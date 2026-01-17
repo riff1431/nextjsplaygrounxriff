@@ -38,6 +38,18 @@ export default function CreatorDashboard() {
                 }
                 setUser(user);
 
+                // Check role
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile?.role !== 'creator') {
+                    router.push('/home');
+                    return;
+                }
+
                 // Fetch creator's rooms
                 const { data: myRooms, error } = await supabase
                     .from('rooms')

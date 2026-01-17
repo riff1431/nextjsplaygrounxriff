@@ -285,8 +285,8 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                     </TabsList>
 
                     <TabsContent value="posts" className="mt-8 max-w-2xl mx-auto">
-                        {/* Create Post Widget (Owner Only) - Floating or Inline? Inline is better for feed feeling */}
-                        {isOwner && (
+                        {/* Create Post Widget (Owner & Creator Only) */}
+                        {isOwner && profile.role === 'creator' && (
                             <div className="mb-8 flex items-center gap-4 bg-zinc-900/30 p-4 rounded-xl border border-white/5">
                                 <Avatar className="w-10 h-10 border border-white/10">
                                     <AvatarImage src={profile.avatar_url || ""} />

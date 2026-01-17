@@ -771,54 +771,30 @@ export default function Home() {
             try {
                 // Fetch rooms joined with host profile
                 // Explicitly specifying !host_id to avoid ambiguous relationship errors
-                const { data: roomsData, error: roomsError } = await supabase
-                    .from('rooms')
-                    .select('*, host:profiles!host_id(id, username, avatar_url, role)')
-                    .eq('status', 'live');
+                // Fetch ALL creators (not just live rooms)
+                // 1. Fetch creators with stats (RPC)
+                // This single query returns profile, post count, and latest media
+                const { data: creatorsData, error: creatorsError } = await supabase
+                    .rpc('get_creators_with_stats');
 
-                if (roomsError) console.error("Error fetching rooms:", roomsError);
+                if (creatorsError) console.error("Error fetching creators:", creatorsError);
                 else {
-                    // Fetch latest posts for these hosts to get background images
-                    const hostIds = (roomsData || []).map(r => r.host?.id || r.host_id).filter(Boolean);
+                    const calculateLevel = (count: number): "Rookie" | "Rising" | "Star" | "Elite" => {
+                        if (count >= 20) return "Elite";
+                        if (count >= 10) return "Star";
+                        if (count >= 3) return "Rising";
+                        return "Rookie";
+                    };
 
-                    let activePostsStr: Record<string, any> = {};
-
-                    if (hostIds.length > 0) {
-                        // We want 1 latest post per user.
-                        // Simplest efficient way in Supabase/Postgres is unclear without distinct on.
-                        // We will just fetch all recent posts for these users and pick latest in JS.
-                        const { data: hostPosts } = await supabase
-                            .from('posts')
-                            .select('user_id, media_url, thumbnail_url, created_at')
-                            .in('user_id', hostIds)
-                            .order('created_at', { ascending: false })
-                            .limit(50); // Reasonable limit for homepage
-
-                        if (hostPosts) {
-                            hostPosts.forEach(p => {
-                                // Since ordered by desc, first time we see a user_id, it's the latest
-                                if (!activePostsStr[p.user_id]) {
-                                    activePostsStr[p.user_id] = p;
-                                }
-                            });
-                        }
-                    }
-
-                    const mapped = (roomsData || []).map(r => {
-                        const hostId = r.host?.id || r.host_id;
-                        const latestPost = activePostsStr[hostId];
-                        const bgImage = latestPost
-                            ? (latestPost.media_url || latestPost.thumbnail_url)
-                            : r.cover_image;
-
+                    const mapped = (creatorsData || []).map((c: any) => {
                         return {
-                            id: r.id,
-                            userId: hostId, // Store host ID for profile navigation
-                            name: r.host?.username || "Unknown Host",
-                            level: "Star",
-                            tags: [r.title, r.type || "General"],
-                            avatar_url: r.host?.avatar_url,
-                            cover_url: bgImage
+                            id: c.id,
+                            userId: c.id,
+                            name: c.username || "Unknown Creator",
+                            level: calculateLevel(c.post_count || 0),
+                            tags: ["General"], // Default tag since not a specific room
+                            avatar_url: c.avatar_url,
+                            cover_url: c.latest_media_url || c.latest_thumbnail_url || null
                         };
                     });
                     setRooms(mapped);
@@ -945,22 +921,24 @@ export default function Home() {
                             <p className="text-sm text-gray-400">View your profile, collection, and posts.</p>
                         </button>
 
-                        {/* Upload Content Card */}
-                        <CreatePostModal
-                            currentUserId={user?.id || null}
-                            onPostCreated={() => { }} // No feed to refresh here, maybe toast?
-                            trigger={
-                                <button
-                                    className="w-full h-full rounded-2xl border border-green-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                                >
-                                    <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                        <Upload className="w-5 h-5 text-green-300" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-green-200 mb-1">Upload Content</h3>
-                                    <p className="text-sm text-gray-400">Post new photos, videos, or status updates.</p>
-                                </button>
-                            }
-                        />
+                        {/* Upload Content Card - Creators Only */}
+                        {role === 'creator' && (
+                            <CreatePostModal
+                                currentUserId={user?.id || null}
+                                onPostCreated={() => { }} // No feed to refresh here, maybe toast?
+                                trigger={
+                                    <button
+                                        className="w-full h-full rounded-2xl border border-green-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
+                                    >
+                                        <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                                            <Upload className="w-5 h-5 text-green-300" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-green-200 mb-1">Upload Content</h3>
+                                        <p className="text-sm text-gray-400">Post new photos, videos, or status updates.</p>
+                                    </button>
+                                }
+                            />
+                        )}
 
                         {/* Confessions Studio */}
                         <button
