@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import ConversationList from "@/components/messaging/ConversationList";
@@ -9,7 +9,7 @@ import NewChatModal from "@/components/messaging/NewChatModal";
 import { ArrowLeft, MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
 
-export default function MessagesPage() {
+function MessagesContent() {
     const supabase = createClient();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -249,5 +249,13 @@ export default function MessagesPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center bg-black text-white">Loading messages...</div>}>
+            <MessagesContent />
+        </Suspense>
     );
 }

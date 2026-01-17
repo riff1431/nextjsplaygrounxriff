@@ -4,6 +4,11 @@ import React from "react";
 import { CreditCard, Wallet, Plus, ArrowUpRight, ArrowDownLeft, History, Clock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import TopUpModal from "@/components/wallet/TopUpModal";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -27,10 +32,12 @@ function NeonButton({
     children,
     className = "",
     variant = "pink",
+    onClick,
 }: {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     className?: string;
     variant?: "pink" | "blue" | "ghost";
+    onClick?: () => void;
 }) {
     const base = "px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2";
     const styles =
@@ -40,15 +47,114 @@ function NeonButton({
                 ? "bg-blue-600 hover:bg-blue-700 text-white border border-blue-500/30 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
                 : "bg-white/5 hover:bg-white/10 text-pink-200 border border-pink-500/20";
 
-    return <button className={cx(base, styles, className)}>{children}</button>;
+    return <button onClick={onClick} className={cx(base, styles, className)}>{children}</button>;
 }
 
 
 export default function WalletPage() {
     const router = useRouter();
+    const supabase = createClient();
+    const [balance, setBalance] = useState<number>(0);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+
+    useEffect(() => {
+        fetchWalletData();
+    }, []);
+
+    const fetchWalletData = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/auth');
+                return;
+            }
+
+            // Fetch Wallet
+            const { data: wallet } = await supabase
+                .from('wallets')
+                .select('balance')
+                .eq('user_id', user.id)
+                .single();
+
+            if (wallet) {
+                setBalance(wallet.balance);
+            }
+
+            // Fetch Transactions
+            const { data: txs } = await supabase
+                .from('transactions')
+                .select('*')
+                // .eq('wallet_id', wallet?.id) // Ideally join, but RLS handles viewing own txs by wallet ownership. 
+                // Actually RLS policy relies on querying by wallet_id that belongs to user.
+                // Let's rely on the policy "Users can view own transactions" which does a subquery.
+                // So simple select * is fine if policy works, but safer to join or get wallet id first.
+                // RLS: wallet_id in (select id from wallets where user_id = auth.uid())
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (txs) setTransactions(txs);
+
+        } catch (error) {
+            console.error('Error fetching wallet:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddFunds = async (amount: number, method: string) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Mock Payment Process
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing
+
+            let description = `Top Up via ${method === 'card' ? 'Credit Card' : method === 'paypal' ? 'PayPal' : 'Bank Transfer'}`;
+
+            // For bank transfer, ideally we'd set status to 'pending', but strictly using our simple add_funds calls:
+            // Let's slightly tweak behavior or just append (Pending) to description if we can't change status easily without changing RPC
+            if (method === 'bank') {
+                description += " (Pending Approval)";
+                const { error } = await supabase.rpc('request_topup', {
+                    user_uuid: user.id,
+                    amount_val: amount,
+                    desc_text: description
+                });
+                if (error) throw error;
+                toast.success("Request sent! Admin will review shortly.");
+            } else {
+                // Card/PayPal - Instant
+                const { error } = await supabase.rpc('add_funds', {
+                    user_uuid: user.id,
+                    amount_val: amount,
+                    desc_text: description
+                });
+                if (error) throw error;
+                toast.success(`Successfully added $${amount}`);
+            }
+
+            fetchWalletData(); // Refresh
+
+        } catch (error: any) {
+            toast.error("Failed to add funds: " + error.message);
+            throw error; // Re-throw for modal to handle if needed
+        }
+    };
+
+    // Format currency
+    const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+
+    if (loading) return <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center">Loading...</div>;
 
     return (
         <div className="min-h-screen bg-black text-white p-6 pb-20 lg:pb-6">
+            <TopUpModal
+                isOpen={isTopUpOpen}
+                onClose={() => setIsTopUpOpen(false)}
+                onTopUp={handleAddFunds}
+            />
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -73,10 +179,14 @@ export default function WalletPage() {
                     <div className="relative z-10 flex flex-col items-center text-center space-y-4">
                         <div className="text-pink-200 text-sm font-medium uppercase tracking-widest opacity-80">Total Balance</div>
                         <div className="text-5xl md:text-6xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
-                            <span className="text-pink-500">$</span>1,240.50
+                            {fmt(balance)}
                         </div>
                         <div className="flex gap-4 pt-4">
-                            <NeonButton variant="pink" className="px-8 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+                            <NeonButton
+                                onClick={() => setIsTopUpOpen(true)}
+                                variant="pink"
+                                className="px-8 shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+                            >
                                 <Plus className="w-4 h-4" /> Add Funds
                             </NeonButton>
                             <NeonButton variant="ghost" className="hover:bg-white/10">
@@ -94,7 +204,7 @@ export default function WalletPage() {
                         </div>
                         <div>
                             <div className="text-xs text-gray-400">Total Spent</div>
-                            <div className="text-lg font-bold text-white">$450.00</div>
+                            <div className="text-lg font-bold text-white">--</div>
                         </div>
                     </NeonCard>
                     <NeonCard className="p-4 flex items-center gap-4 hover:border-purple-500/40 transition">
@@ -103,13 +213,40 @@ export default function WalletPage() {
                         </div>
                         <div>
                             <div className="text-xs text-gray-400">Pending</div>
-                            <div className="text-lg font-bold text-white">$25.00</div>
+                            <div className="text-lg font-bold text-white">$0.00</div>
                         </div>
                     </NeonCard>
                 </div>
 
-                {/* Payment Methods */}
+                {/* Transactions List */}
                 <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-gray-200">Recent Activity</h2>
+                    <div className="space-y-2">
+                        {transactions.length === 0 ? (
+                            <div className="text-gray-500 text-center py-4">No transactions yet</div>
+                        ) : (
+                            transactions.map(tx => (
+                                <NeonCard key={tx.id} className="p-4 flex items-center justify-between border-white/5 bg-white/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2 rounded-full ${tx.type === 'deposit' ? 'bg-green-500/20 text-green-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                                            {tx.type === 'deposit' ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-medium text-white">{tx.description}</div>
+                                            <div className="text-xs text-gray-400">{format(new Date(tx.created_at), 'PPP p')}</div>
+                                        </div>
+                                    </div>
+                                    <div className={`font-bold ${tx.type === 'deposit' ? 'text-green-400' : 'text-white'}`}>
+                                        {tx.type === 'deposit' ? '+' : '-'}{fmt(tx.amount)}
+                                    </div>
+                                </NeonCard>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
                     <h2 className="text-lg font-semibold text-gray-200">Payment Methods</h2>
 
                     <NeonCard className="p-4 flex items-center justify-between group cursor-pointer hover:border-white/20 transition">
