@@ -1,0 +1,2478 @@
+Confessions Room — Creator View Plan (Developer Spec)
+1) Purpose
+
+Confessions Studio (Creator View) is the creator-facing publishing tool that produces locked confession items that appear in the Fan Confession Wall.
+Creators can draft, publish, duplicate, and archive confession items while setting:
+
+Tier (price enforced by server)
+
+Type (Text / Voice / Video)
+
+Title
+
+Teaser (what fans see before unlocking)
+
+Content (text body or uploaded media reference)
+
+2) Core Objects
+
+Confession Item
+
+id: string
+
+title: string
+
+teaser: string (preview text shown when locked)
+
+tier: enum (Soft | Spicy | Dirty | Dark | Forbidden)
+
+type: enum (Text | Voice | Video)
+
+status: enum (Draft | Published | Archived)
+
+createdAt: ISO date/time
+
+content:
+
+if Text: fullText stored server-side
+
+if Voice/Video: mediaAssetId + metadata (duration, mime, etc.)
+
+Tier Pricing (fixed / server-enforced)
+
+Soft: $5
+
+Spicy: $10
+
+Dirty: $20
+
+Dark: $35
+
+Forbidden: $60
+
+UI shows price next to tier but server is source of truth.
+
+3) Creator Studio Layout
+
+Top Bar
+
+Back button → returns to Home
+
+“Fan View” button → switches to Fan Confessions Room preview
+
+Title: “Confessions Studio — Creator View”
+
+Subtitle: “Create locked confessions for the fan Confession Wall”
+
+Left Column: Editor Panel
+
+Type selector: 3 buttons (Text / Voice / Video)
+
+Tier selector: 5 buttons (Soft / Spicy / Dirty / Dark / Forbidden)
+
+Displays Tier • $Price badge
+
+Title input
+
+Teaser input
+
+Full content section
+
+If Text: textarea for full confession
+
+If Voice/Video: “Add File” button (mockup sets a placeholder filename)
+
+Actions
+
+Save Draft
+
+Publish
+
+Cancel (reset editor)
+
+Right Column: Library
+
+Filter tabs: Draft / Published / Archived
+
+List of items (based on filter)
+
+Each item shows:
+
+Title
+
+Tier + enforced price badge
+
+Type badge
+
+Status badge
+
+Teaser
+
+Created date
+
+Item actions:
+
+Edit (loads into editor)
+
+Duplicate (creates Draft copy)
+
+Archive (sets status Archived)
+
+4) Behavior Rules
+
+Save Draft
+
+Creates a new item with status=Draft OR updates existing editing item to Draft.
+
+Publish
+
+Creates a new item with status=Published OR updates existing editing item to Published.
+
+Edit
+
+Loads item fields into editor.
+
+Duplicate
+
+Clones item into a Draft copy with new id.
+
+Archive
+
+Sets status=Archived.
+
+Pricing
+
+Tier price displayed in UI; must be validated and enforced by backend.
+
+Media
+
+In production: “Add File” becomes upload flow to create a media asset and return an assetId.
+
+5) Production Integration Notes (for real build)
+
+Creator Studio calls:
+
+POST /creator/confessions (draft/publish)
+
+PUT /creator/confessions/{id}
+
+POST /creator/confessions/{id}/duplicate
+
+POST /creator/confessions/{id}/archive
+
+POST /media/upload (voice/video)
+
+Fan unlock flow calls:
+
+POST /fan/confessions/{id}/unlock (creates entitlement + charges)
+
+Then GET /fan/confessions/{id} returns unlocked payload (text or signed media URL)
+
+Full React Mockup Code (Preview Only)
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Crown,
+  MessageCircle,
+  Star,
+  Lock,
+  Sparkles,
+  ChevronDown,
+  Search,
+  Users,
+  Settings,
+  CreditCard,
+  LogOut,
+  User,
+  Bell,
+  Video,
+  Image as ImageIcon,
+  ArrowLeft,
+  Send,
+  Heart,
+  Link as LinkIcon,
+} from "lucide-react";
+
+/**
+ * PlayGroundX — PREVIEW BUILD
+ * ------------------------------------------------
+ * Includes (preview-only UI):
+ *  - Home Screen (creator browse + right Creator Feed)
+ *  - Suga 4 U Room (mockup preview)
+ *  - Confessions Room (Fan view)
+ *  - Confessions Studio (Creator view)
+ *
+ * Notes:
+ *  - No real payments / no WebRTC. Buttons are UI-only.
+ */
+
+// ---- Helpers --------------------------------------------------------------
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+const noop = () => {};
+
+// Minimal dev-time sanity checks (no UI impact)
+function useDevSanityTests() {
+  useEffect(() => {
+    console.assert(clamp(0, 0, 10) === 0, "clamp lower bound failed");
+    console.assert(clamp(99, 0, 10) === 10, "clamp upper bound failed");
+    console.assert(clamp(3, 0, 10) === 3, "clamp passthrough failed");
+
+    // Additional test cases (requested):
+    console.assert(cx("a", false, "b", null, undefined, "c") === "a b c", "cx failed");
+    console.assert(Array.isArray(CREATORS) && CREATORS.length >= 6, "CREATORS missing");
+    console.assert(Array.isArray(CREATOR_LEVELS) && CREATOR_LEVELS.length === 5, "levels missing");
+    console.assert(Array.isArray(ROOM_TAGS) && ROOM_TAGS.length >= 6, "room tags missing");
+
+    // Ensure our safe fallback is callable
+    console.assert(typeof noop === "function", "noop should be function");
+  }, []);
+}
+
+// ---- Local icon (bar/drink) ----------------------------------------------
+function BarDrinkIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M7 3h10l-1 7a4 4 0 0 1-4 3H12a4 4 0 0 1-4-3L7 3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M10 21h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M12 13v8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M9 6h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// ---- Types ----------------------------------------------------------------
+type Route = "home" | "suga4u" | "confessions" | "creator_confessions";
+
+type CreatorLevel = "All" | "Rookie" | "Rising" | "Star" | "Elite";
+
+type SortBy = "Recommended" | "Rookie→Elite" | "Elite→Rookie";
+
+type RoomTag =
+  | "All"
+  | "Flash Drops"
+  | "Confessions"
+  | "X Chat"
+  | "Bar Lounge"
+  | "Truth or Dare"
+  | "Suga 4 U";
+
+type CreatorCard = {
+  id: string;
+  name: string;
+  level: Exclude<CreatorLevel, "All">;
+  tags: Array<Exclude<RoomTag, "All">>;
+};
+
+// ---- Mock Data ------------------------------------------------------------
+const CREATORS: CreatorCard[] = [
+  { id: "c1", name: "NeonNyla", level: "Elite", tags: ["Suga 4 U", "Flash Drops"] },
+  { id: "c2", name: "PinkVibe", level: "Star", tags: ["Truth or Dare", "Bar Lounge"] },
+  { id: "c3", name: "BlueMuse", level: "Rising", tags: ["X Chat", "Confessions"] },
+  { id: "c4", name: "LunaLux", level: "Elite", tags: ["Suga 4 U", "Confessions"] },
+  { id: "c5", name: "NovaHeat", level: "Star", tags: ["Flash Drops", "Bar Lounge"] },
+  { id: "c6", name: "RoxyRave", level: "Rookie", tags: ["Truth or Dare", "X Chat"] },
+  { id: "c7", name: "VelvetX", level: "Rising", tags: ["Bar Lounge", "Confessions"] },
+  { id: "c8", name: "Sapphire", level: "Star", tags: ["Suga 4 U", "Truth or Dare"] },
+];
+
+const CREATOR_LEVELS: CreatorLevel[] = ["All", "Rookie", "Rising", "Star", "Elite"];
+
+const ROOM_TAGS: RoomTag[] = [
+  "All",
+  "Flash Drops",
+  "Confessions",
+  "X Chat",
+  "Bar Lounge",
+  "Truth or Dare",
+  "Suga 4 U",
+];
+
+// ---- Branding --------------------------------------------------------------
+function Logo() {
+  // Preview-safe logo (no external file dependency).
+  // Styled to mimic the neon cursive reference.
+  return (
+    <div className="flex items-center gap-3 select-none">
+      <div className="text-2xl leading-none">
+        <span className="pgx-logo">PlayGround</span>
+        <span className="pgx-logo-x">X</span>
+      </div>
+      <span className="ml-1 text-[10px] px-2 py-[2px] rounded-full border border-pink-500/40 text-pink-200 bg-black/40">
+        Preview
+      </span>
+    </div>
+  );
+}
+
+// ---- Reusable UI -----------------------------------------------------------
+function NeonCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={cx(
+        "rounded-2xl border border-pink-500/25 bg-black",
+        "shadow-[0_0_22px_rgba(236,72,153,0.14),0_0_52px_rgba(59,130,246,0.08)]",
+        "hover:shadow-[0_0_34px_rgba(236,72,153,0.20),0_0_78px_rgba(59,130,246,0.12)] transition-shadow",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Dropdown({
+  label,
+  items,
+  tone = "pink",
+}: {
+  label: React.ReactNode;
+  items: Array<{ icon?: React.ReactNode; text: string; onClick?: () => void }>;
+  tone?: "pink" | "blue";
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cx(
+          "w-full flex items-center justify-between gap-2 rounded-2xl px-4 py-3",
+          "border bg-black/40 transition",
+          tone === "pink"
+            ? "border-pink-500/35 text-pink-200 hover:bg-pink-600/10"
+            : "border-blue-500/35 text-blue-200 hover:bg-blue-600/10"
+        )}
+      >
+        <span className="inline-flex items-center gap-2">{label}</span>
+        <ChevronDown className={cx("w-4 h-4 transition", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div
+          className={cx(
+            "mt-2 w-full rounded-2xl border bg-black/75",
+            tone === "pink" ? "border-pink-500/25" : "border-blue-500/25"
+          )}
+        >
+          <div className="py-2 flex flex-col items-center text-center">
+            {items.map((it, idx) => (
+              <button
+                key={`${it.text}-${idx}`}
+                onClick={() => {
+                  setOpen(false);
+                  it.onClick?.();
+                }}
+                className="w-full px-4 py-2 text-sm flex items-center justify-center gap-2 hover:bg-white/5"
+              >
+                <span className="opacity-90">{it.icon}</span>
+                <span>{it.text}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function toneClasses(tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow") {
+  // Deep nightclub neon palette (strong core + controlled outer glow)
+  switch (tone) {
+    case "green":
+      return {
+        text: "text-emerald-300 drop-shadow-[0_0_28px_rgba(0,255,170,1)] neon-deep",
+        icon: "text-emerald-300 drop-shadow-[0_0_34px_rgba(0,255,170,1)]",
+        border: "border-emerald-300/90",
+        glow:
+          "shadow-[0_0_16px_rgba(0,255,170,0.72),0_0_48px_rgba(0,255,170,0.36)] hover:shadow-[0_0_22px_rgba(0,255,170,0.86),0_0_72px_rgba(0,255,170,0.50)]",
+        hover: "hover:bg-emerald-500/8",
+      };
+    case "purple":
+      return {
+        text: "text-violet-300 drop-shadow-[0_0_28px_rgba(170,80,255,1)] neon-deep",
+        icon: "text-violet-300 drop-shadow-[0_0_34px_rgba(170,80,255,1)]",
+        border: "border-violet-300/90",
+        glow:
+          "shadow-[0_0_16px_rgba(170,80,255,0.72),0_0_48px_rgba(170,80,255,0.36)] hover:shadow-[0_0_22px_rgba(170,80,255,0.86),0_0_72px_rgba(170,80,255,0.50)]",
+        hover: "hover:bg-violet-500/8",
+      };
+    case "red":
+      return {
+        text: "text-rose-300 drop-shadow-[0_0_28px_rgba(255,55,95,1)] neon-deep",
+        icon: "text-rose-300 drop-shadow-[0_0_34px_rgba(255,55,95,1)]",
+        border: "border-rose-300/90",
+        glow:
+          "shadow-[0_0_16px_rgba(255,55,95,0.72),0_0_48px_rgba(255,55,95,0.36)] hover:shadow-[0_0_22px_rgba(255,55,95,0.86),0_0_72px_rgba(255,55,95,0.50)]",
+        hover: "hover:bg-rose-500/8",
+      };
+    case "blue":
+      return {
+        text: "text-cyan-200 drop-shadow-[0_0_28px_rgba(0,230,255,1)] neon-deep",
+        icon: "text-cyan-200 drop-shadow-[0_0_34px_rgba(0,230,255,1)]",
+        border: "border-cyan-200/90",
+        glow:
+          "shadow-[0_0_16px_rgba(0,230,255,0.72),0_0_48px_rgba(0,230,255,0.36)] hover:shadow-[0_0_22px_rgba(0,230,255,0.86),0_0_72px_rgba(0,230,255,0.50)]",
+        hover: "hover:bg-cyan-500/8",
+      };
+    case "yellow":
+      return {
+        text: "text-lime-200 drop-shadow-[0_0_28px_rgba(200,255,0,1)] neon-deep",
+        icon: "text-lime-200 drop-shadow-[0_0_34px_rgba(200,255,0,1)]",
+        border: "border-lime-200/90",
+        glow:
+          "shadow-[0_0_16px_rgba(200,255,0,0.70),0_0_48px_rgba(200,255,0,0.34)] hover:shadow-[0_0_22px_rgba(200,255,0,0.85),0_0_72px_rgba(200,255,0,0.48)]",
+        hover: "hover:bg-lime-500/8",
+      };
+    default:
+      return {
+        text: "text-fuchsia-300 drop-shadow-[0_0_30px_rgba(255,0,200,1)] neon-deep",
+        icon: "text-fuchsia-300 drop-shadow-[0_0_36px_rgba(255,0,200,1)]",
+        border: "border-fuchsia-300/90",
+        glow:
+          "shadow-[0_0_18px_rgba(255,0,200,0.72),0_0_54px_rgba(255,0,200,0.38)] hover:shadow-[0_0_26px_rgba(255,0,200,0.86),0_0_86px_rgba(255,0,200,0.54)]",
+        hover: "hover:bg-fuchsia-500/8",
+      };
+  }
+}
+
+function CreatorTile({ creator }: { creator: CreatorCard }) {
+  const tags = creator.tags.slice(0, 2);
+  while (tags.length < 2) tags.push("Flash Drops");
+
+  return (
+    <button
+      className={cx(
+        "h-full rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
+        "hover:border-pink-500/45 transition flex flex-col"
+      )}
+      title="Preview tile"
+    >
+      <div className="h-36 w-full bg-gradient-to-b from-pink-500/18 via-black to-blue-500/10" />
+
+      <div className="p-3 text-left flex-1 flex flex-col">
+        <div className="flex items-center justify-between gap-2 min-h-[22px]">
+          <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_46px_rgba(255,0,200,1)]">
+            {creator.name}
+          </div>
+          <span className="shrink-0 text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
+            {creator.level}
+          </span>
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-1 min-h-[28px]">
+          {tags.map((t, idx) => (
+            <span
+              key={`${creator.id}-${t}-${idx}`}
+              className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex-1" />
+      </div>
+    </button>
+  );
+}
+
+// ---- Home Screen ----------------------------------------------------------
+function HomeScreen({
+  query,
+  setQuery,
+  onOpenSuga4U,
+  onOpenConfessions,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  onOpenSuga4U: () => void;
+  onOpenConfessions: () => void;
+}) {
+  const [levelFilter, setLevelFilter] = useState<CreatorLevel>("All");
+  const [activeCat, setActiveCat] = useState<string>("suga4u");
+  const [tagFilter, setTagFilter] = useState<RoomTag>("Suga 4 U");
+  const [sortBy, setSortBy] = useState<SortBy>("Recommended");
+
+  const CAT_TO_TAG: Record<string, RoomTag> = {
+    drops: "Flash Drops",
+    conf: "Confessions",
+    xchat: "X Chat",
+    bar: "Bar Lounge",
+    truth: "Truth or Dare",
+    suga4u: "Suga 4 U",
+  };
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let rows = CREATORS.slice();
+
+    if (q) {
+      rows = rows.filter((c) => [c.name, c.level, ...c.tags].some((t) => t.toLowerCase().includes(q)));
+    }
+
+    if (levelFilter !== "All") rows = rows.filter((c) => c.level === levelFilter);
+    if (tagFilter !== "All") rows = rows.filter((c) => c.tags.includes(tagFilter as any));
+
+    const rank: Record<CreatorCard["level"], number> = { Rookie: 1, Rising: 2, Star: 3, Elite: 4 };
+    if (sortBy === "Rookie→Elite") rows.sort((a, b) => rank[a.level] - rank[b.level]);
+    if (sortBy === "Elite→Rookie") rows.sort((a, b) => rank[b.level] - rank[a.level]);
+
+    return rows;
+  }, [query, levelFilter, tagFilter, sortBy]);
+
+  const CATS: Array<{
+    label: string;
+    key: string;
+    icon: React.ReactNode;
+    tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow";
+    primary?: boolean;
+  }> = [
+    { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue" },
+    { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red" },
+    { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow" },
+    { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple" },
+    { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green" },
+    { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left sidebar */}
+        <NeonCard className="relative overflow-hidden p-4 lg:col-span-2">
+          <div className="pointer-events-none absolute inset-0 opacity-50">
+            <div className="absolute -inset-12 blur-3xl bg-[radial-gradient(circle_at_22%_18%,rgba(255,0,200,0.26),transparent_55%),radial-gradient(circle_at_80%_40%,rgba(0,230,255,0.18),transparent_60%)]" />
+          </div>
+
+          <div className="relative">
+            <div className="neon-smoke" aria-hidden="true" />
+
+            <div className="text-fuchsia-300 text-sm mb-3 neon-flicker drop-shadow-[0_0_58px_rgba(255,0,200,1)]">
+              Browse
+            </div>
+
+            <div>
+              <div className="text-xs text-fuchsia-300 inline-flex items-center gap-2 drop-shadow-[0_0_58px_rgba(255,0,200,1)]">
+                <Search className="w-4 h-4 text-fuchsia-300 drop-shadow-[0_0_62px_rgba(255,0,200,1)]" />
+                Categories
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {CATS.map((cat) => {
+                  const t = toneClasses(cat.tone);
+                  const isPrimary = !!cat.primary;
+                  return (
+                    <button
+                      key={cat.key}
+                      onClick={() => {
+                        setActiveCat(cat.key);
+                        setTagFilter(CAT_TO_TAG[cat.key] ?? "All");
+                      }}
+                      className={cx(
+                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition",
+                        "bg-black/55",
+                        t.border,
+                        t.glow,
+                        t.hover,
+                        isPrimary && "ring-1 ring-cyan-200/30",
+                        activeCat === cat.key && "neon-pulse"
+                      )}
+                      title={isPrimary ? "Primary category" : "Category"}
+                    >
+                      <span className={cx("inline-flex items-center gap-2", t.text, "neon-flicker")}>
+                        <span className={t.icon}>{cat.icon}</span>
+                        <span className="truncate neon-deep" style={{ fontFamily: "cursive" }}>
+                          {cat.label}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick enter bar (preview) */}
+              <div className="mt-3 rounded-2xl border border-pink-500/20 bg-black/45 p-3">
+                <div className="text-[11px] text-gray-300 flex items-center justify-between">
+                  <span>Selected:</span>
+                  <span className="text-pink-200">{tagFilter}</span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (tagFilter === "Suga 4 U") onOpenSuga4U();
+                    if (tagFilter === "Confessions") onOpenConfessions();
+                  }}
+                  className={cx(
+                    "mt-2 w-full rounded-xl border px-3 py-2 text-sm",
+                    tagFilter === "Suga 4 U" || tagFilter === "Confessions"
+                      ? "border-pink-500/30 bg-pink-600 hover:bg-pink-700"
+                      : "border-white/10 bg-black/40 opacity-60 cursor-not-allowed"
+                  )}
+                  title={
+                    tagFilter === "Suga 4 U"
+                      ? "Open Suga 4 U room preview"
+                      : tagFilter === "Confessions"
+                        ? "Open Confessions room preview"
+                        : "Select a room category to enter"
+                  }
+                >
+                  {tagFilter === "Confessions" ? "Enter Confessions" : "Enter Suga 4 U"}
+                </button>
+
+                <div className="mt-2 text-[10px] text-gray-400">Home is browse-only. Rooms open from dedicated previews.</div>
+              </div>
+            </div>
+
+            <div className="mt-6 text-fuchsia-200 text-sm drop-shadow-[0_0_44px_rgba(255,0,200,0.75)]">
+              Account
+            </div>
+
+            <div className="mt-2 space-y-3">
+              <div className="grid grid-cols-1 gap-2">
+                <button className="w-full rounded-xl border border-cyan-200/90 bg-black px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_22px_rgba(0,230,255,0.75),0_0_120px_rgba(0,230,255,0.55)] hover:shadow-[0_0_34px_rgba(0,230,255,0.92),0_0_170px_rgba(0,230,255,0.75)]">
+                  <MessageCircle className="w-4 h-4" /> Messages
+                </button>
+                <button className="w-full rounded-xl border border-fuchsia-300/90 bg-black px-3 py-2 text-sm text-fuchsia-200 hover:bg-fuchsia-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_22px_rgba(255,0,200,0.72),0_0_130px_rgba(255,0,200,0.58)] hover:shadow-[0_0_36px_rgba(255,0,200,0.92),0_0_180px_rgba(255,0,200,0.78)]">
+                  <Bell className="w-4 h-4" /> Notifications
+                </button>
+                <button className="w-full rounded-xl border border-violet-300/90 bg-black px-3 py-2 text-sm text-violet-200 hover:bg-violet-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_20px_rgba(170,80,255,0.70),0_0_110px_rgba(170,80,255,0.55)] hover:shadow-[0_0_32px_rgba(170,80,255,0.92),0_0_170px_rgba(170,80,255,0.76)]">
+                  <Star className="w-4 h-4" /> Collections
+                </button>
+              </div>
+
+              <div className="border-t border-pink-500/15 pt-3" />
+              <button className="w-full rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2 justify-center">
+                <LogOut className="w-4 h-4" /> Log Out
+              </button>
+            </div>
+          </div>
+        </NeonCard>
+
+        {/* Center column */}
+        <div className="lg:col-span-6">
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                <div className="text-[10px] text-gray-400 mb-1">Creator Level</div>
+                <select
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value as CreatorLevel)}
+                  className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
+                >
+                  {CREATOR_LEVELS.map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {lvl}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-2xl border border-blue-500/20 bg-black/35 px-3 py-2">
+                <div className="text-[10px] text-gray-400 mb-1">Room / Category</div>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value as RoomTag)}
+                  className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm"
+                >
+                  {ROOM_TAGS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                <div className="text-[10px] text-gray-400 mb-1">Sort</div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortBy)}
+                  className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
+                >
+                  <option value="Recommended">Recommended</option>
+                  <option value="Rookie→Elite">Rookie → Elite</option>
+                  <option value="Elite→Rookie">Elite → Rookie</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+            {filtered.map((c) => (
+              <CreatorTile key={c.id} creator={c} />
+            ))}
+          </div>
+        </div>
+
+        {/* Right rail */}
+        <NeonCard className="p-4 lg:col-span-4">
+          <div className="text-pink-200 text-sm mb-3">Creator Feed</div>
+          <div className="space-y-4">
+            {[0, 1, 2, 3].map((i) => {
+              const isVideo = i % 2 === 0;
+              return (
+                <div key={i} className="rounded-2xl border border-pink-500/15 bg-black/40 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-300">@NeonNyla</div>
+                    <span
+                      className={cx(
+                        "text-[10px] px-2 py-[2px] rounded-full border",
+                        isVideo ? "border-blue-500/25 text-blue-200" : "border-pink-500/20 text-pink-200"
+                      )}
+                    >
+                      {isVideo ? "Video" : "Photo"}
+                    </span>
+                  </div>
+
+                  <div className="mt-1 text-sm text-gray-100">
+                    {isVideo ? "New clip just dropped. Unlock to watch." : "New pics tonight. VIP gets first look."}
+                  </div>
+
+                  <div className="mt-3 rounded-2xl overflow-hidden border border-white/10 bg-black/30">
+                    <div className="relative aspect-video bg-gradient-to-b from-pink-500/15 via-black to-blue-500/10 flex items-center justify-center">
+                      {isVideo ? (
+                        <div className="flex items-center gap-2 text-blue-200">
+                          <Video className="w-5 h-5" />
+                          <span className="text-sm">Video preview</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-pink-200">
+                          <ImageIcon className="w-5 h-5" />
+                          <span className="text-sm">Photo preview</span>
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                        {isVideo ? "Tap to unlock" : "Tap to view"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
+                      Flash Drop
+                    </span>
+                    <span className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200">
+                      Suga 4 U
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex gap-2">
+                    <button className="flex-1 rounded-xl border border-pink-500/25 bg-black/40 py-2 text-sm hover:bg-white/5">
+                      Like
+                    </button>
+                    <button className="flex-1 rounded-xl border border-pink-500/30 bg-pink-600 py-2 text-sm hover:bg-pink-700">
+                      Unlock
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </NeonCard>
+      </div>
+    </div>
+  );
+}
+
+// ---- Confessions Room (Fan) ----------------------------------------------
+// NOTE: Creator studio continues below, plus Suga4U and App Shell.
+// (Kept exactly as in your current mockup.)
+
+function ConfessionsRoomPreview({
+  onBack,
+  onCreatorView,
+  onFanView,
+}: {
+  onBack: () => void;
+  onCreatorView: () => void;
+  onFanView?: () => void;
+}) {
+  const onFanViewSafe = onFanView ?? noop;
+
+  const creator = { handle: "@NeonNyla", level: "Elite" as const };
+
+  type ConfTier = "Soft" | "Spicy" | "Dirty" | "Dark" | "Forbidden";
+  const tierMeta: Record<ConfTier, { price: number; tone: string }> = {
+    Soft: { price: 5, tone: "border-pink-500/25 text-pink-200" },
+    Spicy: { price: 10, tone: "border-rose-400/30 text-rose-200" },
+    Dirty: { price: 20, tone: "border-red-400/30 text-red-200" },
+    Dark: { price: 35, tone: "border-violet-300/30 text-violet-200" },
+    Forbidden: { price: 60, tone: "border-yellow-400/30 text-yellow-200" },
+  };
+
+  type Confession = {
+    id: string;
+    tier: ConfTier;
+    title: string;
+    preview: string;
+    type: "Text" | "Voice" | "Video";
+  };
+
+  const [walletSpent, setWalletSpent] = useState(0);
+  const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
+  const [active, setActive] = useState<string | null>(null);
+
+  const confessions: Confession[] = [
+    { id: "x1", tier: "Spicy", type: "Voice", title: "Confession #14", preview: "I crave being watched when…" },
+    { id: "x2", tier: "Dirty", type: "Text", title: "Confession #15", preview: "Last night I imagined you…" },
+    { id: "x3", tier: "Dark", type: "Video", title: "Confession #16", preview: "I shouldn’t admit this but…" },
+    { id: "x4", tier: "Soft", type: "Text", title: "Confession #17", preview: "Here’s what I really want…" },
+    { id: "x5", tier: "Forbidden", type: "Voice", title: "VIP Confession #18", preview: "Only one person should hear…" },
+  ];
+
+  const unlock = (id: string, price: number) => {
+    setUnlocked((m) => ({ ...m, [id]: true }));
+    setWalletSpent((s) => s + price);
+    setActive(id);
+  };
+
+  const activeConf = confessions.find((c) => c.id === active) ?? null;
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <button
+            onClick={onCreatorView}
+            className="rounded-xl border border-rose-400/30 bg-rose-600/20 px-3 py-2 text-sm text-rose-100 hover:bg-rose-600/30 inline-flex items-center gap-2"
+            title="Switch to Creator Studio preview"
+          >
+            <Sparkles className="w-4 h-4" /> Creator View
+          </button>
+
+          <button
+            onClick={onFanViewSafe}
+            className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-gray-200 hover:bg-white/5 inline-flex items-center gap-2"
+            title="Fan View (no-op unless provided)"
+          >
+            <Sparkles className="w-4 h-4" /> Fan View
+          </button>
+
+          <div>
+            <div className="text-rose-200 text-sm">Confessions — Fan Room Preview</div>
+            <div className="text-[11px] text-gray-400">Unlock creator confessions by tier</div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-3 py-2">
+          <div className="text-[10px] text-rose-200">Wallet (preview)</div>
+          <div className="text-sm text-rose-100 font-semibold">Spent: ${walletSpent}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <NeonCard className="lg:col-span-7 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-rose-200 text-sm">Confession Wall</div>
+            <div className="text-[11px] text-gray-400">
+              Creator: <span className="text-gray-200">{creator.handle}</span> • {creator.level}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {confessions.map((c) => {
+              const meta = tierMeta[c.tier];
+              const isUnlocked = !!unlocked[c.id];
+              return (
+                <div key={c.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm text-gray-100 flex items-center gap-2">
+                        <span className="font-semibold">{c.title}</span>
+                        <span className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", meta.tone)}>
+                          {c.tier} • ${meta.price}
+                        </span>
+                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                          {c.type}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-sm text-gray-300">
+                        {isUnlocked ? "Unlocked — view content (preview)." : c.preview}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 w-36">
+                      {isUnlocked ? (
+                        <button
+                          className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                          onClick={() => setActive(c.id)}
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <button
+                          className="rounded-xl border border-rose-400/30 bg-rose-600 py-2 text-sm hover:bg-rose-700"
+                          onClick={() => unlock(c.id, meta.price)}
+                        >
+                          Unlock
+                        </button>
+                      )}
+                      <button className="rounded-xl border border-white/10 bg-black/30 py-2 text-sm hover:bg-white/5">
+                        Tip
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </NeonCard>
+
+        <NeonCard className="lg:col-span-5 p-4">
+          <div className="text-rose-200 text-sm mb-3">Unlocked Preview</div>
+          <div className="rounded-2xl border border-white/10 bg-black/30 p-4 min-h-[260px]">
+            {!activeConf ? (
+              <div className="text-sm text-gray-400">Select an unlocked confession to preview.</div>
+            ) : (
+              <div>
+                <div className="text-sm text-gray-100 font-semibold">{activeConf.title}</div>
+                <div className="mt-2 text-sm text-gray-300">
+                  This is a preview placeholder for <span className="text-gray-200">{activeConf.type}</span> content.
+                </div>
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-gray-300">
+                  In production, this panel loads the decrypted / authorized media stream or text after payment.
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-rose-400/20 bg-black/35 p-3">
+            <div className="text-[11px] text-gray-400">Upsell (preview)</div>
+            <div className="mt-1 text-sm text-gray-100">Subscribe to {creator.handle} for weekly private drops.</div>
+            <button className="mt-3 w-full rounded-xl border border-rose-400/30 bg-rose-600 py-2 text-sm hover:bg-rose-700">
+              Subscribe
+            </button>
+          </div>
+        </NeonCard>
+      </div>
+    </div>
+  );
+}
+
+// ---- Confessions Studio (Creator) ----------------------------------------
+function CreatorConfessionsStudioPreview({
+  onBack,
+  onFanView,
+}: {
+  onBack: () => void;
+  onFanView: () => void;
+}) {
+  type ConfTier = "Soft" | "Spicy" | "Dirty" | "Dark" | "Forbidden";
+  type ConfType = "Text" | "Voice" | "Video";
+  type ConfStatus = "Draft" | "Published" | "Archived";
+
+  const TIER_PRICE: Record<ConfTier, number> = {
+    Soft: 5,
+    Spicy: 10,
+    Dirty: 20,
+    Dark: 35,
+    Forbidden: 60,
+  };
+
+  const tierTone: Record<ConfTier, string> = {
+    Soft: "border-pink-500/25 text-pink-200",
+    Spicy: "border-rose-400/30 text-rose-200",
+    Dirty: "border-red-400/30 text-red-200",
+    Dark: "border-violet-300/30 text-violet-200",
+    Forbidden: "border-yellow-400/30 text-yellow-200",
+  };
+
+  type Item = {
+    id: string;
+    title: string;
+    teaser: string;
+    tier: ConfTier;
+    type: ConfType;
+    status: ConfStatus;
+    createdAt: string;
+  };
+
+  const [filter, setFilter] = useState<ConfStatus>("Published");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [type, setType] = useState<ConfType>("Text");
+  const [tier, setTier] = useState<ConfTier>("Spicy");
+  const [title, setTitle] = useState("");
+  const [teaser, setTeaser] = useState("");
+  const [fullText, setFullText] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const [items, setItems] = useState<Item[]>([
+    {
+      id: "p1",
+      title: "Confession #14",
+      teaser: "I crave being watched when…",
+      tier: "Spicy",
+      type: "Voice",
+      status: "Published",
+      createdAt: "2025-12-31",
+    },
+    {
+      id: "p2",
+      title: "Confession #16",
+      teaser: "I shouldn’t admit this but…",
+      tier: "Dark",
+      type: "Video",
+      status: "Published",
+      createdAt: "2025-12-31",
+    },
+    {
+      id: "d1",
+      title: "Draft — next drop",
+      teaser: "I want to tell you something…",
+      tier: "Dirty",
+      type: "Text",
+      status: "Draft",
+      createdAt: "2025-12-31",
+    },
+  ]);
+
+  const visible = useMemo(() => items.filter((i) => i.status === filter), [items, filter]);
+
+  const reset = () => {
+    setEditingId(null);
+    setType("Text");
+    setTier("Spicy");
+    setTitle("");
+    setTeaser("");
+    setFullText("");
+    setFileName(null);
+  };
+
+  const saveDraft = () => {
+    const now = "2025-12-31";
+    if (!title.trim()) return;
+    if (editingId) {
+      setItems((rows) =>
+        rows.map((r) =>
+          r.id === editingId ? { ...r, title: title.trim(), teaser: teaser.trim(), tier, type, status: "Draft" } : r
+        )
+      );
+      reset();
+      return;
+    }
+    setItems((rows) => [
+      {
+        id: `d${rows.length + 10}`,
+        title: title.trim(),
+        teaser: teaser.trim(),
+        tier,
+        type,
+        status: "Draft",
+        createdAt: now,
+      },
+      ...rows,
+    ]);
+    reset();
+  };
+
+  const publish = () => {
+    const now = "2025-12-31";
+    if (!title.trim()) return;
+    if (editingId) {
+      setItems((rows) =>
+        rows.map((r) =>
+          r.id === editingId
+            ? { ...r, title: title.trim(), teaser: teaser.trim(), tier, type, status: "Published" }
+            : r
+        )
+      );
+      reset();
+      return;
+    }
+    setItems((rows) => [
+      {
+        id: `p${rows.length + 10}`,
+        title: title.trim(),
+        teaser: teaser.trim(),
+        tier,
+        type,
+        status: "Published",
+        createdAt: now,
+      },
+      ...rows,
+    ]);
+    reset();
+  };
+
+  const load = (c: Item) => {
+    setEditingId(c.id);
+    setType(c.type);
+    setTier(c.tier);
+    setTitle(c.title);
+    setTeaser(c.teaser);
+    setFullText("");
+    setFileName(null);
+  };
+
+  const duplicate = (id: string) => {
+    const src = items.find((i) => i.id === id);
+    if (!src) return;
+    setItems((rows) => [
+      {
+        ...src,
+        id: `dup_${Math.random().toString(16).slice(2)}`,
+        title: `${src.title} (Copy)`,
+        status: "Draft",
+      },
+      ...rows,
+    ]);
+  };
+
+  const archive = (id: string) => {
+    setItems((rows) => rows.map((r) => (r.id === id ? { ...r, status: "Archived" } : r)));
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <button
+            onClick={onFanView}
+            className="rounded-xl border border-rose-400/30 bg-rose-600/20 px-3 py-2 text-sm text-rose-100 hover:bg-rose-600/30 inline-flex items-center gap-2"
+            title="Switch back to Fan Confessions room preview"
+          >
+            <Sparkles className="w-4 h-4" /> Fan View
+          </button>
+
+          <div>
+            <div className="text-rose-200 text-sm">Confessions Studio — Creator View</div>
+            <div className="text-[11px] text-gray-400">Create locked confessions for the fan Confession Wall</div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-3 py-2">
+          <div className="text-[10px] text-rose-200">Pricing</div>
+          <div className="text-sm text-rose-100 font-semibold">Fixed by Tier</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <NeonCard className="lg:col-span-5 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-rose-200 text-sm">{editingId ? "Edit Confession" : "New Confession"}</div>
+            <span className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", tierTone[tier])}>
+              {tier} • ${TIER_PRICE[tier]}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400 mb-2">Type</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["Text", "Voice", "Video"] as ConfType[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setType(t)}
+                    className={cx(
+                      "rounded-xl border py-2 text-sm",
+                      type === t ? "border-rose-400/40 bg-rose-600/20" : "border-white/10 bg-black/20 hover:bg-white/5"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400 mb-2">Tier</div>
+              <div className="grid grid-cols-5 gap-2">
+                {(["Soft", "Spicy", "Dirty", "Dark", "Forbidden"] as ConfTier[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTier(t)}
+                    className={cx(
+                      "rounded-xl border py-2 text-xs",
+                      tier === t
+                        ? cx("bg-black/40", tierTone[t])
+                        : "border-white/10 bg-black/20 hover:bg-white/5 text-gray-200"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 text-[10px] text-gray-400">Price is enforced server-side.</div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400 mb-2">Title</div>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full rounded-xl border border-rose-400/20 bg-black/40 px-3 py-2 text-sm outline-none"
+                placeholder="Confession title…"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400 mb-2">Teaser / Preview (locked)</div>
+              <input
+                value={teaser}
+                onChange={(e) => setTeaser(e.target.value)}
+                className="w-full rounded-xl border border-rose-400/20 bg-black/40 px-3 py-2 text-sm outline-none"
+                placeholder="What fans see blurred before unlocking…"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400 mb-2">Full content</div>
+              {type === "Text" ? (
+                <textarea
+                  value={fullText}
+                  onChange={(e) => setFullText(e.target.value)}
+                  className="w-full min-h-[120px] rounded-xl border border-rose-400/20 bg-black/40 px-3 py-2 text-sm outline-none"
+                  placeholder="Full confession text (unlocked)…"
+                />
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm text-gray-200 truncate">
+                    {fileName ? `Selected: ${fileName}` : "No file selected (preview)"}
+                  </div>
+                  <button
+                    className="rounded-xl border border-rose-400/25 bg-black/40 px-3 py-2 text-sm hover:bg-white/5 inline-flex items-center gap-2"
+                    onClick={() => setFileName(type === "Voice" ? "new_confession.m4a" : "new_confession.mp4")}
+                  >
+                    <LinkIcon className="w-4 h-4" /> Add File
+                  </button>
+                </div>
+              )}
+              {editingId && (
+                <div className="mt-2 text-[10px] text-gray-400">
+                  Published items should only edit title & teaser (content stays unlocked-safe).
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                onClick={saveDraft}
+              >
+                Save Draft
+              </button>
+              <button
+                className="flex-1 rounded-xl border border-rose-400/30 bg-rose-600 py-2 text-sm hover:bg-rose-700"
+                onClick={publish}
+              >
+                Publish
+              </button>
+              <button
+                className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm hover:bg-white/5"
+                onClick={reset}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </NeonCard>
+
+        <NeonCard className="lg:col-span-7 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-rose-200 text-sm">Confessions Library</div>
+            <div className="flex items-center gap-2">
+              {(["Draft", "Published", "Archived"] as ConfStatus[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={cx(
+                    "rounded-xl border px-3 py-2 text-sm",
+                    filter === s ? "border-rose-400/35 bg-rose-600/15" : "border-white/10 bg-black/20 hover:bg-white/5"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {visible.length === 0 ? (
+              <div className="text-sm text-gray-400">No items in this filter.</div>
+            ) : (
+              visible.map((c) => (
+                <div key={c.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm text-gray-100 flex items-center gap-2">
+                        <span className="font-semibold">{c.title}</span>
+                        <span
+                          className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", tierTone[c.tier])}
+                        >
+                          {c.tier} • ${TIER_PRICE[c.tier]}
+                        </span>
+                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                          {c.type}
+                        </span>
+                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">
+                          {c.status}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-sm text-gray-300">{c.teaser}</div>
+                      <div className="mt-1 text-[10px] text-gray-500">Created: {c.createdAt}</div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 w-40">
+                      <button
+                        className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                        onClick={() => load(c)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                        onClick={() => duplicate(c.id)}
+                      >
+                        Duplicate
+                      </button>
+                      <button
+                        className="rounded-xl border border-white/10 bg-black/30 py-2 text-sm hover:bg-white/5"
+                        onClick={() => archive(c.id)}
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </NeonCard>
+      </div>
+    </div>
+  );
+}
+
+// ---- Suga 4 U Room (Preview) ---------------------------------------------
+// (left unchanged; included because it exists in this mockup file)
+function Suga4URoomPreview({ onBack }: { onBack: () => void }) {
+  const [chat, setChat] = useState("");
+  const [totalSuga, setTotalSuga] = useState(755);
+  const [entered, setEntered] = useState(true);
+  const [isVip, setIsVip] = useState(false);
+
+  // Entry: $10 unless VIP. First 10 min free then $2/min.
+  const ENTRY_FEE = 10;
+  const FREE_MINS = 10;
+  const PER_MIN = 2;
+
+  const [minsInRoom, setMinsInRoom] = useState(7);
+  const billableMins = Math.max(0, minsInRoom - FREE_MINS);
+  const runningCharge = (entered ? (isVip ? 0 : ENTRY_FEE) : 0) + billableMins * PER_MIN;
+
+  const favorites = [
+    { id: "f1", title: "Perfume — Midnight Rose", price: 85 },
+    { id: "f2", title: "Lingerie Set — Neon Lace", price: 120 },
+    { id: "f3", title: "Skincare — Glow Kit", price: 60 },
+    { id: "f4", title: "Heels — Club Stilettos", price: 150 },
+  ];
+
+  const tipButtons = [
+    { label: "💖 Kiss", amount: 5 },
+    { label: "🔥 Tease", amount: 10 },
+    { label: "💎 Luxury", amount: 25 },
+    { label: "👑 Royal", amount: 50 },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <div>
+            <div className="text-pink-200 text-sm">Suga 4 U — Room Preview</div>
+            <div className="text-[11px] text-gray-400">Live stage + chat + Send Suga + Creator Favorites</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+            <div className="text-[10px] text-gray-400">Minutes in room (preview)</div>
+            <div className="mt-1 flex items-center gap-2">
+              <button
+                className="px-2 py-1 rounded-lg border border-white/10 bg-black/30 text-xs hover:bg-white/5"
+                onClick={() => setMinsInRoom((m) => Math.max(0, m - 1))}
+              >
+                −
+              </button>
+              <div className="text-sm text-gray-100 w-10 text-center">{minsInRoom}</div>
+              <button
+                className="px-2 py-1 rounded-lg border border-white/10 bg-black/30 text-xs hover:bg-white/5"
+                onClick={() => setMinsInRoom((m) => m + 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 px-3 py-2 vip-glow">
+            <div className="text-[10px] text-yellow-200">Running charge</div>
+            <div className="text-sm text-yellow-100 font-semibold">${runningCharge}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main stage */}
+        <NeonCard className="lg:col-span-8 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="text-fuchsia-300 font-semibold drop-shadow-[0_0_46px_rgba(255,0,200,1)]">Creator Spotlight</div>
+              <span className="text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">Live</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-[11px] text-gray-300 inline-flex items-center gap-2">
+                <input type="checkbox" checked={isVip} onChange={(e) => setIsVip(e.target.checked)} />
+                VIP (no entry fee)
+              </label>
+              <button
+                onClick={() => setEntered(true)}
+                className={cx(
+                  "rounded-xl px-3 py-2 text-sm border",
+                  entered
+                    ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-200"
+                    : "border-pink-500/25 bg-black/40 text-pink-200"
+                )}
+              >
+                {entered ? "Entered" : "Enter"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl overflow-hidden border border-pink-500/15 bg-black/40">
+            <div className="relative aspect-video bg-gradient-to-b from-pink-500/18 via-black to-blue-500/10 flex items-center justify-center">
+              <div className="flex items-center gap-2 text-blue-200">
+                <Video className="w-5 h-5" />
+                <span className="text-sm">Creator video (preview)</span>
+              </div>
+              <div className="absolute bottom-3 left-3 text-xs text-gray-200 bg-black/45 border border-white/10 rounded-full px-3 py-1">
+                @NeonNyla • Elite
+              </div>
+              <div className="absolute bottom-3 right-3 text-xs text-yellow-200 bg-black/45 border border-yellow-400/30 rounded-full px-3 py-1 vip-glow">
+                Total Suga: ${totalSuga}
+              </div>
+            </div>
+          </div>
+
+          {/* Fan camera strip (preview) */}
+          <div className="mt-4">
+            <div className="text-[11px] text-gray-300 mb-2">Fans in room (up to 10)</div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-white/10 bg-black/30 overflow-hidden"
+                  title="Fan camera slot (preview)"
+                >
+                  <div className="h-14 bg-gradient-to-b from-blue-500/10 via-black to-pink-500/10 flex items-center justify-center text-xs text-gray-200">
+                    FAN {i + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Creator Favorites */}
+          <div className="mt-5">
+            <div className="flex items-center justify-between">
+              <div className="text-pink-200 text-sm">Creator Favorites</div>
+              <span className="text-[10px] text-gray-400">Pay to see links, “Buy” tips creator amount</span>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {favorites.map((f) => (
+                <div key={f.id} className="rounded-2xl border border-pink-500/15 bg-black/35 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm text-gray-100">{f.title}</div>
+                      <div className="text-xs text-gray-400 mt-1">Suggested: ${f.price}</div>
+                    </div>
+                    <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                      Locked
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      className="flex-1 rounded-xl border border-pink-500/25 bg-black/40 py-2 text-sm hover:bg-white/5 inline-flex items-center justify-center gap-2"
+                      title="Unlock link (preview)"
+                    >
+                      <LinkIcon className="w-4 h-4" /> Unlock Link
+                    </button>
+                    <button
+                      className="flex-1 rounded-xl border border-pink-500/30 bg-pink-600 py-2 text-sm hover:bg-pink-700"
+                      onClick={() => setTotalSuga((s) => s + f.price)}
+                      title="Buy = tip creator that amount (preview)"
+                    >
+                      Buy
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </NeonCard>
+
+        {/* Right column */}
+        <div className="lg:col-span-4 space-y-6">
+          <NeonCard className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-pink-200 text-sm">Live Chat</div>
+              <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                Room
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-52 overflow-auto">
+              {["Welcome to Suga 4 U.", "VIP gets priority attention.", "Tip to stand out."].map((m, idx) => (
+                <div key={idx} className="text-sm text-gray-200 mb-2">
+                  <span className="text-fuchsia-300">@fan{idx + 1}</span>: {m}
+                </div>
+              ))}
+              <div className="text-sm text-gray-200 mb-2">
+                <span className="text-fuchsia-300">@NeonNyla</span>: Tell me what you want…
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                value={chat}
+                onChange={(e) => setChat(e.target.value)}
+                className="flex-1 rounded-xl border border-pink-500/20 bg-black/40 px-3 py-2 text-sm outline-none"
+                placeholder="Type message…"
+              />
+              <button
+                className="rounded-xl border border-pink-500/30 bg-pink-600 px-3 py-2 text-sm hover:bg-pink-700 inline-flex items-center gap-2"
+                onClick={() => setChat("")}
+              >
+                <Send className="w-4 h-4" /> Send
+              </button>
+            </div>
+          </NeonCard>
+
+          <NeonCard className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-pink-200 text-sm">Send Suga</div>
+              <span className="text-[10px] text-gray-400">Preview amounts</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {tipButtons.map((b) => (
+                <button
+                  key={b.label}
+                  className="rounded-xl border border-pink-500/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                  onClick={() => setTotalSuga((s) => s + b.amount)}
+                >
+                  {b.label} <span className="text-gray-300">${b.amount}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400">Entry & timing (preview)</div>
+              <div className="mt-1 text-sm text-gray-100">
+                Entry: <span className="text-pink-200">${ENTRY_FEE}</span> (VIP: $0) • First {FREE_MINS} min free • Then {PER_MIN}/min
+              </div>
+              <div className="mt-2 text-sm text-gray-200">
+                Current: <span className="text-yellow-200">${runningCharge}</span> • Billable min: {billableMins}
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <button
+                className="flex-1 rounded-xl border border-pink-500/25 bg-black/40 py-2 text-sm hover:bg-white/5 inline-flex items-center justify-center gap-2"
+                onClick={() => setTotalSuga((s) => s + 10)}
+              >
+                <Heart className="w-4 h-4" /> Tip $10
+              </button>
+              <button
+                className="flex-1 rounded-xl border border-pink-500/30 bg-pink-600 py-2 text-sm hover:bg-pink-700"
+                onClick={() => setTotalSuga((s) => s + 25)}
+              >
+                Boost $25
+              </button>
+            </div>
+          </NeonCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- App Shell -------------------------------------------------------------
+export default function PlaygroundxMockup() {
+  useDevSanityTests();
+
+  const [route, setRoute] = useState<Route>("home");
+  const [homeQuery, setHomeQuery] = useState("");
+
+  // Navigation handlers (named to prevent undefined reference errors)
+  const goHome = () => setRoute("home");
+  const goSuga4U = () => setRoute("suga4u");
+  const goConfessionsFan = () => setRoute("confessions");
+  const goConfessionsCreator = () => setRoute("creator_confessions");
+
+  // Greeting / top-bar personalization (preview)
+  const firstName = "Alex";
+  const tierLabel = "Gold";
+  const [revealWelcome, setRevealWelcome] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setRevealWelcome(true), 120);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <style>{`
+        @keyframes neonFlicker {
+          0%, 100% { opacity: 1; filter: saturate(1.55) contrast(1.06); }
+          42% { opacity: 0.95; }
+          43% { opacity: 0.78; }
+          44% { opacity: 1; }
+          68% { opacity: 0.93; }
+          69% { opacity: 0.72; }
+          70% { opacity: 0.99; }
+        }
+        @keyframes neonPulse {
+          0%, 100% { transform: translateZ(0) scale(1); }
+          50% { transform: translateZ(0) scale(1.02); }
+        }
+        @keyframes smokeDrift {
+          0% { transform: translate3d(-6%, -2%, 0) scale(1); opacity: .18; }
+          50% { transform: translate3d(4%, 3%, 0) scale(1.10); opacity: .32; }
+          100% { transform: translate3d(-6%, -2%, 0) scale(1); opacity: .18; }
+        }
+
+        /* Neon handwriting reveal */
+        @keyframes writeReveal {
+          0% { clip-path: inset(0 100% 0 0); opacity: 0.2; }
+          15% { opacity: 1; }
+          100% { clip-path: inset(0 0 0 0); opacity: 1; }
+        }
+        @keyframes writeCaret {
+          0%, 45% { opacity: 1; }
+          46%, 100% { opacity: 0; }
+        }
+
+        .neon-flicker { animation: neonFlicker 7.5s infinite; }
+        .neon-pulse { animation: neonPulse 2.2s ease-in-out infinite; }
+        .neon-deep { filter: saturate(1.85) contrast(1.18); }
+
+        .neon-write {
+          position: relative;
+          display: inline-block;
+          clip-path: inset(0 100% 0 0);
+          animation: writeReveal 1.1s ease-out forwards;
+        }
+        .neon-write::after {
+          content: "";
+          position: absolute;
+          right: -8px;
+          top: 50%;
+          width: 10px;
+          height: 10px;
+          transform: translateY(-50%);
+          border-radius: 999px;
+          background: rgba(255, 0, 200, 0.95);
+          box-shadow: 0 0 18px rgba(255,0,200,1), 0 0 54px rgba(255,0,200,0.55);
+          animation: writeCaret 1.1s ease-out forwards;
+        }
+        .neon-write-stroke {
+          color: rgba(255, 0, 200, 0.92);
+          text-shadow:
+            0 0 10px rgba(255,0,200,0.95),
+            0 0 26px rgba(255,0,200,0.75),
+            0 0 62px rgba(0,230,255,0.25);
+          filter: saturate(1.8) contrast(1.22);
+        }
+        .vip-glow {
+          box-shadow:
+            0 0 16px rgba(255, 215, 0, 0.55),
+            0 0 44px rgba(255, 215, 0, 0.28),
+            0 0 22px rgba(255, 0, 200, 0.20);
+        }
+
+        /* Ambient smoke overlay */
+        .neon-smoke {
+          pointer-events: none;
+          position: absolute;
+          inset: -46px;
+          filter: blur(18px);
+          background:
+            radial-gradient(circle at 18% 20%, rgba(255,0,200,.22), transparent 55%),
+            radial-gradient(circle at 74% 38%, rgba(0,230,255,.18), transparent 60%),
+            radial-gradient(circle at 35% 82%, rgba(0,255,170,.12), transparent 58%),
+            radial-gradient(circle at 85% 85%, rgba(170,80,255,.14), transparent 58%),
+            radial-gradient(circle at 58% 62%, rgba(200,255,0,.08), transparent 56%);
+          mix-blend-mode: screen;
+          animation: smokeDrift 9s ease-in-out infinite;
+        }
+
+        /* Logo styling (preview-safe) */
+        .pgx-logo {
+          font-family: cursive;
+          font-style: italic;
+          color: rgba(255,0,200,0.95);
+          text-shadow: 0 0 18px rgba(255,0,200,0.95), 0 0 56px rgba(255,0,200,0.55);
+          filter: saturate(1.7) contrast(1.15);
+        }
+        .pgx-logo-x {
+          font-family: cursive;
+          font-style: italic;
+          margin-left: 2px;
+          color: rgba(0,230,255,0.95);
+          text-shadow: 0 0 18px rgba(0,230,255,0.95), 0 0 56px rgba(0,230,255,0.55);
+          filter: saturate(1.7) contrast(1.15);
+        }
+      `}</style>
+
+      {/* Top bar */}
+      <div className="px-6 py-4 border-b border-pink-500/20 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Logo />
+
+          <div className={cx("flex items-center gap-3", revealWelcome ? "" : "opacity-0")}>
+            <div
+              className={cx("text-sm", "neon-write", "drop-shadow-[0_0_44px_rgba(255,0,200,0.95)]")}
+              aria-label={`Welcome ${firstName}`}
+            >
+              <span className="neon-write-stroke">Welcome</span>
+              <span className="mx-2" />
+              <span className="font-semibold neon-write-stroke">{firstName}</span>
+            </div>
+
+            <span
+              className={cx(
+                "inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[10px] border",
+                "border-yellow-400/80 text-yellow-200 bg-yellow-500/10",
+                "vip-glow"
+              )}
+              title="High tier badge"
+            >
+              <Crown className="w-3 h-3" />
+              {tierLabel}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="w-[200px]">
+            <Dropdown
+              tone="blue"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Preview
+                </span>
+              }
+              items={[
+                { text: "Home", onClick: goHome },
+                { text: "Suga 4 U (Fan)", onClick: goSuga4U },
+                { text: "Confessions (Fan)", onClick: goConfessionsFan },
+                { text: "Confessions (Creator)", onClick: goConfessionsCreator },
+              ]}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+            <Search className="w-4 h-4 text-pink-300" />
+            <input
+              value={homeQuery}
+              onChange={(e) => setHomeQuery(e.target.value)}
+              className="bg-transparent outline-none text-sm w-56"
+              placeholder="Search creators…"
+            />
+          </div>
+
+          <div className="w-[220px]">
+            <Dropdown
+              tone="pink"
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <User className="w-4 h-4" /> My Profile
+                </span>
+              }
+              items={[
+                { icon: <User className="w-4 h-4" />, text: "Edit Profile" },
+                { icon: <CreditCard className="w-4 h-4" />, text: "Wallet/Card" },
+                { icon: <Users className="w-4 h-4" />, text: "Subscription" },
+                { icon: <Star className="w-4 h-4" />, text: "CollectionX" },
+                { icon: <Settings className="w-4 h-4" />, text: "Settings" },
+                { icon: <LogOut className="w-4 h-4" />, text: "Log Out" },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+
+      {route === "home" ? (
+        <HomeScreen
+          query={homeQuery}
+          setQuery={setHomeQuery}
+          onOpenSuga4U={goSuga4U}
+          onOpenConfessions={goConfessionsFan}
+        />
+      ) : route === "suga4u" ? (
+        <Suga4URoomPreview onBack={goHome} />
+      ) : route === "confessions" ? (
+        <ConfessionsRoomPreview onBack={goHome} onCreatorView={goConfessionsCreator} onFanView={goConfessionsFan} />
+      ) : (
+        <CreatorConfessionsStudioPreview onBack={goHome} onFanView={goConfessionsFan} />
+      )}
+    </div>
+  );
+}
+
+
+
+PlayGroundX — Confessions (Creator + Fan) Backend API Contract (v1)
+0) Scope
+
+Supports:
+
+Creator creates and manages locked “Confessions” content (text/voice/video)
+
+Fans browse “Confession Wall”, unlock individual items by tier, then access full content
+
+Entitlements persist so a fan doesn’t pay twice for the same confession item
+
+Server enforces pricing by tier (client can only select tier)
+
+Non-goals (for this phase):
+
+Subscriptions billing (separate product)
+
+Live chat/rooms payments (separate product)
+
+Moderation tooling UI (but we include minimal admin hooks)
+
+1) Roles, Auth, and Security
+1.1 Identity
+
+Use JWT access tokens.
+
+sub = userId
+
+role = fan | creator | admin
+
+creatorId present if role includes creator (or derived from user table)
+
+1.2 Authorization rules
+
+Creator endpoints require role=creator and resource ownership.
+
+Fan endpoints require role=fan (or standard user role with fan capability).
+
+Admin endpoints require role=admin.
+
+1.3 Data security
+
+Confession “full content” must not be returned unless entitlement is valid.
+
+Media access must be via short-lived signed URLs or streaming with signed tokens.
+
+Store “locked preview” separately from full content.
+
+2) Pricing and Tiers (Server Source of Truth)
+2.1 Tier Enum + Price Map
+
+tier enum (fixed):
+
+SOFT = 5.00
+
+SPICY = 10.00
+
+DIRTY = 20.00
+
+DARK = 35.00
+
+FORBIDDEN = 60.00
+
+Rules:
+
+Client sends tier only; server calculates price.
+
+Server returns price as part of listing response to keep UI consistent.
+
+If price ever changes later, unlock checks use the price at time of purchase (store pricePaid on transaction).
+
+3) Core Data Model (Tables)
+3.1 confession_items
+
+id (uuid, pk)
+
+creatorId (uuid, indexed)
+
+type enum: TEXT | VOICE | VIDEO
+
+tier enum: SOFT | SPICY | DIRTY | DARK | FORBIDDEN
+
+status enum: DRAFT | PUBLISHED | ARCHIVED
+
+title (varchar)
+
+teaser (text) — preview/locked blurb
+
+fullText (text, nullable) — only for TEXT
+
+mediaAssetId (uuid, nullable) — only for VOICE/VIDEO
+
+createdAt, updatedAt
+
+publishedAt (nullable)
+
+archivedAt (nullable)
+
+3.2 media_assets
+
+id (uuid, pk)
+
+ownerCreatorId (uuid, indexed)
+
+kind enum: VOICE | VIDEO
+
+mimeType (varchar)
+
+sizeBytes (bigint)
+
+durationSec (int, nullable)
+
+storageKey (varchar) — object storage path/key
+
+createdAt
+
+3.3 confession_entitlements
+
+Represents “fan unlocked this confession”
+
+id (uuid, pk)
+
+userId (uuid, indexed)
+
+confessionId (uuid, indexed)
+
+creatorId (uuid, indexed)
+
+unlockedAt
+
+paymentTxnId (uuid or varchar) — link to payments
+
+Unique constraint: (userId, confessionId)
+
+3.4 payments_transactions (minimal)
+
+id (uuid)
+
+userId
+
+amount
+
+currency (e.g., USD)
+
+status enum: PENDING | SUCCEEDED | FAILED | REFUNDED
+
+provider (stripe, etc.)
+
+providerRef (string)
+
+createdAt, updatedAt
+
+4) REST API Conventions
+4.1 Versioning
+
+All routes prefixed:
+
+/v1/...
+
+4.2 Pagination
+
+Use cursor pagination:
+
+Request: limit (default 20, max 50), cursor (opaque)
+
+Response: nextCursor (nullable)
+
+4.3 Idempotency
+
+Any endpoint that can charge money or create duplicates must accept:
+
+Header: Idempotency-Key: <uuid>
+Server stores keyed result for 24 hours.
+
+4.4 Standard error format
+{
+  "error": {
+    "code": "string",
+    "message": "string",
+    "details": { "optional": "object" }
+  }
+}
+
+
+Common codes:
+
+UNAUTHORIZED, FORBIDDEN, NOT_FOUND, VALIDATION_ERROR, CONFLICT, PAYMENT_REQUIRED, RATE_LIMITED
+
+5) Creator APIs (Confessions Studio)
+5.1 Create Confession (Draft or Published)
+
+POST /v1/creator/confessions
+
+Request:
+
+{
+  "status": "DRAFT | PUBLISHED",
+  "type": "TEXT | VOICE | VIDEO",
+  "tier": "SOFT | SPICY | DIRTY | DARK | FORBIDDEN",
+  "title": "string",
+  "teaser": "string",
+  "content": {
+    "fullText": "string (required if TEXT)",
+    "mediaAssetId": "uuid (required if VOICE/VIDEO)"
+  }
+}
+
+
+Rules:
+
+If type=TEXT, require content.fullText, forbid mediaAssetId
+
+If type=VOICE|VIDEO, require content.mediaAssetId, forbid fullText
+
+If status=PUBLISHED, set publishedAt=now
+
+Tier price is not provided; server derives and returns it
+
+Response:
+
+{
+  "confession": {
+    "id": "uuid",
+    "creatorId": "uuid",
+    "status": "DRAFT|PUBLISHED",
+    "type": "TEXT|VOICE|VIDEO",
+    "tier": "SPICY",
+    "price": 10,
+    "title": "string",
+    "teaser": "string",
+    "createdAt": "iso",
+    "updatedAt": "iso",
+    "publishedAt": "iso|null"
+  }
+}
+
+5.2 List Creator Confessions
+
+GET /v1/creator/confessions?status=DRAFT|PUBLISHED|ARCHIVED&limit=20&cursor=...
+
+Response:
+
+{
+  "items": [
+    {
+      "id": "uuid",
+      "status": "PUBLISHED",
+      "type": "VOICE",
+      "tier": "SPICY",
+      "price": 10,
+      "title": "string",
+      "teaser": "string",
+      "createdAt": "iso",
+      "publishedAt": "iso|null"
+    }
+  ],
+  "nextCursor": "string|null"
+}
+
+5.3 Get Confession Details (Creator)
+
+GET /v1/creator/confessions/:id
+
+Response includes editable fields plus content references:
+
+{
+  "confession": {
+    "id": "uuid",
+    "status": "DRAFT",
+    "type": "TEXT",
+    "tier": "DIRTY",
+    "price": 20,
+    "title": "string",
+    "teaser": "string",
+    "content": {
+      "fullText": "string|null",
+      "mediaAssetId": "uuid|null"
+    },
+    "createdAt": "iso",
+    "updatedAt": "iso"
+  }
+}
+
+5.4 Update Confession (Creator)
+
+PUT /v1/creator/confessions/:id
+
+Request (patch semantics but full body is fine):
+
+{
+  "title": "string",
+  "teaser": "string",
+  "tier": "SOFT|SPICY|DIRTY|DARK|FORBIDDEN",
+  "status": "DRAFT|PUBLISHED|ARCHIVED",
+  "content": {
+    "fullText": "string|null",
+    "mediaAssetId": "uuid|null"
+  }
+}
+
+
+Rules:
+
+If current status is PUBLISHED, decide policy:
+
+Recommended: allow edits to title and teaser only; changing tier/type/content requires creating a new confession.
+
+If you do allow changes, you must guarantee existing entitlements still grant access to the updated item (usually undesirable).
+
+If status transitions to PUBLISHED set publishedAt if null.
+
+If status transitions to ARCHIVED set archivedAt.
+
+Response: same shape as get.
+
+5.5 Duplicate Confession (Creator)
+
+POST /v1/creator/confessions/:id/duplicate
+
+Creates a new item:
+
+status = DRAFT
+
+title = "<original> (Copy)"
+
+Response:
+
+{ "confession": { "id": "uuid", "status": "DRAFT", "...": "..." } }
+
+5.6 Archive Confession (Creator)
+
+POST /v1/creator/confessions/:id/archive
+
+Response:
+
+{ "confession": { "id": "uuid", "status": "ARCHIVED" } }
+
+6) Media Upload APIs (Creator)
+6.1 Create Upload (Pre-signed URL)
+
+POST /v1/creator/media/uploads
+
+Request:
+
+{
+  "kind": "VOICE|VIDEO",
+  "mimeType": "audio/m4a | video/mp4 | ...",
+  "sizeBytes": 1234567
+}
+
+
+Response:
+
+{
+  "upload": {
+    "assetId": "uuid",
+    "uploadUrl": "string",
+    "headers": { "Content-Type": "audio/m4a" },
+    "expiresAt": "iso"
+  }
+}
+
+6.2 Complete Upload
+
+POST /v1/creator/media/uploads/:assetId/complete
+
+Request:
+
+{ "durationSec": 42 }
+
+
+Response:
+
+{
+  "asset": {
+    "id": "uuid",
+    "kind": "VOICE",
+    "mimeType": "audio/m4a",
+    "sizeBytes": 1234567,
+    "durationSec": 42
+  }
+}
+
+
+Rules:
+
+Asset is only usable in a confession once upload is completed.
+
+Optionally run async transcoding and store processingStatus.
+
+7) Fan APIs (Confessions Room)
+7.1 List Confession Wall (Published Only)
+
+GET /v1/fan/creators/:creatorId/confessions?limit=20&cursor=...
+
+Response (locked view):
+
+{
+  "items": [
+    {
+      "id": "uuid",
+      "creatorId": "uuid",
+      "type": "VOICE",
+      "tier": "SPICY",
+      "price": 10,
+      "title": "Confession #14",
+      "teaser": "I crave being watched when…",
+      "isUnlocked": false,
+      "publishedAt": "iso"
+    }
+  ],
+  "nextCursor": "string|null"
+}
+
+
+Notes:
+
+isUnlocked is computed based on entitlement existence.
+
+Never include full content here.
+
+7.2 Unlock a Confession (Charge + Entitlement)
+
+POST /v1/fan/confessions/:id/unlock
+
+Headers:
+
+Idempotency-Key: <uuid>
+
+Request:
+
+{
+  "paymentMethodId": "string (optional depending on wallet setup)"
+}
+
+
+Behavior:
+
+Validate confession exists and is PUBLISHED
+
+Check entitlement (userId, confessionId)
+
+If exists: return alreadyUnlocked=true (do not charge)
+
+Determine price from tier
+
+Create charge (Stripe PaymentIntent or equivalent)
+
+On success, create entitlement row (unique constraint prevents double)
+
+Return access payload (signed URL or full text) OR require a follow-up GET call
+
+Response:
+
+{
+  "alreadyUnlocked": false,
+  "entitlement": {
+    "id": "uuid",
+    "confessionId": "uuid",
+    "unlockedAt": "iso"
+  },
+  "payment": {
+    "transactionId": "uuid",
+    "status": "SUCCEEDED",
+    "amount": 10,
+    "currency": "USD"
+  }
+}
+
+
+Failure cases:
+
+404 NOT_FOUND if confession missing
+
+409 CONFLICT if entitlement created concurrently and idempotency missing
+
+402 PAYMENT_REQUIRED if charge fails
+
+7.3 Get Confession Content (Unlocked Required)
+
+GET /v1/fan/confessions/:id
+
+Rules:
+
+If not entitled: return locked response (or 403—pick one). Recommended: locked response to avoid extra branching.
+
+Response (locked):
+
+{
+  "confession": {
+    "id": "uuid",
+    "creatorId": "uuid",
+    "type": "TEXT",
+    "tier": "DIRTY",
+    "price": 20,
+    "title": "Confession #15",
+    "teaser": "Last night I imagined you…",
+    "isUnlocked": false
+  }
+}
+
+
+Response (unlocked):
+
+{
+  "confession": {
+    "id": "uuid",
+    "creatorId": "uuid",
+    "type": "VIDEO",
+    "tier": "DARK",
+    "price": 35,
+    "title": "Confession #16",
+    "isUnlocked": true,
+    "content": {
+      "fullText": "string|null",
+      "media": {
+        "assetId": "uuid",
+        "playUrl": "signedUrl",
+        "expiresAt": "iso"
+      }
+    }
+  }
+}
+
+7.4 Tip Creator (Optional but recommended monetization)
+
+POST /v1/fan/creators/:creatorId/tips
+
+Headers:
+
+Idempotency-Key
+
+Request:
+
+{ "amount": 10, "currency": "USD", "message": "optional" }
+
+
+Response:
+
+{ "transactionId": "uuid", "status": "SUCCEEDED" }
+
+8) Optional: Bundles / Upsells (Revenue Boosters)
+
+If you want “unlock pack” or “tier pass”:
+
+8.1 Tier Pass (Unlock all items up to tier for 7 days)
+
+POST /v1/fan/creators/:creatorId/confessions/passes
+
+Request:
+
+{ "maxTier": "SPICY", "durationDays": 7 }
+
+
+Entitlement logic:
+
+Create creator_pass_entitlements with expiresAt
+
+isUnlocked computed if item tier <= pass maxTier and pass not expired.
+
+9) Webhooks and Async Processing
+9.1 Payment provider webhook
+
+POST /v1/webhooks/payments/stripe
+
+Verify signature
+
+Update payments_transactions.status
+
+If async confirmation required, create entitlement when payment transitions to SUCCEEDED
+
+9.2 Media processing webhook (optional)
+
+When transcoding finishes, mark media_assets.processingStatus = READY
+
+Fan playUrl only available when READY
+
+10) Observability, Anti-Fraud, and Abuse Controls
+10.1 Rate limits
+
+Unlock endpoint: e.g., 10/min per user
+
+Media upload init: e.g., 20/hour per creator
+
+10.2 Fraud/chargeback
+
+Store providerRef
+
+Attach confessionId, creatorId metadata to provider charge object
+
+10.3 Moderation hooks
+
+Add confession_items.moderationStatus (optional):
+
+PENDING | APPROVED | REJECTED
+
+Fan list only returns APPROVED items.
+
+11) Frontend Integration Notes (Minimal)
+
+Creator Studio:
+
+Upload media → POST uploads → PUT to uploadUrl → POST complete
+
+Create confession with returned mediaAssetId
+
+List with status filter tabs
+
+Fan Room:
+
+List published confessions (includes isUnlocked)
+
+On unlock: call /unlock with idempotency key then fetch /confessions/:id for content
+
+Media playback uses signed playUrl

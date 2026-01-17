@@ -1,0 +1,737 @@
+Below is a developer handoff for the X Chat — Creator View: a full implementation plan plus full working code (as a standalone React component you can drop into your app). It mirrors the current mockup logic: lane triage (Priority/Paid/Free), reply, mark answered, refund, plus queue + gross stats and quick actions.
+
+1) Product + UX Plan (Creator View)
+Primary jobs-to-be-done
+
+Triage messages across three lanes:
+
+Priority: time-bound boosts (priority queue, highlighted badge, pin)
+
+Paid: direct paid prompts (private question, paid sticker, paid request)
+
+Free: normal chat messages
+
+Reply quickly with minimal clicks.
+
+Resolve a message:
+
+Mark Answered (finalizes charge for paid items)
+
+Refund (void charge; removes from queue)
+
+Maintain creator control tools:
+
+Slow mode
+
+Clear Free lane (bulk management)
+
+Prompt Fans (broadcast)
+
+Raise Prices (pricing controls / elasticity)
+
+Key UI surfaces
+
+Top bar
+
+Back navigation
+
+Toggle to Fan View (optional)
+
+Creator KPIs: Answered gross, Queue counts
+
+Inbox (left/main)
+
+Lane tabs: Priority / Paid / Free
+
+Message cards show:
+
+Sender handle
+
+Lane + paid amount (if any)
+
+Timestamp/age indicator
+
+Message body
+
+Actions: Reply, Refund (if paid) OR Pin (if free)
+
+Inline reply composer for the selected message
+
+Controls (right rail)
+
+Policy note (sorting rules)
+
+Quick actions buttons
+
+Creator guidance notes
+
+Pending paid total (sum of queued paid)
+
+Message lifecycle states
+
+Queued: visible in lane inbox
+
+Answered: removed from inbox; contributes to “answered gross”
+
+Refunded: removed from inbox; contributes to refunds metrics (optional)
+
+Sorting & ordering rules (recommended)
+
+Server-authoritative sorting (client may do optimistic UI):
+
+Lane selection determines filtering
+
+Within lane:
+
+Priority: sort by paidAmount desc, then createdAt asc
+
+Paid: sort by paidAmount desc, then createdAt asc
+
+Free: sort by createdAt asc
+
+Optional: pin special items above fold (e.g., “priority queue purchase”)
+
+2) Backend + Data Model Plan
+Entities
+
+User
+
+id, handle, role (creator/fan), moderation flags
+
+Room
+
+id, creatorId, title, status, pricing config, slow mode config
+
+Message
+
+id
+
+roomId
+
+fromUserId, fromHandle
+
+lane: "PRIORITY" | "PAID" | "FREE"
+
+body
+
+createdAt
+
+paidAmountCents (nullable)
+
+paidType (optional enum: BOOST|STICKER|PRIVATE_QUESTION|PIN|...)
+
+status: "QUEUED" | "ANSWERED" | "REFUNDED"
+
+answer: optional { id, body, createdAt, creatorId }
+
+Payment Ledger (server-side)
+
+txnId, messageId, amountCents, state: AUTHORIZED|CAPTURED|VOIDED|REFUNDED
+
+Important: Do not rely on client totals; compute from ledger.
+
+Required APIs (minimum)
+
+Fetch queued messages (paged)
+
+GET /rooms/:roomId/creator/messages?lane=PRIORITY&status=QUEUED&cursor=...
+
+Returns: { items: Message[], nextCursor?: string }
+
+Answer message
+
+POST /rooms/:roomId/creator/messages/:messageId/answer
+
+Body: { body: string }
+
+Server actions:
+
+persist answer
+
+mark message ANSWERED
+
+capture payment (if paid)
+
+emit events to realtime channel
+
+Refund message (paid)
+
+POST /rooms/:roomId/creator/messages/:messageId/refund
+
+Server actions:
+
+mark message REFUNDED
+
+void/refund payment
+
+emit events
+
+Pin (free lane message)
+
+POST /rooms/:roomId/creator/messages/:messageId/pin
+
+Often time-bound: { durationSeconds: 60 }
+
+Room controls
+
+POST /rooms/:roomId/controls/slow-mode { enabled: boolean, secondsPerMessage?: number }
+
+POST /rooms/:roomId/controls/clear-free-lane { before?: timestamp }
+
+POST /rooms/:roomId/controls/broadcast { body: string }
+
+POST /rooms/:roomId/controls/pricing { ... }
+
+Realtime events (WebSocket)
+
+message.created
+
+message.updated (status changes, pinned, etc.)
+
+creator.answer.created
+
+payment.updated (capture/refund result)
+
+Critical production safeguards
+
+Idempotency keys on answer/refund endpoints (avoid double captures)
+
+Rate limiting + abuse controls
+
+Moderation hooks (creator tools)
+
+Optimistic UI with server reconciliation (authoritative state)
+
+3) Full Code (Standalone React Component)
+
+Copy/paste into a file like XChatCreatorView.tsx. This is self-contained UI + mock state; replace the mockApi* functions with your real API calls.
+
+import React, { useMemo, useState } from "react";
+import { ArrowLeft, Send, Sparkles } from "lucide-react";
+
+/**
+ * X Chat — Creator View (Standalone)
+ * ----------------------------------
+ * Implements:
+ *  - Lane triage: Priority / Paid / Free
+ *  - Reply -> mark Answered
+ *  - Refund (paid messages only)
+ *  - Pin (free messages only)
+ *  - Stats: queued / answered / gross / pending paid
+ *
+ * NOTE: This is UI + mock state. Replace mockApi* with real endpoints.
+ */
+
+// -------------------- helpers --------------------
+function cx(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+// Minimal “card” container to match the mock styling approach.
+// Replace with your design system component if needed.
+function NeonCard({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cx(
+        "rounded-2xl border border-pink-500/25 bg-black",
+        "shadow-[0_0_22px_rgba(236,72,153,0.14),0_0_52px_rgba(59,130,246,0.08)]",
+        "hover:shadow-[0_0_34px_rgba(236,72,153,0.20),0_0_78px_rgba(59,130,246,0.12)] transition-shadow",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+// -------------------- types --------------------
+type Lane = "Priority" | "Paid" | "Free";
+type Status = "Queued" | "Answered" | "Refunded";
+
+type Msg = {
+  id: string;
+  from: string;
+  lane: Lane;
+  body: string;
+  paid?: number; // dollars in this mock (use cents in production)
+  ts: string; // display-only; use createdAt timestamp in production
+  status: Status;
+};
+
+// -------------------- mock API (replace) --------------------
+async function mockApiAnswer(messageId: string, body: string): Promise<void> {
+  // Replace with POST /rooms/:roomId/creator/messages/:messageId/answer
+  await new Promise((r) => setTimeout(r, 120));
+  void messageId;
+  void body;
+}
+
+async function mockApiRefund(messageId: string): Promise<void> {
+  // Replace with POST /rooms/:roomId/creator/messages/:messageId/refund
+  await new Promise((r) => setTimeout(r, 120));
+  void messageId;
+}
+
+async function mockApiPin(messageId: string): Promise<void> {
+  // Replace with POST /rooms/:roomId/creator/messages/:messageId/pin
+  await new Promise((r) => setTimeout(r, 120));
+  void messageId;
+}
+
+// -------------------- component --------------------
+export function XChatCreatorView({
+  onBack,
+  onFanView,
+}: {
+  onBack?: () => void;
+  onFanView?: () => void;
+}) {
+  const [toast, setToast] = useState<string | null>(null);
+  const [lane, setLane] = useState<Lane>("Priority");
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [reply, setReply] = useState("");
+
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [msgs, setMsgs] = useState<Msg[]>([
+    {
+      id: "m1",
+      from: "@fan_ace",
+      lane: "Priority",
+      paid: 75,
+      body: "Can you answer me next?",
+      ts: "00:14",
+      status: "Queued",
+    },
+    {
+      id: "m2",
+      from: "@fan_ivy",
+      lane: "Paid",
+      paid: 25,
+      body: "Pin my message for 1 min?",
+      ts: "00:12",
+      status: "Queued",
+    },
+    {
+      id: "m3",
+      from: "@fan_jade",
+      lane: "Paid",
+      paid: 20,
+      body: "Private question: what's your favorite...",
+      ts: "00:10",
+      status: "Queued",
+    },
+    {
+      id: "m4",
+      from: "@fan_moon",
+      lane: "Free",
+      body: "Hi!",
+      ts: "00:08",
+      status: "Queued",
+    },
+    {
+      id: "m5",
+      from: "@fan_rio",
+      lane: "Priority",
+      paid: 40,
+      body: "Highlight badge please",
+      ts: "00:07",
+      status: "Queued",
+    },
+  ]);
+
+  const pushToast = (m: string) => {
+    setToast(m);
+    window.setTimeout(() => setToast((t) => (t === m ? null : t)), 1400);
+  };
+
+  const laneChip = (l: Lane) =>
+    l === "Priority"
+      ? "border-yellow-400/35 text-yellow-200 bg-yellow-500/10"
+      : l === "Paid"
+      ? "border-cyan-200/25 text-cyan-200 bg-black/30"
+      : "border-white/10 text-gray-200 bg-black/25";
+
+  const visible = useMemo(() => {
+    return msgs.filter((m) => m.lane === lane && m.status === "Queued");
+  }, [msgs, lane]);
+
+  const stats = useMemo(() => {
+    const queued = msgs.filter((m) => m.status === "Queued").length;
+    const answered = msgs.filter((m) => m.status === "Answered").length;
+
+    // In production, compute gross from server ledger, not from client state.
+    const gross = msgs.reduce(
+      (s, m) => s + (m.status === "Answered" ? (m.paid ?? 0) : 0),
+      0
+    );
+    const pendingGross = msgs.reduce(
+      (s, m) => s + (m.status === "Queued" ? (m.paid ?? 0) : 0),
+      0
+    );
+
+    return { queued, answered, gross, pendingGross };
+  }, [msgs]);
+
+  const answer = async (id: string) => {
+    if (!reply.trim()) return;
+
+    try {
+      setBusyId(id);
+      await mockApiAnswer(id, reply.trim());
+
+      setMsgs((rows) =>
+        rows.map((m) => (m.id === id ? { ...m, status: "Answered" } : m))
+      );
+      pushToast("✅ Marked answered (preview)");
+      setReplyTo(null);
+      setReply("");
+    } catch {
+      pushToast("❌ Failed to answer (preview)");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const refund = async (id: string) => {
+    try {
+      setBusyId(id);
+      await mockApiRefund(id);
+
+      setMsgs((rows) =>
+        rows.map((m) => (m.id === id ? { ...m, status: "Refunded" } : m))
+      );
+      pushToast("↩️ Refunded (preview)");
+
+      if (replyTo === id) {
+        setReplyTo(null);
+        setReply("");
+      }
+    } catch {
+      pushToast("❌ Failed to refund (preview)");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const pin = async (id: string) => {
+    try {
+      setBusyId(id);
+      await mockApiPin(id);
+      pushToast("📌 Pinned (preview)");
+    } catch {
+      pushToast("❌ Failed to pin (preview)");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* lightweight styling hooks (you can remove if you already have global classes) */}
+      <style>{`
+        .vip-glow {
+          box-shadow:
+            0 0 16px rgba(255, 215, 0, 0.55),
+            0 0 44px rgba(255, 215, 0, 0.28),
+            0 0 22px rgba(255, 0, 200, 0.20);
+        }
+      `}</style>
+
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] rounded-2xl border border-white/10 bg-black/75 px-4 py-2 text-sm text-gray-100 shadow-[0_0_40px_rgba(255,215,0,0.16)]">
+          {toast}
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="rounded-xl border border-lime-200/25 bg-black/40 px-3 py-2 text-sm text-lime-200 hover:bg-white/5 inline-flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+
+            <button
+              onClick={onFanView}
+              className="rounded-xl border border-blue-500/25 bg-black/40 px-3 py-2 text-sm text-blue-200 hover:bg-white/5 inline-flex items-center gap-2"
+              title="Switch to Fan room view"
+            >
+              <Sparkles className="w-4 h-4" /> Fan View
+            </button>
+
+            <div>
+              <div className="text-lime-200 text-sm">
+                X Chat — Creator View
+              </div>
+              <div className="text-[11px] text-gray-400">
+                Triage lanes, answer, and refund
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 px-3 py-2 vip-glow">
+              <div className="text-[10px] text-yellow-200">
+                Answered gross (preview)
+              </div>
+              <div className="text-sm text-yellow-100 font-semibold">
+                ${stats.gross.toLocaleString()}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-cyan-200/20 bg-black/35 px-3 py-2">
+              <div className="text-[10px] text-gray-400">Queue</div>
+              <div className="text-sm text-gray-100 font-semibold">
+                {stats.queued} queued • {stats.answered} answered
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Inbox */}
+          <NeonCard className="lg:col-span-7 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-lime-200 text-sm">Inbox</div>
+              <div className="flex items-center gap-2">
+                {(["Priority", "Paid", "Free"] as Lane[]).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => {
+                      setLane(l);
+                      setReplyTo(null);
+                      setReply("");
+                    }}
+                    className={cx(
+                      "rounded-xl border px-3 py-2 text-sm",
+                      lane === l
+                        ? "border-lime-200/30 bg-lime-600/15"
+                        : "border-white/10 bg-black/20 hover:bg-white/5"
+                    )}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {visible.length === 0 ? (
+                <div className="text-sm text-gray-400">
+                  No queued messages in this lane.
+                </div>
+              ) : (
+                visible.map((m) => (
+                  <div
+                    key={m.id}
+                    className="rounded-2xl border border-white/10 bg-black/30 p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm text-gray-100 flex items-center gap-2">
+                          <span className="font-semibold truncate">
+                            {m.from}
+                          </span>
+
+                          <span
+                            className={cx(
+                              "text-[10px] px-2 py-[2px] rounded-full border",
+                              laneChip(m.lane)
+                            )}
+                          >
+                            {m.lane}
+                            {typeof m.paid === "number" ? ` • $${m.paid}` : ""}
+                          </span>
+
+                          <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">
+                            {m.ts}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 text-sm text-gray-300 break-words">
+                          {m.body}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2 w-36">
+                        <button
+                          className="rounded-xl border border-lime-200/20 bg-lime-600/15 py-2 text-sm hover:bg-lime-600/25 disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={() => {
+                            setReplyTo(m.id);
+                            pushToast("✍️ Replying (preview)");
+                          }}
+                          disabled={busyId === m.id}
+                        >
+                          Reply
+                        </button>
+
+                        {typeof m.paid === "number" ? (
+                          <button
+                            className="rounded-xl border border-rose-400/25 bg-rose-600/10 py-2 text-sm hover:bg-rose-600/15 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => refund(m.id)}
+                            title="Refund and remove from queue"
+                            disabled={busyId === m.id}
+                          >
+                            Refund
+                          </button>
+                        ) : (
+                          <button
+                            className="rounded-xl border border-white/10 bg-black/20 py-2 text-sm hover:bg-white/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => pin(m.id)}
+                            disabled={busyId === m.id}
+                          >
+                            Pin
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {replyTo === m.id && (
+                      <div className="mt-3 rounded-2xl border border-lime-200/15 bg-black/35 p-3">
+                        <div className="text-[11px] text-gray-400 mb-2">
+                          Reply
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            value={reply}
+                            onChange={(e) => setReply(e.target.value)}
+                            className="flex-1 rounded-xl border border-lime-200/15 bg-black/40 px-3 py-2 text-sm outline-none"
+                            placeholder="Type your reply…"
+                            disabled={busyId === m.id}
+                          />
+                          <button
+                            className="rounded-xl border border-lime-200/20 bg-lime-600/20 px-3 py-2 text-sm hover:bg-lime-600/30 inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => answer(m.id)}
+                            disabled={busyId === m.id}
+                          >
+                            <Send className="w-4 h-4" /> Send
+                          </button>
+                        </div>
+
+                        <div className="mt-2 text-[10px] text-gray-500">
+                          Production: enforce SLA, prevent double-answers, and
+                          finalize charge after delivery.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </NeonCard>
+
+          {/* Controls */}
+          <NeonCard className="lg:col-span-5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-lime-200 text-sm">Controls</div>
+              <span className="text-[10px] px-2 py-[2px] rounded-full border border-yellow-400/30 text-yellow-200 bg-yellow-500/10 vip-glow">
+                Pending paid: ${stats.pendingGross.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="text-[11px] text-gray-400">
+                  Priority policy (preview)
+                </div>
+                <div className="mt-1 text-sm text-gray-100">
+                  Auto-sort by: paid amount → age → lane
+                </div>
+                <div className="mt-2 text-[10px] text-gray-500">
+                  Production: server-authoritative ordering + anti-spam/abuse +
+                  rate limits.
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-3 vip-glow">
+                <div className="text-yellow-200 text-sm">Quick Actions</div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    className="rounded-xl border border-yellow-400/25 bg-black/35 py-2 text-sm hover:bg-white/5"
+                    onClick={() => pushToast("🔇 Slow mode enabled (preview)")}
+                  >
+                    Slow Mode
+                  </button>
+                  <button
+                    className="rounded-xl border border-yellow-400/25 bg-black/35 py-2 text-sm hover:bg-white/5"
+                    onClick={() => pushToast("🧹 Cleared free lane (preview)")}
+                  >
+                    Clear Free Lane
+                  </button>
+                  <button
+                    className="rounded-xl border border-yellow-400/25 bg-black/35 py-2 text-sm hover:bg-white/5"
+                    onClick={() => pushToast("📣 Broadcasted prompt (preview)")}
+                  >
+                    Prompt Fans
+                  </button>
+                  <button
+                    className="rounded-xl border border-yellow-400/25 bg-black/35 py-2 text-sm hover:bg-white/5"
+                    onClick={() => pushToast("💰 Raised prices (preview)")}
+                  >
+                    Raise Prices
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-cyan-200/20 bg-black/35 p-3">
+                <div className="text-cyan-200 text-sm">Creator Notes</div>
+                <div className="mt-1 text-sm text-gray-100">
+                  Use Priority lane for paid guarantees; keep Free lane visible
+                  but throttled.
+                </div>
+                <div className="mt-2 text-[10px] text-gray-500">
+                  Replace preview behavior with real server + realtime events.
+                </div>
+              </div>
+            </div>
+          </NeonCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default XChatCreatorView;
+
+4) Integration Notes (so your developer can wire it fast)
+Routing
+
+Route example: /rooms/:roomId/xchat/creator
+
+Provide onBack() and onFanView() to connect to your router.
+
+State source of truth
+
+Server owns:
+
+message ordering
+
+lane assignment
+
+payment state
+
+answered/refunded finality
+
+Client does optimistic updates but always reconciles on:
+
+API responses
+
+realtime events
+
+Metrics
+
+“Answered gross” should come from ledger, not message.paid sums.
+
+“Pending paid” should be computed server-side from queued paid messages.

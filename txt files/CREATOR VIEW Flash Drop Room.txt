@@ -1,0 +1,631 @@
+Below is a developer-ready TXT containing (1) the full implementation plan/spec for the Flash Drops — Creator Room (Creator Console) and (2) the full code for the Creator room plus required integration points (route + Preview dropdown entry) as it exists in your current mockup.
+
+Copy/paste this entire message into a .txt file and hand it to the developer.
+
+========================================================
+FLASHDROP ROOM — CREATOR VIEW (CREATOR CONSOLE)
+FULL PLAN + FULL CODE (MOCKUP IMPLEMENTATION)
+========================================================
+
+A) SCOPE & GOAL
+---------------
+Build the "Flash Drops — Creator Console" screen used by a creator to:
+- View a control board of Flash Drops
+- Change a drop status (Scheduled / Live / Ended)
+- Create new drops quickly
+- Simulate demand (unlock bursts) to preview metrics
+- Track basic daily gross/unlocks at-a-glance (preview only)
+
+This is a UI-only mock. No real payments, inventory enforcement, or server state.
+
+B) UX / IA (INFORMATION ARCHITECTURE)
+-------------------------------------
+Top Bar:
+- Back button -> returns to Home
+- Fan View button -> navigates to Flash Drops (Fan) preview
+- Title + subtitle
+- Right-side creator info card
+- Today gross KPI card (sum of grossPreview across all drops)
+
+Main Layout: 12-col grid (desktop)
+Left (7 cols): "Drop Control Board"
+- List of drops (cards)
+- Each card shows:
+  - title
+  - kind (Photo Set / Video / Live Replay / DM Pack / Vault)
+  - rarity (Common / Rare / Epic / Legendary)
+  - status pill (Scheduled / Live / Ended)
+  - ends in minutes
+  - inventory remaining/total
+  - price
+  - unlocks preview
+  - gross preview
+- Selecting a drop highlights it and updates the right panel controls
+
+Right (5 cols): stacked panels
+1) "Selected Drop Controls"
+   - Summary of selected drop
+   - Status controls:
+     - Go Live
+     - Schedule
+     - End Now
+   - Demand simulation:
+     - +5 unlocks
+     - +25 unlocks
+     - +100 unlocks
+     Each adjusts inventoryRemaining, unlocksPreview, and grossPreview
+   - Creator note / teaser:
+     - Textarea + Save Note button (toast only, no persistence beyond state)
+
+2) "Create New Drop"
+   - Form fields:
+     - Title
+     - Kind
+     - Rarity
+     - Price
+     - Ends (min)
+     - Inventory
+   - Create Drop button:
+     - Adds a new row at top, Scheduled by default
+     - Sets it as selected
+     - Toast: "Drop created (Scheduled)"
+
+C) DATA MODEL (FRONT-END PREVIEW)
+---------------------------------
+Types:
+- DropKind: "Photo Set" | "Video" | "Live Replay" | "DM Pack" | "Vault"
+- Rarity: "Common" | "Rare" | "Epic" | "Legendary"
+- DropStatus: "Scheduled" | "Live" | "Ended"
+- DropRow:
+  id: string
+  title: string
+  kind: DropKind
+  rarity: Rarity
+  price: number
+  endsInMin: number
+  status: DropStatus
+  inventoryTotal?: number
+  inventoryRemaining?: number
+  grossPreview: number
+  unlocksPreview: number
+
+State:
+- drops: DropRow[]
+- selected: string (drop id)
+- toast: string | null
+- form state: title/kind/rarity/price/ends/inventory/note
+
+Demand simulation behavior (preview):
+- simulateUnlockBurst(id, n):
+  - taken = min(n, inventoryRemaining)
+  - inventoryRemaining -= taken
+  - unlocksPreview += taken
+  - grossPreview += taken * price
+
+D) ROUTING / NAVIGATION (PREVIEW)
+---------------------------------
+- A route constant exists: "creator_flash_drops"
+- Preview dropdown includes "Flash Drops (Creator)"
+- Selecting it routes to the Creator Console.
+- The Creator Console includes a "Fan View" button that routes to "flash_drops".
+- The "Back" button returns to "home".
+
+E) SERVER/API NOTES (FOR REAL BUILD, NOT PREVIEW)
+-------------------------------------------------
+In production, the following MUST be server-authoritative:
+- Status transitions (Scheduled/Live/Ended) with audit log
+- Inventory enforcement and concurrency (atomic decrement)
+- Pricing enforcement
+- Idempotent unlock settlement and gross aggregation
+- Time remaining based on server time
+Suggested endpoints:
+- GET /creator/flashdrops -> list drops with metrics
+- POST /creator/flashdrops -> create drop
+- PATCH /creator/flashdrops/:id -> update status, metadata
+- POST /creator/flashdrops/:id/end -> end now
+- GET /creator/flashdrops/metrics?range=today -> kpis
+
+F) EDGE CASES / VALIDATION RULES (PROD GUIDANCE)
+------------------------------------------------
+- Price must be >= 1
+- EndsIn must be >= 1 minute
+- Inventory must be >= 1 for limited drops, optional for unlimited
+- Status changes require permission checks
+- Ending a drop prevents further unlocks
+- Gross should be computed from ledger, not derived from unlock count alone
+- Rate limiting & fraud checks on bursts or unusually high traffic
+
+G) ANALYTICS (SUGGESTED)
+-----------------------
+Track:
+- creator_flashdrops_viewed
+- flashdrop_selected
+- flashdrop_status_changed (from, to)
+- flashdrop_created
+- flashdrop_note_saved
+- flashdrop_simulated_unlocks (preview only)
+
+========================================================
+FULL CODE — FLASH DROPS (CREATOR) + REQUIRED INTEGRATION
+========================================================
+
+NOTE:
+- This code is written to drop into the existing React file (the one containing your preview app).
+- It depends on existing helpers/components in your file:
+  - cx(...)
+  - NeonCard
+  - toneClasses(...)
+  - icons: ArrowLeft, Sparkles
+- It also expects route handlers:
+  - goHome()
+  - goFlashDrops()  (Fan room)
+  - goFlashDropsCreator()
+
+--------------------------------------------------------
+1) ROUTE TYPE (ensure this exists in your Route union)
+--------------------------------------------------------
+
+type Route =
+  | "home"
+  | "suga4u"
+  | "bar_lounge"
+  | "confessions"
+  | "flash_drops"
+  | "creator_flash_drops"
+  | "creator_confessions";
+
+--------------------------------------------------------
+2) PREVIEW DROPDOWN ENTRY (ensure this exists)
+--------------------------------------------------------
+In the Preview dropdown items array, include:
+
+{ text: "Flash Drops (Creator)", onClick: goFlashDropsCreator },
+
+--------------------------------------------------------
+3) ROUTE RENDERING (ensure this exists)
+--------------------------------------------------------
+In your main render switch:
+
+route === "creator_flash_drops" ? (
+  <FlashDropsCreatorPreview onBack={goHome} onFanView={goFlashDrops} />
+) : ...
+
+--------------------------------------------------------
+4) FULL COMPONENT: FlashDropsCreatorPreview
+--------------------------------------------------------
+
+function FlashDropsCreatorPreview({ onBack, onFanView }: { onBack: () => void; onFanView: () => void }) {
+  type DropKind = "Photo Set" | "Video" | "Live Replay" | "DM Pack" | "Vault";
+  type Rarity = "Common" | "Rare" | "Epic" | "Legendary";
+  type DropStatus = "Scheduled" | "Live" | "Ended";
+
+  type DropRow = {
+    id: string;
+    title: string;
+    kind: DropKind;
+    rarity: Rarity;
+    price: number;
+    endsInMin: number;
+    status: DropStatus;
+    inventoryTotal?: number;
+    inventoryRemaining?: number;
+    grossPreview: number;
+    unlocksPreview: number;
+  };
+
+  const creator = { handle: "@NovaHeat", level: "Star" as const };
+
+  const [toast, setToast] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState<string>("d3");
+
+  const [drops, setDrops] = React.useState<DropRow[]>([
+    {
+      id: "d1",
+      title: "After Hours — Tease Set",
+      kind: "Photo Set",
+      rarity: "Common",
+      price: 25,
+      endsInMin: 28,
+      status: "Live",
+      inventoryTotal: 999,
+      inventoryRemaining: 812,
+      grossPreview: 1275,
+      unlocksPreview: 51,
+    },
+    {
+      id: "d2",
+      title: "Neon Confetti — Clip",
+      kind: "Video",
+      rarity: "Rare",
+      price: 60,
+      endsInMin: 22,
+      status: "Live",
+      inventoryTotal: 400,
+      inventoryRemaining: 244,
+      grossPreview: 4380,
+      unlocksPreview: 73,
+    },
+    {
+      id: "d3",
+      title: "VIP Backstage — Full Reel",
+      kind: "Live Replay",
+      rarity: "Epic",
+      price: 250,
+      endsInMin: 15,
+      status: "Live",
+      inventoryTotal: 120,
+      inventoryRemaining: 33,
+      grossPreview: 18750,
+      unlocksPreview: 75,
+    },
+    {
+      id: "d4",
+      title: "Private DMs — 10 Pack",
+      kind: "DM Pack",
+      rarity: "Epic",
+      price: 400,
+      endsInMin: 12,
+      status: "Scheduled",
+      inventoryTotal: 80,
+      inventoryRemaining: 80,
+      grossPreview: 0,
+      unlocksPreview: 0,
+    },
+    {
+      id: "d5",
+      title: "Vault Drop — Uncut",
+      kind: "Vault",
+      rarity: "Legendary",
+      price: 1000,
+      endsInMin: 7,
+      status: "Scheduled",
+      inventoryTotal: 25,
+      inventoryRemaining: 25,
+      grossPreview: 0,
+      unlocksPreview: 0,
+    },
+  ]);
+
+  const [formTitle, setFormTitle] = React.useState("New Flash Drop");
+  const [formKind, setFormKind] = React.useState<DropKind>("Video");
+  const [formRarity, setFormRarity] = React.useState<Rarity>("Rare");
+  const [formPrice, setFormPrice] = React.useState(250);
+  const [formEnds, setFormEnds] = React.useState(15);
+  const [formInv, setFormInv] = React.useState(100);
+  const [formNote, setFormNote] = React.useState("Short teaser for fans…");
+
+  const selectedDrop = drops.find((d) => d.id === selected) ?? drops[0];
+
+  const pushToast = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 1400);
+  };
+
+  const setStatus = (id: string, status: DropStatus) => {
+    setDrops((rows) => rows.map((r) => (r.id === id ? { ...r, status } : r)));
+  };
+
+  const quickCreate = () => {
+    const id = `new_${Math.random().toString(16).slice(2)}`;
+    const row: DropRow = {
+      id,
+      title: formTitle.trim() || "Untitled Drop",
+      kind: formKind,
+      rarity: formRarity,
+      price: Math.max(1, Math.floor(formPrice)),
+      endsInMin: Math.max(1, Math.floor(formEnds)),
+      status: "Scheduled",
+      inventoryTotal: Math.max(1, Math.floor(formInv)),
+      inventoryRemaining: Math.max(1, Math.floor(formInv)),
+      grossPreview: 0,
+      unlocksPreview: 0,
+    };
+    setDrops((rows) => [row, ...rows]);
+    setSelected(id);
+    pushToast("✅ Drop created (Scheduled)");
+  };
+
+  const simulateUnlockBurst = (id: string, n: number) => {
+    setDrops((rows) =>
+      rows.map((r) => {
+        if (r.id !== id) return r;
+        const invRem = typeof r.inventoryRemaining === "number" ? r.inventoryRemaining : 999999;
+        const taken = Math.max(0, Math.min(invRem, n));
+        return {
+          ...r,
+          inventoryRemaining:
+            typeof r.inventoryRemaining === "number" ? r.inventoryRemaining - taken : r.inventoryRemaining,
+          unlocksPreview: r.unlocksPreview + taken,
+          grossPreview: r.grossPreview + taken * r.price,
+        };
+      })
+    );
+  };
+
+  const rarityTone = (rarity: Rarity) =>
+    rarity === "Legendary" ? "yellow" : rarity === "Epic" ? "purple" : rarity === "Rare" ? "blue" : "pink";
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] rounded-2xl border border-white/10 bg-black/75 px-4 py-2 text-sm text-gray-100 shadow-[0_0_40px_rgba(255,215,0,0.16)]">
+          {toast}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-xl border border-yellow-400/25 bg-black/40 px-3 py-2 text-sm text-yellow-200 hover:bg-white/5 inline-flex items-center gap-2 vip-glow"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+
+          <button
+            onClick={onFanView}
+            className="rounded-xl border border-blue-500/25 bg-black/40 px-3 py-2 text-sm text-blue-200 hover:bg-white/5 inline-flex items-center gap-2"
+            title="Switch to Fan room preview"
+          >
+            <Sparkles className="w-4 h-4" /> Fan View
+          </button>
+
+          <div>
+            <div className="text-yellow-200 text-sm">Flash Drops — Creator Console (Preview)</div>
+            <div className="text-[11px] text-gray-400">Schedule drops, control live status, and monitor spend</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl border border-blue-500/20 bg-black/35 px-3 py-2">
+            <div className="text-[10px] text-gray-400">Creator</div>
+            <div className="text-sm text-gray-100 font-semibold">
+              {creator.handle} <span className="text-[11px] text-blue-200">• {creator.level}</span>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 px-3 py-2 vip-glow">
+            <div className="text-[10px] text-gray-400">Today (preview)</div>
+            <div className="text-sm text-yellow-100 font-semibold">
+              Gross: ${drops.reduce((s, d) => s + d.grossPreview, 0).toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <NeonCard className="lg:col-span-7 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-yellow-200 text-sm">Drop Control Board</div>
+            <button
+              className="rounded-xl border border-yellow-400/25 bg-black/40 px-3 py-2 text-sm hover:bg-white/5 vip-glow"
+              onClick={() => pushToast("🔄 Refreshed metrics")}
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {drops.map((d) => {
+              const t = toneClasses(rarityTone(d.rarity) as any);
+              const active = selected === d.id;
+              const inv = typeof d.inventoryRemaining === "number" ? `${d.inventoryRemaining}/${d.inventoryTotal}` : "—";
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setSelected(d.id)}
+                  className={cx(
+                    "w-full text-left rounded-2xl border bg-black/35 p-3 transition",
+                    t.border,
+                    t.glow,
+                    active && "ring-1 ring-yellow-300/30"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className={cx("text-sm font-semibold", t.text)}>{d.title}</div>
+                      <div className="mt-1 text-xs text-gray-300">
+                        {d.kind} •{" "}
+                        <span className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", t.border, t.text)}>
+                          {d.rarity}
+                        </span>
+                        <span className="ml-2 text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                          {d.status}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-[11px] text-gray-400">Ends in {d.endsInMin}m • Inventory {inv}</div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm text-yellow-200 font-semibold">${d.price.toLocaleString()}</div>
+                      <div className="mt-1 text-[11px] text-gray-300">Unlocks: {d.unlocksPreview.toLocaleString()}</div>
+                      <div className="mt-1 text-[11px] text-gray-300">Gross: ${d.grossPreview.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </NeonCard>
+
+        <div className="lg:col-span-5 space-y-6">
+          <NeonCard className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-yellow-200 text-sm">Selected Drop Controls</div>
+              <span className="text-[10px] px-2 py-[2px] rounded-full border border-yellow-400/30 text-yellow-200 bg-black/40 vip-glow">
+                {selectedDrop.status}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-sm text-gray-100 font-semibold">{selectedDrop.title}</div>
+              <div className="mt-1 text-[11px] text-gray-300">Price: ${selectedDrop.price.toLocaleString()} • Ends in {selectedDrop.endsInMin}m</div>
+              <div className="mt-1 text-[11px] text-gray-300">
+                Inventory:{" "}
+                {typeof selectedDrop.inventoryRemaining === "number"
+                  ? `${selectedDrop.inventoryRemaining}/${selectedDrop.inventoryTotal}`
+                  : "—"}
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <button
+                className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 py-2 text-sm hover:bg-emerald-500/15"
+                onClick={() => {
+                  setStatus(selectedDrop.id, "Live");
+                  pushToast("🟢 Drop set LIVE");
+                }}
+              >
+                Go Live
+              </button>
+              <button
+                className="rounded-xl border border-yellow-400/30 bg-yellow-500/10 py-2 text-sm hover:bg-yellow-500/15 vip-glow"
+                onClick={() => {
+                  setStatus(selectedDrop.id, "Scheduled");
+                  pushToast("🗓️ Scheduled");
+                }}
+              >
+                Schedule
+              </button>
+              <button
+                className="rounded-xl border border-rose-400/30 bg-rose-600/15 py-2 text-sm hover:bg-rose-600/20"
+                onClick={() => {
+                  setStatus(selectedDrop.id, "Ended");
+                  pushToast("⛔ Drop ended");
+                }}
+              >
+                End Now
+              </button>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-blue-500/20 bg-black/35 p-3">
+              <div className="text-[11px] text-gray-400">Simulate demand (preview)</div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {[5, 25, 100].map((n) => (
+                  <button
+                    key={n}
+                    className="rounded-xl border border-blue-500/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                    onClick={() => {
+                      simulateUnlockBurst(selectedDrop.id, n);
+                      pushToast(`⚡ +${n} unlocks simulated`);
+                    }}
+                  >
+                    +{n} unlocks
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 text-[10px] text-gray-500">Preview only. Production must be server-authoritative.</div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] text-gray-400">Creator note / teaser</div>
+              <textarea
+                value={formNote}
+                onChange={(e) => setFormNote(e.target.value)}
+                className="w-full min-h-[80px] rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none"
+              />
+              <button
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/35 py-2 text-sm hover:bg-white/5"
+                onClick={() => pushToast("💾 Note saved")}
+              >
+                Save Note
+              </button>
+            </div>
+          </NeonCard>
+
+          <NeonCard className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-yellow-200 text-sm">Create New Drop</div>
+              <span className="text-[10px] text-gray-400">Scheduled by default</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                <div className="text-[11px] text-gray-400 mb-2">Title</div>
+                <input
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  className="w-full rounded-xl border border-yellow-400/15 bg-black/40 px-3 py-2 text-sm outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Kind</div>
+                  <select
+                    value={formKind}
+                    onChange={(e) => setFormKind(e.target.value as DropKind)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm"
+                  >
+                    {(["Photo Set", "Video", "Live Replay", "DM Pack", "Vault"] as DropKind[]).map((k) => (
+                      <option key={k} value={k}>
+                        {k}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Rarity</div>
+                  <select
+                    value={formRarity}
+                    onChange={(e) => setFormRarity(e.target.value as Rarity)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm"
+                  >
+                    {(["Common", "Rare", "Epic", "Legendary"] as Rarity[]).map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Price</div>
+                  <input
+                    type="number"
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(Number(e.target.value))}
+                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none"
+                  />
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Ends (min)</div>
+                  <input
+                    type="number"
+                    value={formEnds}
+                    onChange={(e) => setFormEnds(Number(e.target.value))}
+                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none"
+                  />
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                  <div className="text-[11px] text-gray-400 mb-2">Inventory</div>
+                  <input
+                    type="number"
+                    value={formInv}
+                    onChange={(e) => setFormInv(Number(e.target.value))}
+                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                className="w-full rounded-xl border border-yellow-400/30 bg-yellow-600/15 py-2 text-sm hover:bg-yellow-600/25 vip-glow"
+                onClick={quickCreate}
+              >
+                Create Drop
+              </button>
+
+              <div className="text-[10px] text-gray-500">
+                Preview note: pricing enforcement, inventory, auctioning, and payouts must be server-authoritative in production.
+              </div>
+            </div>
+          </NeonCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+========================================================
+END OF FILE
