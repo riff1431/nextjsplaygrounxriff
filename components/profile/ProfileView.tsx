@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft } from "lucide-react";
+import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useState } from "react";
@@ -60,6 +60,16 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
     const router = useRouter();
+
+    // Calculate Dynamic Level
+    const getLevelName = (followers: number) => {
+        if (followers < 100) return "Rookie";
+        if (followers < 1000) return "Rising Star";
+        if (followers < 10000) return "Pro";
+        if (followers < 50000) return "Elite";
+        return "Legend";
+    };
+    const levelName = getLevelName(stats.followers);
 
     const handleFollowToggle = async () => {
         if (!currentUserId) {
@@ -172,9 +182,9 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                 <h1 className="text-3xl font-bold text-white tracking-tight">
                                     {profile.full_name || profile.username || "Anonymous"}
                                 </h1>
-                                {profile.role && (
+                                {profile.role === 'creator' && (
                                     <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-                                        VIP
+                                        {levelName}
                                     </Badge>
                                 )}
                             </div>
@@ -210,22 +220,32 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                     </Button>
                                 </Link>
                             ) : (
-                                <Button
-                                    onClick={handleFollowToggle}
-                                    disabled={loading}
-                                    className={`w-full md:w-auto rounded-full px-6 transition-all ${isFollowing
-                                        ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
-                                        : "bg-white text-black hover:bg-zinc-200 border border-transparent font-semibold"
-                                        }`}
-                                >
-                                    {loading ? (
-                                        <span className="animate-pulse">Loading...</span>
-                                    ) : isFollowing ? (
-                                        "Following"
-                                    ) : (
-                                        "Follow"
-                                    )}
-                                </Button>
+                                <>
+                                    <Button
+                                        onClick={handleFollowToggle}
+                                        disabled={loading}
+                                        className={`w-full md:w-auto rounded-full px-6 transition-all ${isFollowing
+                                            ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
+                                            : "bg-white text-black hover:bg-zinc-200 border border-transparent font-semibold"
+                                            }`}
+                                    >
+                                        {loading ? (
+                                            <span className="animate-pulse">Loading...</span>
+                                        ) : isFollowing ? (
+                                            "Following"
+                                        ) : (
+                                            "Follow"
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={() => router.push(`/account/messages?chatWith=${profile.id}`)}
+                                        className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-full p-3 md:px-4 aspect-square md:aspect-auto flex items-center justify-center border border-white/10"
+                                        title="Send Message"
+                                    >
+                                        <MessageSquare className="w-5 h-5 md:mr-0" />
+                                        <span className="hidden md:inline ml-2">Message</span>
+                                    </Button>
+                                </>
                             )}
 
                             <Button
@@ -233,7 +253,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                 className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 shadow-[0_0_15px_rgba(37,99,235,0.3)] border border-blue-400/20"
                             >
                                 <Share2 className="w-4 h-4 mr-2" />
-                                Share
+                                <span className="hidden md:inline">Share</span>
                             </Button>
                         </div>
                     </div>

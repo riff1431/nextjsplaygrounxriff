@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { Crown, Sparkles, MessageCircle, BarChart3, Users, DollarSign, Play, Archive, Plus, Lock, MessageSquare, Zap, Wine, Video, Trophy, Settings, ChevronDown, User, LogOut, Upload } from "lucide-react";
+import { Crown, Sparkles, MessageCircle, BarChart3, Users, DollarSign, Play, Archive, Plus, Lock, MessageSquare, Zap, Wine, Video, Trophy, Settings, ChevronDown, User, LogOut, Upload, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import CreatePostModal from "@/components/posts/CreatePostModal";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -21,6 +22,7 @@ export default function CreatorDashboard() {
         activeRooms: 0
     });
     const [user, setUser] = useState<any>(null);
+    const [creatorProfile, setCreatorProfile] = useState<any>(null);
     const [profileOpen, setProfileOpen] = useState(false);
 
     const signOut = async () => {
@@ -41,7 +43,7 @@ export default function CreatorDashboard() {
                 // Check role
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, avatar_url, username, full_name')
                     .eq('id', user.id)
                     .single();
 
@@ -49,6 +51,8 @@ export default function CreatorDashboard() {
                     router.push('/home');
                     return;
                 }
+
+                setCreatorProfile(profile);
 
                 // Fetch creator's rooms
                 const { data: myRooms, error } = await supabase
@@ -108,69 +112,34 @@ export default function CreatorDashboard() {
             <div className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-600">
-                        Creator Dashboard
+                        Creator Studio Dashboard
                     </h1>
                     <p className="text-gray-400 mt-1">Welcome back, @{user?.user_metadata?.username || user?.user_metadata?.full_name || 'Creator'}</p>
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => router.push('/creator/rooms/suga-4-u')}
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-medium flex items-center gap-2 shadow-[0_0_20px_rgba(236,72,153,0.3)] transition"
+                        onClick={() => router.push('/home')}
+                        className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-medium flex items-center gap-2 transition"
                     >
-                        <Crown className="w-4 h-4" /> Go Live (Suga4U)
+                        <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                    <button
+                        onClick={() => router.push('/account/messages')}
+                        className="px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
+                        title="Messages"
+                    >
+                        <MessageSquare className="w-4 h-4" />
                     </button>
                     {/* Profile Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setProfileOpen(!profileOpen)}
-                            className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gray-900/60 border border-white/10 hover:bg-gray-900 transition"
-                        >
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold">
-                                {(user?.user_metadata?.username?.[0] || 'C').toUpperCase()}
-                            </div>
-                            <span className="text-sm font-medium text-gray-200 hidden md:block">
-                                {user?.user_metadata?.username || 'Creator'}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {profileOpen && (
-                            <div className="absolute right-0 mt-2 w-56 rounded-xl bg-gray-900 border border-white/10 shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
-                                <div className="p-2 border-b border-white/5">
-                                    <div className="px-3 py-2">
-                                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Signed in as</div>
-                                        <div className="text-sm font-medium text-white truncate">{user?.email}</div>
-                                    </div>
-                                </div>
-                                <div className="p-1">
-                                    <Link
-                                        href={`/profile/${user?.id}`}
-                                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition"
-                                        onClick={() => setProfileOpen(false)}
-                                    >
-                                        <User className="w-4 h-4 text-pink-500" /> My Profile
-                                    </Link>
-                                    <Link
-                                        href="/settings/profile"
-                                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition"
-                                        onClick={() => setProfileOpen(false)}
-                                    >
-                                        <Settings className="w-4 h-4 text-purple-500" /> Edit Profile
-                                    </Link>
-                                </div>
-                                <div className="p-1 border-t border-white/5">
-                                    <button
-                                        onClick={() => {
-                                            signOut();
-                                            setProfileOpen(false);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition"
-                                    >
-                                        <LogOut className="w-4 h-4" /> Log Out
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                    {/* Profile Dropdown */}
+                    <div className="relative z-50">
+                        <ProfileMenu
+                            user={user}
+                            profile={creatorProfile || user?.user_metadata || {}}
+                            role="creator"
+                            router={router}
+                            onSignOut={signOut}
+                        />
                     </div>
                 </div>
             </div>
@@ -332,6 +301,6 @@ export default function CreatorDashboard() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

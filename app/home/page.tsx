@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
     Crown,
+    MessageSquare,
     MessageCircle,
     Heart,
     Star,
@@ -30,6 +31,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import CreatePostModal from "@/components/posts/CreatePostModal";
+import { AnimatePresence, motion } from "framer-motion";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -762,7 +765,7 @@ export default function Home() {
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
 
-    const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null } | null>(null);
+    const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null } | null>(null);
     const supabase = createClient();
 
     // Fetch active rooms and posts
@@ -845,7 +848,7 @@ export default function Home() {
             try {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('username, full_name')
+                    .select('username, full_name, avatar_url')
                     .eq('id', user.id)
                     .single();
 
@@ -1164,23 +1167,20 @@ export default function Home() {
                         />
                     </div>
 
-                    <div className="w-[220px]">
-                        <Dropdown
-                            tone="pink"
-                            label={
-                                <span className="inline-flex items-center gap-2">
-                                    <User className="w-4 h-4" /> My Profile
-                                </span>
-                            }
-                            items={[
-                                { icon: <User className="w-4 h-4" />, text: "View Profile", onClick: () => router.push("/account/profile") },
-                                { icon: <Settings className="w-4 h-4" />, text: "Edit Profile", onClick: () => router.push("/settings/profile") },
-                                { icon: <CreditCard className="w-4 h-4" />, text: "Wallet/Card", onClick: () => router.push("/account/wallet") },
-                                { icon: <Users className="w-4 h-4" />, text: "Subscription", onClick: () => router.push("/account/subscription") },
-                                { icon: <Star className="w-4 h-4" />, text: "CollectionX", onClick: () => router.push("/account/collections") },
-                                { icon: <Settings className="w-4 h-4" />, text: "Settings", onClick: () => router.push("/settings/profile") },
-                                { icon: <LogOut className="w-4 h-4" />, text: "Log Out", onClick: async () => { await supabase.auth.signOut(); router.push("/"); } },
-                            ]}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => router.push('/account/messages')}
+                            className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                            title="Messages"
+                        >
+                            <MessageSquare className="w-5 h-5" />
+                        </button>
+                        <ProfileMenu
+                            user={user}
+                            profile={currentProfile}
+                            role={role}
+                            router={router}
+                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
                         />
                     </div>
                 </div>
