@@ -69,16 +69,32 @@ type CreatorCard = {
     tags: string[];
 };
 
+type Post = {
+    id: string;
+    content_type: 'text' | 'image' | 'video';
+    caption: string | null;
+    media_url: string | null;
+    thumbnail_url: string | null;
+    created_at: string;
+    user_id: string;
+    tags?: string[];
+    profiles: {
+        username: string | null;
+        avatar_url: string | null;
+        role?: string;
+    } | null;
+};
+
 // ---- Mock content ----------------------------------------------------------
 const CREATORS: CreatorCard[] = [
-    { id: "c1", name: "NeonNyla", level: "Elite", tags: ["Suga 4 U", "Flash Drops"] },
-    { id: "c2", name: "PinkVibe", level: "Star", tags: ["Truth or Dare", "Bar Lounge"] },
-    { id: "c3", name: "BlueMuse", level: "Rising", tags: ["X Chat", "Confessions"] },
-    { id: "c4", name: "LunaLux", level: "Elite", tags: ["Suga 4 U", "Confessions"] },
-    { id: "c5", name: "NovaHeat", level: "Star", tags: ["Flash Drops", "Bar Lounge"] },
-    { id: "c6", name: "RoxyRave", level: "Rookie", tags: ["Truth or Dare", "X Chat"] },
-    { id: "c7", name: "VelvetX", level: "Rising", tags: ["Bar Lounge", "Confessions"] },
-    { id: "c8", name: "Sapphire", level: "Star", tags: ["Suga 4 U", "Truth or Dare"] },
+    { id: "c1", userId: "u1", name: "NeonNyla", level: "Elite", tags: ["Suga 4 U", "Flash Drops"] },
+    { id: "c2", userId: "u2", name: "PinkVibe", level: "Star", tags: ["Truth or Dare", "Bar Lounge"] },
+    { id: "c3", userId: "u3", name: "BlueMuse", level: "Rising", tags: ["X Chat", "Confessions"] },
+    { id: "c4", userId: "u4", name: "LunaLux", level: "Elite", tags: ["Suga 4 U", "Confessions"] },
+    { id: "c5", userId: "u5", name: "NovaHeat", level: "Star", tags: ["Flash Drops", "Bar Lounge"] },
+    { id: "c6", userId: "u6", name: "RoxyRave", level: "Rookie", tags: ["Truth or Dare", "X Chat"] },
+    { id: "c7", userId: "u7", name: "VelvetX", level: "Rising", tags: ["Bar Lounge", "Confessions"] },
+    { id: "c8", userId: "u8", name: "Sapphire", level: "Star", tags: ["Suga 4 U", "Truth or Dare"] },
 ];
 
 // ---- Branding --------------------------------------------------------------
@@ -288,15 +304,19 @@ function toneClasses(tone: "pink" | "green" | "purple" | "red" | "blue" | "yello
             };
         default:
             return {
-                text: "text-fuchsia-400 drop-shadow-[0_0_24px_rgba(255,0,200,1)] neon-deep",
-                icon: "text-fuchsia-400 drop-shadow-[0_0_28px_rgba(255,0,200,1)]",
-                border: "border-fuchsia-400/90",
-                glow:
-                    "shadow-[0_0_20px_rgba(255,0,200,0.85),0_0_70px_rgba(255,0,200,0.5)] hover:shadow-[0_0_30px_rgba(255,0,200,0.95),0_0_100px_rgba(255,0,200,0.7)]",
                 hover: "hover:bg-fuchsia-500/8",
             };
     }
 }
+
+type CreatorCard = {
+    id: string;
+    name: string;
+    level: "Rookie" | "Rising" | "Star" | "Elite";
+    tags: string[];
+    avatar_url?: string | null;
+    cover_url?: string | null;
+};
 
 function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => void }) {
     const tags = creator.tags.slice(0, 2);
@@ -307,23 +327,55 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
         <button
             onClick={onOpen}
             className={cx(
-                "h-full rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
+                "group relative h-full rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
                 "hover:border-pink-500/45 transition",
-                "flex flex-col"
+                "flex flex-col text-left"
             )}
             title={creator.tags.includes("Suga 4 U") ? "Open Suga4U (preview)" : "Join Room"}
         >
-            {/* Media area (fixed) */}
-            <div className="h-32 w-full bg-gradient-to-b from-pink-500/20 via-black to-blue-500/10" />
+            {/* Background Image (Cover) */}
+            {creator.cover_url ? (
+                <div
+                    className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-700"
+                    style={{ backgroundImage: `url(${creator.cover_url})` }}
+                />
+            ) : (
+                // Fallback gradient logic if no cover (or keep as overlay?)
+                // keeping overlay div below to Ensure text readability regardless of image
+                null
+            )}
+
+            {/* Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/90 pointer-events-none" />
+
+
+            {/* Media area (aspect ratio spacer if needed, or just allow flex-grow) 
+                Actually, the original design had a fixed top area. 
+                With bg image, we might want the whole tile to be the image.
+                Let's stick to the visual structure but use the image as the full tile bg.
+            */}
+            <div className="h-32 w-full" /> {/* Spacer to push content down roughly as before */}
+
 
             {/* Body (fixed rhythm) */}
-            <div className="p-3 text-left flex-1 flex flex-col">
-                {/* Row: name + level (fixed baseline) */}
+            <div className="relative p-3 flex-1 flex flex-col z-10">
+                {/* Row: Avatar + name + level */}
                 <div className="flex items-center justify-between gap-2 min-h-[22px]">
-                    <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
-                        {creator.name}
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        {/* Avatar */}
+                        {creator.avatar_url ? (
+                            <img src={creator.avatar_url} alt="" className="w-6 h-6 rounded-full border border-white/20 object-cover shrink-0" />
+                        ) : (
+                            <div className="w-6 h-6 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0">
+                                <User className="w-3 h-3 text-pink-300" />
+                            </div>
+                        )}
+                        <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
+                            {creator.name}
+                        </div>
                     </div>
-                    <span className="shrink-0 text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
+
+                    <span className="shrink-0 text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200 bg-black/50 backdrop-blur-sm">
                         {creator.level}
                     </span>
                 </div>
@@ -334,7 +386,7 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                         t ? (
                             <span
                                 key={`${creator.id}-${t}`}
-                                className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200"
+                                className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200 bg-black/40 backdrop-blur-sm"
                             >
                                 {t}
                             </span>
@@ -362,34 +414,47 @@ function HomeScreen({
     query,
     setQuery,
     rooms, // Received from parent
+    posts, // New prop
     userId,
 }: {
     onEnterSuga4U: () => void;
     query: string;
     setQuery: React.Dispatch<React.SetStateAction<string>>;
     rooms: any[];
+    posts: Post[];
     userId?: string;
 }) {
     const router = useRouter();
-    const [levelFilter, setLevelFilter] = useState<CreatorCard["level"] | "All">("All");
-    const [activeCat, setActiveCat] = useState<string>("suga4u");
-    const [tagFilter, setTagFilter] = useState<string | "All">("All");
+    const [activeCat, setActiveCat] = useState("all");
+    const [tagFilter, setTagFilter] = useState("All");
     const [sortBy, setSortBy] = useState<"Recommended" | "Rookie→Elite" | "Elite→Rookie">("Recommended");
+    const [levelFilter, setLevelFilter] = useState<"All" | "Rookie" | "Rising" | "Star" | "Elite">("All");
 
+    // Use fetched rooms if available, otherwise fallback to mock for preview
+    const dataSource: CreatorCard[] = rooms.length > 0 ? rooms : CREATORS; // Assuming CREATORS is defined elsewhere
+
+    // Filter logic
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        let rows = (rooms || []).slice(); // Use passed rooms with safety check
-
-        if (q) {
-            rows = rows.filter((c) => [c.name, c.level, ...c.tags].some((t) => t.toLowerCase().includes(q)));
-        }
-
-        if (levelFilter !== "All") rows = rows.filter((c) => c.level === levelFilter);
-        // if (tagFilter !== "All") rows = rows.filter((c) => c.tags.includes(tagFilter));
+        let rows = dataSource.filter((c) => {
+            // Tag/Room filter
+            if (tagFilter !== "All" && !c.tags.some(t => t.includes(tagFilter))) return false;
+            // Level filter
+            if (levelFilter !== "All" && c.level !== levelFilter) return false;
+            // Search query
+            if (q && ![c.name, c.level, ...c.tags].some((t) => t.toLowerCase().includes(q))) return false;
+            return true;
+        });
 
         // Sorting (mock logic mostly, preserved)
         const rank: Record<CreatorCard["level"], number> = { Rookie: 1, Rising: 2, Star: 3, Elite: 4 };
         // if (sortBy === ...)
+        if (sortBy === "Rookie→Elite") {
+            rows.sort((a, b) => rank[a.level] - rank[b.level]);
+        } else if (sortBy === "Elite→Rookie") {
+            rows.sort((a, b) => rank[b.level] - rank[a.level]);
+        }
+        // For "Recommended", we'd need actual recommendation logic, so it's left as is.
 
         return rows;
     }, [query, levelFilter, tagFilter, sortBy, rooms]);
@@ -574,7 +639,10 @@ function HomeScreen({
                                 key={c.id}
                                 creator={c}
                                 onOpen={() => {
-                                    if (c.tags.includes("Suga 4 U")) {
+                                    // Use userId if available for profile redirect
+                                    if (c.userId) {
+                                        router.push("/profile/" + c.userId);
+                                    } else if (c.tags.includes("Suga 4 U")) {
                                         onEnterSuga4U();
                                     } else {
                                         router.push("/room/" + c.id);
@@ -589,12 +657,16 @@ function HomeScreen({
                 <NeonCard className="p-4 lg:col-span-4">
                     <div className="text-pink-200 text-sm mb-3">Creator Feed</div>
                     <div className="space-y-4">
-                        {[0, 1, 2, 3].map((i) => {
-                            const isVideo = i % 2 === 0;
+                        {posts.map((post) => {
+                            const isVideo = post.content_type === 'video';
+                            const authorName = post.profiles?.username || "Unknown Creator";
+                            const isFlashDrop = post.tags?.includes("Flash Drop") || false;
+                            const isSuga4U = post.tags?.includes("Suga 4 U") || false;
+
                             return (
-                                <div key={i} className="rounded-2xl border border-pink-500/15 bg-black/40 p-3">
+                                <div key={post.id} className="rounded-2xl border border-pink-500/15 bg-black/40 p-3">
                                     <div className="flex items-center justify-between">
-                                        <div className="text-xs text-gray-300">@NeonNyla</div>
+                                        <div className="text-xs text-gray-300">@{authorName}</div>
                                         <span
                                             className={cx(
                                                 "text-[10px] px-2 py-[2px] rounded-full border",
@@ -606,35 +678,61 @@ function HomeScreen({
                                     </div>
 
                                     <div className="mt-1 text-sm text-gray-100">
-                                        {isVideo ? "New clip just dropped. Unlock to watch." : "New pics tonight. VIP gets first look."}
+                                        {post.caption || (isVideo ? "New clip just dropped. Unlock to watch." : "New pics tonight. VIP gets first look.")}
                                     </div>
 
-                                    <div className="mt-3 rounded-2xl overflow-hidden border border-white/10 bg-black/30">
+                                    <div
+                                        onClick={() => router.push(`/profile/${post.user_id}`)}
+                                        className="mt-3 rounded-2xl overflow-hidden border border-white/10 bg-black/30 cursor-pointer group hover:border-pink-500/40 transition-colors"
+                                    >
                                         <div className="relative aspect-video bg-gradient-to-b from-pink-500/15 via-black to-blue-500/10 flex items-center justify-center">
-                                            {isVideo ? (
-                                                <div className="flex items-center gap-2 text-blue-200">
-                                                    <Video className="w-5 h-5" />
-                                                    <span className="text-sm">Video preview</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2 text-pink-200">
-                                                    <ImageIcon className="w-5 h-5" />
-                                                    <span className="text-sm">Photo preview</span>
-                                                </div>
+                                            {/* Dynamic Content Image */}
+                                            {(post.media_url || post.thumbnail_url) && (
+                                                <img
+                                                    src={post.media_url || post.thumbnail_url || ""}
+                                                    alt="Post content"
+                                                    className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                />
                                             )}
-                                            <span className="absolute top-2 left-2 text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+
+                                            {/* Overlay for icon if valid image provided, or keep generic if not? 
+                                                If we have an image, maybe we don't need the icon as much, but 'Photo preview' logic 
+                                                was essentially placeholder. Let's keep the icon overlay but maybe subtler if image exists.
+                                                actually, user wants "work as dynamic". 
+                                                If image exists, we show image. The 'Tap to view' badge is still good.
+                                                The big centered Icon might obscure the image. Let's make it conditional/overlay.
+                                            */}
+                                            {!(post.media_url || post.thumbnail_url) && (
+                                                isVideo ? (
+                                                    <div className="flex items-center gap-2 text-blue-200">
+                                                        <Video className="w-5 h-5" />
+                                                        <span className="text-sm">Video preview</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 text-pink-200">
+                                                        <ImageIcon className="w-5 h-5" />
+                                                        <span className="text-sm">Photo preview</span>
+                                                    </div>
+                                                )
+                                            )}
+
+                                            <span className="absolute top-2 left-2 text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40 backdrop-blur-md">
                                                 {isVideo ? "Tap to unlock" : "Tap to view"}
                                             </span>
                                         </div>
                                     </div>
 
                                     <div className="mt-3 flex items-center gap-2">
-                                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
-                                            Flash Drop
-                                        </span>
-                                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200">
-                                            Suga 4 U
-                                        </span>
+                                        {isFlashDrop && (
+                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
+                                                Flash Drop
+                                            </span>
+                                        )}
+                                        {isSuga4U && (
+                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200">
+                                                Suga 4 U
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="mt-3 flex gap-2">
@@ -648,6 +746,11 @@ function HomeScreen({
                                 </div>
                             );
                         })}
+                        {posts.length === 0 && (
+                            <div className="text-center py-6 text-gray-500 text-sm">
+                                No recent updates.
+                            </div>
+                        )}
                     </div>
                 </NeonCard>
             </div>
@@ -661,44 +764,106 @@ export default function Home() {
     const { role, isLoading: authLoading, user } = useAuth();
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
+    const [posts, setPosts] = useState<Post[]>([]);
+    type CreatorCard = {
+        id: string;
+        userId: string; // Added for profile navigation
+        name: string;
+        level: "Rookie" | "Rising" | "Star" | "Elite";
+        tags: string[];
+        avatar_url?: string | null;
+        cover_url?: string | null;
+    };
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null } | null>(null);
     const supabase = createClient();
 
-    // Fetch active rooms
+    // Fetch active rooms and posts
     useEffect(() => {
-        const fetchRooms = async () => {
+        const fetchContent = async () => {
             try {
                 // Fetch rooms joined with host profile
                 // Explicitly specifying !host_id to avoid ambiguous relationship errors
-                const { data, error } = await supabase
+                const { data: roomsData, error: roomsError } = await supabase
                     .from('rooms')
-                    .select('*, host:profiles!host_id(username, avatar_url, role)')
+                    .select('*, host:profiles!host_id(id, username, avatar_url, role)')
                     .eq('status', 'live');
 
-                if (error) throw error;
+                if (roomsError) console.error("Error fetching rooms:", roomsError);
+                else {
+                    // Fetch latest posts for these hosts to get background images
+                    const hostIds = (roomsData || []).map(r => r.host?.id || r.host_id).filter(Boolean);
 
-                const mapped = (data || []).map(r => ({
-                    id: r.id,
-                    name: r.host?.username || "Unknown Host",
-                    level: "Star", // Default for now
-                    tags: [r.title, r.type || "General"],
-                    cover: r.cover_image
-                }));
-                setRooms(mapped);
+                    let activePostsStr: Record<string, any> = {};
+
+                    if (hostIds.length > 0) {
+                        // We want 1 latest post per user.
+                        // Simplest efficient way in Supabase/Postgres is unclear without distinct on.
+                        // We will just fetch all recent posts for these users and pick latest in JS.
+                        const { data: hostPosts } = await supabase
+                            .from('posts')
+                            .select('user_id, media_url, thumbnail_url, created_at')
+                            .in('user_id', hostIds)
+                            .order('created_at', { ascending: false })
+                            .limit(50); // Reasonable limit for homepage
+
+                        if (hostPosts) {
+                            hostPosts.forEach(p => {
+                                // Since ordered by desc, first time we see a user_id, it's the latest
+                                if (!activePostsStr[p.user_id]) {
+                                    activePostsStr[p.user_id] = p;
+                                }
+                            });
+                        }
+                    }
+
+                    const mapped = (roomsData || []).map(r => {
+                        const hostId = r.host?.id || r.host_id;
+                        const latestPost = activePostsStr[hostId];
+                        const bgImage = latestPost
+                            ? (latestPost.media_url || latestPost.thumbnail_url)
+                            : r.cover_image;
+
+                        return {
+                            id: r.id,
+                            userId: hostId, // Store host ID for profile navigation
+                            name: r.host?.username || "Unknown Host",
+                            level: "Star",
+                            tags: [r.title, r.type || "General"],
+                            avatar_url: r.host?.avatar_url,
+                            cover_url: bgImage
+                        };
+                    });
+                    setRooms(mapped);
+                }
+
+                // 2. Fetch Posts (Creator Feed)
+                // Filter to ONLY show posts from users with 'creator' role using !inner join
+                const { data: postsData, error: postsError } = await supabase
+                    .from('posts')
+                    .select('*, profiles!user_id!inner(username, avatar_url, role)')
+                    .eq('profiles.role', 'creator')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (postsError) console.error("Error fetching posts:", postsError);
+                else {
+                    setPosts(postsData as unknown as Post[]);
+                }
+
             } catch (err) {
-                console.error("Error fetching rooms:", err);
+                console.error("Error fetching content:", err);
             } finally {
                 setLoadingRooms(false);
             }
         };
 
-        fetchRooms();
+        fetchContent();
 
+        // Realtime subscription
         const channel = supabase
-            .channel('public:rooms')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
-                fetchRooms();
-            })
+            .channel('public:content')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => fetchContent())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => fetchContent())
             .subscribe();
 
         return () => {
@@ -1052,7 +1217,14 @@ export default function Home() {
                 </div>
             </div>
 
-            <HomeScreen onEnterSuga4U={() => router.push("/rooms/suga-4-u")} query={homeQuery} setQuery={setHomeQuery} rooms={rooms} userId={user?.id} />
+            <HomeScreen
+                onEnterSuga4U={() => setLevelFilter("Elite")}
+                query={homeQuery}
+                setQuery={setHomeQuery}
+                rooms={rooms}
+                posts={posts}
+                userId={user?.id}
+            />
         </div>
     );
 }
