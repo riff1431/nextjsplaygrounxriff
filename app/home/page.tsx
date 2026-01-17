@@ -64,9 +64,12 @@ type BadgeTier = "Bronze" | "Silver" | "Gold" | "Platinum" | "VIP";
 
 type CreatorCard = {
     id: string;
+    userId: string;
     name: string;
     level: "Rookie" | "Rising" | "Star" | "Elite";
     tags: string[];
+    avatar_url?: string | null;
+    cover_url?: string | null;
 };
 
 type Post = {
@@ -309,14 +312,7 @@ function toneClasses(tone: "pink" | "green" | "purple" | "red" | "blue" | "yello
     }
 }
 
-type CreatorCard = {
-    id: string;
-    name: string;
-    level: "Rookie" | "Rising" | "Star" | "Elite";
-    tags: string[];
-    avatar_url?: string | null;
-    cover_url?: string | null;
-};
+
 
 function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => void }) {
     const tags = creator.tags.slice(0, 2);
@@ -765,15 +761,7 @@ export default function Home() {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
-    type CreatorCard = {
-        id: string;
-        userId: string; // Added for profile navigation
-        name: string;
-        level: "Rookie" | "Rising" | "Star" | "Elite";
-        tags: string[];
-        avatar_url?: string | null;
-        cover_url?: string | null;
-    };
+
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null } | null>(null);
     const supabase = createClient();
 
@@ -837,11 +825,14 @@ export default function Home() {
                 }
 
                 // 2. Fetch Posts (Creator Feed)
+                // 2. Fetch Posts (Creator Feed)
                 // Filter to ONLY show posts from users with 'creator' role using !inner join
+                // AND only show posts with visual content (media_url is not null)
                 const { data: postsData, error: postsError } = await supabase
                     .from('posts')
                     .select('*, profiles!user_id!inner(username, avatar_url, role)')
                     .eq('profiles.role', 'creator')
+                    .not('media_url', 'is', null)
                     .order('created_at', { ascending: false })
                     .limit(10);
 
