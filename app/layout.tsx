@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${outfit.variable} antialiased bg-black text-white min-h-screen selection:bg-pink-500 selection:text-white`}>
+      <body className={`${outfit.variable} antialiased bg-black text-white min-h-screen selection:bg-pink-500 selection:text-white`} suppressHydrationWarning>
         <AuthProvider>
           {children}
           <ToasterProvider />

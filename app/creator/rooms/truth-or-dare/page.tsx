@@ -24,6 +24,7 @@ import {
     RotateCcw,
     ArrowLeft,
 } from "lucide-react";
+import BrandLogo from "@/components/common/BrandLogo";
 
 // ---------- Pricing / constants (for display; server is source of truth) ----------
 const ENTRY_FEE = 10;
@@ -380,10 +381,7 @@ export default function TruthOrDareCreatorRoom() {
                     >
                         <ArrowLeft className="w-4 h-4" /> Back
                     </button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-pink-500 text-2xl font-semibold">PlayGround</span>
-                        <span className="text-blue-400 text-2xl font-extrabold">X</span>
-                    </div>
+                    <BrandLogo showBadge={false} />
                 </div>
 
                 <div className="flex items-center gap-3 text-pink-200 text-sm">
@@ -394,14 +392,7 @@ export default function TruthOrDareCreatorRoom() {
                     <span className="px-2 py-[2px] rounded-full text-[10px] border border-pink-400/40 text-pink-200">
                         {me.name}{isHost ? " (Host)" : ""}
                     </span>
-                    <button
-                        onClick={() => setIsLive((v) => !v)}
-                        className={`px-2 py-[2px] rounded-full text-[10px] border ${isLive ? "border-green-400/40 text-green-200" : "border-gray-600 text-gray-300"
-                            }`}
-                        title="Preview only"
-                    >
-                        {isLive ? "● LIVE" : "OFFLINE"}
-                    </button>
+
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ import {
     CameraOff,
     FlipHorizontal,
 } from "lucide-react";
+import BrandLogo from "@/components/common/BrandLogo";
 
 /**
  * PlayGroundX — Competitions Room (Creator Studio ONLY)
@@ -418,8 +419,7 @@ export default function CompetitionsCreatorStudio() {
             {/* Top bar */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-300/15">
                 <div className="flex items-center gap-2">
-                    <span className="text-pink-500 text-2xl font-semibold">PlayGround</span>
-                    <span className="text-blue-400 text-2xl font-extrabold">X</span>
+                    <BrandLogo showBadge={false} />
                     <span className="ml-3 text-[11px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
                         Creator Studio
                     </span>

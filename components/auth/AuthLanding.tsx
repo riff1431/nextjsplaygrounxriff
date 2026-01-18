@@ -16,25 +16,16 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
 
+import BrandLogo from "@/components/common/BrandLogo";
+
+// ... (keep imports)
+
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
 }
 
-function Logo() {
-    return (
-        <div className="flex items-center gap-3 select-none">
-            <div className="text-2xl leading-none">
-                <span className="pgx-logo">PlayGround</span>
-                <span className="pgx-logo-x">X</span>
-            </div>
-            <span className="ml-1 text-[10px] px-2 py-[2px] rounded-full border border-pink-500/40 text-pink-200 bg-black/40">
-                Alpha
-            </span>
-        </div>
-    );
-}
-
 const CollageTile = ({ label, tone, className }: { label: string; tone: "pink" | "cyan" | "violet" | "lime"; className?: string }) => {
+    // ...
     const toneBg =
         tone === "cyan"
             ? "from-cyan-400/25 via-black to-fuchsia-500/10"
@@ -257,21 +248,6 @@ export default function AuthLanding() {
           mix-blend-mode: screen;
           animation: smokeDrift 9s ease-in-out infinite;
         }
-        .pgx-logo {
-          font-family: cursive;
-          font-style: italic;
-          color: rgba(255,0,200,0.95);
-          text-shadow: 0 0 18px rgba(255,0,200,0.95), 0 0 56px rgba(255,0,200,0.55);
-          filter: saturate(1.7) contrast(1.15);
-        }
-        .pgx-logo-x {
-          font-family: cursive;
-          font-style: italic;
-          margin-left: 2px;
-          color: rgba(0,230,255,0.95);
-          text-shadow: 0 0 18px rgba(0,230,255,0.95), 0 0 56px rgba(0,230,255,0.55);
-          filter: saturate(1.7) contrast(1.15);
-        }
       `}</style>
 
             {/* Backdrop */}
@@ -309,7 +285,7 @@ export default function AuthLanding() {
                             <div className="neon-smoke" aria-hidden="true" />
 
                             <div className="relative">
-                                <Logo />
+                                <BrandLogo />
 
                                 <div className="mt-8 space-y-4">
                                     <h1 className="text-3xl font-semibold leading-tight text-gray-50">

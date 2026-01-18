@@ -16,6 +16,7 @@ import {
     CreditCard,
     ArrowLeft,
 } from "lucide-react";
+import BrandLogo from "@/components/common/BrandLogo";
 
 /**
  * PlayGroundX — Truth or Dare Room (Fan View)
@@ -97,10 +98,7 @@ export default function TruthOrDareRoom() {
                     >
                         <ArrowLeft className="w-4 h-4" /> Back
                     </button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-pink-500 text-2xl font-semibold">PlayGround</span>
-                        <span className="text-blue-400 text-2xl font-extrabold">X</span>
-                    </div>
+                    <BrandLogo showBadge={false} />
                 </div>
                 <div className="flex items-center gap-3 text-pink-300 text-sm">
                     <Crown className="w-4 h-4" /> Truth or Dare Room

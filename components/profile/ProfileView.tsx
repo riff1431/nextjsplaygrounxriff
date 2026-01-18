@@ -7,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard, { Post } from "@/components/posts/PostCard";
+import SubscriptionModal from "@/components/subscriptions/SubscriptionModal";
 
 export interface Profile {
     id: string;
@@ -24,6 +25,8 @@ export interface Profile {
     location?: string | null;
     created_at?: string | null;
     cover_url?: string | null;
+    subscription_price_weekly?: number | null;
+    subscription_price_monthly?: number | null;
 }
 
 export interface UnlockableItem {
@@ -57,9 +60,34 @@ interface ProfileViewProps {
 export default function ProfileView({ profile, isOwner, stats: initialStats, isFollowing: initialIsFollowing, currentUserId, unlocks, likedItems, posts, onPostCreated }: ProfileViewProps) {
     const [stats, setStats] = useState(initialStats);
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
     const router = useRouter();
+
+    useEffect(() => {
+        const checkSubscription = async () => {
+            if (!currentUserId || !profile.id) return;
+
+            const { data, error } = await supabase
+                .from('subscriptions')
+                .select('id')
+                .eq('user_id', currentUserId)
+                .eq('creator_id', profile.id)
+                .eq('status', 'active')
+                .gt('current_period_end', new Date().toISOString())
+                .maybeSingle();
+
+            if (error) {
+                console.error("Error checking subscription:", error);
+                return;
+            }
+
+            if (data) setIsSubscribed(true);
+        };
+        checkSubscription();
+    }, [currentUserId, profile.id]);
 
     // Calculate Dynamic Level
     const getLevelName = (followers: number) => {
@@ -120,9 +148,15 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     // Calculate "Unlocks" - using a mock or placeholder for now as per plan
     const unlocksCount = 85; // Placeholder value
 
-    const joinDate = profile.created_at
-        ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-        : "March 2025"; // Fallback to match design mock if null
+    const [joinDate, setJoinDate] = useState("Loading...");
+
+    useEffect(() => {
+        if (profile.created_at) {
+            setJoinDate(new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }));
+        } else {
+            setJoinDate("March 2025");
+        }
+    }, [profile.created_at]);
 
     return (
         <div className="min-h-screen bg-black text-white pb-20 font-sans">
@@ -222,17 +256,33 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                             ) : (
                                 <>
                                     <Button
-                                        onClick={handleFollowToggle}
+                                        onClick={() => {
+                                            if (isSubscribed) {
+                                                router.push('/account/subscription');
+                                            } else if ((profile.subscription_price_weekly || 0) > 0 || (profile.subscription_price_monthly || 0) > 0) {
+                                                setIsSubscriptionModalOpen(true);
+                                            } else {
+                                                handleFollowToggle();
+                                            }
+                                        }}
                                         disabled={loading}
-                                        className={`w-full md:w-auto rounded-full px-6 transition-all ${isFollowing
-                                            ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
-                                            : "bg-white text-black hover:bg-zinc-200 border border-transparent font-semibold"
+                                        className={`w-full md:w-auto rounded-full px-6 transition-all ${isSubscribed
+                                            ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.3)]"
+                                            : isFollowing
+                                                ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-white/10"
+                                                : "bg-white text-black hover:bg-zinc-200 border border-transparent font-semibold"
                                             }`}
                                     >
                                         {loading ? (
                                             <span className="animate-pulse">Loading...</span>
-                                        ) : isFollowing ? (
+                                        ) : isSubscribed ? (
+                                            <>
+                                                <Crown className="w-4 h-4 mr-2 fill-current" /> Subscribed
+                                            </>
+                                        ) : isFollowing && !((profile.subscription_price_weekly || 0) > 0 || (profile.subscription_price_monthly || 0) > 0) ? (
                                             "Following"
+                                        ) : (profile.subscription_price_weekly || 0) > 0 || (profile.subscription_price_monthly || 0) > 0 ? (
+                                            "Subscribe"
                                         ) : (
                                             "Follow"
                                         )}
@@ -247,6 +297,20 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                     </Button>
                                 </>
                             )}
+
+                            <SubscriptionModal
+                                isOpen={isSubscriptionModalOpen}
+                                onClose={() => setIsSubscriptionModalOpen(false)}
+                                creator={profile}
+                                currentUserId={currentUserId}
+                                onSuccess={() => {
+                                    setIsSubscribed(true);
+                                    if (!isFollowing) {
+                                        setIsFollowing(true);
+                                        setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
+                                    }
+                                }}
+                            />
 
                             <Button
                                 onClick={handleShare}
@@ -320,7 +384,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
 
                         {posts.length > 0 ? (
                             posts.map(post => (
-                                <PostCard key={post.id} post={post} user={profile} currentUserId={currentUserId} onPostDeleted={onPostCreated} />
+                                <PostCard key={post.id} post={post} user={profile} currentUserId={currentUserId} onPostDeleted={onPostCreated} isSubscribed={isSubscribed} />
                             ))
                         ) : (
                             <div className="flex flex-col items-center justify-center py-12 text-zinc-600">

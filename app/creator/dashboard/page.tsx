@@ -8,6 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
+import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -272,6 +273,9 @@ export default function CreatorDashboard() {
                         </button>
                     </div>
                 </div>
+
+                {/* Subscription Settings */}
+                <SubscriptionSettings user={user} />
 
                 {/* Recent History (Compacted) */}
                 <div>

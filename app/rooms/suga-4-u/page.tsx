@@ -14,6 +14,7 @@ import {
   Flame,
   Gift,
 } from "lucide-react";
+import BrandLogo from "@/components/common/BrandLogo";
 
 /**
  * PlayGroundX — Suga4U Room (PREVIEW MOCKUP)
@@ -479,10 +480,7 @@ export default function Suga4URoom() {
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20">
-        <div className="flex items-center gap-2">
-          <span className="text-pink-500 text-2xl font-semibold">PlayGround</span>
-          <span className="text-blue-400 text-2xl font-extrabold">X</span>
-        </div>
+        <BrandLogo showBadge={false} />
 
         <div className="text-pink-300 text-sm flex items-center gap-2">
           <Crown className="w-4 h-4" /> Suga4U Room

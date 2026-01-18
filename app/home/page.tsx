@@ -31,8 +31,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import CreatePostModal from "@/components/posts/CreatePostModal";
+import PostCard from "@/components/posts/PostCard";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
+import BrandLogo from "@/components/common/BrandLogo";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -107,14 +109,7 @@ const CREATORS: CreatorCard[] = [
 function Logo({ onClick }: { onClick?: () => void }) {
     return (
         <button onClick={onClick} className="flex items-center gap-2 select-none text-left" title="Back to Home">
-            <img
-                src="/logo.png"
-                alt="PlayGroundX"
-                className="h-8 w-auto drop-shadow-[0_0_35px_rgba(255,0,200,0.9)]"
-            />
-            <span className="ml-2 text-[10px] px-2 py-[2px] rounded-full border border-pink-500/40 text-pink-300 neon-deep">
-                Preview
-            </span>
+            <BrandLogo showBadge={false} />
         </button>
     );
 }
@@ -415,6 +410,7 @@ function HomeScreen({
     rooms, // Received from parent
     posts, // New prop
     userId,
+    subscribedCreatorIds,
 }: {
     onEnterSuga4U: () => void;
     query: string;
@@ -422,6 +418,7 @@ function HomeScreen({
     rooms: any[];
     posts: Post[];
     userId?: string;
+    subscribedCreatorIds: Set<string>;
 }) {
     const router = useRouter();
     const [activeCat, setActiveCat] = useState("all");
@@ -656,95 +653,15 @@ function HomeScreen({
                 <NeonCard className="p-4 lg:col-span-4">
                     <div className="text-pink-200 text-sm mb-3">Creator Feed</div>
                     <div className="space-y-4">
-                        {posts.map((post) => {
-                            const isVideo = post.content_type === 'video';
-                            const authorName = post.profiles?.username || "Unknown Creator";
-                            const isFlashDrop = post.tags?.includes("Flash Drop") || false;
-                            const isSuga4U = post.tags?.includes("Suga 4 U") || false;
-
-                            return (
-                                <div key={post.id} className="rounded-2xl border border-pink-500/15 bg-black/40 p-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-xs text-gray-300">@{authorName}</div>
-                                        <span
-                                            className={cx(
-                                                "text-[10px] px-2 py-[2px] rounded-full border",
-                                                isVideo ? "border-blue-500/25 text-blue-200" : "border-pink-500/20 text-pink-200"
-                                            )}
-                                        >
-                                            {isVideo ? "Video" : "Photo"}
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-1 text-sm text-gray-100">
-                                        {post.caption || (isVideo ? "New clip just dropped. Unlock to watch." : "New pics tonight. VIP gets first look.")}
-                                    </div>
-
-                                    <div
-                                        onClick={() => router.push(`/profile/${post.user_id}`)}
-                                        className="mt-3 rounded-2xl overflow-hidden border border-white/10 bg-black/30 cursor-pointer group hover:border-pink-500/40 transition-colors"
-                                    >
-                                        <div className="relative aspect-video bg-gradient-to-b from-pink-500/15 via-black to-blue-500/10 flex items-center justify-center">
-                                            {/* Dynamic Content Image */}
-                                            {(post.media_url || post.thumbnail_url) && (
-                                                <img
-                                                    src={post.media_url || post.thumbnail_url || ""}
-                                                    alt="Post content"
-                                                    className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                                />
-                                            )}
-
-                                            {/* Overlay for icon if valid image provided, or keep generic if not? 
-                                                If we have an image, maybe we don't need the icon as much, but 'Photo preview' logic 
-                                                was essentially placeholder. Let's keep the icon overlay but maybe subtler if image exists.
-                                                actually, user wants "work as dynamic". 
-                                                If image exists, we show image. The 'Tap to view' badge is still good.
-                                                The big centered Icon might obscure the image. Let's make it conditional/overlay.
-                                            */}
-                                            {!(post.media_url || post.thumbnail_url) && (
-                                                isVideo ? (
-                                                    <div className="flex items-center gap-2 text-blue-200">
-                                                        <Video className="w-5 h-5" />
-                                                        <span className="text-sm">Video preview</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center gap-2 text-pink-200">
-                                                        <ImageIcon className="w-5 h-5" />
-                                                        <span className="text-sm">Photo preview</span>
-                                                    </div>
-                                                )
-                                            )}
-
-                                            <span className="absolute top-2 left-2 text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40 backdrop-blur-md">
-                                                {isVideo ? "Tap to unlock" : "Tap to view"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 flex items-center gap-2">
-                                        {isFlashDrop && (
-                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200">
-                                                Flash Drop
-                                            </span>
-                                        )}
-                                        {isSuga4U && (
-                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200">
-                                                Suga 4 U
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-3 flex gap-2">
-                                        <NeonButton variant="ghost" className="flex-1 justify-center">
-                                            Like
-                                        </NeonButton>
-                                        <NeonButton variant="pink" className="flex-1 justify-center">
-                                            Unlock
-                                        </NeonButton>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {posts.map((post) => (
+                            <PostCard
+                                key={post.id}
+                                post={post as any}
+                                user={post.profiles as any}
+                                currentUserId={userId || null}
+                                isSubscribed={post.user_id ? subscribedCreatorIds.has(post.user_id) : false}
+                            />
+                        ))}
                         {posts.length === 0 && (
                             <div className="text-center py-6 text-gray-500 text-sm">
                                 No recent updates.
@@ -766,6 +683,7 @@ export default function Home() {
     const [posts, setPosts] = useState<Post[]>([]);
 
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null } | null>(null);
+    const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
     // Fetch active rooms and posts
@@ -841,23 +759,36 @@ export default function Home() {
         };
     }, []);
 
-    // Fetch current user profile
+    // Fetch current user profile and subscriptions
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchUserData = async () => {
             if (!user) return;
             try {
-                const { data, error } = await supabase
+                // Profile
+                const { data: profileData } = await supabase
                     .from('profiles')
                     .select('username, full_name, avatar_url')
                     .eq('id', user.id)
                     .single();
 
-                if (data) setCurrentProfile(data);
+                if (profileData) setCurrentProfile(profileData);
+
+                // Subscriptions
+                const { data: subData } = await supabase
+                    .from('subscriptions')
+                    .select('creator_id')
+                    .eq('user_id', user.id)
+                    .eq('status', 'active')
+                    .gt('current_period_end', new Date().toISOString());
+
+                if (subData) {
+                    setSubscribedCreatorIds(new Set(subData.map(s => s.creator_id)));
+                }
             } catch (err) {
-                console.error("Error fetching profile:", err);
+                console.error("Error fetching user data:", err);
             }
         };
-        fetchProfile();
+        fetchUserData();
     }, [user]);
 
     const [homeQuery, setHomeQuery] = useState("");
@@ -1193,6 +1124,7 @@ export default function Home() {
                 rooms={rooms}
                 posts={posts}
                 userId={user?.id}
+                subscribedCreatorIds={subscribedCreatorIds}
             />
         </div>
     );

@@ -20,6 +20,7 @@ import {
     DollarSign,
     ArrowLeft,
 } from "lucide-react";
+import BrandLogo from "@/components/common/BrandLogo";
 
 // ---------- Pricing / constants (for display; server is source of truth) ----------
 const GOAL_TARGET = 100;
@@ -347,10 +348,7 @@ export default function CreatorSuga4URoom() {
                     >
                         <ArrowLeft className="w-4 h-4" /> Back
                     </button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-pink-500 text-2xl font-semibold">PlayGround</span>
-                        <span className="text-blue-400 text-2xl font-extrabold">X</span>
-                    </div>
+                    <BrandLogo showBadge={false} />
                 </div>
 
                 <div className="text-pink-200 text-sm flex items-center gap-3">
@@ -362,14 +360,7 @@ export default function CreatorSuga4URoom() {
                         {me?.name}
                     </span>
 
-                    <button
-                        onClick={() => setIsLive((v) => !v)}
-                        className={`px-2 py-[2px] rounded-full text-[10px] border ${isLive ? "border-green-400/40 text-green-200" : "border-gray-600 text-gray-300"
-                            }`}
-                        title="Toggle live state (preview only)"
-                    >
-                        {isLive ? "● LIVE" : "OFFLINE"}
-                    </button>
+
 
                     <span className="px-2 py-[2px] rounded-full text-[10px] border border-pink-500/30 text-pink-200 inline-flex items-center gap-2">
                         <Timer className="w-3 h-3" /> Live {formatMMSS(secondsLive)}

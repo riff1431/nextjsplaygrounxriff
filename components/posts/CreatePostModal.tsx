@@ -17,6 +17,8 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
     const [caption, setCaption] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isPaid, setIsPaid] = useState(false);
+    const [price, setPrice] = useState("");
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const supabase = createClient();
@@ -99,7 +101,9 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
                     user_id: currentUserId,
                     content_type: contentType,
                     caption: caption,
-                    media_url: mediaUrl
+                    media_url: mediaUrl,
+                    is_paid: isPaid,
+                    price: isPaid && price ? parseFloat(price) : 0
                 });
 
             if (insertError) throw insertError;
@@ -111,6 +115,8 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
             setCaption("");
             clearFile();
             setActiveTab("text");
+            setIsPaid(false);
+            setPrice("");
 
             onPostCreated(); // Refresh feed
 
@@ -150,6 +156,33 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
                             value={caption}
                             onChange={(e) => setCaption(e.target.value)}
                         />
+
+                        <div className="flex items-center gap-4 bg-zinc-950/50 p-3 rounded-xl border border-zinc-800">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isPaid"
+                                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-pink-500 focus:ring-pink-500"
+                                    checked={isPaid}
+                                    onChange={(e) => setIsPaid(e.target.checked)}
+                                />
+                                <label htmlFor="isPaid" className="text-sm font-medium text-zinc-300">Paid Post</label>
+                            </div>
+
+                            {isPaid && (
+                                <div className="flex items-center gap-2 flex-1">
+                                    <span className="text-sm text-zinc-500">$</span>
+                                    <input
+                                        type="number"
+                                        placeholder="Price"
+                                        className="bg-transparent border-b border-zinc-700 focus:border-pink-500 outline-none text-sm w-full py-1"
+                                        value={price}
+                                        onChange={(e) => setPrice(e.target.value)}
+                                        min="1"
+                                    />
+                                </div>
+                            )}
+                        </div>
 
                         {activeTab !== 'text' && (
                             <div className="border-2 border-dashed border-zinc-700 rounded-xl p-4 flex flex-col items-center justify-center min-h-[150px] relative bg-zinc-950/50">
