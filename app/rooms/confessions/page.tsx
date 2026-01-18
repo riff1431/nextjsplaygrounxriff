@@ -126,10 +126,7 @@ export default function ConfessionsRoomPreview() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-3 py-2">
-                            <div className="text-[10px] text-rose-200">Spent (preview)</div>
-                            <div className="text-sm text-rose-100 font-semibold">${walletSpent}</div>
-                        </div>
+
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

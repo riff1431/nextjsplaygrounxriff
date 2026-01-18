@@ -80,26 +80,20 @@ export default function BarLoungeRoomPreview() {
     const onBack = () => window.history.back();
 
     const ENTRY_FEE = 10;
-    const FREE_MINS = 10;
-    const PER_MIN = 2;
+    const ENTRY_FEE = 10;
+
 
     // Billing model: NO charge until the fan interacts (send message / react / buy drink / VIP / spin)
     const [billingActive, setBillingActive] = useState(false);
-    const [minsInRoom, setMinsInRoom] = useState(0);
     const [chat, setChat] = useState("");
 
     // We intentionally do NOT display “total spent” to avoid anchoring/limiting spend.
     // Still used internally for effects + preview behaviors.
     const [spentHidden, setSpentHidden] = useState(32);
 
-    const billableMins = Math.max(0, minsInRoom - FREE_MINS);
-    const shownBillableMins = billingActive ? billableMins : 0;
-    const runningCharge = (billingActive ? ENTRY_FEE : 0) + (billingActive ? shownBillableMins * PER_MIN : 0);
-
     const activateBilling = () => {
         if (!billingActive) {
             setBillingActive(true);
-            if (minsInRoom === 0) setMinsInRoom(1);
         }
     };
 
@@ -223,7 +217,7 @@ export default function BarLoungeRoomPreview() {
         { id: "o1", label: "Pinned Message (1 min)", odds: 30, note: "Your next message pins above chat." },
         { id: "o2", label: "Priority Cam (2 min)", odds: 20, note: "Your badge glows; creator sees you first." },
         { id: "o3", label: "VIP Booth Discount $50", odds: 12, note: "Applies to VIP Booth unlock." },
-        { id: "o4", label: "Free +2 Minutes", odds: 18, note: "Adds 2 minutes of free time." },
+
         { id: "o5", label: "Creator Dares You", odds: 10, note: "Unlocks a spicy prompt." },
         { id: "o6", label: "Try Again", odds: 10, note: "No perk, but you get a hype shoutout." },
     ];
@@ -370,7 +364,7 @@ export default function BarLoungeRoomPreview() {
 
                         <div className="rounded-2xl border border-yellow-400/30 bg-yellow-500/10 px-3 py-2 vip-glow">
                             <div className="text-[10px] text-yellow-200">Pricing</div>
-                            <div className="text-sm text-yellow-100 font-semibold">Entry ${ENTRY_FEE} • Free {FREE_MINS}m • ${PER_MIN}/m</div>
+                            <div className="text-sm text-yellow-100 font-semibold">Entry ${ENTRY_FEE}</div>
                         </div>
                     </div>
                 </div>
@@ -394,39 +388,12 @@ export default function BarLoungeRoomPreview() {
                                     @PinkVibe • Star
                                 </div>
                                 <div className="absolute bottom-3 right-3 text-xs text-yellow-200 bg-black/45 border border-yellow-400/30 rounded-full px-3 py-1 vip-glow">
-                                    {billingActive ? `Current: $${runningCharge}` : "Interact to start billing"}
+                                    {billingActive ? `Active` : "Interact to start billing"}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-4 rounded-2xl border border-violet-300/15 bg-black/30 p-3">
-                            <div className="text-[11px] text-gray-400">Minutes since interaction (preview)</div>
-                            <div className="mt-1 flex items-center justify-between gap-4">
-                                <div className="text-sm text-gray-100">
-                                    <span className="text-gray-300">Billable:</span> {shownBillableMins} • <span className="text-gray-300">Current:</span> <span className="text-yellow-200">${runningCharge}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        className="px-2 py-1 rounded-lg border border-white/10 bg-black/30 text-xs hover:bg-white/5"
-                                        onClick={() => setMinsInRoom((m) => Math.max(0, m - 1))}
-                                        disabled={!billingActive}
-                                        title={!billingActive ? "Billing starts after first interaction" : ""}
-                                    >
-                                        −
-                                    </button>
-                                    <div className="text-sm text-gray-100 w-10 text-center">{minsInRoom}</div>
-                                    <button
-                                        className="px-2 py-1 rounded-lg border border-white/10 bg-black/30 text-xs hover:bg-white/5"
-                                        onClick={() => setMinsInRoom((m) => m + 1)}
-                                        disabled={!billingActive}
-                                        title={!billingActive ? "Billing starts after first interaction" : ""}
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="mt-2 text-[11px] text-gray-400">Billing begins only after you message, react, buy a drink, spin, or unlock VIP.</div>
-                        </div>
+
 
                         {/* DRINKS (first) */}
                         <div className="mt-5">
@@ -627,9 +594,8 @@ export default function BarLoungeRoomPreview() {
                             </div>
 
                             <div className="mt-4 rounded-2xl border border-violet-300/15 bg-black/35 p-3">
-                                <div className="text-[11px] text-gray-400">Billing rules</div>
                                 <div className="mt-1 text-sm text-gray-100">
-                                    Entry: <span className="text-violet-200">${ENTRY_FEE}</span> • First {FREE_MINS} min free • Then ${PER_MIN}/min
+                                    Entry: <span className="text-violet-200">${ENTRY_FEE}</span>
                                 </div>
                                 <div className="mt-2 text-[11px] text-gray-300">Charges start only after your first interaction.</div>
                                 <div className="mt-1 text-[11px] text-gray-300">Drinks, spin, reactions, and VIP are separate add-ons.</div>
@@ -637,7 +603,7 @@ export default function BarLoungeRoomPreview() {
                         </NeonCard>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

@@ -188,10 +188,7 @@ export default function FlashDropsRoomPreview() {
                                     {creator.handle} <span className="text-[11px] text-blue-200">• {creator.level}</span>
                                 </div>
                             </div>
-                            <div className="rounded-2xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2">
-                                <div className="text-[10px] text-gray-400">Wallet (preview)</div>
-                                <div className="text-sm text-emerald-100 font-semibold">Spent: ${walletSpent}</div>
-                            </div>
+
                         </div>
                     </div>
 

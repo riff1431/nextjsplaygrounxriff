@@ -20,7 +20,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 
 /**
  * PlayGroundX — Truth or Dare Room (Fan View)
- * Entry: $10 (first 10 mins free, then $2/min)
+ * Entry: $10
  * 4 Creators, 10 Fans max on camera.
  */
 
@@ -42,8 +42,7 @@ const CROWD_TIER_FEES: Record<TierId, number> = {
 const CROWD_TV_FEES = { truth: 5, dare: 10 } as const;
 
 const ENTRY_FEE = 10;
-const FREE_MINUTES = 10;
-const PER_MIN_FEE = 2;
+
 
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n));
@@ -65,12 +64,8 @@ export default function TruthOrDareRoom() {
     const [replayAvailable, setReplayAvailable] = useState(false);
     const [topFan] = useState("TopSuga");
 
-    const [creatorCount, setCreatorCount] = useState(4);
-    const [fanCount, setFanCount] = useState(2);
-
-    const [minutesInRoom, setMinutesInRoom] = useState(0);
-    const billableMinutes = Math.max(0, minutesInRoom - FREE_MINUTES);
-    const roomTimeCost = billableMinutes * PER_MIN_FEE;
+    const [creatorCount] = useState(4);
+    const [fanCount] = useState(2);
 
     const truthWins = useMemo(() => votes.truth >= votes.dare, [votes]);
 
@@ -103,7 +98,7 @@ export default function TruthOrDareRoom() {
                 <div className="flex items-center gap-3 text-pink-300 text-sm">
                     <Crown className="w-4 h-4" /> Truth or Dare Room
                     <span className="hidden sm:inline text-[10px] text-gray-400">
-                        Entry ${ENTRY_FEE} · First {FREE_MINUTES} min free · Then ${PER_MIN_FEE}/min
+                        Entry ${ENTRY_FEE}
                     </span>
                 </div>
             </div>
@@ -148,78 +143,76 @@ export default function TruthOrDareRoom() {
                 </div>
 
                 <aside className="rounded-2xl border border-pink-500/30 bg-gray-950 p-4 space-y-5">
-                    <div className="rounded-xl border border-pink-500/20 bg-black/40 p-3">
-                        <div className="text-xs text-pink-300">Room Billing</div>
-                        <div className="mt-1 text-[11px] text-gray-300">
-                            Entry fee: <span className="text-white">${ENTRY_FEE}</span>
-                            <br />
-                            Time: <span className="text-white">{minutesInRoom} min</span> (first {FREE_MINUTES} free)
-                            <br />
-                            Current time cost: <span className="text-white">${roomTimeCost}</span>
+                    <div className="rounded-xl border border-pink-500/20 bg-black/40 p-3 mb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-bold text-pink-200">
+                            <CrownIcon className="w-5 h-5 text-yellow-400" />
+                            Dare King
                         </div>
-                        <button
-                            onClick={() => setMinutesInRoom((m) => m + 1)}
-                            className="mt-2 w-full rounded-lg border border-pink-500/30 py-1 text-xs hover:bg-pink-600/10 flex items-center justify-center gap-1"
-                        >
-                            <Timer className="w-3 h-3" /> Simulate +1 minute
-                        </button>
-                        <div className="mt-1 text-[10px] text-gray-500">In production this runs automatically.</div>
+                        <div className="text-sm font-bold bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent">
+                            {topFan}
+                        </div>
                     </div>
+                    {/* Room Billing and Screens removed for Fan View */}
+                    {/* Controls are now Creator-side or automated */}
 
                     <div>
-                        <h3 className="text-pink-300 mb-2">Room Screens</h3>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <button
-                                onClick={() => setCreatorCount((c) => clamp(c - 1, 1, 4))}
-                                className="rounded border border-pink-500/30 py-1 hover:bg-pink-600/10"
-                            >
-                                − Creator
-                            </button>
-                            <button
-                                onClick={() => setCreatorCount((c) => clamp(c + 1, 1, 4))}
-                                className="rounded border border-pink-500/30 py-1 hover:bg-pink-600/10"
-                            >
-                                + Creator
-                            </button>
-                            <button
-                                onClick={() => setFanCount((f) => clamp(f - 1, 0, 10))}
-                                className="rounded border border-blue-400/30 py-1 hover:bg-blue-600/10"
-                            >
-                                − Fan
-                            </button>
-                            <button
-                                onClick={() => setFanCount((f) => clamp(f + 1, 0, 10))}
-                                className="rounded border border-blue-400/30 py-1 hover:bg-blue-600/10"
-                            >
-                                + Fan
-                            </button>
-                        </div>
-                        <div className="mt-1 text-[10px] text-gray-400">Creators 1–4 · Fans 0–10</div>
-                    </div>
+                        <h3 className="text-pink-300 mb-2">Choose a Prompt</h3>
 
-                    <div>
-                        <h3 className="text-pink-300 mb-2">Choose a Tier (Auto Prompt)</h3>
-                        <div className="space-y-2">
-                            {TIERS.map((t) => (
-                                <button
-                                    key={t.id}
-                                    onClick={() => {
-                                        setSelectedTier(t.id);
-                                        setCustomType(null);
-                                    }}
-                                    className={`w-full rounded-xl border p-3 text-left hover:bg-pink-600/10 ${selectedTier === t.id && !customType ? "border-pink-500/80" : "border-pink-500/40"
-                                        }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm">{t.label}</span>
-                                        <span className="text-sm">${t.price}</span>
-                                    </div>
-                                    <div className="text-xs text-pink-300">{t.desc}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            {/* Column 1: Truths */}
+                            <div className="space-y-2">
+                                <div className="text-xs text-blue-300 font-semibold mb-1 text-center">System Truths</div>
+                                {TIERS.map((t) => (
+                                    <button
+                                        key={`truth-${t.id}`}
+                                        onClick={() => {
+                                            setSelectedTier(t.id);
+                                            setCustomType(null); // It's a system prompt
+                                            setLastAction(`Purchased ${t.label} Truth`);
+                                            // In real app: trigger purchase({ tier: t.id, type: 'truth' })
+                                        }}
+                                        className="w-full rounded-xl border border-blue-500/30 p-2 text-left hover:bg-blue-600/10 transition"
+                                    >
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-white">{t.label}</span>
+                                                <span className="text-xs text-blue-200">${t.price}</span>
+                                            </div>
+                                            <div className="text-[10px] text-gray-400 truncate">{t.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Column 2: Dares */}
+                            <div className="space-y-2">
+                                <div className="text-xs text-pink-300 font-semibold mb-1 text-center">System Dares</div>
+                                {TIERS.map((t) => (
+                                    <button
+                                        key={`dare-${t.id}`}
+                                        onClick={() => {
+                                            setSelectedTier(t.id);
+                                            setCustomType(null);
+                                            setLastAction(`Purchased ${t.label} Dare`);
+                                            // In real app: trigger purchase({ tier: t.id, type: 'dare' })
+                                        }}
+                                        className="w-full rounded-xl border border-pink-500/30 p-2 text-left hover:bg-pink-600/10 transition"
+                                    >
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold text-white">{t.label}</span>
+                                                <span className="text-xs text-pink-200">${t.price}</span>
+                                            </div>
+                                            <div className="text-[10px] text-gray-400 truncate">{t.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
-                            <Zap className="w-3 h-3" /> Selecting Gold again serves a new Gold prompt.
+
+                        <div className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-gray-400 flex items-center gap-1 justify-center">
+                            <Zap className="w-3 h-3 text-yellow-500" />
+                            <span>Creator-defined list (or system defaults)</span>
                         </div>
                     </div>
 
@@ -347,12 +340,10 @@ export default function TruthOrDareRoom() {
                         </div>
 
                         <button className="w-full rounded-xl border border-pink-500/40 py-2 text-sm flex items-center justify-center gap-1 hover:bg-pink-600/10 mb-2">
-                            <Timer className="w-4 h-4" /> +30s Dare ($5)
+                            <Timer className="w-4 h-4" /> Dare ($5)
                         </button>
 
-                        <div className="text-xs text-pink-300 flex items-center gap-1 mb-2">
-                            <CrownIcon className="w-4 h-4" /> Dare King: {topFan}
-                        </div>
+
 
                         <div className="text-xs text-gray-400 mb-2">
                             Creators may decline any prompt. A same-tier replacement is auto-served.
@@ -372,7 +363,7 @@ export default function TruthOrDareRoom() {
                             <Users className="w-3 h-3" /> Up to 4 creators & 10 fans
                         </p>
                         <p className="flex items-center gap-1">
-                            <DollarSign className="w-3 h-3" /> Fan entry ${ENTRY_FEE} · First {FREE_MINUTES} min free · Then ${PER_MIN_FEE}/min
+                            <DollarSign className="w-3 h-3" /> Fan entry ${ENTRY_FEE}
                         </p>
                         <p className="flex items-center gap-1">
                             <Star className="w-3 h-3" /> Tips split 90/10 (creator/platform)
@@ -380,6 +371,6 @@ export default function TruthOrDareRoom() {
                     </div>
                 </aside>
             </main>
-        </div>
+        </div >
     );
 }

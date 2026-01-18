@@ -40,8 +40,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 
 // ---- Config (Suga4U monetization rules) ------------------------------------
 const ENTRY_FEE = 10;
-const PAY_TO_STAY_FREE_SECONDS = 10 * 60;
-const PAY_TO_STAY_RATE_PER_MIN = 2;
+
 
 const GIFTS = [
   { label: "💖 Kiss", amount: 5 },
@@ -298,9 +297,6 @@ function useDevSanityTests() {
     console.assert(clamp(99, 0, 10) === 10, "clamp upper bound failed");
     console.assert(clamp(3, 0, 10) === 3, "clamp passthrough failed");
 
-    console.assert(formatMMSS(0) === "00:00", "formatMMSS(0) failed");
-    console.assert(formatMMSS(61) === "01:01", "formatMMSS(61) failed");
-
     console.assert(isEntryRequired("VIP") === false, "VIP should not require entry");
     console.assert(isEntryRequired("Gold") === true, "Non-VIP should require entry");
 
@@ -320,10 +316,9 @@ export default function Suga4URoom() {
   const [selectedBadgeTier] = useState<BadgeTier>("Gold");
 
   // Entry + time
+  // Entry + time
   const [hasPaidEntry, setHasPaidEntry] = useState<boolean>(false);
-  const [secondsInRoom, setSecondsInRoom] = useState(0);
-  const [paidMinutes, setPaidMinutes] = useState(0);
-  const timerRef = useRef<number | null>(null);
+
 
   // Chat + reactions
   const [chat, setChat] = useState<string[]>(["Welcome to Suga4U 💖"]);
@@ -368,12 +363,7 @@ export default function Suga4URoom() {
   const goalPct = useMemo(() => Math.min((totalSuga / 100) * 100, 100), [totalSuga]);
   const fanBadgeLabel = `${selectedBadgeTier}${selectedBadgeTier === "VIP" ? " VIP" : ""}`;
 
-  // Derived pay-to-stay state
-  const freeRemaining = Math.max(0, PAY_TO_STAY_FREE_SECONDS - secondsInRoom);
-  const inPaidZone = secondsInRoom >= PAY_TO_STAY_FREE_SECONDS;
-  const paidSecondsRemaining =
-    paidMinutes * 60 - Math.max(0, secondsInRoom - PAY_TO_STAY_FREE_SECONDS);
-  const payToStayNeeded = hasPaidEntry && inPaidZone && paidSecondsRemaining <= 0;
+
 
   function pushChat(msg: string) {
     setChat((c) => [...c, msg]);
@@ -445,22 +435,10 @@ export default function Suga4URoom() {
     setRequestText("");
   }
 
-  function payToStayOneMinute() {
-    setPaidMinutes((m) => m + 1);
-    addToSuga(PAY_TO_STAY_RATE_PER_MIN, "⏱️ Pay-to-stay +1 min");
-  }
+
 
   // Timers
-  useEffect(() => {
-    if (timerRef.current) window.clearInterval(timerRef.current);
-    timerRef.current = window.setInterval(() => {
-      setSecondsInRoom((s) => s + 1);
-    }, 1000);
 
-    return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -507,28 +485,12 @@ export default function Suga4URoom() {
           </span>
 
           {/* Pay-to-stay status (no pricing shown) */}
-          <span className="ml-2 px-2 py-[2px] rounded-full text-[10px] border border-pink-500/30 text-pink-200 inline-flex items-center gap-1">
-            <Timer className="w-3 h-3" />
-            {freeRemaining > 0
-              ? `Free ${formatMMSS(freeRemaining)}`
-              : `Time ${formatMMSS(Math.max(0, paidSecondsRemaining))}`}
-          </span>
+
         </div>
       </div>
 
       <main className="p-8 grid grid-cols-1 md:grid-cols-4 gap-6 max-w-7xl mx-auto">
-        {/* Entry CTA (non-VIP only, no education) */}
-        {!hasPaidEntry && isEntryRequired(selectedBadgeTier) && (
-          <div className="md:col-span-4 mb-4 rounded-2xl border border-pink-500/40 bg-black/60 p-4 flex items-center justify-between">
-            <div className="text-pink-200 text-sm">Enter Suga4U</div>
-            <button
-              onClick={payEntryFee}
-              className="bg-pink-600 px-4 py-2 rounded-xl hover:bg-pink-700 text-sm"
-            >
-              Enter $10
-            </button>
-          </div>
-        )}
+
 
         {/* LEFT: Creator Spotlight */}
         <div className="md:col-span-2 flex flex-col gap-4">
@@ -736,22 +698,7 @@ export default function Suga4URoom() {
         {/* RIGHT: Monetization */}
         <aside className="rounded-2xl border border-pink-500/30 bg-gray-950 p-4 space-y-4">
           {/* Pay-to-stay control (action-only) */}
-          {payToStayNeeded && (
-            <div className="rounded-xl border border-pink-500/25 bg-black/40 p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-pink-200 flex items-center gap-2">
-                  <Timer className="w-4 h-4" /> Time Expired
-                </div>
-                <div className="text-[10px] text-gray-400">Add time to stay</div>
-              </div>
-              <button
-                onClick={payToStayOneMinute}
-                className="mt-3 w-full bg-pink-600 py-2 rounded-xl hover:bg-pink-700 text-sm"
-              >
-                Pay to Stay +1 min
-              </button>
-            </div>
-          )}
+
 
           {/* Paid Request Menu */}
           <div className="rounded-xl border border-blue-500/20 bg-black/40 p-3">
@@ -832,27 +779,7 @@ export default function Suga4URoom() {
         </aside>
       </main>
 
-      {/* Bottom subtle timer bar (experience-first; no pricing) */}
-      <div className="max-w-7xl mx-auto px-8 pb-10">
-        <div className="rounded-2xl border border-pink-500/15 bg-gray-950/60 p-3 text-[11px] text-gray-400 flex items-center justify-between">
-          <span className="inline-flex items-center gap-2">
-            <Timer className="w-4 h-4 text-pink-300" /> Session time: {formatMMSS(secondsInRoom)}
-          </span>
-          <span className="inline-flex items-center gap-2">
-            {freeRemaining > 0 ? (
-              <>
-                <span className="text-pink-200">Free time remaining</span>
-                <span className="text-gray-200">{formatMMSS(freeRemaining)}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-pink-200">Paid time remaining</span>
-                <span className="text-gray-200">{formatMMSS(Math.max(0, paidSecondsRemaining))}</span>
-              </>
-            )}
-          </span>
-        </div>
-      </div>
+
     </div>
   );
 }
