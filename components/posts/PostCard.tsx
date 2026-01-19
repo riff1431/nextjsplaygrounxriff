@@ -1,6 +1,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Share2, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark } from "lucide-react";
 import { Profile } from "@/components/profile/ProfileView";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -141,6 +141,53 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
         const url = `${window.location.origin}/post/${post.id}`; // Assuming we'll have single post view
         navigator.clipboard.writeText(url);
         toast.success("Link copied to clipboard");
+    };
+
+    const [bookmarked, setBookmarked] = useState(false);
+
+    useEffect(() => {
+        const checkBookmark = async () => {
+            if (!currentUserId) return;
+            const { data } = await supabase
+                .from('post_bookmarks')
+                .select('id')
+                .eq('post_id', post.id)
+                .eq('user_id', currentUserId)
+                .single();
+            if (data) setBookmarked(true);
+        };
+        checkBookmark();
+    }, [post.id, currentUserId]);
+
+    const handleBookmark = async () => {
+        if (!currentUserId) {
+            toast.error("Please log in to save posts");
+            return;
+        }
+
+        const newBookmarked = !bookmarked;
+        setBookmarked(newBookmarked); // Optimistic
+
+        try {
+            if (newBookmarked) {
+                const { error } = await supabase
+                    .from('post_bookmarks')
+                    .insert({ post_id: post.id, user_id: currentUserId });
+                if (error) throw error;
+                toast.success("Saved to collections");
+            } else {
+                const { error } = await supabase
+                    .from('post_bookmarks')
+                    .delete()
+                    .eq('post_id', post.id)
+                    .eq('user_id', currentUserId);
+                if (error) throw error;
+            }
+        } catch (err) {
+            console.error("Error bookmarking:", err);
+            setBookmarked(!newBookmarked); // Revert
+            toast.error("Failed to update bookmark");
+        }
     };
 
     const handleUnlock = () => {
@@ -305,6 +352,13 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
 
                 <button onClick={handleShare} className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors ml-auto">
                     <Share2 className="w-5 h-5" />
+                </button>
+
+                <button
+                    onClick={handleBookmark}
+                    className={`flex items-center gap-2 transition-colors ${bookmarked ? "text-yellow-400" : "text-zinc-400 hover:text-yellow-400"}`}
+                >
+                    <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-current" : ""}`} />
                 </button>
             </div>
         </div>

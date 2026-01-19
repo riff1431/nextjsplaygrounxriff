@@ -1,9 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Users, Crown, ChevronRight, Zap, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Users, Crown, ChevronRight, Zap, Loader2, MoreHorizontal, Ban } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -32,6 +40,7 @@ type Subscription = {
     creator: {
         full_name: string;
         avatar_url: string;
+        username: string;
     };
 };
 
@@ -72,7 +81,8 @@ export default function SubscriptionsPage() {
                         tier,
                         creator:profiles!creator_id (
                             full_name,
-                            avatar_url
+                            avatar_url,
+                            username
                         )
                     `)
                     .eq("user_id", user.id);
@@ -97,8 +107,28 @@ export default function SubscriptionsPage() {
         return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     };
 
-    const handleManage = (subId: string) => {
-        alert("Manage subscription feature coming soon!");
+    const router = useRouter();
+
+    const handleCancel = async (subId: string) => {
+        if (!confirm("Are you sure you want to cancel this subscription? You will lose access at the end of the billing period.")) return;
+
+        try {
+            const { error } = await supabase
+                .from("subscriptions")
+                .update({ status: 'cancelled' })
+                .eq("id", subId);
+
+            if (error) throw error;
+
+            toast.success("Subscription cancelled");
+            // Refresh list
+            setSubscriptions(prev => prev.map(sub =>
+                sub.id === subId ? { ...sub, status: 'cancelled' } : sub
+            ));
+        } catch (err) {
+            console.error("Error cancelling:", err);
+            toast.error("Failed to cancel subscription");
+        }
     };
 
     return (
@@ -142,6 +172,7 @@ export default function SubscriptionsPage() {
                             const creatorName = sub.creator?.full_name || "Unknown Creator";
                             const avatar = sub.creator?.avatar_url || "";
                             const initial = creatorName[0] || "?";
+                            const isCancelled = sub.status === 'cancelled';
 
                             return (
                                 <NeonCard key={sub.id} className="p-4 flex items-center justify-between group hover:border-white/30 transition">
@@ -159,18 +190,43 @@ export default function SubscriptionsPage() {
                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full border border-${color}-500/30 bg-${color}-500/10 text-${color}-300 uppercase`}>
                                                     {tier}
                                                 </span>
+                                                {isCancelled && (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-300 uppercase">
+                                                        Cancelled
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-400">
-                                                Renews {formatDate(sub.current_period_end)}
+                                                {isCancelled ? "Expires" : "Renews"} {formatDate(sub.current_period_end)}
                                             </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleManage(sub.id)}
-                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition flex items-center gap-1 text-gray-300 hover:text-white"
-                                    >
-                                        Manage <ChevronRight className="w-4 h-4" />
-                                    </button>
+
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition flex items-center gap-1 text-gray-300 hover:text-white">
+                                                Manage <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-200">
+                                            {!isCancelled && (
+                                                <DropdownMenuItem
+                                                    onClick={() => handleCancel(sub.id)}
+                                                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer"
+                                                >
+                                                    <Ban className="w-4 h-4 mr-2" />
+                                                    Cancel Subscription
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem
+                                                onClick={() => router.push(`/profile/${sub.creator_id}`)}
+                                                className="cursor-pointer"
+                                            >
+                                                <Users className="w-4 h-4 mr-2" />
+                                                View Profile
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </NeonCard>
                             );
                         })
@@ -183,7 +239,10 @@ export default function SubscriptionsPage() {
                         <h3 className="text-lg font-bold text-white mb-1">Discover more Creators</h3>
                         <p className="text-sm text-gray-400">Find your next favorite vibe.</p>
                     </div>
-                    <button className="px-4 py-2 bg-gradient-to-r from-pink-600 to-blue-600 rounded-xl font-bold text-white shadow-lg hover:opacity-90 transition">
+                    <button
+                        onClick={() => router.push('/home')}
+                        className="px-4 py-2 bg-gradient-to-r from-pink-600 to-blue-600 rounded-xl font-bold text-white shadow-lg hover:opacity-90 transition"
+                    >
                         Explore Hub
                     </button>
                 </div>

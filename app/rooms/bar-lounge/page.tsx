@@ -80,7 +80,7 @@ export default function BarLoungeRoomPreview() {
     const onBack = () => window.history.back();
 
     const ENTRY_FEE = 10;
-    const ENTRY_FEE = 10;
+
 
 
     // Billing model: NO charge until the fan interacts (send message / react / buy drink / VIP / spin)
