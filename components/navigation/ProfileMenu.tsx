@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid } from "lucide-react";
+import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase } from "lucide-react";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -119,6 +119,12 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                         {/* Menu Items List */}
                         <div className="px-2 pb-2">
                             <div className="space-y-0.5">
+                                {role === 'admin' && (
+                                    <button onClick={() => router.push('/admin/dashboard')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-pink-500/10 text-pink-200 hover:text-pink-100 transition-colors text-sm group border border-pink-500/20 mb-1">
+                                        <Briefcase className="w-4 h-4 text-pink-400 group-hover:text-pink-300 transition-colors" />
+                                        Business Console
+                                    </button>
+                                )}
                                 <button onClick={() => router.push('/account/feed')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group">
                                     <LayoutGrid className="w-4 h-4 text-gray-500 group-hover:text-pink-400 transition-colors" />
                                     Feed
