@@ -14,6 +14,7 @@ import {
     Bell,
     MessageCircle,
     Flame,
+    Palette,
     Menu,
     X,
 } from "lucide-react";
@@ -33,6 +34,7 @@ import AdminStats from "../../../components/admin/dashboard/AdminStats";
 import SchedulingManager from "../../../components/admin/settings/SchedulingManager";
 import MessagingCenter from "../../../components/admin/users/MessagingCenter";
 import SystemMonitoring from "../../../components/admin/safety/SystemMonitoring";
+import AdminThemeEditor from "../../../components/admin/settings/AdminThemeEditor";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -43,6 +45,7 @@ type AdminModule =
     | "home"
     | "dashboard"
     | "pricing"
+    | "theme"
     | "users"
     | "refunds"
     | "payouts"
@@ -62,6 +65,7 @@ export default function AdminDashboardPage() {
         { id: "home", label: "Admin Home", icon: <Home className="w-4 h-4" />, tone: "cyan" },
         { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
+        { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
@@ -194,6 +198,7 @@ export default function AdminDashboardPage() {
 
                     {/* Integrated Modules */}
                     {bizModule === "pricing" && <PricingControls />}
+                    {bizModule === "theme" && <AdminThemeEditor />}
                     {bizModule === "users" && <UserManagement />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
