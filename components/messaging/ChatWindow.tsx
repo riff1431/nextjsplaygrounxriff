@@ -5,6 +5,7 @@ import MessageInput from './MessageInput';
 import { MoreVertical, Phone, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 
 type Props = {
     conversationId: string;
@@ -98,28 +99,20 @@ export default function ChatWindow({ conversationId, currentUser, otherUser }: P
 
         // Upload file if exists
         if (file) {
-            const ext = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${ext}`;
-            const { data, error } = await supabase.storage
-                .from('dm_media')
-                .upload(`${conversationId}/${fileName}`, file);
+            try {
+                const publicUrl = await uploadToLocalServer(file);
+                mediaUrl = publicUrl;
 
-            if (error) {
-                toast.error("Upload failed");
+                const ext = file.name.split('.').pop();
+                // Determine type more robustly
+                const isImage = file.type.startsWith('image/') ||
+                    ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'svg'].includes(ext?.toLowerCase() || '');
+
+                type = isImage ? 'image' : 'video';
+            } catch (error: any) {
+                toast.error("Upload failed: " + error.message);
                 throw error;
             }
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('dm_media')
-                .getPublicUrl(`${conversationId}/${fileName}`);
-
-            mediaUrl = publicUrl;
-
-            // Determine type more robustly
-            const isImage = file.type.startsWith('image/') ||
-                ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'svg'].includes(ext?.toLowerCase() || '');
-
-            type = isImage ? 'image' : 'video';
         }
 
         // Insert message
@@ -140,8 +133,6 @@ export default function ChatWindow({ conversationId, currentUser, otherUser }: P
         if (insertedMsg) {
             setMessages((prev) => [...prev, insertedMsg]);
         }
-
-
     };
 
     return (

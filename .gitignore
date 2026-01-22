@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Large media files
 *.mp4
+
+# Local Uploads
+/uploads/

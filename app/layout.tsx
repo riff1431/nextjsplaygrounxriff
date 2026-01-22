@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { PaymentProvider } from "./context/PaymentContext";
 import ToasterProvider from "@/components/providers/ToasterProvider";
 
 const outfit = Outfit({
@@ -47,8 +48,10 @@ export default function RootLayout({
       <body className={`${outfit.variable} antialiased bg-black text-white min-h-screen selection:bg-pink-500 selection:text-white`} suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider>
-            {children}
-            <ToasterProvider />
+            <PaymentProvider>
+              {children}
+              <ToasterProvider />
+            </PaymentProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

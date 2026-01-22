@@ -17,6 +17,7 @@ import {
     Palette,
     Menu,
     X,
+    Check,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -35,6 +36,8 @@ import SchedulingManager from "../../../components/admin/settings/SchedulingMana
 import MessagingCenter from "../../../components/admin/users/MessagingCenter";
 import SystemMonitoring from "../../../components/admin/safety/SystemMonitoring";
 import AdminThemeEditor from "../../../components/admin/settings/AdminThemeEditor";
+import PaymentGatewayManager from "../../../components/admin/settings/PaymentGatewayManager";
+import PaymentApprovals from "../../../components/admin/finance/PaymentApprovals";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -46,6 +49,8 @@ type AdminModule =
     | "dashboard"
     | "pricing"
     | "theme"
+    | "payments"
+    | "approvals"
     | "users"
     | "refunds"
     | "payouts"
@@ -66,6 +71,8 @@ export default function AdminDashboardPage() {
         { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
+        { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+        { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
@@ -199,6 +206,8 @@ export default function AdminDashboardPage() {
                     {/* Integrated Modules */}
                     {bizModule === "pricing" && <PricingControls />}
                     {bizModule === "theme" && <AdminThemeEditor />}
+                    {bizModule === "payments" && <PaymentGatewayManager />}
+                    {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}

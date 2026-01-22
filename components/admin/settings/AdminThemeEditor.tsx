@@ -5,14 +5,13 @@ import { Palette, Upload, Globe, Save } from "lucide-react";
 import { useTheme } from "../../../app/context/ThemeContext";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
-import { createClient } from "@/utils/supabase/client";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 import { toast } from "sonner"; // Assuming sonner is set up, fallback to alert if not
 
 export default function AdminThemeEditor() {
     const { theme, updateTheme } = useTheme();
     const [formData, setFormData] = useState({ ...theme });
     const [saving, setSaving] = useState(false);
-    const supabase = createClient();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,16 +37,7 @@ export default function AdminThemeEditor() {
         const toastId = toast.loading("Uploading image...");
 
         try {
-            const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-            const { data, error } = await supabase.storage
-                .from("public_assets") // Assuming this bucket exists
-                .upload(`theme/${fileName}`, file);
-
-            if (error) throw error;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from("public_assets")
-                .getPublicUrl(`theme/${fileName}`);
+            const publicUrl = await uploadToLocalServer(file);
 
             setFormData(prev => ({ ...prev, [key]: publicUrl }));
             toast.success("Image uploaded", { id: toastId });

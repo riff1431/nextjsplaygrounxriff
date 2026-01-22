@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Image as ImageIcon, Video, Type, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 
 export default function CreatePostModal({ currentUserId, onPostCreated, trigger }: { currentUserId: string | null, onPostCreated: () => void, trigger?: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -71,19 +72,7 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
 
             // 1. Upload File if exists
             if (activeTab !== 'text' && selectedFile) {
-                const fileExt = selectedFile.name.split('.').pop();
-                const fileName = `${currentUserId}/${Date.now()}.${fileExt}`;
-                const { error: uploadError, data } = await supabase.storage
-                    .from('post-media')
-                    .upload(fileName, selectedFile);
-
-                if (uploadError) throw uploadError;
-
-                // Get Public URL
-                const { data: { publicUrl } } = supabase.storage
-                    .from('post-media')
-                    .getPublicUrl(fileName);
-
+                const publicUrl = await uploadToLocalServer(selectedFile);
                 mediaUrl = publicUrl;
             } else if (activeTab === 'text') {
                 contentType = 'text';

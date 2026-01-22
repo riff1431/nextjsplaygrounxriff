@@ -103,43 +103,78 @@ export default function WalletPage() {
         }
     };
 
-    const handleAddFunds = async (amount: number, method: string) => {
+    const handleAddFunds = async (amount: number, method: string, status: 'pending' | 'completed' = 'completed', proofUrl?: string) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Mock Payment Process
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing
+            // 1. Get or Create Wallet ID
+            let { data: wallet } = await supabase
+                .from('wallets')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle(); // Use maybeSingle to avoid immediate error
+
+            if (!wallet) {
+                // Create wallet if doesn't exist
+                const { data: newWallet, error: createError } = await supabase
+                    .from('wallets')
+                    .insert({ user_id: user.id, balance: 0 })
+                    .select('id')
+                    .single();
+
+                if (createError) throw new Error("Failed to create wallet: " + createError.message);
+                wallet = newWallet;
+            }
+
+            if (!wallet) throw new Error("Wallet not found and could not be created");
 
             let description = `Top Up via ${method === 'card' ? 'Credit Card' : method === 'paypal' ? 'PayPal' : 'Bank Transfer'}`;
 
-            // For bank transfer, ideally we'd set status to 'pending', but strictly using our simple add_funds calls:
-            // Let's slightly tweak behavior or just append (Pending) to description if we can't change status easily without changing RPC
-            if (method === 'bank') {
-                description += " (Pending Approval)";
-                const { error } = await supabase.rpc('request_topup', {
-                    user_uuid: user.id,
-                    amount_val: amount,
-                    desc_text: description
-                });
-                if (error) throw error;
-                toast.success("Request sent! Admin will review shortly.");
-            } else {
-                // Card/PayPal - Instant
+            if (status === 'completed') {
+                // Instant Payment (Card/PayPal) - Use RPC to add funds safely
+                // Ideally update RPC to accept method, but for now we rely on description
                 const { error } = await supabase.rpc('add_funds', {
                     user_uuid: user.id,
                     amount_val: amount,
                     desc_text: description
                 });
                 if (error) throw error;
+
+                // Update the transaction record with method if RPC created it (RPC usually does simple insert)
+                // Or we can just trust the RPC. For better data integrity we might want to update the last tx
+                // but for now, let's assume RPC is sufficient for demo.
+                // Actually, to store payment_method properly, we might need a separate update or better RPC.
+                // For this demo, let's stick to simple RPC for completed flows.
+
                 toast.success(`Successfully added $${amount}`);
+            } else {
+                // Pending Payment (Bank Transfer) - Insert Transaction Record Directly
+                const { error } = await supabase
+                    .from('transactions')
+                    .insert({
+                        wallet_id: wallet.id,
+                        user_id: user.id, // Required for RLS and schema
+                        amount: amount,
+                        type: 'deposit',
+                        description: description,
+                        status: 'pending',
+                        payment_method: method,
+                        proof_url: proofUrl,
+                        metadata: {
+                            user_submitted: true,
+                            submitted_at: new Date().toISOString()
+                        }
+                    });
+
+                if (error) throw error;
+                toast.success("Verification submitted! Admin will review shortly.");
             }
 
-            fetchWalletData(); // Refresh
+            fetchWalletData();
 
         } catch (error: any) {
-            toast.error("Failed to add funds: " + error.message);
-            throw error; // Re-throw for modal to handle if needed
+            toast.error("Failed to process transaction: " + error.message);
         }
     };
 

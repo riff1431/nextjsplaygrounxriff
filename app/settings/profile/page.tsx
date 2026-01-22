@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -144,21 +145,7 @@ export default function EditProfilePage() {
                 return;
             }
             const file = event.target.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath);
+            const publicUrl = await uploadToLocalServer(file);
 
             setFormData({ ...formData, avatar_url: publicUrl });
             toast.success("Avatar uploaded successfully!");
@@ -177,22 +164,7 @@ export default function EditProfilePage() {
                 return;
             }
             const file = event.target.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `cover_${user.id}-${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
-            // We'll use the 'covers' bucket.
-            const { error: uploadError } = await supabase.storage
-                .from('covers')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('covers')
-                .getPublicUrl(filePath);
+            const publicUrl = await uploadToLocalServer(file);
 
             setFormData(prev => ({ ...prev, cover_url: publicUrl }));
             toast.success("Cover uploaded successfully!");
