@@ -112,6 +112,14 @@ export default function CreatorConfessionsStudio() {
     const [deliveryFile, setDeliveryFile] = useState<string | null>(null);
     const [deliveryUploading, setDeliveryUploading] = useState(false);
 
+    // [New] Toast State
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -134,7 +142,7 @@ export default function CreatorConfessionsStudio() {
             setFileName(publicUrl);
         } catch (error) {
             console.error('Error uploading file:', error);
-            alert('Error uploading file');
+            showToast('Error uploading file', 'error');
         } finally {
             setUploading(false);
         }
@@ -161,9 +169,9 @@ export default function CreatorConfessionsStudio() {
             if (res.ok) {
                 fetchCreatorRequests(roomId);
                 // Switch to workspace if needed (omitted for now)
-                alert("Request Accepted! You can now fulfill it.");
+                showToast("Request Accepted! You can now fulfill it.", 'success');
             }
-        } catch (e) { alert("Error accepting"); }
+        } catch (e) { showToast("Error accepting", 'error'); }
     };
 
     // [New] Fetch Notifications
@@ -212,7 +220,7 @@ export default function CreatorConfessionsStudio() {
             setDeliveryFile(publicUrl);
         } catch (error) {
             console.error('Error uploading delivery:', error);
-            alert('Error uploading file');
+            showToast('Error uploading file', 'error');
         } finally {
             setDeliveryUploading(false);
         }
@@ -221,7 +229,7 @@ export default function CreatorConfessionsStudio() {
     const handleSubmitFulfillment = async () => {
         if (!fulfillingReq || !roomId) return;
         if (!deliveryText && !deliveryFile) {
-            alert("Please provide text or a file.");
+            showToast("Please provide text or a file.", 'error');
             return;
         }
 
@@ -243,16 +251,16 @@ export default function CreatorConfessionsStudio() {
             });
 
             if (res.ok) {
-                alert("Request Fulfilled! Fan notified.");
+                showToast("Request Fulfilled! Fan notified.", 'success');
                 setFulfillingReq(null);
                 setDeliveryText("");
                 setDeliveryFile(null);
                 fetchCreatorRequests(roomId);
             } else {
                 const err = await res.json();
-                alert("Error fulfilling request: " + (err.error || "Unknown"));
+                showToast("Error fulfilling: " + (err.error || "Unknown"), 'error');
             }
-        } catch (e) { console.error(e); alert("Error submitting"); }
+        } catch (e) { console.error(e); showToast("Error submitting", 'error'); }
     };
 
     // 1. Init Room + Fetch Data
@@ -479,7 +487,30 @@ export default function CreatorConfessionsStudio() {
 
     return (
         <ProtectRoute allowedRoles={["creator"]}>
-            <div className="max-w-7xl mx-auto px-6 py-6 text-gray-200">
+            <div className="max-w-7xl mx-auto px-6 py-6 text-gray-200 relative">
+                {/* Toast Notification */}
+                {toast && (
+                    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[70] animate-fade-in-down">
+                        <NeonCard className={cx(
+                            "px-6 py-3 flex items-center gap-3 border",
+                            toast.type === 'success' ? "border-green-500/50 shadow-green-900/40" : "border-red-500/50 shadow-red-900/40"
+                        )}>
+                            {toast.type === 'success' ? <Check className="w-5 h-5 text-green-400" /> : <X className="w-5 h-5 text-red-400" />}
+                            <span className="font-bold text-sm tracking-wide text-white">{toast.message}</span>
+                        </NeonCard>
+                    </div>
+                )}
+
+                <style>{`
+            @keyframes fadeInDown {
+                from { opacity: 0; transform: translate(-50%, -20px); }
+                to { opacity: 1; transform: translate(-50%, 0); }
+            }
+            .animate-fade-in-down {
+                animation: fadeInDown 0.3s ease-out forwards;
+            }
+          `}</style>
+
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                         <button
