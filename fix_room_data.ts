@@ -47,7 +47,7 @@ async function main() {
         .from('confessions')
         .update({ room_id: correctRoomId })
         .eq('room_id', wrongRoomId)
-        .select('*', { count: 'exact' });
+        .select('*');
 
     if (error) console.error("Error updating:", error);
     else console.log(`Success! Confessions moved.`);

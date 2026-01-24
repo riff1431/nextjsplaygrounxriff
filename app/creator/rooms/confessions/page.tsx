@@ -19,7 +19,8 @@ import {
     Send,
     Heart,
     ChevronDown,
-    Check
+    Check,
+    X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "../../../context/AuthContext";
