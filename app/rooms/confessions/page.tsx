@@ -211,7 +211,9 @@ export default function ConfessionsRoomPreview() {
         if (!purchaseConfession) return;
         try {
             const res = await fetch(`/api/v1/confessions/${purchaseConfession.id}/unlock`, {
-                method: "POST"
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ paymentMethod: selectedPaymentMethod })
             });
             const data = await res.json();
 
@@ -386,7 +388,7 @@ export default function ConfessionsRoomPreview() {
                 {/* 1. Purchase Unlock Modal */}
                 {purchaseConfession && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <NeonCard className="w-full max-w-sm p-6 bg-gray-900 border border-rose-500/30">
+                        <NeonCard className="w-full max-w-lg p-6 bg-gray-900 border border-rose-500/30">
                             <div className="flex justify-between items-start mb-6">
                                 <h3 className="text-xl font-bold text-white">Unlock Confession</h3>
                                 <button onClick={() => setPurchaseConfession(null)}><X className="w-5 h-5 text-gray-400" /></button>
@@ -407,6 +409,72 @@ export default function ConfessionsRoomPreview() {
                                 <div className="font-bold text-lg text-white mb-2 leading-tight">"{purchaseConfession.title}"</div>
                             </div>
 
+                            {/* Payment Selector */}
+                            <div className="mb-6">
+                                <div className="text-sm text-gray-400 mb-3">Select Payment Method</div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Wallet */}
+                                    <button
+                                        onClick={() => setSelectedPaymentMethod('wallet')}
+                                        className={cx(
+                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition relative overflow-hidden",
+                                            selectedPaymentMethod === 'wallet'
+                                                ? "bg-rose-600/20 border-rose-500 text-white"
+                                                : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
+                                        )}
+                                    >
+                                        <Wallet className="w-6 h-6" />
+                                        <span className="text-xs font-bold">My Wallet</span>
+                                        <span className="text-[10px] opacity-70">Bal: ${myWalletBalance}</span>
+                                        {myWalletBalance < purchaseConfession.price && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm text-[10px] text-red-400 font-bold">Low Balance</div>
+                                        )}
+                                    </button>
+
+                                    {/* Stripe */}
+                                    <button
+                                        onClick={() => setSelectedPaymentMethod('stripe')}
+                                        className={cx(
+                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            selectedPaymentMethod === 'stripe'
+                                                ? "bg-indigo-600/20 border-indigo-500 text-white"
+                                                : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
+                                        )}
+                                    >
+                                        <CreditCard className="w-6 h-6" />
+                                        <span className="text-xs font-bold">Stripe</span>
+                                    </button>
+
+                                    {/* PayPal */}
+                                    <button
+                                        onClick={() => setSelectedPaymentMethod('paypal')}
+                                        className={cx(
+                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            selectedPaymentMethod === 'paypal'
+                                                ? "bg-blue-600/20 border-blue-500 text-white"
+                                                : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
+                                        )}
+                                    >
+                                        <Globe className="w-6 h-6" />
+                                        <span className="text-xs font-bold">PayPal</span>
+                                    </button>
+
+                                    {/* Bank */}
+                                    <button
+                                        onClick={() => setSelectedPaymentMethod('bank')}
+                                        className={cx(
+                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            selectedPaymentMethod === 'bank'
+                                                ? "bg-emerald-600/20 border-emerald-500 text-white"
+                                                : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
+                                        )}
+                                    >
+                                        <Building2 className="w-6 h-6" />
+                                        <span className="text-xs font-bold">Bank</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="flex items-center justify-between mb-6 px-2">
                                 <span className="text-gray-400 text-sm">Total Price</span>
                                 <span className="text-2xl font-bold text-rose-400">${purchaseConfession.price}</span>
@@ -414,7 +482,8 @@ export default function ConfessionsRoomPreview() {
 
                             <button
                                 onClick={handleUnlockPurchase}
-                                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-white hover:opacity-90 transition shadow-[0_0_20px_rgba(225,29,72,0.4)]"
+                                disabled={selectedPaymentMethod === 'wallet' && myWalletBalance < purchaseConfession.price}
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-white hover:opacity-90 transition shadow-[0_0_20px_rgba(225,29,72,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Confirm Payment
                             </button>
@@ -440,13 +509,35 @@ export default function ConfessionsRoomPreview() {
                                     </p>
                                 )}
                                 {(viewConfession.type === 'Video' || viewConfession.type === 'Voice') && (
-                                    <div className="w-full max-w-lg aspect-video bg-black rounded-xl border border-white/10 flex items-center justify-center">
-                                        {/* Placeholder for real player */}
-                                        <div className="text-gray-500 flex flex-col items-center">
-                                            {viewConfession.type === 'Video' ? <Video className="w-12 h-12 mb-2" /> : <Mic className="w-12 h-12 mb-2" />}
-                                            <span>Media Player Placeholder</span>
-                                            <span className="text-xs mt-2">{viewConfession.media_url || "No URL source"}</span>
-                                        </div>
+                                    <div className="w-full max-w-lg bg-black rounded-xl border border-white/10 flex items-center justify-center overflow-hidden">
+                                        {viewConfession.type === 'Video' ? (
+                                            viewConfession.media_url ? (
+                                                <video
+                                                    src={viewConfession.media_url}
+                                                    controls
+                                                    className="w-full h-full aspect-video object-contain"
+                                                    autoPlay
+                                                />
+                                            ) : (
+                                                <div className="h-48 flex items-center justify-center text-gray-500">No video source</div>
+                                            )
+                                        ) : (
+                                            viewConfession.media_url ? (
+                                                <div className="p-8 w-full flex flex-col items-center">
+                                                    <div className="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center mb-4 animate-pulse">
+                                                        <Mic className="w-8 h-8 text-rose-400" />
+                                                    </div>
+                                                    <audio
+                                                        src={viewConfession.media_url}
+                                                        controls
+                                                        className="w-full"
+                                                        autoPlay
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="h-32 flex items-center justify-center text-gray-500">No audio source</div>
+                                            )
+                                        )}
                                     </div>
                                 )}
                             </div>

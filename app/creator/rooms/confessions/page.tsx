@@ -18,7 +18,8 @@ import {
     Image as ImageIcon,
     Send,
     Heart,
-    ChevronDown
+    ChevronDown,
+    Check
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "../../../context/AuthContext";
@@ -96,6 +97,35 @@ export default function CreatorConfessionsStudio() {
     const [teaser, setTeaser] = useState("");
     const [fullText, setFullText] = useState("");
     const [fileName, setFileName] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const filePath = `confessions/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('public_assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('public_assets')
+                .getPublicUrl(filePath);
+
+            setFileName(publicUrl);
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     // 1. Init Room + Fetch Data
     useEffect(() => {
@@ -104,13 +134,24 @@ export default function CreatorConfessionsStudio() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Find room
-            const { data: room } = await supabase
+            // Find room - Prefer default-room if available (to match fan view)
+            let { data: room } = await supabase
                 .from('rooms')
                 .select('id')
                 .eq('host_id', user.id)
-                .limit(1)
-                .single();
+                .eq('slug', 'default-room')
+                .maybeSingle();
+
+            if (!room) {
+                // Fallback to any room
+                const { data: anyRoom } = await supabase
+                    .from('rooms')
+                    .select('id')
+                    .eq('host_id', user.id)
+                    .limit(1)
+                    .single();
+                room = anyRoom;
+            }
 
             let targetRoomId = room?.id;
             if (!targetRoomId) {
@@ -400,15 +441,32 @@ export default function CreatorConfessionsStudio() {
                                     />
                                 ) : (
                                     <div className="flex items-center justify-between gap-2">
-                                        <div className="text-sm text-gray-200 truncate">
-                                            {fileName ? `Selected: ${fileName}` : "No file selected (preview)"}
+                                        <div className="text-sm text-gray-200 truncate flex-1">
+                                            {fileName ? (
+                                                <span className="text-green-400 flex items-center gap-2">
+                                                    <Check className="w-3 h-3" /> {fileName.split('/').pop()}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500">No file selected</span>
+                                            )}
                                         </div>
-                                        <button
-                                            className="rounded-xl border border-rose-400/25 bg-black/40 px-3 py-2 text-sm hover:bg-white/5 inline-flex items-center gap-2"
-                                            onClick={() => setFileName(type === "Voice" ? "new_confession.m4a" : "new_confession.mp4")}
-                                        >
-                                            <LinkIcon className="w-4 h-4" /> Add File
-                                        </button>
+                                        <label className="cursor-pointer rounded-xl border border-rose-400/25 bg-black/40 px-3 py-2 text-sm hover:bg-white/5 inline-flex items-center gap-2 relative">
+                                            {uploading ? (
+                                                <span className="animate-pulse">Uploading...</span>
+                                            ) : (
+                                                <>
+                                                    <LinkIcon className="w-4 h-4" />
+                                                    {fileName ? "Change File" : "Upload File"}
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept={type === "Voice" ? "audio/*" : "video/*"}
+                                                className="hidden"
+                                                onChange={handleFileUpload}
+                                                disabled={uploading}
+                                            />
+                                        </label>
                                     </div>
                                 )}
                                 {editingId && (
