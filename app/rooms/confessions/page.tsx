@@ -105,6 +105,24 @@ export default function ConfessionsRoomPreview() {
             fetchRequests();
             fetchConfessions();
             fetchWallet();
+
+            // [New] Real-time Alerts
+            const supabase = createClient();
+            const channel = supabase
+                .channel('fan-notifications')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+                    (payload) => {
+                        if (payload.new.type === 'request_delivered') {
+                            showToast(payload.new.message, 'success');
+                            fetchRequests();
+                        }
+                    }
+                )
+                .subscribe();
+
+            return () => { supabase.removeChannel(channel); };
         }
     }, [user, roomId]);
 
@@ -561,10 +579,33 @@ export default function ConfessionsRoomPreview() {
 
                             <div className="space-y-4">
                                 <div className="text-sm text-gray-300">Creator has delivered:</div>
-                                <div className="p-4 bg-white/5 rounded-xl border border-white/10 min-h-[100px] flex items-center justify-center text-center">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/10 min-h-[100px] flex items-center justify-center text-center overflow-hidden">
                                     {reviewRequest.delivery_content ? (
                                         <div className="w-full">
-                                            <p className="text-rose-200">{reviewRequest.delivery_content}</p>
+                                            {/* Check if content is URL (Visual check for http) */}
+                                            {reviewRequest.delivery_content.startsWith('http') ? (
+                                                <>
+                                                    {/* Video Ext check (naive but effective for MVP) */}
+                                                    {['mp4', 'mov', 'webm'].some(ext => reviewRequest.delivery_content?.toLowerCase().includes('.' + ext)) ? (
+                                                        <video src={reviewRequest.delivery_content} controls className="w-full rounded-lg max-h-[300px]" />
+                                                    ) : ['mp3', 'wav', 'ogg', 'm4a'].some(ext => reviewRequest.delivery_content?.toLowerCase().includes('.' + ext)) ? (
+                                                        <div className="w-full flex justify-center py-4">
+                                                            <audio src={reviewRequest.delivery_content} controls className="w-full" />
+                                                        </div>
+                                                    ) : (
+                                                        <a
+                                                            href={reviewRequest.delivery_content}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-rose-400 underline break-all font-mono text-xs hover:text-rose-300"
+                                                        >
+                                                            {reviewRequest.delivery_content}
+                                                        </a>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <p className="text-rose-200 whitespace-pre-wrap font-serif italic text-lg">"{reviewRequest.delivery_content}"</p>
+                                            )}
                                         </div>
                                     ) : (
                                         <span className="text-gray-500">Content loading...</span>
@@ -573,7 +614,7 @@ export default function ConfessionsRoomPreview() {
 
                                 <button
                                     onClick={() => handleApproveDelivery(reviewRequest.id)}
-                                    className="w-full py-3 rounded-xl bg-green-600 font-bold text-white hover:bg-green-700 transition"
+                                    className="w-full py-3 rounded-xl bg-green-600 font-bold text-white hover:bg-green-700 transition shadow-lg shadow-green-900/30"
                                 >
                                     Accept Delivery & Release Funds
                                 </button>

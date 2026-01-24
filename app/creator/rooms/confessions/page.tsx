@@ -99,6 +99,19 @@ export default function CreatorConfessionsStudio() {
     const [fileName, setFileName] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
 
+    // [New] Notification & Requests State
+    const [activeTab, setActiveTab] = useState<'library' | 'requests'>('library');
+    const [creatorRequests, setCreatorRequests] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+    // [New] Fulfillment State
+    const [fulfillingReq, setFulfillingReq] = useState<any>(null); // Request being fulfilled
+    const [deliveryText, setDeliveryText] = useState("");
+    const [deliveryFile, setDeliveryFile] = useState<string | null>(null);
+    const [deliveryUploading, setDeliveryUploading] = useState(false);
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -125,6 +138,121 @@ export default function CreatorConfessionsStudio() {
         } finally {
             setUploading(false);
         }
+    };
+
+    // [New] Fetch Requests
+    const fetchCreatorRequests = async (rid: string) => {
+        try {
+            const res = await fetch(`/api/v1/rooms/${rid}/requests`);
+            const data = await res.json();
+            if (data.requests) setCreatorRequests(data.requests);
+        } catch (e) { console.error("Req error", e); }
+    };
+
+    // [New] Accept Request (Move to 'in_progress')
+    const handleAcceptRequest = async (reqId: string) => {
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/requests/${reqId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "accept" })
+            });
+            if (res.ok) {
+                fetchCreatorRequests(roomId);
+                // Switch to workspace if needed (omitted for now)
+                alert("Request Accepted! You can now fulfill it.");
+            }
+        } catch (e) { alert("Error accepting"); }
+    };
+
+    // [New] Fetch Notifications
+    const fetchNotifications = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        try {
+            const { data } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (data) {
+                setNotifications(data);
+                setUnreadCount(data.filter((n: any) => !n.is_read).length);
+            }
+        } catch (e) {
+            // If table doesn't exist (migration pending), this will fail silently
+            console.log("Notifications fetch failed (migration missing?)");
+        }
+    };
+
+    // [New] Fulfillment Handlers
+    const handleDeliveryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setDeliveryUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const filePath = `deliveries/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('public_assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('public_assets')
+                .getPublicUrl(filePath);
+
+            setDeliveryFile(publicUrl);
+        } catch (error) {
+            console.error('Error uploading delivery:', error);
+            alert('Error uploading file');
+        } finally {
+            setDeliveryUploading(false);
+        }
+    };
+
+    const handleSubmitFulfillment = async () => {
+        if (!fulfillingReq || !roomId) return;
+        if (!deliveryText && !deliveryFile) {
+            alert("Please provide text or a file.");
+            return;
+        }
+
+        try {
+            // Content can be text or file URL. Usually "content" field or specific.
+            // Requirement said "submit text file/video". 
+            // We will store main content in `delivery_content` (text or url).
+            // If both, we might concatenate? Or JSON?
+            // Simple MVP: If file, use URL. Else text.
+            const content = deliveryFile || deliveryText;
+
+            const res = await fetch(`/api/v1/rooms/${roomId}/requests/${fulfillingReq.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "deliver",
+                    deliveryContent: content
+                })
+            });
+
+            if (res.ok) {
+                alert("Request Fulfilled! Fan notified.");
+                setFulfillingReq(null);
+                setDeliveryText("");
+                setDeliveryFile(null);
+                fetchCreatorRequests(roomId);
+            } else {
+                const err = await res.json();
+                alert("Error fulfilling request: " + (err.error || "Unknown"));
+            }
+        } catch (e) { console.error(e); alert("Error submitting"); }
     };
 
     // 1. Init Room + Fetch Data
@@ -167,6 +295,25 @@ export default function CreatorConfessionsStudio() {
             if (targetRoomId) {
                 setRoomId(targetRoomId);
                 fetchConfessions(targetRoomId);
+                fetchCreatorRequests(targetRoomId); // [New]
+                fetchNotifications(); // [New]
+
+                // [New] Subscribe to Notifications (Realtime)
+                const channel = supabase
+                    .channel('creator-notifications')
+                    .on(
+                        'postgres_changes',
+                        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+                        (payload) => {
+                            setNotifications(prev => [payload.new, ...prev]);
+                            setUnreadCount(c => c + 1);
+                            // Also refresh requests if it's a request type
+                            fetchCreatorRequests(targetRoomId);
+                        }
+                    )
+                    .subscribe();
+
+                return () => { supabase.removeChannel(channel); };
             }
             setLoading(false);
         }
@@ -355,9 +502,52 @@ export default function CreatorConfessionsStudio() {
                             <div className="text-[11px] text-gray-400">Create locked confessions for the fan Confession Wall</div>
                         </div>
                     </div>
-                    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-3 py-2">
-                        <div className="text-[10px] text-rose-200">Pricing</div>
-                        <div className="text-sm text-rose-100 font-semibold">Fixed by Tier</div>
+                    <div className="flex items-center gap-4">
+                        {/* [New] Notification Bell */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                                className="relative p-2 rounded-xl hover:bg-white/10 transition"
+                            >
+                                <Bell className={cx("w-5 h-5", unreadCount > 0 ? "text-rose-400" : "text-gray-400")} />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-black animate-pulse" />
+                                )}
+                            </button>
+
+                            {showNotifDropdown && (
+                                <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                    <div className="p-3 border-b border-white/5 flex justify-between items-center">
+                                        <span className="text-xs font-bold text-gray-300">Notifications</span>
+                                        {unreadCount > 0 && <span className="text-[10px] text-rose-400">{unreadCount} new</span>}
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {notifications.length === 0 ? (
+                                            <div className="p-4 text-center text-xs text-gray-500">No notifications</div>
+                                        ) : (
+                                            notifications.map((n, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer transition"
+                                                    onClick={() => {
+                                                        setActiveTab('requests');
+                                                        setShowNotifDropdown(false);
+                                                    }}
+                                                >
+                                                    <div className="text-xs text-gray-200">{n.message}</div>
+                                                    <div className="text-[10px] text-gray-500 mt-1">{new Date(n.created_at).toLocaleTimeString()}</div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-3 py-2">
+                            <div className="text-[10px] text-rose-200">Pricing</div>
+                            <div className="text-sm text-rose-100 font-semibold">Fixed by Tier</div>
+                        </div>
                     </div>
                 </div>
 
@@ -503,78 +693,223 @@ export default function CreatorConfessionsStudio() {
 
                     <NeonCard className="lg:col-span-7 p-4">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="text-rose-200 text-sm">Confessions Library</div>
-                            <div className="flex items-center gap-2">
-                                {(["Draft", "Published", "Archived"] as ConfStatus[]).map((s) => (
-                                    <button
-                                        key={s}
-                                        onClick={() => setFilter(s)}
-                                        className={cx(
-                                            "rounded-xl border px-3 py-2 text-sm",
-                                            filter === s ? "border-rose-400/35 bg-rose-600/15" : "border-white/10 bg-black/20 hover:bg-white/5"
-                                        )}
-                                    >
-                                        {s}
-                                    </button>
-                                ))}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setActiveTab('library')}
+                                    className={cx("text-sm font-semibold transition", activeTab === 'library' ? "text-rose-200" : "text-gray-500 hover:text-gray-300")}
+                                >
+                                    Confessions Library
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('requests')}
+                                    className={cx("text-sm font-semibold transition relative", activeTab === 'requests' ? "text-rose-200" : "text-gray-500 hover:text-gray-300")}
+                                >
+                                    Incoming Requests
+                                    {creatorRequests.filter(r => r.status === 'pending_approval').length > 0 && (
+                                        <span className="ml-2 px-1.5 py-0.5 bg-rose-600 text-[10px] rounded-full text-white">
+                                            {creatorRequests.filter(r => r.status === 'pending_approval').length}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
+
+                            {activeTab === 'library' && (
+                                <div className="flex items-center gap-2">
+                                    {(["Draft", "Published", "Archived"] as ConfStatus[]).map((s) => (
+                                        <button
+                                            key={s}
+                                            onClick={() => setFilter(s)}
+                                            className={cx(
+                                                "rounded-xl border px-3 py-2 text-sm",
+                                                filter === s ? "border-rose-400/35 bg-rose-600/15" : "border-white/10 bg-black/20 hover:bg-white/5"
+                                            )}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-3">
-                            {visible.length === 0 ? (
-                                <div className="text-sm text-gray-400">No items in this filter.</div>
-                            ) : (
-                                visible.map((c) => (
-                                    <div key={c.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div className="text-sm text-gray-100 flex items-center gap-2">
-                                                    <span className="font-semibold">{c.title}</span>
-                                                    <span
-                                                        className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", tierTone[c.tier])}
-                                                    >
-                                                        {c.tier} • ${TIER_PRICE[c.tier]}
-                                                    </span>
-                                                    <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
-                                                        {c.type}
-                                                    </span>
-                                                    <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">
-                                                        {c.status}
-                                                    </span>
+                            {activeTab === 'library' ? (
+                                visible.length === 0 ? (
+                                    <div className="text-sm text-gray-400">No items in this filter.</div>
+                                ) : (
+                                    visible.map((c) => (
+                                        <div key={c.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="text-sm text-gray-100 flex items-center gap-2">
+                                                        <span className="font-semibold">{c.title}</span>
+                                                        <span
+                                                            className={cx("text-[10px] px-2 py-[2px] rounded-full border bg-black/40", tierTone[c.tier])}
+                                                        >
+                                                            {c.tier} • ${TIER_PRICE[c.tier]}
+                                                        </span>
+                                                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">
+                                                            {c.type}
+                                                        </span>
+                                                        <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">
+                                                            {c.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-1 text-sm text-gray-300">{c.teaser}</div>
+                                                    <div className="mt-1 text-[10px] text-gray-500">Created: {c.createdAt}</div>
                                                 </div>
-                                                <div className="mt-1 text-sm text-gray-300">{c.teaser}</div>
-                                                <div className="mt-1 text-[10px] text-gray-500">Created: {c.createdAt}</div>
-                                            </div>
 
-                                            <div className="flex flex-col gap-2 w-40">
-                                                <button
-                                                    className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
-                                                    onClick={() => load(c)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
-                                                    onClick={() => duplicate(c.id)}
-                                                >
-                                                    Duplicate
-                                                </button>
-                                                {c.status !== 'Archived' && (
+                                                <div className="flex flex-col gap-2 w-40">
                                                     <button
-                                                        className="rounded-xl border border-white/10 bg-black/30 py-2 text-sm hover:bg-white/5"
-                                                        onClick={() => archive(c.id)}
+                                                        className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                                                        onClick={() => load(c)}
                                                     >
-                                                        Archive
+                                                        Edit
                                                     </button>
-                                                )}
+                                                    <button
+                                                        className="rounded-xl border border-rose-400/25 bg-black/40 py-2 text-sm hover:bg-white/5"
+                                                        onClick={() => duplicate(c.id)}
+                                                    >
+                                                        Duplicate
+                                                    </button>
+                                                    {c.status !== 'Archived' && (
+                                                        <button
+                                                            className="rounded-xl border border-white/10 bg-black/30 py-2 text-sm hover:bg-white/5"
+                                                            onClick={() => archive(c.id)}
+                                                        >
+                                                            Archive
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))
+                                )
+                            ) : (
+                                // [New] Requests List
+                                creatorRequests.length === 0 ? (
+                                    <div className="text-center py-10 text-gray-500 text-sm">No incoming requests.</div>
+                                ) : (
+                                    creatorRequests.map(req => (
+                                        <div key={req.id} className="rounded-2xl border border-white/10 bg-black/30 p-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-rose-200">{req.topic}</span>
+                                                        <span className="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{req.type}</span>
+                                                        <span className="text-xs font-bold text-green-400">${req.amount}</span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-400">
+                                                        From Fan (ID: ...{req.fan_id.slice(-4)}) • {new Date(req.created_at).toLocaleDateString()}
+                                                    </div>
+
+                                                    {/* Status Badge */}
+                                                    <div className="mt-2 text-[10px] uppercase tracking-wider">
+                                                        <span className={cx(
+                                                            "px-2 py-1 rounded border",
+                                                            req.status === 'pending_approval' ? "border-yellow-500/30 text-yellow-500" :
+                                                                req.status === 'in_progress' ? "border-blue-500/30 text-blue-500" :
+                                                                    "border-gray-500/30 text-gray-500"
+                                                        )}>
+                                                            {req.status.replace('_', ' ')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col gap-2 w-32">
+                                                    {req.status === 'pending_approval' && (
+                                                        <button
+                                                            onClick={() => handleAcceptRequest(req.id)}
+                                                            className="w-full py-2 bg-rose-600 hover:bg-rose-700 rounded-lg text-xs font-bold text-white transition"
+                                                        >
+                                                            Accept & Start
+                                                        </button>
+                                                    )}
+                                                    {req.status === 'in_progress' && (
+                                                        <button
+                                                            onClick={() => setFulfillingReq(req)}
+                                                            className="w-full py-2 bg-green-600 hover:bg-green-700 rounded-lg text-xs font-bold text-white transition"
+                                                        >
+                                                            Fulfill
+                                                        </button>
+                                                    )}
+                                                    {req.status === 'delivered' && (
+                                                        <button className="w-full py-2 bg-gray-700/50 text-gray-400 rounded-lg text-xs font-bold cursor-default">
+                                                            Delivered
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )
                             )}
                         </div>
                     </NeonCard>
                 </div>
+
+                {/* [New] Fulfillment Modal */}
+                {fulfillingReq && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <NeonCard className="w-full max-w-md p-6 bg-gray-900 border-rose-500/30">
+                            <h3 className="text-lg font-bold text-rose-200 mb-1">Fulfill Request</h3>
+                            <p className="text-xs text-gray-400 mb-4">{fulfillingReq.topic} (${fulfillingReq.amount})</p>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs text-gray-400 mb-1">Upload Content (Video/Audio)</label>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="text-xs text-gray-300 truncate flex-1">
+                                            {deliveryFile ? (
+                                                <span className="text-green-400 flex items-center gap-2">
+                                                    <Check className="w-3 h-3" /> Ready to send
+                                                </span>
+                                            ) : "No file selected"}
+                                        </div>
+                                        <label className="cursor-pointer rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs hover:bg-white/5 inline-flex items-center gap-2">
+                                            {deliveryUploading ? "Uploading..." : (
+                                                <>
+                                                    <LinkIcon className="w-3 h-3" /> Select File
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleDeliveryFileUpload}
+                                                disabled={deliveryUploading}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs text-gray-400 mb-1">Message / Note</label>
+                                    <textarea
+                                        value={deliveryText}
+                                        onChange={(e) => setDeliveryText(e.target.value)}
+                                        className="w-full h-24 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none text-white placeholder-gray-600"
+                                        placeholder="Add a message or paste text content here..."
+                                    />
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        onClick={handleSubmitFulfillment}
+                                        disabled={deliveryUploading}
+                                        className="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-xl text-sm font-bold text-white disabled:opacity-50"
+                                    >
+                                        Submit Delivery
+                                    </button>
+                                    <button
+                                        onClick={() => setFulfillingReq(null)}
+                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm text-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </NeonCard>
+                    </div>
+                )}
             </div>
         </ProtectRoute>
     );
