@@ -281,24 +281,21 @@ export default function TruthOrDareCreatorRoom() {
                 ]);
             }
 
-            // Fetch session history for Dashboard
+            // Fetch session history for Dashboard via API (Server Client)
             console.log("Fetching session history for room:", rid);
-            const { data: pastGames, error: historyError } = await supabase
-                .from('truth_dare_sessions')
-                .select('*')
-                .eq('room_id', rid)
-                .order('created_at', { ascending: false });
+            const historyRes = await fetch(`/api/v1/rooms/${rid}/truth-or-dare/session`);
+            const historyData = await historyRes.json();
 
-            if (historyError) console.error("History fetch error:", historyError);
-            console.log("Past games fetched:", pastGames);
-
-            if (pastGames) {
-                // Map to UI format if needed (title vs session_title mismatch handling)
-                const mapped = pastGames.map((p: any) => ({
+            if (historyData.history) {
+                console.log("Past games fetched via API:", historyData.history);
+                // Map to UI format if needed (title vs session_title mismatch handling as fallback)
+                const mapped = historyData.history.map((p: any) => ({
                     ...p,
-                    session_title: p.title // Map back for UI compatibility
+                    session_title: p.title
                 }));
                 setHistory(mapped);
+            } else {
+                console.error("History API error:", historyData.error);
             }
 
         } catch (e) {

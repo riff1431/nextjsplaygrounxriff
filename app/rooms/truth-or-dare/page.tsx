@@ -17,7 +17,9 @@ import {
     ArrowLeft,
     Lock,
     Play,
+    X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
@@ -82,6 +84,22 @@ function TruthOrDareContent() {
     const [hostId, setHostId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [unlocking, setUnlocking] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Modal States
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        type: string;
+        tier?: string | null;
+        content?: string;
+        price: number;
+    } | null>(null);
+
+    const [resultModal, setResultModal] = useState<{
+        isOpen: boolean;
+        content: string;
+        type: string;
+    } | null>(null);
 
     // Moved Hooks from bottom to fix "Rendered fewer hooks" error
     const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
@@ -221,19 +239,64 @@ function TruthOrDareContent() {
     // Wait, it is used for styling: ${truthWins ? ...
     const truthWins = votes.truth >= votes.dare; // Simple check
 
-    function submitBaseline() {
-        if (customType) {
-            const trimmed = customText.trim();
-            if (!trimmed) return;
-            setLastAction(`Custom ${customType.toUpperCase()} submitted`);
-            setCustomText("");
-            return;
-        }
-        if (selectedTier) {
-            const tierLabel = TIERS.find((t) => t.id === selectedTier)?.label ?? selectedTier;
-            setLastAction(`${tierLabel} prompt purchased`);
+    // Moved to top
+
+
+    function openConfirmation(type: string, tier: string | null = null, content: string = "", price: number = 0) {
+        setConfirmModal({ isOpen: true, type, tier, content, price });
+    }
+
+    async function processPayment() {
+        if (!roomId || !confirmModal || isSubmitting) return;
+        setIsSubmitting(true);
+        setLastAction("Processing transaction...");
+
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/interact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: confirmModal.type,
+                    tier: confirmModal.tier,
+                    content: confirmModal.content,
+                    amount: confirmModal.price
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setLastAction("Request sent successfully!");
+                // Close confirm modal
+                setConfirmModal(null);
+
+                // Show Result Modal (especially meaningful for System Prompts where content is revealed)
+                if (data.request && data.request.content) {
+                    setResultModal({
+                        isOpen: true,
+                        content: data.request.content,
+                        type: confirmModal.type
+                    });
+                }
+
+                // Reset inputs
+                setCustomText("");
+                setCustomType(null);
+                setSelectedTier(null);
+            } else {
+                setLastAction(`Error: ${data.error || "Failed to send"}`);
+                alert(`Error: ${data.error || "Failed to send"}`); // Fallback
+            }
+        } catch (e) {
+            setLastAction("Network error. Please try again.");
+        } finally {
+            setIsSubmitting(false);
         }
     }
+
+    // Wiring up System and Custom submissions
+    // Note: Inline handlers updated below within JSX
+
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -350,12 +413,9 @@ function TruthOrDareContent() {
                                 {TIERS.map((t) => (
                                     <button
                                         key={`truth-${t.id}`}
-                                        onClick={() => {
-                                            setSelectedTier(t.id);
-                                            setCustomType(null); // It's a system prompt
-                                            setLastAction(`Purchased ${t.label} Truth`);
-                                        }}
-                                        className="w-full rounded-xl border border-blue-500/30 p-2 text-left hover:bg-blue-600/10 transition"
+                                        disabled={isSubmitting}
+                                        onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
+                                        className="w-full rounded-xl border border-blue-500/30 p-2 text-left hover:bg-blue-600/10 transition disabled:opacity-50"
                                     >
                                         <div className="flex flex-col">
                                             <div className="flex items-center justify-between">
@@ -374,12 +434,9 @@ function TruthOrDareContent() {
                                 {TIERS.map((t) => (
                                     <button
                                         key={`dare-${t.id}`}
-                                        onClick={() => {
-                                            setSelectedTier(t.id);
-                                            setCustomType(null);
-                                            setLastAction(`Purchased ${t.label} Dare`);
-                                        }}
-                                        className="w-full rounded-xl border border-pink-500/30 p-2 text-left hover:bg-pink-600/10 transition"
+                                        disabled={isSubmitting}
+                                        onClick={() => openConfirmation('system_dare', t.id, "", t.price)}
+                                        className="w-full rounded-xl border border-pink-500/30 p-2 text-left hover:bg-pink-600/10 transition disabled:opacity-50"
                                     >
                                         <div className="flex flex-col">
                                             <div className="flex items-center justify-between">
@@ -431,10 +488,14 @@ function TruthOrDareContent() {
                             placeholder="Write your custom Truth/Dare here…"
                         />
                         <button
-                            onClick={submitBaseline}
-                            className="mt-2 w-full rounded-xl border border-pink-500/40 py-2 text-sm flex items-center justify-center gap-2 hover:bg-pink-600/10"
+                            disabled={isSubmitting || !customType || !customText.trim()}
+                            onClick={() => {
+                                const price = customType === 'truth' ? 25 : 35;
+                                openConfirmation(`custom_${customType}`, null, customText, price);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-pink-500/40 py-2 text-sm flex items-center justify-center gap-2 hover:bg-pink-600/10 disabled:opacity-50"
                         >
-                            <CreditCard className="w-4 h-4" /> Pay & Submit
+                            <CreditCard className="w-4 h-4" /> {isSubmitting ? "Processing..." : "Pay & Submit"}
                         </button>
                         <div className="mt-1 text-[10px] text-gray-400">Custom requests are direct fan↔creator. No auto-approval.</div>
                     </div>
@@ -552,8 +613,108 @@ function TruthOrDareContent() {
                     </div>
                 </aside>
             </main>
+            <AnimatePresence>
+                {/* 1. Confirmation Modal */}
+                {confirmModal && confirmModal.isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="w-full max-w-sm bg-gray-900 border border-pink-500/50 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
+                            <button
+                                onClick={() => setConfirmModal(null)}
+                                className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="text-center space-y-4">
+                                <div className="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-2">
+                                    <Crown className="w-8 h-8 text-pink-400" />
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Confirm Interaction</h3>
+                                    <p className="text-sm text-gray-400 mt-1">
+                                        You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier || "Custom"} {confirmModal.type.split('_')[1]}</span>.
+                                    </p>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-black/40 border border-white/10">
+                                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Cost</div>
+                                    <div className="text-3xl font-bold text-white flex items-center justify-center gap-1">
+                                        <span className="text-pink-500">$</span>{confirmModal.price}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={processPayment}
+                                    disabled={isSubmitting}
+                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-lg shadow-lg shadow-pink-900/40 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <>Processing...</>
+                                    ) : (
+                                        <>Confirm & Pay</>
+                                    )}
+                                </button>
+                                <p className="text-[10px] text-gray-500">Funds will be deducted from your wallet immediately.</p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* 2. Result Reveal Modal */}
+                {resultModal && resultModal.isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+                    >
+                        <motion.div
+                            initial={{ rotateX: 90, opacity: 0 }}
+                            animate={{ rotateX: 0, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: "spring", damping: 20 }}
+                            className="w-full max-w-md aspect-[4/5] bg-gradient-to-tr from-gray-900 to-gray-800 border-2 border-pink-500 rounded-[2rem] p-8 shadow-[0_0_60px_rgba(236,72,153,0.3)] relative flex flex-col items-center justify-center text-center"
+                        >
+                            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-gray-700/50 rounded-full"></div>
+
+                            <div className="mb-8">
+                                <div className="text-sm font-black tracking-[0.4em] text-pink-500 uppercase mb-2">
+                                    {resultModal.type.includes('truth') ? 'TRUTH' : 'DARE'} REVEALED
+                                </div>
+                                <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
+                                    "{resultModal.content}"
+                                </h2>
+                            </div>
+
+                            <p className="text-sm text-gray-400 mb-8 max-w-[80%]">
+                                This prompt has been sent to the Creator. They will perform it shortly!
+                            </p>
+
+                            <button
+                                onClick={() => setResultModal(null)}
+                                className="px-8 py-3 rounded-full bg-white text-black font-bold hover:bg-gray-200 transition"
+                            >
+                                Close & Continue
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
+
 }
 
 export default function TruthOrDareRoom() {

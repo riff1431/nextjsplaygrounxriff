@@ -106,7 +106,23 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ roomId: string }> }
 ) {
-    // Optional: Get session info separately if needed, but usually fetched with game state
-    // Just returning simple status
-    return NextResponse.json({ message: "Use existing game state endpoint" });
+    const supabase = await createClient();
+    const { roomId } = await params;
+
+    try {
+        const { data: history, error } = await supabase
+            .from('truth_dare_sessions')
+            .select('*')
+            .eq('room_id', roomId)
+            .order('started_at', { ascending: false });
+
+        if (error) {
+            console.error("Fetch History Error:", error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ history: history || [] });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
 }

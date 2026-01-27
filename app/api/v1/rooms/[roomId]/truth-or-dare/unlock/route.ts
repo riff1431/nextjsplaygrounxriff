@@ -31,6 +31,7 @@ export async function POST(
         }
 
         const price = Number(game.unlock_price);
+        console.log(`[Unlock Debug] Room: ${roomId}, Price: ${price}`);
 
         // 2. Check if already unlocked
         const { data: existing } = await supabase
@@ -41,27 +42,31 @@ export async function POST(
             .single();
 
         if (existing) {
+            console.log(`[Unlock Debug] Already unlocked for user ${user.id}`);
             return NextResponse.json({ success: true, message: "Already unlocked" });
         }
 
-        // 3. Process Payment (Mock Wallet Deduction)
-        // In real app, check 'profiles' wallet_balance > price -> decrement -> transaction log
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('wallet_balance')
-            .eq('id', user.id)
+        // 3. Process Payment (Real System uses 'wallets' table)
+        const { data: wallet } = await supabase
+            .from('wallets')
+            .select('balance, id') // Get ID for logging/future use
+            .eq('user_id', user.id)
             .single();
 
-        if (!profile || (profile.wallet_balance || 0) < price) {
+        const balance = Number(wallet?.balance || 0);
+        console.log(`[Unlock Debug] User: ${user.id}, Balance: ${balance}, Price: ${price} (Source: wallets table)`);
+
+        if (balance < price) {
+            console.warn(`[Unlock Debug] Insufficient Balance. Need ${price}, has ${balance}`);
             return NextResponse.json({ error: "Insufficient balance" }, { status: 402 });
         }
 
-        // Deduct using ad-hoc update if RPC fails or not present, but try safe way
-        const newBalance = (profile.wallet_balance || 0) - price;
+        // Deduct using direct update (ensure RLS allows this or use service role if needed, currently acting as user)
+        const newBalance = balance - price;
         const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ wallet_balance: newBalance })
-            .eq('id', user.id);
+            .from('wallets')
+            .update({ balance: newBalance })
+            .eq('user_id', user.id);
 
         if (updateError) throw updateError;
 

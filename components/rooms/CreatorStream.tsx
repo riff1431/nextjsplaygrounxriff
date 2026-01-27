@@ -12,6 +12,8 @@ import {
     useRemoteUsers,
 } from 'agora-rtc-react';
 import { Mic, MicOff, Video, VideoOff, Play, Square, Users } from 'lucide-react';
+import ActiveRequestOverlay from './ActiveRequestOverlay';
+import CreatorRequestManager from './CreatorRequestManager';
 
 interface CreatorStreamProps {
     appId: string;
