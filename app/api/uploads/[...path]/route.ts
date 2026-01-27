@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import mime from "mime";
+
 
 export async function GET(
     req: NextRequest,
@@ -31,7 +31,18 @@ export async function GET(
         }
 
         const fileBuffer = fs.readFileSync(fullPath);
-        const mimeType = mime.getType(fullPath) || "application/octet-stream";
+        const ext = path.extname(fullPath).toLowerCase();
+        const mimeTypes: Record<string, string> = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".mp4": "video/mp4",
+            ".mov": "video/quicktime",
+            ".webm": "video/webm",
+        };
+        const mimeType = mimeTypes[ext] || "application/octet-stream";
 
         return new NextResponse(fileBuffer, {
             headers: {

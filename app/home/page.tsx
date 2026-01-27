@@ -35,6 +35,8 @@ import PostCard from "@/components/posts/PostCard";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
+import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
+import LiveFeed from "@/components/home/LiveFeed";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -467,7 +469,7 @@ function HomeScreen({
             { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions" },
             { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat" },
             { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
-            { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare" },
+            { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/live" },
             { label: "Competitions", key: "comp", icon: <Trophy className="w-4 h-4" />, tone: "yellow", route: "/competition" },
             { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga-4-u" },
         ];
@@ -578,6 +580,8 @@ function HomeScreen({
 
                 {/* Main grid */}
                 <div className="lg:col-span-6">
+                    <LiveFeed />
+
                     <div className="flex flex-col gap-3 mb-4">
                         {/* Filters */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -651,6 +655,7 @@ function HomeScreen({
 
                 {/* Right rail (feed) */}
                 <NeonCard className="p-4 lg:col-span-4">
+                    <WorldTruthDareList />
                     <div className="text-pink-200 text-sm mb-3">Creator Feed</div>
                     <div className="space-y-4">
                         {posts.map((post) => (

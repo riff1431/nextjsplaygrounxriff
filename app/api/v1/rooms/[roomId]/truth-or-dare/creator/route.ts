@@ -29,9 +29,7 @@ export async function GET(
     // 2. Fetch active creators (for now, assume creator of room + others joined?)
     // Mocking creators list for now, or fetching from room participants if available.
     // In a real system, we'd query room_participants where role='creator'
-    const creators = [
-        { id: "c1", name: "Creator 1", isHost: true }, // Placeholder
-    ];
+    const creators: any[] = [];
 
     // 3. Fetch camera slots (on-camera fans)
     const { data: slots } = await supabase

@@ -54,7 +54,14 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    let user = null
+    try {
+        const result = await supabase.auth.getUser()
+        user = result.data.user
+    } catch (e) {
+        // Suppress fetch errors in Edge runtime to avoid log spam
+        // console.error("Middleware auth check failed (likely network/edge issue):", e)
+    }
 
     // ROUTE PROTECTION LOGIC
     const path = request.nextUrl.pathname;

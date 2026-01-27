@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 
 import {
     Crown,
@@ -15,8 +15,19 @@ import {
     MessageCircle,
     CreditCard,
     ArrowLeft,
+    Lock,
+    Play,
 } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
+// import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
+// import FanStream from "@/components/rooms/FanStream"; // Removed
+
+import dynamic from 'next/dynamic';
+const LiveStreamWrapper = dynamic(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
+
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 /**
  * PlayGroundX — Truth or Dare Room (Fan View)
@@ -50,11 +61,29 @@ function clamp(n: number, min: number, max: number) {
 
 const TIP_AMOUNTS = [5, 10, 25, 50] as const;
 
-export default function TruthOrDareRoom() {
+function TruthOrDareContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const supabase = createClient();
+    const roomId = searchParams.get("roomId");
+
+    // Agora Client
+    // Agora Client removed form here
+
     const onBack = () => {
-        window.location.href = "/home";
+        router.push("/home");
     };
 
+    // Session State
+    const [loading, setLoading] = useState(true);
+    const [sessionStatus, setSessionStatus] = useState<'active' | 'ended' | 'loading'>('loading');
+    const [access, setAccess] = useState<'granted' | 'locked'>('granted'); // Default granted for backward compat, strictly checked below
+    const [sessionInfo, setSessionInfo] = useState<{ title: string; desc: string; price: number; isPrivate: boolean } | null>(null);
+    const [hostId, setHostId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [unlocking, setUnlocking] = useState(false);
+
+    // Moved Hooks from bottom to fix "Rendered fewer hooks" error
     const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
     const [customType, setCustomType] = useState<"truth" | "dare" | null>(null);
     const [customText, setCustomText] = useState("");
@@ -64,10 +93,133 @@ export default function TruthOrDareRoom() {
     const [replayAvailable, setReplayAvailable] = useState(false);
     const [topFan] = useState("TopSuga");
 
-    const [creatorCount] = useState(4);
+    const [creatorCount] = useState(1);
     const [fanCount] = useState(2);
 
-    const truthWins = useMemo(() => votes.truth >= votes.dare, [votes]);
+    // Load Session Data
+    useEffect(() => {
+        if (!roomId) return;
+
+        async function checkAccess() {
+            try {
+                // 1. Get Game State
+                const { data: game } = await supabase
+                    .from('truth_dare_games')
+                    .select(`
+                        *,
+                        room:rooms (
+                            host_id
+                        )
+                    `)
+                    .eq('room_id', roomId)
+                    .single();
+
+                if (!game || game.status !== 'active') {
+                    setSessionStatus('ended');
+                    setLoading(false);
+                    return;
+                }
+                setSessionStatus('active');
+                setHostId(game.room?.host_id); // Store host ID correctly from join
+                setSessionInfo({
+                    title: game.session_title || "Truth or Dare",
+                    desc: game.session_description,
+                    price: Number(game.unlock_price),
+                    isPrivate: game.is_private
+                });
+
+                // 2. Check Access (if private)
+                if (game.is_private) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        setUserId(user.id);
+                        // Check unlocks table
+                        const { data: unlock } = await supabase
+                            .from('truth_dare_unlocks')
+                            .select('id')
+                            .eq('room_id', roomId)
+                            .eq('fan_id', user.id)
+                            .single();
+
+                        if (unlock) setAccess('granted');
+                        else setAccess('locked');
+                    } else {
+                        setAccess('locked');
+                    }
+                } else {
+                    setAccess('granted');
+                    // Even if public, try to get user for streaming UID
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) setUserId(user.id);
+                }
+
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        }
+        checkAccess();
+    }, [roomId, supabase]);
+
+    // Realtime Status Updates
+    useEffect(() => {
+        if (!roomId) return;
+
+        const channel = supabase.channel(`room_status_${roomId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_games', filter: `room_id=eq.${roomId}` }, (payload) => {
+                const newData = payload.new as any;
+                if (newData.status === 'ended') {
+                    setSessionStatus('ended');
+                } else if (newData.status === 'active') {
+                    // Optional: Handling re-activation if needed, but primary goal is END handling
+                    setSessionStatus('active');
+                }
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, supabase]);
+
+    async function unlockSession() {
+        if (!roomId || !sessionInfo) return;
+        setUnlocking(true);
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/unlock`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setAccess('granted');
+            } else {
+                alert(data.error || "Failed to unlock");
+            }
+        } catch (e) {
+            alert("Payment failed");
+        } finally {
+            setUnlocking(false);
+        }
+    }
+
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-pink-500">Checking access...</div>;
+
+    if (sessionStatus === 'ended' && roomId) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center">
+                <div className="text-xl font-bold mb-2">Session Ended</div>
+                <p className="text-gray-400 mb-6">This Truth or Dare session is no longer active.</p>
+                <button onClick={onBack} className="px-6 py-2 bg-pink-600 rounded-xl">Back to Home</button>
+            </div>
+        );
+    }
+
+
+
+    // const truthWins = useMemo(() => votes.truth >= votes.dare, [votes]);
+    // Fix: truthWins is not used in the return JSX yet? 
+    // Wait, it is used for styling: ${truthWins ? ...
+    const truthWins = votes.truth >= votes.dare; // Simple check
 
     function submitBaseline() {
         if (customType) {
@@ -85,7 +237,8 @@ export default function TruthOrDareRoom() {
 
     return (
         <div className="min-h-screen bg-black text-white">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20 relative z-20 bg-black/50 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
@@ -96,30 +249,64 @@ export default function TruthOrDareRoom() {
                     <BrandLogo showBadge={false} />
                 </div>
                 <div className="flex items-center gap-3 text-pink-300 text-sm">
-                    <Crown className="w-4 h-4" /> Truth or Dare Room
+                    <Crown className="w-4 h-4" /> {sessionInfo?.title || "Truth or Dare Room"}
                     <span className="hidden sm:inline text-[10px] text-gray-400">
-                        Entry ${ENTRY_FEE}
+                        {sessionInfo?.isPrivate ? `Private Entry $${sessionInfo.price}` : `Entry $${ENTRY_FEE}`}
                     </span>
                 </div>
             </div>
 
+            {/* Paywall Overlay */}
+            {access === 'locked' && sessionInfo && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
+                    <div className="max-w-md w-full bg-gray-900 border border-purple-500/30 rounded-3xl p-8 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]">
+                        <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-6">
+                            <Lock className="w-8 h-8 text-purple-400" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">{sessionInfo.title}</h2>
+                        <p className="text-gray-400 mb-8">{sessionInfo.desc || "This is a private VIP session. Unlock to enter and participate."}</p>
+
+                        <div className="p-4 rounded-xl bg-black/40 border border-white/10 mb-8">
+                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Entry Fee</div>
+                            <div className="text-3xl font-bold text-purple-300">${sessionInfo.price}</div>
+                        </div>
+
+                        <button
+                            onClick={unlockSession}
+                            disabled={unlocking}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg shadow-lg shadow-purple-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {unlocking ? "Processing..." : <>Unlock Access <Play className="w-5 h-5 fill-current" /></>}
+                        </button>
+                        <p className="mt-4 text-xs text-gray-600">Secure payment via PlaygroundX Wallet</p>
+                    </div>
+                </div>
+            )}
+
             <main className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                 <div className="lg:col-span-3 flex flex-col gap-4">
-                    <div className="grid grid-cols-2 grid-rows-2 gap-4">
+                    <div className={`grid gap-4 ${creatorCount === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                         {Array.from({ length: creatorCount }).map((_, i) => (
                             <div
                                 key={`creator-${i}`}
-                                className="relative rounded-2xl border border-pink-500/40 aspect-video flex items-center justify-center bg-gray-950"
+                                className="relative rounded-2xl border border-pink-500/40 aspect-video flex items-center justify-center bg-gray-950 overflow-hidden"
                             >
-                                <Video className="w-10 h-10 text-pink-400" />
-                                <span className="absolute bottom-2 left-2 text-xs text-pink-300">Creator {i + 1}</span>
+                                {/* Fan View - Only Creator 1 (index 0) is streaming for now */}
+                                {i === 0 && roomId ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={userId || 0} // Pass actual user ID if available, else 0 (anon)
+                                        hostId={hostId || 0} // Now correctly populated
+                                    />
+                                ) : (
+                                    <>
+                                        <Video className="w-10 h-10 text-pink-400" />
+                                        <span className="absolute bottom-2 left-2 text-xs text-pink-300">Creator {i + 1}</span>
+                                    </>
+                                )}
                             </div>
-                        ))}
-                        {Array.from({ length: Math.max(0, 4 - creatorCount) }).map((_, i) => (
-                            <div
-                                key={`creator-empty-${i}`}
-                                className="rounded-2xl border border-pink-500/10 aspect-video bg-black/40"
-                            />
                         ))}
                     </div>
 
@@ -152,8 +339,6 @@ export default function TruthOrDareRoom() {
                             {topFan}
                         </div>
                     </div>
-                    {/* Room Billing and Screens removed for Fan View */}
-                    {/* Controls are now Creator-side or automated */}
 
                     <div>
                         <h3 className="text-pink-300 mb-2">Choose a Prompt</h3>
@@ -169,7 +354,6 @@ export default function TruthOrDareRoom() {
                                             setSelectedTier(t.id);
                                             setCustomType(null); // It's a system prompt
                                             setLastAction(`Purchased ${t.label} Truth`);
-                                            // In real app: trigger purchase({ tier: t.id, type: 'truth' })
                                         }}
                                         className="w-full rounded-xl border border-blue-500/30 p-2 text-left hover:bg-blue-600/10 transition"
                                     >
@@ -194,7 +378,6 @@ export default function TruthOrDareRoom() {
                                             setSelectedTier(t.id);
                                             setCustomType(null);
                                             setLastAction(`Purchased ${t.label} Dare`);
-                                            // In real app: trigger purchase({ tier: t.id, type: 'dare' })
                                         }}
                                         className="w-full rounded-xl border border-pink-500/30 p-2 text-left hover:bg-pink-600/10 transition"
                                     >
@@ -343,8 +526,6 @@ export default function TruthOrDareRoom() {
                             <Timer className="w-4 h-4" /> Dare ($5)
                         </button>
 
-
-
                         <div className="text-xs text-gray-400 mb-2">
                             Creators may decline any prompt. A same-tier replacement is auto-served.
                         </div>
@@ -371,6 +552,14 @@ export default function TruthOrDareRoom() {
                     </div>
                 </aside>
             </main>
-        </div >
+        </div>
+    );
+}
+
+export default function TruthOrDareRoom() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading Room...</div>}>
+            <TruthOrDareContent />
+        </Suspense>
     );
 }
