@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
+import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New Component
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
 
@@ -79,7 +80,8 @@ function TruthOrDareContent() {
     // Session State
     const [loading, setLoading] = useState(true);
     const [sessionStatus, setSessionStatus] = useState<'active' | 'ended' | 'loading'>('loading');
-    const [access, setAccess] = useState<'granted' | 'locked'>('granted'); // Default granted for backward compat, strictly checked below
+    const [access, setAccess] = useState<'granted' | 'locked'>('locked'); // Default locked for security
+    const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
     const [sessionInfo, setSessionInfo] = useState<{ title: string; desc: string; price: number; isPrivate: boolean } | null>(null);
     const [hostId, setHostId] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
@@ -146,30 +148,57 @@ function TruthOrDareContent() {
                     isPrivate: game.is_private
                 });
 
-                // 2. Check Access (if private)
-                if (game.is_private) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        setUserId(user.id);
-                        // Check unlocks table
-                        const { data: unlock } = await supabase
-                            .from('truth_dare_unlocks')
-                            .select('id')
-                            .eq('room_id', roomId)
-                            .eq('fan_id', user.id)
-                            .single();
+                console.log("Checking Room Access:", { isPrivate: game.is_private, price: game.unlock_price });
 
-                        if (unlock) setAccess('granted');
-                        else setAccess('locked');
+                // 2. Check Access
+                // Note: ALL rooms are now paid (Public != Free).
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (user) {
+                    setUserId(user.id);
+
+                    // A. Check Payment (Unlocks table) - Valid for both Public and Private
+                    const { data: unlock } = await supabase
+                        .from('truth_dare_unlocks')
+                        .select('id')
+                        .eq('room_id', roomId)
+                        .eq('fan_id', user.id)
+                        .single();
+
+                    if (unlock) {
+                        console.log("Access Granted: User has paid.");
+                        setAccess('granted');
+                        return; // Done
+                    }
+
+                    // B. If Private, check Request Status
+                    if (game.is_private) {
+                        const { data: req } = await supabase
+                            .from('room_requests')
+                            .select('status')
+                            .eq('room_id', roomId)
+                            .eq('user_id', user.id)
+                            .maybeSingle();
+
+                        if (req) {
+                            console.log("Request Status:", req.status);
+                            setRequestStatus(req.status as any); // pending, approved, rejected
+                        } else {
+                            setRequestStatus('none');
+                        }
                     } else {
-                        setAccess('locked');
+                        // Public Room: No request needed, but payment IS required.
+                        // So we stay 'locked' until paid.
+                        console.log("Access Locked: Public Room (Payment Required)");
+                        // Ensure requestStatus allows payment immediately
+                        setRequestStatus('approved'); // Treat public as "auto-approved" for payment flow
                     }
                 } else {
-                    setAccess('granted');
-                    // Even if public, try to get user for streaming UID
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) setUserId(user.id);
+                    console.log("Access Locked: No user.");
                 }
+
+                // Default: Locked
+                setAccess('locked');
 
             } catch (e) {
                 console.error(e);
@@ -190,7 +219,6 @@ function TruthOrDareContent() {
                 if (newData.status === 'ended') {
                     setSessionStatus('ended');
                 } else if (newData.status === 'active') {
-                    // Optional: Handling re-activation if needed, but primary goal is END handling
                     setSessionStatus('active');
                 }
             })
@@ -198,6 +226,25 @@ function TruthOrDareContent() {
 
         return () => { supabase.removeChannel(channel); };
     }, [roomId, supabase]);
+
+    async function sendJoinRequest() {
+        if (!roomId || !userId) return;
+        setUnlocking(true);
+        try {
+            const { error } = await supabase
+                .from('room_requests')
+                .insert({ room_id: roomId, user_id: userId, status: 'pending' });
+
+            if (error) throw error;
+            setRequestStatus('pending');
+            alert("Request sent! Waiting for host approval.");
+        } catch (e) {
+            console.error("Request failed", e);
+            alert("Failed to send request.");
+        } finally {
+            setUnlocking(false);
+        }
+    }
 
     async function unlockSession() {
         if (!roomId || !sessionInfo) return;
@@ -220,27 +267,7 @@ function TruthOrDareContent() {
         }
     }
 
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-pink-500">Checking access...</div>;
-
-    if (sessionStatus === 'ended' && roomId) {
-        return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center">
-                <div className="text-xl font-bold mb-2">Session Ended</div>
-                <p className="text-gray-400 mb-6">This Truth or Dare session is no longer active.</p>
-                <button onClick={onBack} className="px-6 py-2 bg-pink-600 rounded-xl">Back to Home</button>
-            </div>
-        );
-    }
-
-
-
-    // const truthWins = useMemo(() => votes.truth >= votes.dare, [votes]);
-    // Fix: truthWins is not used in the return JSX yet? 
-    // Wait, it is used for styling: ${truthWins ? ...
     const truthWins = votes.truth >= votes.dare; // Simple check
-
-    // Moved to top
-
 
     function openConfirmation(type: string, tier: string | null = null, content: string = "", price: number = 0) {
         setConfirmModal({ isOpen: true, type, tier, content, price });
@@ -267,10 +294,8 @@ function TruthOrDareContent() {
 
             if (res.ok) {
                 setLastAction("Request sent successfully!");
-                // Close confirm modal
                 setConfirmModal(null);
 
-                // Show Result Modal (especially meaningful for System Prompts where content is revealed)
                 if (data.request && data.request.content) {
                     setResultModal({
                         isOpen: true,
@@ -279,13 +304,12 @@ function TruthOrDareContent() {
                     });
                 }
 
-                // Reset inputs
                 setCustomText("");
                 setCustomType(null);
                 setSelectedTier(null);
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
-                alert(`Error: ${data.error || "Failed to send"}`); // Fallback
+                alert(`Error: ${data.error || "Failed to send"}`);
             }
         } catch (e) {
             setLastAction("Network error. Please try again.");
@@ -294,12 +318,26 @@ function TruthOrDareContent() {
         }
     }
 
-    // Wiring up System and Custom submissions
-    // Note: Inline handlers updated below within JSX
 
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-pink-500">Checking access...</div>;
+
+    if (sessionStatus === 'ended' && roomId) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center">
+                <div className="text-xl font-bold mb-2">Session Ended</div>
+                <p className="text-gray-400 mb-6">This Truth or Dare session is no longer active.</p>
+                <button onClick={onBack} className="px-6 py-2 bg-pink-600 rounded-xl">Back to Home</button>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-black text-white">
+            {/* Host Tools: Request Manager (Private Rooms) */}
+            {userId && hostId && userId === hostId && sessionInfo?.isPrivate && (
+                <RoomRequestManager roomId={roomId!} />
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20 relative z-20 bg-black/50 backdrop-blur-md">
                 <div className="flex items-center gap-3">
@@ -314,7 +352,7 @@ function TruthOrDareContent() {
                 <div className="flex items-center gap-3 text-pink-300 text-sm">
                     <Crown className="w-4 h-4" /> {sessionInfo?.title || "Truth or Dare Room"}
                     <span className="hidden sm:inline text-[10px] text-gray-400">
-                        {sessionInfo?.isPrivate ? `Private Entry $${sessionInfo.price}` : `Entry $${ENTRY_FEE}`}
+                        {sessionInfo?.isPrivate ? `Private Entry $${sessionInfo.price}` : `Free Entry`}
                     </span>
                 </div>
             </div>
@@ -344,7 +382,8 @@ function TruthOrDareContent() {
                         <p className="mt-4 text-xs text-gray-600">Secure payment via PlaygroundX Wallet</p>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             <main className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                 <div className="lg:col-span-3 flex flex-col gap-4">
@@ -712,7 +751,7 @@ function TruthOrDareContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 
 }

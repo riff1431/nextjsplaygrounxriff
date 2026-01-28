@@ -65,17 +65,34 @@ export default function CreatorDashboard() {
                 if (error) throw error;
                 setRooms(myRooms || []);
 
-                // Fetch real stats via RPC
+                // Calculate Revenue ( TIPS & INTERACTIONS ONLY )
+                // Explicitly fetching from truth_dare_requests to ensure we DO NOT include entry fees (truth_dare_unlocks)
+                let calculatedTips = 0;
+                if (myRooms && myRooms.length > 0) {
+                    const roomIds = myRooms.map(r => r.id);
+                    const { data: interactions } = await supabase
+                        .from('truth_dare_requests')
+                        .select('amount')
+                        .in('room_id', roomIds);
+
+                    if (interactions) {
+                        calculatedTips = interactions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+                    }
+                }
+
+                // Fetch real stats via RPC (for followers/rooms)
                 const { data: realStats, error: statsError } = await supabase
                     .rpc('get_creator_dashboard_stats', { p_creator_id: user.id });
 
                 if (!statsError && realStats) {
                     setStats({
-                        totalViewers: 0, // Not tracked yet aggregate
-                        earnings: (realStats.totalEarningsCents || 0) / 100,
+                        totalViewers: 0,
+                        earnings: calculatedTips, // Override with Tips Only
                         followers: realStats.totalFollowers || 0,
                         activeRooms: realStats.activeRooms || 0
                     });
+                } else {
+                    setStats(prev => ({ ...prev, earnings: calculatedTips }));
                 }
 
             } catch (err: any) {
@@ -154,7 +171,7 @@ export default function CreatorDashboard() {
                             <DollarSign className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="text-gray-400 text-xs uppercase tracking-wider">Total Earnings</div>
+                            <div className="text-gray-400 text-xs uppercase tracking-wider">Tips Earned</div>
                             <div className="text-2xl font-bold text-gray-100">${stats.earnings.toLocaleString()}</div>
                         </div>
                     </div>

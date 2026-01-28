@@ -479,25 +479,18 @@ function HomeScreen({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Left rail (always-expanded categories) */}
                 <NeonCard className="relative overflow-hidden p-4 lg:col-span-2">
+                    {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
                         <div className="absolute -inset-12 blur-3xl bg-[radial-gradient(circle_at_25%_20%,rgba(255,0,200,0.30),transparent_55%),radial-gradient(circle_at_80%_35%,rgba(0,230,255,0.22),transparent_60%)]" />
                     </div>
 
                     <div className="relative">
-                        <div className="neon-smoke" aria-hidden="true" />
                         <div className="text-fuchsia-300 text-sm mb-3 neon-flicker drop-shadow-[0_0_58px_rgba(255,0,200,1)]">
                             Browse
                         </div>
 
                         <div>
-                            <div className="flex items-center justify-between">
-                                <div className="text-xs text-fuchsia-300 inline-flex items-center gap-2 drop-shadow-[0_0_58px_rgba(255,0,200,1)]">
-                                    <Search className="w-4 h-4 text-fuchsia-300 drop-shadow-[0_0_62px_rgba(255,0,200,1)]" />
-                                    Categories
-                                </div>
-                            </div>
-
                             <div className="mt-3 space-y-2">
                                 {CATS.map((cat) => {
                                     const t = toneClasses(cat.tone);
@@ -518,7 +511,6 @@ function HomeScreen({
                                                 isPrimary && "ring-1 ring-cyan-300/35",
                                                 activeCat === cat.key && "neon-pulse"
                                             )}
-                                            title={isPrimary ? "Enter Suga4U" : "Coming next"}
                                         >
                                             <span
                                                 className={cx(
@@ -540,124 +532,49 @@ function HomeScreen({
                         <div className="mt-6 text-fuchsia-200 text-sm drop-shadow-[0_0_44px_rgba(255,0,200,0.75)]">Account</div>
                         <div className="mt-2 space-y-3">
                             <div className="grid grid-cols-1 gap-2">
-                                <button
-                                    className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_28px_rgba(0,230,255,0.98),0_0_160px_rgba(0,230,255,0.78)] hover:shadow-[0_0_54px_rgba(0,230,255,1),0_0_220px_rgba(0,230,255,0.95)] drop-shadow-[0_0_54px_rgba(0,230,255,1)]"
-                                    title="My Profile"
-                                    onClick={() => router.push("/account/profile")}
-                                >
+                                <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center" onClick={() => router.push("/account/profile")}>
                                     <User className="w-4 h-4" /> My Profile
                                 </button>
-                                <button
-                                    className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_28px_rgba(0,230,255,0.98),0_0_160px_rgba(0,230,255,0.78)] hover:shadow-[0_0_54px_rgba(0,230,255,1),0_0_220px_rgba(0,230,255,0.95)] drop-shadow-[0_0_54px_rgba(0,230,255,1)]"
-                                    title="Messages"
-                                    onClick={() => router.push("/account/messages")}
-                                >
+                                <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center" onClick={() => router.push("/account/messages")}>
                                     <MessageCircle className="w-4 h-4" /> Messages
                                 </button>
-                                <button
-                                    className="w-full rounded-xl border border-fuchsia-300/90 bg-black px-3 py-2 text-sm text-fuchsia-300 hover:bg-fuchsia-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_30px_rgba(255,0,200,0.98),0_0_180px_rgba(255,0,200,0.82)] hover:shadow-[0_0_58px_rgba(255,0,200,1),0_0_240px_rgba(255,0,200,0.96)] drop-shadow-[0_0_58px_rgba(255,0,200,1)]"
-                                    title="Notifications"
-                                    onClick={() => router.push("/account/notifications")}
-                                >
-                                    <Bell className="w-4 h-4" /> Notifications
-                                </button>
-                                <button
-                                    className="w-full rounded-xl border border-violet-300/90 bg-black px-3 py-2 text-sm text-violet-300 hover:bg-violet-500/10 inline-flex items-center gap-2 justify-center shadow-[0_0_26px_rgba(170,80,255,0.98),0_0_150px_rgba(170,80,255,0.82)] hover:shadow-[0_0_46px_rgba(170,80,255,1),0_0_220px_rgba(170,80,255,0.95)] drop-shadow-[0_0_54px_rgba(170,80,255,1)]"
-                                    title="Collections"
-                                    onClick={() => router.push("/account/collections")}
-                                >
-                                    <Star className="w-4 h-4" /> Collections
-                                </button>
+                                <NeonButton variant="ghost" className="w-full justify-start flex items-center gap-2" title="Log Out" onClick={() => router.push("/")}>
+                                    <LogOut className="w-4 h-4" /> Log Out
+                                </NeonButton>
                             </div>
-
-                            <div className="border-t border-pink-500/15 pt-3" />
-                            <NeonButton variant="ghost" className="w-full justify-start flex items-center gap-2" title="Log Out" onClick={() => router.push("/")}>
-                                <LogOut className="w-4 h-4" /> Log Out
-                            </NeonButton>
                         </div>
                     </div>
                 </NeonCard>
 
-                {/* Main grid */}
+                {/* Main Content (Simplified) */}
                 <div className="lg:col-span-6">
-                    <LiveFeed />
+                    {/* Browse Live Sessions CTA */}
+                    <div className="p-10 text-center rounded-3xl bg-gradient-to-br from-pink-900/20 to-purple-900/20 border border-pink-500/20 mb-8 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.1),transparent)] group-hover:bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.2),transparent)] transition-all duration-700" />
 
-                    <div className="flex flex-col gap-3 mb-4">
-                        {/* Filters */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
-                                <div className="text-[10px] text-gray-400 mb-1">Creator Level</div>
-                                <select
-                                    value={levelFilter}
-                                    onChange={(e) => setLevelFilter(e.target.value as any)}
-                                    className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
-                                >
-                                    <option value="All">All</option>
-                                    <option value="Rookie">Rookie</option>
-                                    <option value="Rising">Rising</option>
-                                    <option value="Star">Star</option>
-                                    <option value="Elite">Elite</option>
-                                </select>
-                            </div>
+                        <div className="relative z-10">
+                            <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Live Sessions</h2>
+                            <p className="text-gray-400 mb-8 text-lg">Discover active rooms, join the action, and interact with creators.</p>
 
-                            <div className="rounded-2xl border border-blue-500/20 bg-black/35 px-3 py-2">
-                                <div className="text-[10px] text-gray-400 mb-1">Room / Category</div>
-                                <select
-                                    value={tagFilter}
-                                    onChange={(e) => setTagFilter(e.target.value)}
-                                    className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm"
-                                >
-                                    <option value="All">All</option>
-                                    <option value="Flash Drops">Flash Drops</option>
-                                    <option value="Confessions">Confessions</option>
-                                    <option value="Bar Lounge">Bar Lounge</option>
-                                    <option value="Truth or Dare">Truth or Dare</option>
-                                    <option value="Suga 4 U">Suga 4 U</option>
-                                    <option value="X Chat">X Chat</option>
-                                </select>
-                            </div>
-
-                            <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
-                                <div className="text-[10px] text-gray-400 mb-1">Sort</div>
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value as any)}
-                                    className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
-                                >
-                                    <option value="Recommended">Recommended</option>
-                                    <option value="Rookie→Elite">Rookie → Elite</option>
-                                    <option value="Elite→Rookie">Elite → Rookie</option>
-                                </select>
-                            </div>
+                            <button
+                                onClick={() => router.push('/live/sessions')}
+                                className="px-10 py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 font-bold text-white shadow-xl shadow-pink-900/30 hover:shadow-pink-900/50 transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
+                            >
+                                <Video className="w-5 h-5 fill-current" />
+                                Browse Active Rooms
+                            </button>
                         </div>
                     </div>
 
-                    {/* Creator tiles */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
-                        {filtered.map((c) => (
-                            <CreatorTile
-                                key={c.id}
-                                creator={c}
-                                onOpen={() => {
-                                    // Use userId if available for profile redirect
-                                    if (c.userId) {
-                                        router.push("/profile/" + c.userId);
-                                    } else if (c.tags.includes("Suga 4 U")) {
-                                        onEnterSuga4U();
-                                    } else {
-                                        router.push("/room/" + c.id);
-                                    }
-                                }}
-                            />
-                        ))}
-                    </div>
+
                 </div>
 
-                {/* Right rail (feed) */}
+                {/* Right rail (Cleaned) */}
                 <NeonCard className="p-4 lg:col-span-4">
-                    <WorldTruthDareList />
-                    <div className="text-pink-200 text-sm mb-3">Creator Feed</div>
-                    <div className="space-y-4">
+                    <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Creator Feed
+                    </div>
+                    <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
                         {posts.map((post) => (
                             <PostCard
                                 key={post.id}
