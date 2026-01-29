@@ -9,6 +9,8 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import TopUpModal from "@/components/wallet/TopUpModal";
+import WithdrawalModal from "@/components/wallet/WithdrawalModal";
+import { useAuth } from "@/app/context/AuthContext";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -54,10 +56,12 @@ function NeonButton({
 export default function WalletPage() {
     const router = useRouter();
     const supabase = createClient();
+    const { role } = useAuth();
     const [balance, setBalance] = useState<number>(0);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+    const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
 
     useEffect(() => {
         fetchWalletData();
@@ -190,6 +194,12 @@ export default function WalletPage() {
                 onClose={() => setIsTopUpOpen(false)}
                 onTopUp={handleAddFunds}
             />
+            <WithdrawalModal
+                isOpen={withdrawModalOpen}
+                onClose={() => setWithdrawModalOpen(false)}
+                balance={balance}
+                onSuccess={fetchWalletData}
+            />
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -212,7 +222,9 @@ export default function WalletPage() {
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/20 blur-[100px] rounded-full"></div>
 
                     <div className="relative z-10 flex flex-col items-center text-center space-y-4">
-                        <div className="text-pink-200 text-sm font-medium uppercase tracking-widest opacity-80">Total Balance</div>
+                        <div className="text-pink-200 text-sm font-medium uppercase tracking-widest opacity-80">
+                            {role === 'creator' ? 'Total Earnings' : 'Total Balance'}
+                        </div>
                         <div className="text-5xl md:text-6xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                             {fmt(balance)}
                         </div>
@@ -224,9 +236,20 @@ export default function WalletPage() {
                             >
                                 <Plus className="w-4 h-4" /> Add Funds
                             </NeonButton>
-                            <NeonButton variant="ghost" className="hover:bg-white/10">
-                                <ArrowUpRight className="w-4 h-4" /> Withdraw
-                            </NeonButton>
+
+                            {role === 'creator' ? (
+                                <NeonButton
+                                    onClick={() => setWithdrawModalOpen(true)}
+                                    variant="ghost"
+                                    className="hover:bg-white/10"
+                                >
+                                    <ArrowUpRight className="w-4 h-4" /> Withdraw Funds
+                                </NeonButton>
+                            ) : (
+                                <NeonButton variant="ghost" className="hover:bg-white/10">
+                                    <ArrowUpRight className="w-4 h-4" /> Withdraw
+                                </NeonButton>
+                            )}
                         </div>
                     </div>
                 </div>

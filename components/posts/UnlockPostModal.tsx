@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Lock, CreditCard, Building2, CheckCircle2, Loader2, X } from "lucide-react";
@@ -114,8 +114,8 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                 <button
                                     onClick={() => setPaymentMethod("card")}
                                     className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${paymentMethod === "card"
-                                            ? "bg-pink-500/10 border-pink-500 ring-1 ring-pink-500/50"
-                                            : "bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
+                                        ? "bg-pink-500/10 border-pink-500 ring-1 ring-pink-500/50"
+                                        : "bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -133,8 +133,8 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                 <button
                                     onClick={() => setPaymentMethod("bank")}
                                     className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${paymentMethod === "bank"
-                                            ? "bg-pink-500/10 border-pink-500 ring-1 ring-pink-500/50"
-                                            : "bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
+                                        ? "bg-pink-500/10 border-pink-500 ring-1 ring-pink-500/50"
+                                        : "bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">

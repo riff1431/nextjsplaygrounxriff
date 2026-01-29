@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, Check, Star, Zap, Crown, Loader2, ArrowLeft } from "lucide-react";
+import { X, Check, Star, Zap, Crown, Loader2, ArrowLeft, WalletIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
@@ -20,12 +20,21 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
     const [loading, setLoading] = useState(false);
     const [selectedTier, setSelectedTier] = useState<'weekly' | 'monthly' | null>(null);
     const [step, setStep] = useState<1 | 2>(1);
-    const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'bank'>('card');
+    const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'bank' | 'wallet'>('card');
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const supabase = createClient();
     const router = useRouter();
 
     const weeklyPrice = creator.subscription_price_weekly || 0;
     const monthlyPrice = creator.subscription_price_monthly || 0;
+
+    // Fetch Wallet Balance
+    if (isOpen && currentUserId && walletBalance === null) {
+        supabase.from('wallets').select('balance').eq('user_id', currentUserId).single()
+            .then(({ data }) => {
+                if (data) setWalletBalance(data.balance);
+            });
+    }
 
     // Reset state when opening
     if (!isOpen && step !== 1) setStep(1);
@@ -46,33 +55,42 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
     const handlePayment = async () => {
         setLoading(true);
         try {
-            // Mock payment processing delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            const days = selectedTier === 'weekly' ? 7 : 30;
-            const periodEnd = new Date();
-            periodEnd.setDate(periodEnd.getDate() + days);
-
-            const { error } = await supabase
-                .from('subscriptions')
-                .insert({
-                    user_id: currentUserId,
-                    creator_id: creator.id,
-                    tier: selectedTier,
-                    status: 'active',
-                    current_period_end: periodEnd.toISOString()
+            if (paymentMethod === 'wallet') {
+                if ((walletBalance || 0) < (selectedTier === 'weekly' ? weeklyPrice : monthlyPrice)) {
+                    throw new Error("Insufficient wallet balance");
+                }
+                const { error } = await supabase.rpc('subscribe_via_wallet', {
+                    creator_id_val: creator.id,
+                    tier_val: selectedTier,
+                    amount_val: selectedTier === 'weekly' ? weeklyPrice : monthlyPrice
                 });
+                if (error) throw error;
+            } else {
+                // Mock payment processing delay (for other methods)
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
-            if (error) throw error;
+                const days = selectedTier === 'weekly' ? 7 : 30;
+                const periodEnd = new Date();
+                periodEnd.setDate(periodEnd.getDate() + days);
+
+                const { error } = await supabase
+                    .from('subscriptions')
+                    .insert({
+                        user_id: currentUserId,
+                        creator_id: creator.id,
+                        tier: selectedTier,
+                        status: 'active',
+                        current_period_end: periodEnd.toISOString()
+                    });
+                if (error) throw error;
+            }
 
             toast.success(`Subscribed to ${creator.full_name || creator.username}!`);
             onSuccess?.();
             onClose();
             setStep(1); // Reset for next time
-        } catch (error) {
+        } catch (error: any) {
             console.error("Subscription error:", error);
-            console.error("Subscription error:", error);
-            // @ts-ignore
             toast.error(error?.message || "Failed to process subscription");
         } finally {
             setLoading(false);
@@ -208,91 +226,116 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                             </div>
 
                             <div className="space-y-3">
-                                <button
-                                    onClick={() => setPaymentMethod('card')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'card'
-                                        ? 'bg-zinc-800 border-pink-500 text-white'
-                                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
-                                        }`}
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-zinc-950 flex items-center justify-center border border-zinc-700">
-                                        <CreditCardIcon className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <div className="font-medium">Credit Card</div>
-                                        <div className="text-xs opacity-60">Visa, Mastercard, Amex</div>
-                                    </div>
-                                    {paymentMethod === 'card' && <Check className="w-5 h-5 text-pink-500" />}
-                                </button>
+                                <div className="space-y-3">
+                                    {/* Wallet Option */}
+                                    <button
+                                        onClick={() => setPaymentMethod('wallet')}
+                                        disabled={(walletBalance || 0) < (selectedTier === 'weekly' ? weeklyPrice : monthlyPrice)}
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'wallet'
+                                            ? 'bg-zinc-800 border-pink-500 text-white'
+                                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                                            } ${(walletBalance || 0) < (selectedTier === 'weekly' ? weeklyPrice : monthlyPrice) ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-zinc-950 flex items-center justify-center border border-zinc-700">
+                                            <WalletIcon className="w-5 h-5 text-pink-500" />
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <div className="font-medium">Wallet Balance</div>
+                                            <div className="text-xs opacity-60">
+                                                Available: <span className={(walletBalance || 0) < (selectedTier === 'weekly' ? weeklyPrice : monthlyPrice) ? "text-red-400" : "text-green-400"}>
+                                                    ${(walletBalance || 0).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {paymentMethod === 'wallet' && <Check className="w-5 h-5 text-pink-500" />}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'card'
+                                            ? 'bg-zinc-800 border-pink-500 text-white'
+                                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-zinc-950 flex items-center justify-center border border-zinc-700">
+                                            <CreditCardIcon className="w-5 h-5" />
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <div className="font-medium">Credit Card</div>
+                                            <div className="text-xs opacity-60">Visa, Mastercard, Amex</div>
+                                        </div>
+                                        {paymentMethod === 'card' && <Check className="w-5 h-5 text-pink-500" />}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPaymentMethod('paypal')}
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'paypal'
+                                            ? 'bg-zinc-800 border-blue-500 text-white'
+                                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-blue-900/20 flex items-center justify-center border border-blue-900/30">
+                                            <div className="text-blue-500 font-bold text-xs">Py</div>
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <div className="font-medium">PayPal</div>
+                                            <div className="text-xs opacity-60">Pay safely with PayPal</div>
+                                        </div>
+                                        {paymentMethod === 'paypal' && <Check className="w-5 h-5 text-blue-500" />}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setPaymentMethod('bank')}
+                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'bank'
+                                            ? 'bg-zinc-800 border-green-500 text-white'
+                                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
+                                            }`}
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-green-900/20 flex items-center justify-center border border-green-900/30">
+                                            <Building2 className="w-5 h-5 text-green-500" />
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <div className="font-medium">Manual Bank Transfer</div>
+                                            <div className="text-xs opacity-60">Direct transfer details</div>
+                                        </div>
+                                        {paymentMethod === 'bank' && <Check className="w-5 h-5 text-green-500" />}
+                                    </button>
+                                </div>
+
+                                {/* Info Box for Selected Method */}
+                                <div className="bg-zinc-950/50 rounded-xl p-4 border border-zinc-800/50 text-sm text-zinc-400">
+                                    {paymentMethod === 'wallet' && "Payment will be deducted immediately from your wallet balance."}
+                                    {paymentMethod === 'card' && "You will be redirected to our secure payment gateway."}
+                                    {paymentMethod === 'paypal' && "You will be redirected to PayPal to complete your purchase."}
+                                    {paymentMethod === 'bank' && (
+                                        <div className="space-y-1">
+                                            <p className="text-white font-medium mb-2">Bank Details:</p>
+                                            <p>Bank: <span className="text-zinc-300">PlayGroundX Bank</span></p>
+                                            <p>Account: <span className="text-zinc-300">123-456-7890</span></p>
+                                            <p className="text-xs mt-2 text-yellow-500 flex items-center gap-1">
+                                                <Zap className="w-3 h-3" /> Processing may take 24-48h.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <button
-                                    onClick={() => setPaymentMethod('paypal')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'paypal'
-                                        ? 'bg-zinc-800 border-blue-500 text-white'
-                                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
-                                        }`}
+                                    onClick={handlePayment}
+                                    disabled={loading}
+                                    className="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-blue-900/20 flex items-center justify-center border border-blue-900/30">
-                                        <div className="text-blue-500 font-bold text-xs">Py</div>
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <div className="font-medium">PayPal</div>
-                                        <div className="text-xs opacity-60">Pay safely with PayPal</div>
-                                    </div>
-                                    {paymentMethod === 'paypal' && <Check className="w-5 h-5 text-blue-500" />}
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        paymentMethod === 'bank' ? "Confirm Transfer" : "Pay Now"
+                                    )}
                                 </button>
-
-                                <button
-                                    onClick={() => setPaymentMethod('bank')}
-                                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition ${paymentMethod === 'bank'
-                                        ? 'bg-zinc-800 border-green-500 text-white'
-                                        : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
-                                        }`}
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-green-900/20 flex items-center justify-center border border-green-900/30">
-                                        <Building2 className="w-5 h-5 text-green-500" />
-                                    </div>
-                                    <div className="text-left flex-1">
-                                        <div className="font-medium">Manual Bank Transfer</div>
-                                        <div className="text-xs opacity-60">Direct transfer details</div>
-                                    </div>
-                                    {paymentMethod === 'bank' && <Check className="w-5 h-5 text-green-500" />}
-                                </button>
-                            </div>
-
-                            {/* Info Box for Selected Method */}
-                            <div className="bg-zinc-950/50 rounded-xl p-4 border border-zinc-800/50 text-sm text-zinc-400">
-                                {paymentMethod === 'card' && "You will be redirected to our secure payment gateway."}
-                                {paymentMethod === 'paypal' && "You will be redirected to PayPal to complete your purchase."}
-                                {paymentMethod === 'bank' && (
-                                    <div className="space-y-1">
-                                        <p className="text-white font-medium mb-2">Bank Details:</p>
-                                        <p>Bank: <span className="text-zinc-300">PlayGroundX Bank</span></p>
-                                        <p>Account: <span className="text-zinc-300">123-456-7890</span></p>
-                                        <p className="text-xs mt-2 text-yellow-500 flex items-center gap-1">
-                                            <Zap className="w-3 h-3" /> Processing may take 24-48h.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <button
-                                onClick={handlePayment}
-                                disabled={loading}
-                                className="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    paymentMethod === 'bank' ? "Confirm Transfer" : "Pay Now"
-                                )}
-                            </button>
-                        </>
+                            </>
                     )}
-                </div>
+                        </div>
             </DialogContent>
         </Dialog>
     );

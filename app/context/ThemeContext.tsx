@@ -32,15 +32,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         fetchTheme();
+
+        // Realtime Subscription (Broadcast)
+        // We use Broadcast because it bypasses RLS for the events
+        const channel = supabase.channel('global_theme')
+            .on(
+                'broadcast',
+                { event: 'theme_updated' },
+                (payload) => {
+                    const newTheme = payload.payload as ThemeSettings;
+                    if (newTheme) {
+                        setTheme(current => ({ ...current, ...newTheme }));
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const fetchTheme = async () => {
         try {
-            const { data, error } = await supabase
-                .from("admin_settings")
-                .select("value")
-                .eq("key", "theme_config")
-                .single();
+            // Fetch from API Route to bypass RLS
+            const res = await fetch('/api/v1/theme');
+            const data = await res.json();
 
             if (data?.value) {
                 setTheme({ ...DEFAULT_THEME, ...data.value });
@@ -57,6 +74,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setTheme(updated); // Optimistic update
 
         try {
+            // 1. Save to DB (as before)
             const { error } = await supabase
                 .from("admin_settings")
                 .upsert({
@@ -66,6 +84,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 });
 
             if (error) throw error;
+
+            // 2. Broadcast the update to everyone
+            await supabase.channel('global_theme').send({
+                type: 'broadcast',
+                event: 'theme_updated',
+                payload: updated
+            });
+
         } catch (error) {
             console.error("Failed to persist theme settings:", error);
             // Revert on error? For now, we'll just log.

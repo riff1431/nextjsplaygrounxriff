@@ -36,7 +36,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
 import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
-import LiveFeed from "@/components/home/LiveFeed";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -548,7 +547,6 @@ function HomeScreen({
 
                 {/* Main grid */}
                 <div className="lg:col-span-6">
-                    <LiveFeed />
 
                     <div className="flex flex-col gap-3 mb-4">
                         {/* Filters */}
