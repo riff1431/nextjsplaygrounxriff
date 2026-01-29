@@ -832,28 +832,26 @@ export default function TruthOrDareCreatorRoom() {
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: false })}
                                         className={`p-3 rounded-xl border text-sm transition ${!sessionForm.isPrivate ? "border-green-500/50 bg-green-500/10 text-white" : "border-white/10 text-gray-400"}`}
                                     >
-                                        Public (Free)
+                                        Public
                                     </button>
                                     <button
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: true })}
                                         className={`p-3 rounded-xl border text-sm transition ${sessionForm.isPrivate ? "border-purple-500/50 bg-purple-500/10 text-white" : "border-white/10 text-gray-400"}`}
                                     >
-                                        Private (Paid)
+                                        Private
                                     </button>
                                 </div>
                             </div>
 
-                            {sessionForm.isPrivate && (
-                                <div>
-                                    <label className="text-xs text-gray-400 mb-1 block">Entry Price ($)</label>
-                                    <input
-                                        type="number"
-                                        value={sessionForm.price}
-                                        onChange={e => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
-                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500/50 outline-none"
-                                    />
-                                </div>
-                            )}
+                            <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Entry Price ($)</label>
+                                <input
+                                    type="number"
+                                    value={sessionForm.price}
+                                    onChange={e => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500/50 outline-none"
+                                />
+                            </div>
 
                             <button
                                 onClick={startSession}

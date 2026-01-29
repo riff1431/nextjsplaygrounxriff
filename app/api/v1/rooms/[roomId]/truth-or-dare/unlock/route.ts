@@ -26,9 +26,7 @@ export async function POST(
             return NextResponse.json({ error: "Session not active" }, { status: 404 });
         }
 
-        if (!game.is_private) {
-            return NextResponse.json({ error: "Session is free" }, { status: 400 });
-        }
+        // Public sessions can now be paid, so we proceed to payment check.
 
         const price = Number(game.unlock_price);
         console.log(`[Unlock Debug] Room: ${roomId}, Price: ${price}`);

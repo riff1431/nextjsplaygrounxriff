@@ -127,24 +127,21 @@ function TruthOrDareContent() {
         async function checkAccess() {
             try {
                 // 1. Get Game State
-                const { data: game } = await supabase
+                const { data: game, error: gameError } = await supabase
                     .from('truth_dare_games')
-                    .select(`
-                        *,
-                        room:rooms (
-                            host_id
-                        )
-                    `)
+                    .select(`*, room:rooms(host_id)`)
                     .eq('room_id', roomId)
-                    .single();
+                    .maybeSingle();
 
-                if (!game || game.status !== 'active') {
+                if (gameError || !game || game.status !== 'active') {
+                    console.warn("Session ended or not found", gameError);
                     setSessionStatus('ended');
                     setLoading(false);
                     return;
                 }
+
                 setSessionStatus('active');
-                setHostId(game.room?.host_id); // Store host ID correctly from join
+                setHostId(game.room?.host_id);
                 setSessionInfo({
                     title: game.session_title || "Truth or Dare",
                     desc: game.session_description,
@@ -152,10 +149,7 @@ function TruthOrDareContent() {
                     isPrivate: game.is_private
                 });
 
-                console.log("Checking Room Access:", { isPrivate: game.is_private, price: game.unlock_price });
-
                 // 2. Check Access
-                // Note: ALL rooms are now paid (Public != Free).
                 const { data: { user } } = await supabase.auth.getUser();
 
                 if (user) {
@@ -167,7 +161,7 @@ function TruthOrDareContent() {
                         .select('id')
                         .eq('room_id', roomId)
                         .eq('fan_id', user.id)
-                        .single();
+                        .maybeSingle();
 
                     if (unlock) {
                         console.log("Access Granted: User has paid.");
@@ -185,17 +179,13 @@ function TruthOrDareContent() {
                             .maybeSingle();
 
                         if (req) {
-                            console.log("Request Status:", req.status);
-                            setRequestStatus(req.status as any); // pending, approved, rejected
+                            setRequestStatus(req.status as any);
                         } else {
                             setRequestStatus('none');
                         }
                     } else {
-                        // Public Room: No request needed, but payment IS required.
-                        // So we stay 'locked' until paid.
-                        console.log("Access Locked: Public Room (Payment Required)");
-                        // Ensure requestStatus allows payment immediately
-                        setRequestStatus('approved'); // Treat public as "auto-approved" for payment flow
+                        // Public Room: Auto-approve request logic for payment flow
+                        setRequestStatus('approved');
                     }
                 } else {
                     console.log("Access Locked: No user.");
@@ -205,7 +195,9 @@ function TruthOrDareContent() {
                 setAccess('locked');
 
             } catch (e) {
-                console.error(e);
+                console.error("checkAccess failed", e);
+                // If error, keep loading or show error, do not expose content
+                setSessionStatus('ended'); // Safest fallback
             } finally {
                 setLoading(false);
             }
@@ -400,37 +392,60 @@ function TruthOrDareContent() {
                 <div className="flex items-center gap-3 text-pink-300 text-sm">
                     <Crown className="w-4 h-4" /> {sessionInfo?.title || "Truth or Dare Room"}
                     <span className="hidden sm:inline text-[10px] text-gray-400">
-                        {sessionInfo?.isPrivate ? `Private Entry $${sessionInfo.price}` : `Free Entry`}
+                        {sessionInfo?.isPrivate ? "Private" : "Public"} Entry ${sessionInfo?.price ?? 0}
                     </span>
                 </div>
             </div>
 
             {/* Paywall Overlay */}
-            {access === 'locked' && sessionInfo && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-                    <div className="max-w-md w-full bg-gray-900 border border-purple-500/30 rounded-3xl p-8 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]">
-                        <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-6">
-                            <Lock className="w-8 h-8 text-purple-400" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">{sessionInfo.title}</h2>
-                        <p className="text-gray-400 mb-8">{sessionInfo.desc || "This is a private VIP session. Unlock to enter and participate."}</p>
+            {
+                access === 'locked' && sessionInfo && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
+                        <div className="max-w-md w-full bg-gray-900 border border-purple-500/30 rounded-3xl p-8 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]">
+                            <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-6">
+                                <Lock className="w-8 h-8 text-purple-400" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2">{sessionInfo.title}</h2>
+                            <p className="text-gray-400 mb-8">{sessionInfo.desc || "This is a private VIP session. Unlock to enter and participate."}</p>
 
-                        <div className="p-4 rounded-xl bg-black/40 border border-white/10 mb-8">
-                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Entry Fee</div>
-                            <div className="text-3xl font-bold text-purple-300">${sessionInfo.price}</div>
-                        </div>
+                            <div className="p-4 rounded-xl bg-black/40 border border-white/10 mb-8">
+                                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Entry Fee</div>
+                                <div className="text-3xl font-bold text-purple-300">${sessionInfo.price}</div>
+                            </div>
 
-                        <button
-                            onClick={unlockSession}
-                            disabled={unlocking}
-                            className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-lg shadow-lg shadow-purple-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {unlocking ? "Processing..." : <>Unlock Access <Play className="w-5 h-5 fill-current" /></>}
-                        </button>
-                        <p className="mt-4 text-xs text-gray-600">Secure payment via PlaygroundX Wallet</p>
+                            <button
+                                onClick={
+                                    sessionInfo.isPrivate && requestStatus !== 'approved'
+                                        ? sendJoinRequest
+                                        : unlockSession
+                                }
+                                disabled={unlocking || (sessionInfo.isPrivate && requestStatus === 'pending') || (sessionInfo.isPrivate && requestStatus === 'rejected')}
+                                className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${sessionInfo.isPrivate && requestStatus !== 'approved'
+                                    ? "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40 text-white"
+                                    : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-purple-900/40"
+                                    }`}
+                            >
+                                {unlocking ? (
+                                    "Processing..."
+                                ) : sessionInfo.isPrivate && requestStatus === 'pending' ? (
+                                    <>Request Pending...</>
+                                ) : sessionInfo.isPrivate && requestStatus === 'rejected' ? (
+                                    <>Request Declined</>
+                                ) : sessionInfo.isPrivate && requestStatus !== 'approved' ? (
+                                    <>Request to Join</>
+                                ) : (
+                                    <>Unlock Access <Play className="w-5 h-5 fill-current" /></>
+                                )}
+                            </button>
+                            <p className="mt-4 text-xs text-gray-600">
+                                {sessionInfo.isPrivate && requestStatus !== 'approved'
+                                    ? "Host must approve your request before payment."
+                                    : "Secure payment via PlaygroundX Wallet"
+                                }
+                            </p>
+                        </div>
                     </div>
-                </div>
-            )
+                )
             }
 
             <main className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
@@ -801,7 +816,7 @@ function TruthOrDareContent() {
                 isVisible={showOverlay}
                 onClose={() => setShowOverlay(false)}
             />
-        </div>
+        </div >
     );
 }
 

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Search, Filter, Crown, Lock, User, Video, Mic, ArrowLeft, Users } from 'lucide-react';
 import BrandLogo from '@/components/common/BrandLogo';
 
+import SessionPreviewModal from '@/components/live/SessionPreviewModal';
+
 type LiveRoom = {
     id: string;
     title: string;
@@ -24,6 +26,7 @@ type LiveRoom = {
         price: number;
         capacity: number;
         filled: number;
+        description?: string;
     };
 };
 
@@ -33,6 +36,7 @@ export default function LiveSessionsPage() {
     const [rooms, setRooms] = useState<LiveRoom[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [selectedSession, setSelectedSession] = useState<LiveRoom | null>(null);
 
     useEffect(() => {
         fetchRooms();
@@ -180,7 +184,7 @@ export default function LiveSessionsPage() {
                                 </div>
 
                                 <button
-                                    onClick={() => router.push(`/rooms/truth-or-dare?roomId=${room.id}`)} // MVP: Assumes T&D
+                                    onClick={() => setSelectedSession(room)}
                                     className="w-full py-3 rounded-xl bg-white text-black font-bold hover:bg-gray-200 transition flex items-center justify-center gap-2"
                                 >
                                     {room.meta?.is_private ? 'Request to Join' : 'Join Room'}
@@ -190,6 +194,14 @@ export default function LiveSessionsPage() {
                     ))
                 )}
             </div>
+
+            {/* Preview Modal */}
+            {selectedSession && (
+                <SessionPreviewModal
+                    session={selectedSession}
+                    onClose={() => setSelectedSession(null)}
+                />
+            )}
         </div>
     );
 }

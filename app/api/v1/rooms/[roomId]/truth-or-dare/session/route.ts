@@ -40,7 +40,7 @@ export async function POST(
                     title: title,
                     description: description,
                     is_private: isPrivate,
-                    price: isPrivate ? price : 0,
+                    price: price,
                     status: 'active'
                 });
 
@@ -54,7 +54,7 @@ export async function POST(
                     session_title: title,
                     session_description: description,
                     is_private: isPrivate,
-                    unlock_price: isPrivate ? price : 0,
+                    unlock_price: price,
                     status: 'active',
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'room_id' });

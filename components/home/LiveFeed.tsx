@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Lock, Radio, Users, ChevronRight } from "lucide-react";
+import SessionPreviewModal from "@/components/live/SessionPreviewModal";
 
 interface ActiveStream {
     id: string;
@@ -25,6 +26,7 @@ interface ActiveStream {
 export default function LiveFeed() {
     const [streams, setStreams] = useState<ActiveStream[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSession, setSelectedSession] = useState<any>(null); // Using any to match Modal's loose typing for now
     const router = useRouter();
     const supabase = createClient();
 
@@ -138,7 +140,22 @@ export default function LiveFeed() {
                         return (
                             <div
                                 key={stream.id}
-                                onClick={() => router.push(`/rooms/truth-or-dare?roomId=${stream.room_id}`)}
+                                onClick={() => {
+                                    // Adapt stream data to match SessionPreviewModal expected structure
+                                    setSelectedSession({
+                                        id: stream.room_id,
+                                        title: stream.session_title || stream.room.title,
+                                        host: stream.host || { username: 'Unknown', avatar_url: null },
+                                        meta: {
+                                            is_private: stream.is_private,
+                                            price: stream.unlock_price,
+                                            description: stream.session_description,
+                                            // mocks for now as LiveFeed doesn't fetch these
+                                            filled: 0,
+                                            capacity: 100
+                                        }
+                                    });
+                                }}
                                 className="group relative cursor-pointer overflow-hidden rounded-3xl border border-white/5 bg-gray-900 transition-all hover:border-pink-500/50 hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] aspect-[4/5]"
                             >
                                 {/* Background Image with conditional blur */}
@@ -182,9 +199,13 @@ export default function LiveFeed() {
                                         </p>
                                     </div>
 
-                                    {!stream.is_private && (
+                                    {!stream.is_private ? (
                                         <div className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
                                             Watch Stream <ChevronRight className="w-4 h-4" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full py-2.5 rounded-xl bg-pink-600/20 hover:bg-pink-600/30 backdrop-blur-md border border-pink-500/20 text-pink-200 text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
+                                            Unlock Access
                                         </div>
                                     )}
                                 </div>
@@ -193,6 +214,13 @@ export default function LiveFeed() {
                     })
                 )}
             </div>
+
+            {selectedSession && (
+                <SessionPreviewModal
+                    session={selectedSession}
+                    onClose={() => setSelectedSession(null)}
+                />
+            )}
         </div>
     );
 }
