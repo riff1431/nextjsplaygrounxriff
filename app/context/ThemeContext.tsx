@@ -55,12 +55,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const fetchTheme = async () => {
         try {
-            // Fetch from API Route to bypass RLS
-            const res = await fetch('/api/v1/theme');
+            // Fetch from API Route to bypass RLS. Ensure no-store to avoid stale data.
+            const res = await fetch('/api/v1/theme', { cache: 'no-store' });
             const data = await res.json();
 
             if (data?.value) {
-                setTheme({ ...DEFAULT_THEME, ...data.value });
+                const val = data.value;
+                // Normalize keys to handle potential snake_case vs camelCase mismatch
+                const normalized: ThemeSettings = {
+                    ...DEFAULT_THEME,
+                    ...val,
+                    // Prioritize camelCase, fallback to snake_case
+                    logoUrl: val.logoUrl || val.logo_url || null,
+                    faviconUrl: val.faviconUrl || val.favicon_url || null,
+                    siteName: val.siteName || val.site_name || DEFAULT_THEME.siteName,
+                    primaryColor: val.primaryColor || val.primary_color || DEFAULT_THEME.primaryColor
+                };
+                setTheme(normalized);
             }
         } catch (error) {
             console.error("Error fetching theme:", error);

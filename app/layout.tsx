@@ -22,9 +22,10 @@ export async function generateMetadata() {
     .eq("key", "theme_config")
     .single();
 
-  const theme = data?.value || {
-    siteName: "PlayGroundX | Creator Platform",
-    faviconUrl: null
+  const val = data?.value || {};
+  const theme = {
+    siteName: val.siteName || val.site_name || "PlayGroundX | Creator Platform",
+    faviconUrl: val.faviconUrl || val.favicon_url || null
   };
 
   return {
