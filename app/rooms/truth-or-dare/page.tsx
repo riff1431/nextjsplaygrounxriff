@@ -24,6 +24,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New Component
+import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
 
@@ -99,9 +100,12 @@ function TruthOrDareContent() {
 
     const [resultModal, setResultModal] = useState<{
         isOpen: boolean;
-        content: string;
-        type: string;
+        success: boolean;
+        message: string;
     } | null>(null);
+
+    const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
+    const [showOverlay, setShowOverlay] = useState(false);
 
     // Moved Hooks from bottom to fix "Rendered fewer hooks" error
     const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
@@ -213,7 +217,7 @@ function TruthOrDareContent() {
     useEffect(() => {
         if (!roomId) return;
 
-        const channel = supabase.channel(`room_status_${roomId}`)
+        const gameStatusChannel = supabase.channel(`room_status_${roomId}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_games', filter: `room_id=eq.${roomId}` }, (payload) => {
                 const newData = payload.new as any;
                 if (newData.status === 'ended') {
@@ -224,8 +228,44 @@ function TruthOrDareContent() {
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
-    }, [roomId, supabase]);
+        const roomRequestChannel = supabase.channel(`room_requests_${roomId}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'room_requests', filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newRecord = payload.new as any;
+                    // If my request was updated
+                    if (userId && newRecord.user_id === userId) { // Changed fan_id to user_id based on schema
+                        if (newRecord.status === 'approved') {
+                            setRequestStatus('approved');
+                            // toast.success("Host approved your request! Proceeding to payment..."); // Removed toast as it's not imported
+                        } else if (newRecord.status === 'rejected') {
+                            setRequestStatus('rejected');
+                            // toast.error("Host declined your request."); // Removed toast
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        // Reveal Listener (Game Updates)
+        const gameChannel = supabase.channel(`room:${roomId}`)
+            .on('broadcast', { event: 'game_update' }, (payload) => {
+                if (payload.payload?.type === 'reveal') {
+                    const p = payload.payload.prompt;
+                    setOverlayPrompt(p);
+                    setShowOverlay(true);
+                    setTimeout(() => setShowOverlay(false), 6000); // Hide after 6s
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(gameStatusChannel);
+            supabase.removeChannel(roomRequestChannel);
+            supabase.removeChannel(gameChannel);
+        };
+    }, [roomId, userId, supabase]);
 
     async function sendJoinRequest() {
         if (!roomId || !userId) return;
@@ -296,23 +336,31 @@ function TruthOrDareContent() {
                 setLastAction("Request sent successfully!");
                 setConfirmModal(null);
 
-                if (data.request && data.request.content) {
-                    setResultModal({
-                        isOpen: true,
-                        content: data.request.content,
-                        type: confirmModal.type
-                    });
-                }
+                // Update resultModal based on the new structure
+                setResultModal({
+                    isOpen: true,
+                    success: true,
+                    message: data.message || "Your request was sent successfully!"
+                });
 
                 setCustomText("");
                 setCustomType(null);
                 setSelectedTier(null);
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
-                alert(`Error: ${data.error || "Failed to send"}`);
+                setResultModal({
+                    isOpen: true,
+                    success: false,
+                    message: data.error || "Failed to send your request."
+                });
             }
         } catch (e) {
             setLastAction("Network error. Please try again.");
+            setResultModal({
+                isOpen: true,
+                success: false,
+                message: "Network error. Please try again."
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -724,22 +772,18 @@ function TruthOrDareContent() {
                             animate={{ rotateX: 0, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ type: "spring", damping: 20 }}
-                            className="w-full max-w-md aspect-[4/5] bg-gradient-to-tr from-gray-900 to-gray-800 border-2 border-pink-500 rounded-[2rem] p-8 shadow-[0_0_60px_rgba(236,72,153,0.3)] relative flex flex-col items-center justify-center text-center"
+                            className={`w-full max-w-md aspect-[4/5] bg-gradient-to-tr ${resultModal.success ? 'from-green-900 to-green-800 border-green-500' : 'from-red-900 to-red-800 border-red-500'} border-2 rounded-[2rem] p-8 shadow-[0_0_60px_rgba(236,72,153,0.3)] relative flex flex-col items-center justify-center text-center`}
                         >
                             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-gray-700/50 rounded-full"></div>
 
                             <div className="mb-8">
-                                <div className="text-sm font-black tracking-[0.4em] text-pink-500 uppercase mb-2">
-                                    {resultModal.type.includes('truth') ? 'TRUTH' : 'DARE'} REVEALED
+                                <div className={`text-sm font-black tracking-[0.4em] ${resultModal.success ? 'text-green-500' : 'text-red-500'} uppercase mb-2`}>
+                                    {resultModal.success ? 'SUCCESS' : 'FAILED'}
                                 </div>
                                 <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
-                                    "{resultModal.content}"
+                                    {resultModal.message}
                                 </h2>
                             </div>
-
-                            <p className="text-sm text-gray-400 mb-8 max-w-[80%]">
-                                This prompt has been sent to the Creator. They will perform it shortly!
-                            </p>
 
                             <button
                                 onClick={() => setResultModal(null)}
@@ -751,9 +795,14 @@ function TruthOrDareContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div >
+            {/* Overlay */}
+            <InteractionOverlay
+                prompt={overlayPrompt}
+                isVisible={showOverlay}
+                onClose={() => setShowOverlay(false)}
+            />
+        </div>
     );
-
 }
 
 export default function TruthOrDareRoom() {

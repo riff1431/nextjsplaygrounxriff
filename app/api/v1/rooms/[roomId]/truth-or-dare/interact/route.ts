@@ -1,5 +1,6 @@
 
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
 import { SYSTEM_TRUTHS, SYSTEM_DARES } from "@/utils/truth_dare_prompts";
 
@@ -90,7 +91,14 @@ export async function POST(
 
         if (!creatorWallet) {
             console.log("Creator has no wallet, creating one...");
-            const { data: newWallet, error: createError } = await supabase
+
+            // USE SERVICE ROLE to bypass RLS (since Fan cannot create Wallet for Host)
+            const adminSupabase = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+
+            const { data: newWallet, error: createError } = await adminSupabase
                 .from('wallets')
                 .insert({ user_id: hostId, balance: 0 })
                 .select()

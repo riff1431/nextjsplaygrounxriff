@@ -32,6 +32,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 
 import dynamic from 'next/dynamic';
 const LiveStreamWrapper = dynamic(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
+import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -181,6 +182,9 @@ export default function TruthOrDareCreatorRoom() {
         price: 5
     });
     const [sessionInfo, setSessionInfo] = useState<{ title: string; isPrivate: boolean; price: number } | null>(null);
+
+    const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
+    const [showOverlay, setShowOverlay] = useState(false);
 
     // 1. Initialize Room ID & Load Data
     useEffect(() => {
@@ -403,12 +407,94 @@ export default function TruthOrDareCreatorRoom() {
     // ---------- Actions (API) ----------
     async function serveQueueItem(item: QueueItem) {
         if (!roomId) return;
-        setQueue(q => q.filter(x => x.id !== item.id));
+        try {
+            // 1. Determine prompt text
+            let pText = "";
+            if (item.type === "TIER_PURCHASE") {
+                pText = `Perform a ${item.meta.tier} tier dare!`;
+            } else if (item.type === "CUSTOM_TRUTH" || item.type === "CUSTOM_DARE") {
+                pText = item.meta.text;
+            } else {
+                console.warn("Attempted to serve non-prompt item:", item);
+                return; // Only serve actual prompts
+            }
 
-        await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/serve`, {
-            method: 'POST',
-            body: JSON.stringify({ queueItemId: item.id })
-        });
+            // 2. Mark item as served in DB
+            await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/serve`, {
+                method: 'POST',
+                body: JSON.stringify({ queueItemId: item.id })
+            });
+
+            // 3. Update local state
+            setCurrentPrompt({
+                id: item.id,
+                label: pText,
+                source: item.type.includes('CUSTOM') ? 'custom' : 'tier',
+                tier: item.meta.tier,
+                customType: item.type.includes('TRUTH') ? 'truth' : 'dare',
+                purchaser: item.fanName,
+                isDoubleDare: doubleDareArmed,
+                startedAt: Date.now()
+            });
+
+            // 4. Broadcast Realtime Event & Update Game Table
+            if (roomId) {
+                // Update Game Table (Persistence for late joiners)
+                await supabase.from('truth_dare_games')
+                    .update({
+                        current_round_data: {
+                            id: item.id,
+                            type: item.type.includes('TRUTH') ? 'truth' : 'dare',
+                            text: pText,
+                            fanName: item.fanName,
+                            tier: item.meta.tier,
+                            customType: item.type.includes('TRUTH') ? 'custom_truth' : 'custom_dare',
+                            startedAt: Date.now()
+                        }
+                    })
+                    .eq('room_id', roomId);
+
+                // Broadcast Event (Instant Animation)
+                // We'll use the existing channel or a new one. Let's use the 'room:ID' channel if possible, 
+                // but since we might not have a dedicated channel ref here, let's send it via a new temporary channel call 
+                // or assume the main listener will pick it up if we update the table.
+                // BETTER: Explicit broadcast for animation sync.
+                await supabase.channel(`room:${roomId}`)
+                    .send({
+                        type: 'broadcast',
+                        event: 'game_update',
+                        payload: {
+                            type: 'reveal',
+                            prompt: {
+                                id: item.id,
+                                type: item.type.includes('TRUTH') ? 'truth' : 'dare',
+                                text: pText,
+                                fanName: item.fanName,
+                                tier: item.meta.tier
+                            }
+                        }
+                    });
+            }
+
+            // 5. Trigger Local Overlay for Creator
+            setOverlayPrompt({
+                id: item.id,
+                type: item.type.includes('TRUTH') ? 'truth' : 'dare',
+                text: pText,
+                fanName: item.fanName || 'Anonymous',
+                tier: item.meta.tier
+            });
+            setShowOverlay(true);
+            setTimeout(() => setShowOverlay(false), 6000); // Hide after 6s
+
+            // Remove from queue
+            setQueue(q => q.filter(x => x.id !== item.id));
+            if (doubleDareArmed) setDoubleDareArmed(false);
+
+        } catch (err) {
+            console.error("Error serving item:", err);
+            // toast.error("Failed to serve item");
+        }
     }
 
     async function declineCurrentPrompt() {
@@ -1177,6 +1263,12 @@ export default function TruthOrDareCreatorRoom() {
                 </main >
             )
             }
-        </div >
+            {/* Overlay */}
+            <InteractionOverlay
+                prompt={overlayPrompt}
+                isVisible={showOverlay}
+                onClose={() => setShowOverlay(false)}
+            />
+        </div>
     );
 }

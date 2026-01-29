@@ -546,29 +546,80 @@ function HomeScreen({
                     </div>
                 </NeonCard>
 
-                {/* Main Content (Simplified) */}
+                {/* Main grid */}
                 <div className="lg:col-span-6">
-                    {/* Browse Live Sessions CTA */}
-                    <div className="p-10 text-center rounded-3xl bg-gradient-to-br from-pink-900/20 to-purple-900/20 border border-pink-500/20 mb-8 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.1),transparent)] group-hover:bg-[radial-gradient(circle_at_50%_50%,rgba(236,72,153,0.2),transparent)] transition-all duration-700" />
+                    <LiveFeed />
 
-                        <div className="relative z-10">
-                            <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Live Sessions</h2>
-                            <p className="text-gray-400 mb-8 text-lg">Discover active rooms, join the action, and interact with creators.</p>
+                    <div className="flex flex-col gap-3 mb-4">
+                        {/* Filters */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                                <div className="text-[10px] text-gray-400 mb-1">Creator Level</div>
+                                <select
+                                    value={levelFilter}
+                                    onChange={(e) => setLevelFilter(e.target.value as any)}
+                                    className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
+                                >
+                                    <option value="All">All</option>
+                                    <option value="Rookie">Rookie</option>
+                                    <option value="Rising">Rising</option>
+                                    <option value="Star">Star</option>
+                                    <option value="Elite">Elite</option>
+                                </select>
+                            </div>
 
-                            <button
-                                onClick={() => router.push('/live/sessions')}
-                                className="px-10 py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 font-bold text-white shadow-xl shadow-pink-900/30 hover:shadow-pink-900/50 transition-all transform hover:scale-105 flex items-center gap-3 mx-auto"
-                            >
-                                <Video className="w-5 h-5 fill-current" />
-                                Browse Active Rooms
-                            </button>
+                            <div className="rounded-2xl border border-blue-500/20 bg-black/35 px-3 py-2">
+                                <div className="text-[10px] text-gray-400 mb-1">Room / Category</div>
+                                <select
+                                    value={tagFilter}
+                                    onChange={(e) => setTagFilter(e.target.value)}
+                                    className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm"
+                                >
+                                    <option value="All">All</option>
+                                    <option value="Flash Drops">Flash Drops</option>
+                                    <option value="Confessions">Confessions</option>
+                                    <option value="Bar Lounge">Bar Lounge</option>
+                                    <option value="Truth or Dare">Truth or Dare</option>
+                                    <option value="Suga 4 U">Suga 4 U</option>
+                                    <option value="X Chat">X Chat</option>
+                                </select>
+                            </div>
+
+                            <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                                <div className="text-[10px] text-gray-400 mb-1">Sort</div>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as any)}
+                                    className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
+                                >
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Rookie→Elite">Rookie → Elite</option>
+                                    <option value="Elite→Rookie">Elite → Rookie</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-
+                    {/* Creator tiles */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+                        {filtered.map((c) => (
+                            <CreatorTile
+                                key={c.id}
+                                creator={c}
+                                onOpen={() => {
+                                    // Use userId if available for profile redirect
+                                    if (c.userId) {
+                                        router.push("/profile/" + c.userId);
+                                    } else if (c.tags.includes("Suga 4 U")) {
+                                        onEnterSuga4U();
+                                    } else {
+                                        router.push("/room/" + c.id);
+                                    }
+                                }}
+                            />
+                        ))}
+                    </div>
                 </div>
-
                 {/* Right rail (Cleaned) */}
                 <NeonCard className="p-4 lg:col-span-4">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
