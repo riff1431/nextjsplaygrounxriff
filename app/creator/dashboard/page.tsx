@@ -65,36 +65,18 @@ export default function CreatorDashboard() {
                 if (error) throw error;
                 setRooms(myRooms || []);
 
-                // Calculate Revenue ( TIPS & INTERACTIONS ONLY )
-                // Explicitly fetching from truth_dare_requests to ensure we DO NOT include entry fees (truth_dare_unlocks)
-                let calculatedTips = 0;
-                if (myRooms && myRooms.length > 0) {
-                    const roomIds = myRooms.map(r => r.id);
-                    const { data: interactions } = await supabase
-                        .from('truth_dare_requests')
-                        .select('amount')
-                        .in('room_id', roomIds);
-
-                    if (interactions) {
-                        calculatedTips = interactions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-                    }
-                }
-
-                // Fetch real stats via RPC (for followers/rooms)
+                // Fetch real stats via RPC (for followers/rooms/earnings)
                 const { data: realStats, error: statsError } = await supabase
                     .rpc('get_creator_dashboard_stats', { p_creator_id: user.id });
 
                 if (!statsError && realStats) {
                     setStats({
                         totalViewers: 0,
-                        earnings: calculatedTips, // Override with Tips Only
+                        earnings: realStats.totalEarnings || 0,
                         followers: realStats.totalFollowers || 0,
                         activeRooms: realStats.activeRooms || 0
                     });
-                } else {
-                    setStats(prev => ({ ...prev, earnings: calculatedTips }));
                 }
-
             } catch (err: any) {
                 console.error("Dashboard error:", err);
                 toast.error("Failed to load dashboard data");
