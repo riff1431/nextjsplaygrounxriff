@@ -113,10 +113,14 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
         }
     }, [countdown]);
 
+    const [error, setError] = useState<string | null>(null);
+
     // Fetch Token
     useEffect(() => {
+        let mounted = true;
         async function fetchToken() {
             try {
+                setError(null);
                 const res = await fetch('/api/v1/auth/agora-token', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -127,12 +131,25 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
                     })
                 });
                 const data = await res.json();
-                if (data.token) setToken(data.token);
-            } catch (e) {
+
+                if (!mounted) return;
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (data.token) {
+                    setToken(data.token);
+                } else {
+                    throw new Error("No token returned from API");
+                }
+            } catch (e: any) {
                 console.error("Failed to fetch token", e);
+                if (mounted) setError(e.message || "Failed to load studio token.");
             }
         }
         if (channelName && uid) fetchToken();
+        return () => { mounted = false; };
     }, [channelName, uid]);
 
     // Join & Publish
@@ -186,11 +203,32 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
 
     const isConnected = useIsConnected();
 
-    if (!token) return <div className="text-xs text-gray-500">Preparing studio...</div>;
+    if (error) {
+        return (
+            <div className="w-full h-full bg-gray-900 rounded-2xl flex flex-col items-center justify-center p-6 text-center">
+                <div className="text-red-400 mb-2">Studio Error</div>
+                <div className="text-gray-400 text-sm mb-4">{error}</div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-white transition"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    if (!token) return (
+        <div className="w-full h-full bg-black rounded-2xl flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" />
+                <div className="text-xs text-gray-500">Preparing studio...</div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden group">
-            {/* ... (rest of render) */}
             {/* Video Surface */}
             <div className="absolute inset-0 z-0">
                 {/* Direct Video Render */}
