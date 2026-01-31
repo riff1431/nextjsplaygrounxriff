@@ -412,10 +412,13 @@ export default function TruthOrDareCreatorRoom() {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'truth_dare_requests',
-                filter: `room_id=eq.${roomId}`
+                table: 'truth_dare_requests'
             }, async (payload) => {
                 const request = payload.new as any;
-                console.log('New truth/dare request:', request);
+                // Client-side filtering to ensure we catch the event
+                if (request.room_id !== roomId) return;
+
+                console.log('🔔 RECEIVED NEW REQUEST EVENT:', request);
 
                 // Determine type and tier
                 const isSystemPrompt = request.type?.startsWith('system_');
