@@ -33,11 +33,32 @@ export async function POST(
             else if (tier === 'gold') price = 20;
             else return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
 
-            // Random Content Logic
-            const category = type === 'system_truth' ? SYSTEM_TRUTHS : SYSTEM_DARES;
-            // @ts-ignore
-            const pool = category[tier];
-            if (!pool) return NextResponse.json({ error: "Invalid tier pool" }, { status: 400 });
+            // Determine Message Content
+            // type format: system_truth, system_dare
+            const interactionType = type.split('_')[1] as 'truth' | 'dare'; // truth or dare
+
+            // Try fetching from DB
+            let pool: string[] = [];
+
+            // Use 'supabase' (user client) since we allowed public read on system_prompts
+            const { data: dbPrompts } = await supabase
+                .from('system_prompts')
+                .select('content')
+                .eq('type', interactionType)
+                .eq('tier', tier);
+
+            if (dbPrompts && dbPrompts.length > 0) {
+                pool = dbPrompts.map((p: { content: string }) => p.content);
+            } else {
+                // Fallback to constants
+                if (interactionType === 'truth') {
+                    // @ts-ignore
+                    pool = SYSTEM_TRUTHS[tier] || SYSTEM_TRUTHS['bronze'];
+                } else {
+                    // @ts-ignore
+                    pool = SYSTEM_DARES[tier] || SYSTEM_DARES['bronze'];
+                }
+            }
 
             finalContent = pool[Math.floor(Math.random() * pool.length)];
         } else {
@@ -90,25 +111,74 @@ export async function POST(
         let creatorBalance = 0;
 
         if (!creatorWallet) {
-            console.log("Creator has no wallet, creating one...");
+            console.log("Creator wallet not visible to fan, using Admin client...");
 
-            // USE SERVICE ROLE to bypass RLS (since Fan cannot create Wallet for Host)
+            // USE SERVICE ROLE to bypass RLS
             const adminSupabase = createAdminClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL!,
                 process.env.SUPABASE_SERVICE_ROLE_KEY!
             );
 
-            const { data: newWallet, error: createError } = await adminSupabase
+            // 1. Try to GET wallet again as Admin (in case it exists but RLS hid it)
+            const { data: existingWallet } = await adminSupabase
                 .from('wallets')
-                .insert({ user_id: hostId, balance: 0 })
-                .select()
+                .select('balance, id')
+                .eq('user_id', hostId)
                 .single();
 
-            if (createError) {
-                console.error("Failed to create creator wallet", createError);
-                return NextResponse.json({ error: "Creator wallet system error" }, { status: 500 });
+            if (existingWallet) {
+                creatorBalance = Number(existingWallet.balance || 0);
+            } else {
+                // Wallet TRULY doesn't exist. Create it.
+
+                // A. Ensure Profile Exists
+                const { data: profile } = await adminSupabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', hostId)
+                    .single();
+
+                if (!profile) {
+                    console.log("Creator profile missing, creating placeholder...");
+                    const { data: hostUser } = await adminSupabase.auth.admin.getUserById(hostId);
+                    const username = hostUser.user?.user_metadata?.full_name || hostUser.user?.email?.split('@')[0] || "Creator";
+
+                    const { error: profileError } = await adminSupabase
+                        .from('profiles')
+                        .insert({
+                            id: hostId,
+                            username: username,
+                            full_name: username
+                        });
+
+                    // Ignore duplicate key error on profile (race condition safe)
+                    if (profileError && profileError.code !== '23505') {
+                        console.error("Failed to create creator profile", profileError);
+                        return NextResponse.json({ error: "System Error: Failed to init creator profile: " + profileError.message }, { status: 500 });
+                    }
+                }
+
+                // B. Create Wallet
+                const { data: newWallet, error: createError } = await adminSupabase
+                    .from('wallets')
+                    .insert({ user_id: hostId, balance: 0 })
+                    .select()
+                    .single();
+
+                if (createError) {
+                    // One last check for race condition
+                    if (createError.code === '23505') {
+                        // It was created in parallel, just fetch it (or assume 0 for now to proceed)
+                        const { data: retryWallet } = await adminSupabase.from('wallets').select('balance').eq('user_id', hostId).single();
+                        creatorBalance = Number(retryWallet?.balance || 0);
+                    } else {
+                        console.error("Failed to create creator wallet", createError);
+                        return NextResponse.json({ error: "System Error: Failed to init creator wallet: " + createError.message }, { status: 500 });
+                    }
+                } else {
+                    creatorBalance = 0;
+                }
             }
-            creatorBalance = 0;
         } else {
             creatorBalance = Number(creatorWallet.balance || 0);
         }
