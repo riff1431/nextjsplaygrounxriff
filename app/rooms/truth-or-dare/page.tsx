@@ -719,6 +719,7 @@ function TruthOrDareContent() {
                 {/* 1. Confirmation Modal */}
                 {confirmModal && confirmModal.isOpen && (
                     <motion.div
+                        key="confirm-modal"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -777,6 +778,7 @@ function TruthOrDareContent() {
                 {/* 2. Result Reveal Modal */}
                 {resultModal && resultModal.isOpen && (
                     <motion.div
+                        key="result-modal"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
