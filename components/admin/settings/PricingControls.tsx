@@ -14,7 +14,13 @@ export default function PricingControls() {
     const [pricing, setPricing] = useState<GlobalPricing>({
         entry_fee: 10,
         free_minutes: 5,
-        rate_per_minute: 2
+        rate_per_minute: 2,
+        system_truth_bronze: 5,
+        system_truth_silver: 10,
+        system_truth_gold: 20,
+        system_dare_bronze: 5,
+        system_dare_silver: 10,
+        system_dare_gold: 20
     });
 
     const [pricingVersion, setPricingVersion] = useState("v1.0");
@@ -107,7 +113,79 @@ export default function PricingControls() {
                 </div>
             </div>
 
+            {/* System Prompt Pricing Section */}
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div className="text-sm text-cyan-200 mb-3">System Truth & Dare Pricing</div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Truth Pricing */}
+                    <div className="space-y-3">
+                        <div className="text-xs font-bold text-cyan-500 uppercase tracking-wider">System Truth</div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <label className="text-[10px] text-gray-400">
+                                Bronze ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_truth_bronze || 5}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_truth_bronze: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-500"
+                                />
+                            </label>
+                            <label className="text-[10px] text-gray-400">
+                                Silver ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_truth_silver || 10}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_truth_silver: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-500"
+                                />
+                            </label>
+                            <label className="text-[10px] text-gray-400">
+                                Gold ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_truth_gold || 20}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_truth_gold: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-cyan-500"
+                                />
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Dare Pricing */}
+                    <div className="space-y-3">
+                        <div className="text-xs font-bold text-red-500 uppercase tracking-wider">System Dare</div>
+                        <div className="grid grid-cols-3 gap-3">
+                            <label className="text-[10px] text-gray-400">
+                                Bronze ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_dare_bronze || 5}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_dare_bronze: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-red-500"
+                                />
+                            </label>
+                            <label className="text-[10px] text-gray-400">
+                                Silver ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_dare_silver || 10}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_dare_silver: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-red-500"
+                                />
+                            </label>
+                            <label className="text-[10px] text-gray-400">
+                                Gold ($)
+                                <input
+                                    type="number"
+                                    value={pricing.system_dare_gold || 20}
+                                    onChange={(e) => setPricing(p => ({ ...p, system_dare_gold: Number(e.target.value) }))}
+                                    className="mt-1 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white focus:border-red-500"
+                                />
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div className="text-sm text-cyan-200">Room Pricing Snapshot (Live)</div>
                 <div className="mt-3">
                     <AdminTable

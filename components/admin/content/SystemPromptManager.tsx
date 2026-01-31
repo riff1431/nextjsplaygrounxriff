@@ -139,34 +139,41 @@ export default function SystemPromptManager() {
             </div>
 
             {/* Content Table */}
-            <AdminTable
-                headers={["Prompt Content", "Type", "Tier", "Actions"]}
-                data={prompts.map(p => ({
-                    id: p.id,
-                    content: (
-                        <div className="max-w-lg truncate" title={p.content}>
-                            {p.content}
-                        </div>
-                    ),
-                    type: (
-                        <AdminPill tone={p.type === 'truth' ? 'cyan' : 'red'}>
-                            {p.type.toUpperCase()}
-                        </AdminPill>
-                    ),
-                    tier: (
-                        <AdminPill tone={p.tier === 'gold' ? 'amber' : p.tier === 'silver' ? 'cyan' : 'pink'}>
-                            {p.tier.toUpperCase()}
-                        </AdminPill>
-                    ),
-                    actions: (
-                        <div className="flex gap-2">
-                            <button onClick={() => openEdit(p)} className="p-1 hover:text-cyan-400 transition"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(p.id)} className="p-1 hover:text-red-400 transition"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                    )
-                }))}
-                isLoading={loading}
-            />
+            {loading ? (
+                <div className="text-center p-8 text-gray-500 animate-pulse">Loading prompts...</div>
+            ) : (
+                <AdminTable
+                    columns={[
+                        { key: "content", label: "Prompt Content", w: "2fr" },
+                        { key: "type", label: "Type", w: "0.8fr" },
+                        { key: "tier", label: "Tier", w: "0.8fr" },
+                        { key: "actions", label: "Actions", w: "0.6fr", right: true }
+                    ]}
+                    rows={prompts.map(p => ({
+                        content: (
+                            <div className="max-w-lg truncate" title={p.content}>
+                                {p.content}
+                            </div>
+                        ),
+                        type: (
+                            <AdminPill tone={p.type === 'truth' ? 'cyan' : 'red'}>
+                                {p.type.toUpperCase()}
+                            </AdminPill>
+                        ),
+                        tier: (
+                            <AdminPill tone={p.tier === 'gold' ? 'amber' : p.tier === 'silver' ? 'cyan' : 'pink'}>
+                                {p.tier.toUpperCase()}
+                            </AdminPill>
+                        ),
+                        actions: (
+                            <div className="flex gap-2 justify-end">
+                                <button onClick={() => openEdit(p)} className="p-1 hover:text-cyan-400 transition"><Edit2 className="w-4 h-4" /></button>
+                                <button onClick={() => handleDelete(p.id)} className="p-1 hover:text-red-400 transition"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                        )
+                    }))}
+                />
+            )}
 
             {/* Edit Modal (Simple Inline Overlay for MVP) */}
             {isEditing && (

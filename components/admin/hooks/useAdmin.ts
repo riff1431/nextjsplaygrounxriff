@@ -6,6 +6,13 @@ export interface GlobalPricing {
     entry_fee: number;
     free_minutes: number;
     rate_per_minute: number;
+    // System Prompt Pricing
+    system_truth_bronze?: number;
+    system_truth_silver?: number;
+    system_truth_gold?: number;
+    system_dare_bronze?: number;
+    system_dare_silver?: number;
+    system_dare_gold?: number;
 }
 
 export function useAdmin() {

@@ -39,13 +39,15 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
  * 4 Creators, 10 Fans max on camera.
  */
 
-const TIERS = [
+const DEFAULT_TIERS = [
     { id: "bronze", label: "Bronze", price: 5, desc: "Light & playful" },
     { id: "silver", label: "Silver", price: 10, desc: "Spicy" },
     { id: "gold", label: "Gold", price: 20, desc: "Very explicit" },
 ] as const;
 
-type TierId = (typeof TIERS)[number]["id"];
+
+type TierId = "bronze" | "silver" | "gold";
+
 type Votes = { truth: number; dare: number };
 
 const CROWD_TIER_FEES: Record<TierId, number> = {
@@ -55,14 +57,7 @@ const CROWD_TIER_FEES: Record<TierId, number> = {
 };
 
 const CROWD_TV_FEES = { truth: 5, dare: 10 } as const;
-
 const ENTRY_FEE = 10;
-
-
-function clamp(n: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, n));
-}
-
 const TIP_AMOUNTS = [5, 10, 25, 50] as const;
 
 function TruthOrDareContent() {
@@ -71,9 +66,32 @@ function TruthOrDareContent() {
     const supabase = createClient();
     const roomId = searchParams.get("roomId");
 
-    // Agora Client
-    // Agora Client removed form here
+    // Dynamic Pricing State
+    const [truthTiers, setTruthTiers] = useState<{ id: TierId; label: string; price: number; desc: string }[]>([...DEFAULT_TIERS]);
+    const [dareTiers, setDareTiers] = useState<{ id: TierId; label: string; price: number; desc: string }[]>([...DEFAULT_TIERS]);
 
+    // Fetch Pricing
+    useEffect(() => {
+        async function loadPricing() {
+            const { data } = await supabase.from('admin_settings').select('value').eq('key', 'global_pricing').single();
+            if (data?.value) {
+                const config = data.value;
+
+                setTruthTiers(prev => prev.map(t => ({
+                    ...t,
+                    price: Number(config[`system_truth_${t.id}`] ?? t.price)
+                })));
+
+                setDareTiers(prev => prev.map(t => ({
+                    ...t,
+                    price: Number(config[`system_dare_${t.id}`] ?? t.price)
+                })));
+            }
+        }
+        loadPricing();
+    }, [supabase]);
+
+    // ... existing onBack ...
     const onBack = () => {
         router.push("/home");
     };
@@ -512,7 +530,7 @@ function TruthOrDareContent() {
                             {/* Column 1: Truths */}
                             <div className="space-y-2">
                                 <div className="text-xs text-blue-300 font-semibold mb-1 text-center">System Truths</div>
-                                {TIERS.map((t) => (
+                                {truthTiers.map((t) => (
                                     <button
                                         key={`truth-${t.id}`}
                                         disabled={isSubmitting}
@@ -533,7 +551,7 @@ function TruthOrDareContent() {
                             {/* Column 2: Dares */}
                             <div className="space-y-2">
                                 <div className="text-xs text-pink-300 font-semibold mb-1 text-center">System Dares</div>
-                                {TIERS.map((t) => (
+                                {dareTiers.map((t) => (
                                     <button
                                         key={`dare-${t.id}`}
                                         disabled={isSubmitting}
@@ -624,7 +642,7 @@ function TruthOrDareContent() {
                         <div className="mb-3">
                             <div className="text-xs text-gray-300 mb-1">Crowd Vote: Escalate Tier</div>
                             <div className="grid grid-cols-3 gap-2">
-                                {TIERS.map((t) => (
+                                {truthTiers.map((t) => (
                                     <button
                                         key={`vote-tier-${t.id}`}
                                         className="rounded-lg border border-pink-500/30 py-1 text-xs hover:bg-pink-600/10"

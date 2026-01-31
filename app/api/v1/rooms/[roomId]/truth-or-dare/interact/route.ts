@@ -27,15 +27,41 @@ export async function POST(
         let finalContent = "";
 
         if (type.startsWith('system_')) {
-            // Pricing Logic
-            if (tier === 'bronze') price = 5;
-            else if (tier === 'silver') price = 10;
-            else if (tier === 'gold') price = 20;
-            else return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
-
             // Determine Message Content
             // type format: system_truth, system_dare
             const interactionType = type.split('_')[1] as 'truth' | 'dare'; // truth or dare
+
+            // Fetch Dynamic Pricing
+            // Default pricing
+            let price = 0;
+            const defaults = {
+                bronze: 5,
+                silver: 10,
+                gold: 20
+            };
+
+            const { data: settings } = await supabase
+                .from('admin_settings')
+                .select('value')
+                .eq('key', 'global_pricing')
+                .single();
+
+            const config = settings?.value || {};
+            // specific key e.g., system_truth_bronze
+            const configKey = `${type}_${tier}`;
+
+            if (config[configKey]) {
+                price = Number(config[configKey]);
+            } else {
+                // Fallback
+                if (tier === 'bronze') price = defaults.bronze;
+                else if (tier === 'silver') price = defaults.silver;
+                else if (tier === 'gold') price = defaults.gold;
+                else return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
+            }
+
+            // Determine Message Content (Random from DB)
+            // ... (rest of logic continues)
 
             // Try fetching from DB
             let pool: string[] = [];
