@@ -17,6 +17,16 @@ export async function POST(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Fetch fan name
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, username')
+        .eq('id', user.id)
+        .single();
+
+    const fanName = profile?.full_name || profile?.username || user.email?.split('@')[0] || 'Anonymous';
+
+
     try {
         const body = await request.json();
         const { type, tier, content: customContent, amount: customAmount } = body;
@@ -241,8 +251,10 @@ export async function POST(
                 type,
                 tier,
                 content: finalContent,
+
                 amount: price,
-                status: 'pending'
+                status: 'pending',
+                fan_name: fanName
             })
             .select()
             .single();

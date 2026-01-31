@@ -596,7 +596,7 @@ export default function TruthOrDareCreatorRoom() {
     useEffect(() => {
         if (revealQueue.length > 0 && !activeReveal) {
             const next = revealQueue[0];
-            const delay = 10000; // 10 seconds
+            const delay = 500; // Immediate (was 10s)
 
             console.log(`Queuing reveal for "${next.question}" in ${delay / 1000} seconds...`);
 
