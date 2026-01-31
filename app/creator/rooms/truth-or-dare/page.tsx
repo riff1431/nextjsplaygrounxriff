@@ -23,7 +23,10 @@ import {
     Pause,
     RotateCcw,
     ArrowLeft,
+    Clock,
 } from "lucide-react";
+import { toast } from "sonner";
+import { playNotificationSound } from "@/utils/sounds";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
@@ -403,6 +406,7 @@ export default function TruthOrDareCreatorRoom() {
                     setQueue(prev => prev.filter(q => q.id !== updated.id));
                 }
             })
+
             // NEW: Listen for truth_dare_requests (fan purchases)
             .on('postgres_changes', {
                 event: 'INSERT',
@@ -424,6 +428,33 @@ export default function TruthOrDareCreatorRoom() {
                 const tier = request.tier as TierId;
                 const amount = Number(request.amount || 0);
                 const fanName = request.fan_name || 'Anonymous';
+
+                // 🔔 IMMEDIATE FEEDBACK: Sound + Toast
+                playNotificationSound();
+                toast.custom((t) => (
+                    <div className="bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-pink-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
+                        <div className={`p-3 rounded-full ${interactionType === 'truth' ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border ${interactionType === 'truth' ? 'border-cyan-500/30' : 'border-pink-500/30'}`}>
+                            {interactionType === 'truth' ? (
+                                <MessageCircle className="w-6 h-6 text-cyan-400" />
+                            ) : (
+                                <Flame className="w-6 h-6 text-pink-500" />
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-white text-lg leading-none mb-1">
+                                    New {tier?.toUpperCase() || ''} {interactionType.toUpperCase()}!
+                                </h4>
+                                <span className="text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded text-xs">
+                                    +${amount}
+                                </span>
+                            </div>
+                            <p className="text-pink-200 text-sm opacity-90">
+                                from <span className="font-bold text-white">{fanName}</span>
+                            </p>
+                        </div>
+                    </div>
+                ), { duration: 6000, position: 'top-center' });
 
                 // Add to activity feed
                 const activityItem: ActivityItem = {
@@ -495,9 +526,25 @@ export default function TruthOrDareCreatorRoom() {
                     console.log('ℹ️ Not a system prompt or no content:', { isSystemPrompt, hasContent: !!request.content, type: request.type });
                 }
             })
-            .subscribe();
+            .subscribe((status) => {
+                console.log('🔌 Realtime subscription status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ Successfully subscribed to room updates');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('❌ Channel error - real-time subscription failed');
+                } else if (status === 'TIMED_OUT') {
+                    console.error('⏱️ Subscription timed out');
+                } else if (status === 'CLOSED') {
+                    console.warn('🔒 Channel closed');
+                }
+            });
 
-        return () => { supabase.removeChannel(channel); };
+        console.log('🎯 Setting up real-time subscriptions for room:', roomId);
+
+        return () => {
+            console.log('🔌 Cleaning up real-time subscriptions');
+            supabase.removeChannel(channel);
+        };
     }, [roomId]);
 
 
