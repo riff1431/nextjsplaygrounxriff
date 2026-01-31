@@ -43,9 +43,9 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
         }
     }, [client]);
 
-    // Tracks
-    const { localMicrophoneTrack } = useLocalMicrophoneTrack(isStreaming);
-    const { localCameraTrack } = useLocalCameraTrack(isStreaming);
+    // Tracks - Always active for preview
+    const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
+    const { localCameraTrack } = useLocalCameraTrack(true);
 
     // Countdown State
     const [countdown, setCountdown] = useState<number | null>(null);
@@ -154,9 +154,14 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
 
     // Join & Publish
     console.log("CreatorStream: Joining with UID:", uid);
+    // Join always to establish connection? Or only when streaming? 
+    // Usually better to join early, publish later. Let's keep join conditional or always? 
+    // If we join always, we are "in the room". 
+    // Let's stick to: Join always (so we can get remote users/chat), Publish only when isStreaming.
+
     useJoin(
         { appid: appId, channel: channelName, token: token || null, uid: uid },
-        isStreaming && !!token
+        !!token // Join as soon as we have a token
     );
 
     usePublish([localMicrophoneTrack, localCameraTrack], isStreaming && !!token && !!localMicrophoneTrack && !!localCameraTrack);
@@ -176,30 +181,21 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
     const vidRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (isStreaming && localCameraTrack && vidRef.current) {
+        // Play local video whenever track is available (Preview Mode)
+        if (localCameraTrack && vidRef.current) {
             localCameraTrack.play(vidRef.current);
         }
         return () => {
-            if (localCameraTrack) {
-                localCameraTrack.stop();
-                localCameraTrack.close();
-            }
+            // Do NOT stop/close track here, just stop playback if needed, 
+            // but Agora SDK handles playing on same element well.
+            // If we want to be safe:
+            // localCameraTrack?.stop(); 
+            // But we want it to persist. 
         };
-    }, [isStreaming, localCameraTrack]);
+    }, [localCameraTrack]);
 
-    // Explicitly cleanup tracks when streaming stops
-    useEffect(() => {
-        if (!isStreaming) {
-            if (localMicrophoneTrack) {
-                localMicrophoneTrack.stop();
-                localMicrophoneTrack.close();
-            }
-            if (localCameraTrack) {
-                localCameraTrack.stop();
-                localCameraTrack.close();
-            }
-        }
-    }, [isStreaming, localMicrophoneTrack, localCameraTrack]);
+    // Cleanup tracks ONLY on component unmount (handled by top-level useEffect)
+    // Removed the "stop tracks when !isStreaming" effect.
 
     const isConnected = useIsConnected();
 
