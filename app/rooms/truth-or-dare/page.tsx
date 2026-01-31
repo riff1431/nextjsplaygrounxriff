@@ -30,6 +30,7 @@ import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/Interactio
 
 import dynamic from 'next/dynamic';
 const LiveStreamWrapper = dynamic(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
+const QuestionCountdown = dynamic(() => import('./components/QuestionCountdown'), { ssr: false });
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -124,6 +125,7 @@ function TruthOrDareContent() {
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
+    const [showCountdown, setShowCountdown] = useState(false);
 
     // Moved Hooks from bottom to fix "Rendered fewer hooks" error
     const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
@@ -356,6 +358,11 @@ function TruthOrDareContent() {
                 setCustomText("");
                 setCustomType(null);
                 setSelectedTier(null);
+
+                // Show countdown for system truth/dare purchases
+                if (confirmModal.type === 'system_truth' || confirmModal.type === 'system_dare') {
+                    setShowCountdown(true);
+                }
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
                 setResultModal({
@@ -830,6 +837,16 @@ function TruthOrDareContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Question Countdown & Reveal */}
+            {showCountdown && userId && roomId && (
+                <QuestionCountdown
+                    roomId={roomId}
+                    userId={userId}
+                    onClose={() => setShowCountdown(false)}
+                />
+            )}
+
             {/* Overlay */}
             <InteractionOverlay
                 prompt={overlayPrompt}
