@@ -411,7 +411,7 @@ export default function TruthOrDareCreatorRoom() {
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
-                table: 'truth_dare_requests',
+
                 table: 'truth_dare_requests'
             }, async (payload) => {
                 const request = payload.new as any;
