@@ -189,6 +189,7 @@ export default function TruthOrDareCreatorRoom() {
     const [revealQueue, setRevealQueue] = useState<RevealItem[]>([]);
     const [activeReveal, setActiveReveal] = useState<RevealItem | null>(null);
     const [customResponse, setCustomResponse] = useState("");
+    const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
 
     // Game State
     const [currentPrompt, setCurrentPrompt] = useState<CurrentPrompt | null>(null);
@@ -533,12 +534,18 @@ export default function TruthOrDareCreatorRoom() {
                 console.log('🔌 Realtime subscription status:', status);
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Successfully subscribed to room updates');
+                    setRealtimeStatus('connected');
+                    toast.success('Real-time connected!', { duration: 2000, position: 'bottom-right' });
                 } else if (status === 'CHANNEL_ERROR') {
                     console.error('❌ Channel error - real-time subscription failed');
+                    setRealtimeStatus('error');
+                    toast.error('Real-time connection failed', { duration: 5000, position: 'bottom-right' });
                 } else if (status === 'TIMED_OUT') {
                     console.error('⏱️ Subscription timed out');
+                    setRealtimeStatus('error');
                 } else if (status === 'CLOSED') {
                     console.warn('🔒 Channel closed');
+                    setRealtimeStatus('closed');
                 }
             });
 
@@ -840,6 +847,25 @@ export default function TruthOrDareCreatorRoom() {
                     </span>
                     <span className="px-2 py-[2px] rounded-full text-[10px] border border-pink-400/40 text-pink-200">
                         {me.name}{isHost ? " (Host)" : ""}
+                    </span>
+                    {/* Realtime Status Indicator */}
+                    <span
+                        className={`px-2 py-[2px] rounded-full text-[10px] border flex items-center gap-1 ${realtimeStatus === 'connected' ? 'border-green-500/40 text-green-300 bg-green-500/10' :
+                            realtimeStatus === 'error' ? 'border-red-500/40 text-red-300 bg-red-500/10' :
+                                realtimeStatus === 'closed' ? 'border-gray-500/40 text-gray-300 bg-gray-500/10' :
+                                    'border-yellow-500/40 text-yellow-300 bg-yellow-500/10'
+                            }`}
+                        title={`Realtime: ${realtimeStatus}`}
+                    >
+                        <span className={`w-2 h-2 rounded-full ${realtimeStatus === 'connected' ? 'bg-green-400 animate-pulse' :
+                            realtimeStatus === 'error' ? 'bg-red-400' :
+                                realtimeStatus === 'closed' ? 'bg-gray-400' :
+                                    'bg-yellow-400 animate-pulse'
+                            }`} />
+                        {realtimeStatus === 'connected' ? 'LIVE' :
+                            realtimeStatus === 'error' ? 'ERROR' :
+                                realtimeStatus === 'closed' ? 'OFFLINE' :
+                                    'CONNECTING...'}
                     </span>
                     {sessionActive && (
                         <div className="flex items-center gap-2 ml-4 border-l border-white/10 pl-4">
@@ -1315,6 +1341,80 @@ export default function TruthOrDareCreatorRoom() {
                                     className="rounded-xl border border-pink-500/25 py-2 text-xs text-pink-200 hover:bg-pink-600/10 inline-flex items-center justify-center gap-2"
                                 >
                                     <RotateCcw className="w-4 h-4" /> Open Replay Window
+                                </button>
+
+                                {/* Test Notification Button for Debugging */}
+                                <button
+                                    onClick={() => {
+                                        const testRequest = {
+                                            id: `test_${Date.now()}`,
+                                            type: 'system_truth',
+                                            tier: 'silver',
+                                            amount: 10,
+                                            fan_name: 'Test Fan',
+                                            content: 'What is your biggest secret that you have never told anyone?',
+                                            created_at: new Date().toISOString(),
+                                            fan_id: 'test_fan_id'
+                                        };
+
+                                        // Trigger notification
+                                        playNotificationSound();
+                                        toast.custom((t) => (
+                                            <div className="bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-pink-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
+                                                <div className="p-3 rounded-full bg-cyan-500/20 border border-cyan-500/30">
+                                                    <MessageCircle className="w-6 h-6 text-cyan-400" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="font-bold text-white text-lg leading-none mb-1">
+                                                            TEST SILVER TRUTH!
+                                                        </h4>
+                                                        <span className="text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded text-xs">
+                                                            +$10
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-pink-200 text-sm opacity-90">
+                                                        from <span className="font-bold text-white">Test Fan</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ), { duration: 6000, position: 'top-center' });
+
+                                        // Add to reveal queue
+                                        const revealItem: RevealItem = {
+                                            id: `reveal_${testRequest.id}`,
+                                            fanId: testRequest.fan_id,
+                                            fanName: testRequest.fan_name,
+                                            type: 'truth',
+                                            tier: testRequest.tier as TierId,
+                                            question: testRequest.content,
+                                            amount: testRequest.amount,
+                                            timestamp: Date.now(),
+                                            requestId: testRequest.id
+                                        };
+                                        setRevealQueue(prev => [...prev, revealItem]);
+
+                                        // Update activity feed
+                                        setActivityFeed(prev => [{
+                                            id: testRequest.id,
+                                            timestamp: Date.now(),
+                                            fanName: testRequest.fan_name,
+                                            type: 'truth' as const,
+                                            tier: testRequest.tier as TierId,
+                                            amount: testRequest.amount
+                                        }, ...prev].slice(0, 20));
+
+                                        // Update earnings
+                                        setSessionEarnings(prev => ({
+                                            ...prev,
+                                            total: prev.total + testRequest.amount,
+                                            truths: prev.truths + testRequest.amount
+                                        }));
+                                    }}
+                                    className="rounded-xl border border-orange-500/25 py-2 text-xs text-orange-200 hover:bg-orange-600/10 inline-flex items-center justify-center gap-2 col-span-2"
+                                    title="Simulate a fan request for testing"
+                                >
+                                    <Star className="w-4 h-4" /> Test Notification
                                 </button>
                             </div>
 

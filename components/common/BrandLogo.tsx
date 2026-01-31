@@ -18,11 +18,11 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
                 className="h-9 w-auto object-contain"
             />
 
-            {showBadge && (
+            {/* {showBadge && (
                 <span className="ml-1 text-[10px] px-2 py-[2px] rounded-full border border-pink-500/40 text-pink-200 bg-black/40">
                     Alpha
                 </span>
-            )}
+            )} */}
         </div>
     );
 }

@@ -12,8 +12,8 @@ export default function AuthPage() {
     useEffect(() => {
         if (!isLoading && user) {
             if (role === 'admin') router.push('/admin/dashboard');
-            else if (role === 'creator') router.push('/creator/dashboard');
-            else router.push('/home');
+            else if (role === 'creator') router.push('/onboarding'); // Creators go to onboarding (guard will check status)
+            else router.push('/onboarding'); // Fans MUST complete onboarding first
         }
     }, [user, role, isLoading, router]);
 
@@ -26,3 +26,4 @@ export default function AuthPage() {
 
     return <AuthLanding />;
 }
+

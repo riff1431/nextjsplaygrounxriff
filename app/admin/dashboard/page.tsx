@@ -39,6 +39,9 @@ import AdminThemeEditor from "../../../components/admin/settings/AdminThemeEdito
 import PaymentGatewayManager from "../../../components/admin/settings/PaymentGatewayManager";
 import PaymentApprovals from "../../../components/admin/finance/PaymentApprovals";
 import SystemPromptManager from "../../../components/admin/content/SystemPromptManager";
+import KYCReviewPanel from "../../../components/admin/users/KYCReviewPanel";
+import FanMembershipManager from "../../../components/admin/settings/FanMembershipManager";
+import CreatorLevelManager from "../../../components/admin/settings/CreatorLevelManager";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -54,6 +57,9 @@ type AdminModule =
     | "payments"
     | "approvals"
     | "users"
+    | "kyc" // KYC Review
+    | "memberships" // Fan Memberships
+    | "creator-levels" // Creator Levels
     | "refunds"
     | "payouts"
     | "audit"
@@ -77,6 +83,9 @@ export default function AdminDashboardPage() {
         { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
+        { id: "kyc", label: "KYC Review", icon: <Lock className="w-4 h-4" />, tone: "red" },
+        { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
+        { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "audit", label: "Audit Logs", icon: <Lock className="w-4 h-4" />, tone: "cyan" },
@@ -194,6 +203,9 @@ export default function AdminDashboardPage() {
                                 <Tile id="prompts" label="System Truth & Dare" icon={<MessageCircle className="w-4 h-4" />} tone="pink" desc="Manage prompts" />
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
                                 <Tile id="users" label="Users" icon={<Users className="w-4 h-4" />} tone="cyan" desc="Manage access" />
+                                <Tile id="kyc" label="KYC Review" icon={<Lock className="w-4 h-4" />} tone="red" desc="Verify creators" />
+                                <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
+                                <Tile id="creator-levels" label="Creator Levels" icon={<Star className="w-4 h-4" />} tone="pink" desc="Creator tiers" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="audit" label="Audit Logs" icon={<Lock className="w-4 h-4" />} tone="cyan" desc="System history" />
@@ -214,6 +226,9 @@ export default function AdminDashboardPage() {
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}
+                    {bizModule === "kyc" && <KYCReviewPanel />}
+                    {bizModule === "memberships" && <FanMembershipManager />}
+                    {bizModule === "creator-levels" && <CreatorLevelManager />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
                     {bizModule === "payouts" && <PayoutManager />}

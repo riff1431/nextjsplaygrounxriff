@@ -102,6 +102,7 @@ export default function AuthLanding() {
     const [showPw, setShowPw] = useState(false);
     const [remember, setRemember] = useState(true);
     const [agree, setAgree] = useState(false);
+    const [isAgeVerified, setIsAgeVerified] = useState(false);
 
     // Sign In Handler
     const handleLogin = async (e?: React.FormEvent) => {
@@ -123,8 +124,7 @@ export default function AuthLanding() {
             // Check role
             const metaRole = data.user?.user_metadata?.role;
             if (metaRole === 'admin') router.push('/admin/dashboard');
-            else if (metaRole === 'creator') router.push('/creator/dashboard');
-            else router.push('/home');
+            else router.push('/onboarding'); // All users go to onboarding (guard checks completion)
 
         } catch (err: any) {
             console.error("Login error:", err);
@@ -157,7 +157,7 @@ export default function AuthLanding() {
             if (data.session) {
                 toast.success("Account created! Redirecting...", { id: toastId });
                 router.refresh();
-                router.push(createRole === 'creator' ? '/creator/dashboard' : '/home');
+                router.push('/onboarding'); // All new users go to onboarding
             } else {
                 toast.success("Account created! Check your email to confirm.", { id: toastId, duration: 5000 });
                 setLoading(false);
@@ -207,8 +207,7 @@ export default function AuthLanding() {
             router.refresh();
             toast.success(`Welcome ${role}!`, { id: toastId });
             if (role === 'admin') router.push('/admin/dashboard');
-            else if (role === 'creator') router.push('/creator/dashboard');
-            else router.push('/home');
+            else router.push('/onboarding'); // All non-admin go to onboarding
 
         } catch (err) {
             toast.error(`Demo login failed. Please create an account.`, { id: toastId });
@@ -524,13 +523,22 @@ export default function AuthLanding() {
                                             <div className="flex items-start gap-2">
                                                 <Checkbox id="agree" checked={agree} onCheckedChange={(v) => setAgree(!!v)} />
                                                 <Label htmlFor="agree" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                    I agree to the <span className="underline underline-offset-4">Terms</span> and acknowledge the{" "}
-                                                    <span className="underline underline-offset-4">Privacy Policy</span>.
+                                                    <span>
+                                                        I agree to the <span className="underline underline-offset-4">Terms</span> and acknowledge the{" "}
+                                                        <span className="underline underline-offset-4">Privacy Policy</span>.
+                                                    </span>
+                                                </Label>
+                                            </div>
+
+                                            <div className="flex items-start gap-2">
+                                                <Checkbox id="age-verify" checked={isAgeVerified} onCheckedChange={(v) => setIsAgeVerified(!!v)} />
+                                                <Label htmlFor="age-verify" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                    <span>I confirm that I am at least 18 years old.</span>
                                                 </Label>
                                             </div>
 
                                             <Button
-                                                disabled={!agree || loading}
+                                                disabled={!agree || !isAgeVerified || loading}
                                                 onClick={handleSignUp}
                                                 className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700"
                                             >
