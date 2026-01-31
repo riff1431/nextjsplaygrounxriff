@@ -10,6 +10,7 @@ import {
     useJoin,
     useIsConnected,
     useRemoteUsers,
+    useRTCClient,
 } from 'agora-rtc-react';
 import { Mic, MicOff, Video, VideoOff, Play, Square, Users } from 'lucide-react';
 import ActiveRequestOverlay from './ActiveRequestOverlay';
@@ -31,6 +32,16 @@ export default function CreatorStream({ appId, channelName, uid }: CreatorStream
     const supabase = createClient();
     const [token, setToken] = useState<string | null>(null);
     const [isStreaming, setIsStreaming] = useState(true);
+    const client = useRTCClient();
+
+    // Ensure Creator is a Host so they can publish
+    useEffect(() => {
+        if (client) {
+            client.setClientRole("host")
+                .then(() => console.log("CreatorStream: Role set to HOST"))
+                .catch(err => console.error("CreatorStream: Failed to set role", err));
+        }
+    }, [client]);
 
     // Tracks
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(isStreaming);
