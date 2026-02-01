@@ -54,18 +54,21 @@ export default function PaymentApprovals() {
 
             // Enrich with user emails (manual fetch avoid complex joins right now for speed)
             const enriched = await Promise.all(data.map(async (tx: any) => {
-                // This is a bit inefficient (N+1), but for admin dashboard with low volume pending txs, it's fine.
-                // Better way: get all user_ids and fetch profiles in one go.
-                // Even better: use the Relation view if exist.
-                // Let's just assume we display ID if email fetch fails or do a quick profile fetch.
+                let userName = "Unknown User";
+                let userEmail = "";
 
-                let userEmail = "Unknown User";
                 if (tx.wallets?.user_id) {
-                    // Try fetching from profiles or auth (can't fetch auth client side easily for other users)
-                    // Fetch from profiles table
-                    const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', tx.wallets.user_id).single();
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('email, full_name')
+                        .eq('id', tx.wallets.user_id)
+                        .single();
+
                     if (profile) {
-                        userEmail = profile.email || "No Email";
+                        userName = profile.full_name || "No Name";
+                        userEmail = profile.email || tx.wallets.user_id;
+                    } else {
+                        userEmail = tx.wallets.user_id;
                     }
                 }
 
@@ -73,6 +76,7 @@ export default function PaymentApprovals() {
                     ...tx,
                     wallet: {
                         user: {
+                            full_name: userName,
                             email: userEmail
                         }
                     }
@@ -163,8 +167,8 @@ export default function PaymentApprovals() {
                             transactions.map((tx) => (
                                 <tr key={tx.id} className="hover:bg-white/5 transition">
                                     <td className="p-4">
-                                        <div className="font-medium text-white">{tx.wallet?.user?.email}</div>
-                                        <div className="text-xs text-gray-500">{tx.id}</div>
+                                        <div className="font-medium text-white">{tx.wallet?.user?.full_name || "Unknown User"}</div>
+                                        <div className="text-xs text-gray-500">{tx.wallet?.user?.email}</div>
                                     </td>
                                     <td className="p-4">
                                         <div className="font-bold text-green-400">${tx.amount}</div>

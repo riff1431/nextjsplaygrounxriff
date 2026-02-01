@@ -11,9 +11,12 @@ import FanMembershipStep from "@/components/onboarding/steps/FanMembershipStep";
 import CreatorLevelStep from "@/components/onboarding/steps/CreatorLevelStep";
 import KYCVerificationStep from "@/components/onboarding/steps/KYCVerificationStep";
 import VerificationPendingScreen from "@/components/onboarding/VerificationPendingScreen";
+import BankPaymentPendingScreen from "@/components/onboarding/BankPaymentPendingScreen";
 
 interface ProfileData {
     account_type_id: string | null;
+    account_type_skipped: boolean;
+    bank_payment_pending: boolean;
     fan_membership_id: string | null;
     creator_level_id: string | null;
     onboarding_completed_at: string | null;
@@ -49,7 +52,7 @@ export default function OnboardingPage() {
 
         const { data: profile, error } = await supabase
             .from("profiles")
-            .select("account_type_id, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role")
+            .select("account_type_id, account_type_skipped, bank_payment_pending, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role")
             .eq("id", user.id)
             .single();
 
@@ -62,7 +65,10 @@ export default function OnboardingPage() {
         setProfileData(profile);
 
         // Determine current step based on what's completed
-        if (!profile.account_type_id) {
+        // Step 1 is done if account_type_id is set OR account_type_skipped is true
+        const step1Done = profile.account_type_id || profile.account_type_skipped;
+
+        if (!step1Done) {
             setCurrentStep(1);
         } else if (profile.role === "fan" && !profile.fan_membership_id) {
             setCurrentStep(2);
@@ -110,6 +116,11 @@ export default function OnboardingPage() {
         return <VerificationPendingScreen onStatusChange={refreshProfile} />;
     }
 
+    // Show bank payment pending screen if user has a pending bank payment
+    if (profileData?.bank_payment_pending) {
+        return <BankPaymentPendingScreen />;
+    }
+
     return (
         <div className="min-h-screen bg-black">
             {/* Background gradient */}
@@ -137,10 +148,10 @@ export default function OnboardingPage() {
                                 <React.Fragment key={step}>
                                     <div
                                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step < currentStep
-                                                ? "bg-green-500 text-white"
-                                                : step === currentStep
-                                                    ? "bg-pink-500 text-white"
-                                                    : "bg-gray-800 text-gray-500 border border-gray-700"
+                                            ? "bg-green-500 text-white"
+                                            : step === currentStep
+                                                ? "bg-pink-500 text-white"
+                                                : "bg-gray-800 text-gray-500 border border-gray-700"
                                             }`}
                                     >
                                         {step < currentStep ? "✓" : step}

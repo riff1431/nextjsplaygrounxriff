@@ -137,15 +137,11 @@ export default function KYCReviewPanel() {
             return;
         }
 
-        // Update the user's profile
-        const { error: profileError } = await supabase
-            .from("profiles")
-            .update({
-                kyc_status: "approved",
-                onboarding_completed_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            })
-            .eq("id", submission.user_id);
+        // Update the user's profile using RPC to bypass RLS
+        const { error: profileError } = await supabase.rpc('update_kyc_status', {
+            target_user_id: submission.user_id,
+            new_status: 'approved'
+        });
 
         if (profileError) {
             toast.error("Failed to update profile status");
@@ -203,14 +199,12 @@ export default function KYCReviewPanel() {
             return;
         }
 
-        // Update the user's profile
-        const { error: profileError } = await supabase
-            .from("profiles")
-            .update({
-                kyc_status: "rejected",
-                updated_at: new Date().toISOString(),
-            })
-            .eq("id", selectedSubmission.user_id);
+        // Update the user's profile using RPC to bypass RLS
+        const { error: profileError } = await supabase.rpc('update_kyc_status', {
+            target_user_id: selectedSubmission.user_id,
+            new_status: 'rejected',
+            rejection_reason: rejectionReason
+        });
 
         if (profileError) {
             toast.error("Failed to update profile status");
@@ -356,8 +350,8 @@ export default function KYCReviewPanel() {
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-3 py-1.5 text-xs rounded-lg transition ${filterStatus === status
-                                        ? "bg-pink-600 text-white"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    ? "bg-pink-600 text-white"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
                                     }`}
                             >
                                 {status.charAt(0).toUpperCase() + status.slice(1)}

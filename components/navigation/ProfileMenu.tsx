@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase } from "lucide-react";
+import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award } from "lucide-react";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -136,6 +136,13 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                 <button onClick={() => router.push('/account/collections')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group">
                                     <Star className="w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-colors" />
                                     Collections
+                                </button>
+                                <button
+                                    onClick={() => router.push(role === 'creator' ? '/account/creator-levels' : '/account/membership')}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group"
+                                >
+                                    <Award className="w-4 h-4 text-gray-500 group-hover:text-amber-400 transition-colors" />
+                                    Membership
                                 </button>
                                 <button onClick={() => router.push('/settings/profile')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group">
                                     <Settings className="w-4 h-4 text-gray-500 group-hover:text-cyan-400 transition-colors" />

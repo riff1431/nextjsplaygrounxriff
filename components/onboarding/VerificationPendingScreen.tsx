@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RefreshCw, Home } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Props {
     onStatusChange: () => void;
@@ -19,9 +20,28 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
     useEffect(() => {
-        // Set up real-time subscription for KYC status changes
+        // Check initial status and set up real-time subscription
         if (!user) return;
 
+        // Check current status on mount
+        const checkInitialStatus = async () => {
+            const { data } = await supabase
+                .from("profiles")
+                .select("kyc_status")
+                .eq("id", user.id)
+                .single();
+
+            if (data?.kyc_status === "approved") {
+                setStatus("approved");
+            } else if (data?.kyc_status === "rejected") {
+                setStatus("rejected");
+                fetchRejectionReason();
+            }
+        };
+
+        checkInitialStatus();
+
+        // Set up real-time subscription for status changes
         const channel = supabase
             .channel("kyc-status")
             .on(
@@ -36,11 +56,10 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
                     const newStatus = payload.new.kyc_status;
                     if (newStatus === "approved") {
                         setStatus("approved");
-                        setTimeout(() => {
-                            router.push("/creator/dashboard");
-                        }, 2000);
+                        toast.success("🎉 Your verification has been approved!");
                     } else if (newStatus === "rejected") {
                         setStatus("rejected");
+                        toast.error("Verification was not approved. Please check the reason.");
                         fetchRejectionReason();
                     }
                 }
@@ -99,16 +118,30 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
 
     if (status === "approved") {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="text-center animate-in fade-in zoom-in duration-500">
+            <div className="min-h-screen bg-black flex items-center justify-center p-6">
+                <div className="text-center animate-in fade-in zoom-in duration-500 max-w-md">
                     <div className="w-24 h-24 mx-auto mb-6 bg-green-500/20 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-12 h-12 text-green-500" />
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">Verification Approved!</h1>
-                    <p className="text-gray-400 mb-6">
-                        Welcome to the creator community. Redirecting you to your dashboard...
+                    <p className="text-gray-400 mb-8">
+                        Welcome to the creator community! You now have full access to all creator features.
                     </p>
-                    <div className="w-8 h-8 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin mx-auto" />
+
+                    <button
+                        onClick={() => router.push("/home")}
+                        className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg shadow-green-500/25"
+                    >
+                        <Home className="w-5 h-5" />
+                        Go to Home
+                    </button>
+
+                    <button
+                        onClick={() => router.push("/creator/dashboard")}
+                        className="mt-3 w-full py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-all"
+                    >
+                        Go to Creator Dashboard
+                    </button>
                 </div>
             </div>
         );

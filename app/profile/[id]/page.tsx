@@ -35,10 +35,17 @@ export default function ProfilePage() {
                 setCurrentUserId(user?.id || null);
                 const isCurrentUser = user?.id === id;
 
-                // 2. Fetch profile data
+                // 2. Fetch profile data with badges
                 const { data: profileData, error: profileError } = await supabase
                     .from("profiles")
-                    .select("*")
+                    .select(`
+                        *,
+                        account_types:account_type_id (
+                            display_name,
+                            badge_color,
+                            badge_icon
+                        )
+                    `)
                     .eq("id", id)
                     .single();
 

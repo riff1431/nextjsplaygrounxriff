@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare } from "lucide-react";
+import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -27,6 +27,12 @@ export interface Profile {
     cover_url?: string | null;
     subscription_price_weekly?: number | null;
     subscription_price_monthly?: number | null;
+    // Badge-related fields
+    account_types?: {
+        display_name: string;
+        badge_color: string | null;
+        badge_icon: string | null;
+    } | null;
 }
 
 export interface UnlockableItem {
@@ -212,10 +218,28 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                     {/* 3. Header Info & Actions */}
                     <div className="flex-1 w-full pt-16 md:pt-16 pb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-1">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
                                 <h1 className="text-3xl font-bold text-white tracking-tight">
                                     {profile.full_name || profile.username || "Anonymous"}
                                 </h1>
+
+                                {/* Account Type Badge (e.g. Sugar Daddy/Mommy) */}
+                                {profile.account_types && (
+                                    <span
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-lg"
+                                        style={{
+                                            backgroundColor: `${profile.account_types.badge_color || '#ec4899'}20`,
+                                            color: profile.account_types.badge_color || '#ec4899',
+                                            borderColor: `${profile.account_types.badge_color || '#ec4899'}40`,
+                                            boxShadow: `0 0 15px ${profile.account_types.badge_color || '#ec4899'}30`
+                                        }}
+                                    >
+                                        <span>{profile.account_types.badge_icon || '✨'}</span>
+                                        {profile.account_types.display_name}
+                                    </span>
+                                )}
+
+                                {/* Creator Level Badge */}
                                 {profile.role === 'creator' && (
                                     <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_10px_rgba(234,179,8,0.2)]">
                                         {levelName}

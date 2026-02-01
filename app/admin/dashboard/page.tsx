@@ -18,6 +18,7 @@ import {
     Menu,
     X,
     Check,
+    Sparkles,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -42,6 +43,8 @@ import SystemPromptManager from "../../../components/admin/content/SystemPromptM
 import KYCReviewPanel from "../../../components/admin/users/KYCReviewPanel";
 import FanMembershipManager from "../../../components/admin/settings/FanMembershipManager";
 import CreatorLevelManager from "../../../components/admin/settings/CreatorLevelManager";
+import AccountTypeManager from "../../../components/admin/settings/AccountTypeManager";
+import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymentReviewPanel";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -58,8 +61,10 @@ type AdminModule =
     | "approvals"
     | "users"
     | "kyc" // KYC Review
+    | "account-types" // Account Types (Sugar Daddy/Mommy)
     | "memberships" // Fan Memberships
     | "creator-levels" // Creator Levels
+    | "bank-payments" // Bank Payment Reviews
     | "refunds"
     | "payouts"
     | "audit"
@@ -84,8 +89,10 @@ export default function AdminDashboardPage() {
         { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
         { id: "kyc", label: "KYC Review", icon: <Lock className="w-4 h-4" />, tone: "red" },
+        { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
         { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
         { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
+        { id: "bank-payments", label: "Bank Payments", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "audit", label: "Audit Logs", icon: <Lock className="w-4 h-4" />, tone: "cyan" },
@@ -227,8 +234,10 @@ export default function AdminDashboardPage() {
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}
                     {bizModule === "kyc" && <KYCReviewPanel />}
+                    {bizModule === "account-types" && <AccountTypeManager />}
                     {bizModule === "memberships" && <FanMembershipManager />}
                     {bizModule === "creator-levels" && <CreatorLevelManager />}
+                    {bizModule === "bank-payments" && <BankPaymentReviewPanel />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
                     {bizModule === "payouts" && <PayoutManager />}
