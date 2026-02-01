@@ -36,6 +36,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
 import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
+import { NotificationIcon } from "@/components/common/NotificationIcon";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -1077,6 +1078,7 @@ export default function Home() {
                         >
                             <MessageSquare className="w-5 h-5" />
                         </button>
+                        <NotificationIcon role="fan" />
                         <ProfileMenu
                             user={user}
                             profile={currentProfile}

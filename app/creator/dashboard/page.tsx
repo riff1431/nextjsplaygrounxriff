@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
+import { NotificationIcon } from "@/components/common/NotificationIcon";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -123,6 +124,7 @@ export default function CreatorDashboard() {
                     >
                         <ArrowLeft className="w-4 h-4" /> Back
                     </button>
+                    <NotificationIcon role="creator" />
                     <button
                         onClick={() => router.push('/account/messages')}
                         className="px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"

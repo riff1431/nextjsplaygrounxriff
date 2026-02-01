@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { PaymentProvider } from "./context/PaymentContext";
 import ToasterProvider from "@/components/providers/ToasterProvider";
+import { NotificationProvider } from "@/components/providers/NotificationProvider";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -50,8 +51,10 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <PaymentProvider>
-              {children}
-              <ToasterProvider />
+              <NotificationProvider>
+                {children}
+                <ToasterProvider />
+              </NotificationProvider>
             </PaymentProvider>
           </ThemeProvider>
         </AuthProvider>
