@@ -128,7 +128,7 @@ export default function LiveFeed() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {loading ? (
                     [1, 2].map(i => (
                         <div key={i} className="aspect-[4/5] rounded-2xl bg-white/5 animate-pulse" />
@@ -178,34 +178,34 @@ export default function LiveFeed() {
                                 )}
 
                                 {/* Content */}
-                                <div className="absolute inset-x-0 bottom-0 p-5 z-20">
-                                    <div className="mb-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600/90 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-red-600/20">
-                                                <Radio className="w-3 h-3 animate-pulse" /> Live
+                                <div className="absolute inset-x-0 bottom-0 p-3 z-20">
+                                    <div className="mb-2">
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600/90 text-white text-[9px] font-bold uppercase tracking-wider shadow-lg shadow-red-600/20">
+                                                <Radio className="w-2.5 h-2.5 animate-pulse" /> Live
                                             </span>
                                             {stream.is_private && (
-                                                <span className="px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-gray-300 text-[10px] font-medium">
+                                                <span className="px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-gray-300 text-[9px] font-medium">
                                                     Private
                                                 </span>
                                             )}
                                         </div>
 
-                                        <h3 className="text-white font-bold text-xl leading-tight mb-1 line-clamp-2">
+                                        <h3 className="text-white font-bold text-base leading-tight mb-0.5 line-clamp-1">
                                             {stream.session_title || "Interactive Session"}
                                         </h3>
-                                        <p className="text-gray-300 text-sm line-clamp-1">
+                                        <p className="text-gray-300 text-xs line-clamp-1">
                                             {stream.host?.username || "Creator"}
                                         </p>
                                     </div>
 
                                     {!stream.is_private ? (
-                                        <div className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
-                                            Watch Stream <ChevronRight className="w-4 h-4" />
+                                        <div className="w-full py-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                                            Watch <ChevronRight className="w-3 h-3" />
                                         </div>
                                     ) : (
-                                        <div className="w-full py-2.5 rounded-xl bg-pink-600/20 hover:bg-pink-600/30 backdrop-blur-md border border-pink-500/20 text-pink-200 text-sm font-semibold flex items-center justify-center gap-2 transition-colors">
-                                            Unlock Access
+                                        <div className="w-full py-1.5 rounded-lg bg-pink-600/20 hover:bg-pink-600/30 backdrop-blur-md border border-pink-500/20 text-pink-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                                            Unlock
                                         </div>
                                     )}
                                 </div>

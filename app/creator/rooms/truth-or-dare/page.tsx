@@ -136,6 +136,13 @@ type RevealItem = {
     requestId: string;
 };
 
+type TipItem = {
+    id: string;
+    fanName: string;
+    amount: number;
+    message?: string;
+};
+
 // ---------- Helpers ----------
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n));
@@ -156,6 +163,22 @@ function timeAgo(ts: number) {
     const m = Math.floor(s / 60);
     if (m < 60) return `${m}m ago`;
     return `${Math.floor(m / 60)}h ago`;
+}
+
+function formatCanadaDate(isoString: string | null | undefined) {
+    if (!isoString) return "-";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "-";
+    try {
+        return d.toLocaleDateString("en-CA", {
+            timeZone: "America/Toronto", // Defaulting to Eastern Time as requested for "Canada Time"
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        });
+    } catch (e) {
+        return d.toLocaleDateString("en-CA"); // Fallback if timezone invalid
+    }
 }
 
 // ---------- Component ----------
@@ -190,6 +213,7 @@ export default function TruthOrDareCreatorRoom() {
     const [activeReveal, setActiveReveal] = useState<RevealItem | null>(null);
     const [customResponse, setCustomResponse] = useState("");
     const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
+    const [activeTip, setActiveTip] = useState<TipItem | null>(null);
 
     // Game State
     const [currentPrompt, setCurrentPrompt] = useState<CurrentPrompt | null>(null);
@@ -228,7 +252,7 @@ export default function TruthOrDareCreatorRoom() {
         title: "",
         description: "",
         isPrivate: false,
-        price: 5
+        price: 10
     });
     const [sessionInfo, setSessionInfo] = useState<{ title: string; isPrivate: boolean; price: number } | null>(null);
 
@@ -412,73 +436,99 @@ export default function TruthOrDareCreatorRoom() {
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
-
-                table: 'truth_dare_requests'
+                table: 'truth_dare_requests',
+                filter: `room_id=eq.${roomId}`
             }, async (payload) => {
                 const request = payload.new as any;
-                // Client-side filtering to ensure we catch the event
-                if (request.room_id !== roomId) return;
-
                 console.log('🔔 RECEIVED NEW REQUEST EVENT:', request);
+                console.log('📊 Room ID check:', { requestRoomId: request.room_id, currentRoomId: roomId });
 
                 // Determine type and tier
                 const isSystemPrompt = request.type?.startsWith('system_');
                 const isCustom = request.type?.startsWith('custom_');
-                const interactionType = isSystemPrompt
-                    ? request.type.split('_')[1] as 'truth' | 'dare'
-                    : isCustom
+                const isTip = request.type === 'tip';
+
+                const interactionType = isTip
+                    ? 'tip'
+                    : isSystemPrompt
                         ? request.type.split('_')[1] as 'truth' | 'dare'
-                        : 'truth';
+                        : isCustom
+                            ? request.type.split('_')[1] as 'truth' | 'dare'
+                            : 'truth';
+
                 const tier = request.tier as TierId;
                 const amount = Number(request.amount || 0);
                 const fanName = request.fan_name || 'Anonymous';
 
                 // 🔔 IMMEDIATE FEEDBACK: Sound + Toast
                 playNotificationSound();
-                toast.custom((t) => (
-                    <div className="bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-pink-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
-                        <div className={`p-3 rounded-full ${interactionType === 'truth' ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border ${interactionType === 'truth' ? 'border-cyan-500/30' : 'border-pink-500/30'}`}>
-                            {interactionType === 'truth' ? (
-                                <MessageCircle className="w-6 h-6 text-cyan-400" />
-                            ) : (
-                                <Flame className="w-6 h-6 text-pink-500" />
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-white text-lg leading-none mb-1">
-                                    New {tier?.toUpperCase() || ''} {interactionType.toUpperCase()}!
-                                </h4>
-                                <span className="text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded text-xs">
-                                    +${amount}
-                                </span>
+
+                if (isTip) {
+                    // Show Tip Overlay (Separate Dialog)
+                    setActiveTip({
+                        id: request.id,
+                        fanName,
+                        amount,
+                        message: request.content
+                    });
+
+                    // Auto-hide tip overlay after 7 seconds
+                    setTimeout(() => {
+                        setActiveTip(null);
+                    }, 7000);
+                } else {
+                    // Standard Toast for others
+                    toast.custom((t) => (
+                        <div className="bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-pink-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
+                            <div className={`p-3 rounded-full ${interactionType === 'truth' ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border ${interactionType === 'truth' ? 'border-cyan-500/30' : 'border-pink-500/30'}`}>
+                                {interactionType === 'truth' ? (
+                                    <MessageCircle className="w-6 h-6 text-cyan-400" />
+                                ) : (
+                                    <Flame className="w-6 h-6 text-pink-500" />
+                                )}
                             </div>
-                            <p className="text-pink-200 text-sm opacity-90">
-                                from <span className="font-bold text-white">{fanName}</span>
-                            </p>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-white text-lg leading-none mb-1">
+                                        New {tier?.toUpperCase() || ''} {interactionType.toUpperCase()}!
+                                    </h4>
+                                    <span className="text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded text-xs">
+                                        +${amount}
+                                    </span>
+                                </div>
+                                <p className="text-pink-200 text-sm opacity-90">
+                                    from <span className="font-bold text-white">{fanName}</span>
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                ), { duration: 6000, position: 'top-center' });
+                    ), { duration: 6000, position: 'top-center' });
+                }
 
                 // Add to activity feed
                 const activityItem: ActivityItem = {
                     id: request.id,
                     timestamp: new Date(request.created_at).getTime(),
                     fanName,
-                    type: isCustom ? `custom_${interactionType}` as any : interactionType,
+                    type: isCustom ? `custom_${interactionType}` as any : interactionType as any,
                     tier: isSystemPrompt ? tier : undefined,
                     amount,
                     message: isCustom ? request.content : undefined
                 };
 
-                setActivityFeed(prev => [activityItem, ...prev].slice(0, 20)); // Keep last 20
+                setActivityFeed(prev => {
+                    const updated = [activityItem, ...prev].slice(0, 20);
+                    console.log('📋 Activity Feed Updated:', updated.length, 'items');
+                    return updated;
+                }); // Keep last 20
 
                 // Update earnings
                 setSessionEarnings(prev => {
                     const newEarnings = { ...prev };
                     newEarnings.total += amount;
 
-                    if (isCustom) {
+                    if (isTip) {
+                        newEarnings.tips += amount;
+                    } else if (isCustom) {
                         newEarnings.custom += amount;
                     } else if (interactionType === 'truth') {
                         newEarnings.truths += amount;
@@ -486,6 +536,7 @@ export default function TruthOrDareCreatorRoom() {
                         newEarnings.dares += amount;
                     }
 
+                    console.log('💵 Session Earnings Updated:', newEarnings);
                     return newEarnings;
                 });
 
@@ -506,14 +557,14 @@ export default function TruthOrDareCreatorRoom() {
                     };
                 });
 
-                // If system prompt, fetch question and add to reveal queue
-                if (isSystemPrompt && request.content) {
+                // If prompt (System or Custom), and NOT a tip, add to reveal queue for "New Request" overlay
+                if (request.content && !isTip) {
                     const revealItem: RevealItem = {
                         id: `reveal_${request.id}`,
                         fanId: request.fan_id,
                         fanName,
-                        type: interactionType,
-                        tier,
+                        type: interactionType as 'truth' | 'dare',
+                        tier: isSystemPrompt ? tier : (isCustom ? 'gold' : 'bronze'), // fallback tier color
                         question: request.content,
                         amount,
                         timestamp: new Date(request.created_at).getTime(),
@@ -526,8 +577,8 @@ export default function TruthOrDareCreatorRoom() {
                         console.log('📋 Reveal queue updated. Length:', newQueue.length);
                         return newQueue;
                     });
-                } else {
-                    console.log('ℹ️ Not a system prompt or no content:', { isSystemPrompt, hasContent: !!request.content, type: request.type });
+                } else if (!isTip) {
+                    console.log('ℹ️ No content for request:', request);
                 }
             })
             .subscribe((status) => {
@@ -953,22 +1004,15 @@ export default function TruthOrDareCreatorRoom() {
                     </div>
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         <div className="p-6 rounded-2xl bg-gray-900 border border-white/5">
                             <div className="text-gray-400 text-sm mb-1">Total Sessions</div>
                             <div className="text-3xl font-bold text-white">{history ? history.length : 0}</div>
                         </div>
                         <div className="p-6 rounded-2xl bg-gray-900 border border-white/5">
-                            <div className="text-gray-400 text-sm mb-1">Est. Entry Revenue</div>
-                            <div className="text-3xl font-bold text-green-400">
-                                ${history ? history.reduce((acc, s) => acc + (Number(s.price) || 0), 0).toFixed(2) : "0.00"}
-                            </div>
-                            <div className="text-[10px] text-gray-500 mt-1">*Based on session pricing, not actual sales</div>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-gray-900 border border-white/5">
                             <div className="text-gray-400 text-sm mb-1">Latest Session</div>
                             <div className="text-3xl font-bold text-blue-400">
-                                {history && history[0] ? new Date(history[0].created_at).toLocaleDateString() : "-"}
+                                {history && history[0] ? formatCanadaDate(history[0].started_at || history[0].created_at) : "-"}
                             </div>
                         </div>
                     </div>
@@ -989,7 +1033,7 @@ export default function TruthOrDareCreatorRoom() {
                                         <div>
                                             <div className="font-bold text-white mb-1">{session.session_title || "Untitled Session"}</div>
                                             <div className="text-xs text-gray-400 flex items-center gap-2">
-                                                <span>{new Date(session.created_at).toLocaleDateString()}</span>
+                                                <span>{formatCanadaDate(session.started_at || session.created_at)}</span>
                                                 <span>•</span>
                                                 <span className={session.is_private ? "text-purple-400" : "text-green-400"}>
                                                     {session.is_private ? "Private" : "Public"}
@@ -1085,12 +1129,19 @@ export default function TruthOrDareCreatorRoom() {
 
                             <div>
                                 <label className="text-xs text-gray-400 mb-1 block">Entry Price ($)</label>
-                                <input
-                                    type="number"
-                                    value={sessionForm.price}
-                                    onChange={e => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-purple-500/50 outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={10}
+                                        readOnly
+                                        disabled
+                                        className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-gray-400 text-sm cursor-not-allowed opacity-70 outline-none"
+                                    />
+                                    <span className="absolute right-4 top-3 text-[10px] text-gray-500 uppercase font-bold tracking-wider">Fixed</span>
+                                </div>
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                    Standard entry fee for all Truth or Dare sessions.
+                                </p>
                             </div>
 
                             <button
@@ -1913,6 +1964,47 @@ export default function TruthOrDareCreatorRoom() {
                         <div className="mt-4 text-center text-xs text-gray-500">
                             Click "Mark as Answered" after you've completed the truth/dare. The fan will be notified.
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* NEW: Cute Real-time Tip Alert Dialog */}
+            {activeTip && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
+                    <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
+                        {/* Confetti/Glow Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 animate-pulse" />
+
+                        {/* Content */}
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] animate-bounce">
+                                <TrendingUp className="w-10 h-10 text-green-400" />
+                            </div>
+
+                            <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-wider drop-shadow-lg">
+                                New Tip!
+                            </h2>
+                            <p className="text-green-200 font-medium mb-6 text-lg">
+                                {activeTip.message || "Someone loves your vibes!"}
+                            </p>
+
+                            <div className="bg-green-900/40 border border-green-500/30 rounded-2xl p-4 w-full mb-4">
+                                <div className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">From</div>
+                                <div className="text-2xl font-bold text-white">{activeTip.fanName}</div>
+                            </div>
+
+                            <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
+                                ${activeTip.amount}
+                            </div>
+                        </div>
+
+                        {/* Close Button (Optional if they want to dismiss it early) */}
+                        <button
+                            onClick={() => setActiveTip(null)}
+                            className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                        >
+                            <XCircle className="w-6 h-6" />
+                        </button>
                     </div>
                 </div>
             )}

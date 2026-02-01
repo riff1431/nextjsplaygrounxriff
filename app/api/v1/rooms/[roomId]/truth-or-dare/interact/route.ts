@@ -97,6 +97,13 @@ export async function POST(
             }
 
             finalContent = pool[Math.floor(Math.random() * pool.length)];
+        } else if (type === 'tip') {
+            // Tip Logic
+            price = Number(customAmount);
+            if (price <= 0) {
+                return NextResponse.json({ error: "Tip amount must be positive" }, { status: 400 });
+            }
+            finalContent = "Sent a tip!";
         } else {
             // Custom Logic
             price = Number(customAmount);
@@ -260,6 +267,36 @@ export async function POST(
             .single();
 
         if (reqError) throw reqError;
+
+        // 6. Add to Active Queue (Actionable Item for Creator)
+        // Determine Queue Type
+        let queueType = 'TIER_PURCHASE'; // Default
+        if (type === 'custom_truth') queueType = 'CUSTOM_TRUTH';
+        else if (type === 'custom_dare') queueType = 'CUSTOM_DARE';
+        else if (type === 'tip') queueType = 'TIP';
+        else if (type === 'system_truth' || type === 'system_dare') queueType = 'TIER_PURCHASE';
+
+        const { error: queueError } = await supabase
+            .from('truth_dare_queue')
+            .insert({
+                room_id: roomId,
+                fan_id: user.id,
+                fan_name: fanName,
+                type: queueType,
+                amount: price,
+                status: 'pending',
+                meta: {
+                    tier: tier,
+                    text: finalContent, // The prompt
+                    request_id: newRequest.id
+                }
+            });
+
+        if (queueError) {
+            console.error("Failed to add to queue:", queueError);
+            // Non-fatal, creator can still see it in history/requests list if implemented, 
+            // but for now we just log it. Request is paid and recorded.
+        }
 
         return NextResponse.json({ success: true, request: newRequest });
 

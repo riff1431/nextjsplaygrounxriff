@@ -18,6 +18,7 @@ import {
     Lock,
     Play,
     X,
+    TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -121,6 +122,7 @@ function TruthOrDareContent() {
         isOpen: boolean;
         success: boolean;
         message: string;
+        type?: string;
     } | null>(null);
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
@@ -352,7 +354,8 @@ function TruthOrDareContent() {
                 setResultModal({
                     isOpen: true,
                     success: true,
-                    message: data.message || "Your request was sent successfully!"
+                    message: data.message || "Your request was sent successfully!",
+                    type: confirmModal.type
                 });
 
                 setCustomText("");
@@ -634,7 +637,7 @@ function TruthOrDareContent() {
                                 <button
                                     key={t}
                                     className="rounded-xl border border-pink-500/30 py-2 text-sm hover:bg-pink-600/10"
-                                    onClick={() => setLastAction(`Tipped $${t}`)}
+                                    onClick={() => openConfirmation('tip', null, "", t)}
                                 >
                                     ${t}
                                 </button>
@@ -756,7 +759,7 @@ function TruthOrDareContent() {
                             exit={{ scale: 0.9, y: 20 }}
                             className="w-full max-w-sm bg-gray-900 border border-pink-500/50 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
                         >
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600"></div>
+                            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.type === 'tip' ? 'from-green-500 to-emerald-400' : 'from-pink-500 to-purple-600'}`}></div>
                             <button
                                 onClick={() => setConfirmModal(null)}
                                 className="absolute top-4 right-4 text-gray-500 hover:text-white"
@@ -765,28 +768,41 @@ function TruthOrDareContent() {
                             </button>
 
                             <div className="text-center space-y-4">
-                                <div className="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-2">
-                                    <Crown className="w-8 h-8 text-pink-400" />
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${confirmModal.type === 'tip' ? 'bg-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : 'bg-pink-500/20'}`}>
+                                    {confirmModal.type === 'tip' ? (
+                                        <TrendingUp className="w-8 h-8 text-green-400" />
+                                    ) : (
+                                        <Crown className="w-8 h-8 text-pink-400" />
+                                    )}
                                 </div>
 
                                 <div>
-                                    <h3 className="text-xl font-bold text-white">Confirm Interaction</h3>
+                                    <h3 className="text-xl font-bold text-white">
+                                        {confirmModal.type === 'tip' ? 'Send a Tip' : 'Confirm Interaction'}
+                                    </h3>
                                     <p className="text-sm text-gray-400 mt-1">
-                                        You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier || "Custom"} {confirmModal.type.split('_')[1]}</span>.
+                                        {confirmModal.type === 'tip' ? (
+                                            <>Show some love to the creators!</>
+                                        ) : (
+                                            <>You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier || "Custom"} {confirmModal.type.split('_')[1]}</span>.</>
+                                        )}
                                     </p>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-black/40 border border-white/10">
+                                <div className={`p-4 rounded-2xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
                                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Cost</div>
-                                    <div className="text-3xl font-bold text-white flex items-center justify-center gap-1">
-                                        <span className="text-pink-500">$</span>{confirmModal.price}
+                                    <div className={`text-3xl font-bold flex items-center justify-center gap-1 ${confirmModal.type === 'tip' ? 'text-green-400' : 'text-white'}`}>
+                                        <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>$</span>{confirmModal.price}
                                     </div>
                                 </div>
 
                                 <button
                                     onClick={processPayment}
                                     disabled={isSubmitting}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-lg shadow-lg shadow-pink-900/40 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 ${confirmModal.type === 'tip'
+                                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/40'
+                                        : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-pink-900/40'
+                                        }`}
                                 >
                                     {isSubmitting ? (
                                         <>Processing...</>
@@ -814,22 +830,29 @@ function TruthOrDareContent() {
                             animate={{ rotateX: 0, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ type: "spring", damping: 20 }}
-                            className={`w-full max-w-md aspect-[4/5] bg-gradient-to-tr ${resultModal.success ? 'from-green-900 to-green-800 border-green-500' : 'from-red-900 to-red-800 border-red-500'} border-2 rounded-[2rem] p-8 shadow-[0_0_60px_rgba(236,72,153,0.3)] relative flex flex-col items-center justify-center text-center`}
+                            className={`w-full max-w-md aspect-[4/5] ${resultModal.type === 'tip' ? 'bg-gradient-to-tr from-green-900 to-emerald-900 border-green-500 shadow-[0_0_60px_rgba(34,197,94,0.3)]' : resultModal.success ? 'bg-gradient-to-tr from-green-900 to-green-800 border-green-500 shadow-[0_0_60px_rgba(236,72,153,0.3)]' : 'bg-gradient-to-tr from-red-900 to-red-800 border-red-500'} border-2 rounded-[2rem] p-8 relative flex flex-col items-center justify-center text-center`}
                         >
                             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-gray-700/50 rounded-full"></div>
 
+                            {/* Custom Icon for Tips */}
+                            {resultModal.type === 'tip' && resultModal.success && (
+                                <div className="mb-6 w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.4)] animate-bounce">
+                                    <TrendingUp className="w-12 h-12 text-green-400" />
+                                </div>
+                            )}
+
                             <div className="mb-8">
-                                <div className={`text-sm font-black tracking-[0.4em] ${resultModal.success ? 'text-green-500' : 'text-red-500'} uppercase mb-2`}>
-                                    {resultModal.success ? 'SUCCESS' : 'FAILED'}
+                                <div className={`text-sm font-black tracking-[0.4em] ${resultModal.success ? (resultModal.type === 'tip' ? 'text-green-400' : 'text-green-500') : 'text-red-500'} uppercase mb-2`}>
+                                    {resultModal.success ? (resultModal.type === 'tip' ? 'TIP SENT!' : 'SUCCESS') : 'FAILED'}
                                 </div>
                                 <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
-                                    {resultModal.message}
+                                    {resultModal.type === 'tip' && resultModal.success ? "Thanks for your support!" : resultModal.message}
                                 </h2>
                             </div>
 
                             <button
                                 onClick={() => setResultModal(null)}
-                                className="px-8 py-3 rounded-full bg-white text-black font-bold hover:bg-gray-200 transition"
+                                className={`px-8 py-3 rounded-full font-bold transition ${resultModal.type === 'tip' ? 'bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-900/40' : 'bg-white text-black hover:bg-gray-200'}`}
                             >
                                 Close & Continue
                             </button>

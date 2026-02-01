@@ -26,21 +26,19 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
 
     const toggleOpen = () => setOpen(!open);
 
-    // Styles based on role
-    const isCreator = role === "creator";
-    const accentColor = isCreator ? "text-pink-500" : "text-cyan-400";
-    const badgeColor = isCreator ? "bg-pink-600" : "bg-red-500";
-    const hoverBg = isCreator ? "hover:bg-pink-500/10" : "hover:bg-cyan-500/10";
-    const borderColor = isCreator ? "border-pink-500/20" : "border-cyan-400/20";
+    // Unified Pink/Neon styles to match existing header buttons (Home & Dashboard)
+    const buttonClasses = "p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition relative";
+    const badgeColor = "bg-pink-600";
+    const dropdownBorder = "border-pink-500/20";
 
     return (
         <div className="relative z-50" ref={dropdownRef}>
             <button
                 onClick={toggleOpen}
-                className={`relative p-2 rounded-xl transition ${hoverBg} ${open ? 'bg-white/5' : ''}`}
+                className={`${buttonClasses} ${open ? 'bg-pink-500/20 text-pink-300' : ''}`}
                 title="Notifications"
             >
-                <Bell className={`w-5 h-5 ${isCreator ? 'text-gray-300' : 'text-gray-300'} ${open ? accentColor : ''} transition-colors`} />
+                <Bell className="w-5 h-5 transition-colors" />
                 {unreadCount > 0 && (
                     <span className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full ${badgeColor} border border-black animate-pulse`} />
                 )}
@@ -53,7 +51,7 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border ${borderColor} bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden ring-1 ring-white/5`}
+                        className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border ${dropdownBorder} bg-black/95 backdrop-blur-xl shadow-2xl overflow-hidden ring-1 ring-white/5`}
                     >
                         <div className="p-4 border-b border-white/10 flex items-center justify-between">
                             <h3 className="font-semibold text-white text-sm">Notifications</h3>
@@ -63,7 +61,7 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
                                         e.stopPropagation();
                                         markAsRead();
                                     }}
-                                    className={`text-xs ${isCreator ? 'text-pink-400 hover:text-pink-300' : 'text-cyan-400 hover:text-cyan-300'} flex items-center gap-1 transition`}
+                                    className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition"
                                 >
                                     <Check className="w-3 h-3" /> Mark all read
                                 </button>
@@ -89,7 +87,7 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
                                             }}
                                             className={`p-4 border-b border-white/5 hover:bg-white/5 transition cursor-pointer flex gap-3 ${!n.is_read ? 'bg-white/[0.02]' : ''}`}
                                         >
-                                            <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!n.is_read ? (isCreator ? 'bg-pink-500' : 'bg-cyan-500') : 'bg-transparent'}`} />
+                                            <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${!n.is_read ? 'bg-pink-500' : 'bg-transparent'}`} />
                                             <div className="flex-1 space-y-1">
                                                 <div className="flex justify-between items-start">
                                                     <p className="text-sm font-medium text-gray-200 leading-snug">{n.title}</p>
