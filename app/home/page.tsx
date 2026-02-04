@@ -470,15 +470,14 @@ function HomeScreen({
             { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat" },
             { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/live" },
-            { label: "Competitions", key: "comp", icon: <Trophy className="w-4 h-4" />, tone: "yellow", route: "/competition" },
             { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga-4-u" },
         ];
 
     return (
         <div className="w-full mx-auto px-6 py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left rail (always-expanded categories) */}
-                <NeonCard className="relative overflow-hidden p-4 lg:col-span-2">
+                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4">
                     {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
@@ -529,14 +528,39 @@ function HomeScreen({
                             </div>
                         </div>
 
+                        {/* Separate Competitions Section */}
+                        <div className="mt-8 mb-4">
+                            <button
+                                onClick={() => router.push("/competition")}
+                                className={cx(
+                                    "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group",
+                                    "bg-black/80 border-yellow-500/50 hover:bg-yellow-500/10",
+                                    "shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_25px_rgba(234,179,8,0.25)]"
+                                )}
+                            >
+                                <span className="relative z-10 inline-flex items-center gap-2 text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
+                                    <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
+                                    Competitions
+                                </span>
+                                {/* Subtle internal glow */}
+                                <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
+                            </button>
+                        </div>
+
                         <div className="mt-6 text-fuchsia-200 text-sm drop-shadow-[0_0_44px_rgba(255,0,200,0.75)]">Account</div>
                         <div className="mt-2 space-y-3">
                             <div className="grid grid-cols-1 gap-2">
-                                <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center" onClick={() => router.push("/account/profile")}>
+                                <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
                                     <User className="w-4 h-4" /> My Profile
                                 </button>
-                                <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-center" onClick={() => router.push("/account/messages")}>
+                                <button className="w-full rounded-xl border border-fuchsia-500/90 bg-black px-3 py-2 text-sm text-fuchsia-200 hover:bg-fuchsia-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/messages")}>
                                     <MessageCircle className="w-4 h-4" /> Messages
+                                </button>
+                                <button className="w-full rounded-xl border border-purple-500/90 bg-black px-3 py-2 text-sm text-purple-200 hover:bg-purple-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/notifications")}>
+                                    <Bell className="w-4 h-4" /> Notifications
+                                </button>
+                                <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/collections")}>
+                                    <Star className="w-4 h-4" /> Collections
                                 </button>
                                 <NeonButton variant="ghost" className="w-full justify-start flex items-center gap-2" title="Log Out" onClick={() => router.push("/")}>
                                     <LogOut className="w-4 h-4" /> Log Out
@@ -547,7 +571,7 @@ function HomeScreen({
                 </NeonCard>
 
                 {/* Main grid */}
-                <div className="lg:col-span-6">
+                <div className="flex-1 min-w-0">
 
                     <div className="flex flex-col gap-3 mb-4">
                         {/* Filters */}
@@ -620,7 +644,7 @@ function HomeScreen({
                     </div>
                 </div>
                 {/* Right rail (Cleaned) */}
-                <NeonCard className="p-4 lg:col-span-4">
+                <NeonCard className="w-full lg:w-96 shrink-0 p-4">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Creator Feed
                     </div>
@@ -642,7 +666,7 @@ function HomeScreen({
                     </div>
                 </NeonCard>
             </div>
-        </div>
+        </div >
     );
 }
 
