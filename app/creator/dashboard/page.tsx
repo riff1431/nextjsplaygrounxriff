@@ -214,7 +214,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 2. X Chat Console */}
-                        <button onClick={() => router.push('/creator/rooms/x-chat')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-yellow-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-yellow-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><MessageSquare className="w-12 h-12 text-gray-800 group-hover:text-yellow-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-yellow-500/20 text-yellow-400 mb-4 group-hover:bg-yellow-500 group-hover:text-white transition">
                                 <MessageSquare className="w-6 h-6" />
@@ -224,7 +224,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 3. Flash Drops */}
-                        <button onClick={() => router.push('/creator/rooms/flash-drop')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Zap className="w-12 h-12 text-gray-800 group-hover:text-blue-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-blue-500/20 text-blue-400 mb-4 group-hover:bg-blue-500 group-hover:text-white transition">
                                 <Zap className="w-6 h-6" />
@@ -234,7 +234,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 4. Bar Lounge */}
-                        <button onClick={() => router.push('/creator/rooms/bar-lounge')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Wine className="w-12 h-12 text-gray-800 group-hover:text-purple-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-purple-500/20 text-purple-400 mb-4 group-hover:bg-purple-500 group-hover:text-white transition">
                                 <Wine className="w-6 h-6" />
@@ -254,7 +254,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 6. Suga 4 U */}
-                        <button onClick={() => router.push('/creator/rooms/suga-4-u')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
                                 <Crown className="w-6 h-6" />
@@ -264,7 +264,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 7. Competition Manager */}
-                        <button onClick={() => router.push('/creator/studio/competition')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60 transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2">
+                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60 transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Trophy className="w-12 h-12 text-gray-800 group-hover:text-orange-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-orange-500/20 text-orange-400 mb-4 group-hover:bg-orange-500 group-hover:text-white transition">
                                 <Trophy className="w-6 h-6" />

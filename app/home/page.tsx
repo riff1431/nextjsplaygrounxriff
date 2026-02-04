@@ -305,6 +305,15 @@ function toneClasses(tone: "pink" | "green" | "purple" | "red" | "blue" | "yello
                     "shadow-[0_0_18px_rgba(200,255,0,0.85),0_0_60px_rgba(200,255,0,0.45)] hover:shadow-[0_0_26px_rgba(200,255,0,0.95),0_0_90px_rgba(200,255,0,0.65)]",
                 hover: "hover:bg-lime-500/8",
             };
+        case "pink":
+            return {
+                text: "text-pink-400 drop-shadow-[0_0_22px_rgba(236,72,153,1)] neon-deep",
+                icon: "text-pink-400 drop-shadow-[0_0_26px_rgba(236,72,153,1)]",
+                border: "border-pink-400/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(236,72,153,0.85),0_0_60px_rgba(236,72,153,0.45)] hover:shadow-[0_0_26px_rgba(236,72,153,0.95),0_0_90px_rgba(236,72,153,0.65)]",
+                hover: "hover:bg-pink-500/8",
+            };
         default:
             return {
                 hover: "hover:bg-fuchsia-500/8",
@@ -465,12 +474,12 @@ function HomeScreen({
         primary?: boolean;
         route: string;
     }> = [
-            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop" },
+            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/coming-soon" },
             { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions" },
-            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat" },
-            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
+            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/coming-soon" },
+            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/coming-soon" },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/live" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga-4-u" },
+            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/coming-soon" },
         ];
 
     return (
@@ -531,11 +540,11 @@ function HomeScreen({
                         {/* Separate Competitions Section */}
                         <div className="mt-8 mb-4">
                             <button
-                                onClick={() => router.push("/competition")}
+                                onClick={() => router.push("/coming-soon")}
                                 className={cx(
                                     "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group",
-                                    "bg-black/80 border-yellow-500/50 hover:bg-yellow-500/10",
-                                    "shadow-[0_0_15px_rgba(234,179,8,0.15)] hover:shadow-[0_0_25px_rgba(234,179,8,0.25)]"
+                                    "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10",
+                                    "shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
                                 )}
                             >
                                 <span className="relative z-10 inline-flex items-center gap-2 text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
@@ -682,6 +691,13 @@ export default function Home() {
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
+    // Redirect creators to dashboard
+    useEffect(() => {
+        if (!authLoading && role === "creator") {
+            router.push("/creator/dashboard");
+        }
+    }, [role, authLoading, router]);
+
     // Fetch active rooms and posts
     useEffect(() => {
         const fetchContent = async () => {
@@ -812,152 +828,10 @@ export default function Home() {
 
     // ---- Creator Dashboard View --------------------------------------------
     if (role === "creator") {
-        return (
-            <div className="min-h-screen bg-black text-white p-8">
-                <style>{`
-                @keyframes neonFlicker {
-                  0%, 100% { opacity: 1; filter: saturate(1.55) contrast(1.06); }
-                  42% { opacity: 0.95; }
-                  43% { opacity: 0.78; }
-                  44% { opacity: 1; }
-                  68% { opacity: 0.93; }
-                  69% { opacity: 0.72; }
-                  70% { opacity: 0.99; }
-                }
-                .neon-flicker { animation: neonFlicker 7.5s infinite; }
-            `}</style>
-
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-2xl font-semibold text-white">Creator Studio Dashboard</h1>
-                            <p className="text-gray-400 text-sm">Welcome back, @{currentProfile?.username || user?.user_metadata?.username || "Creator"}</p>
-                        </div>
-                        <NeonButton variant="ghost" className="flex items-center gap-2" onClick={() => router.push('/creator/dashboard')} title="Back">
-                            <ArrowLeft className="w-4 h-4" /> Back
-                        </NeonButton>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Profile Card */}
-                        <button
-                            onClick={() => router.push(`/profile/${user?.id}`)}
-                            className="rounded-2xl border border-cyan-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <User className="w-5 h-5 text-cyan-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-cyan-200 mb-1">My Profile</h3>
-                            <p className="text-sm text-gray-400">View your profile, collection, and posts.</p>
-                        </button>
-
-                        {/* Upload Content Card - Creators Only */}
-                        {role === 'creator' && (
-                            <CreatePostModal
-                                currentUserId={user?.id || null}
-                                onPostCreated={() => { }} // No feed to refresh here, maybe toast?
-                                trigger={
-                                    <button
-                                        className="w-full h-full rounded-2xl border border-green-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                                    >
-                                        <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                            <Upload className="w-5 h-5 text-green-300" />
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-green-200 mb-1">Upload Content</h3>
-                                        <p className="text-sm text-gray-400">Post new photos, videos, or status updates.</p>
-                                    </button>
-                                }
-                            />
-                        )}
-
-                        {/* Confessions Studio */}
-                        <button
-                            onClick={() => router.push("/creator/rooms/confessions")}
-                            className="rounded-2xl border border-pink-500/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-pink-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <Lock className="w-5 h-5 text-pink-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-pink-200 mb-1">Confessions Studio</h3>
-                            <p className="text-sm text-gray-400">Manage backlog, publish text/voice/video confessions.</p>
-                        </button>
-
-                        {/* X Chat Studio */}
-                        <button
-                            onClick={() => router.push("/creator/rooms/x-chat")}
-                            className="rounded-2xl border border-yellow-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <MessageCircle className="w-5 h-5 text-yellow-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-yellow-200 mb-1">X Chat Console</h3>
-                            <p className="text-sm text-gray-400">Moderate live chat, set slow mode, answer priority DMs.</p>
-                        </button>
-
-                        {/* Flash Drop Studio */}
-                        <button
-                            onClick={() => router.push("/creator/rooms/flash-drop")}
-                            className="rounded-2xl border border-blue-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <Sparkles className="w-5 h-5 text-blue-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-blue-200 mb-1">Flash Drops</h3>
-                            <p className="text-sm text-gray-400">Schedule limited-time drops and monitor sales.</p>
-                        </button>
-
-                        {/* Bar Lounge */}
-                        <button
-                            onClick={() => router.push("/rooms/bar-lounge")}
-                            className="rounded-2xl border border-purple-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <BarDrinkIcon className="w-5 h-5 text-purple-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-purple-200 mb-1">Bar Lounge</h3>
-                            <p className="text-sm text-gray-400">Buy drinks and join the VIP booth.</p>
-                        </button>
-
-                        {/* Truth or Dare */}
-                        <button
-                            onClick={() => router.push("/rooms/truth-or-dare")}
-                            className="rounded-2xl border border-emerald-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <Video className="w-5 h-5 text-emerald-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-emerald-200 mb-1">Truth or Dare</h3>
-                            <p className="text-sm text-gray-400">Join camera and send dares!</p>
-                        </button>
-
-                        {/* Suga 4 U */}
-                        <button
-                            onClick={() => router.push("/rooms/suga-4-u")}
-                            className="rounded-2xl border border-pink-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-pink-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <Crown className="w-5 h-5 text-pink-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-pink-200 mb-1">Suga 4 U</h3>
-                            <p className="text-sm text-gray-400">Unlock secrets and claim drops.</p>
-                        </button>
-
-                        {/* Competition Manager */}
-                        <button
-                            onClick={() => router.push("/competition")}
-                            className="rounded-2xl border border-orange-400/30 bg-black/40 p-6 text-left hover:bg-white/5 transition group"
-                        >
-                            <div className="h-10 w-10 rounded-full bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition">
-                                <Trophy className="w-5 h-5 text-orange-300" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-orange-200 mb-1">Competition Manager</h3>
-                            <p className="text-sm text-gray-400">Create battles, manage brackets & prizes.</p>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+        return null; // Redirecting...
     }
+
+
 
     return (
         <div className="min-h-screen bg-black text-white">
