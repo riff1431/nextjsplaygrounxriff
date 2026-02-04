@@ -5,6 +5,8 @@ import { ShieldCheck, ExternalLink, AlertTriangle, CheckCircle } from "lucide-re
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+import { createClient } from "@/utils/supabase/client";
+
 interface Props {
     onComplete: () => void;
     rejectionReason?: string;
@@ -13,6 +15,64 @@ interface Props {
 export default function DiditVerificationStep({ onComplete, rejectionReason }: Props) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const supabase = createClient();
+
+    React.useEffect(() => {
+        const checkStatusAndSubscribe = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // Check current status immediately
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('kyc_status')
+                .eq('id', user.id)
+                .single();
+
+            if (profile?.kyc_status === 'approved') {
+                toast.success("Already verified!");
+                onComplete();
+                return; // No need to subscribe if already done, or maybe we still should? 
+                // If onComplete unmounts this, return is fine. 
+                // If it acts as a passive step, we might want to stay subscribed, but onComplete implies moving on.
+            }
+
+            // Subscribe to realtime changes
+            const channel = supabase
+                .channel('kyc-status-updates')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'profiles',
+                        filter: `id=eq.${user.id}`
+                    },
+                    (payload) => {
+                        const newStatus = payload.new.kyc_status;
+                        if (newStatus === 'approved') {
+                            toast.success("Verification approved!");
+                            onComplete();
+                        } else if (newStatus === 'rejected') {
+                            // Optionally handle rejection in realtime, currently handled by parent re-render or reload
+                            toast.error("Verification rejected. Please try again.");
+                            // We might want to trigger a reload or callback to update parent state
+                            // For now, onComplete likely moves to next step, so we only call it on approval.
+                            // To handle rejection properly without reload, we might need a prop to update parent state.
+                            // But simplified:
+                            window.location.reload();
+                        }
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        };
+
+        checkStatusAndSubscribe();
+    }, [supabase, onComplete]);
 
     const startVerification = async () => {
         setLoading(true);
@@ -83,7 +143,7 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                     <button
                         onClick={startVerification}
                         disabled={loading}
-                        className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-3"
                     >
                         {loading ? (
                             <>
@@ -96,6 +156,13 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                                 <ExternalLink className="w-4 h-4" />
                             </>
                         )}
+                    </button>
+
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="w-full py-3 rounded-xl font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                        Check verification status
                     </button>
 
                     <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
