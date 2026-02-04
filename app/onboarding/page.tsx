@@ -10,6 +10,7 @@ import AccountTypeStep from "@/components/onboarding/steps/AccountTypeStep";
 import FanMembershipStep from "@/components/onboarding/steps/FanMembershipStep";
 import CreatorLevelStep from "@/components/onboarding/steps/CreatorLevelStep";
 import KYCVerificationStep from "@/components/onboarding/steps/KYCVerificationStep";
+import DiditVerificationStep from "@/components/onboarding/steps/DiditVerificationStep";
 import VerificationPendingScreen from "@/components/onboarding/VerificationPendingScreen";
 import BankPaymentPendingScreen from "@/components/onboarding/BankPaymentPendingScreen";
 
@@ -193,11 +194,11 @@ export default function OnboardingPage() {
                         )}
 
                         {currentStep === 3 && role === "creator" && (
-                            <KYCVerificationStep
+                            <DiditVerificationStep
                                 onComplete={handleStepComplete}
                                 rejectionReason={
                                     profileData?.kyc_status === "rejected"
-                                        ? "Please resubmit your documents"
+                                        ? "Please resubmit your verification"
                                         : undefined
                                 }
                             />
