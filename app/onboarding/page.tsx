@@ -26,7 +26,7 @@ interface ProfileData {
 }
 
 export default function OnboardingPage() {
-    const { user, role, isLoading: authLoading } = useAuth();
+    const { user, role, logout, isLoading: authLoading } = useAuth();
     const router = useRouter();
     const supabase = createClient();
 
@@ -131,13 +131,21 @@ export default function OnboardingPage() {
             <div className="relative z-10 min-h-screen flex flex-col">
                 {/* Header */}
                 <header className="p-6">
-                    <div className="max-w-4xl mx-auto">
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-                            Complete Your Profile
-                        </h1>
-                        <p className="text-gray-400 text-sm mt-1">
-                            Just a few steps to get you started
-                        </p>
+                    <div className="max-w-4xl mx-auto flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+                                Complete Your Profile
+                            </h1>
+                            <p className="text-gray-400 text-sm mt-1">
+                                Just a few steps to get you started
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => logout()}
+                            className="text-gray-400 hover:text-white hover:bg-white/10 px-3 py-1.5 rounded-md text-sm transition-colors border border-gray-800 hover:border-gray-600"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </header>
 
