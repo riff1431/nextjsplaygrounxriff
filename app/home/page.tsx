@@ -252,9 +252,7 @@ function fanTierBg(tier: BadgeTier) {
     }
 }
 
-function isHighTier(tier: BadgeTier) {
-    return tier === "Gold" || tier === "Platinum" || tier === "VIP";
-}
+
 
 // ---- Neon palette helpers --------------------------------------------------
 function toneClasses(tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow") {
@@ -687,7 +685,7 @@ export default function Home() {
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
 
-    const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null } | null>(null);
+    const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null, fan_membership_id?: string | null } | null>(null);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
@@ -779,11 +777,28 @@ export default function Home() {
                 // Profile
                 const { data: profileData } = await supabase
                     .from('profiles')
-                    .select('username, full_name, avatar_url')
+                    .select('username, full_name, avatar_url, fan_membership_id')
                     .eq('id', user.id)
                     .single();
 
-                if (profileData) setCurrentProfile(profileData);
+                if (profileData) {
+                    setCurrentProfile(profileData);
+
+                    // Fetch membership tier if exists
+                    if (profileData.fan_membership_id) {
+                        const { data: planData } = await supabase
+                            .from('fan_membership_plans')
+                            .select('name')
+                            .eq('id', profileData.fan_membership_id)
+                            .single();
+
+                        if (planData?.name) {
+                            // Convert DB plan name (e.g. "gold") to BadgeTier (e.g. "Gold")
+                            const tierName = planData.name.charAt(0).toUpperCase() + planData.name.slice(1).toLowerCase();
+                            setFanTier(tierName as BadgeTier);
+                        }
+                    }
+                }
 
                 // Subscriptions
                 const { data: subData } = await supabase
@@ -808,20 +823,22 @@ export default function Home() {
     const [tagFilter, setTagFilter] = useState<string | "All">("All"); // Renamed for clarity in UI
 
     // NOTE: no fan-tier selector on Home per requirements; retained for Suga4U preview behavior.
-    const [fanTier] = useState<BadgeTier>("Gold");
+    const [fanTier, setFanTier] = useState<BadgeTier>("Bronze");
 
     // Filter logic removed (moved to HomeScreen)
 
 
     // Greeting / top-bar personalization (preview)
-    const firstName = role === "creator" ? "Creator" : "Fan";
+    const firstName = role === "creator"
+        ? "Creator"
+        : (currentProfile?.full_name?.split(" ")[0] || currentProfile?.username || "Fan");
     const [revealWelcome, setRevealWelcome] = useState(false);
     useEffect(() => {
         const t = window.setTimeout(() => setRevealWelcome(true), 120);
         return () => window.clearTimeout(t);
     }, []);
 
-    const showTierBadge = isHighTier(fanTier) && role !== "creator";
+    const showTierBadge = role !== "creator";
     const tierLabel = fanTier === "VIP" ? "VIP" : fanTier;
 
     if (authLoading) return null; // Or a loading spinner
