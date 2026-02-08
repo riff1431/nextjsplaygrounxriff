@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { playNotificationSound, playSuccessSound, playErrorSound } from '@/utils/sounds';
 
 interface RoomRequestManagerProps {
     roomId: string;
@@ -65,6 +66,7 @@ export default function RoomRequestManager({ roomId }: RoomRequestManagerProps) 
                 if (payload.new.status === 'pending') {
                     // Refetch to get profile (doing single fetch to avoid complex join logic in realtime payload)
                     fetchRequests();
+                    playNotificationSound();
                     toast.info("New Join Request!");
                 }
             })
@@ -73,7 +75,7 @@ export default function RoomRequestManager({ roomId }: RoomRequestManagerProps) 
         return () => { supabase.removeChannel(channel); };
     }, [roomId, supabase]);
 
-    const handleAction = async (requestId: string, action: 'approved' | 'rejected') => {
+    const handleAction = async (requestId: string, userId: string, action: 'approved' | 'rejected') => {
         try {
             const { error } = await supabase
                 .from('room_requests')
@@ -82,7 +84,33 @@ export default function RoomRequestManager({ roomId }: RoomRequestManagerProps) 
 
             if (error) throw error;
 
-            toast.success(`Request ${action}`);
+            // Broadcast the status change to notify the fan instantly
+            try {
+                const channel = supabase.channel(`room:${roomId}`);
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'request_status',
+                    payload: {
+                        requestId,
+                        userId,
+                        status: action,
+                        timestamp: Date.now()
+                    }
+                });
+                console.log('📢 Broadcast request status:', action);
+            } catch (broadcastError) {
+                console.error('Failed to broadcast request status:', broadcastError);
+            }
+
+            // Play appropriate sound
+            if (action === 'approved') {
+                playSuccessSound();
+                toast.success("Request approved!");
+            } else {
+                playErrorSound();
+                toast.info("Request declined");
+            }
+
             setRequests(prev => prev.filter(r => r.id !== requestId));
 
         } catch (e) {
@@ -128,13 +156,13 @@ export default function RoomRequestManager({ roomId }: RoomRequestManagerProps) 
 
                                 <div className="flex gap-1 shrink-0">
                                     <button
-                                        onClick={() => handleAction(req.id, 'rejected')}
+                                        onClick={() => handleAction(req.id, req.user_id, 'rejected')}
                                         className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                     <button
-                                        onClick={() => handleAction(req.id, 'approved')}
+                                        onClick={() => handleAction(req.id, req.user_id, 'approved')}
                                         className="p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white transition"
                                     >
                                         <Check className="w-4 h-4" />

@@ -80,5 +80,27 @@ export async function POST(
         return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
+    // 4. Broadcast question_answered event for earnings display
+    try {
+        const earnedAmount = item.meta?.amount || 0;
+        const channel = supabase.channel(`room:${roomId}`);
+        await channel.send({
+            type: 'broadcast',
+            event: 'question_answered',
+            payload: {
+                queueItemId,
+                requestId: item.request_id,
+                fanName: item.fan_name,
+                type: item.type,
+                tier: item.meta?.tier,
+                earnedAmount,
+                timestamp: Date.now()
+            }
+        });
+        console.log('📢 Broadcast question_answered event, earned:', earnedAmount);
+    } catch (broadcastError) {
+        console.error('Failed to broadcast question_answered:', broadcastError);
+    }
+
     return NextResponse.json({ success: true, game });
 }

@@ -36,6 +36,10 @@ import BrandLogo from "@/components/common/BrandLogo";
 import dynamic from 'next/dynamic';
 const LiveStreamWrapper = dynamic(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
+import CreatorCountdown from "./components/CreatorCountdown";
+import EarningsModal from "./components/EarningsModal";
+import RoomRequestManager from "@/components/rooms/RoomRequestManager";
+import { playMoneySound } from "@/utils/sounds";
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -143,6 +147,17 @@ type TipItem = {
     message?: string;
 };
 
+type CountdownRequest = {
+    requestId: string;
+    fanId: string;
+    fanName: string;
+    type: string;
+    tier: string;
+    content: string;
+    amount: number;
+    startedAt: number;
+};
+
 // ---------- Helpers ----------
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n));
@@ -153,8 +168,8 @@ function formatMMSS(totalSeconds: number) {
     const ss = String(s % 60).padStart(2, "0");
     return `${mm}:${ss}`;
 }
-function money(n: number) {
-    return `$${n.toFixed(0)}`;
+function money(n: number | undefined | null) {
+    return `$${(n ?? 0).toFixed(0)}`;
 }
 function timeAgo(ts: number) {
     const d = Math.max(0, Date.now() - ts);
@@ -214,6 +229,13 @@ export default function TruthOrDareCreatorRoom() {
     const [customResponse, setCustomResponse] = useState("");
     const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
     const [activeTip, setActiveTip] = useState<TipItem | null>(null);
+    const [activeCountdown, setActiveCountdown] = useState<CountdownRequest | null>(null);
+    const [earningsNotification, setEarningsNotification] = useState<{
+        amount: number;
+        fanName: string;
+        type: string;
+        tier?: string;
+    } | null>(null);
 
     // Game State
     const [currentPrompt, setCurrentPrompt] = useState<CurrentPrompt | null>(null);
@@ -371,8 +393,16 @@ export default function TruthOrDareCreatorRoom() {
                     session_title: p.title
                 }));
                 setHistory(mapped);
+            }
+
+            if (historyData.currentEarnings) {
+                console.log("Setting initial session earnings:", historyData.currentEarnings);
+                setSessionEarnings(prev => ({
+                    ...prev,
+                    ...historyData.currentEarnings
+                }));
             } else {
-                console.error("History API error:", historyData.error);
+                console.error("History API error or no earnings:", historyData.error);
             }
 
         } catch (e) {
@@ -600,12 +630,104 @@ export default function TruthOrDareCreatorRoom() {
                 }
             });
 
+        // Listen for countdown_start broadcast events
+        const broadcastChannel = supabase.channel(`room:${roomId}`)
+            .on('broadcast', { event: 'countdown_start' }, (payload) => {
+                console.log('⏱️ Received countdown_start broadcast:', payload);
+                const data = payload.payload;
+                setActiveCountdown({
+                    requestId: data.requestId,
+                    fanId: data.fanId,
+                    fanName: data.fanName,
+                    type: data.type,
+                    tier: data.tier,
+                    content: data.content,
+                    amount: data.amount,
+                    startedAt: data.startedAt
+                });
+                playNotificationSound();
+            })
+            .on('broadcast', { event: 'question_answered' }, (payload) => {
+                console.log('💰 Question answered, earned:', payload.payload);
+                const data = payload.payload;
+                // Show earnings modal after 3-second delay
+                setTimeout(() => {
+                    setEarningsNotification({
+                        amount: data.earnedAmount,
+                        fanName: data.fanName,
+                        type: data.type,
+                        tier: data.tier
+                    });
+                    playMoneySound();
+                    // Update session earnings
+                    setSessionEarnings(prev => prev + (data.earnedAmount || 0));
+                }, 3000);
+            })
+            .subscribe();
+
         console.log('🎯 Setting up real-time subscriptions for room:', roomId);
 
         return () => {
             console.log('🔌 Cleaning up real-time subscriptions');
             supabase.removeChannel(channel);
+            supabase.removeChannel(broadcastChannel);
         };
+    }, [roomId]);
+
+
+    // NEW: Fetch Pending Requests on Mount (or Manual Refresh)
+    const fetchPendingRequests = async () => {
+        if (!roomId) return;
+        try {
+            console.log("Fetching pending requests for room:", roomId);
+            const { data, error } = await supabase
+                .from('truth_dare_requests')
+                .select('*')
+                .eq('room_id', roomId)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                console.log("Found pending requests:", data);
+                // process into revealItems
+                const reveals: RevealItem[] = data.map(r => ({
+                    id: `reveal_${r.id}`,
+                    fanId: r.fan_id,
+                    fanName: r.fan_name || 'Anonymous',
+                    type: r.type.includes('truth') ? 'truth' : 'dare',
+                    tier: r.tier as TierId,
+                    question: r.content,
+                    amount: r.amount,
+                    timestamp: new Date(r.created_at).getTime(),
+                    requestId: r.id
+                }));
+
+                // Merge with existing queue to avoid duplicates
+                setRevealQueue(prev => {
+                    const existingIds = new Set(prev.map(p => p.requestId));
+                    const uniqueNew = reveals.filter(r => !existingIds.has(r.requestId));
+                    if (uniqueNew.length > 0) {
+                        toast.success(`Loaded ${uniqueNew.length} pending requests.`);
+                        return [...prev, ...uniqueNew];
+                    }
+                    return prev;
+                });
+            } else {
+                console.log("No pending requests found.");
+                // toast("No pending requests.", { position: "bottom-right" }); // constant toast is annoying
+            }
+        } catch (e) {
+            console.error("Error fetching pending requests:", e);
+            toast.error("Failed to sync pending requests.");
+        }
+    };
+
+    useEffect(() => {
+        if (roomId) {
+            fetchPendingRequests();
+        }
     }, [roomId]);
 
 
@@ -1467,6 +1589,14 @@ export default function TruthOrDareCreatorRoom() {
                                 >
                                     <Star className="w-4 h-4" /> Test Notification
                                 </button>
+
+                                <button
+                                    onClick={fetchPendingRequests}
+                                    className="rounded-xl border border-green-500/25 py-2 text-xs text-green-200 hover:bg-green-600/10 inline-flex items-center justify-center gap-2 col-span-2"
+                                    title="Manually check for missed requests"
+                                >
+                                    <RotateCcw className="w-4 h-4" /> Refresh Requests
+                                </button>
                             </div>
 
                             <div className="mt-2 text-[10px] text-gray-500">
@@ -1488,7 +1618,7 @@ export default function TruthOrDareCreatorRoom() {
                                 <div className="text-xs text-green-400 uppercase tracking-wider mb-1">Total Earned</div>
                                 <div className="text-3xl font-black text-white flex items-baseline gap-1">
                                     <span className="text-green-400">$</span>
-                                    <span className="tabular-nums">{sessionEarnings.total.toFixed(2)}</span>
+                                    <span className="tabular-nums">{(sessionEarnings?.total ?? 0).toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -1496,19 +1626,19 @@ export default function TruthOrDareCreatorRoom() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-gray-400">Tips</span>
-                                    <span className="text-white font-bold">${sessionEarnings.tips.toFixed(2)}</span>
+                                    <span className="text-white font-bold">${(sessionEarnings?.tips ?? 0).toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-gray-400">Truths</span>
-                                    <span className="text-cyan-300 font-bold">${sessionEarnings.truths.toFixed(2)}</span>
+                                    <span className="text-cyan-300 font-bold">${(sessionEarnings?.truths ?? 0).toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-gray-400">Dares</span>
-                                    <span className="text-pink-300 font-bold">${sessionEarnings.dares.toFixed(2)}</span>
+                                    <span className="text-pink-300 font-bold">${(sessionEarnings?.dares ?? 0).toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-gray-400">Custom</span>
-                                    <span className="text-purple-300 font-bold">${sessionEarnings.custom.toFixed(2)}</span>
+                                    <span className="text-purple-300 font-bold">${(sessionEarnings?.custom ?? 0).toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -1712,29 +1842,29 @@ export default function TruthOrDareCreatorRoom() {
                             <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
                                 <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
                                     <div className="text-gray-400">Tips</div>
-                                    <div className="text-pink-200">{money(revenue.tips)}</div>
+                                    <div className="text-pink-200">{money(sessionEarnings.tips)}</div>
                                 </div>
                                 <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Tier</div>
-                                    <div className="text-pink-200">{money(revenue.tier)}</div>
+                                    <div className="text-gray-400">Truths</div>
+                                    <div className="text-pink-200">{money(sessionEarnings.truths)}</div>
+                                </div>
+                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
+                                    <div className="text-gray-400">Dares</div>
+                                    <div className="text-pink-200">{money(sessionEarnings.dares)}</div>
                                 </div>
                                 <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
                                     <div className="text-gray-400">Custom</div>
-                                    <div className="text-pink-200">{money(revenue.custom)}</div>
-                                </div>
-                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Votes/Add-ons</div>
-                                    <div className="text-pink-200">{money(revenue.votes + revenue.addons)}</div>
+                                    <div className="text-pink-200">{money(sessionEarnings.custom)}</div>
                                 </div>
                             </div>
 
                             <div className="mt-3 text-[11px] text-gray-300 flex items-center justify-between">
                                 <span>Total</span>
-                                <span className="text-pink-200">{money(revenue.total)}</span>
+                                <span className="text-pink-200">{money(sessionEarnings.total)}</span>
                             </div>
                             <div className="mt-1 text-[10px] text-gray-500 flex items-center justify-between">
                                 <span>Estimated creator take</span>
-                                <span>{money(revenue.creatorTake)}</span>
+                                <span>{money(sessionEarnings.total * 0.8)}</span>
                             </div>
 
                             <div className="mt-3 text-xs text-pink-200 flex items-center gap-2">
@@ -1747,267 +1877,300 @@ export default function TruthOrDareCreatorRoom() {
             }
 
             {/* NEW: Question Reveal Modal */}
-            {activeReveal && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in duration-700">
-                    <div className="w-full max-w-2xl bg-gradient-to-br from-purple-950/50 to-pink-950/50 backdrop-blur-xl border-2 border-pink-500/60 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-[0_0_100px_rgba(236,72,153,0.5),0_0_200px_rgba(236,72,153,0.3)] animate-in zoom-in-95 duration-700 relative overflow-hidden">
-                        {/* Animated background glow */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-pink-500/10 animate-pulse pointer-events-none" />
+            {
+                activeReveal && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 sm:p-6 animate-in fade-in duration-700">
+                        <div className="w-full max-w-2xl bg-gradient-to-br from-purple-950/50 to-pink-950/50 backdrop-blur-xl border-2 border-pink-500/60 rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-[0_0_100px_rgba(236,72,153,0.5),0_0_200px_rgba(236,72,153,0.3)] animate-in zoom-in-95 duration-700 relative overflow-hidden">
+                            {/* Animated background glow */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-pink-500/10 animate-pulse pointer-events-none" />
 
-                        {/* Header */}
-                        <div className="text-center mb-6 relative z-10">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/30 backdrop-blur-md border border-pink-500/50 mb-4 shadow-[0_0_30px_rgba(236,72,153,0.4)] animate-pulse">
-                                <Star className="w-5 h-5 text-yellow-400 animate-pulse" />
-                                <span className="text-sm font-bold text-pink-200 uppercase tracking-wider">
-                                    New {activeReveal.type} Request
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-center gap-3 mb-2">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${activeReveal.tier === 'gold' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40' :
-                                    activeReveal.tier === 'silver' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' :
-                                        'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                                    }`}>
-                                    {activeReveal.tier} Tier
-                                </span>
-                                <span className="text-2xl font-black text-green-400">
-                                    +${activeReveal.amount}
-                                </span>
-                            </div>
-
-                            <div className="text-sm text-gray-400">
-                                From <span className="text-white font-bold">{activeReveal.fanName}</span>
-                            </div>
-                        </div>
-
-                        {/* Question */}
-                        <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/30 p-6 mb-6 shadow-[inset_0_0_50px_rgba(255,255,255,0.05)] relative z-10">
-                            <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">The Question:</div>
-                            <div className="text-xl sm:text-2xl font-bold text-white leading-relaxed text-center">
-                                "{activeReveal.question}"
-                            </div>
-                        </div>
-
-                        {/* Custom Response (Optional) */}
-                        <div className="mb-6 relative z-10">
-                            <label className="block text-sm text-gray-300 mb-2">
-                                Your Response (Optional)
-                            </label>
-                            <textarea
-                                value={customResponse}
-                                onChange={(e) => setCustomResponse(e.target.value)}
-                                placeholder="Add a custom response or note about this question..."
-                                className="w-full h-24 px-4 py-3 rounded-xl bg-black/50 border border-white/20 text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
-                            />
-                            <div className="text-xs text-gray-500 mt-1">
-                                This will be saved with the request for your records
-                            </div>
-                        </div>
-
-                        {/* NEW: Pending Reveals Queue */}
-                        <div className="rounded-xl border border-purple-500/40 bg-gradient-to-br from-purple-950/30 to-pink-950/30 backdrop-blur-md p-4 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-purple-200 text-sm flex items-center gap-2 font-bold">
-                                    <Clock className="w-4 h-4" /> Pending Reveals
+                            {/* Header */}
+                            <div className="text-center mb-6 relative z-10">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/30 backdrop-blur-md border border-pink-500/50 mb-4 shadow-[0_0_30px_rgba(236,72,153,0.4)] animate-pulse">
+                                    <Star className="w-5 h-5 text-yellow-400 animate-pulse" />
+                                    <span className="text-sm font-bold text-pink-200 uppercase tracking-wider">
+                                        New {activeReveal.type} Request
+                                    </span>
                                 </div>
-                                <div className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200 font-bold">
-                                    {revealQueue.length}
+
+                                <div className="flex items-center justify-center gap-3 mb-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${activeReveal.tier === 'gold' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40' :
+                                        activeReveal.tier === 'silver' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' :
+                                            'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                        }`}>
+                                        {activeReveal.tier} Tier
+                                    </span>
+                                    <span className="text-2xl font-black text-green-400">
+                                        +${activeReveal.amount}
+                                    </span>
+                                </div>
+
+                                <div className="text-sm text-gray-400">
+                                    From <span className="text-white font-bold">{activeReveal.fanName}</span>
                                 </div>
                             </div>
 
-                            {revealQueue.length === 0 ? (
-                                <div className="text-xs text-gray-500 text-center py-4">
-                                    No pending reveals
+                            {/* Question */}
+                            <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/30 p-6 mb-6 shadow-[inset_0_0_50px_rgba(255,255,255,0.05)] relative z-10">
+                                <div className="text-xs text-gray-400 uppercase tracking-wider mb-3">The Question:</div>
+                                <div className="text-xl sm:text-2xl font-bold text-white leading-relaxed text-center">
+                                    "{activeReveal.question}"
                                 </div>
-                            ) : (
-                                <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent">
-                                    {revealQueue.map((reveal, idx) => {
-                                        const tierColor = reveal.tier === 'gold' ? 'text-yellow-400' :
-                                            reveal.tier === 'silver' ? 'text-cyan-400' :
-                                                'text-amber-400';
-                                        const typeColor = reveal.type === 'truth' ? 'text-cyan-300' : 'text-pink-300';
+                            </div>
 
-                                        return (
-                                            <div
-                                                key={reveal.id}
-                                                className="rounded-lg border border-white/10 bg-gradient-to-r from-black/60 to-black/40 p-2.5"
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-xs">
-                                                            <span className="text-white font-bold">{reveal.fanName}</span>
-                                                            {' '}
-                                                            <span className={`${tierColor} font-bold uppercase`}>
-                                                                {reveal.tier}
-                                                            </span>
-                                                            {' '}
-                                                            <span className={`${typeColor} font-bold capitalize`}>
-                                                                {reveal.type}
-                                                            </span>
+                            {/* Custom Response (Optional) */}
+                            <div className="mb-6 relative z-10">
+                                <label className="block text-sm text-gray-300 mb-2">
+                                    Your Response (Optional)
+                                </label>
+                                <textarea
+                                    value={customResponse}
+                                    onChange={(e) => setCustomResponse(e.target.value)}
+                                    placeholder="Add a custom response or note about this question..."
+                                    className="w-full h-24 px-4 py-3 rounded-xl bg-black/50 border border-white/20 text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 resize-none"
+                                />
+                                <div className="text-xs text-gray-500 mt-1">
+                                    This will be saved with the request for your records
+                                </div>
+                            </div>
+
+                            {/* NEW: Pending Reveals Queue */}
+                            <div className="rounded-xl border border-purple-500/40 bg-gradient-to-br from-purple-950/30 to-pink-950/30 backdrop-blur-md p-4 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="text-purple-200 text-sm flex items-center gap-2 font-bold">
+                                        <Clock className="w-4 h-4" /> Pending Reveals
+                                    </div>
+                                    <div className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-200 font-bold">
+                                        {revealQueue.length}
+                                    </div>
+                                </div>
+
+                                {revealQueue.length === 0 ? (
+                                    <div className="text-xs text-gray-500 text-center py-4">
+                                        No pending reveals
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500/20 scrollbar-track-transparent">
+                                        {revealQueue.map((reveal, idx) => {
+                                            const tierColor = reveal.tier === 'gold' ? 'text-yellow-400' :
+                                                reveal.tier === 'silver' ? 'text-cyan-400' :
+                                                    'text-amber-400';
+                                            const typeColor = reveal.type === 'truth' ? 'text-cyan-300' : 'text-pink-300';
+
+                                            return (
+                                                <div
+                                                    key={reveal.id}
+                                                    className="rounded-lg border border-white/10 bg-gradient-to-r from-black/60 to-black/40 p-2.5"
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="text-xs">
+                                                                <span className="text-white font-bold">{reveal.fanName}</span>
+                                                                {' '}
+                                                                <span className={`${tierColor} font-bold uppercase`}>
+                                                                    {reveal.tier}
+                                                                </span>
+                                                                {' '}
+                                                                <span className={`${typeColor} font-bold capitalize`}>
+                                                                    {reveal.type}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-[10px] text-gray-400 mt-1 truncate">
+                                                                "{reveal.question}"
+                                                            </div>
                                                         </div>
-                                                        <div className="text-[10px] text-gray-400 mt-1 truncate">
-                                                            "{reveal.question}"
-                                                        </div>
+                                                        {idx === 0 && (
+                                                            <div className="text-[10px] px-2 py-1 rounded-full bg-purple-500/30 text-purple-200 font-bold animate-pulse">
+                                                                Next
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {idx === 0 && (
-                                                        <div className="text-[10px] px-2 py-1 rounded-full bg-purple-500/30 text-purple-200 font-bold animate-pulse">
-                                                            Next
-                                                        </div>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
 
-                        {/* Actions */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 relative z-10">
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        console.log('Declining question:', activeReveal);
+                            {/* Actions */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 relative z-10">
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            console.log('Declining question:', activeReveal);
 
-                                        // Mark as declined in database
-                                        if (activeReveal.requestId) {
-                                            const { error } = await supabase
-                                                .from('truth_dare_requests')
-                                                .update({
-                                                    status: 'declined',
-                                                    declined_at: new Date().toISOString()
-                                                })
-                                                .eq('id', activeReveal.requestId);
+                                            // Mark as declined in database
+                                            if (activeReveal.requestId) {
+                                                const { error } = await supabase
+                                                    .from('truth_dare_requests')
+                                                    .update({
+                                                        status: 'declined',
+                                                        declined_at: new Date().toISOString()
+                                                    })
+                                                    .eq('id', activeReveal.requestId);
 
-                                            if (error) {
-                                                console.error('Error declining question:', error);
-                                            } else {
-                                                console.log('Question declined successfully');
-                                            }
-                                        }
-
-                                        // Remove from queue
-                                        setRevealQueue(prev => prev.filter(r => r.id !== activeReveal.id));
-                                        setActiveReveal(null);
-                                        setCustomResponse("");
-                                    } catch (error) {
-                                        console.error('Failed to decline question:', error);
-                                        setActiveReveal(null);
-                                    }
-                                }}
-                                className="py-4 rounded-xl border-2 border-red-500/40 bg-red-950/20 hover:bg-red-950/40 text-red-200 font-bold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
-                            >
-                                <XCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                                Decline
-                            </button>
-
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        console.log('Marking as answered:', activeReveal, 'Response:', customResponse);
-
-                                        // Update database to mark as answered
-                                        if (activeReveal.requestId) {
-                                            const { error } = await supabase
-                                                .from('truth_dare_requests')
-                                                .update({
-                                                    status: 'answered',
-                                                    answered_at: new Date().toISOString(),
-                                                    creator_response: customResponse || null,
-                                                    revealed_at: new Date().toISOString()
-                                                })
-                                                .eq('id', activeReveal.requestId);
-
-                                            if (error) {
-                                                console.error('Error marking as answered:', error);
-                                            } else {
-                                                console.log('Question marked as answered successfully');
-                                            }
-                                        }
-
-                                        // Broadcast to fans via realtime
-                                        if (roomId) {
-                                            const channel = supabase.channel(`room:${roomId}`);
-                                            await channel.send({
-                                                type: 'broadcast',
-                                                event: 'question_revealed',
-                                                payload: {
-                                                    requestId: activeReveal.requestId || activeReveal.id,
-                                                    fanId: activeReveal.fanId,
-                                                    type: activeReveal.type,
-                                                    tier: activeReveal.tier,
-                                                    question: activeReveal.question,
-                                                    fanName: activeReveal.fanName,
-                                                    creatorResponse: customResponse || null,
-                                                    timestamp: new Date().toISOString()
+                                                if (error) {
+                                                    console.error('Error declining question:', error);
+                                                } else {
+                                                    console.log('Question declined successfully');
                                                 }
-                                            });
-                                            console.log('Question broadcasted to fans with response');
+                                            }
+
+                                            // Remove from queue
+                                            setRevealQueue(prev => prev.filter(r => r.id !== activeReveal.id));
+                                            setActiveReveal(null);
+                                            setCustomResponse("");
+                                        } catch (error) {
+                                            console.error('Failed to decline question:', error);
+                                            setActiveReveal(null);
                                         }
+                                    }}
+                                    className="py-4 rounded-xl border-2 border-red-500/40 bg-red-950/20 hover:bg-red-950/40 text-red-200 font-bold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
+                                >
+                                    <XCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                                    Decline
+                                </button>
 
-                                        // Remove from queue and close modal
-                                        setRevealQueue(prev => prev.filter(r => r.id !== activeReveal.id));
-                                        setActiveReveal(null);
-                                        setCustomResponse("");
-                                    } catch (error) {
-                                        console.error('Failed to mark as answered:', error);
-                                        setActiveReveal(null);
-                                    }
-                                }}
-                                className="py-4 rounded-xl border-2 border-green-500/40 bg-gradient-to-r from-green-600/20 to-emerald-600/20 hover:from-green-600/40 hover:to-emerald-600/40 text-green-200 font-bold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group shadow-lg shadow-green-900/20"
-                            >
-                                <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                Mark as Answered
-                            </button>
-                        </div>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            console.log('Marking as answered:', activeReveal, 'Response:', customResponse);
 
-                        {/* Info */}
-                        <div className="mt-4 text-center text-xs text-gray-500">
-                            Click "Mark as Answered" after you've completed the truth/dare. The fan will be notified.
+                                            // Update database to mark as answered
+                                            if (activeReveal.requestId) {
+                                                const { error } = await supabase
+                                                    .from('truth_dare_requests')
+                                                    .update({
+                                                        status: 'answered',
+                                                        answered_at: new Date().toISOString(),
+                                                        creator_response: customResponse || null,
+                                                        revealed_at: new Date().toISOString()
+                                                    })
+                                                    .eq('id', activeReveal.requestId);
+
+                                                if (error) {
+                                                    console.error('Error marking as answered:', error);
+                                                } else {
+                                                    console.log('Question marked as answered successfully');
+                                                }
+                                            }
+
+                                            // Broadcast to fans via realtime
+                                            if (roomId) {
+                                                const channel = supabase.channel(`room:${roomId}`);
+                                                await channel.send({
+                                                    type: 'broadcast',
+                                                    event: 'question_revealed',
+                                                    payload: {
+                                                        requestId: activeReveal.requestId || activeReveal.id,
+                                                        fanId: activeReveal.fanId,
+                                                        type: activeReveal.type,
+                                                        tier: activeReveal.tier,
+                                                        question: activeReveal.question,
+                                                        fanName: activeReveal.fanName,
+                                                        creatorResponse: customResponse || null,
+                                                        timestamp: new Date().toISOString()
+                                                    }
+                                                });
+                                                console.log('Question broadcasted to fans with response');
+                                            }
+
+                                            // Remove from queue and close modal
+                                            setRevealQueue(prev => prev.filter(r => r.id !== activeReveal.id));
+                                            setActiveReveal(null);
+                                            setCustomResponse("");
+                                        } catch (error) {
+                                            console.error('Failed to mark as answered:', error);
+                                            setActiveReveal(null);
+                                        }
+                                    }}
+                                    className="py-4 rounded-xl border-2 border-green-500/40 bg-gradient-to-r from-green-600/20 to-emerald-600/20 hover:from-green-600/40 hover:to-emerald-600/40 text-green-200 font-bold transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group shadow-lg shadow-green-900/20"
+                                >
+                                    <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                    Mark as Answered
+                                </button>
+                            </div>
+
+                            {/* Info */}
+                            <div className="mt-4 text-center text-xs text-gray-500">
+                                Click "Mark as Answered" after you've completed the truth/dare. The fan will be notified.
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* NEW: Cute Real-time Tip Alert Dialog */}
-            {activeTip && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
-                    <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
-                        {/* Confetti/Glow Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 animate-pulse" />
+            {
+                activeTip && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
+                        <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
+                            {/* Confetti/Glow Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 animate-pulse" />
 
-                        {/* Content */}
-                        <div className="relative z-10 flex flex-col items-center">
-                            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] animate-bounce">
-                                <TrendingUp className="w-10 h-10 text-green-400" />
+                            {/* Content */}
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] animate-bounce">
+                                    <TrendingUp className="w-10 h-10 text-green-400" />
+                                </div>
+
+                                <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-wider drop-shadow-lg">
+                                    New Tip!
+                                </h2>
+                                <p className="text-green-200 font-medium mb-6 text-lg">
+                                    {activeTip.message || "Someone loves your vibes!"}
+                                </p>
+
+                                <div className="bg-green-900/40 border border-green-500/30 rounded-2xl p-4 w-full mb-4">
+                                    <div className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">From</div>
+                                    <div className="text-2xl font-bold text-white">{activeTip.fanName}</div>
+                                </div>
+
+                                <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
+                                    ${activeTip.amount}
+                                </div>
                             </div>
 
-                            <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-wider drop-shadow-lg">
-                                New Tip!
-                            </h2>
-                            <p className="text-green-200 font-medium mb-6 text-lg">
-                                {activeTip.message || "Someone loves your vibes!"}
-                            </p>
-
-                            <div className="bg-green-900/40 border border-green-500/30 rounded-2xl p-4 w-full mb-4">
-                                <div className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">From</div>
-                                <div className="text-2xl font-bold text-white">{activeTip.fanName}</div>
-                            </div>
-
-                            <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
-                                ${activeTip.amount}
-                            </div>
+                            {/* Close Button (Optional if they want to dismiss it early) */}
+                            <button
+                                onClick={() => setActiveTip(null)}
+                                className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                            >
+                                <XCircle className="w-6 h-6" />
+                            </button>
                         </div>
-
-                        {/* Close Button (Optional if they want to dismiss it early) */}
-                        <button
-                            onClick={() => setActiveTip(null)}
-                            className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
-                        >
-                            <XCircle className="w-6 h-6" />
-                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Private Session Join Requests */}
+            {roomId && <RoomRequestManager roomId={roomId} />}
+
+            {/* Creator Countdown Overlay */}
+            <CreatorCountdown
+                request={activeCountdown}
+                roomId={roomId || ''}
+                onComplete={(earnedAmount) => {
+                    setActiveCountdown(null);
+                    // Update session earnings immediately
+                    if (earnedAmount > 0) {
+                        setSessionEarnings(prev => ({
+                            ...prev,
+                            total: prev.total + earnedAmount
+                        }));
+                        // Show earnings notification after a brief delay
+                        setTimeout(() => {
+                            setEarningsNotification({
+                                amount: earnedAmount,
+                                fanName: activeCountdown?.fanName || 'Fan',
+                                type: activeCountdown?.type || 'dare',
+                                tier: activeCountdown?.tier
+                            });
+                        }, 500);
+                    }
+                }}
+                onDismiss={() => setActiveCountdown(null)}
+            />
 
             {/* Overlay */}
             <InteractionOverlay
@@ -2015,6 +2178,12 @@ export default function TruthOrDareCreatorRoom() {
                 isVisible={showOverlay}
                 onClose={() => setShowOverlay(false)}
             />
-        </div>
+
+            {/* Earnings Notification Modal */}
+            <EarningsModal
+                notification={earningsNotification}
+                onClose={() => setEarningsNotification(null)}
+            />
+        </div >
     );
 }

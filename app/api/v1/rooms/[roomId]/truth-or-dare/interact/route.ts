@@ -43,7 +43,6 @@ export async function POST(
 
             // Fetch Dynamic Pricing
             // Default pricing
-            let price = 0;
             const defaults = {
                 bronze: 5,
                 silver: 10,
@@ -296,6 +295,29 @@ export async function POST(
             console.error("Failed to add to queue:", queueError);
             // Non-fatal, creator can still see it in history/requests list if implemented, 
             // but for now we just log it. Request is paid and recorded.
+        }
+
+        // 7. Broadcast countdown_start event for synchronized display on both fan and creator views
+        try {
+            const channel = supabase.channel(`room:${roomId}`);
+            await channel.send({
+                type: 'broadcast',
+                event: 'countdown_start',
+                payload: {
+                    requestId: newRequest.id,
+                    fanId: user.id,
+                    fanName,
+                    type,
+                    tier,
+                    content: finalContent,
+                    amount: price,
+                    startedAt: Date.now()
+                }
+            });
+            console.log('Broadcast countdown_start event sent for request:', newRequest.id);
+        } catch (broadcastError) {
+            console.error('Failed to broadcast countdown event:', broadcastError);
+            // Non-fatal - the request is already saved
         }
 
         return NextResponse.json({ success: true, request: newRequest });

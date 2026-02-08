@@ -121,7 +121,36 @@ export async function GET(
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ history: history || [] });
+        // Calculate current session earnings
+        let currentEarnings = { total: 0, tips: 0, truths: 0, dares: 0, custom: 0 };
+        const activeSession = history?.find((s: any) => s.status === 'active');
+
+        if (activeSession) {
+            const { data: requests } = await supabase
+                .from('truth_dare_requests')
+                .select('amount, type, status, created_at')
+                .eq('room_id', roomId)
+                .eq('status', 'answered')
+                .gte('created_at', activeSession.started_at);
+
+            if (requests) {
+                requests.forEach((r: any) => {
+                    const amount = r.amount || 0;
+                    currentEarnings.total += amount;
+
+                    const type = r.type?.toLowerCase() || '';
+                    if (type.includes('tip')) currentEarnings.tips += amount;
+                    else if (type.includes('truth')) currentEarnings.truths += amount;
+                    else if (type.includes('dare')) currentEarnings.dares += amount;
+                    else if (type.includes('custom')) currentEarnings.custom += amount;
+                });
+            }
+        }
+
+        return NextResponse.json({
+            history: history || [],
+            currentEarnings
+        });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }

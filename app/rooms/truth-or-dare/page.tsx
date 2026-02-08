@@ -26,12 +26,15 @@ import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New Component
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
+import { playSuccessSound, playErrorSound } from "@/utils/sounds";
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
 
 import dynamic from 'next/dynamic';
 const LiveStreamWrapper = dynamic(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 const QuestionCountdown = dynamic(() => import('./components/QuestionCountdown'), { ssr: false });
+const FanAnswerModal = dynamic(() => import('./components/FanAnswerModal'), { ssr: false });
+const FanViewersList = dynamic(() => import('./components/FanViewersList'), { ssr: false });
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -108,6 +111,8 @@ function TruthOrDareContent() {
     const [userId, setUserId] = useState<string | null>(null);
     const [unlocking, setUnlocking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [userName, setUserName] = useState<string>('Anonymous');
+    const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
     // Modal States
     const [confirmModal, setConfirmModal] = useState<{
@@ -128,6 +133,13 @@ function TruthOrDareContent() {
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
     const [showCountdown, setShowCountdown] = useState(false);
+    const [answerNotification, setAnswerNotification] = useState<{
+        fanName: string;
+        type: string;
+        tier?: string;
+        content?: string;
+        creatorResponse?: string;
+    } | null>(null);
 
     // Moved Hooks from bottom to fix "Rendered fewer hooks" error
     const [selectedTier, setSelectedTier] = useState<TierId | null>(null);
@@ -176,6 +188,18 @@ function TruthOrDareContent() {
 
                 if (user) {
                     setUserId(user.id);
+
+                    // Fetch profile for presence
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, username, avatar_url')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profile) {
+                        setUserName(profile.full_name || profile.username || user.email?.split('@')[0] || 'Anonymous');
+                        setUserAvatar(profile.avatar_url);
+                    }
 
                     // A. Check Payment (Unlocks table) - Valid for both Public and Private
                     const { data: unlock } = await supabase
@@ -270,6 +294,45 @@ function TruthOrDareContent() {
                     setOverlayPrompt(p);
                     setShowOverlay(true);
                     setTimeout(() => setShowOverlay(false), 6000); // Hide after 6s
+                }
+            })
+            .on('broadcast', { event: 'countdown_start' }, (payload) => {
+                // Check if this is for the current user
+                if (payload.payload?.fanId === userId) {
+                    console.log('⏱️ Countdown started for my request:', payload.payload);
+                    // The showCountdown state is already triggered in processPayment
+                    // This is a backup sync mechanism
+                    setShowCountdown(true);
+                }
+            })
+            .on('broadcast', { event: 'request_status' }, (payload) => {
+                // Check if this status update is for the current user
+                if (payload.payload?.userId === userId) {
+                    console.log('📢 Request status update:', payload.payload);
+                    const status = payload.payload.status;
+                    if (status === 'approved') {
+                        setRequestStatus('approved');
+                        playSuccessSound();
+                    } else if (status === 'rejected') {
+                        setRequestStatus('rejected');
+                        playErrorSound();
+                    }
+                }
+            })
+            .on('broadcast', { event: 'question_revealed' }, (payload) => {
+                // Check if this answer is for the current user's request
+                console.log('📢 Question revealed event received:', payload.payload);
+                const data = payload.payload;
+
+                // Only show modal to the fan who made this specific request
+                if (data.fanId && data.fanId === userId) {
+                    setAnswerNotification({
+                        fanName: data.fanName,
+                        type: data.type,
+                        tier: data.tier,
+                        content: data.question,
+                        creatorResponse: data.creatorResponse
+                    });
                 }
             })
             .subscribe();
@@ -503,17 +566,17 @@ function TruthOrDareContent() {
                         ))}
                     </div>
 
-                    <div className="flex flex-wrap gap-3 justify-start">
-                        {Array.from({ length: fanCount }).map((_, i) => (
-                            <div
-                                key={`fan-${i}`}
-                                className="relative rounded-xl border border-blue-400/40 w-40 aspect-video flex items-center justify-center bg-gray-900"
-                            >
-                                <Users className="w-6 h-6 text-blue-400" />
-                                <span className="absolute bottom-1 left-1 text-[10px] text-blue-300">Fan {i + 1}</span>
-                            </div>
-                        ))}
-                    </div>
+                    {/* Dynamic Fan Viewers */}
+                    {roomId && userId && access === 'granted' && (
+                        <div className="bg-gray-900/50 rounded-xl border border-pink-500/20 p-3">
+                            <FanViewersList
+                                roomId={roomId}
+                                userId={userId}
+                                userName={userName}
+                                userAvatar={userAvatar}
+                            />
+                        </div>
+                    )}
 
                     {lastAction && (
                         <div className="text-xs text-pink-300 flex items-center gap-2">
@@ -816,46 +879,125 @@ function TruthOrDareContent() {
                     </motion.div>
                 )}
 
-                {/* 2. Result Reveal Modal */}
+                {/* 2. Result Reveal Modal - Apple Liquid Glass Style */}
                 {resultModal && resultModal.isOpen && (
                     <motion.div
                         key="result-modal"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xl p-4"
+                        onClick={() => setResultModal(null)}
                     >
                         <motion.div
-                            initial={{ rotateX: 90, opacity: 0 }}
-                            animate={{ rotateX: 0, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            transition={{ type: "spring", damping: 20 }}
-                            className={`w-full max-w-md aspect-[4/5] ${resultModal.type === 'tip' ? 'bg-gradient-to-tr from-green-900 to-emerald-900 border-green-500 shadow-[0_0_60px_rgba(34,197,94,0.3)]' : resultModal.success ? 'bg-gradient-to-tr from-green-900 to-green-800 border-green-500 shadow-[0_0_60px_rgba(236,72,153,0.3)]' : 'bg-gradient-to-tr from-red-900 to-red-800 border-red-500'} border-2 rounded-[2rem] p-8 relative flex flex-col items-center justify-center text-center`}
+                            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative w-full max-w-xs overflow-hidden"
                         >
-                            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-gray-700/50 rounded-full"></div>
-
-                            {/* Custom Icon for Tips */}
-                            {resultModal.type === 'tip' && resultModal.success && (
-                                <div className="mb-6 w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.4)] animate-bounce">
-                                    <TrendingUp className="w-12 h-12 text-green-400" />
-                                </div>
-                            )}
-
-                            <div className="mb-8">
-                                <div className={`text-sm font-black tracking-[0.4em] ${resultModal.success ? (resultModal.type === 'tip' ? 'text-green-400' : 'text-green-500') : 'text-red-500'} uppercase mb-2`}>
-                                    {resultModal.success ? (resultModal.type === 'tip' ? 'TIP SENT!' : 'SUCCESS') : 'FAILED'}
-                                </div>
-                                <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
-                                    {resultModal.type === 'tip' && resultModal.success ? "Thanks for your support!" : resultModal.message}
-                                </h2>
-                            </div>
-
-                            <button
-                                onClick={() => setResultModal(null)}
-                                className={`px-8 py-3 rounded-full font-bold transition ${resultModal.type === 'tip' ? 'bg-green-500 hover:bg-green-400 text-black shadow-lg shadow-green-900/40' : 'bg-white text-black hover:bg-gray-200'}`}
+                            {/* Liquid Glass Container */}
+                            <div
+                                className={`
+                                    relative rounded-3xl p-6 
+                                    bg-gradient-to-br 
+                                    ${resultModal.success
+                                        ? 'from-white/20 via-white/10 to-white/5'
+                                        : 'from-red-500/20 via-red-500/10 to-red-500/5'
+                                    }
+                                    backdrop-blur-2xl
+                                    border border-white/20
+                                    shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]
+                                `}
                             >
-                                Close & Continue
-                            </button>
+                                {/* Inner glow effect */}
+                                <div className={`
+                                    absolute inset-0 rounded-3xl opacity-60
+                                    ${resultModal.success
+                                        ? 'bg-gradient-to-t from-emerald-500/20 via-transparent to-transparent'
+                                        : 'bg-gradient-to-t from-red-500/20 via-transparent to-transparent'
+                                    }
+                                `} />
+
+                                {/* Content */}
+                                <div className="relative z-10 flex flex-col items-center text-center">
+                                    {/* Success/Error Icon */}
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
+                                        className={`
+                                            w-14 h-14 rounded-full flex items-center justify-center mb-4
+                                            ${resultModal.success
+                                                ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-[0_4px_20px_rgba(52,211,153,0.5)]'
+                                                : 'bg-gradient-to-br from-red-400 to-red-500 shadow-[0_4px_20px_rgba(239,68,68,0.5)]'
+                                            }
+                                        `}
+                                    >
+                                        {resultModal.success ? (
+                                            resultModal.type === 'tip' ? (
+                                                <TrendingUp className="w-7 h-7 text-white" />
+                                            ) : (
+                                                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )
+                                        ) : (
+                                            <X className="w-7 h-7 text-white" />
+                                        )}
+                                    </motion.div>
+
+                                    {/* Status Label */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.15 }}
+                                        className={`
+                                            text-xs font-semibold tracking-widest uppercase mb-2
+                                            ${resultModal.success ? 'text-emerald-400' : 'text-red-400'}
+                                        `}
+                                    >
+                                        {resultModal.success
+                                            ? (resultModal.type === 'tip' ? 'Tip Sent' : 'Success')
+                                            : 'Failed'
+                                        }
+                                    </motion.div>
+
+                                    {/* Message */}
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="text-lg font-semibold text-white/90 leading-snug mb-5"
+                                    >
+                                        {resultModal.type === 'tip' && resultModal.success
+                                            ? "Thanks for your support!"
+                                            : resultModal.message
+                                        }
+                                    </motion.h2>
+
+                                    {/* Close Button */}
+                                    <motion.button
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.25 }}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => setResultModal(null)}
+                                        className={`
+                                            w-full py-2.5 rounded-xl font-medium text-sm
+                                            transition-all duration-200
+                                            ${resultModal.success
+                                                ? 'bg-white/90 hover:bg-white text-gray-900 shadow-[0_2px_12px_rgba(255,255,255,0.3)]'
+                                                : 'bg-white/20 hover:bg-white/30 text-white border border-white/10'
+                                            }
+                                        `}
+                                    >
+                                        Close & Continue
+                                    </motion.button>
+                                </div>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
@@ -875,6 +1017,12 @@ function TruthOrDareContent() {
                 prompt={overlayPrompt}
                 isVisible={showOverlay}
                 onClose={() => setShowOverlay(false)}
+            />
+
+            {/* Fan Answer Notification Modal */}
+            <FanAnswerModal
+                notification={answerNotification}
+                onClose={() => setAnswerNotification(null)}
             />
         </div >
     );
