@@ -355,27 +355,38 @@ function TruthOrDareContent() {
             .subscribe();
 
         // Presence tracking - announce this user's presence to the room
-        const presenceChannel = supabase.channel(`presence:${roomId}`, {
-            config: { presence: { key: userId || 'anon' } }
-        });
+        // Only track if we have valid user data
+        let presenceChannel: ReturnType<typeof supabase.channel> | null = null;
 
-        presenceChannel.subscribe(async (status) => {
-            if (status === 'SUBSCRIBED' && userId && userName) {
-                await presenceChannel.track({
-                    id: userId,
-                    name: userName,
-                    avatar: userAvatar || null,
-                    joinedAt: Date.now()
+        if (userId && userName) {
+            presenceChannel = supabase.channel(`presence:${roomId}`, {
+                config: { presence: { key: userId } }
+            });
+
+            presenceChannel
+                .on('presence', { event: 'sync' }, () => {
+                    console.log('📡 Fan presence synced');
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await presenceChannel?.track({
+                            id: userId,
+                            name: userName,
+                            avatar: userAvatar || null,
+                            joinedAt: Date.now()
+                        });
+                        console.log('📡 Tracking presence for:', userName);
+                    }
                 });
-                console.log('📡 Tracking presence for:', userName);
-            }
-        });
+        }
 
         return () => {
             supabase.removeChannel(gameStatusChannel);
             supabase.removeChannel(roomRequestChannel);
             supabase.removeChannel(gameChannel);
-            supabase.removeChannel(presenceChannel);
+            if (presenceChannel) {
+                supabase.removeChannel(presenceChannel);
+            }
         };
     }, [roomId, userId, userName, userAvatar, supabase]);
 
