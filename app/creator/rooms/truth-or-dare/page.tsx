@@ -69,6 +69,7 @@ type Creator = { id: string; name: string; isHost?: boolean };
 type Fan = {
     id: string;
     name: string;
+    avatar?: string | null;
     paidEntry: boolean;
     minutesInRoom: number;
     onCamera: boolean; // opt-in
@@ -369,16 +370,8 @@ export default function TruthOrDareCreatorRoom() {
                 setCreators([{ id: currentUserId, name: "Me", isHost: true }]);
             }
 
-            // We can keep some mock fans for the "On Camera" strip demo if DB is empty
-            if (data.camera_slots && data.camera_slots.length > 0) {
-                // map slots
-            } else {
-                setFans([
-                    { id: "f1", name: "TopSuga", paidEntry: true, minutesInRoom: 12, onCamera: true, walletOk: true, spendTotal: 120 },
-                    { id: "f2", name: "Mike", paidEntry: true, minutesInRoom: 6, onCamera: true, walletOk: true, spendTotal: 45 },
-                    { id: "f3", name: "Jason", paidEntry: true, minutesInRoom: 15, onCamera: false, walletOk: true, spendTotal: 70 },
-                ]);
-            }
+            // Fans are now populated dynamically via Presence subscription
+            // No mock data needed
 
             // Fetch session history for Dashboard via API (Server Client)
             console.log("Fetching session history for room:", rid);
@@ -671,6 +664,46 @@ export default function TruthOrDareCreatorRoom() {
             console.log('🔌 Cleaning up real-time subscriptions');
             supabase.removeChannel(channel);
             supabase.removeChannel(broadcastChannel);
+        };
+    }, [roomId]);
+
+    // 3. Presence Subscription - Track live viewers
+    useEffect(() => {
+        if (!roomId) return;
+
+        const presenceChannel = supabase.channel(`presence:${roomId}`);
+
+        presenceChannel
+            .on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
+                console.log('👥 Presence sync:', state);
+
+                // Convert presence state to Fan array
+                const viewers: Fan[] = Object.values(state).flatMap((presences: any) =>
+                    presences.map((p: any) => ({
+                        id: p.id || 'unknown',
+                        name: p.name || 'Anonymous',
+                        avatar: p.avatar || null,
+                        paidEntry: true,
+                        minutesInRoom: Math.floor((Date.now() - p.joinedAt) / 60000),
+                        onCamera: false,
+                        walletOk: true,
+                        spendTotal: 0
+                    }))
+                );
+
+                setFans(viewers);
+            })
+            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+                console.log('✅ Viewer joined:', newPresences);
+            })
+            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+                console.log('👋 Viewer left:', leftPresences);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(presenceChannel);
         };
     }, [roomId]);
 
@@ -1376,52 +1409,41 @@ export default function TruthOrDareCreatorRoom() {
                         <div className="rounded-2xl border border-blue-500/30 bg-gray-950/60 backdrop-blur-md p-4 shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(59,130,246,0.25)]">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="text-blue-200 text-sm flex items-center gap-2">
-                                    <Users className="w-4 h-4" /> Fans on Camera
+                                    <Users className="w-4 h-4" /> Live Viewers
                                 </div>
-                                <div className="text-[10px] text-gray-400">{onCamFans.length}/10 slots used</div>
+                                <div className="text-[10px] text-gray-400">{fans.length} watching</div>
                             </div>
 
                             <div className="flex flex-wrap gap-3">
-                                {onCamFans.length === 0 ? (
-                                    <div className="text-[11px] text-gray-500">No fans on camera. Fans must opt in (“Join on Camera”).</div>
+                                {fans.length === 0 ? (
+                                    <div className="text-[11px] text-gray-500">No viewers yet. Share the room link to invite fans!</div>
                                 ) : (
-                                    onCamFans.map((f) => (
+                                    fans.map((f) => (
                                         <div
                                             key={f.id}
-                                            className="relative rounded-xl border border-blue-400/40 w-40 aspect-video flex items-center justify-center bg-gray-900/80 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.4)]"
+                                            className="relative rounded-xl border border-blue-400/40 p-3 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] min-w-[80px]"
                                         >
-                                            <Users className="w-6 h-6 text-blue-400" />
-                                            <span className="absolute bottom-1 left-1 text-[10px] text-blue-200">{f.name}</span>
+                                            {/* Avatar or Initials */}
+                                            {f.avatar ? (
+                                                <img
+                                                    src={f.avatar}
+                                                    alt={f.name}
+                                                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-400/50"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm border-2 border-blue-400/50">
+                                                    {f.name.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                            <span className="mt-2 text-[10px] text-blue-200 truncate max-w-[70px]">{f.name}</span>
                                             {!f.walletOk && (
-                                                <span className="absolute top-1 right-1 text-[10px] px-1.5 py-[1px] rounded border border-red-400/40 text-red-200">
+                                                <span className="absolute top-1 right-1 text-[8px] px-1 py-[1px] rounded border border-red-400/40 text-red-200">
                                                     Low $
                                                 </span>
                                             )}
                                         </div>
                                     ))
                                 )}
-                            </div>
-
-                            {/* Preview controls to flip camera state */}
-                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                {fans.slice(0, 4).map((f) => (
-                                    <button
-                                        key={`togglecam-${f.id}`}
-                                        onClick={() =>
-                                            setFans((fs) =>
-                                                fs.map((x) =>
-                                                    x.id === f.id
-                                                        ? { ...x, onCamera: !x.onCamera }
-                                                        : x
-                                                )
-                                            )
-                                        }
-                                        className="rounded-xl border border-blue-400/25 py-2 text-[11px] text-blue-200 hover:bg-blue-600/10"
-                                        title="Preview only"
-                                    >
-                                        {f.onCamera ? `Remove ${f.name}` : `Add ${f.name}`}
-                                    </button>
-                                ))}
                             </div>
                         </div>
 

@@ -354,12 +354,30 @@ function TruthOrDareContent() {
             })
             .subscribe();
 
+        // Presence tracking - announce this user's presence to the room
+        const presenceChannel = supabase.channel(`presence:${roomId}`, {
+            config: { presence: { key: userId || 'anon' } }
+        });
+
+        presenceChannel.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED' && userId && userName) {
+                await presenceChannel.track({
+                    id: userId,
+                    name: userName,
+                    avatar: userAvatar || null,
+                    joinedAt: Date.now()
+                });
+                console.log('📡 Tracking presence for:', userName);
+            }
+        });
+
         return () => {
             supabase.removeChannel(gameStatusChannel);
             supabase.removeChannel(roomRequestChannel);
             supabase.removeChannel(gameChannel);
+            supabase.removeChannel(presenceChannel);
         };
-    }, [roomId, userId, supabase]);
+    }, [roomId, userId, userName, userAvatar, supabase]);
 
     async function sendJoinRequest() {
         if (!roomId || !userId) return;
