@@ -23,6 +23,7 @@ export default function FanAnswerModal({ notification, onClose }: FanAnswerModal
 
     useEffect(() => {
         if (notification) {
+            console.log("FanAnswerModal received notification:", notification);
             setVisible(true);
             playSuccessSound();
 
@@ -186,7 +187,7 @@ export default function FanAnswerModal({ notification, onClose }: FanAnswerModal
                             )}
 
                             {/* Creator's Response - THE MAIN CONTENT */}
-                            {notification.creatorResponse && (
+                            {(notification.creatorResponse !== undefined && notification.creatorResponse !== null) && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}

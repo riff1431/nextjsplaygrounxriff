@@ -325,6 +325,11 @@ function TruthOrDareContent() {
                 console.log('📢 Question revealed event received:', payload.payload);
                 const data = payload.payload;
 
+                console.log(`[Debug Answer] FanID in payload: ${data.fanId} | Current UserID: ${userId}`);
+                if (data.fanId && data.fanId !== userId) {
+                    console.log(`[Debug Answer] Mismatch: ignoring event for other fan.`);
+                }
+
                 // Only show modal to the fan who made this specific request
                 if (data.fanId && data.fanId === userId) {
 

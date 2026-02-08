@@ -10,6 +10,7 @@ export async function POST(
     const supabase = await createClient();
     const body = await request.json();
     const { requestId, earnedAmount, creatorResponse } = body;
+    console.log("Answer API received:", { requestId, earnedAmount, creatorResponse });
 
     if (!requestId) {
         return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
@@ -22,7 +23,7 @@ export async function POST(
             .update({
                 status: 'answered',
                 answered_at: new Date().toISOString(),
-                creator_response: creatorResponse || null
+                creator_response: creatorResponse // Allow empty string
             })
             .eq("id", requestId)
             .select()
@@ -67,7 +68,7 @@ export async function POST(
                     type: updatedRequest?.type,
                     tier: updatedRequest?.tier,
                     question: updatedRequest?.content,
-                    creatorResponse: creatorResponse || null,
+                    creatorResponse: creatorResponse, // Allow empty string
                     timestamp: Date.now()
                 }
             });
