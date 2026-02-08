@@ -1663,19 +1663,6 @@ export default function TruthOrDareCreatorRoom() {
                                     <span className="text-purple-300 font-bold">${(sessionEarnings?.custom ?? 0).toFixed(2)}</span>
                                 </div>
                             </div>
-
-                            {/* Top Fan */}
-                            <div className="mt-4 pt-3 border-t border-white/10">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <CrownIcon className="w-4 h-4 text-yellow-400" />
-                                        <span className="text-xs text-gray-400">Dare King</span>
-                                    </div>
-                                    <span className="text-sm font-bold bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent">
-                                        {topSpender}
-                                    </span>
-                                </div>
-                            </div>
                         </div>
 
                         {/* NEW: Live Activity Feed */}
