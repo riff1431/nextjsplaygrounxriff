@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import React, { useEffect, useMemo, useState, Suspense } from "react";
 
 import {
@@ -326,13 +327,24 @@ function TruthOrDareContent() {
 
                 // Only show modal to the fan who made this specific request
                 if (data.fanId && data.fanId === userId) {
-                    setAnswerNotification({
-                        fanName: data.fanName,
-                        type: data.type,
-                        tier: data.tier,
-                        content: data.question,
-                        creatorResponse: data.creatorResponse
-                    });
+
+                    // Show a toast first? Or just delay? User said "show... after 5 seconds".
+                    // Let's delay everything.
+                    setTimeout(() => {
+                        setAnswerNotification({
+                            fanName: data.fanName,
+                            type: data.type,
+                            tier: data.tier,
+                            content: data.question,
+                            creatorResponse: data.creatorResponse
+                        });
+                        // Play sound when revealed
+                        playSuccessSound();
+                        toast.success("Your request was answered!", {
+                            duration: 5000,
+                            position: "top-center"
+                        });
+                    }, 5000);
                 }
             })
             .subscribe();
