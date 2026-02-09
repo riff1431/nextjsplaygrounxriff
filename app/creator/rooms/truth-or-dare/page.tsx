@@ -205,6 +205,7 @@ export default function TruthOrDareCreatorRoom() {
     // State
     const [roomId, setRoomId] = useState<string | null>(null);
     const [me, setMe] = useState<Creator>({ id: "c1", name: "Creator", isHost: true });
+    const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
     const isHost = !!me.isHost;
     const [isLive, setIsLive] = useState(true);
 
@@ -289,6 +290,20 @@ export default function TruthOrDareCreatorRoom() {
             if (!user) return;
 
             setMe({ id: user.id, name: user.user_metadata?.full_name || "Creator", isHost: true }); // Assume host for creator view
+
+            // Fetch creator profile for avatar
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('avatar_url, full_name, username')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                setMyAvatarUrl(profile.avatar_url);
+                if (profile.full_name || profile.username) {
+                    setMe(prev => ({ ...prev, name: profile.full_name || profile.username || prev.name }));
+                }
+            }
 
             // Find first room hosted by user
             const { data: room } = await supabase
@@ -1336,6 +1351,8 @@ export default function TruthOrDareCreatorRoom() {
                                                         roomId={roomId}
                                                         uid={me.id}
                                                         hostId={me.id}
+                                                        hostAvatarUrl={myAvatarUrl}
+                                                        hostName={me.name}
                                                     />
                                                 </div>
                                             ) : (

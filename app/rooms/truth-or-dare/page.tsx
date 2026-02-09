@@ -109,6 +109,8 @@ function TruthOrDareContent() {
     const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
     const [sessionInfo, setSessionInfo] = useState<{ title: string; desc: string; price: number; isPrivate: boolean } | null>(null);
     const [hostId, setHostId] = useState<string | null>(null);
+    const [hostAvatarUrl, setHostAvatarUrl] = useState<string | null>(null);
+    const [hostName, setHostName] = useState<string>('Creator');
     const [userId, setUserId] = useState<string | null>(null);
     const [unlocking, setUnlocking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -183,6 +185,20 @@ function TruthOrDareContent() {
                     price: Number(game.unlock_price),
                     isPrivate: game.is_private
                 });
+
+                // Fetch host profile for avatar
+                if (game.room?.host_id) {
+                    const { data: hostProfile } = await supabase
+                        .from('profiles')
+                        .select('avatar_url, full_name, username')
+                        .eq('id', game.room.host_id)
+                        .single();
+
+                    if (hostProfile) {
+                        setHostAvatarUrl(hostProfile.avatar_url);
+                        setHostName(hostProfile.full_name || hostProfile.username || 'Creator');
+                    }
+                }
 
                 // 2. Check Access
                 const { data: { user } } = await supabase.auth.getUser();
@@ -593,7 +609,6 @@ function TruthOrDareContent() {
                                 key={`creator-${i}`}
                                 className="relative rounded-2xl border border-pink-500/40 aspect-video flex items-center justify-center bg-gray-950 overflow-hidden"
                             >
-                                {/* Fan View - Only Creator 1 (index 0) is streaming for now */}
                                 {i === 0 && roomId ? (
                                     <LiveStreamWrapper
                                         role="fan"
@@ -601,6 +616,8 @@ function TruthOrDareContent() {
                                         roomId={roomId}
                                         uid={userId || 0} // Pass actual user ID if available, else 0 (anon)
                                         hostId={hostId || 0} // Now correctly populated
+                                        hostAvatarUrl={hostAvatarUrl}
+                                        hostName={hostName}
                                     />
                                 ) : (
                                     <>

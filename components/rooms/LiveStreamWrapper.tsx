@@ -11,9 +11,11 @@ interface LiveStreamWrapperProps {
     uid: string | number; // The CURRENT USER's UID
     hostId: string | number; // The HOST's UID (who we want to watch)
     appId: string;
+    hostAvatarUrl?: string | null; // Creator's avatar URL
+    hostName?: string; // Creator's display name
 }
 
-export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId }: LiveStreamWrapperProps) {
+export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, hostAvatarUrl, hostName }: LiveStreamWrapperProps) {
     const [client, setClient] = useState<any>(null);
 
     useEffect(() => {
@@ -30,10 +32,23 @@ export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId }: 
         <AgoraProvider client={client}>
             {role === 'host' ? (
                 // For host, uid === hostId usually, but we pass uid as the publisher ID
-                <CreatorStream appId={appId} channelName={roomId} uid={uid} />
+                <CreatorStream
+                    appId={appId}
+                    channelName={roomId}
+                    uid={uid}
+                    avatarUrl={hostAvatarUrl}
+                    creatorName={hostName}
+                />
             ) : (
                 // For fan, uid is their ID, hostId is who they watch
-                <FanStream appId={appId} channelName={roomId} uid={uid} hostId={hostId} />
+                <FanStream
+                    appId={appId}
+                    channelName={roomId}
+                    uid={uid}
+                    hostId={hostId}
+                    hostAvatarUrl={hostAvatarUrl}
+                    hostName={hostName}
+                />
             )}
         </AgoraProvider>
     );
