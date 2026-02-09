@@ -1464,67 +1464,7 @@ export default function TruthOrDareCreatorRoom() {
                             </div>
                         </div>
 
-                        {/* Current Prompt Panel */}
-                        <div className="rounded-2xl border border-pink-500/40 bg-gradient-to-br from-gray-950/80 via-pink-950/20 to-gray-950/80 backdrop-blur-md p-4 shadow-[0_0_30px_rgba(236,72,153,0.2)] transition-all duration-300">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-pink-200 flex items-center gap-2">
-                                    <Flame className="w-4 h-4" /> Current Prompt
-                                </h2>
-                                <div className="text-[10px] text-gray-400">
-                                    Safe-word decline = replacement (no refund)
-                                </div>
-                            </div>
 
-                            {!currentPrompt ? (
-                                <div className="mt-3 text-[11px] text-gray-500">
-                                    No prompt active. Serve one from the queue.
-                                </div>
-                            ) : (
-                                <div className="mt-3 rounded-xl border border-pink-500/30 bg-black/50 backdrop-blur-sm p-3 shadow-[0_0_20px_rgba(236,72,153,0.15)] animate-in fade-in duration-500">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0">
-                                            <div className="text-sm text-gray-100">{currentPrompt.label}</div>
-                                            <div className="text-[11px] text-gray-400 mt-1">
-                                                Purchaser: <span className="text-pink-200">{currentPrompt.purchaser ?? "—"}</span>
-                                                {" · "}
-                                                Source: {currentPrompt.source}
-                                                {currentPrompt.tier ? ` · Tier: ${currentPrompt.tier.toUpperCase()}` : ""}
-                                                {currentPrompt.customType ? ` · ${currentPrompt.customType.toUpperCase()}` : ""}
-                                                {currentPrompt.isDoubleDare ? " · DOUBLE DARE" : ""}
-                                            </div>
-                                        </div>
-
-                                        <div className="text-right">
-                                            <div className="text-xs text-pink-200 inline-flex items-center gap-2">
-                                                <Timer className="w-4 h-4" /> {formatMMSS(promptTimeLeft)}
-                                            </div>
-                                            <div className="text-[10px] text-gray-500 mt-1">time left</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                        <button
-                                            onClick={declineCurrentPrompt}
-                                            className="rounded-xl border border-red-400/30 py-2 text-xs text-red-200 hover:bg-red-600/10 inline-flex items-center justify-center gap-2"
-                                        >
-                                            <XCircle className="w-4 h-4" /> Decline / Safe-word
-                                        </button>
-                                        <button
-                                            onClick={() => { }}
-                                            className="rounded-xl border border-blue-400/25 py-2 text-xs text-blue-200 hover:bg-blue-600/10 inline-flex items-center justify-center gap-2"
-                                        >
-                                            <Eye className="w-4 h-4" /> Close-up
-                                        </button>
-                                        <button
-                                            onClick={endPrompt}
-                                            className="rounded-xl border border-pink-500/25 py-2 text-xs text-pink-200 hover:bg-pink-600/10 inline-flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle2 className="w-4 h-4" /> End Prompt
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {/* CONTROL PANEL */}
@@ -1644,7 +1584,7 @@ export default function TruthOrDareCreatorRoom() {
                                 <div className="text-[10px] text-gray-400">{queue.length} items</div>
                             </div>
 
-                            <div className="mt-3 space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                            <div className="mt-3 space-y-2 max-h-[600px] overflow-y-auto pr-1">
                                 {queue.map((q) => {
                                     const isPrompt =
                                         q.type === "TIER_PURCHASE" || q.type === "CUSTOM_TRUTH" || q.type === "CUSTOM_DARE";
@@ -1701,90 +1641,6 @@ export default function TruthOrDareCreatorRoom() {
                             </div>
                         </div>
 
-                        {/* Crowd Vote Panels */}
-                        <div className="rounded-xl border border-blue-500/30 bg-black/60 backdrop-blur-md p-3 shadow-[0_0_25px_rgba(59,130,246,0.15)]">
-                            <div className="text-blue-200 text-sm flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4" /> Crowd Votes (Paid)
-                            </div>
-
-                            <div className="mt-3">
-                                <div className="text-[11px] text-gray-300 mb-2">Escalate Tier</div>
-                                <div className="grid grid-cols-3 gap-2 text-[11px]">
-                                    {(Object.keys(votesTier) as TierId[]).map((t) => (
-                                        <div key={`vt-${t}`} className="rounded-lg border border-blue-500/20 bg-black/50 backdrop-blur-sm p-2 transition-all duration-200 hover:border-blue-500/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                                            <div className="text-gray-200">{t.toUpperCase()}</div>
-                                            <div className="text-gray-400">{votesTier[t]} votes</div>
-                                            <div className="text-blue-200">{money(CROWD_TIER_FEES[t])}/vote</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="mt-4">
-                                <div className="text-[11px] text-gray-300 mb-2">Truth vs Dare</div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div
-                                        className={`rounded-lg border p-2 ${truthWins ? "border-pink-500/40" : "border-blue-500/15"} bg-black/30`}
-                                    >
-                                        <div className="text-gray-200">Truth</div>
-                                        <div className="text-gray-400">{votesTV.truth} votes</div>
-                                        <div className="text-blue-200">{money(CROWD_TV_FEES.truth)}/vote</div>
-                                    </div>
-                                    <div
-                                        className={`rounded-lg border p-2 ${!truthWins ? "border-pink-500/40" : "border-blue-500/15"} bg-black/30`}
-                                    >
-                                        <div className="text-gray-200">Dare</div>
-                                        <div className="text-gray-400">{votesTV.dare} votes</div>
-                                        <div className="text-blue-200">{money(CROWD_TV_FEES.dare)}/vote</div>
-                                    </div>
-                                </div>
-                                <div className="mt-2 text-[10px] text-gray-500">
-                                    Majority wins (preview). In production: apply threshold/round rules server-side.
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Revenue + Leaderboard */}
-                        <div className="rounded-xl border border-pink-500/30 bg-black/60 backdrop-blur-md p-3 shadow-[0_0_25px_rgba(236,72,153,0.15)]">
-                            <div className="flex items-center justify-between">
-                                <div className="text-pink-200 text-sm flex items-center gap-2">
-                                    <Star className="w-4 h-4" /> Room Earnings
-                                </div>
-                                <div className="text-[10px] text-gray-400">Tips split 90/10</div>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Tips</div>
-                                    <div className="text-pink-200">{money(sessionEarnings.tips)}</div>
-                                </div>
-                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Truths</div>
-                                    <div className="text-pink-200">{money(sessionEarnings.truths)}</div>
-                                </div>
-                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Dares</div>
-                                    <div className="text-pink-200">{money(sessionEarnings.dares)}</div>
-                                </div>
-                                <div className="rounded-lg border border-pink-500/15 bg-black/30 p-2">
-                                    <div className="text-gray-400">Custom</div>
-                                    <div className="text-pink-200">{money(sessionEarnings.custom)}</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-3 text-[11px] text-gray-300 flex items-center justify-between">
-                                <span>Total</span>
-                                <span className="text-pink-200">{money(sessionEarnings.total)}</span>
-                            </div>
-                            <div className="mt-1 text-[10px] text-gray-500 flex items-center justify-between">
-                                <span>Estimated creator take</span>
-                                <span>{money(sessionEarnings.total * 0.8)}</span>
-                            </div>
-
-                            <div className="mt-3 text-xs text-pink-200 flex items-center gap-2">
-                                <CrownIcon className="w-4 h-4" /> Dare King / Queen: {topSpender}
-                            </div>
-                        </div>
                     </aside>
                 </main >
             )

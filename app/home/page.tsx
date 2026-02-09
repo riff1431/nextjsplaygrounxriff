@@ -471,13 +471,14 @@ function HomeScreen({
         tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow";
         primary?: boolean;
         route: string;
+        comingSoon?: boolean;
     }> = [
-            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/coming-soon" },
+            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/coming-soon", comingSoon: true },
             { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions" },
-            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/coming-soon" },
-            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/coming-soon" },
+            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/coming-soon", comingSoon: true },
+            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/coming-soon", comingSoon: true },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/live" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/coming-soon" },
+            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/coming-soon", comingSoon: true },
         ];
 
     return (
@@ -528,6 +529,9 @@ function HomeScreen({
                                             >
                                                 <span className={t.icon}>{cat.icon}</span>
                                                 <span className="truncate neon-deep">{cat.label}</span>
+                                                {cat.comingSoon && (
+                                                    <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
+                                                )}
                                             </span>
                                         </button>
                                     );
@@ -545,9 +549,10 @@ function HomeScreen({
                                     "shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
                                 )}
                             >
-                                <span className="relative z-10 inline-flex items-center gap-2 text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
+                                <span className="relative z-10 inline-flex items-center gap-2 w-full text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
                                     Competitions
+                                    <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
                                 </span>
                                 {/* Subtle internal glow */}
                                 <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
@@ -686,6 +691,7 @@ export default function Home() {
     const [posts, setPosts] = useState<Post[]>([]);
 
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null, fan_membership_id?: string | null } | null>(null);
+    const [userAccountType, setUserAccountType] = useState<{ display_name: string, badge_icon: string, badge_color: string } | null>(null);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
@@ -774,15 +780,22 @@ export default function Home() {
         const fetchUserData = async () => {
             if (!user) return;
             try {
-                // Profile
+                // Profile with account type
                 const { data: profileData } = await supabase
                     .from('profiles')
-                    .select('username, full_name, avatar_url, fan_membership_id')
+                    .select('username, full_name, avatar_url, fan_membership_id, account_types(display_name, badge_icon, badge_color)')
                     .eq('id', user.id)
                     .single();
 
                 if (profileData) {
                     setCurrentProfile(profileData);
+
+                    // Set account type if exists
+                    if (profileData.account_types) {
+                        // Cast to handle potential array or object return although single is expected for many-to-one
+                        const at = Array.isArray(profileData.account_types) ? profileData.account_types[0] : profileData.account_types;
+                        setUserAccountType(at as any);
+                    }
 
                     // Fetch membership tier if exists
                     if (profileData.fan_membership_id) {
@@ -964,10 +977,27 @@ export default function Home() {
                                     fanTierBg(fanTier),
                                     "vip-glow"
                                 )}
-                                title="High tier badge"
+                                title="Membership tier"
                             >
                                 <Crown className="w-3 h-3" />
                                 {tierLabel}
+                            </span>
+                        )}
+
+                        {/* Account Type Badge */}
+                        {userAccountType && (
+                            <span
+                                className="inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[10px] border font-medium"
+                                style={{
+                                    backgroundColor: `${userAccountType.badge_color || '#ec4899'}20`,
+                                    color: userAccountType.badge_color || '#ec4899',
+                                    borderColor: `${userAccountType.badge_color || '#ec4899'}40`,
+                                    boxShadow: `0 0 10px ${userAccountType.badge_color || '#ec4899'}30`
+                                }}
+                                title="Account Type"
+                            >
+                                <span>{userAccountType.badge_icon || '✨'}</span>
+                                {userAccountType.display_name}
                             </span>
                         )}
                     </div>
@@ -994,6 +1024,13 @@ export default function Home() {
                             <MessageSquare className="w-5 h-5" />
                         </button>
                         <NotificationIcon role="fan" />
+                        <button
+                            onClick={() => router.push('/account/subscription')}
+                            className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
+                            title="Subscription"
+                        >
+                            <Crown className="w-5 h-5" />
+                        </button>
                         <ProfileMenu
                             user={user}
                             profile={currentProfile}

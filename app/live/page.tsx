@@ -1,12 +1,39 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import LiveFeed from "@/components/home/LiveFeed";
 import BrandLogo from "@/components/common/BrandLogo";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { createClient } from "@/utils/supabase/client";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
 
 export default function LivePage() {
     const router = useRouter();
+    const { user, role } = useAuth();
+    const [profile, setProfile] = useState<any>(null);
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function fetchProfile() {
+            if (!user) return;
+            const { data } = await supabase
+                .from('profiles')
+                .select('username, full_name, avatar_url')
+                .eq('id', user.id)
+                .single();
+
+            if (data) {
+                setProfile(data);
+            }
+        }
+        fetchProfile();
+    }, [user]);
+
+    const handleRefresh = () => {
+        window.location.reload();
+    };
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -21,6 +48,24 @@ export default function LivePage() {
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         <BrandLogo />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleRefresh}
+                            className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                            title="Refresh Page"
+                        >
+                            <RefreshCw className="w-5 h-5" />
+                        </button>
+
+                        <ProfileMenu
+                            user={user}
+                            profile={profile}
+                            role={role}
+                            router={router}
+                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                        />
                     </div>
                 </div>
             </header>

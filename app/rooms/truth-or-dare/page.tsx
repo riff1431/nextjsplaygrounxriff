@@ -152,7 +152,10 @@ function TruthOrDareContent() {
 
     const [votes, setVotes] = useState<Votes>({ truth: 0, dare: 0 });
     const [replayAvailable, setReplayAvailable] = useState(false);
-    const [topFan] = useState("TopSuga");
+
+    // Top spenders state
+    const [topDareKing, setTopDareKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
+    const [topTruthKing, setTopTruthKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
 
     const [creatorCount] = useState(1);
     const [fanCount] = useState(2);
@@ -406,6 +409,104 @@ function TruthOrDareContent() {
         };
     }, [roomId, userId, userName, userAvatar, supabase]);
 
+    // Calculate and subscribe to Top Spenders (Truth King / Dare King)
+    useEffect(() => {
+        if (!roomId) return;
+
+        const calculateTopSpenders = async () => {
+            try {
+                // Fetch all requests for this room with spending data
+                const { data: requests, error } = await supabase
+                    .from('truth_dare_requests')
+                    .select('fan_id, fan_name, type, amount')
+                    .eq('room_id', roomId);
+
+                if (error || !requests || requests.length === 0) {
+                    // No requests yet - show default
+                    return;
+                }
+
+                // Calculate spending by fan for dares vs truths
+                const dareSpending: Record<string, { name: string; total: number }> = {};
+                const truthSpending: Record<string, { name: string; total: number }> = {};
+
+                requests.forEach((req) => {
+                    const amount = Number(req.amount) || 0;
+
+                    if (req.type === 'system_dare' || req.type === 'custom_dare') {
+                        if (!dareSpending[req.fan_id]) {
+                            dareSpending[req.fan_id] = { name: req.fan_name, total: 0 };
+                        }
+                        dareSpending[req.fan_id].total += amount;
+                    } else if (req.type === 'system_truth' || req.type === 'custom_truth') {
+                        if (!truthSpending[req.fan_id]) {
+                            truthSpending[req.fan_id] = { name: req.fan_name, total: 0 };
+                        }
+                        truthSpending[req.fan_id].total += amount;
+                    }
+                });
+
+                // Find top dare spender
+                let topDare: { id: string; name: string; total: number } | null = null;
+                for (const [id, data] of Object.entries(dareSpending)) {
+                    if (!topDare || data.total > topDare.total) {
+                        topDare = { id, name: data.name, total: data.total };
+                    }
+                }
+
+                // Find top truth spender
+                let topTruth: { id: string; name: string; total: number } | null = null;
+                for (const [id, data] of Object.entries(truthSpending)) {
+                    if (!topTruth || data.total > topTruth.total) {
+                        topTruth = { id, name: data.name, total: data.total };
+                    }
+                }
+
+                // Fetch avatars for top spenders
+                const fetchAvatar = async (fanId: string): Promise<string | null> => {
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('avatar_url')
+                        .eq('id', fanId)
+                        .single();
+                    return data?.avatar_url || null;
+                };
+
+                if (topDare) {
+                    const avatar = await fetchAvatar(topDare.id);
+                    setTopDareKing({ name: topDare.name, avatar, total: topDare.total });
+                }
+
+                if (topTruth) {
+                    const avatar = await fetchAvatar(topTruth.id);
+                    setTopTruthKing({ name: topTruth.name, avatar, total: topTruth.total });
+                }
+
+            } catch (err) {
+                console.error('Error calculating top spenders:', err);
+            }
+        };
+
+        // Initial calculation
+        calculateTopSpenders();
+
+        // Subscribe to real-time updates for recalculation
+        const topSpenderChannel = supabase.channel(`top_spenders_${roomId}`)
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'truth_dare_requests', filter: `room_id=eq.${roomId}` },
+                () => {
+                    // Recalculate on any change
+                    calculateTopSpenders();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(topSpenderChannel);
+        };
+    }, [roomId, supabase]);
+
     async function sendJoinRequest() {
         if (!roomId || !userId) return;
         setUnlocking(true);
@@ -648,14 +749,69 @@ function TruthOrDareContent() {
                     )}
                 </div>
 
-                <aside className="rounded-2xl border border-pink-500/30 bg-gray-950 p-4 space-y-5">
-                    <div className="rounded-xl border border-pink-500/20 bg-black/40 p-3 mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-bold text-pink-200">
-                            <CrownIcon className="w-5 h-5 text-yellow-400" />
-                            Dare King
+                <aside className="rounded-2xl border border-pink-500/30 bg-gray-950 p-3 sm:p-4 space-y-4 sm:space-y-5">
+                    {/* Top Spenders Row - Responsive Grid */}
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                        {/* Dare King */}
+                        <div className="rounded-xl border border-pink-500/20 bg-black/40 p-2 sm:p-3 flex flex-col items-center text-center min-h-[120px] sm:min-h-[140px]">
+                            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-pink-200 mb-2 whitespace-nowrap">
+                                <CrownIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0" />
+                                <span>Dare King</span>
+                            </div>
+                            {/* Avatar */}
+                            <div className="relative mb-1.5 sm:mb-2">
+                                {topDareKing?.avatar ? (
+                                    <img
+                                        src={topDareKing.avatar}
+                                        alt={topDareKing.name}
+                                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-yellow-400/50 shadow-[0_0_10px_rgba(250,204,21,0.3)]"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/30 flex items-center justify-center">
+                                        <CrownIcon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400/60" />
+                                    </div>
+                                )}
+                                {topDareKing && (
+                                    <div className="absolute -bottom-1 -right-1 bg-yellow-500 text-black text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full">
+                                        ${topDareKing.total.toFixed(0)}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Name */}
+                            <div className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent truncate max-w-full px-1">
+                                {topDareKing?.name || userName || 'Be first!'}
+                            </div>
                         </div>
-                        <div className="text-sm font-bold bg-gradient-to-r from-yellow-200 to-yellow-500 bg-clip-text text-transparent">
-                            {topFan}
+
+                        {/* Truth King */}
+                        <div className="rounded-xl border border-blue-500/20 bg-black/40 p-2 sm:p-3 flex flex-col items-center text-center min-h-[120px] sm:min-h-[140px]">
+                            <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold text-blue-200 mb-2 whitespace-nowrap">
+                                <CrownIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" />
+                                <span>Truth King</span>
+                            </div>
+                            {/* Avatar */}
+                            <div className="relative mb-1.5 sm:mb-2">
+                                {topTruthKing?.avatar ? (
+                                    <img
+                                        src={topTruthKing.avatar}
+                                        alt={topTruthKing.name}
+                                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.3)]"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 border-2 border-cyan-400/30 flex items-center justify-center">
+                                        <CrownIcon className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400/60" />
+                                    </div>
+                                )}
+                                {topTruthKing && (
+                                    <div className="absolute -bottom-1 -right-1 bg-cyan-500 text-black text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full">
+                                        ${topTruthKing.total.toFixed(0)}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Name */}
+                            <div className="text-[10px] sm:text-xs font-bold bg-gradient-to-r from-cyan-200 to-blue-500 bg-clip-text text-transparent truncate max-w-full px-1">
+                                {topTruthKing?.name || userName || 'Be first!'}
+                            </div>
                         </div>
                     </div>
 

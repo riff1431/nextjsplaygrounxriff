@@ -21,13 +21,62 @@ export default function PaymentGatewayManager() {
     const handleSave = async () => {
         setSaving(true);
         try {
+            // Save to admin_settings via context (legacy support)
             await updateConfig(formData);
+
+            // Also sync to payment_settings table for API access
+            await syncToPaymentSettings(formData);
+
             toast.success("Payment gateway settings updated");
         } catch (error) {
             toast.error("Failed to save settings");
         } finally {
             setSaving(false);
         }
+    };
+
+    // Sync to payment_settings table for Stripe API routes
+    const syncToPaymentSettings = async (data: typeof formData) => {
+        const supabase = (await import("@/utils/supabase/client")).createClient();
+
+        // Sync Stripe
+        await supabase
+            .from('payment_settings')
+            .upsert({
+                provider: 'stripe',
+                is_enabled: data.stripe.enabled,
+                config: { public_key: data.stripe.publicKey },
+                secret_config: { secret_key: data.stripe.secretKey },
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'provider' });
+
+        // Sync PayPal
+        await supabase
+            .from('payment_settings')
+            .upsert({
+                provider: 'paypal',
+                is_enabled: data.paypal.enabled,
+                config: { client_id: data.paypal.clientId },
+                secret_config: {},
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'provider' });
+
+        // Sync Bank
+        await supabase
+            .from('payment_settings')
+            .upsert({
+                provider: 'bank',
+                is_enabled: data.bank.enabled,
+                config: {
+                    bank_name: data.bank.bankName,
+                    account_name: data.bank.accountName,
+                    account_number: data.bank.accountNumber,
+                    routing_number: data.bank.routingNumber,
+                    instructions: data.bank.instructions
+                },
+                secret_config: {},
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'provider' });
     };
 
     const toggleGateway = (gateway: 'stripe' | 'paypal' | 'bank') => {
