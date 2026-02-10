@@ -6,6 +6,7 @@ import { usePayment } from "@/app/context/PaymentContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import StripePaymentModal from "@/components/live/StripePaymentModal";
 
 interface Props {
     amount: number;
@@ -39,6 +40,7 @@ export default function OnboardingPaymentModal({
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [showStripeModal, setShowStripeModal] = useState(false);
 
     // Auto-select first available method
     useEffect(() => {
@@ -97,9 +99,9 @@ export default function OnboardingPaymentModal({
         setProcessing(true);
 
         if (selectedMethod === "stripe") {
-            await simulatePayment();
-            toast.success("Payment successful!");
-            onSuccess();
+            setShowStripeModal(true);
+            setProcessing(false);
+            return;
         } else if (selectedMethod === "paypal") {
             await simulatePayment();
             toast.success("Payment successful!");
@@ -301,8 +303,8 @@ export default function OnboardingPaymentModal({
                         onClick={handleBankTransferSubmit}
                         disabled={!receiptFile || uploading}
                         className={`w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${receiptFile && !uploading
-                                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
-                                : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
+                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
                             }`}
                     >
                         {uploading ? (
@@ -335,128 +337,147 @@ export default function OnboardingPaymentModal({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-gray-900 border border-pink-500/20 rounded-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-300">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Complete Payment</h2>
-                    <button
-                        onClick={onCancel}
-                        className="text-gray-400 hover:text-white p-1"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
+        <>
+            {showStripeModal && (
+                <StripePaymentModal
+                    amount={amount}
+                    onClose={() => setShowStripeModal(false)}
+                    onSuccess={() => {
+                        toast.success("Payment successful!");
+                        onSuccess();
+                        setShowStripeModal(false);
+                    }}
+                    confirmUrl="/api/v1/payments/stripe/confirm-membership"
+                    metadata={{
+                        type: planType,
+                        planId: planId,
+                        planName: planName
+                    }}
+                />
+            )}
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                <div className="bg-gray-900 border border-pink-500/20 rounded-2xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-300">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-white">Complete Payment</h2>
+                        <button
+                            onClick={onCancel}
+                            className="text-gray-400 hover:text-white p-1"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
 
-                {/* Order Summary */}
-                <div className="bg-black/40 border border-white/10 rounded-xl p-4 mb-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-white font-medium">{planName}</p>
-                            <p className="text-gray-400 text-sm">
-                                {planType === "membership" ? "Fan Membership" : planType === "creator_level" ? "Creator Level" : "Account Type"}
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold text-white">${amount.toFixed(2)}</p>
-                            <p className="text-gray-500 text-xs">one-time</p>
+                    {/* Order Summary */}
+                    <div className="bg-black/40 border border-white/10 rounded-xl p-4 mb-6">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <p className="text-white font-medium">{planName}</p>
+                                <p className="text-gray-400 text-sm">
+                                    {planType === "membership" ? "Fan Membership" : planType === "creator_level" ? "Creator Level" : "Account Type"}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-2xl font-bold text-white">${amount.toFixed(2)}</p>
+                                <p className="text-gray-500 text-xs">one-time</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Payment Methods */}
-                <div className="space-y-3 mb-6">
-                    <p className="text-gray-400 text-sm mb-2">Select payment method</p>
-                    {availableMethods.map((method) => {
-                        const IconComponent = method.icon;
-                        const isSelected = selectedMethod === method.id;
+                    {/* Payment Methods */}
+                    <div className="space-y-3 mb-6">
+                        <p className="text-gray-400 text-sm mb-2">Select payment method</p>
+                        {availableMethods.map((method) => {
+                            const IconComponent = method.icon;
+                            const isSelected = selectedMethod === method.id;
 
-                        return (
-                            <button
-                                key={method.id}
-                                onClick={() => setSelectedMethod(method.id)}
-                                className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
-                                    ? `border-${method.color}-500 bg-${method.color}-500/10`
-                                    : "border-white/10 hover:border-white/20"
-                                    }`}
-                                style={{
-                                    borderColor: isSelected
-                                        ? method.color === "blue"
-                                            ? "#3b82f6"
-                                            : method.color === "indigo"
-                                                ? "#6366f1"
-                                                : "#22c55e"
-                                        : undefined,
-                                    backgroundColor: isSelected
-                                        ? method.color === "blue"
-                                            ? "rgba(59, 130, 246, 0.1)"
-                                            : method.color === "indigo"
-                                                ? "rgba(99, 102, 241, 0.1)"
-                                                : "rgba(34, 197, 94, 0.1)"
-                                        : undefined,
-                                }}
-                            >
-                                <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center`}
+                            return (
+                                <button
+                                    key={method.id}
+                                    onClick={() => setSelectedMethod(method.id)}
+                                    className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isSelected
+                                        ? `border-${method.color}-500 bg-${method.color}-500/10`
+                                        : "border-white/10 hover:border-white/20"
+                                        }`}
                                     style={{
-                                        backgroundColor:
-                                            method.color === "blue"
-                                                ? "rgba(59, 130, 246, 0.2)"
+                                        borderColor: isSelected
+                                            ? method.color === "blue"
+                                                ? "#3b82f6"
                                                 : method.color === "indigo"
-                                                    ? "rgba(99, 102, 241, 0.2)"
-                                                    : "rgba(34, 197, 94, 0.2)",
+                                                    ? "#6366f1"
+                                                    : "#22c55e"
+                                            : undefined,
+                                        backgroundColor: isSelected
+                                            ? method.color === "blue"
+                                                ? "rgba(59, 130, 246, 0.1)"
+                                                : method.color === "indigo"
+                                                    ? "rgba(99, 102, 241, 0.1)"
+                                                    : "rgba(34, 197, 94, 0.1)"
+                                            : undefined,
                                     }}
                                 >
-                                    <IconComponent
-                                        className="w-5 h-5"
+                                    <div
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center`}
                                         style={{
-                                            color:
+                                            backgroundColor:
                                                 method.color === "blue"
-                                                    ? "#3b82f6"
+                                                    ? "rgba(59, 130, 246, 0.2)"
                                                     : method.color === "indigo"
-                                                        ? "#6366f1"
-                                                        : "#22c55e",
+                                                        ? "rgba(99, 102, 241, 0.2)"
+                                                        : "rgba(34, 197, 94, 0.2)",
                                         }}
-                                    />
-                                </div>
-                                <div className="text-left flex-1">
-                                    <span className="text-white font-medium">{method.name}</span>
-                                    {method.id === "bank" && (
-                                        <p className="text-xs text-gray-500">Upload receipt for verification</p>
+                                    >
+                                        <IconComponent
+                                            className="w-5 h-5"
+                                            style={{
+                                                color:
+                                                    method.color === "blue"
+                                                        ? "#3b82f6"
+                                                        : method.color === "indigo"
+                                                            ? "#6366f1"
+                                                            : "#22c55e",
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="text-left flex-1">
+                                        <span className="text-white font-medium">{method.name}</span>
+                                        {method.id === "bank" && (
+                                            <p className="text-xs text-gray-500">Upload receipt for verification</p>
+                                        )}
+                                    </div>
+                                    {isSelected && (
+                                        <Check className="w-5 h-5 text-green-500" />
                                     )}
-                                </div>
-                                {isSelected && (
-                                    <Check className="w-5 h-5 text-green-500" />
-                                )}
-                            </button>
-                        );
-                    })}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Pay Button */}
+                    <button
+                        onClick={handlePay}
+                        disabled={!selectedMethod || processing}
+                        className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${selectedMethod && !processing
+                            ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25"
+                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                            }`}
+                    >
+                        {processing ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Processing...
+                            </span>
+                        ) : (
+                            selectedMethod === "bank" ? "Continue to Bank Transfer" : `Pay $${amount.toFixed(2)}`
+                        )}
+                    </button>
+
+                    {/* Security Note */}
+                    <p className="text-gray-500 text-xs text-center mt-4">
+                        🔒 Secure payment powered by industry-leading encryption
+                    </p>
                 </div>
-
-                {/* Pay Button */}
-                <button
-                    onClick={handlePay}
-                    disabled={!selectedMethod || processing}
-                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${selectedMethod && !processing
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25"
-                        : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                        }`}
-                >
-                    {processing ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Processing...
-                        </span>
-                    ) : (
-                        selectedMethod === "bank" ? "Continue to Bank Transfer" : `Pay $${amount.toFixed(2)}`
-                    )}
-                </button>
-
-                {/* Security Note */}
-                <p className="text-gray-500 text-xs text-center mt-4">
-                    🔒 Secure payment powered by industry-leading encryption
-                </p>
             </div>
-        </div>
+        </>
     );
 }

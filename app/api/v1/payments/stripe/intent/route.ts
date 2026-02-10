@@ -44,7 +44,8 @@ export async function POST(req: Request) {
             metadata: {
                 userId: user.id,
                 roomId: roomId || 'generic',
-                type: 'unlock_session'
+                type: body.metadata?.type || 'unlock_session',
+                ...body.metadata
             }
         });
 

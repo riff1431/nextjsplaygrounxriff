@@ -5,6 +5,8 @@ import { ArrowLeft, Video, Lock, Check, X, FileText, Mic, CreditCard, Wallet, Bu
 import { useRouter, useParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
+import StripePaymentModal from "@/components/live/StripePaymentModal";
 
 // ---- Shared Logic/Components -----------------------------------------------
 
@@ -94,6 +96,12 @@ export default function ConfessionsRoomPreview() {
     // [NEW] Confirmation Modal State
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet' | 'stripe' | 'paypal' | 'bank'>('stripe');
+    const [stripeConfig, setStripeConfig] = useState<{
+        amount: number;
+        confirmUrl: string;
+        metadata: any;
+        onSuccess: () => void;
+    } | null>(null);
 
     // Countdown (Preserved Static)
     const GOAL_TARGET = 250;
@@ -191,6 +199,30 @@ export default function ConfessionsRoomPreview() {
 
     const handleConfirmAndPay = async () => {
         setIsSending(true);
+
+        if (selectedPaymentMethod === 'stripe') {
+            setStripeConfig({
+                amount: reqAmount,
+                confirmUrl: "/api/v1/payments/stripe/confirm-confession-request",
+                metadata: {
+                    roomId,
+                    type: reqType,
+                    topic: reqTopic.slice(0, 400), // Truncate to fit Stripe metadata limits (approx)
+                    creatorId: null // Route will fetch if needed, or we can pass if we have it
+                },
+                onSuccess: () => {
+                    // Optimistically add to list (Stripe success guarantees it will be added by webhook/api eventually)
+                    // But here we might want to just fetch requests
+                    fetchRequests();
+                    setReqTopic("");
+                    setShowConfirmModal(false);
+                    showToast("Request Sent! Payment processed.", 'success');
+                    setIsSending(false);
+                }
+            });
+            return;
+        }
+
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/requests`, {
                 method: "POST",
@@ -227,6 +259,24 @@ export default function ConfessionsRoomPreview() {
 
     const handleUnlockPurchase = async () => {
         if (!purchaseConfession) return;
+
+        if (selectedPaymentMethod === 'stripe') {
+            setStripeConfig({
+                amount: purchaseConfession.price,
+                confirmUrl: "/api/v1/payments/stripe/confirm-confession-unlock",
+                metadata: {
+                    confessionId: purchaseConfession.id
+                },
+                onSuccess: () => {
+                    setMyUnlocks(prev => new Set(prev).add(purchaseConfession.id));
+                    setPurchaseConfession(null);
+                    setViewConfession(purchaseConfession);
+                    showToast("Confession Unlocked!", 'success');
+                }
+            });
+            return;
+        }
+
         try {
             const res = await fetch(`/api/v1/confessions/${purchaseConfession.id}/unlock`, {
                 method: "POST",
@@ -298,6 +348,19 @@ export default function ConfessionsRoomPreview() {
                 animation: fadeInDown 0.3s ease-out forwards;
             }
           `}</style>
+
+                {stripeConfig && (
+                    <StripePaymentModal
+                        amount={stripeConfig.amount}
+                        onClose={() => { setStripeConfig(null); setIsSending(false); }}
+                        onSuccess={() => {
+                            stripeConfig.onSuccess();
+                            setStripeConfig(null);
+                        }}
+                        confirmUrl={stripeConfig.confirmUrl}
+                        metadata={stripeConfig.metadata}
+                    />
+                )}
 
                 {/* --- MODALS --- */}
                 {/* ... (rest of the render is same) */}

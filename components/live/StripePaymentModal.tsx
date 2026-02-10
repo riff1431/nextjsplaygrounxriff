@@ -3,7 +3,7 @@ import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X, AlertCircle } from 'lucide-react';
 
-const CheckoutForm = ({ amount, roomId, onClose, onSuccess }: { amount: number, roomId: string, onClose: () => void, onSuccess: () => void }) => {
+const CheckoutForm = ({ amount, roomId, confirmUrl, onClose, onSuccess }: { amount: number, roomId?: string, confirmUrl?: string, onClose: () => void, onSuccess: () => void }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [message, setMessage] = useState<string | null>(null);
@@ -31,7 +31,7 @@ const CheckoutForm = ({ amount, roomId, onClose, onSuccess }: { amount: number, 
             // Payment succeeded! Verify and Unlock on server
             try {
                 // Call confirm endpoint with paymentIntent.id
-                const res = await fetch('/api/v1/payments/stripe/confirm', {
+                const res = await fetch(confirmUrl || '/api/v1/payments/stripe/confirm', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -71,12 +71,14 @@ const CheckoutForm = ({ amount, roomId, onClose, onSuccess }: { amount: number, 
 
 interface StripePaymentModalProps {
     amount: number;
-    roomId: string;
+    roomId?: string; // Optional now
+    confirmUrl?: string; // Optional custom confirm endpoint
+    metadata?: any; // Optional metadata for intent
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export default function StripePaymentModal({ amount, roomId, onClose, onSuccess }: StripePaymentModalProps) {
+export default function StripePaymentModal({ amount, roomId, confirmUrl, metadata, onClose, onSuccess }: StripePaymentModalProps) {
     const [clientSecret, setClientSecret] = useState('');
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
     const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export default function StripePaymentModal({ amount, roomId, onClose, onSuccess 
                 const intentRes = await fetch('/api/v1/payments/stripe/intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount, roomId }),
+                    body: JSON.stringify({ amount, roomId, metadata }),
                 });
 
                 const intentData = await intentRes.json();
@@ -169,7 +171,7 @@ export default function StripePaymentModal({ amount, roomId, onClose, onSuccess 
                     </div>
                 ) : clientSecret && stripePromise ? (
                     <Elements options={options} stripe={stripePromise}>
-                        <CheckoutForm amount={amount} roomId={roomId} onClose={onClose} onSuccess={onSuccess} />
+                        <CheckoutForm amount={amount} roomId={roomId} confirmUrl={confirmUrl} onClose={onClose} onSuccess={onSuccess} />
                     </Elements>
                 ) : null}
             </div>
