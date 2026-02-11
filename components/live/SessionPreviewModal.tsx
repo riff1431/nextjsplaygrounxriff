@@ -354,105 +354,105 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="w-full max-w-[340px] bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
                 {/* Close Button */}
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-white/10 text-white/70 transition z-10">
-                    <X className="w-5 h-5" />
+                <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-white/10 text-white/70 transition z-10">
+                    <X className="w-4 h-4" />
                 </button>
 
                 {/* Hero / Cover */}
-                <div className="h-48 bg-gray-800 relative">
+                <div className="h-32 bg-gray-800 relative">
                     {/* Gradient Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
 
                     {/* Badge */}
-                    <div className="absolute top-4 left-4 flex gap-2">
-                        <div className="px-3 py-1 rounded-full bg-black/60 backdrop-blur border border-white/10 text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wide">
-                            {isPrivate ? <Lock className="w-3 h-3 text-yellow-400" /> : <Video className="w-3 h-3 text-pink-400" />}
-                            {isPrivate ? "Private Session" : "Public Session"}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                        <div className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur border border-white/10 text-[10px] font-bold text-white flex items-center gap-1 uppercase tracking-wide">
+                            {isPrivate ? <Lock className="w-2.5 h-2.5 text-yellow-400" /> : <Video className="w-2.5 h-2.5 text-pink-400" />}
+                            {isPrivate ? "Private" : "Public"}
                         </div>
                     </div>
 
                     {/* Creator Avatar - Large centered or overlapping */}
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
-                        <div className="w-20 h-20 rounded-full border-4 border-gray-900 bg-gray-800 overflow-hidden shadow-xl">
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
+                        <div className="w-16 h-16 rounded-full border-4 border-gray-900 bg-gray-800 overflow-hidden shadow-xl">
                             {session.host?.avatar_url ? (
                                 <img src={session.host.avatar_url} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-700"><User className="w-8 h-8 text-gray-400" /></div>
+                                <div className="w-full h-full flex items-center justify-center bg-gray-700"><User className="w-6 h-6 text-gray-400" /></div>
                             )}
                         </div>
                         {/* Live Badge */}
-                        <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-green-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-black uppercase">
+                        <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-green-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm border border-black uppercase">
                             Live
                         </div>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="pt-12 pb-8 px-8 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-2">{session.title}</h2>
-                    <p className="text-gray-400 text-sm mb-6 line-clamp-2">{session.meta?.description || "Join this interactive live session for Truth or Dare!"}</p>
+                <div className="pt-8 pb-6 px-6 text-center">
+                    <h2 className="text-xl font-bold text-white mb-1">{session.title}</h2>
+                    <p className="text-gray-400 text-xs mb-4 line-clamp-2">{session.meta?.description || "Join this interactive live session for Truth or Dare!"}</p>
 
                     {/* Stats / Info */}
-                    <div className="flex items-center justify-center gap-6 mb-8 text-sm text-gray-500">
-                        <div className="flex flex-col items-center gap-1">
-                            <Users className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center justify-center gap-4 mb-5 text-xs text-gray-500">
+                        <div className="flex flex-col items-center gap-0.5">
+                            <Users className="w-4 h-4 text-gray-400" />
                             <span>{session.meta?.filled} / {session.meta?.capacity}</span>
                         </div>
-                        <div className="w-px h-8 bg-white/10" />
-                        <div className="flex flex-col items-center gap-1">
-                            <Crown className="w-5 h-5 text-yellow-500" />
+                        <div className="w-px h-6 bg-white/10" />
+                        <div className="flex flex-col items-center gap-0.5">
+                            <Crown className="w-4 h-4 text-yellow-500" />
                             <span>VIP Access</span>
                         </div>
                     </div>
 
                     {/* Pricing */}
-                    <div className="mb-8 p-4 rounded-2xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
-                        <div className="text-xs text-pink-300 uppercase tracking-wider font-semibold mb-1">Session Entry Fee</div>
-                        <div className="text-4xl font-bold text-white">${price}</div>
-                        <div className={`mt-2 text-sm font-medium ${walletBalance !== null && walletBalance < price ? 'text-red-300' : 'text-green-300'}`}>
+                    <div className="mb-5 p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
+                        <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
+                        <div className="text-2xl font-bold text-white">${price}</div>
+                        <div className={`mt-1 text-xs font-medium ${walletBalance !== null && walletBalance < price ? 'text-red-300' : 'text-green-300'}`}>
                             Your Balance: {walletBalance !== null ? `$${walletBalance.toFixed(2)}` : 'Checking...'}
                         </div>
                     </div>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex items-center gap-2 text-left">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
+                        <div className="mb-4 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-200 text-xs flex items-center gap-2 text-left">
+                            <AlertCircle className="w-3 h-3 shrink-0" />
                             {error}
                         </div>
                     )}
 
                     {/* Actions */}
                     {loading ? (
-                        <div className="h-14 flex items-center justify-center text-gray-500 bg-white/5 rounded-xl animate-pulse">
+                        <div className="h-10 flex items-center justify-center text-gray-500 bg-white/5 rounded-lg animate-pulse text-sm">
                             Checking access...
                         </div>
                     ) : accessStatus === 'unlocked' ? (
                         <button
                             onClick={handleEnter}
-                            className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition flex items-center justify-center gap-2"
+                            className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-base shadow-lg shadow-green-900/20 transition flex items-center justify-center gap-2"
                         >
-                            Enter Room <Play className="w-5 h-5 fill-current" />
+                            Enter Room <Play className="w-4 h-4 fill-current" />
                         </button>
                     ) : accessStatus === 'pending_payment' ? (
-                        <button disabled className="w-full py-4 rounded-xl bg-yellow-600/50 text-yellow-200 font-bold text-lg shadow-lg shadow-yellow-900/20 transition flex items-center justify-center gap-2 cursor-not-allowed">
-                            <Clock className="w-5 h-5" />
+                        <button disabled className="w-full py-3 rounded-xl bg-yellow-600/50 text-yellow-200 font-bold text-base shadow-lg shadow-yellow-900/20 transition flex items-center justify-center gap-2 cursor-not-allowed">
+                            <Clock className="w-4 h-4" />
                             Payment Verifying...
                         </button>
                     ) : (isPrivate && accessStatus !== 'locked') ? (
                         // Private Flow (Pending/None/Rejected)
                         accessStatus === 'pending' ? (
-                            <button disabled className="w-full py-4 rounded-xl bg-gray-700 text-gray-400 font-bold cursor-not-allowed">Request Pending...</button>
+                            <button disabled className="w-full py-3 rounded-xl bg-gray-700 text-gray-400 font-bold cursor-not-allowed text-base">Request Pending...</button>
                         ) : accessStatus === 'rejected' ? (
-                            <button disabled className="w-full py-4 rounded-xl bg-red-900/50 text-red-400 font-bold cursor-not-allowed">Request Declined</button>
+                            <button disabled className="w-full py-3 rounded-xl bg-red-900/50 text-red-400 font-bold cursor-not-allowed text-base">Request Declined</button>
                         ) : (
                             // 'none' or Default for Private -> Request
                             <button
                                 onClick={handleRequestJoin}
                                 disabled={unlocking}
-                                className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg shadow-lg shadow-blue-900/20 transition flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-lg shadow-blue-900/20 transition flex items-center justify-center gap-2"
                             >
                                 {unlocking ? "Sending Request..." : "Request to Join"}
                             </button>
@@ -461,13 +461,13 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                         // Public OR Private Approved -> Pay to Unlock
                         <button
                             onClick={() => setShowPaymentOptions(true)}
-                            className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition flex items-center justify-center gap-2"
+                            className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-base shadow-lg shadow-green-900/20 transition flex items-center justify-center gap-2"
                         >
-                            Enter Room <Play className="w-5 h-5 fill-current" />
+                            Enter Room <Play className="w-4 h-4 fill-current" />
                         </button>
                     )}
 
-                    <p className="mt-4 text-xs text-gray-500">
+                    <p className="mt-3 text-[10px] text-gray-500">
                         Secure payment via PlaygroundX Wallet
                     </p>
                 </div>

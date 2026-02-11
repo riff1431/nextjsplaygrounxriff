@@ -37,6 +37,7 @@ import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
 import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
+import { activeCreators, CreatorCard } from "@/components/data/activeCreators";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -69,15 +70,6 @@ function cx(...parts: Array<string | false | null | undefined>) {
 // ---- Types -----------------------------------------------------------------
 type BadgeTier = "Bronze" | "Silver" | "Gold" | "Platinum" | "VIP";
 
-type CreatorCard = {
-    id: string;
-    userId: string;
-    name: string;
-    level: "Rookie" | "Rising" | "Star" | "Elite";
-    tags: string[];
-    avatar_url?: string | null;
-    cover_url?: string | null;
-};
 
 type Post = {
     id: string;
@@ -96,16 +88,7 @@ type Post = {
 };
 
 // ---- Mock content ----------------------------------------------------------
-const CREATORS: CreatorCard[] = [
-    { id: "c1", userId: "u1", name: "NeonNyla", level: "Elite", tags: ["Suga 4 U", "Flash Drops"] },
-    { id: "c2", userId: "u2", name: "PinkVibe", level: "Star", tags: ["Truth or Dare", "Bar Lounge"] },
-    { id: "c3", userId: "u3", name: "BlueMuse", level: "Rising", tags: ["X Chat", "Confessions"] },
-    { id: "c4", userId: "u4", name: "LunaLux", level: "Elite", tags: ["Suga 4 U", "Confessions"] },
-    { id: "c5", userId: "u5", name: "NovaHeat", level: "Star", tags: ["Flash Drops", "Bar Lounge"] },
-    { id: "c6", userId: "u6", name: "RoxyRave", level: "Rookie", tags: ["Truth or Dare", "X Chat"] },
-    { id: "c7", userId: "u7", name: "VelvetX", level: "Rising", tags: ["Bar Lounge", "Confessions"] },
-    { id: "c8", userId: "u8", name: "Sapphire", level: "Star", tags: ["Suga 4 U", "Truth or Dare"] },
-];
+const CREATORS: CreatorCard[] = activeCreators;
 
 // ---- Branding --------------------------------------------------------------
 function Logo({ onClick }: { onClick?: () => void }) {
@@ -435,8 +418,15 @@ function HomeScreen({
     const [sortBy, setSortBy] = useState<"Recommended" | "Rookie→Elite" | "Elite→Rookie">("Recommended");
     const [levelFilter, setLevelFilter] = useState<"All" | "Rookie" | "Rising" | "Star" | "Elite">("All");
 
-    // Use fetched rooms if available, otherwise fallback to mock for preview
-    const dataSource: CreatorCard[] = rooms.length > 0 ? rooms : CREATORS; // Assuming CREATORS is defined elsewhere
+    // Merge active/static creators with fetched rooms
+    // We prioritize showcasing the 'Active Creators' requested by the user.
+    // We perform a simple merge. If IDs overlap, we might want to dedupe, but assuming they are distinct for now.
+    const dataSource: CreatorCard[] = useMemo(() => {
+        // Create a map to deduplicate by ID if necessary, or just concat.
+        // Given c1..c20 ids vs uuid, simple concat is safe.
+        // We put CREATORS first to ensure they are at the top/start.
+        return [...CREATORS, ...rooms];
+    }, [rooms]);
 
     // Filter logic
     const filtered = useMemo(() => {

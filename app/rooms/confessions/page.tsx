@@ -370,39 +370,39 @@ export default function ConfessionsRoomPreview() {
                 {/* [NEW] 0. Request Confirmation Modal */}
                 {showConfirmModal && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
-                        <NeonCard className="w-full max-w-lg p-6 bg-gray-900 border border-pink-500/40">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold text-white">Confirm Request</h3>
-                                <button onClick={() => setShowConfirmModal(false)}><X className="w-5 h-5 text-gray-400" /></button>
+                        <NeonCard className="w-full max-w-[340px] p-5 bg-gray-900 border border-pink-500/40">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-white">Confirm Request</h3>
+                                <button onClick={() => setShowConfirmModal(false)}><X className="w-4 h-4 text-gray-400" /></button>
                             </div>
 
                             {/* Summary */}
-                            <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs text-gray-400 uppercase">Topic</span>
-                                    <span className="text-xs text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded">{reqType}</span>
+                            <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-4">
+                                <div className="flex justify-between items-start mb-1.5">
+                                    <span className="text-[10px] text-gray-400 uppercase">Topic</span>
+                                    <span className="text-[10px] text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded">{reqType}</span>
                                 </div>
-                                <div className="text-gray-200 italic font-medium">"{reqTopic}"</div>
+                                <div className="text-gray-200 italic font-medium text-sm">"{reqTopic}"</div>
                             </div>
 
-                            <div className="mb-6">
-                                <div className="text-sm text-gray-400 mb-3">Select Payment Method</div>
-                                <div className="grid grid-cols-2 gap-3">
+                            <div className="mb-4">
+                                <div className="text-xs text-gray-400 mb-2">Select Payment Method</div>
+                                <div className="grid grid-cols-2 gap-2">
                                     {/* Wallet */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('wallet')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition relative overflow-hidden",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition relative overflow-hidden",
                                             selectedPaymentMethod === 'wallet'
                                                 ? "bg-rose-600/20 border-rose-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Wallet className="w-6 h-6" />
-                                        <span className="text-xs font-bold">My Wallet</span>
-                                        <span className="text-[10px] opacity-70">Bal: ${myWalletBalance}</span>
+                                        <Wallet className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">My Wallet</span>
+                                        <span className="text-[9px] opacity-70">Bal: ${myWalletBalance}</span>
                                         {myWalletBalance < reqAmount && (
-                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm text-[10px] text-red-400 font-bold">Low Balance</div>
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm text-[9px] text-red-400 font-bold">Low Balance</div>
                                         )}
                                     </button>
 
@@ -410,55 +410,55 @@ export default function ConfessionsRoomPreview() {
                                     <button
                                         onClick={() => setSelectedPaymentMethod('stripe')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'stripe'
                                                 ? "bg-indigo-600/20 border-indigo-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <CreditCard className="w-6 h-6" />
-                                        <span className="text-xs font-bold">Stripe</span>
+                                        <CreditCard className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">Stripe</span>
                                     </button>
 
                                     {/* PayPal */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('paypal')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'paypal'
                                                 ? "bg-blue-600/20 border-blue-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Globe className="w-6 h-6" />
-                                        <span className="text-xs font-bold">PayPal</span>
+                                        <Globe className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">PayPal</span>
                                     </button>
 
                                     {/* Bank */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('bank')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'bank'
                                                 ? "bg-emerald-600/20 border-emerald-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Building2 className="w-6 h-6" />
-                                        <span className="text-xs font-bold">Bank</span>
+                                        <Building2 className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">Bank</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between mb-6 px-2">
-                                <span className="text-gray-300">Total</span>
-                                <span className="text-3xl font-bold text-white">${reqAmount}</span>
+                            <div className="flex items-center justify-between mb-4 px-1">
+                                <span className="text-gray-300 text-xs">Total</span>
+                                <span className="text-xl font-bold text-white">${reqAmount}</span>
                             </div>
 
                             <button
                                 onClick={handleConfirmAndPay}
                                 disabled={isSending || (selectedPaymentMethod === 'wallet' && myWalletBalance < reqAmount)}
-                                className="w-full py-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-lg text-white hover:opacity-90 transition shadow-lg shadow-rose-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-sm text-white hover:opacity-90 transition shadow-lg shadow-rose-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSending ? "Processing..." : "Confirm & Pay"}
                             </button>
@@ -469,46 +469,46 @@ export default function ConfessionsRoomPreview() {
                 {/* 1. Purchase Unlock Modal */}
                 {purchaseConfession && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <NeonCard className="w-full max-w-lg p-6 bg-gray-900 border border-rose-500/30">
-                            <div className="flex justify-between items-start mb-6">
-                                <h3 className="text-xl font-bold text-white">Unlock Confession</h3>
-                                <button onClick={() => setPurchaseConfession(null)}><X className="w-5 h-5 text-gray-400" /></button>
+                        <NeonCard className="w-full max-w-[340px] p-5 bg-gray-900 border border-rose-500/30">
+                            <div className="flex justify-between items-start mb-4">
+                                <h3 className="text-lg font-bold text-white">Unlock Confession</h3>
+                                <button onClick={() => setPurchaseConfession(null)}><X className="w-4 h-4 text-gray-400" /></button>
                             </div>
 
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center font-bold text-lg">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center font-bold text-base">
                                     N
                                 </div>
                                 <div>
-                                    <div className="text-sm font-bold text-white">@NeonNyla</div>
-                                    <div className="text-xs text-rose-300">Creator</div>
+                                    <div className="text-xs font-bold text-white">@NeonNyla</div>
+                                    <div className="text-[10px] text-rose-300">Creator</div>
                                 </div>
                             </div>
 
-                            <div className="bg-black/50 rounded-xl p-4 border border-white/10 mb-6">
-                                <div className="text-xs text-gray-400 uppercase tracking-widest mb-1">{purchaseConfession.tier} Confession</div>
-                                <div className="font-bold text-lg text-white mb-2 leading-tight">"{purchaseConfession.title}"</div>
+                            <div className="bg-black/50 rounded-xl p-3 border border-white/10 mb-4">
+                                <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">{purchaseConfession.tier} Confession</div>
+                                <div className="font-bold text-base text-white mb-1 leading-tight">"{purchaseConfession.title}"</div>
                             </div>
 
                             {/* Payment Selector */}
-                            <div className="mb-6">
-                                <div className="text-sm text-gray-400 mb-3">Select Payment Method</div>
-                                <div className="grid grid-cols-2 gap-3">
+                            <div className="mb-4">
+                                <div className="text-xs text-gray-400 mb-2">Select Payment Method</div>
+                                <div className="grid grid-cols-2 gap-2">
                                     {/* Wallet */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('wallet')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition relative overflow-hidden",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition relative overflow-hidden",
                                             selectedPaymentMethod === 'wallet'
                                                 ? "bg-rose-600/20 border-rose-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Wallet className="w-6 h-6" />
-                                        <span className="text-xs font-bold">My Wallet</span>
-                                        <span className="text-[10px] opacity-70">Bal: ${myWalletBalance}</span>
+                                        <Wallet className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">My Wallet</span>
+                                        <span className="text-[9px] opacity-70">Bal: ${myWalletBalance}</span>
                                         {myWalletBalance < purchaseConfession.price && (
-                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm text-[10px] text-red-400 font-bold">Low Balance</div>
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm text-[9px] text-red-400 font-bold">Low Balance</div>
                                         )}
                                     </button>
 
@@ -516,55 +516,55 @@ export default function ConfessionsRoomPreview() {
                                     <button
                                         onClick={() => setSelectedPaymentMethod('stripe')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'stripe'
                                                 ? "bg-indigo-600/20 border-indigo-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <CreditCard className="w-6 h-6" />
-                                        <span className="text-xs font-bold">Stripe</span>
+                                        <CreditCard className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">Stripe</span>
                                     </button>
 
                                     {/* PayPal */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('paypal')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'paypal'
                                                 ? "bg-blue-600/20 border-blue-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Globe className="w-6 h-6" />
-                                        <span className="text-xs font-bold">PayPal</span>
+                                        <Globe className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">PayPal</span>
                                     </button>
 
                                     {/* Bank */}
                                     <button
                                         onClick={() => setSelectedPaymentMethod('bank')}
                                         className={cx(
-                                            "p-3 rounded-xl border flex flex-col items-center gap-2 transition",
+                                            "p-2 rounded-lg border flex flex-col items-center gap-1.5 transition",
                                             selectedPaymentMethod === 'bank'
                                                 ? "bg-emerald-600/20 border-emerald-500 text-white"
                                                 : "bg-black/40 border-white/10 text-gray-400 hover:bg-white/5"
                                         )}
                                     >
-                                        <Building2 className="w-6 h-6" />
-                                        <span className="text-xs font-bold">Bank</span>
+                                        <Building2 className="w-5 h-5" />
+                                        <span className="text-[10px] font-bold">Bank</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between mb-6 px-2">
-                                <span className="text-gray-400 text-sm">Total Price</span>
-                                <span className="text-2xl font-bold text-rose-400">${purchaseConfession.price}</span>
+                            <div className="flex items-center justify-between mb-4 px-1">
+                                <span className="text-gray-400 text-xs">Total Price</span>
+                                <span className="text-xl font-bold text-rose-400">${purchaseConfession.price}</span>
                             </div>
 
                             <button
                                 onClick={handleUnlockPurchase}
                                 disabled={selectedPaymentMethod === 'wallet' && myWalletBalance < purchaseConfession.price}
-                                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-white hover:opacity-90 transition shadow-[0_0_20px_rgba(225,29,72,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 font-bold text-sm text-white hover:opacity-90 transition shadow-[0_0_20px_rgba(225,29,72,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Confirm Payment
                             </button>

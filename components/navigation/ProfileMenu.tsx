@@ -110,7 +110,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                 <CreditCard className="w-5 h-5 text-blue-300 group-hover:text-blue-200 group-hover:scale-110 transition-transform" />
                                 <span className="text-xs text-gray-300">Wallet</span>
                             </button>
-                            <button onClick={() => router.push('/account/membership')} className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-amber-500/30 transition-all group">
+                            <button onClick={() => router.push(role === 'creator' ? '/account/creator-levels' : '/account/membership')} className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-amber-500/30 transition-all group">
                                 <Award className="w-5 h-5 text-amber-400 group-hover:text-amber-300 group-hover:scale-110 transition-transform" />
                                 <span className="text-xs text-gray-300">Membership</span>
                             </button>
