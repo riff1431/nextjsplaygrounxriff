@@ -1,0 +1,798 @@
+Below is a complete, developer-ready plan + full starter code (DB migrations + backend APIs + admin UI page + invoice drawer + print/email hooks) for PlayGroundX → Admin → Creator Payouts exactly like you described.
+
+I wrote it so you can drop it into a typical Node/Express/TypeScript + Postgres + React stack. If your repo is slightly different (Next.js, Prisma, etc.), your dev can still map it 1:1 because the data model + endpoints are clean.
+
+1) Full plan (what to build)
+A) What the page must do
+Admin “Creator Payouts” page
+
+Shows month-to-date totals:
+
+Total Creators Earned (MTD) = sum of all creator split entries for selected month
+
+(optional) Platform earned MTD
+
+Table of creators who earned in that month:
+
+Creator (clickable)
+
+Gross collected
+
+Creator earned (after split)
+
+Platform earned
+
+Events count
+
+Last activity
+
+Status (Ready / Hold / Paid)
+
+Filters:
+
+Month picker
+
+Revenue type
+
+Status
+
+Search creators
+
+Sort (recommended = Creator earned desc)
+
+Click creator → expands invoice detail (drawer/modal/page)
+
+Shows invoice summary for that creator for the month
+
+Shows line items:
+
+Date, time
+
+Room / category
+
+Type (tip/gift/subscription/unlock/competition)
+
+Fan (who paid)
+
+Session duration / time spent (linked session)
+
+Amount collected
+
+Split profile used
+
+Creator share
+
+Platform share
+
+Status
+
+Actions:
+
+View
+
+Print
+
+Email
+
+Edit (admin adjustments)
+
+B) Core accounting rules (must not break)
+
+Every payment becomes one immutable revenue_event
+
+Splits are saved as rows in revenue_splits (creator + platform + other parts)
+
+Refunds/disputes create adjustment events (negative values) so totals stay correct.
+
+No front-end local storage gating: all admin access and profile/role checks come from server.
+
+2) Database (Postgres) – SQL migrations
+
+Put these in a migration file (e.g., migrations/2026_02_09_creator_payouts.sql).
+
+EXCEPTION WHEN duplicate_object THEN NULL;
+  occurred_at TIMESTAMPTZ NOT NULL,
+  fan_user_id UUID NOT NULL,
+  creator_user_id UUID,
+  revenue_type_id BIGINT NOT NULL REFERENCES revenue_types(id),
+  room_key TEXT,
+  competition_id UUID,
+  subscription_id UUID,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  gross_amount NUMERIC(12,2) NOT NULL,
+  net_amount NUMERIC(12,2),
+  payment_provider TEXT NOT NULL,
+  payment_intent_id TEXT NOT NULL,
+  status revenue_event_status NOT NULL DEFAULT 'pending',
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT uq_payment UNIQUE (payment_provider, payment_intent_id)
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_revenue_events_creator_time
+ON revenue_events (creator_user_id, occurred_at);
+
+
+CREATE INDEX IF NOT EXISTS idx_revenue_events_status_time
+ON revenue_events (status, occurred_at);
+
+
+-- =========================
+-- 4) SPLITS (WHO GETS WHAT)
+-- =========================
+CREATE TABLE IF NOT EXISTS revenue_splits (
+  id BIGSERIAL PRIMARY KEY,
+  revenue_event_id UUID NOT NULL REFERENCES revenue_events(id) ON DELETE CASCADE,
+  beneficiary_type split_beneficiary_type NOT NULL,
+  beneficiary_id UUID, -- creator id when beneficiary_type='creator'
+  split_profile_id BIGINT NOT NULL REFERENCES split_profiles(id) ON DELETE RESTRICT,
+  pct NUMERIC(5,2) NOT NULL,
+  amount NUMERIC(12,2) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_revenue_splits_event
+ON revenue_splits (revenue_event_id);
+
+
+CREATE INDEX IF NOT EXISTS idx_revenue_splits_creator
+ON revenue_splits (beneficiary_type, beneficiary_id);
+
+
+-- =========================
+-- 5) SESSION TRACKING (TIME SPENT)
+-- =========================
+CREATE TABLE IF NOT EXISTS creator_activity_sessions (
+  id UUID PRIMARY KEY,
+  creator_user_id UUID NOT NULL,
+  room_key TEXT,
+  session_type session_type NOT NULL,
+  started_at TIMESTAMPTZ NOT NULL,
+  ended_at TIMESTAMPTZ,
+  duration_seconds INT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_sessions_creator_time
+ON creator_activity_sessions (creator_user_id, started_at);
+
+
+CREATE TABLE IF NOT EXISTS revenue_event_sessions (
+  revenue_event_id UUID NOT NULL REFERENCES revenue_events(id) ON DELETE CASCADE,
+  session_id UUID NOT NULL REFERENCES creator_activity_sessions(id) ON DELETE CASCADE,
+  PRIMARY KEY (revenue_event_id, session_id)
+);
+
+
+-- =========================
+-- 6) PAYOUT BATCHES (PAYING OUT IS SEPARATE FROM EARNING)
+-- =========================
+CREATE TABLE IF NOT EXISTS payout_batches (
+  id UUID PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  period_year INT NOT NULL,
+  period_month INT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+
+CREATE TABLE IF NOT EXISTS payout_batch_items (
+  id UUID PRIMARY KEY,
+  batch_id UUID NOT NULL REFERENCES payout_batches(id) ON DELETE CASCADE,
+  creator_user_id UUID NOT NULL,
+  amount NUMERIC(12,2) NOT NULL,
+  status payout_item_status NOT NULL DEFAULT 'ready',
+  paid_at TIMESTAMPTZ,
+  reference TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT uq_batch_creator UNIQUE (batch_id, creator_user_id)
+);
+Seed (example)
+INSERT INTO revenue_types (code, name) VALUES
+('subscription','Subscription'),
+('tip','Tip'),
+('gift','Gift'),
+('room_unlock','Room Unlock'),
+('competition_entry','Competition Entry'),
+('adjustment','Adjustment')
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO split_profiles (name, creator_pct, platform_pct, processing_pct, affiliate_pct, other_pct)
+VALUES
+('Standard 85/15', 85, 15, 0, 0, 0),
+('Creator 100%', 100, 0, 0, 0, 0),
+('Competition 90/10', 90, 10, 0, 0, 0)
+ON CONFLICT DO NOTHING;
+3) Backend (Node/Express/TypeScript)
+A) Folder layout
+backend/
+  src/
+    db/
+      pool.ts
+      sql.ts
+    middleware/
+      requireAdmin.ts
+    services/
+      splitEngine.ts
+      payoutsService.ts
+      invoiceService.ts
+    routes/
+      adminPayoutsRoutes.ts
+      revenueIngestRoutes.ts
+    server.ts
+B) DB pool
+// src/db/pool.ts
+import { Pool } from "pg";
+
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.PGSSLMODE ? { rejectUnauthorized: false } : undefined,
+});
+C) Admin auth middleware (server-side only)
+// src/middleware/requireAdmin.ts
+import { Request, Response, NextFunction } from "express";
+
+
+/**
+ * Assumes you already have auth middleware that sets req.user.
+ * Must be server-validated. NO localStorage gating.
+ */
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  if (user.role !== "admin" && user.role !== "superadmin") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  next();
+}
+D) Split Engine (5-way split with rounding)
+// src/services/splitEngine.ts
+import { pool } from "../db/pool";
+
+
+export type SplitProfile = {
+  id: number;
+  creator_pct: number;
+  platform_pct: number;
+  processing_pct: number;
+  affiliate_pct: number;
+  other_pct: number;
+};
+
+
+function round2(n: number) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+
+export async function getSplitProfileForEvent(params: {
+  revenueTypeId: number;
+  roomKey?: string | null;
+  occurredAt: Date;
+}): Promise<SplitProfile> {
+  const { revenueTypeId, roomKey, occurredAt } = params;
+
+
+  // Choose most specific: revenueType + roomKey match, else revenueType only
+  const q = `
+    SELECT sp.*
+    FROM revenue_type_split_map m
+    JOIN split_profiles sp ON sp.id = m.split_profile_id
+    WHERE m.revenue_type_id = $1
+      AND (m.room_key = $2 OR (m.room_key IS NULL AND $2 IS NULL) OR (m.room_key IS NULL))
+      AND m.effective_from <= $3
+      AND (m.effective_to IS NULL OR m.effective_to > $3)
+    ORDER BY (m.room_key IS NOT NULL) DESC, m.effective_from DESC
+    LIMIT 1
+  `;
+  const r = await pool.query(q, [revenueTypeId, roomKey ?? null, occurredAt]);
+  if (r.rowCount === 0) {
+    throw new Error(`No split profile found for revenue_type_id=${revenueTypeId}, roomKey=${roomKey}`);
+  }
+  return r.rows[0];
+}
+
+
+export function computeSplits(baseAmount: number, profile: SplitProfile) {
+  const parts = [
+    { key: "creator", pct: profile.creator_pct },
+    { key: "platform", pct: profile.platform_pct },
+    { key: "processor", pct: profile.processing_pct },
+    { key: "affiliate", pct: profile.affiliate_pct },
+    { key: "other", pct: profile.other_pct },
+  ].filter(p => p.pct > 0);
+
+
+  const amounts = parts.map(p => ({
+    ...p,
+    amount: round2(baseAmount * (p.pct / 100)),
+  }));
+
+
+  // Remainder handling (from rounding): add to platform by default
+  const sum = round2(amounts.reduce((a, b) => a + b.amount, 0));
+  const remainder = round2(baseAmount - sum);
+  if (remainder !== 0) {
+    const platform = amounts.find(a => a.key === "platform") ?? amounts[0];
+    platform.amount = round2(platform.amount + remainder);
+  }
+
+
+  return amounts;
+}
+E) Revenue ingestion (called by Stripe webhook handler or internal payment confirmation)
+    // Insert revenue event (prevents duplicate credit via unique constraint)
+        room_key, competition_id, subscription_id, currency,
+        gross_amount, net_amount, payment_provider, payment_intent_id, status, metadata
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+      RETURNING *
+    `;
+    const eventRow = await client.query(insertEvent, [
+      eventId,
+      occurred,
+      fanUserId,
+      creatorUserId ?? null,
+      revenueTypeId,
+      roomKey ?? null,
+      competitionId ?? null,
+      subscriptionId ?? null,
+      currency ?? "USD",
+      grossAmount,
+      netAmount ?? null,
+      paymentProvider,
+      paymentIntentId,
+      status ?? "succeeded",
+      metadata ?? {},
+    ]);
+
+
+    const event = eventRow.rows[0];
+
+
+    // Determine split profile and compute splits
+    const profile = await getSplitProfileForEvent({
+      revenueTypeId,
+      roomKey: roomKey ?? null,
+      occurredAt: occurred,
+    });
+
+
+    // Choose base: gross by default (change to net if you prefer)
+    const baseAmount = Number(event.gross_amount);
+    const splitAmounts = computeSplits(baseAmount, profile);
+
+
+    // Insert splits
+    for (const s of splitAmounts) {
+      const beneficiaryType = s.key; // creator/platform/processor/affiliate/other
+      const beneficiaryId = beneficiaryType === "creator" ? creatorUserId : null;
+
+
+      await client.query(
+        `INSERT INTO revenue_splits
+         (revenue_event_id, beneficiary_type, beneficiary_id, split_profile_id, pct, amount)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [eventId, beneficiaryType, beneficiaryId, profile.id, s.pct, s.amount]
+      );
+    }
+
+
+    // Optional: link event to a session for time spent
+    if (sessionId) {
+      await client.query(
+        `INSERT INTO revenue_event_sessions (revenue_event_id, session_id)
+         VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+        [eventId, sessionId]
+      );
+    }
+
+
+    await client.query("COMMIT");
+    res.json({ ok: true, eventId });
+  } catch (e: any) {
+    await client.query("ROLLBACK");
+    // If unique violation on payment intent, return idempotent response
+    if (String(e?.code) === "23505") return res.status(409).json({ ok: false, error: "Duplicate payment_intent_id" });
+    res.status(500).json({ ok: false, error: e.message });
+  } finally {
+    client.release();
+  }
+});
+F) Admin payouts APIs (list + invoice + actions)
+1) List creators for a month
+// src/services/payoutsService.ts
+import { pool } from "../db/pool";
+
+
+export async function getPayoutsMonth(params: {
+  year: number;
+  month: number; // 1-12
+  search?: string;
+  revenueTypeCode?: string;
+  status?: string; // succeeded/refunded/etc
+  sort?: "creatorEarnedDesc" | "creatorEarnedAsc" | "lastActivityDesc";
+}) {
+  const { year, month, search, revenueTypeCode, status, sort } = params;
+
+
+  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+  const end = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+
+
+  const orderBy =
+    sort === "creatorEarnedAsc" ? "creator_earned ASC" :
+    sort === "lastActivityDesc" ? "last_activity DESC NULLS LAST" :
+    "creator_earned DESC";
+
+
+  // Assumes you have users table with id, username, display_name, avatar_url
+  const q = `
+    WITH filtered_events AS (
+      SELECT e.*
+      FROM revenue_events e
+      JOIN revenue_types rt ON rt.id = e.revenue_type_id
+      WHERE e.occurred_at >= $1 AND e.occurred_at < $2
+        AND ($3::text IS NULL OR e.status = $3::revenue_event_status)
+        AND ($4::text IS NULL OR rt.code = $4)
+    ),
+    creator_sums AS (
+      SELECT
+        e.creator_user_id AS creator_id,
+        SUM(CASE WHEN e.status='succeeded' THEN e.gross_amount ELSE 0 END) AS gross_collected,
+        SUM(CASE WHEN s.beneficiary_type='creator' THEN s.amount ELSE 0 END) AS creator_earned,
+        SUM(CASE WHEN s.beneficiary_type='platform' THEN s.amount ELSE 0 END) AS platform_earned,
+        COUNT(DISTINCT e.id) AS events_count,
+        MAX(e.occurred_at) AS last_activity
+      FROM filtered_events e
+      JOIN revenue_splits s ON s.revenue_event_id = e.id
+      WHERE e.creator_user_id IS NOT NULL
+      GROUP BY e.creator_user_id
+    )
+    SELECT
+      u.id AS creator_id,
+      u.username,
+      u.display_name,
+      u.avatar_url,
+      cs.gross_collected,
+      cs.creator_earned,
+      cs.platform_earned,
+      cs.events_count,
+      cs.last_activity,
+      'Ready' AS status
+    FROM creator_sums cs
+    JOIN users u ON u.id = cs.creator_id
+    WHERE ($5::text IS NULL OR (u.username ILIKE '%'||$5||'%' OR u.display_name ILIKE '%'||$5||'%'))
+    ORDER BY ${orderBy}
+  `;
+
+
+  const r = await pool.query(q, [
+    start.toISOString(),
+    end.toISOString(),
+    status ?? null,
+    revenueTypeCode ?? null,
+    search ?? null
+  ]);
+
+
+  const totalsQ = `
+    SELECT
+      COALESCE(SUM(s.amount),0)::numeric(12,2) AS total_creators_earned,
+      COALESCE(SUM(CASE WHEN s.beneficiary_type='platform' THEN s.amount ELSE 0 END),0)::numeric(12,2) AS total_platform_earned
+    FROM revenue_events e
+    JOIN revenue_splits s ON s.revenue_event_id = e.id
+    WHERE e.occurred_at >= $1 AND e.occurred_at < $2
+      AND e.status='succeeded'
+      AND s.beneficiary_type IN ('creator','platform')
+  `;
+  const totals = await pool.query(totalsQ, [start.toISOString(), end.toISOString()]);
+
+
+  return { rows: r.rows, totals: totals.rows[0] };
+}
+2) Invoice detail for one creator
+// src/services/invoiceService.ts
+import { pool } from "../db/pool";
+
+
+export async function getCreatorInvoice(params: {
+  creatorId: string;
+  year: number;
+  month: number;
+}) {
+  const { creatorId, year, month } = params;
+  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+  const end = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+
+
+  const summaryQ = `
+    SELECT
+      COALESCE(SUM(e.gross_amount),0)::numeric(12,2) AS gross_collected,
+      COALESCE(SUM(CASE WHEN s.beneficiary_type='creator' THEN s.amount ELSE 0 END),0)::numeric(12,2) AS creator_earned,
+      COALESCE(SUM(CASE WHEN s.beneficiary_type='platform' THEN s.amount ELSE 0 END),0)::numeric(12,2) AS platform_earned,
+      COUNT(DISTINCT e.id) AS events_count,
+      MAX(e.occurred_at) AS last_activity
+    FROM revenue_events e
+    JOIN revenue_splits s ON s.revenue_event_id = e.id
+    WHERE e.creator_user_id = $1
+      AND e.occurred_at >= $2 AND e.occurred_at < $3
+  `;
+  const summaryR = await pool.query(summaryQ, [creatorId, start.toISOString(), end.toISOString()]);
+
+
+  const linesQ = `
+    SELECT
+      e.id AS event_id,
+      e.occurred_at,
+      rt.code AS revenue_type,
+      e.room_key,
+      e.currency,
+      e.gross_amount,
+      e.status,
+      e.metadata,
+      fu.id AS fan_id,
+      fu.username AS fan_username,
+      fu.display_name AS fan_display_name,
+      sp.name AS split_name,
+      COALESCE(sess.duration_seconds,0) AS duration_seconds,
+      -- creator share + platform share per event
+      COALESCE(SUM(CASE WHEN s.beneficiary_type='creator' THEN s.amount ELSE 0 END),0)::numeric(12,2) AS creator_share,
+      COALESCE(SUM(CASE WHEN s.beneficiary_type='platform' THEN s.amount ELSE 0 END),0)::numeric(12,2) AS platform_share
+    FROM revenue_events e
+    JOIN revenue_types rt ON rt.id = e.revenue_type_id
+    JOIN revenue_splits s ON s.revenue_event_id = e.id
+    JOIN split_profiles sp ON sp.id = s.split_profile_id
+    JOIN users fu ON fu.id = e.fan_user_id
+    LEFT JOIN revenue_event_sessions res ON res.revenue_event_id = e.id
+    LEFT JOIN creator_activity_sessions sess ON sess.id = res.session_id
+    WHERE e.creator_user_id = $1
+      AND e.occurred_at >= $2 AND e.occurred_at < $3
+    GROUP BY
+      e.id, e.occurred_at, rt.code, e.room_key, e.currency, e.gross_amount, e.status, e.metadata,
+      fu.id, fu.username, fu.display_name, sp.name, sess.duration_seconds
+    ORDER BY e.occurred_at DESC
+  `;
+  const linesR = await pool.query(linesQ, [creatorId, start.toISOString(), end.toISOString()]);
+
+
+  return { summary: summaryR.rows[0], lines: linesR.rows };
+}
+3) Routes
+// src/routes/adminPayoutsRoutes.ts
+import { Router } from "express";
+import { requireAdmin } from "../middleware/requireAdmin";
+import { getPayoutsMonth } from "../services/payoutsService";
+import { getCreatorInvoice } from "../services/invoiceService";
+
+
+export const adminPayoutsRoutes = Router();
+adminPayoutsRoutes.use(requireAdmin);
+
+
+adminPayoutsRoutes.get("/payouts", async (req, res) => {
+  const year = Number(req.query.year);
+  const month = Number(req.query.month);
+  const search = (req.query.search as string) || undefined;
+  const revenueTypeCode = (req.query.revenueType as string) || undefined;
+  const status = (req.query.status as string) || undefined;
+  const sort = (req.query.sort as any) || "creatorEarnedDesc";
+
+
+  const data = await getPayoutsMonth({ year, month, search, revenueTypeCode, status, sort });
+  res.json(data);
+});
+
+
+adminPayoutsRoutes.get("/payouts/:creatorId/invoice", async (req, res) => {
+  const creatorId = req.params.creatorId;
+  const year = Number(req.query.year);
+  const month = Number(req.query.month);
+
+
+  const data = await getCreatorInvoice({ creatorId, year, month });
+  res.json(data);
+});
+
+
+/**
+ * Hooks for actions (you’ll wire real implementations)
+ */
+adminPayoutsRoutes.post("/payouts/:creatorId/email-invoice", async (req, res) => {
+  // generate invoice PDF OR use HTML invoice template + send
+  res.json({ ok: true });
+});
+
+
+adminPayoutsRoutes.get("/payouts/:creatorId/invoice.pdf", async (req, res) => {
+  // generate PDF and stream it
+  res.status(501).send("Not implemented yet");
+});
+
+
+adminPayoutsRoutes.post("/payouts/:creatorId/adjustment", async (req, res) => {
+  // create a negative/positive adjustment revenue_event with splits
+  res.status(501).json({ ok: false, error: "Not implemented yet" });
+});
+4) Server mount
+// src/server.ts
+import express from "express";
+import cors from "cors";
+import { adminPayoutsRoutes } from "./routes/adminPayoutsRoutes";
+import { revenueIngestRoutes } from "./routes/revenueIngestRoutes";
+
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: "2mb" }));
+
+
+// Your auth middleware should set req.user before admin routes
+// app.use(authMiddleware);
+
+
+app.use("/api/admin", adminPayoutsRoutes);
+app.use("/api/revenue", revenueIngestRoutes);
+
+
+const port = process.env.PORT || 5000;
+app.listen(port, () => console.log(`Server listening on ${port}`));
+4) Frontend (React) – Creator Payouts page + Invoice drawer mock
+A) API helper
+// src/api/adminPayoutsApi.ts
+export async function fetchPayouts(params: {
+  year: number; month: number;
+  search?: string;
+  revenueType?: string;
+  status?: string;
+  sort?: string;
+}) {
+  const qs = new URLSearchParams();
+  qs.set("year", String(params.year));
+  qs.set("month", String(params.month));
+  if (params.search) qs.set("search", params.search);
+  if (params.revenueType) qs.set("revenueType", params.revenueType);
+  if (params.status) qs.set("status", params.status);
+  if (params.sort) qs.set("sort", params.sort);
+
+
+  const r = await fetch(`/api/admin/payouts?${qs.toString()}`, { credentials: "include" });
+  if (!r.ok) throw new Error(`Failed payouts: ${r.status}`);
+  return r.json();
+}
+
+
+export async function fetchCreatorInvoice(creatorId: string, year: number, month: number) {
+  const qs = new URLSearchParams({ year: String(year), month: String(month) });
+  const r = await fetch(`/api/admin/payouts/${creatorId}/invoice?${qs.toString()}`, { credentials: "include" });
+  if (!r.ok) throw new Error(`Failed invoice: ${r.status}`);
+  return r.json();
+}
+B) Creator Payouts Page (UI)
+// src/pages/admin/CreatorPayouts.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { fetchCreatorInvoice, fetchPayouts } from "../../api/adminPayoutsApi";
+
+
+function money(n: any) {
+  const v = Number(n || 0);
+  return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function secondsToHms(sec: number) {
+  const s = Math.max(0, Number(sec || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return `${h}h ${m}m ${r}s`;
+}
+
+
+export default function CreatorPayouts() {
+  const now = new Date();
+  const [year, setYear] = useState(now.getUTCFullYear());
+  const [month, setMonth] = useState(now.getUTCMonth() + 1);
+
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string>(""); // succeeded, refunded, etc
+  const [revenueType, setRevenueType] = useState<string>(""); // subscription, tip...
+  const [sort, setSort] = useState<string>("creatorEarnedDesc");
+
+
+  const [loading, setLoading] = useState(false);
+  const [rows, setRows] = useState<any[]>([]);
+  const [totals, setTotals] = useState<any>({ total_creators_earned: "0.00", total_platform_earned: "0.00" });
+
+
+  const [openCreator, setOpenCreator] = useState<any | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoice, setInvoice] = useState<any | null>(null);
+
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await fetchPayouts({ year, month, search: search.trim() || undefined, status: status || undefined, revenueType: revenueType || undefined, sort });
+      setRows(data.rows || []);
+      setTotals(data.totals || { total_creators_earned: "0.00", total_platform_earned: "0.00" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  async function openInvoice(creator: any) {
+    setOpenCreator(creator);
+    setInvoice(null);
+    setInvoiceLoading(true);
+    try {
+      const data = await fetchCreatorInvoice(creator.creator_id, year, month);
+      setInvoice(data);
+    } finally {
+      setInvoiceLoading(false);
+    }
+  }
+
+
+  useEffect(() => { load(); }, [year, month, sort]); // keep simple
+  // Add debounce for search in real app.
+
+
+  const monthLabel = useMemo(() => {
+    const d = new Date(Date.UTC(year, month - 1, 1));
+    return d.toLocaleString(undefined, { month: "long", year: "numeric" });
+  }, [year, month]);
+
+
+  return (
+    <div style={{ display: "flex", gap: 20, padding: 24, color: "#fff" }}>
+      {/* Page container */}
+      <div style={{ flex: 1 }}>
+        <div style={{
+          padding: 16,
+          borderRadius: 18,
+          border: "1px solid rgba(255,0,150,0.25)",
+          background: "rgba(10,10,15,0.65)",
+5) Notes your developer must follow (critical)
+A) Admin security (no client gating)
+
+Every /api/admin/* endpoint must require server auth + role check.
+
+Do NOT rely on localStorage, hidden UI, or client-side checks.
+
+B) “Time spent” definition
+
+Sessions should be created by room host start/stop events:
+
+Start session when creator starts a live room / competition host
+
+End session when they leave / stream ends
+
+Link revenue events to sessions using revenue_event_sessions.
+
+C) Refund/chargeback handling
+
+Never “delete” events.
+
+Create adjustment event (negative gross) with mirrored splits.
+
+6) What to send your developer (copy/paste packet)
+
+SQL migration section (tables + indexes)
+
+Backend routes:
+
+/api/admin/payouts
+
+/api/admin/payouts/:creatorId/invoice
+
+/api/revenue/record (webhook-driven)
+
+Split Engine (getSplitProfileForEvent, computeSplits)
+
+React page CreatorPayouts.tsx + API helper

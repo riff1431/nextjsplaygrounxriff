@@ -1,6 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark } from "lucide-react";
+import Link from "next/link";
 import { Profile } from "@/components/profile/ProfileView";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
@@ -226,7 +227,7 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
             />
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <Link href={`/profile/${user.id || post.user_id}`} className="flex items-center gap-3 hover:opacity-80 transition py-1">
                     <Avatar className="w-10 h-10 border border-white/10">
                         <AvatarImage src={user.avatar_url || ""} />
                         <AvatarFallback>{user.username?.[0]?.toUpperCase()}</AvatarFallback>
@@ -242,7 +243,7 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                         </div>
                         <div className="text-xs text-zinc-500">@{user.username} • {timeAgo}</div>
                     </div>
-                </div>
+                </Link>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="text-zinc-500 hover:text-white p-1 rounded-full hover:bg-zinc-800 transition-colors">

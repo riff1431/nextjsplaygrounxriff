@@ -43,8 +43,8 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                 {/* Avatar Circle */}
                 <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 to-blue-500">
                     <div className="w-full h-full rounded-full bg-black overflow-hidden relative">
-                        {profile?.avatar_url ? (
-                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                        {(profile?.avatar_url || user?.user_metadata?.avatar_url) ? (
+                            <img src={profile?.avatar_url || user?.user_metadata?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                                 <User className="w-4 h-4 text-zinc-400" />
@@ -56,7 +56,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                 {/* Name & Chevron */}
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-pink-100 max-w-[100px] truncate">
-                        {profile?.username || "My Profile"}
+                        {profile?.username || user?.user_metadata?.username || "My Profile"}
                     </span>
                     <ChevronDown className={cx("w-4 h-4 text-pink-300/70 transition-transform duration-300", isOpen && "rotate-180")} />
                 </div>
@@ -80,8 +80,8 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                             <div className="relative z-10 flex items-start gap-4">
                                 <div className="w-14 h-14 rounded-2xl p-[2px] bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-lg shadow-pink-500/20">
                                     <div className="w-full h-full rounded-[14px] bg-black overflow-hidden">
-                                        {profile?.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                        {(profile?.avatar_url || user?.user_metadata?.avatar_url) ? (
+                                            <img src={profile?.avatar_url || user?.user_metadata?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                                                 <User className="w-6 h-6 text-zinc-400" />
@@ -90,9 +90,11 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-0 pt-0.5">
-                                    <h3 className="text-base font-bold text-white truncate">{profile?.full_name || "User"}</h3>
+                                    <h3 className="text-base font-bold text-white truncate">
+                                        {profile?.full_name || user?.user_metadata?.full_name || "User"}
+                                    </h3>
                                     <p className="text-xs text-pink-300/80 items-center gap-1 flex mb-2">
-                                        @{profile?.username || "username"}
+                                        @{profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || "username"}
                                     </p>
                                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 no-underline">
                                         <div className={cx("w-1.5 h-1.5 rounded-full", role === 'creator' ? "bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]" : "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]")} />

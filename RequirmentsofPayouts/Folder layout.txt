@@ -1,0 +1,15 @@
+backend/
+  src/
+    db/
+      pool.ts
+      sql.ts
+    middleware/
+      requireAdmin.ts
+    services/
+      splitEngine.ts
+      payoutsService.ts
+      invoiceService.ts
+    routes/
+      adminPayoutsRoutes.ts
+      revenueIngestRoutes.ts
+    server.ts

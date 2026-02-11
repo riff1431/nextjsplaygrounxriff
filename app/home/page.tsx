@@ -28,6 +28,7 @@ import {
     ArrowLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import CreatePostModal from "@/components/posts/CreatePostModal";
@@ -418,15 +419,8 @@ function HomeScreen({
     const [sortBy, setSortBy] = useState<"Recommended" | "Rookie→Elite" | "Elite→Rookie">("Recommended");
     const [levelFilter, setLevelFilter] = useState<"All" | "Rookie" | "Rising" | "Star" | "Elite">("All");
 
-    // Merge active/static creators with fetched rooms
-    // We prioritize showcasing the 'Active Creators' requested by the user.
-    // We perform a simple merge. If IDs overlap, we might want to dedupe, but assuming they are distinct for now.
-    const dataSource: CreatorCard[] = useMemo(() => {
-        // Create a map to deduplicate by ID if necessary, or just concat.
-        // Given c1..c20 ids vs uuid, simple concat is safe.
-        // We put CREATORS first to ensure they are at the top/start.
-        return [...CREATORS, ...rooms];
-    }, [rooms]);
+    // Use fetched rooms (which include active creators seeded in DB)
+    const dataSource: CreatorCard[] = rooms;
 
     // Filter logic
     const filtered = useMemo(() => {
@@ -704,8 +698,11 @@ export default function Home() {
                 const { data: creatorsData, error: creatorsError } = await supabase
                     .rpc('get_creators_with_stats');
 
-                if (creatorsError) console.error("Error fetching creators:", creatorsError);
-                else {
+                if (creatorsError) {
+                    console.error("Error fetching creators:", creatorsError);
+                    // fallback to activeCreators if DB fails
+                    setRooms(activeCreators);
+                } else if (creatorsData && creatorsData.length > 0) {
                     const calculateLevel = (count: number): "Rookie" | "Rising" | "Star" | "Elite" => {
                         if (count >= 20) return "Elite";
                         if (count >= 10) return "Star";
@@ -713,18 +710,30 @@ export default function Home() {
                         return "Rookie";
                     };
 
-                    const mapped = (creatorsData || []).map((c: any) => {
+                    const mapped: CreatorCard[] = (creatorsData as any[]).map((c) => {
                         return {
                             id: c.id,
                             userId: c.id,
                             name: c.username || "Unknown Creator",
                             level: calculateLevel(c.post_count || 0),
-                            tags: ["General"], // Default tag since not a specific room
+                            // Use tags from DB if available, else fallback
+                            tags: (c.tags && c.tags.length > 0) ? c.tags : ["General"],
                             avatar_url: c.avatar_url,
-                            cover_url: c.latest_media_url || c.latest_thumbnail_url || null
+                            cover_url: c.latest_media_url || c.latest_thumbnail_url || null,
+                            bio: c.bio || ""
                         };
                     });
+
+                    // We now have the real data which includes the active creators we seeded.
+                    // No need to merge static data unless we want to guarantee they are there 
+                    // even if the seed failed (which it didn't).
+                    // However, to be safe and avoid duplicates if seeded data exists,
+                    // we should just use the fetched data.
                     setRooms(mapped);
+
+                } else {
+                    // DB empty? Fallback.
+                    setRooms(activeCreators);
                 }
 
                 // 2. Fetch Posts (Creator Feed)
@@ -733,7 +742,7 @@ export default function Home() {
                 // AND only show posts with visual content (media_url is not null)
                 const { data: postsData, error: postsError } = await supabase
                     .from('posts')
-                    .select('*, profiles!user_id!inner(username, avatar_url, role)')
+                    .select('*, profiles!user_id!inner(id, username, avatar_url, role)')
                     .eq('profiles.role', 'creator')
                     .not('media_url', 'is', null)
                     .order('created_at', { ascending: false })

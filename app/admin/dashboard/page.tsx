@@ -29,13 +29,13 @@ import PricingControls from "../../../components/admin/settings/PricingControls"
 import UserManagement from "../../../components/admin/users/UserManagement";
 import AuditLogViewer from "../../../components/admin/safety/AuditLogViewer";
 import RefundManager from "../../../components/admin/finance/RefundManager";
-import PayoutManager from "../../../components/admin/finance/PayoutManager";
-import ModerationQueue from "../../../components/admin/safety/ModerationQueue";
 import AdminStats from "../../../components/admin/dashboard/AdminStats";
 // Extended Modules
 import SchedulingManager from "../../../components/admin/settings/SchedulingManager";
 import MessagingCenter from "../../../components/admin/users/MessagingCenter";
 import SystemMonitoring from "../../../components/admin/safety/SystemMonitoring";
+import CreatorPayouts from "../../../components/admin/finance/CreatorPayouts";
+import ModerationQueue from "../../../components/admin/safety/ModerationQueue";
 import AdminThemeEditor from "../../../components/admin/settings/AdminThemeEditor";
 import PaymentGatewayManager from "../../../components/admin/settings/PaymentGatewayManager";
 import PaymentApprovals from "../../../components/admin/finance/PaymentApprovals";
@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "bank-payments" && <BankPaymentReviewPanel />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
-                    {bizModule === "payouts" && <PayoutManager />}
+                    {bizModule === "payouts" && <CreatorPayouts />}
                     {bizModule === "moderation" && <ModerationQueue />}
 
                     {/* Extended Modules */}

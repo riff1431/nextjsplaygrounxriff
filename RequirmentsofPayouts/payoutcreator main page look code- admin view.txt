@@ -1,0 +1,412 @@
+import React, { useMemo, useState } from "react";
+import "./creatorPayouts.css";
+
+type CreatorRow = {
+  id: string;
+  name: string;
+  handle: string;
+  avatarUrl: string;
+  gross: number;
+  creatorEarned: number;
+  platformEarned: number;
+  events: number;
+  lastActivity: string;
+  status: "Ready" | "Hold" | "Paid";
+};
+
+type InvoiceLine = {
+  id: string;
+  occurredAt: string;
+  revenueType: string; // tip / subscription / gift / room_unlock / competition_entry
+  roomKey?: string;
+  fanHandle: string;
+  durationSeconds: number;
+  collected: number;
+  splitName: string;
+  creatorShare: number;
+  platformShare: number;
+  status: "succeeded" | "refunded" | "disputed";
+};
+
+const demoRows: CreatorRow[] = [
+  {
+    id: "c1",
+    name: "AmeliaRoseXO",
+    handle: "@ameliarosexoxo",
+    avatarUrl: "https://i.pravatar.cc/80?img=47",
+    gross: 16485,
+    creatorEarned: 13550.25,
+    platformEarned: 2934.75,
+    events: 68,
+    lastActivity: "Today at 11:24 AM",
+    status: "Ready",
+  },
+  {
+    id: "c2",
+    name: "JamesKinging",
+    handle: "@jameskinging",
+    avatarUrl: "https://i.pravatar.cc/80?img=12",
+    gross: 8915,
+    creatorEarned: 8142.75,
+    platformEarned: 772.25,
+    events: 41,
+    lastActivity: "Today at 10:30 AM",
+    status: "Ready",
+  },
+  {
+    id: "c3",
+    name: "FitWithLuna",
+    handle: "@fitwithluna",
+    avatarUrl: "https://i.pravatar.cc/80?img=5",
+    gross: 7540,
+    creatorEarned: 6409,
+    platformEarned: 1131,
+    events: 37,
+    lastActivity: "Yesterday at 5:45 PM",
+    status: "Ready",
+  },
+  {
+    id: "c4",
+    name: "GamerGirlMeghan",
+    handle: "@gamergirlmeghan",
+    avatarUrl: "https://i.pravatar.cc/80?img=32",
+    gross: 6275,
+    creatorEarned: 5229,
+    platformEarned: 1046,
+    events: 49,
+    lastActivity: "Yesterday at 2:10 PM",
+    status: "Ready",
+  },
+];
+
+const demoInvoice: InvoiceLine[] = [
+  {
+    id: "l1",
+    occurredAt: "Apr 22, 2024 • 9:12 PM",
+    revenueType: "tip",
+    roomKey: "confessions",
+    fanHandle: "@joinfanx",
+    durationSeconds: 420,
+    collected: 50,
+    splitName: "Creator 100%",
+    creatorShare: 50,
+    platformShare: 0,
+    status: "succeeded",
+  },
+  {
+    id: "l2",
+    occurredAt: "Apr 20, 2024 • 7:05 PM",
+    revenueType: "room_unlock",
+    roomKey: "flash_drops",
+    fanHandle: "@martyfly",
+    durationSeconds: 180,
+    collected: 100,
+    splitName: "Standard 85/15",
+    creatorShare: 85,
+    platformShare: 15,
+    status: "succeeded",
+  },
+  {
+    id: "l3",
+    occurredAt: "Apr 19, 2024 • 10:14 PM",
+    revenueType: "subscription",
+    roomKey: "profile",
+    fanHandle: "@hotfan44",
+    durationSeconds: 0,
+    collected: 25,
+    splitName: "Standard 85/15",
+    creatorShare: 21.25,
+    platformShare: 3.75,
+    status: "succeeded",
+  },
+];
+
+function money(n: number) {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function hms(sec: number) {
+  const s = Math.max(0, sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${r}s`;
+  return `${r}s`;
+}
+function titleCase(s: string) {
+  return s.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export default function CreatorPayoutsPage() {
+  const [monthLabel] = useState("April 2024");
+  const [rows] = useState<CreatorRow[]>(demoRows);
+  const [selected, setSelected] = useState<CreatorRow>(demoRows[0]);
+
+  const totals = useMemo(() => {
+    const creator = rows.reduce((a, b) => a + b.creatorEarned, 0);
+    const platform = rows.reduce((a, b) => a + b.platformEarned, 0);
+    return { creator, platform };
+  }, [rows]);
+
+  return (
+    <div className="pgx-page">
+      {/* Left Sidebar (matches your admin style) */}
+      <aside className="pgx-sidebar glass neon-pink">
+        <div className="pgx-brand">
+          <div className="pgx-logo">PlayGround<span>X</span></div>
+          <div className="pgx-sub">Business Console</div>
+        </div>
+
+        <nav className="pgx-nav">
+          {[
+            "Admin Home",
+            "Dashboard",
+            "System Truth & Dare",
+            "Pricing Controls",
+            "Theme & Brand",
+            "Payment Gateways",
+            "Payment Approvals",
+            "Users",
+            "KYC Review",
+            "Account Types",
+            "Fan Memberships",
+            "Creator Levels",
+            "Audit Logs",
+            "Payouts",
+          ].map((item) => (
+            <button
+              key={item}
+              className={`pgx-nav-item ${item === "Payouts" ? "active" : ""}`}
+            >
+              <span className="dot" />
+              {item}
+            </button>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main + Right panel */}
+      <main className="pgx-main">
+        {/* Top bar */}
+        <header className="pgx-topbar glass neon-blue">
+          <div className="pgx-title">
+            <div className="h1">Creator Payouts</div>
+            <div className="h2">{monthLabel}</div>
+          </div>
+
+          <div className="pgx-top-actions">
+            <div className="pgx-search">
+              <span className="icon">⌕</span>
+              <input placeholder="Search creators..." />
+            </div>
+            <button className="iconbtn">☐</button>
+            <button className="iconbtn">🔔</button>
+            <button className="iconbtn crown">♛</button>
+          </div>
+        </header>
+
+        {/* Summary card */}
+        <section className="pgx-summary glass neon-pink">
+          <div className="summary-left">
+            <div className="kicker">Total Creators Earned This Month</div>
+            <div className="big">
+              <span className="money">${money(totals.creator)}</span>
+              <span className="muted">
+                <span className="dotline" />
+                Platform <b>${money(totals.platform)}</b>
+              </span>
+            </div>
+          </div>
+
+          <div className="summary-right">
+            <span className="pill">MTD</span>
+            <span className="pill ghost">Auto-updated</span>
+          </div>
+        </section>
+
+        {/* Filters */}
+        <section className="pgx-filters glass neon-blue">
+          <div className="filter">
+            <span className="lbl">Month</span>
+            <select defaultValue="April 2024">
+              <option>April 2024</option>
+              <option>March 2024</option>
+              <option>February 2024</option>
+            </select>
+          </div>
+
+          <div className="filter">
+            <span className="lbl">Revenue Type</span>
+            <select defaultValue="All">
+              <option>All</option>
+              <option>Subscriptions</option>
+              <option>Tips</option>
+              <option>Gifts</option>
+              <option>Room Unlocks</option>
+              <option>Competitions</option>
+            </select>
+          </div>
+
+          <div className="filter">
+            <span className="lbl">Status</span>
+            <select defaultValue="Ready">
+              <option>All</option>
+              <option>Ready</option>
+              <option>Hold</option>
+              <option>Paid</option>
+            </select>
+          </div>
+
+          <div className="filter grow">
+            <span className="lbl">Search</span>
+            <div className="pgx-search thin">
+              <span className="icon">⌕</span>
+              <input placeholder="Search creators..." />
+            </div>
+          </div>
+
+          <button className="btn primary">Apply</button>
+        </section>
+
+        <div className="pgx-grid">
+          {/* Table card */}
+          <section className="pgx-table glass neon-pink">
+            <div className="table-head">
+              <div className="th creator">Creator</div>
+              <div className="th">Gross</div>
+              <div className="th hot">Creator Earned</div>
+              <div className="th">Platform Earned</div>
+              <div className="th">Events</div>
+              <div className="th">Last Activity</div>
+              <div className="th">Status</div>
+            </div>
+
+            <div className="table-body">
+              {rows.map((r) => (
+                <button
+                  key={r.id}
+                  className={`tr ${selected.id === r.id ? "selected" : ""}`}
+                  onClick={() => setSelected(r)}
+                >
+                  <div className="td creator">
+                    <img className="avatar" src={r.avatarUrl} alt="" />
+                    <div className="cmeta">
+                      <div className="cname">{r.name}</div>
+                      <div className="chandle">{r.handle}</div>
+                    </div>
+                  </div>
+                  <div className="td">${money(r.gross)}</div>
+                  <div className="td hot">${money(r.creatorEarned)}</div>
+                  <div className="td">${money(r.platformEarned)}</div>
+                  <div className="td">{r.events}</div>
+                  <div className="td muted">{r.lastActivity}</div>
+                  <div className="td">
+                    <span className={`status ${r.status.toLowerCase()}`}>{r.status}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="table-foot">
+              <span className="muted">Click a creator to open invoice details.</span>
+              <button className="btn ghost">Export</button>
+            </div>
+          </section>
+
+          {/* Right invoice panel */}
+          <aside className="pgx-invoice glass neon-blue">
+            <div className="inv-head">
+              <div className="inv-title">
+                <div className="h1">Recording Payment</div>
+                <div className="h2">Invoice Detail</div>
+              </div>
+              <button className="iconbtn">✕</button>
+            </div>
+
+            <div className="inv-creator">
+              <img className="avatar lg" src={selected.avatarUrl} alt="" />
+              <div className="cmeta">
+                <div className="cname">{selected.name}</div>
+                <div className="chandle">{selected.handle}</div>
+              </div>
+              <span className="badge">ROOKIE</span>
+            </div>
+
+            <div className="inv-metrics">
+              <div className="metric">
+                <div className="mval">${money(selected.gross)}</div>
+                <div className="mlbl">Gross</div>
+              </div>
+              <div className="metric hot">
+                <div className="mval">${money(selected.creatorEarned)}</div>
+                <div className="mlbl">Creator Earned</div>
+              </div>
+              <div className="metric">
+                <div className="mval">${money(selected.platformEarned)}</div>
+                <div className="mlbl">Platform Earned</div>
+              </div>
+            </div>
+
+            <div className="inv-actions">
+              <button className="btn">Print</button>
+              <button className="btn">Email</button>
+              <button className="btn ghost">Edit</button>
+            </div>
+
+            <div className="inv-section">
+              <div className="sec-title">Activity Details</div>
+
+              <div className="inv-lines">
+                {demoInvoice.map((l) => (
+                  <div key={l.id} className="line glass subtle">
+                    <div className="line-top">
+                      <div className="lt">
+                        <span className="tag">{titleCase(l.revenueType)}</span>
+                        <span className="tag ghost">{titleCase(l.roomKey || "—")}</span>
+                      </div>
+                      <div className="rt muted">{l.occurredAt}</div>
+                    </div>
+
+                    <div className="line-mid">
+                      <div className="pair">
+                        <span className="muted">Fan</span>
+                        <b>{l.fanHandle}</b>
+                      </div>
+                      <div className="pair right">
+                        <span className="muted">Time Spent</span>
+                        <b>{hms(l.durationSeconds)}</b>
+                      </div>
+
+                      <div className="pair">
+                        <span className="muted">Split</span>
+                        <b>{l.splitName}</b>
+                      </div>
+                      <div className="pair right">
+                        <span className="muted">Collected</span>
+                        <b>${money(l.collected)}</b>
+                      </div>
+
+                      <div className="pair">
+                        <span className="muted">Creator Share</span>
+                        <b className="pink">${money(l.creatorShare)}</b>
+                      </div>
+                      <div className="pair right">
+                        <span className="muted">Platform Share</span>
+                        <b>${money(l.platformShare)}</b>
+                      </div>
+                    </div>
+
+                    <div className="line-foot">
+                      <span className={`pill ${l.status}`}>{l.status}</span>
+                      <span className="muted">Event: {l.id}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+  );
+}
