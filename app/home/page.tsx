@@ -323,7 +323,7 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             {/* Background Image (Cover) */}
             {creator.cover_url ? (
                 <div
-                    className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-80 transition-opacity duration-700"
+                    className="absolute inset-0 bg-cover bg-top opacity-60 group-hover:opacity-80 transition-opacity duration-700"
                     style={{ backgroundImage: `url(${creator.cover_url})` }}
                 />
             ) : (
@@ -719,7 +719,7 @@ export default function Home() {
                             // Use tags from DB if available, else fallback
                             tags: (c.tags && c.tags.length > 0) ? c.tags : ["General"],
                             avatar_url: c.avatar_url,
-                            cover_url: c.latest_media_url || c.latest_thumbnail_url || null,
+                            cover_url: c.cover_url || c.latest_media_url || c.latest_thumbnail_url || null,
                             bio: c.bio || ""
                         };
                     });
