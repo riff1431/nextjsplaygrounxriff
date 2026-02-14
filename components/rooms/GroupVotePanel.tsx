@@ -34,6 +34,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
     const [state, setState] = useState<GroupVoteState>(initialState || {});
     const [loadingVote, setLoadingVote] = useState<string | null>(null);
     const [completedCampaigns, setCompletedCampaigns] = useState<string[]>([]);
+    const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
 
     useEffect(() => {
         if (!roomId) return;
@@ -44,14 +45,34 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
         };
         fetchInitialState();
 
-        const channel = supabase.channel(`group_vote_updates_${roomId}`)
+        // 1. Database Changes Listener (Truth of Source)
+        const dbChannel = supabase.channel(`group_vote_updates_${roomId}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_games', filter: `room_id=eq.${roomId}` }, (payload) => {
                 const newData = payload.new as any;
                 if (newData.group_vote_state) setState(newData.group_vote_state);
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        // 2. Broadcast Listener (Instant Feedback from API)
+        const broadcastChannel = supabase.channel(`room:${roomId}`)
+            .on('broadcast', { event: 'group_vote_update' }, (payload) => {
+                const { type, current, target } = payload.payload;
+                setState(prev => {
+                    const newState = { ...prev };
+                    if (type === 'truth' && newState.truth) {
+                        newState.truth = { ...newState.truth, current, target };
+                    } else if (type === 'dare' && newState.dare) {
+                        newState.dare = { ...newState.dare, current, target };
+                    }
+                    return newState;
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(dbChannel);
+            supabase.removeChannel(broadcastChannel);
+        };
     }, [roomId, supabase]);
 
     // Handle Auto-Hide Logic
@@ -70,11 +91,20 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
         });
     }, [state, completedCampaigns]);
 
-    const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
-
     const handleVote = async (type: 'truth' | 'dare') => {
         if (loadingVote) return;
         setLoadingVote(type);
+
+        // Optimistic Update
+        setState(prev => {
+            const newState = { ...prev };
+            const campaign = newState[type];
+            if (campaign) {
+                // Increment immediately
+                campaign.current = (campaign.current || 0) + 1;
+            }
+            return newState;
+        });
 
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/vote`, {
@@ -83,10 +113,42 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                 body: JSON.stringify({ type })
             });
             const data = await res.json();
-            if (res.ok) toast.success(`Voted!`);
-            else toast.error(data.error || "Failed to vote");
+            if (res.ok) {
+                toast.success(`Voted!`);
+                // Update with server state if successful to be sure
+                if (data.newCount !== undefined) {
+                    setState(prev => {
+                        const newState = { ...prev };
+                        const campaign = newState[type];
+                        if (campaign) {
+                            campaign.current = data.newCount;
+                        }
+                        return newState;
+                    });
+                }
+            } else {
+                toast.error(data.error || "Failed to vote");
+                // Revert optimistic update on failure
+                setState(prev => {
+                    const newState = { ...prev };
+                    const campaign = newState[type];
+                    if (campaign) {
+                        campaign.current = Math.max(0, (campaign.current || 0) - 1);
+                    }
+                    return newState;
+                });
+            }
         } catch (e) {
             toast.error("Network error");
+            // Revert optimistic update on failure
+            setState(prev => {
+                const newState = { ...prev };
+                const campaign = newState[type];
+                if (campaign) {
+                    campaign.current = Math.max(0, (campaign.current || 0) - 1);
+                }
+                return newState;
+            });
         } finally {
             setLoadingVote(null);
         }

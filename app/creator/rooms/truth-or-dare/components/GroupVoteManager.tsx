@@ -44,14 +44,33 @@ export default function GroupVoteManager({ roomId }: Props) {
         };
         fetchState();
 
-        const channel = supabase.channel(`group_vote_manager_${roomId}`)
+        const dbChannel = supabase.channel(`group_vote_manager_${roomId}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_games', filter: `room_id=eq.${roomId}` }, (payload) => {
                 const newData = payload.new as any;
                 if (newData.group_vote_state) setState(newData.group_vote_state);
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        // Broadcast Listener (Instant Feedback from API)
+        const broadcastChannel = supabase.channel(`room:${roomId}`)
+            .on('broadcast', { event: 'group_vote_update' }, (payload) => {
+                const { type, current, target } = payload.payload;
+                setState(prev => {
+                    const newState = { ...prev };
+                    if (type === 'truth' && newState.truth) {
+                        newState.truth = { ...newState.truth, current, target };
+                    } else if (type === 'dare' && newState.dare) {
+                        newState.dare = { ...newState.dare, current, target };
+                    }
+                    return newState;
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(dbChannel);
+            supabase.removeChannel(broadcastChannel);
+        };
     }, [roomId, supabase]);
 
 
