@@ -20,6 +20,7 @@ import {
     Play,
     X,
     TrendingUp,
+    Flame, // Added Flame icon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -27,7 +28,9 @@ import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New Component
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
-import { playSuccessSound, playErrorSound } from "@/utils/sounds";
+import { playNotificationSound, playSuccessSound, playErrorSound, playMoneySound } from "@/utils/sounds"; // Added playNotificationSound, playMoneySound
+import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVotePanel
+
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
 
@@ -702,6 +705,7 @@ function TruthOrDareContent() {
                 )
             }
 
+
             <main className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                 <div className="lg:col-span-3 flex flex-col gap-4">
                     <div className={`grid gap-4 ${creatorCount === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
@@ -750,6 +754,11 @@ function TruthOrDareContent() {
                 </div>
 
                 <aside className="rounded-2xl border border-pink-500/30 bg-gray-950 p-3 sm:p-4 space-y-4 sm:space-y-5">
+                    {/* Group Vote Panel (Sidebar) */}
+                    {access === 'granted' && roomId && (
+                        <GroupVotePanel roomId={roomId} currentUserId={userId || undefined} />
+                    )}
+
                     {/* Top Spenders Row - Responsive Grid */}
                     <div className="grid grid-cols-2 gap-2 sm:gap-3">
                         {/* Dare King */}

@@ -40,6 +40,7 @@ import CreatorCountdown from "./components/CreatorCountdown";
 import EarningsModal from "./components/EarningsModal";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager";
 import { playMoneySound } from "@/utils/sounds";
+import GroupVoteManager from "./components/GroupVoteManager";
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -1470,6 +1471,7 @@ export default function TruthOrDareCreatorRoom() {
                     {/* CONTROL PANEL */}
                     <aside className="rounded-2xl border border-pink-500/40 bg-gray-950/70 backdrop-blur-xl p-4 space-y-4 shadow-[0_0_50px_rgba(236,72,153,0.15)] lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-pink-500/20 scrollbar-track-transparent">
                         {/* Host controls */}
+                        {roomId && <GroupVoteManager roomId={roomId} />}
 
                         {/* NEW: Earnings Dashboard */}
                         <div className="rounded-xl border border-green-500/40 bg-gradient-to-br from-green-950/30 to-emerald-950/30 backdrop-blur-md p-4 shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300 hover:shadow-[0_0_60px_rgba(34,197,94,0.3)]">
