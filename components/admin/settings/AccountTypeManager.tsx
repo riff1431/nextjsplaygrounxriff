@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Sparkles, Save, Edit2, Plus, Trash2, DollarSign, GripVertical } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Sparkles, Save, Edit2, Plus, Trash2, DollarSign, GripVertical, Upload, X } from "lucide-react";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 
 interface AccountType {
     id: string;
@@ -33,6 +34,8 @@ export default function AccountTypeManager() {
 
     // Form state for editing
     const [formData, setFormData] = useState<Partial<AccountType>>({});
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         fetchTypes();
@@ -62,6 +65,7 @@ export default function AccountTypeManager() {
             billing_type: type.billing_type || "one_time",
             badge_color: type.badge_color,
             badge_icon: type.badge_icon,
+            badge_icon_url: type.badge_icon_url,
             features: type.features || [],
             description: type.description,
             is_active: type.is_active,
@@ -77,6 +81,7 @@ export default function AccountTypeManager() {
             billing_type: "one_time",
             badge_color: "#ff69b4",
             badge_icon: "💎",
+            badge_icon_url: null,
             features: [],
             description: "",
             is_active: true,
@@ -92,6 +97,30 @@ export default function AccountTypeManager() {
         setFormData({});
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        try {
+            const url = await uploadToLocalServer(file);
+            setFormData(prev => ({ ...prev, badge_icon_url: url }));
+            toast.success("Badge image uploaded successfully");
+        } catch (error) {
+            console.error("Upload failed:", error);
+            toast.error("Failed to upload image");
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const removeImage = () => {
+        setFormData(prev => ({ ...prev, badge_icon_url: null }));
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     const handleSave = async () => {
         if (!editingType) return;
         setSaving(true);
@@ -104,6 +133,7 @@ export default function AccountTypeManager() {
                 billing_type: formData.billing_type,
                 badge_color: formData.badge_color,
                 badge_icon: formData.badge_icon,
+                badge_icon_url: formData.badge_icon_url,
                 features: formData.features,
                 description: formData.description,
                 is_active: formData.is_active,
@@ -139,6 +169,7 @@ export default function AccountTypeManager() {
             billing_type: formData.billing_type || "one_time",
             badge_color: formData.badge_color || "#ff69b4",
             badge_icon: formData.badge_icon || "💎",
+            badge_icon_url: formData.badge_icon_url,
             features: formData.features || [],
             description: formData.description || "",
             is_active: formData.is_active !== false,
@@ -228,10 +259,18 @@ export default function AccountTypeManager() {
                             {/* Badge Icon & Color */}
                             <div className="flex items-center gap-3 mb-3">
                                 <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl overflow-hidden relative"
                                     style={{ backgroundColor: `${type.badge_color}20` }}
                                 >
-                                    {type.badge_icon || "💎"}
+                                    {type.badge_icon_url ? (
+                                        <img
+                                            src={type.badge_icon_url}
+                                            alt={type.display_name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        type.badge_icon || "💎"
+                                    )}
                                 </div>
                                 <div>
                                     <div
@@ -423,17 +462,80 @@ export default function AccountTypeManager() {
                                 </div>
                             </div>
 
-                            {/* Badge Icon */}
+                            {/* Badge Icon / Image Upload */}
                             <div>
-                                <label className="text-xs text-gray-400 block mb-1">Badge Emoji/Icon</label>
-                                <input
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white"
-                                    value={formData.badge_icon || ""}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, badge_icon: e.target.value })
-                                    }
-                                    placeholder="💎"
-                                />
+                                <label className="text-xs text-gray-400 block mb-1">Badge Icon (Emoji or Image)</label>
+                                <div className="space-y-3">
+                                    {/* Image Preview Area */}
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className="w-16 h-16 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden relative group"
+                                            style={{ backgroundColor: `${formData.badge_color || '#ff69b4'}20` }}
+                                        >
+                                            {formData.badge_icon_url ? (
+                                                <>
+                                                    <img
+                                                        src={formData.badge_icon_url}
+                                                        alt="Badge"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <button
+                                                        onClick={removeImage}
+                                                        className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 text-red-400" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className="text-2xl">{formData.badge_icon || "💎"}</span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 space-y-2">
+                                            {/* File Upload Button */}
+                                            <div>
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleImageUpload}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+                                                <NeonButton
+                                                    variant="ghost"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="w-full flex items-center justify-center gap-2 text-xs py-2"
+                                                    disabled={uploadingImage}
+                                                >
+                                                    {uploadingImage ? (
+                                                        "Uploading..."
+                                                    ) : (
+                                                        <>
+                                                            <Upload className="w-3 h-3" />
+                                                            Upload Custom Image
+                                                        </>
+                                                    )}
+                                                </NeonButton>
+                                            </div>
+
+                                            {/* Emoji Fallback Input */}
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs">Emoji</span>
+                                                <input
+                                                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-3 py-2 text-sm text-white"
+                                                    value={formData.badge_icon || ""}
+                                                    onChange={(e) =>
+                                                        setFormData({ ...formData, badge_icon: e.target.value })
+                                                    }
+                                                    placeholder="💎"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">
+                                        Upload an image (PNG/JPG) to use as a badge. If no image is uploaded, the emoji will be used.
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Badge Color */}
