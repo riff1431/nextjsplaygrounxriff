@@ -323,7 +323,7 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             {/* Background Image (Cover) */}
             {creator.cover_url ? (
                 <div
-                    className="absolute inset-0 bg-cover bg-top opacity-60 group-hover:opacity-80 transition-opacity duration-700"
+                    className="absolute inset-0 bg-cover bg-top opacity-80 group-hover:opacity-100 transition-opacity duration-700"
                     style={{ backgroundImage: `url(${creator.cover_url})` }}
                 />
             ) : (
@@ -332,8 +332,8 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                 null
             )}
 
-            {/* Gradient Overlay for Text Readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/90 pointer-events-none" />
+            {/* Gradient Overlay for Text Readability - made slightly darker at bottom since avatars are bigger */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/90 pointer-events-none" />
 
 
             {/* Media area (aspect ratio spacer if needed, or just allow flex-grow) 
@@ -347,17 +347,17 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             {/* Body (fixed rhythm) */}
             <div className="relative p-3 flex-1 flex flex-col z-10">
                 {/* Row: Avatar + name + level */}
-                <div className="flex items-center justify-between gap-2 min-h-[22px]">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        {/* Avatar */}
+                <div className="flex items-center justify-between gap-3 min-h-[22px]">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        {/* Avatar - Increased size ~3x (w-6 is 1.5rem/24px -> w-20 is 5rem/80px) */}
                         {creator.avatar_url ? (
-                            <img src={creator.avatar_url} alt="" className="w-6 h-6 rounded-full border border-white/20 object-cover shrink-0" />
+                            <img src={creator.avatar_url} alt="" className="w-20 h-20 rounded-full border-2 border-white/20 object-cover shrink-0" />
                         ) : (
-                            <div className="w-6 h-6 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0">
-                                <User className="w-3 h-3 text-pink-300" />
+                            <div className="w-20 h-20 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
+                                <User className="w-8 h-8 text-pink-300" />
                             </div>
                         )}
-                        <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
+                        <div className="text-lg text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
                             {creator.name}
                         </div>
                     </div>
