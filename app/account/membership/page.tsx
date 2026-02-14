@@ -24,6 +24,7 @@ interface AccountType {
     display_name: string;
     description: string | null;
     badge_icon: string;
+    badge_icon_url: string | null;
     badge_color: string;
     price: number;
     is_active: boolean;
@@ -344,7 +345,7 @@ export default function MembershipPage() {
                             <p className="text-gray-400 text-sm mt-2">Express your style with a premium identity badge</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                             {accountTypes.map((type) => {
                                 const isCurrent = currentAccountTypeId === type.id;
                                 const isSelected = selectedAccountType?.id === type.id;
@@ -375,10 +376,18 @@ export default function MembershipPage() {
 
                                         {/* Badge Icon */}
                                         <div
-                                            className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-4"
+                                            className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 overflow-hidden relative"
                                             style={{ backgroundColor: `${type.badge_color}20` }}
                                         >
-                                            {type.badge_icon || "✨"}
+                                            {type.badge_icon_url ? (
+                                                <img
+                                                    src={type.badge_icon_url}
+                                                    alt={type.display_name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                type.badge_icon || "✨"
+                                            )}
                                         </div>
 
                                         {/* Display Name */}
@@ -390,7 +399,8 @@ export default function MembershipPage() {
                                                 border: `1px solid ${type.badge_color}40`,
                                             }}
                                         >
-                                            <span>{type.badge_icon}</span>
+                                            {/* Small preview of icon if it's an emoji/text, else just name */}
+                                            {!type.badge_icon_url && <span>{type.badge_icon}</span>}
                                             {type.display_name}
                                         </div>
 
@@ -444,31 +454,35 @@ export default function MembershipPage() {
             </div>
 
             {/* Payment Modal */}
-            {showPaymentModal && paymentContext === "membership" && selectedPlan && (
-                <OnboardingPaymentModal
-                    amount={selectedPlan.price}
-                    planName={selectedPlan.display_name}
-                    planType="membership"
-                    onSuccess={() => {
-                        setShowPaymentModal(false);
-                        saveMembership();
-                    }}
-                    onCancel={() => setShowPaymentModal(false)}
-                />
-            )}
-            {showPaymentModal && paymentContext === "account_type" && selectedAccountType && (
-                <OnboardingPaymentModal
-                    amount={selectedAccountType.price}
-                    planName={selectedAccountType.display_name}
-                    planType="account_type"
-                    onSuccess={() => {
-                        setShowPaymentModal(false);
-                        saveAccountType();
-                    }}
-                    onCancel={() => setShowPaymentModal(false)}
-                />
-            )}
-        </div>
+            {
+                showPaymentModal && paymentContext === "membership" && selectedPlan && (
+                    <OnboardingPaymentModal
+                        amount={selectedPlan.price}
+                        planName={selectedPlan.display_name}
+                        planType="membership"
+                        onSuccess={() => {
+                            setShowPaymentModal(false);
+                            saveMembership();
+                        }}
+                        onCancel={() => setShowPaymentModal(false)}
+                    />
+                )
+            }
+            {
+                showPaymentModal && paymentContext === "account_type" && selectedAccountType && (
+                    <OnboardingPaymentModal
+                        amount={selectedAccountType.price}
+                        planName={selectedAccountType.display_name}
+                        planType="account_type"
+                        onSuccess={() => {
+                            setShowPaymentModal(false);
+                            saveAccountType();
+                        }}
+                        onCancel={() => setShowPaymentModal(false)}
+                    />
+                )
+            }
+        </div >
     );
 }
 
