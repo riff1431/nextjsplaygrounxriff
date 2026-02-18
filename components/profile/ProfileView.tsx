@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star } from "lucide-react";
+import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star, ScrollText } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -342,6 +342,16 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                             >
                                 <Share2 className="w-4 h-4 mr-2" />
                                 <span className="hidden md:inline">Share</span>
+                            </Button>
+
+                            {/* Get Confession Button — visible to everyone viewing this profile */}
+                            <Button
+                                onClick={() => router.push(`/rooms/confessions?creator=${encodeURIComponent(profile.username || profile.full_name || profile.id)}`)}
+                                className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(225,29,72,0.35)] border border-rose-400/20 font-semibold transition-all"
+                                title="See this creator's confessions"
+                            >
+                                <ScrollText className="w-4 h-4 mr-2" />
+                                <span>Get Confession</span>
                             </Button>
                         </div>
                     </div>

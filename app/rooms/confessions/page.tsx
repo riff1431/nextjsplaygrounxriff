@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Video, Lock, Check, X, FileText, Mic, CreditCard, Wallet, Building2, Globe } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Video, Lock, Check, X, FileText, Mic, CreditCard, Wallet, Building2, Globe, Search, Filter } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -47,6 +47,13 @@ interface ConfessionRequest {
     created_at: string;
 }
 
+interface CreatorInfo {
+    id: string;
+    full_name: string;
+    username: string;
+    avatar_url?: string;
+}
+
 interface Confession {
     id: string;
     tier: string;
@@ -57,6 +64,7 @@ interface Confession {
     type: 'Text' | 'Voice' | 'Video';
     price: number;
     unlocked?: boolean;
+    creator?: CreatorInfo;
 }
 
 // --------------------------------------------------------------------------
@@ -71,9 +79,11 @@ const tierColors: Record<string, string> = {
 
 export default function ConfessionsRoomPreview() {
     const router = useRouter();
-    const params = useParams();
-    const roomId = params?.roomId as string || "default-room";
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+
+    // Dynamic room discovery
+    const [roomId, setRoomId] = useState<string | null>(null);
 
     // State
     const [requests, setRequests] = useState<ConfessionRequest[]>([]);
@@ -81,6 +91,12 @@ export default function ConfessionsRoomPreview() {
     const [loadingRequests, setLoadingRequests] = useState(false);
     const [loadingWall, setLoadingWall] = useState(false);
     const [myWalletBalance, setMyWalletBalance] = useState(0);
+
+    // Filter & Search
+    const [tierFilter, setTierFilter] = useState<string>('All');
+    const [creatorSearch, setCreatorSearch] = useState('');
+    const [searchDebounce, setSearchDebounce] = useState<ReturnType<typeof setTimeout> | null>(null);
+    const [isSearchMode, setIsSearchMode] = useState(false);
 
     // Request Form
     const [reqType, setReqType] = useState<'Text' | 'Audio' | 'Video'>('Text');
@@ -108,11 +124,54 @@ export default function ConfessionsRoomPreview() {
     const [goalTotal, setGoalTotal] = useState(140);
     const pay = (amount: number) => setGoalTotal(g => g + amount);
 
+    // Discover room on mount
+    useEffect(() => {
+        if (!user) return;
+
+        async function discoverRoom() {
+            const supabase = createClient();
+
+            // Try to find a room that has confessions
+            const { data: confessionRoom } = await supabase
+                .from('confessions')
+                .select('room_id')
+                .limit(1)
+                .maybeSingle();
+
+            if (confessionRoom?.room_id) {
+                setRoomId(confessionRoom.room_id);
+                return;
+            }
+
+            // Fallback: find any available room
+            const { data: anyRoom } = await supabase
+                .from('rooms')
+                .select('id')
+                .limit(1)
+                .maybeSingle();
+
+            if (anyRoom?.id) {
+                setRoomId(anyRoom.id);
+            }
+        }
+
+        discoverRoom();
+    }, [user]);
+
     useEffect(() => {
         if (user && roomId) {
             fetchRequests();
-            fetchConfessions();
             fetchWallet();
+
+            // If ?creator= param is present, auto-search that creator
+            const creatorParam = searchParams?.get('creator');
+            if (creatorParam) {
+                setCreatorSearch(creatorParam);
+                setIsSearchMode(true);
+                fetchConfessions(creatorParam, tierFilter);
+            } else {
+                fetchConfessions();
+            }
 
             // [New] Real-time Alerts
             const supabase = createClient();
@@ -155,24 +214,113 @@ export default function ConfessionsRoomPreview() {
         }
     };
 
-    const fetchConfessions = async () => {
+    const fetchConfessions = async (searchQuery?: string, tier?: string) => {
         setLoadingWall(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/confessions`);
-            const data = await res.json();
-            if (data.confessions) {
-                const mapped = data.confessions.map((c: any) => ({
-                    id: c.id,
-                    tier: c.tier || 'Spicy',
-                    title: c.title,
-                    teaser: c.teaser || c.title,
-                    content: c.content,
-                    media_url: c.media_url,
-                    type: c.type || 'Text',
-                    price: c.price || 5, // Default if missing
+            const q = (searchQuery ?? creatorSearch).trim();
+            const t = tier ?? tierFilter;
+            const supabase = createClient();
+
+            let confessionRows: any[] = [];
+
+            if (q) {
+                // Creator search: find profiles matching name/username, then their rooms, then confessions
+                setIsSearchMode(true);
+
+                const { data: matchedProfiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, username, avatar_url')
+                    .or(`full_name.ilike.%${q}%,username.ilike.%${q}%`)
+                    .limit(20);
+
+                if (!matchedProfiles || matchedProfiles.length === 0) {
+                    setConfessions([]);
+                    return;
+                }
+
+                const creatorIds = matchedProfiles.map((p: any) => p.id);
+
+                const { data: rooms } = await supabase
+                    .from('rooms')
+                    .select('id, host_id')
+                    .in('host_id', creatorIds);
+
+                if (!rooms || rooms.length === 0) {
+                    setConfessions([]);
+                    return;
+                }
+
+                const roomIds = rooms.map((r: any) => r.id);
+
+                let confQuery = supabase
+                    .from('confessions')
+                    .select('*')
+                    .in('room_id', roomIds)
+                    .eq('status', 'Published')
+                    .order('created_at', { ascending: false });
+
+                if (t && t !== 'All') confQuery = confQuery.eq('tier', t);
+
+                const { data: confData } = await confQuery;
+
+                // Enrich with creator info
+                const roomToCreator = new Map<string, any>();
+                for (const room of rooms) {
+                    const profile = matchedProfiles.find((p: any) => p.id === room.host_id);
+                    if (profile) roomToCreator.set(room.id, profile);
+                }
+
+                confessionRows = (confData || []).map((c: any) => ({
+                    ...c,
+                    creator: roomToCreator.get(c.room_id) || null,
                 }));
-                setConfessions(mapped);
+
+            } else if (t !== 'All') {
+                // Tier filter only (no creator search)
+                setIsSearchMode(true);
+
+                let confQuery = supabase
+                    .from('confessions')
+                    .select('*')
+                    .eq('status', 'Published')
+                    .eq('tier', t)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                const { data: confData } = await confQuery;
+                confessionRows = confData || [];
+
+            } else if (roomId) {
+                // Default: fetch from current room
+                setIsSearchMode(false);
+                const res = await fetch(`/api/v1/rooms/${roomId}/confessions`);
+                const data = await res.json();
+                confessionRows = data.confessions || [];
+            } else {
+                // No room, no search — fetch all published
+                setIsSearchMode(true);
+                const { data: confData } = await supabase
+                    .from('confessions')
+                    .select('*')
+                    .eq('status', 'Published')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                confessionRows = confData || [];
             }
+
+            const mapped = confessionRows.map((c: any) => ({
+                id: c.id,
+                tier: c.tier || 'Spicy',
+                title: c.title,
+                teaser: c.teaser || c.title,
+                content: c.content,
+                media_url: c.media_url,
+                type: c.type || 'Text',
+                price: c.price || 5,
+                creator: c.creator || null,
+            }));
+            setConfessions(mapped);
+
         } catch (e) {
             console.error("Failed wall", e);
         } finally {
@@ -180,10 +328,27 @@ export default function ConfessionsRoomPreview() {
         }
     };
 
+
+    // Debounced creator search
+    const handleCreatorSearch = (value: string) => {
+        setCreatorSearch(value);
+        if (searchDebounce) clearTimeout(searchDebounce);
+        const timeout = setTimeout(() => {
+            fetchConfessions(value, tierFilter);
+        }, 400);
+        setSearchDebounce(timeout);
+    };
+
+    // Tier filter change — immediately re-fetch
+    const handleTierFilter = (tier: string) => {
+        setTierFilter(tier);
+        fetchConfessions(creatorSearch, tier);
+    };
+
     const [myUnlocks, setMyUnlocks] = useState<Set<string>>(new Set());
 
     const handleOpenConfirm = () => {
-        if (!reqTopic.trim() || reqAmount <= 0) return;
+        if (!roomId || !reqTopic.trim() || reqAmount <= 0) return;
         setShowConfirmModal(true);
     };
 
@@ -198,6 +363,7 @@ export default function ConfessionsRoomPreview() {
     // ... (rest of the component logic, updating alerts to showToast)
 
     const handleConfirmAndPay = async () => {
+        if (!roomId) { showToast('Room not found. Please refresh.', 'error'); return; }
         setIsSending(true);
 
         if (selectedPaymentMethod === 'stripe') {
@@ -703,6 +869,60 @@ export default function ConfessionsRoomPreview() {
                         </div>
                     </div>
 
+                    {/* --- FILTER & SEARCH BAR --- */}
+                    <div className="flex flex-wrap items-center gap-3 mb-5">
+                        {/* Tier Filter Pills */}
+                        <div className="flex items-center gap-1.5">
+                            <Filter className="w-4 h-4 text-gray-400" />
+                            {['All', 'Soft', 'Spicy', 'Dirty', 'Dark', 'Forbidden'].map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => handleTierFilter(t)}
+                                    className={cx(
+                                        "px-3 py-1.5 rounded-xl border text-xs font-medium transition-all",
+                                        tierFilter === t
+                                            ? t === 'All'
+                                                ? "bg-rose-600/20 border-rose-500/40 text-rose-200 shadow-[0_0_12px_rgba(225,29,72,0.2)]"
+                                                : cx("bg-black/60 shadow-[0_0_12px_rgba(225,29,72,0.15)]", tierColors[t] || "border-rose-500/40 text-rose-200")
+                                            : "bg-black/30 border-white/10 text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                                    )}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="hidden sm:block w-px h-6 bg-white/10" />
+
+                        {/* Creator Search */}
+                        <div className="relative flex-1 min-w-[200px] max-w-[320px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <input
+                                type="text"
+                                value={creatorSearch}
+                                onChange={(e) => handleCreatorSearch(e.target.value)}
+                                placeholder="Search creator name or username..."
+                                className="w-full pl-9 pr-3 py-2 rounded-xl border border-white/10 bg-black/40 text-sm text-white placeholder-gray-500 outline-none focus:border-rose-500/40 focus:shadow-[0_0_12px_rgba(225,29,72,0.15)] transition-all"
+                            />
+                            {creatorSearch && (
+                                <button
+                                    onClick={() => { setCreatorSearch(''); fetchConfessions('', tierFilter); }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-white/10"
+                                >
+                                    <X className="w-3.5 h-3.5 text-gray-400" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Active search indicator */}
+                        {isSearchMode && (
+                            <span className="text-[10px] text-rose-300 border border-rose-500/30 px-2 py-1 rounded-full bg-rose-600/10">
+                                {creatorSearch ? `Results for "${creatorSearch}"` : tierFilter !== 'All' ? `Filtered: ${tierFilter}` : 'All creators'}
+                            </span>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                         {/* --- LEFT SIDEBAR --- */}
@@ -790,6 +1010,19 @@ export default function ConfessionsRoomPreview() {
                                         <div key={c.id} className={cx("rounded-2xl border bg-black/35 p-3 transition", isUnlocked ? "border-rose-400/35" : "border-white/10")}>
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
+                                                    {/* Creator badge (visible in search mode) */}
+                                                    {c.creator && (
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-[9px] font-bold text-white overflow-hidden">
+                                                                {c.creator.avatar_url ? (
+                                                                    <img src={c.creator.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    c.creator.full_name?.charAt(0)?.toUpperCase() || '?'
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[10px] text-rose-300 font-medium">@{c.creator.username || c.creator.full_name}</span>
+                                                        </div>
+                                                    )}
                                                     <div className="text-sm text-gray-100 flex items-center gap-2">
                                                         <span className="inline-flex items-center gap-2">
                                                             <Lock className={cx("w-3 h-3", isUnlocked ? "opacity-0" : "text-rose-200")} />
