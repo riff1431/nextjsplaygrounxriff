@@ -286,13 +286,13 @@ export default function BarLoungeRoom() {
 
         // Increment viewer count on join
         supabase.rpc('increment_viewer_count', { p_room_id: roomId, p_amount: 1 }).then(({ error }) => {
-            if (error) console.error("Error incrementing view count:", error);
+            if (error) console.warn("Error incrementing view count:", error.message);
         });
 
         return () => {
             // Decrement on leave
             supabase.rpc('increment_viewer_count', { p_room_id: roomId, p_amount: -1 }).then(({ error }) => {
-                if (error) console.error("Error decrementing view count:", error);
+                if (error) console.warn("Error decrementing view count:", error.message);
             });
         };
     }, [roomId, viewState]);
@@ -311,12 +311,13 @@ export default function BarLoungeRoom() {
         const channel = supabase.channel("bar_lounge_events_" + roomId)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "revenue_events", filter: `room_key=eq.${roomId}` }, (payload) => {
                 const meta = payload.new.metadata || {};
-                const itemLabel = payload.new.item_label;
+                const itemType = meta.type;
+                const itemLabel = meta.label;
 
                 // Trigger effects based on item type/special
                 if (meta.special === "champagne") onChampagneEffect("champagne");
                 else if (meta.special === "vipbottle") onChampagneEffect("vipbottle");
-                else if (payload.new.item_type === 'spin') {
+                else if (itemType === 'spin') {
                     // Spin outcome effect
                     const out = meta.outcome;
                     if (out) {
@@ -324,7 +325,7 @@ export default function BarLoungeRoom() {
                         else if (out.id === "o5") pushFx(["confetti"], `🎰 ${out.label}`);
                         else pushFx([], `🎰 ${out.label}`);
                     }
-                } else if (payload.new.item_type === 'vip') {
+                } else if (itemType === 'vip') {
                     pushFx(["spotlight"], `👑 ${itemLabel} unlocked`);
                 } else {
                     // Regular drink
@@ -382,7 +383,6 @@ export default function BarLoungeRoom() {
             p_room_id: roomId, p_item_type: type, p_item_label: label, p_amount: price, p_metadata: meta
         });
         if (error) {
-            console.error("Purchase failed:", error);
             pushFx([], `Purchase failed: ${error.message || "Insufficient funds"}`);
         }
     };
@@ -405,7 +405,6 @@ export default function BarLoungeRoom() {
         } else {
             setSpinning(false);
             if (error) {
-                console.error("Spin failed:", error);
                 pushFx([], `Spin failed: ${error.message || "Insufficient funds"}`);
             }
         }
@@ -546,17 +545,21 @@ export default function BarLoungeRoom() {
 
             <div className="max-w-7xl mx-auto px-6 py-6">
                 {/* Effects overlay */}
-                {fx.length > 0 && (
+                {(fx.length > 0 || toast) && (
                     <div className="fixed inset-0 pointer-events-none z-[60]">
-                        {fx.some((x) => x.kind === "spotlight") && <div className="absolute inset-0 bl-spotlight" />}
-                        {fx.some((x) => x.kind === "confetti") && (
-                            <div className="absolute inset-0 overflow-hidden">
-                                {Array.from({ length: 42 }).map((_, i) => (
-                                    <span key={i} className="bl-confetti" style={{ left: `${Math.random() * 100}%`, top: `-12px`, animationDelay: `${Math.random() * 0.35}s`, animationDuration: `${1.1 + Math.random() * 0.6}s`, opacity: 0.9, transform: `translateY(0) rotate(${Math.random() * 360}deg)` }} />
-                                ))}
-                            </div>
+                        {fx.length > 0 && (
+                            <>
+                                {fx.some((x) => x.kind === "spotlight") && <div className="absolute inset-0 bl-spotlight" />}
+                                {fx.some((x) => x.kind === "confetti") && (
+                                    <div className="absolute inset-0 overflow-hidden">
+                                        {Array.from({ length: 42 }).map((_, i) => (
+                                            <span key={i} className="bl-confetti" style={{ left: `${Math.random() * 100}%`, top: `-12px`, animationDelay: `${Math.random() * 0.35}s`, animationDuration: `${1.1 + Math.random() * 0.6}s`, opacity: 0.9, transform: `translateY(0) rotate(${Math.random() * 360}deg)` }} />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
-                        {toast && <div className="absolute top-6 left-1/2 -translate-x-1/2 rounded-2xl border border-white/10 bg-black/70 px-4 py-2 text-sm text-gray-100 shadow-[0_0_40px_rgba(255,0,200,0.25)] z-[70]">{toast}</div>}
+                        {toast && <div className="absolute top-10 left-1/2 -translate-x-1/2 rounded-full border border-pink-500/40 bg-black/90 px-6 py-3 text-sm text-pink-100 font-medium shadow-[0_0_40px_rgba(255,0,200,0.3)] z-[70] transition-all animate-in fade-in slide-in-from-top-4">{toast}</div>}
                     </div>
                 )}
 

@@ -225,11 +225,11 @@ export default function BarLoungeCreatorStudioPage() {
         if (recentEvents) {
             const formatted = recentEvents.map(e => ({
                 id: e.id,
-                ts: new Date(e.created_at).getTime(),
-                kind: e.item_type || 'drink',
-                fanId: e.sender_id,
-                label: e.item_label || 'Item',
-                amount: e.amount,
+                ts: new Date(e.occurred_at || new Date()).getTime(),
+                kind: e.metadata?.type || 'drink',
+                fanId: e.fan_user_id,
+                label: e.metadata?.label || 'Item',
+                amount: e.gross_amount,
                 meta: e.metadata
             })) as RevenueEvent[];
             setEvents(formatted.reverse());
@@ -245,11 +245,11 @@ export default function BarLoungeCreatorStudioPage() {
                     const newEvent = payload.new;
                     const fmt: RevenueEvent = {
                         id: newEvent.id,
-                        ts: new Date(newEvent.created_at).getTime(),
-                        kind: newEvent.item_type || 'drink',
-                        fanId: newEvent.sender_id,
-                        label: newEvent.item_label || 'Item',
-                        amount: newEvent.amount,
+                        ts: new Date(newEvent.occurred_at || new Date()).getTime(),
+                        kind: newEvent.metadata?.type || 'drink',
+                        fanId: newEvent.fan_user_id,
+                        label: newEvent.metadata?.label || 'Item',
+                        amount: newEvent.gross_amount,
                         meta: newEvent.metadata
                     } as any;
 
