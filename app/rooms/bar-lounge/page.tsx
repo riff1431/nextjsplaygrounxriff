@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft, Video, Send, Zap, Star, Sparkles, MessageCircle, Crown, Search, Bell, LogOut, User, CreditCard, Users, Settings, Heart, Image as ImageIcon, Link as LinkIcon, Lock } from "lucide-react";
 
 /**
- * Bar Lounge Room — Fan View Preview
+ * Bar Lounge Room — Fan View
  * ----------------------------------
  * Purpose: A chill, music-focused room where billing is time-based (per minute)
  * but ONLY starts after the fan interacts (send message, buy drink, spin bottle).
@@ -76,7 +76,7 @@ const toneClasses = (tone: "pink" | "purple" | "blue" | "green" | "yellow" | "re
 
 // ---- Bar Lounge Room (Preview) ------------------------------------------
 
-export default function BarLoungeRoomPreview() {
+export default function BarLoungeRoom() {
     const onBack = () => window.history.back();
 
     const ENTRY_FEE = 10;
@@ -348,7 +348,7 @@ export default function BarLoungeRoomPreview() {
                             <ArrowLeft className="w-4 h-4" /> Back
                         </button>
                         <div>
-                            <div className="text-violet-200 text-sm">Bar Lounge — Fan View (Preview)</div>
+                            <div className="text-violet-200 text-sm">Bar Lounge — Fan View</div>
                             <div className="text-[11px] text-gray-400">Entry + per-minute billing starts only after interaction</div>
                         </div>
                     </div>

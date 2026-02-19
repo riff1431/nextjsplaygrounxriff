@@ -236,9 +236,8 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 4. Bar Lounge */}
-                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/creator/rooms/bar-lounge')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Wine className="w-12 h-12 text-gray-800 group-hover:text-purple-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-medium uppercase tracking-wide border border-purple-500/30">Coming Soon</span>
                             <div className="p-3 w-fit rounded-xl bg-purple-500/20 text-purple-400 mb-4 group-hover:bg-purple-500 group-hover:text-white transition">
                                 <Wine className="w-6 h-6" />
                             </div>

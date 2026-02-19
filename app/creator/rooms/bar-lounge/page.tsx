@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 /**
- * Bar Lounge — Creator Studio (Preview)
+ * Bar Lounge — Creator Studio
  * ------------------------------------
  * Mirrors the fan room's monetization surfaces:
  * - Drinks (incl Champagne + VIP Bottle)
@@ -370,7 +370,7 @@ export default function BarLoungeCreatorStudioPage() {
                     </button>
 
                     <div>
-                        <div className="text-violet-200 text-sm">Bar Lounge — Creator Studio (Preview)</div>
+                        <div className="text-violet-200 text-sm">Bar Lounge — Creator Studio</div>
                         <div className="text-[11px] text-gray-400">
                             Live controls + revenue feed. (Fan billing begins after interaction in fan view.)
                         </div>
