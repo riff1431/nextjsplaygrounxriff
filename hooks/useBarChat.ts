@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export type ChatMessage = {
@@ -16,17 +16,24 @@ export function useBarChat(roomId: string | null) {
     const supabase = createClient();
 
     useEffect(() => {
-        if (!roomId) return;
+        if (!roomId) {
+            setMessages([]);
+            return;
+        }
 
         // Load initial messages
         const load = async () => {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from("bar_lounge_messages")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
-                .limit(50);
+                .limit(100);
 
+            if (error) {
+                console.error("Error loading chat:", error);
+                return;
+            }
             if (data) setMessages(data.reverse());
         };
 
@@ -34,13 +41,22 @@ export function useBarChat(roomId: string | null) {
 
         // Subscribe to new messages
         const channel = supabase
-            .channel(`chat:${roomId}`)
+            .channel(`bar-chat-${roomId}`)
             .on(
                 "postgres_changes",
-                { event: "INSERT", schema: "public", table: "bar_lounge_messages", filter: `room_id=eq.${roomId}` },
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "bar_lounge_messages",
+                    filter: `room_id=eq.${roomId}`
+                },
                 (payload) => {
                     const newMsg = payload.new as ChatMessage;
-                    setMessages((prev) => [...prev, newMsg]);
+                    setMessages((prev) => {
+                        // Avoid duplicates if same message arrives via multiple paths
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
                 }
             )
             .subscribe();
@@ -48,12 +64,11 @@ export function useBarChat(roomId: string | null) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId]);
+    }, [roomId, supabase]);
 
-    const sendMessage = async (content: string, userId?: string, handle?: string) => {
+    const sendMessage = useCallback(async (content: string, userId?: string, handle?: string) => {
         if (!roomId || !content.trim()) return;
 
-        // Optimistic update (optional, but skipping for simplicity/correctness first)
         const { error } = await supabase.from("bar_lounge_messages").insert({
             room_id: roomId,
             user_id: userId ?? null,
@@ -61,8 +76,11 @@ export function useBarChat(roomId: string | null) {
             content: content.trim(),
         });
 
-        if (error) console.error("Failed to send message:", error);
-    };
+        if (error) {
+            console.error("Failed to send message:", error);
+            throw error;
+        }
+    }, [roomId, supabase]);
 
     return { messages, sendMessage };
 }

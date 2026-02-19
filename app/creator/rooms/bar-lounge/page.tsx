@@ -140,6 +140,10 @@ export default function BarLoungeCreatorStudioPage() {
     const [isLive, setIsLive] = useState(false);
     const [pinnedMsg, setPinnedMsg] = useState<string>("VIP bottles get priority attention.");
     const [chat, setChat] = useState("");
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const { messages, sendMessage } = useBarChat(roomId);
+
     const [fans, setFans] = useState<FanRow[]>([]);
     const [events, setEvents] = useState<RevenueEvent[]>([]);
 
@@ -150,7 +154,13 @@ export default function BarLoungeCreatorStudioPage() {
     const [drinks, setDrinks] = useState<Drink[]>([]);
     const [spinOutcomes, setSpinOutcomes] = useState<SpinOutcome[]>([]);
 
-    const { messages, sendMessage } = useBarChat(roomId);
+    const [selectedFanId, setSelectedFanId] = useState<string>("f2");
+    const [dareText, setDareText] = useState<string>("Tell me your wildest nightlife confession in 10 seconds.");
+
+    // Auto-scroll chat
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     // --- Initialization ---
     useEffect(() => {
@@ -196,19 +206,8 @@ export default function BarLoungeCreatorStudioPage() {
 
             if (roomList) {
                 setRooms(roomList);
-                const active = roomList.find(r => r.status === 'live');
-                if (active) {
-                    setRoomId(active.id);
-                    setIsLive(true);
-                    setViewState("live");
-                    // Load events for active room
-                    loadRoomEvents(active.id);
-                } else {
-                    setViewState("history");
-                }
-            } else {
-                setViewState("history");
             }
+            setViewState("history");
         };
 
         init();
@@ -220,17 +219,17 @@ export default function BarLoungeCreatorStudioPage() {
             .from("revenue_events")
             .select("*")
             .eq("room_key", rId)
-            .order("occurred_at", { ascending: false })
+            .order("created_at", { ascending: false })
             .limit(20);
 
         if (recentEvents) {
             const formatted = recentEvents.map(e => ({
                 id: e.id,
-                ts: new Date(e.occurred_at).getTime(),
-                kind: e.metadata.type || 'drink',
-                fanId: e.fan_user_id,
-                label: e.metadata.label || 'Item',
-                amount: e.gross_amount,
+                ts: new Date(e.created_at).getTime(),
+                kind: e.item_type || 'drink',
+                fanId: e.sender_id,
+                label: e.item_label || 'Item',
+                amount: e.amount,
                 meta: e.metadata
             })) as RevenueEvent[];
             setEvents(formatted.reverse());
@@ -246,11 +245,11 @@ export default function BarLoungeCreatorStudioPage() {
                     const newEvent = payload.new;
                     const fmt: RevenueEvent = {
                         id: newEvent.id,
-                        ts: new Date(newEvent.occurred_at).getTime(),
-                        kind: newEvent.metadata.type || 'drink',
-                        fanId: newEvent.fan_user_id,
-                        label: newEvent.metadata.label || 'Item',
-                        amount: newEvent.gross_amount,
+                        ts: new Date(newEvent.created_at).getTime(),
+                        kind: newEvent.item_type || 'drink',
+                        fanId: newEvent.sender_id,
+                        label: newEvent.item_label || 'Item',
+                        amount: newEvent.amount,
                         meta: newEvent.metadata
                     } as any;
 
@@ -347,21 +346,37 @@ export default function BarLoungeCreatorStudioPage() {
     const endSession = async () => {
         if (roomId) {
             await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId);
-            const updated = rooms.map(r => r.id === roomId ? { ...r, status: "ended" } : r);
-            setRooms(updated);
         }
         setRoomId(null);
         setIsLive(false);
         setViewState("history");
+        // Refresh room list
+        const { data: roomList } = await supabase
+            .from("rooms")
+            .select("id, title, status, created_at")
+            .eq("host_id", me.id)
+            .eq("type", "bar-lounge")
+            .order("created_at", { ascending: false });
+        if (roomList) setRooms(roomList);
+    };
+
+    const handleEndSpecificRoom = async (id: string) => {
+        const { error } = await supabase.from("rooms").update({ status: "ended" }).eq("id", id);
+        if (error) {
+            pushToast("Failed to end room");
+        } else {
+            setRooms((prev: Room[]) => prev.map(r => r.id === id ? { ...r, status: "ended" } : r));
+            pushToast("Session ended");
+        }
     };
 
     // --- Live Dashboard Logic (Refactored from previous version) ---
     const feedRef = useRef<HTMLDivElement | null>(null);
     const bumpFanSpend = (fanId: string, delta: number) => {
-        setFans((rows) => rows.map((f) => (f.id === fanId ? { ...f, spentTotal: f.spentTotal + delta } : f)));
+        setFans((rows: FanRow[]) => rows.map((f) => (f.id === fanId ? { ...f, spentTotal: f.spentTotal + delta } : f)));
     };
     const addEvent = (evt: RevenueEvent) => {
-        setEvents((rows) => [evt, ...rows].slice(0, 50));
+        setEvents((rows: RevenueEvent[]) => [evt, ...rows].slice(0, 50));
         window.setTimeout(() => { if (feedRef.current) feedRef.current.scrollTop = 0; }, 0);
     };
 
@@ -382,8 +397,6 @@ export default function BarLoungeCreatorStudioPage() {
     const unmuteFan = (fanId: string) => setFans((rows) => rows.map((f) => (f.id === fanId ? { ...f, muted: false } : f)));
     const kickFan = (fanId: string) => setFans((rows) => rows.filter((f) => f.id !== fanId));
 
-    const [selectedFanId, setSelectedFanId] = useState<string>("f2");
-    const [dareText, setDareText] = useState<string>("Tell me your wildest nightlife confession in 10 seconds.");
     const selectedFan = fans.find((f) => f.id === selectedFanId);
     const livePriority = (f: FanRow) => (f.priorityUntilTs && f.priorityUntilTs > Date.now() ? true : false);
 
@@ -451,17 +464,25 @@ export default function BarLoungeCreatorStudioPage() {
                                     <div className="text-xl font-semibold text-white">{room.title || "Untitled Session"}</div>
                                     <div className="text-sm text-gray-400 mt-1">Started {new Date(room.created_at).toLocaleString()}</div>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setRoomId(room.id);
-                                        setIsLive(true);
-                                        setViewState("live");
-                                        loadRoomEvents(room.id);
-                                    }}
-                                    className="rounded-xl bg-emerald-600 px-6 py-3 text-white font-medium hover:bg-emerald-500 transition-colors flex items-center gap-2"
-                                >
-                                    <Play className="w-4 h-4" /> Resume
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleEndSpecificRoom(room.id)}
+                                        className="rounded-xl border border-pink-500/30 bg-pink-900/20 px-4 py-3 text-pink-200 text-sm font-medium hover:bg-pink-900/30 transition-colors"
+                                    >
+                                        End Session
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setRoomId(room.id);
+                                            setIsLive(true);
+                                            setViewState("live");
+                                            loadRoomEvents(room.id);
+                                        }}
+                                        className="rounded-xl bg-emerald-600 px-6 py-3 text-white font-medium hover:bg-emerald-500 transition-colors flex items-center gap-2"
+                                    >
+                                        <Play className="w-4 h-4" /> Resume
+                                    </button>
+                                </div>
                             </div>
                         </NeonCard>
                     ))}
@@ -738,17 +759,45 @@ export default function BarLoungeCreatorStudioPage() {
                             <div className="text-violet-200 text-sm">Lounge Chat</div>
                             <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-200 bg-black/40">Room</span>
                         </div>
-                        <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[320px] overflow-auto flex flex-col-reverse">
+                        <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[320px] overflow-auto flex flex-col">
+                            <div className="flex-1" />
                             {messages.length === 0 && <div className="text-sm text-gray-500 text-center py-4">No messages yet.</div>}
-                            {messages.map((m) => (
-                                <div key={m.id} className="text-sm text-gray-200 mb-2">
-                                    <span className={m.handle === "PinkVibe" ? "text-fuchsia-300" : "text-violet-200"}>{m.handle || "Start"}</span>: {m.content}
-                                </div>
-                            ))}
+                            {messages.map((m) => {
+                                const isMe = m.user_id === me?.id;
+                                return (
+                                    <div key={m.id} className="text-sm text-gray-200 mb-2">
+                                        <span className={cx("font-bold", isMe ? "text-fuchsia-300" : "text-violet-200")}>
+                                            {m.handle || "Start"}
+                                        </span>: {m.content}
+                                    </div>
+                                );
+                            })}
+                            <div ref={chatEndRef} />
                         </div>
                         <div className="mt-3 flex items-center gap-2">
-                            <input value={chat} onChange={(e) => setChat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && chat.trim()) { sendMessage(chat, "creator-id", "PinkVibe"); setChat(""); } }} className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none" placeholder="Type message…" />
-                            <button className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2" onClick={() => { if (chat.trim()) { sendMessage(chat, "creator-id", "PinkVibe"); setChat(""); } }}>
+                            <input
+                                value={chat}
+                                onChange={(e) => setChat(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && chat.trim()) {
+                                        const myHandle = me?.user_metadata?.username || me?.user_metadata?.full_name || "PinkVibe";
+                                        sendMessage(chat, me?.id, myHandle);
+                                        setChat("");
+                                    }
+                                }}
+                                className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none"
+                                placeholder="Type message…"
+                            />
+                            <button
+                                className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2"
+                                onClick={() => {
+                                    if (chat.trim()) {
+                                        const myHandle = me?.user_metadata?.username || me?.user_metadata?.full_name || "PinkVibe";
+                                        sendMessage(chat, me?.id, myHandle);
+                                        setChat("");
+                                    }
+                                }}
+                            >
                                 <Send className="w-4 h-4" /> Send
                             </button>
                         </div>

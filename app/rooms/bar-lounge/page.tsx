@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useBarChat } from "@/hooks/useBarChat";
 import { useAuth } from "@/app/context/AuthContext"; // Integrated Auth Context
@@ -80,11 +80,18 @@ export default function BarLoungeRoom() {
 
     // Selected Room State
     const [roomId, setRoomId] = useState<string | null>(null);
+    const { messages, sendMessage } = useBarChat(roomId);
     const [hostId, setHostId] = useState<string | null>(null);
     const [hostProfile, setHostProfile] = useState<any>(null);
     const [billingActive, setBillingActive] = useState(false);
     const [spentHidden, setSpentHidden] = useState(32);
     const [chat, setChat] = useState("");
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll chat
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     // Config
     const [drinks, setDrinks] = useState<any[]>([]);
@@ -291,7 +298,6 @@ export default function BarLoungeRoom() {
     }, [roomId, viewState]);
 
     const activateBilling = () => { if (!billingActive && viewState === 'watching') setBillingActive(true); };
-    const { messages, sendMessage } = useBarChat(roomId);
 
     // Effects for champagne/VIP
     type FX = { id: string; kind: "confetti" | "spotlight"; createdAt: number };
@@ -377,7 +383,7 @@ export default function BarLoungeRoom() {
         });
         if (error) {
             console.error("Purchase failed:", error);
-            toast && setToast("Purchase failed"); // quick feedback
+            pushFx([], `Purchase failed: ${error.message || "Insufficient funds"}`);
         }
     };
 
@@ -398,7 +404,10 @@ export default function BarLoungeRoom() {
             // Effect handled by subscription
         } else {
             setSpinning(false);
-            if (error) console.error("Spin failed:", error);
+            if (error) {
+                console.error("Spin failed:", error);
+                pushFx([], `Spin failed: ${error.message || "Insufficient funds"}`);
+            }
         }
     };
 
@@ -652,14 +661,50 @@ export default function BarLoungeRoom() {
                     <div className="lg:col-span-4 space-y-6">
                         <NeonCard className="p-4">
                             <div className="flex items-center justify-between mb-3"><div className="text-violet-200 text-sm">Lounge Chat</div></div>
-                            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[420px] overflow-auto flex flex-col-reverse">
-                                {messages.map((m) => (
-                                    <div key={m.id} className="text-sm text-gray-200 mb-2"><span className={m.handle === "PinkVibe" ? "text-fuchsia-300" : "text-violet-200"}>{m.handle || "Start"}</span>: {m.content}</div>
-                                ))}
+                            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[420px] overflow-auto flex flex-col">
+                                <div className="flex-1" />
+                                {messages.map((m) => {
+                                    const isHost = m.handle === "Host" || m.user_id === hostId;
+                                    return (
+                                        <div key={m.id} className="text-sm text-gray-200 mb-2">
+                                            <span className={cx(
+                                                "font-bold",
+                                                isHost ? "text-fuchsia-300" : "text-violet-200"
+                                            )}>
+                                                {m.handle || "Start"}
+                                            </span>: {m.content}
+                                        </div>
+                                    );
+                                })}
+                                <div ref={chatEndRef} />
                             </div>
                             <div className="mt-3 flex items-center gap-2">
-                                <input value={chat} onChange={(e) => setChat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && chat.trim()) { sendMessage(chat, user?.id, viewState === 'hosting' ? "Host" : "Fan"); setChat(""); if (!billingActive && viewState === 'watching') activateBilling(); } }} className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none" placeholder="Type message…" />
-                                <button className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2" onClick={() => { if (chat.trim()) { sendMessage(chat, user?.id, viewState === 'hosting' ? "Host" : "Fan"); setChat(""); if (!billingActive && viewState === 'watching') activateBilling(); } }}><Send className="w-4 h-4" /> Send</button>
+                                <input
+                                    value={chat}
+                                    onChange={(e) => setChat(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && chat.trim()) {
+                                            const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
+                                            sendMessage(chat, user?.id, myHandle);
+                                            setChat("");
+                                        }
+                                    }}
+                                    className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-gray-600"
+                                    placeholder="Type message…"
+                                />
+                                <button
+                                    className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2 transition-colors"
+                                    onClick={() => {
+                                        if (chat.trim()) {
+                                            const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
+                                            sendMessage(chat, user?.id, myHandle);
+                                            setChat("");
+                                            if (!billingActive && viewState === 'watching') activateBilling();
+                                        }
+                                    }}
+                                >
+                                    <Send className="w-4 h-4" /> Send
+                                </button>
                             </div>
                             {viewState === 'watching' && (
                                 <div className="mt-4 rounded-2xl border border-violet-300/15 bg-black/35 p-3">
