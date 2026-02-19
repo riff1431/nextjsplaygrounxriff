@@ -19,6 +19,7 @@ import {
     X,
     Check,
     Sparkles,
+    Martini,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -44,6 +45,7 @@ import KYCReviewPanel from "../../../components/admin/users/KYCReviewPanel";
 import FanMembershipManager from "../../../components/admin/settings/FanMembershipManager";
 import CreatorLevelManager from "../../../components/admin/settings/CreatorLevelManager";
 import AccountTypeManager from "../../../components/admin/settings/AccountTypeManager";
+import BarLoungeManager from "../../../components/admin/settings/BarLoungeManager";
 import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymentReviewPanel";
 
 // Helpers
@@ -64,6 +66,7 @@ type AdminModule =
     | "account-types" // Account Types (Sugar Daddy/Mommy)
     | "memberships" // Fan Memberships
     | "creator-levels" // Creator Levels
+    | "bar-lounge" // Bar Lounge Config
     | "bank-payments" // Bank Payment Reviews
     | "refunds"
     | "payouts"
@@ -92,6 +95,7 @@ export default function AdminDashboardPage() {
         { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
         { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
         { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
+        { id: "bar-lounge", label: "Bar Lounge", icon: <Martini className="w-4 h-4" />, tone: "pink" },
         { id: "bank-payments", label: "Bank Payments", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
@@ -213,6 +217,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="kyc" label="KYC Review" icon={<Lock className="w-4 h-4" />} tone="red" desc="Verify creators" />
                                 <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
                                 <Tile id="creator-levels" label="Creator Levels" icon={<Star className="w-4 h-4" />} tone="pink" desc="Creator tiers" />
+                                <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="audit" label="Audit Logs" icon={<Lock className="w-4 h-4" />} tone="cyan" desc="System history" />
@@ -237,6 +242,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "account-types" && <AccountTypeManager />}
                     {bizModule === "memberships" && <FanMembershipManager />}
                     {bizModule === "creator-levels" && <CreatorLevelManager />}
+                    {bizModule === "bar-lounge" && <BarLoungeManager />}
                     {bizModule === "bank-payments" && <BankPaymentReviewPanel />}
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
