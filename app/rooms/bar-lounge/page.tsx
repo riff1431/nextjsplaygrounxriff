@@ -11,6 +11,10 @@ import {
     Link as LinkIcon, Loader2, Play
 } from "lucide-react";
 
+import DrinkMenu from "@/components/rooms/bar-lounge/DrinkMenu";
+import LoungeChat from "@/components/rooms/bar-lounge/LoungeChat";
+import TipsSection from "@/components/rooms/bar-lounge/TipsSection";
+
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -18,7 +22,7 @@ const supabase = createClient();
 
 // --- Shared Components ---
 
-function cx(...parts: Array<string | false | null | undefined>) {
+export function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
 }
 
@@ -37,7 +41,7 @@ function NeonCard({ children, className = "" }: { children: React.ReactNode; cla
     );
 }
 
-const toneClasses = (tone: "pink" | "purple" | "blue" | "green" | "yellow" | "red") => {
+export const toneClasses = (tone: "pink" | "purple" | "blue" | "green" | "yellow" | "red") => {
     const map = {
         pink: { border: "border-pink-500/30", text: "text-pink-200", glow: "shadow-[0_0_15px_rgba(236,72,153,0.15)]" },
         purple: { border: "border-purple-500/30", text: "text-purple-200", glow: "shadow-[0_0_15px_rgba(168,85,247,0.15)]" },
@@ -544,7 +548,7 @@ export default function BarLoungeRoom() {
     // --- Render: Watching / Hosting ---
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-black text-white relative overflow-hidden">
             <style>{`
                 @keyframes blBottleSpin { 0% { transform: rotate(0deg) scale(1); } 60% { transform: rotate(720deg) scale(1.04); } 100% { transform: rotate(1080deg) scale(1); } }
                 @keyframes blSpotlight { 0% { opacity: 0; } 10% { opacity: 1; } 70% { opacity: 0.85; } 100% { opacity: 0; } }
@@ -556,7 +560,34 @@ export default function BarLoungeRoom() {
                 .vip-glow { box-shadow: 0 0 16px rgba(255, 215, 0, 0.55), 0 0 44px rgba(255, 215, 0, 0.28), 0 0 22px rgba(255, 0, 200, 0.20); }
             `}</style>
 
-            <div className="max-w-7xl mx-auto px-6 py-6">
+            {/* Background image & FX */}
+            <div
+                className="fixed inset-0 z-0"
+                style={{
+                    backgroundImage: "url(/bar-lounge/lounge-bg.png)",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                }}
+            />
+            {/* Dark overlay */}
+            <div className="fixed inset-0 z-0 bg-black/50" />
+
+            {/* Sparkle particles */}
+            {viewState === 'watching' && Array.from({ length: 20 }).map((_, i) => (
+                <div
+                    key={i}
+                    className="fixed w-1 h-1 rounded-full bg-yellow-400 animate-bl-sparkle z-10 pointer-events-none"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 4}s`,
+                        animationDuration: `${2 + Math.random() * 3}s`,
+                    }}
+                />
+            ))}
+
+            <div className="relative z-20 max-w-[1400px] mx-auto px-4 lg:px-6 py-6 h-full min-h-screen flex flex-col">
                 {/* Effects overlay */}
                 {(fx.length > 0 || toast) && (
                     <div className="fixed inset-0 pointer-events-none z-[60]">
@@ -583,154 +614,195 @@ export default function BarLoungeRoom() {
                                 <LogOut className="w-4 h-4" /> End Session
                             </button>
                         ) : (
-                            <button onClick={() => setViewState("lobby")} className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2">
+                            <button onClick={() => setViewState("lobby")} className="rounded-xl border border-fuchsia-500/25 bg-black/60 backdrop-blur-md px-3 py-2 text-sm text-fuchsia-200 hover:bg-white/10 inline-flex items-center gap-2 transition-colors">
                                 <ArrowLeft className="w-4 h-4" /> Leave Room
                             </button>
                         )}
                         <div>
-                            <div className="text-violet-200 text-sm">Bar Lounge</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-violet-200 text-sm font-semibold drop-shadow-md">Bar Lounge</div>
+                            <div className="text-xs text-gray-300 drop-shadow-md">
                                 {viewState === 'hosting' ? "You are Live" : (activeSessions.find(s => s.id === roomId)?.title || "Live Session")}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <NeonCard className="lg:col-span-8 p-4">
-                        <div className="rounded-2xl overflow-hidden border border-violet-300/15 bg-black/40 aspect-video relative">
-                            {/* LIVE STREAM WRAPPER */}
-                            {roomId && (
-                                <LiveStreamWrapper
-                                    role={viewState === 'hosting' ? 'host' : 'fan'}
-                                    appId={APP_ID}
-                                    roomId={roomId}
-                                    uid={user?.id || 0}
-                                    hostId={hostId || ""}
-                                    hostAvatarUrl={viewState === 'hosting' ? user?.user_metadata?.avatar_url : hostProfile?.avatar_url || "/avatars/creator.jpg"}
-                                    hostName={viewState === 'hosting' ? (user?.user_metadata?.full_name || "You") : (hostProfile?.full_name || hostProfile?.handle || "Creator")}
-                                />
-                            )}
+                {viewState === 'watching' ? (
+                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] lg:grid-rows-[minmax(0,1fr)] gap-4 lg:gap-6">
+                        {/* LEFT COLUMN: Drink Menu */}
+                        <div className="order-2 lg:order-1 flex flex-col min-h-0 lg:max-h-[calc(100vh-8rem)]">
+                            <DrinkMenu
+                                drinks={drinks}
+                                creatorName={hostProfile?.full_name || hostProfile?.handle || "Creator"}
+                                vipPrice={vipPrice}
+                                ultraVipPrice={ultraVipPrice}
+                                onPurchaseDrink={(name, price, fxArgs) => {
+                                    handlePurchase("drink", name, price, fxArgs);
+                                    setSpentHidden((s) => s + price);
+                                }}
+                                onPurchaseVip={(name, price) => {
+                                    handlePurchase("vip", name, price);
+                                    setSpentHidden((s) => s + price);
+                                    if (price >= ultraVipPrice) playPop();
+                                }}
+                                onReserveBooth={(price) => {
+                                    handlePurchase("booth", "Reserve Booth", price);
+                                    setSpentHidden((s) => s + price);
+                                }}
+                            />
                         </div>
 
-                        {/* Only Fan sees purchase options */}
-                        {viewState === 'watching' && (
-                            <>
-                                {/* DRINKS */}
-                                <div className="mt-5">
-                                    <div className="text-violet-200 text-sm mb-3">Buy Drinks</div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {drinks.map((d) => {
-                                            const t = toneClasses(d.tone === "yellow" ? "yellow" : d.tone === "green" ? "green" : d.tone === "blue" ? "blue" : d.tone === "red" ? "red" : d.tone === "purple" ? "purple" : "pink");
-                                            return (
-                                                <div key={d.id} className={cx("rounded-2xl border bg-black/35 p-3", t.border, t.glow)}>
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <div className={cx("text-sm font-semibold flex items-center gap-2", t.text)}>
-                                                                <span className="text-lg" aria-hidden="true">{d.icon}</span> <span className="truncate">{d.name}</span>
-                                                            </div>
-                                                            <div className="text-xs text-gray-400 mt-1">${d.price}</div>
-                                                        </div>
-                                                        <button className={cx("shrink-0 rounded-xl border px-3 py-2 text-sm", t.border, "bg-black/40 hover:bg-white/5")} onClick={() => { handlePurchase("drink", d.name, d.price, { special: d.special }); setSpentHidden((s) => s + d.price); }}>Buy</button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* VIP BOOTH */}
-                                <div className="mt-5 rounded-2xl border border-yellow-400/40 bg-yellow-500/10 p-4 vip-glow">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="text-yellow-200 text-sm">VIP Booth Upgrade</div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button className="rounded-xl border border-yellow-400/40 bg-yellow-500/20 py-2 text-sm hover:bg-yellow-500/30" onClick={() => { handlePurchase("vip", "VIP Booth", vipPrice); setSpentHidden((s) => s + vipPrice); }}>VIP Booth ${vipPrice}</button>
-                                        <button className="rounded-xl border border-yellow-400/60 bg-yellow-600/30 py-2 text-sm hover:bg-yellow-600/40" onClick={() => { handlePurchase("vip", "Ultra VIP", ultraVipPrice); setSpentHidden((s) => s + ultraVipPrice); playPop(); }}>Ultra VIP ${ultraVipPrice}</button>
-                                    </div>
-                                </div>
-
-                                {/* Spin the Bottle */}
-                                <div className="mt-5 rounded-2xl border border-violet-300/30 bg-black/45 p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="text-violet-200 text-sm">Spin the Bottle</div>
-                                        <span className="text-[10px] text-gray-400">${SPIN_PRICE}/spin</span>
-                                    </div>
-                                    <div className="rounded-2xl border border-violet-300/20 bg-black/30 p-4 flex items-center justify-center min-h-[170px]">
-                                        <div className={cx("bl-bottle", spinning && "bl-bottle-spin")}>🍾</div>
-                                    </div>
-                                    <button className={cx("mt-3 w-full rounded-xl border border-violet-300/40 bg-violet-600/30 py-3 text-sm hover:bg-violet-600/40", spinning && "opacity-80 cursor-not-allowed")} onClick={doSpin} disabled={spinning}>{spinning ? "Spinning…" : `Spin Bottle — $${SPIN_PRICE}`}</button>
-                                    {spinResult && <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3"><div className="text-sm text-gray-100 font-semibold">{spinResult.label}</div><div className="mt-1 text-[11px] text-gray-300">{spinResult.note}</div></div>}
-                                </div>
-                            </>
-                        )}
-
-                        {/* Host sees Activity/Events placeholder or just enjoys the view */}
-                        {viewState === 'hosting' && (
-                            <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
-                                <h3 className="text-sm text-gray-300 mb-2">Live Session Controls</h3>
-                                <p className="text-xs text-gray-500">Wait for fans to send drinks or spin the bottle. Effects will appear on screen automatically.</p>
+                        {/* CENTER COLUMN: Stream & Tips */}
+                        <div className="order-1 lg:order-2 flex flex-col min-w-0 min-h-0">
+                            <div className="rounded-2xl overflow-hidden border-2 border-fuchsia-500/30 bg-black backdrop-blur-md aspect-video relative shadow-[0_0_30px_rgba(217,70,239,0.15)] glow-pink flex-shrink-0">
+                                {/* LIVE STREAM WRAPPER */}
+                                {roomId && (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user?.id || 0}
+                                        hostId={hostId || ""}
+                                        hostAvatarUrl={hostProfile?.avatar_url || "/avatars/creator.jpg"}
+                                        hostName={hostProfile?.full_name || hostProfile?.handle || "Creator"}
+                                    />
+                                )}
                             </div>
-                        )}
-                    </NeonCard>
 
-                    <div className="lg:col-span-4 space-y-6">
-                        <NeonCard className="p-4">
-                            <div className="flex items-center justify-between mb-3"><div className="text-violet-200 text-sm">Lounge Chat</div></div>
-                            <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[420px] overflow-auto flex flex-col">
-                                <div className="flex-1" />
-                                {messages.map((m) => {
-                                    const isHost = m.handle === "Host" || m.user_id === hostId;
-                                    return (
-                                        <div key={m.id} className="text-sm text-gray-200 mb-2">
-                                            <span className={cx(
-                                                "font-bold",
-                                                isHost ? "text-fuchsia-300" : "text-violet-200"
-                                            )}>
-                                                {m.handle || "Start"}
-                                            </span>: {m.content}
-                                        </div>
-                                    );
-                                })}
-                                <div ref={chatEndRef} />
-                            </div>
-                            <div className="mt-3 flex items-center gap-2">
-                                <input
-                                    value={chat}
-                                    onChange={(e) => setChat(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" && chat.trim()) {
-                                            const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
-                                            sendMessage(chat, user?.id, myHandle);
-                                            setChat("");
-                                        }
-                                    }}
-                                    className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-gray-600"
-                                    placeholder="Type message…"
-                                />
+                            <TipsSection
+                                onTip={(amt) => {
+                                    handlePurchase("tip", "Tip", amt);
+                                    setSpentHidden((s) => s + amt);
+                                }}
+                                onCustomTip={(amt) => {
+                                    handlePurchase("tip", "Custom Tip", amt);
+                                    setSpentHidden((s) => s + amt);
+                                }}
+                            />
+
+                            {/* Spin the Bottle */}
+                            <div className="mt-4 border border-violet-500/20 rounded-xl p-4 bg-black/40 backdrop-blur-md">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="text-violet-200 text-sm font-semibold">Spin the Bottle</div>
+                                    <span className="text-[10px] text-gray-400 font-bold">${SPIN_PRICE}/spin</span>
+                                </div>
+                                <div className="rounded-xl bg-black/30 p-4 flex items-center justify-center min-h-[140px] relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5" />
+                                    <div className={cx("bl-bottle relative z-10", spinning && "bl-bottle-spin")}>🍾</div>
+                                </div>
                                 <button
-                                    className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2 transition-colors"
-                                    onClick={() => {
-                                        if (chat.trim()) {
-                                            const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
-                                            sendMessage(chat, user?.id, myHandle);
-                                            setChat("");
-                                            if (!billingActive && viewState === 'watching') activateBilling();
-                                        }
-                                    }}
+                                    className={cx("mt-3 w-full rounded-xl border border-fuchsia-500/40 bg-fuchsia-600/30 py-2.5 text-sm font-bold text-white hover:bg-fuchsia-600/50 transition-colors", spinning && "opacity-80 cursor-not-allowed")}
+                                    onClick={doSpin}
+                                    disabled={spinning}
                                 >
-                                    <Send className="w-4 h-4" /> Send
+                                    {spinning ? "Spinning…" : `Spin Bottle — $${SPIN_PRICE}`}
                                 </button>
+                                {spinResult && (
+                                    <div className="mt-3 rounded-xl border border-white/10 bg-black/40 p-3 animate-in fade-in zoom-in spin-result-anim">
+                                        <div className="text-sm text-yellow-300 font-bold bl-glow-text-gold">{spinResult.label}</div>
+                                        <div className="mt-1 text-xs text-gray-300">{spinResult.note}</div>
+                                    </div>
+                                )}
                             </div>
-                            {viewState === 'watching' && (
-                                <div className="mt-4 rounded-2xl border border-violet-300/15 bg-black/35 p-3">
-                                    <div className="mt-1 text-sm text-gray-100">Entry: <span className="text-violet-200">${ENTRY_FEE}</span></div>
-                                    <div className="mt-2 text-[11px] text-gray-300">Charges start only after your first interaction.</div>
+                        </div>
+
+                        {/* RIGHT COLUMN: Chat */}
+                        <div className="order-3 flex flex-col min-min lg:max-h-[calc(100vh-8rem)]">
+                            <LoungeChat
+                                messages={messages as any}
+                                chatValue={chat}
+                                hostId={hostId || ""}
+                                currentUserId={user?.id}
+                                onChangeChat={setChat}
+                                onSendMessage={() => {
+                                    if (chat.trim()) {
+                                        const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "Guest";
+                                        sendMessage(chat, user?.id, myHandle);
+                                        setChat("");
+                                        if (!billingActive) activateBilling();
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <NeonCard className="lg:col-span-8 p-4">
+                            <div className="rounded-2xl overflow-hidden border border-violet-300/15 bg-black/40 aspect-video relative">
+                                {/* LIVE STREAM WRAPPER */}
+                                {roomId && (
+                                    <LiveStreamWrapper
+                                        role={viewState === 'hosting' ? 'host' : 'fan'}
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user?.id || 0}
+                                        hostId={hostId || ""}
+                                        hostAvatarUrl={viewState === 'hosting' ? user?.user_metadata?.avatar_url : hostProfile?.avatar_url || "/avatars/creator.jpg"}
+                                        hostName={viewState === 'hosting' ? (user?.user_metadata?.full_name || "You") : (hostProfile?.full_name || hostProfile?.handle || "Creator")}
+                                    />
+                                )}
+                            </div>
+
+                            {/* Host sees Activity/Events placeholder or just enjoys the view */}
+                            {viewState === 'hosting' && (
+                                <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-4">
+                                    <h3 className="text-sm text-gray-300 mb-2">Live Session Controls</h3>
+                                    <p className="text-xs text-gray-500">Wait for fans to send drinks or spin the bottle. Effects will appear on screen automatically.</p>
                                 </div>
                             )}
                         </NeonCard>
+
+                        <div className="lg:col-span-4 space-y-6">
+                            <NeonCard className="p-4">
+                                <div className="flex items-center justify-between mb-3"><div className="text-violet-200 text-sm">Lounge Chat</div></div>
+                                <div className="rounded-2xl border border-white/10 bg-black/30 p-3 h-[420px] overflow-auto flex flex-col">
+                                    <div className="flex-1" />
+                                    {messages.map((m) => {
+                                        const isHost = m.handle === "Host" || m.user_id === hostId;
+                                        return (
+                                            <div key={m.id} className="text-sm text-gray-200 mb-2">
+                                                <span className={cx(
+                                                    "font-bold",
+                                                    isHost ? "text-fuchsia-300" : "text-violet-200"
+                                                )}>
+                                                    {m.handle || "Start"}
+                                                </span>: {m.content}
+                                            </div>
+                                        );
+                                    })}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <div className="mt-3 flex items-center gap-2">
+                                    <input
+                                        value={chat}
+                                        onChange={(e) => setChat(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && chat.trim()) {
+                                                const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
+                                                sendMessage(chat, user?.id, myHandle);
+                                                setChat("");
+                                            }
+                                        }}
+                                        className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none placeholder:text-gray-600"
+                                        placeholder="Type message…"
+                                    />
+                                    <button
+                                        className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2 transition-colors"
+                                        onClick={() => {
+                                            if (chat.trim()) {
+                                                const myHandle = user?.user_metadata?.username || user?.user_metadata?.full_name || "PinkVibe";
+                                                sendMessage(chat, user?.id, myHandle);
+                                                setChat("");
+                                            }
+                                        }}
+                                    >
+                                        <Send className="w-4 h-4" /> Send
+                                    </button>
+                                </div>
+                            </NeonCard>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

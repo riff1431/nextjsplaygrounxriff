@@ -74,6 +74,122 @@
   .progress-bar-glow {
     box-shadow: 0 0 8px hsl(var(--gold) / 0.6);
   }
+
+  /* Bar Lounge Utilities */
+  .bl-glass-panel {
+    background: hsla(270, 40%, 15%, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsla(280, 60%, 45%, 0.25);
+    border-radius: var(--radius);
+  }
+
+  .bl-glass-panel-strong {
+    background: hsla(270, 40%, 15%, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsla(280, 60%, 45%, 0.3);
+    border-radius: var(--radius);
+  }
+
+  .bl-glow-purple {
+    box-shadow: 0 0 15px hsla(280, 100%, 70%, 0.4),
+      0 0 40px hsla(280, 100%, 70%, 0.15),
+      inset 0 0 15px hsla(280, 100%, 70%, 0.05);
+  }
+
+  .bl-glow-gold {
+    box-shadow: 0 0 15px hsla(42, 90%, 55%, 0.4),
+      0 0 40px hsla(42, 90%, 55%, 0.15);
+  }
+
+  .bl-glow-pink {
+    box-shadow: 0 0 15px hsla(320, 100%, 65%, 0.4),
+      0 0 40px hsla(320, 100%, 65%, 0.15);
+  }
+
+  .bl-glow-text-gold {
+    text-shadow: 0 0 10px hsla(42, 90%, 55%, 0.6),
+      0 0 30px hsla(42, 90%, 55%, 0.3);
+  }
+
+  .bl-glow-text-purple {
+    text-shadow: 0 0 10px hsla(280, 100%, 70%, 0.6),
+      0 0 30px hsla(280, 100%, 70%, 0.3);
+  }
+
+  .bl-glow-text-pink {
+    text-shadow: 0 0 10px hsla(320, 100%, 65%, 0.6),
+      0 0 30px hsla(320, 100%, 65%, 0.3);
+  }
+
+  .bl-btn-glow {
+    @apply relative overflow-hidden transition-all duration-300;
+    background: linear-gradient(135deg, hsla(280, 80%, 55%, 0.8), hsla(320, 80%, 60%, 0.8));
+    border: 1px solid hsla(280, 60%, 45%, 0.5);
+  }
+
+  .bl-btn-glow:hover {
+    box-shadow: 0 0 20px hsla(280, 100%, 70%, 0.5),
+      0 0 50px hsla(280, 100%, 70%, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .bl-btn-gold {
+    background: linear-gradient(135deg, hsla(42, 90%, 55%, 0.9), hsla(42, 80%, 45%, 0.9));
+    border: 1px solid hsla(42, 90%, 55%, 0.5);
+    color: hsl(270, 50%, 8%);
+    font-weight: 600;
+  }
+
+  .bl-btn-gold:hover {
+    box-shadow: 0 0 20px hsla(42, 90%, 55%, 0.5),
+      0 0 50px hsla(42, 90%, 55%, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .bl-drink-item {
+    @apply flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200;
+    background: hsla(270, 40%, 15%, 0.3);
+    border: 1px solid hsla(280, 60%, 45%, 0.2);
+  }
+
+  .bl-drink-item:hover {
+    background: hsla(280, 60%, 45%, 0.2);
+    box-shadow: 0 0 10px hsla(280, 100%, 70%, 0.2);
+  }
+
+  .bl-chat-message {
+    @apply px-3 py-2 rounded-lg mb-2;
+    background: hsla(270, 40%, 15%, 0.3);
+    border: 1px solid hsla(280, 60%, 45%, 0.15);
+  }
+
+  .bl-vip-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+    background: linear-gradient(135deg, hsla(42, 90%, 55%, 0.3), hsla(42, 80%, 45%, 0.1));
+    border: 1px solid hsla(42, 90%, 55%, 0.4);
+    color: hsl(42, 90%, 65%);
+  }
+
+  .bl-live-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+    background: hsla(140, 70%, 45%, 0.2);
+    border: 1px solid hsla(140, 70%, 45%, 0.4);
+    color: hsl(140, 70%, 55%);
+  }
+
+  .bl-tip-btn {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200 cursor-pointer;
+    background: hsla(270, 40%, 15%, 0.4);
+    border: 1px solid hsla(280, 60%, 45%, 0.3);
+    color: hsl(45, 100%, 95%);
+  }
+
+  .bl-tip-btn:hover {
+    background: hsla(280, 60%, 45%, 0.3);
+    box-shadow: 0 0 15px hsla(280, 100%, 70%, 0.3);
+  }
 }
 
 @keyframes border-glow {
@@ -145,6 +261,82 @@ body {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Bar Lounge CSS Variables */
+  --color-bl-gold: hsl(42, 90%, 55%);
+  --color-bl-neon-pink: hsl(320, 100%, 65%);
+  --color-bl-neon-purple: hsl(280, 100%, 70%);
+
+  --animate-bl-glow-pulse: bl-glow-pulse 2s ease-in-out infinite;
+  --animate-bl-float: bl-float 4s ease-in-out infinite;
+  --animate-bl-sparkle: bl-sparkle 2s ease-in-out infinite;
+  --animate-bl-neon-flicker: bl-neon-flicker 3s ease-in-out infinite;
+
+  @keyframes bl-glow-pulse {
+
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bl-float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes bl-sparkle {
+
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes bl-neon-flicker {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    92% {
+      opacity: 1;
+    }
+
+    93% {
+      opacity: 0.7;
+    }
+
+    94% {
+      opacity: 1;
+    }
+
+    96% {
+      opacity: 0.8;
+    }
+
+    97% {
+      opacity: 1;
+    }
+  }
 }
 
 :root {
