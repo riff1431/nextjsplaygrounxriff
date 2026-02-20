@@ -15,10 +15,21 @@
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   @keyframes flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+
+    0%,
+    19%,
+    21%,
+    23%,
+    25%,
+    54%,
+    56%,
+    100% {
       opacity: 1;
     }
-    20%, 24%, 55% {
+
+    20%,
+    24%,
+    55% {
       opacity: 0.5;
     }
   }
@@ -32,6 +43,62 @@
 
   .box-shadow-neon {
     box-shadow: 0 0 5px var(--color-neon-blue), 0 0 10px var(--color-neon-blue);
+  }
+
+  /* Confessions UI */
+  .glass-card {
+    @apply backdrop-blur-sm border rounded-xl;
+    background: transparent;
+    border-color: hsl(var(--neon-pink-hsl) / 0.9);
+    box-shadow: 0 0 15px hsl(var(--neon-pink-hsl) / 0.1), 0 0 40px hsl(var(--neon-pink-hsl) / 0.18), inset 0 1px 0 hsl(0 0% 100% / 0.18);
+    animation: border-glow 3s ease-in-out infinite alternate;
+  }
+
+  .neon-border {
+    box-shadow: 0 0 10px hsl(var(--neon-pink-hsl) / 0.5), 0 0 30px hsl(var(--neon-pink-hsl) / 0.25), 0 0 60px hsl(var(--neon-pink-hsl) / 0.1);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px hsl(var(--neon-pink-hsl) / 0.6), 0 0 30px hsl(var(--neon-pink-hsl) / 0.3);
+  }
+
+  .gold-text {
+    color: hsl(var(--gold));
+    text-shadow: 0 0 8px hsl(var(--gold) / 0.5);
+  }
+
+  .gradient-pink {
+    background: linear-gradient(135deg, hsl(var(--neon-pink-hsl)), hsl(var(--neon-magenta)));
+  }
+
+  .progress-bar-glow {
+    box-shadow: 0 0 8px hsl(var(--gold) / 0.6);
+  }
+}
+
+@keyframes border-glow {
+  0% {
+    box-shadow: 0 0 10px hsl(var(--neon-pink-hsl) / 0.2), 0 0 30px hsl(var(--neon-pink-hsl) / 0.08);
+    border-color: hsl(var(--neon-pink-hsl) / 0.25);
+  }
+
+  100% {
+    box-shadow: 0 0 20px hsl(var(--neon-pink-hsl) / 0.35), 0 0 50px hsl(var(--neon-pink-hsl) / 0.15);
+    border-color: hsl(var(--neon-pink-hsl) / 0.5);
+  }
+}
+
+@keyframes heart-float {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: inherit;
+  }
+
+  50% {
+    transform: translateY(-30px) scale(1.15);
+    opacity: 0.3;
   }
 }
 
@@ -113,6 +180,13 @@ body {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Confessions UI custom colors */
+  --neon-glow: 330 100% 60%;
+  --neon-pink-hsl: 330 90% 55%;
+  --neon-magenta: 310 80% 50%;
+  --gold: 40 95% 55%;
+  --gold-dark: 35 90% 40%;
 }
 
 .dark {
@@ -147,12 +221,21 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Confessions UI custom colors */
+  --neon-glow: 330 100% 60%;
+  --neon-pink-hsl: 330 90% 55%;
+  /* Note: Named differently as --color-neon-pink is hex */
+  --neon-magenta: 310 80% 50%;
+  --gold: 40 95% 55%;
+  --gold-dark: 35 90% 40%;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
