@@ -138,7 +138,6 @@ export default function BarLoungeCreatorStudioPage() {
 
     // Live Dashboard Types
     const [isLive, setIsLive] = useState(false);
-    const [pinnedMsg, setPinnedMsg] = useState<string>("VIP bottles get priority attention.");
     const [chat, setChat] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -153,9 +152,6 @@ export default function BarLoungeCreatorStudioPage() {
     const [ultraVipPrice, setUltraVipPrice] = useState(400);
     const [drinks, setDrinks] = useState<Drink[]>([]);
     const [spinOutcomes, setSpinOutcomes] = useState<SpinOutcome[]>([]);
-
-    const [selectedFanId, setSelectedFanId] = useState<string>("f2");
-    const [dareText, setDareText] = useState<string>("Tell me your wildest nightlife confession in 10 seconds.");
 
     // Auto-scroll chat
     useEffect(() => {
@@ -397,7 +393,6 @@ export default function BarLoungeCreatorStudioPage() {
     const unmuteFan = (fanId: string) => setFans((rows) => rows.map((f) => (f.id === fanId ? { ...f, muted: false } : f)));
     const kickFan = (fanId: string) => setFans((rows) => rows.filter((f) => f.id !== fanId));
 
-    const selectedFan = fans.find((f) => f.id === selectedFanId);
     const livePriority = (f: FanRow) => (f.priorityUntilTs && f.priorityUntilTs > Date.now() ? true : false);
 
     // --- Simulation (Preview) ---
@@ -652,103 +647,7 @@ export default function BarLoungeCreatorStudioPage() {
                         />
                     </div>
 
-                    {/* Pinned message */}
-                    <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3">
-                        <div className="text-[11px] text-gray-400 inline-flex items-center gap-2">
-                            <Pin className="w-3 h-3" /> Pinned message (fans see this at top)
-                        </div>
-                        <div className="mt-2 text-sm text-gray-100">{pinnedMsg}</div>
-                    </div>
 
-                    {/* Quick show controls */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <button
-                            className="rounded-2xl border border-violet-300/25 bg-black/35 p-3 hover:bg-white/5"
-                            onClick={() => pushToast("🔦 Spotlight pulse (preview)")}
-                        >
-                            <div className="text-sm text-violet-200 inline-flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" /> Spotlight Pulse
-                            </div>
-                            <div className="text-[11px] text-gray-400 mt-1">Boost hype moment</div>
-                        </button>
-                        <button
-                            className="rounded-2xl border border-fuchsia-300/25 bg-black/35 p-3 hover:bg-white/5"
-                            onClick={() => pushToast("🎉 Confetti moment (preview)")}
-                        >
-                            <div className="text-sm text-fuchsia-200 inline-flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" /> Confetti Moment
-                            </div>
-                            <div className="text-[11px] text-gray-400 mt-1">For big purchases</div>
-                        </button>
-                        <button
-                            className="rounded-2xl border border-yellow-400/25 bg-black/35 p-3 hover:bg-white/5"
-                            onClick={() => pushToast("🔊 Pop sound cue (preview)")}
-                        >
-                            <div className="text-sm text-yellow-200 inline-flex items-center gap-2">
-                                <Zap className="w-4 h-4" /> Play Pop Cue
-                            </div>
-                            <div className="text-[11px] text-gray-400 mt-1">Champagne / VIP bottle</div>
-                        </button>
-                    </div>
-
-                    {/* Creator Actions */}
-                    <div className="mt-6 rounded-2xl border border-violet-300/20 bg-black/35 p-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="text-violet-200 text-sm">Creator Actions</div>
-                            <span className="text-[10px] text-gray-400">Pin • Dare • Highlight</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                            <div className="md:col-span-5">
-                                <div className="text-[11px] text-gray-400 mb-2">Select fan</div>
-                                <div className="rounded-2xl border border-white/10 bg-black/30 p-2">
-                                    <select
-                                        value={selectedFanId}
-                                        onChange={(e) => setSelectedFanId(e.target.value)}
-                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm"
-                                    >
-                                        {fans.map((f) => (
-                                            <option key={f.id} value={f.id}>{f.handle} ({f.tier})</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
-                                    <div className="text-sm text-gray-100 font-semibold inline-flex items-center gap-2">
-                                        {selectedFan?.handle ?? "—"} <span className={tierChip(selectedFan?.tier ?? "Rookie")}>{selectedFan?.tier ?? "—"}</span>
-                                    </div>
-                                    <div className="mt-1 text-[11px] text-gray-400">
-                                        Total spent (creator-visible): <span className="text-yellow-200">{money(selectedFan?.spentTotal ?? 0)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="md:col-span-7">
-                                <div className="text-[11px] text-gray-400 mb-2">Pin message</div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        value={pinnedMsg}
-                                        onChange={(e) => setPinnedMsg(e.target.value)}
-                                        className="flex-1 rounded-xl border border-violet-300/20 bg-black/40 px-3 py-2 text-sm outline-none"
-                                        placeholder="Type pinned message…"
-                                    />
-                                    <button
-                                        className="rounded-xl border border-violet-300/30 bg-violet-600 px-3 py-2 text-sm hover:bg-violet-700 inline-flex items-center gap-2"
-                                        onClick={() => pushToast("📌 Pinned message updated")}
-                                    >
-                                        <Pin className="w-4 h-4" /> Set
-                                    </button>
-                                </div>
-                                <div className="mt-4 text-[11px] text-gray-400 mb-2">Send a dare</div>
-                                <div className="flex gap-2">
-                                    <button className="flex-1 rounded-xl border border-emerald-300/25 bg-emerald-600/20 py-2 text-sm hover:bg-emerald-600/30 inline-flex items-center gap-2 justify-center" onClick={() => pushToast(`🎯 Dare sent to ${selectedFan?.handle ?? "fan"}`)}>
-                                        <MessageCircle className="w-4 h-4" /> Dare
-                                    </button>
-                                    <button className="flex-1 rounded-xl border border-fuchsia-300/25 bg-black/40 py-2 text-sm hover:bg-white/5 inline-flex items-center gap-2 justify-center" onClick={() => pushToast(`✨ Highlighted ${selectedFan?.handle ?? "fan"}`)}>
-                                        <Sparkles className="w-4 h-4" /> Highlight
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </NeonCard>
 
                 {/* Right rail: Feed + Fans + Settings */}
