@@ -80,6 +80,7 @@ type SpinOutcome = {
 type FanRow = {
     id: string;
     handle: string;
+    avatar_url?: string;
     tier: BadgeTier;
     spentTotal: number;
     priorityUntilTs?: number;
@@ -268,7 +269,7 @@ export default function BarLoungeCreatorStudioPage() {
                 .from("room_participants")
                 .select(`
                     user_id,
-                    profiles:user_id ( handle )
+                    profiles:user_id ( handle, avatar_url )
                 `)
                 .eq("room_id", roomId);
 
@@ -276,6 +277,7 @@ export default function BarLoungeCreatorStudioPage() {
                 const mapped: FanRow[] = data.map((p: any) => ({
                     id: p.user_id,
                     handle: p.profiles?.handle || "Unknown",
+                    avatar_url: p.profiles?.avatar_url,
                     tier: "Rookie",
                     spentTotal: 0,
                     muted: false
@@ -647,6 +649,72 @@ export default function BarLoungeCreatorStudioPage() {
                         />
                     </div>
 
+                    {/* Top Bar Royalty */}
+                    <div className="mt-6 rounded-2xl border border-red-500/40 bg-black/40 p-4 min-h-[100px] flex justify-between items-center shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                        {/* King */}
+                        <div className="flex flex-col items-center flex-1">
+                            <span className="text-red-500 text-xs sm:text-sm font-semibold mb-2 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] whitespace-nowrap">Top Bar King</span>
+                            {(() => {
+                                const topSpenders = [...fans].sort((a, b) => b.spentTotal - a.spentTotal);
+                                const king = topSpenders[0];
+                                if (!king) return <div className="text-xs text-gray-500 italic mt-2">Empty</div>;
+                                return (
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+                                            {king.avatar_url ? <img src={king.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{king.handle[0]}</div>}
+                                        </div>
+                                        <span className="text-xs text-red-200 truncate max-w-[80px]">{king.handle}</span>
+                                        {king.spentTotal > 0 && <span className="text-[10px] text-yellow-400">${king.spentTotal}</span>}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-px h-16 bg-red-500/20 mx-4 hidden sm:block"></div>
+
+                        {/* Queen */}
+                        <div className="flex flex-col items-center flex-1">
+                            <span className="text-red-500 text-xs sm:text-sm font-semibold mb-2 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)] whitespace-nowrap">Top Bar Queen</span>
+                            {(() => {
+                                const topSpenders = [...fans].sort((a, b) => b.spentTotal - a.spentTotal);
+                                const queen = topSpenders[1];
+                                if (!queen) return <div className="text-xs text-gray-500 italic mt-2">Empty</div>;
+                                return (
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">
+                                            {queen.avatar_url ? <img src={queen.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{queen.handle[0]}</div>}
+                                        </div>
+                                        <span className="text-xs text-red-200 truncate max-w-[80px]">{queen.handle}</span>
+                                        {queen.spentTotal > 0 && <span className="text-[10px] text-yellow-400">${queen.spentTotal}</span>}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    {/* Active Fans Scatter */}
+                    <div className="mt-4 rounded-2xl border border-red-500/50 bg-black/40 p-6 min-h-[220px] relative shadow-[inset_0_0_30px_rgba(239,68,68,0.05)] overflow-hidden">
+                        <div className="absolute top-2 left-3 text-red-500/50 text-[10px] uppercase font-bold tracking-widest z-10 pointer-events-none">Active Fans</div>
+                        <div className="flex flex-wrap gap-5 sm:gap-8 justify-center items-center mt-4 pt-2">
+                            {fans.length === 0 && <div className="text-gray-500 text-sm mt-10 w-full text-center">No active fans right now</div>}
+                            {fans.map((fan, i) => {
+                                // Add a subtle random vertical translation to make it look "scattered" as requested
+                                const translateY = (i % 3 === 0) ? '-translate-y-2' : (i % 3 === 1) ? 'translate-y-3' : 'translate-y-0';
+                                return (
+                                    <div key={fan.id} className={`flex flex-col items-center gap-1 transform transition-all duration-300 hover:scale-110 hover:z-20 ${translateY}`}>
+                                        <div title={fan.handle} className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-red-500/80 shadow-[0_0_12px_rgba(239,68,68,0.4)] backdrop-blur-sm bg-black/60 flex items-center justify-center hover:shadow-[0_0_20px_rgba(239,68,68,0.8)] hover:border-red-400 cursor-pointer">
+                                            {fan.avatar_url ? (
+                                                <img src={fan.avatar_url} alt={fan.handle} className="w-full h-full object-cover opacity-90" />
+                                            ) : (
+                                                <span className="text-red-300 font-bold text-lg">{fan.handle.substring(0, 2).toUpperCase()}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
                 </NeonCard>
 
@@ -738,7 +806,7 @@ export default function BarLoungeCreatorStudioPage() {
                         </div>
                     </NeonCard>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

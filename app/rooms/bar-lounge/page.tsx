@@ -473,25 +473,38 @@ export default function BarLoungeRoom() {
                                 className="group relative rounded-3xl overflow-hidden border border-white/10 bg-gray-900 cursor-pointer hover:border-violet-500/50 transition-all duration-300 transform hover:-translate-y-1"
                                 onClick={() => joinSession(session)}
                             >
-                                {/* Thumbnail / Cover (Placeholder) */}
-                                <div className="h-48 bg-gradient-to-br from-violet-900/40 to-black relative">
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                                        <Play className="w-12 h-12 text-white drop-shadow-lg" fill="currentColor" />
+                                {/* Thumbnail / Cover (Modern Avatar Blur) */}
+                                <div className="h-48 relative overflow-hidden bg-gray-950">
+                                    {session.profiles?.avatar_url ? (
+                                        <>
+                                            <div
+                                                className="absolute inset-0 bg-cover bg-center blur-xl opacity-50 scale-125 transition-transform duration-700 group-hover:scale-150"
+                                                style={{ backgroundImage: `url(${session.profiles.avatar_url})` }}
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent" />
+                                            {/* Subtle vignette/shadow inner ring */}
+                                            <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] pointer-events-none" />
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/40 to-black" />
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 z-10">
+                                        <Play className="w-12 h-12 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] animate-pulse" fill="currentColor" />
                                     </div>
-                                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-red-500/90 text-white text-xs font-bold uppercase tracking-wide flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-red-500/90 text-white text-xs font-bold uppercase tracking-wide flex items-center gap-1 z-10 shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                                        <div className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_5px_rgba(255,255,255,0.8)]" />
                                         Live
                                     </div>
-                                    <div className="absolute top-4 right-4 px-2 py-1 rounded-lg bg-black/60 text-white text-xs flex items-center gap-1 backdrop-blur-md">
-                                        <Users className="w-3 h-3" />
-                                        <span>{session.viewer_count || 0}</span>
+                                    <div className="absolute top-4 right-4 px-2 py-1 rounded-lg bg-black/60 text-white text-xs flex items-center gap-1 backdrop-blur-md z-10 border border-white/10">
+                                        <Users className="w-3 h-3 text-violet-300" />
+                                        <span className="font-semibold">{session.viewer_count || 0}</span>
                                     </div>
                                     {/* Cleanup Button for Host */}
                                     {user && session.host_id === user.id && (
-                                        <div className="absolute bottom-4 right-4 z-10">
+                                        <div className="absolute bottom-4 right-4 z-20">
                                             <button
                                                 onClick={(e) => endSessionById(session.id, e)}
-                                                className="px-3 py-1 rounded-lg bg-red-600/80 text-white text-xs hover:bg-red-700 backdrop-blur-md border border-red-500/50"
+                                                className="px-3 py-1 rounded-lg bg-red-600/80 text-white text-xs hover:bg-red-700 backdrop-blur-md border border-red-500/50 shadow-lg"
                                             >
                                                 End Session
                                             </button>
