@@ -506,12 +506,28 @@ body {
 
   .fd-neon-text {
     color: hsl(var(--neon-pink-bright));
-    text-shadow: 0 0 8px hsl(330 100% 65% / 0.9), 0 0 20px hsl(330 100% 65% / 0.6), 0 0 40px hsl(330 100% 65% / 0.4);
+    text-shadow:
+      0 0 7px hsl(330 100% 65% / 0.8),
+      0 0 14px hsl(330 100% 65% / 0.5),
+      0 0 21px hsl(330 100% 65% / 0.3),
+      0 0 42px hsl(330 100% 65% / 0.2);
   }
 
   .fd-neon-text-sm {
     color: hsl(var(--neon-pink-bright));
-    text-shadow: 0 0 5px hsl(330 100% 65% / 0.8), 0 0 15px hsl(330 100% 65% / 0.5);
+    text-shadow:
+      0 0 5px hsl(330 100% 65% / 0.8),
+      0 0 10px hsl(330 100% 65% / 0.4),
+      0 0 15px hsl(330 100% 65% / 0.2);
+  }
+
+  .fd-text-glow-strong {
+    color: #fff;
+    text-shadow:
+      0 0 10px hsl(330 100% 65% / 1),
+      0 0 20px hsl(330 100% 65% / 0.8),
+      0 0 40px hsl(330 100% 65% / 0.6),
+      0 0 80px hsl(330 100% 65% / 0.4);
   }
 
   .fd-glass-panel {

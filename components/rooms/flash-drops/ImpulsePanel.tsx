@@ -42,7 +42,7 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
         <div className="flex flex-col gap-2 h-full">
             {/* Impulse Spend */}
             <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
-                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter">Impulse Spend</h2>
+                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Impulse Spend</h2>
                 <div className="grid grid-cols-2 gap-2">
                     {impulseButtons.map((btn) => (
                         <button

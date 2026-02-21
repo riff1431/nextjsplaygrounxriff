@@ -93,23 +93,16 @@ export default function FlashDropsRoomPreview() {
                     </div>
 
                     {/* Header */}
-                    <header className="relative flex items-center justify-between px-5 py-1.5 border-b border-primary/30 bg-black/60 backdrop-blur-md">
+                    <header className="flex items-center justify-between px-10 py-4 h-20 border-b border-primary/20 backdrop-blur-xl bg-black/40 relative z-30">
                         <button
-                            onClick={onBack}
-                            className="flex items-center gap-2 px-3 py-1 rounded-full border border-primary/40 text-foreground/80 fd-font-body font-semibold text-sm hover:border-primary hover:text-foreground transition-all"
+                            onClick={() => window.history.back()}
+                            className="flex items-center gap-2 text-sm font-bold fd-font-tech text-white/70 hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-xl border border-white/10"
                             style={{ boxShadow: "0 0 10px hsl(330 100% 55% / 0.15)" }}
                         >
                             <ArrowLeft className="w-4 h-4" /> Back
                         </button>
 
-                        <h1
-                            className="text-4xl absolute left-1/2 -translate-x-1/2 fd-font-display"
-                            style={{
-                                color: "hsl(330 100% 70%)",
-                                textShadow:
-                                    "0 0 10px hsl(330 100% 65% / 0.9), 0 0 30px hsl(330 100% 65% / 0.7), 0 0 60px hsl(330 100% 65% / 0.5)",
-                            }}
-                        >
+                        <h1 className="fd-font-display text-4xl text-white fd-text-glow-strong absolute left-1/2 -translate-x-1/2">
                             Flash Drops
                         </h1>
 
