@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pacifico:wght@400;600;700;900&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap');
+
+@layer base {
+  :root {
+    --background: 270 50% 4%;
+    --foreground: 310 100% 95%;
+
+    --card: 270 40% 7%;
+    --card-foreground: 310 100% 95%;
+
+    --popover: 270 40% 7%;
+    --popover-foreground: 310 100% 95%;
+
+    --primary: 330 100% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 60% 15%;
+    --secondary-foreground: 310 100% 90%;
+
+    --muted: 270 30% 12%;
+    --muted-foreground: 310 30% 65%;
+
+    --accent: 300 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 330 100% 55%;
+    --input: 270 30% 15%;
+    --ring: 330 100% 55%;
+
+    --radius: 0.5rem;
+
+    /* Neon colors */
+    --neon-pink: 330 100% 55%;
+    --neon-pink-bright: 320 100% 65%;
+    --neon-magenta: 300 100% 60%;
+    --neon-glow-sm: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+    --neon-glow-md: 0 0 10px hsl(330 100% 55% / 0.9), 0 0 30px hsl(330 100% 55% / 0.6), 0 0 60px hsl(330 100% 55% / 0.4), 0 0 100px hsl(330 100% 55% / 0.2);
+    --neon-glow-lg: 0 0 15px hsl(330 100% 55% / 1), 0 0 40px hsl(330 100% 55% / 0.8), 0 0 80px hsl(330 100% 55% / 0.5), 0 0 150px hsl(330 100% 55% / 0.3);
+    --panel-bg: hsl(270 50% 4% / 0.35);
+    --panel-border: hsl(330 100% 55% / 0.8);
+
+    --sidebar-background: 270 50% 4%;
+    --sidebar-foreground: 310 100% 90%;
+    --sidebar-primary: 330 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 30% 12%;
+    --sidebar-accent-foreground: 310 100% 90%;
+    --sidebar-border: 330 100% 55%;
+    --sidebar-ring: 330 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Orbitron', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Dancing Script', cursive;
+  }
+  .font-tech {
+    font-family: 'Orbitron', sans-serif;
+  }
+  .font-body {
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .neon-border {
+    border: 1px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-sm), inset 0 0 20px hsl(330 100% 55% / 0.05);
+  }
+  .neon-border-md {
+    border: 1.5px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-md), inset 0 0 30px hsl(330 100% 55% / 0.08);
+  }
+  .neon-border-lg {
+    border: 2px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-lg), inset 0 0 50px hsl(330 100% 55% / 0.1);
+  }
+
+  .neon-text {
+    color: hsl(var(--neon-pink-bright));
+    text-shadow: 0 0 8px hsl(330 100% 65% / 0.9), 0 0 20px hsl(330 100% 65% / 0.6), 0 0 40px hsl(330 100% 65% / 0.4);
+  }
+
+  .neon-text-sm {
+    color: hsl(var(--neon-pink-bright));
+    text-shadow: 0 0 5px hsl(330 100% 65% / 0.8), 0 0 15px hsl(330 100% 65% / 0.5);
+  }
+
+  .glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .animate-neon-pulse {
+    animation: neon-pulse 2s ease-in-out infinite;
+  }
+  .animate-neon-flicker {
+    animation: neon-flicker 3s ease-in-out infinite;
+  }
+  .animate-glow-breathe {
+    animation: glow-breathe 2.5s ease-in-out infinite;
+  }
+  .animate-border-glow {
+    animation: border-glow 1.8s ease-in-out infinite;
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+    border-color: hsl(330 100% 55% / 0.8);
+  }
+  50% {
+    box-shadow: 0 0 15px hsl(330 100% 65% / 1), 0 0 40px hsl(330 100% 65% / 0.8), 0 0 80px hsl(330 100% 65% / 0.5), 0 0 150px hsl(330 100% 65% / 0.3);
+    border-color: hsl(330 100% 65% / 1);
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    box-shadow: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+    border-color: hsl(330 100% 55% / 0.8);
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    box-shadow: none;
+    border-color: hsl(330 100% 55% / 0.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-breathe {
+  0%, 100% {
+    text-shadow: 0 0 8px hsl(330 100% 65% / 0.9), 0 0 20px hsl(330 100% 65% / 0.6), 0 0 40px hsl(330 100% 65% / 0.4);
+  }
+  50% {
+    text-shadow: 0 0 15px hsl(330 100% 75% / 1), 0 0 35px hsl(330 100% 75% / 0.8), 0 0 70px hsl(330 100% 75% / 0.6), 0 0 120px hsl(330 100% 75% / 0.4);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px hsl(330 100% 55% / 0.5), 0 0 15px hsl(330 100% 55% / 0.3), inset 0 0 10px hsl(330 100% 55% / 0.05);
+    border-color: hsl(330 100% 55% / 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px hsl(330 100% 65% / 0.9), 0 0 30px hsl(330 100% 65% / 0.6), 0 0 60px hsl(330 100% 65% / 0.3), inset 0 0 20px hsl(330 100% 65% / 0.1);
+    border-color: hsl(330 100% 65% / 0.9);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes ticker-move {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-content {
+  animation: ticker-move 20s linear infinite;
+  white-space: nowrap;
+}

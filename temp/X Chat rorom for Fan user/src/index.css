@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 15% 8%;
+    --foreground: 40 30% 90%;
+
+    --card: 30 10% 12%;
+    --card-foreground: 40 30% 90%;
+
+    --popover: 30 10% 12%;
+    --popover-foreground: 40 30% 90%;
+
+    --primary: 40 60% 55%;
+    --primary-foreground: 30 15% 8%;
+
+    --secondary: 30 10% 18%;
+    --secondary-foreground: 40 30% 90%;
+
+    --muted: 30 8% 16%;
+    --muted-foreground: 40 15% 55%;
+
+    --accent: 40 50% 45%;
+    --accent-foreground: 40 30% 95%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 40 25% 25%;
+    --input: 30 10% 20%;
+    --ring: 40 60% 55%;
+
+    --radius: 0.5rem;
+
+    --gold: 40 60% 55%;
+    --gold-light: 40 70% 70%;
+    --gold-dark: 35 50% 35%;
+    --glass: 30 10% 12%;
+    --glass-border: 40 25% 25%;
+
+    --sidebar-background: 30 10% 10%;
+    --sidebar-foreground: 40 30% 90%;
+    --sidebar-primary: 40 60% 55%;
+    --sidebar-primary-foreground: 30 15% 8%;
+    --sidebar-accent: 30 10% 18%;
+    --sidebar-accent-foreground: 40 30% 90%;
+    --sidebar-border: 40 25% 25%;
+    --sidebar-ring: 40 60% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Glass card effect */
+.glass-card {
+  background: hsla(30, 10%, 12%, 0.35);
+  backdrop-filter: blur(4px);
+  border: 1px solid hsla(40, 25%, 25%, 0.5);
+  border-radius: var(--radius);
+}
+
+.glass-card-inner {
+  background: hsla(30, 10%, 10%, 0.3);
+  backdrop-filter: blur(2px);
+  border: 1px solid hsla(40, 25%, 25%, 0.35);
+  border-radius: var(--radius);
+}
+
+/* Gold text */
+.text-gold {
+  color: hsl(40, 60%, 55%);
+}
+
+.text-gold-light {
+  color: hsl(40, 70%, 70%);
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, hsl(40, 70%, 70%), hsl(40, 60%, 55%), hsl(35, 50%, 35%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar styling */
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: hsla(30, 10%, 12%, 0.5);
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: hsla(40, 25%, 25%, 0.8);
+  border-radius: 2px;
+}
