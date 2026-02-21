@@ -92,37 +92,12 @@ export default function FlashDropsRoomPreview() {
                         </div>
                     </div>
 
-                    {/* Header */}
-                    <header className="flex items-center justify-between px-10 py-4 h-20 border-b border-primary/20 backdrop-blur-xl bg-black/40 relative z-30">
-                        <button
-                            onClick={() => window.history.back()}
-                            className="flex items-center gap-2 text-sm font-bold fd-font-tech text-white/70 hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-xl border border-white/10"
-                            style={{ boxShadow: "0 0 10px hsl(330 100% 55% / 0.15)" }}
-                        >
-                            <ArrowLeft className="w-4 h-4" /> Back
-                        </button>
-
-                        <h1 className="fd-font-display text-4xl text-white fd-text-glow-strong absolute left-1/2 -translate-x-1/2">
-                            Flash Drops
-                        </h1>
-
-                        <div className="flex items-center gap-4">
-                            <div className="text-right">
-                                <div className="text-[10px] text-primary/60 fd-font-tech">WALLET SPENT</div>
-                                <div className="text-sm font-bold fd-neon-text">${walletSpent.toLocaleString()}</div>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs fd-font-tech text-primary/60">
-                                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                LIVE
-                            </div>
-                        </div>
-                    </header>
 
                     {/* Main Content Area */}
                     <main className="flex-1">
                         <div className="flex flex-col">
                             {/* Mid-scale layout for better breathing room - Increased top padding */}
-                            <div className="flex-1 flex justify-center gap-20 px-4 pt-12 pb-8">
+                            <div className="flex-1 flex justify-center gap-20 px-4 pt-20 pb-8">
                                 {/* Left: Drop Board */}
                                 <div className="w-[440px] pb-4">
                                     <LiveDropBoard onSpend={spend} />
