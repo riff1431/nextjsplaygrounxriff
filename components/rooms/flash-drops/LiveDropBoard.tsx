@@ -58,7 +58,7 @@ export default function LiveDropBoard({ onSpend }: LiveDropBoardProps) {
     }, []);
 
     return (
-        <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3 flex flex-col h-full">
+        <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3 flex flex-col">
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
                 <h2 className="fd-font-tech text-xl font-bold text-foreground">Live Drop Board</h2>
@@ -83,7 +83,7 @@ export default function LiveDropBoard({ onSpend }: LiveDropBoardProps) {
             </div>
 
             {/* Grid of drops */}
-            <div className="grid grid-cols-2 gap-2.5 flex-1 overflow-y-auto pr-1 min-h-0 min-h-[300px] max-h-[500px] custom-scroll">
+            <div className="grid grid-cols-2 gap-2.5">
                 {drops.map((drop) => (
                     <button
                         key={drop.id}

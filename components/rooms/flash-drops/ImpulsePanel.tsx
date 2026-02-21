@@ -39,7 +39,7 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
     };
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2">
             {/* Impulse Spend */}
             <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
                 <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Impulse Spend</h2>
@@ -62,7 +62,7 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
             </div>
 
             {/* High Roller Packs */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-3 flex-1">
+            <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
                 <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-2 uppercase tracking-widest">High Roller Packs</h2>
                 <div className="space-y-1">
                     {highRollerPacks.map((pack) => (

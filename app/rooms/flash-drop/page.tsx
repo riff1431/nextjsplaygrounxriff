@@ -49,7 +49,7 @@ export default function FlashDropsRoomPreview() {
 
     return (
         <ProtectRoute allowedRoles={["fan"]}>
-            <div className="min-h-screen bg-black text-white fd-theme overflow-hidden font-body">
+            <div className="min-h-screen bg-black text-white fd-theme font-body">
                 {toast && (
                     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] rounded-2xl border border-primary/50 bg-black/80 px-4 py-2 text-sm text-foreground shadow-[0_0_40px_hsl(330_100%_55%/0.3)] animate-float">
                         {toast}
@@ -82,7 +82,7 @@ export default function FlashDropsRoomPreview() {
                 />
 
                 {/* Main content */}
-                <div className="relative z-10 flex flex-col h-screen max-w-[1500px] mx-auto w-full">
+                <div className="relative z-10 flex flex-col min-h-screen max-w-[1500px] mx-auto w-full">
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
                         <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80">
@@ -119,17 +119,17 @@ export default function FlashDropsRoomPreview() {
                     </header>
 
                     {/* Main Content Area */}
-                    <main className="flex-1 overflow-hidden">
-                        <div className="h-full flex flex-col">
-                            {/* Mid-scale layout for better breathing room */}
-                            <div className="flex-1 flex justify-center gap-20 px-4 pt-4 min-h-0 overflow-hidden">
+                    <main className="flex-1">
+                        <div className="flex flex-col">
+                            {/* Mid-scale layout for better breathing room - Increased top padding */}
+                            <div className="flex-1 flex justify-center gap-20 px-4 pt-12 pb-8">
                                 {/* Left: Drop Board */}
-                                <div className="w-[440px] h-full overflow-hidden pb-4">
+                                <div className="w-[440px] pb-4">
                                     <LiveDropBoard onSpend={spend} />
                                 </div>
 
                                 {/* Right: Impulse Panel */}
-                                <div className="w-[400px] h-full overflow-y-auto overflow-x-hidden pr-2 custom-scroll pb-4">
+                                <div className="w-[400px] pb-4">
                                     <ImpulsePanel onSpend={spend} />
                                 </div>
                             </div>
