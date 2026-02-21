@@ -432,3 +432,204 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* ----- START FLASH DROPS THEME (Scoped) ----- */
+.fd-theme {
+  --background: 270 50% 4%;
+  --foreground: 310 100% 95%;
+
+  --card: 270 40% 7%;
+  --card-foreground: 310 100% 95%;
+
+  --popover: 270 40% 7%;
+  --popover-foreground: 310 100% 95%;
+
+  --primary: 330 100% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 280 60% 15%;
+  --secondary-foreground: 310 100% 90%;
+
+  --muted: 270 30% 12%;
+  --muted-foreground: 310 30% 65%;
+
+  --accent: 300 100% 60%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 330 100% 55%;
+  --input: 270 30% 15%;
+  --ring: 330 100% 55%;
+
+  --radius: 0.5rem;
+
+  /* Neon colors */
+  --neon-pink: 330 100% 55%;
+  --neon-pink-bright: 320 100% 65%;
+  --neon-magenta: 300 100% 60%;
+  --neon-glow-sm: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+  --neon-glow-md: 0 0 10px hsl(330 100% 55% / 0.9), 0 0 30px hsl(330 100% 55% / 0.6), 0 0 60px hsl(330 100% 55% / 0.4), 0 0 100px hsl(330 100% 55% / 0.2);
+  --neon-glow-lg: 0 0 15px hsl(330 100% 55% / 1), 0 0 40px hsl(330 100% 55% / 0.8), 0 0 80px hsl(330 100% 55% / 0.5), 0 0 150px hsl(330 100% 55% / 0.3);
+  --panel-bg: hsl(270 50% 2% / 0.65);
+  --panel-border: hsl(330 100% 55% / 0.45);
+}
+
+@layer utilities {
+  .fd-font-display {
+    font-family: 'Dancing Script', cursive;
+  }
+
+  .fd-font-tech {
+    font-family: 'Orbitron', sans-serif;
+  }
+
+  .fd-font-body {
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .fd-neon-border {
+    border: 1px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-sm), inset 0 0 20px hsl(330 100% 55% / 0.05);
+  }
+
+  .fd-neon-border-md {
+    border: 1.5px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-md), inset 0 0 30px hsl(330 100% 55% / 0.08);
+  }
+
+  .fd-neon-border-lg {
+    border: 2px solid hsl(var(--neon-pink));
+    box-shadow: var(--neon-glow-lg), inset 0 0 50px hsl(330 100% 55% / 0.1);
+  }
+
+  .fd-neon-text {
+    color: hsl(var(--neon-pink-bright));
+    text-shadow: 0 0 8px hsl(330 100% 65% / 0.9), 0 0 20px hsl(330 100% 65% / 0.6), 0 0 40px hsl(330 100% 65% / 0.4);
+  }
+
+  .fd-neon-text-sm {
+    color: hsl(var(--neon-pink-bright));
+    text-shadow: 0 0 5px hsl(330 100% 65% / 0.8), 0 0 15px hsl(330 100% 65% / 0.5);
+  }
+
+  .fd-glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .fd-animate-neon-pulse {
+    animation: fd-neon-pulse 2s ease-in-out infinite;
+  }
+
+  .fd-animate-glow-breathe {
+    animation: fd-glow-breathe 2.5s ease-in-out infinite;
+  }
+
+  .fd-animate-border-glow {
+    animation: fd-border-glow 1.8s ease-in-out infinite;
+  }
+
+  .fd-animate-float {
+    animation: fd-float 4s ease-in-out infinite;
+  }
+
+  .fd-animate-neon-flicker {
+    animation: fd-neon-flicker 3s ease-in-out infinite;
+  }
+}
+
+@keyframes fd-neon-flicker {
+
+  0%,
+  19%,
+  21%,
+  23%,
+  25%,
+  54%,
+  56%,
+  100% {
+    box-shadow: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+    border-color: hsl(330 100% 55% / 0.8);
+    opacity: 1;
+  }
+
+  20%,
+  24%,
+  55% {
+    box-shadow: none;
+    border-color: hsl(330 100% 55% / 0.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes fd-glow-breathe {
+
+  0%,
+  100% {
+    text-shadow: 0 0 8px hsl(330 100% 65% / 0.9), 0 0 20px hsl(330 100% 65% / 0.6), 0 0 40px hsl(330 100% 65% / 0.4);
+  }
+
+  50% {
+    text-shadow: 0 0 15px hsl(330 100% 75% / 1), 0 0 35px hsl(330 100% 75% / 0.8), 0 0 70px hsl(330 100% 75% / 0.6), 0 0 120px hsl(330 100% 75% / 0.4);
+  }
+}
+
+@keyframes fd-border-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px hsl(330 100% 55% / 0.5), 0 0 15px hsl(330 100% 55% / 0.3), inset 0 0 10px hsl(330 100% 55% / 0.05);
+    border-color: hsl(330 100% 55% / 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 12px hsl(330 100% 65% / 0.9), 0 0 30px hsl(330 100% 65% / 0.6), 0 0 60px hsl(330 100% 65% / 0.3), inset 0 0 20px hsl(330 100% 65% / 0.1);
+    border-color: hsl(330 100% 65% / 0.9);
+  }
+}
+
+@keyframes fd-neon-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px hsl(330 100% 55% / 0.8), 0 0 20px hsl(330 100% 55% / 0.5), 0 0 40px hsl(330 100% 55% / 0.3);
+    border-color: hsl(330 100% 55% / 0.8);
+  }
+
+  50% {
+    box-shadow: 0 0 15px hsl(330 100% 65% / 1), 0 0 40px hsl(330 100% 65% / 0.8), 0 0 80px hsl(330 100% 65% / 0.5), 0 0 150px hsl(330 100% 65% / 0.3);
+    border-color: hsl(330 100% 65% / 1);
+  }
+}
+
+@keyframes fd-float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes fd-ticker-move {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.fd-ticker-content {
+  animation: fd-ticker-move 20s linear infinite;
+  white-space: nowrap;
+}
+
+/* ----- END FLASH DROPS THEME ----- */
