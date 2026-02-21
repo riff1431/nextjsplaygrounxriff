@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -649,3 +650,82 @@ body {
 }
 
 /* ----- END FLASH DROPS THEME ----- */
+
+/* ==========================================================================
+   X Chat Theme (Premium Gold/Casino)
+   ========================================================================== */
+
+.fd-x-chat-theme {
+  --background: 30 15% 8%;
+  --foreground: 40 30% 90%;
+  --card: 30 10% 12%;
+  --card-foreground: 40 30% 90%;
+  --popover: 30 10% 12%;
+  --popover-foreground: 40 30% 90%;
+  --primary: 40 60% 55%;
+  --primary-foreground: 30 15% 8%;
+  --secondary: 30 10% 18%;
+  --secondary-foreground: 40 30% 90%;
+  --muted: 30 8% 16%;
+  --muted-foreground: 40 15% 55%;
+  --accent: 40 50% 45%;
+  --accent-foreground: 40 30% 95%;
+  --border: 40 25% 25%;
+  --input: 30 10% 20%;
+  --ring: 40 60% 55%;
+  --gold: 40 60% 55%;
+  --gold-light: 40 70% 70%;
+  --gold-dark: 35 50% 35%;
+}
+
+.fd-x-chat-theme h1,
+.fd-x-chat-theme h2,
+.fd-x-chat-theme h3,
+.fd-x-chat-theme h4,
+.fd-x-chat-theme h5,
+.fd-x-chat-theme h6,
+.fd-font-cinzel {
+  font-family: 'Cinzel', serif !important;
+}
+
+.fd-x-chat-theme .glass-card {
+  background: hsla(30, 10%, 12%, 0.35);
+  backdrop-filter: blur(4px);
+  border: 1px solid hsla(40, 25%, 25%, 0.5);
+  border-radius: 0.5rem;
+}
+
+.fd-x-chat-theme .glass-card-inner {
+  background: hsla(30, 10%, 10%, 0.3);
+  backdrop-filter: blur(2px);
+  border: 1px solid hsla(40, 25%, 25%, 0.35);
+  border-radius: 0.5rem;
+}
+
+.fd-x-chat-theme .text-gold {
+  color: hsl(40, 60%, 55%);
+}
+
+.fd-x-chat-theme .text-gold-light {
+  color: hsl(40, 70%, 70%);
+}
+
+.fd-x-chat-theme .text-gold-gradient {
+  background: linear-gradient(135deg, hsl(40, 70%, 70%), hsl(40, 60%, 55%), hsl(35, 50%, 35%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fd-x-chat-theme .chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fd-x-chat-theme .chat-scroll::-webkit-scrollbar-track {
+  background: hsla(30, 10%, 12%, 0.5);
+}
+
+.fd-x-chat-theme .chat-scroll::-webkit-scrollbar-thumb {
+  background: hsla(40, 25%, 25%, 0.8);
+  border-radius: 2px;
+}
