@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -76,121 +76,7 @@
     box-shadow: 0 0 8px hsl(var(--gold) / 0.6);
   }
 
-  /* Bar Lounge Utilities */
-  .bl-glass-panel {
-    background: hsla(270, 40%, 15%, 0.2);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsla(280, 60%, 45%, 0.25);
-    border-radius: var(--radius);
-  }
 
-  .bl-glass-panel-strong {
-    background: hsla(270, 40%, 15%, 0.3);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsla(280, 60%, 45%, 0.3);
-    border-radius: var(--radius);
-  }
-
-  .bl-glow-purple {
-    box-shadow: 0 0 15px hsla(280, 100%, 70%, 0.4),
-      0 0 40px hsla(280, 100%, 70%, 0.15),
-      inset 0 0 15px hsla(280, 100%, 70%, 0.05);
-  }
-
-  .bl-glow-gold {
-    box-shadow: 0 0 15px hsla(42, 90%, 55%, 0.4),
-      0 0 40px hsla(42, 90%, 55%, 0.15);
-  }
-
-  .bl-glow-pink {
-    box-shadow: 0 0 15px hsla(320, 100%, 65%, 0.4),
-      0 0 40px hsla(320, 100%, 65%, 0.15);
-  }
-
-  .bl-glow-text-gold {
-    text-shadow: 0 0 10px hsla(42, 90%, 55%, 0.6),
-      0 0 30px hsla(42, 90%, 55%, 0.3);
-  }
-
-  .bl-glow-text-purple {
-    text-shadow: 0 0 10px hsla(280, 100%, 70%, 0.6),
-      0 0 30px hsla(280, 100%, 70%, 0.3);
-  }
-
-  .bl-glow-text-pink {
-    text-shadow: 0 0 10px hsla(320, 100%, 65%, 0.6),
-      0 0 30px hsla(320, 100%, 65%, 0.3);
-  }
-
-  .bl-btn-glow {
-    @apply relative overflow-hidden transition-all duration-300;
-    background: linear-gradient(135deg, hsla(280, 80%, 55%, 0.8), hsla(320, 80%, 60%, 0.8));
-    border: 1px solid hsla(280, 60%, 45%, 0.5);
-  }
-
-  .bl-btn-glow:hover {
-    box-shadow: 0 0 20px hsla(280, 100%, 70%, 0.5),
-      0 0 50px hsla(280, 100%, 70%, 0.2);
-    transform: translateY(-1px);
-  }
-
-  .bl-btn-gold {
-    background: linear-gradient(135deg, hsla(42, 90%, 55%, 0.9), hsla(42, 80%, 45%, 0.9));
-    border: 1px solid hsla(42, 90%, 55%, 0.5);
-    color: hsl(270, 50%, 8%);
-    font-weight: 600;
-  }
-
-  .bl-btn-gold:hover {
-    box-shadow: 0 0 20px hsla(42, 90%, 55%, 0.5),
-      0 0 50px hsla(42, 90%, 55%, 0.2);
-    transform: translateY(-1px);
-  }
-
-  .bl-drink-item {
-    @apply flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200;
-    background: hsla(270, 40%, 15%, 0.3);
-    border: 1px solid hsla(280, 60%, 45%, 0.2);
-  }
-
-  .bl-drink-item:hover {
-    background: hsla(280, 60%, 45%, 0.2);
-    box-shadow: 0 0 10px hsla(280, 100%, 70%, 0.2);
-  }
-
-  .bl-chat-message {
-    @apply px-3 py-2 rounded-lg mb-2;
-    background: hsla(270, 40%, 15%, 0.3);
-    border: 1px solid hsla(280, 60%, 45%, 0.15);
-  }
-
-  .bl-vip-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
-    background: linear-gradient(135deg, hsla(42, 90%, 55%, 0.3), hsla(42, 80%, 45%, 0.1));
-    border: 1px solid hsla(42, 90%, 55%, 0.4);
-    color: hsl(42, 90%, 65%);
-  }
-
-  .bl-live-badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
-    background: hsla(140, 70%, 45%, 0.2);
-    border: 1px solid hsla(140, 70%, 45%, 0.4);
-    color: hsl(140, 70%, 55%);
-  }
-
-  .bl-tip-btn {
-    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200 cursor-pointer;
-    background: hsla(270, 40%, 15%, 0.4);
-    border: 1px solid hsla(280, 60%, 45%, 0.3);
-    color: hsl(45, 100%, 95%);
-  }
-
-  .bl-tip-btn:hover {
-    background: hsla(280, 60%, 45%, 0.3);
-    box-shadow: 0 0 15px hsla(280, 100%, 70%, 0.3);
-  }
 }
 
 @keyframes border-glow {
@@ -263,81 +149,7 @@ body {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Bar Lounge CSS Variables */
-  --color-bl-gold: hsl(42, 90%, 55%);
-  --color-bl-neon-pink: hsl(320, 100%, 65%);
-  --color-bl-neon-purple: hsl(280, 100%, 70%);
 
-  --animate-bl-glow-pulse: bl-glow-pulse 2s ease-in-out infinite;
-  --animate-bl-float: bl-float 4s ease-in-out infinite;
-  --animate-bl-sparkle: bl-sparkle 2s ease-in-out infinite;
-  --animate-bl-neon-flicker: bl-neon-flicker 3s ease-in-out infinite;
-
-  @keyframes bl-glow-pulse {
-
-    0%,
-    100% {
-      opacity: 0.6;
-    }
-
-    50% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes bl-float {
-
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes bl-sparkle {
-
-    0%,
-    100% {
-      opacity: 0;
-      transform: scale(0);
-    }
-
-    50% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes bl-neon-flicker {
-
-    0%,
-    100% {
-      opacity: 1;
-    }
-
-    92% {
-      opacity: 1;
-    }
-
-    93% {
-      opacity: 0.7;
-    }
-
-    94% {
-      opacity: 1;
-    }
-
-    96% {
-      opacity: 0.8;
-    }
-
-    97% {
-      opacity: 1;
-    }
-  }
 }
 
 :root {
@@ -725,7 +537,210 @@ body {
   background: hsla(30, 10%, 12%, 0.5);
 }
 
-.fd-x-chat-theme .chat-scroll::-webkit-scrollbar-thumb {
-  background: hsla(40, 25%, 25%, 0.8);
-  border-radius: 2px;
+
+/* ==========================================================================
+   Suga 4 U Theme (Sugar/Pink/Gold)
+   ========================================================================== */
+
+.fd-suga4u-theme {
+  --background: 270 20% 6%;
+  --foreground: 40 60% 95%;
+  --card: 270 15% 10%;
+  --card-foreground: 40 60% 95%;
+  --popover: 270 15% 10%;
+  --popover-foreground: 40 60% 95%;
+  --primary: 330 85% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 80% 50%;
+  --secondary-foreground: 270 20% 6%;
+  --muted: 270 10% 18%;
+  --muted-foreground: 40 20% 65%;
+  --accent: 42 80% 50%;
+  --accent-foreground: 270 20% 6%;
+  --border: 42 40% 25%;
+  --input: 270 10% 18%;
+  --ring: 330 85% 55%;
+  --gold: 42 80% 50%;
+  --gold-light: 42 90% 65%;
+  --gold-dark: 42 70% 35%;
+  --pink: 330 85% 55%;
+  --pink-light: 330 90% 70%;
+  --pink-glow: 330 100% 60%;
+  --magenta: 310 80% 50%;
+  --deep-purple: 270 30% 12%;
+}
+
+.fd-suga4u-theme,
+.fd-suga4u-theme .font-body {
+  font-family: 'Montserrat', sans-serif !important;
+}
+
+.fd-suga4u-theme .font-display {
+  font-family: 'Cinzel Decorative', cursive !important;
+}
+
+.fd-suga4u-theme .glow-pink {
+  box-shadow: 0 0 15px hsl(var(--pink-glow) / 0.5), 0 0 30px hsl(var(--pink-glow) / 0.2);
+}
+
+.fd-suga4u-theme .glow-gold {
+  box-shadow: 0 0 15px hsl(var(--gold) / 0.5), 0 0 30px hsl(var(--gold) / 0.2);
+}
+
+.fd-suga4u-theme .glow-text-pink {
+  text-shadow: 0 0 10px hsl(var(--pink-glow) / 0.6), 0 0 20px hsl(var(--pink-glow) / 0.3);
+}
+
+.fd-suga4u-theme .glow-text-gold {
+  text-shadow: 0 0 10px hsl(var(--gold) / 0.6), 0 0 20px hsl(var(--gold) / 0.3);
+}
+
+.fd-suga4u-theme .glass-panel {
+  background: hsl(var(--deep-purple) / 0.15);
+  backdrop-filter: blur(1px);
+  border: 1px solid hsl(var(--gold) / 0.25);
+  border-radius: 0.75rem;
+}
+
+.fd-suga4u-theme .btn-gold {
+  background: linear-gradient(135deg, hsl(var(--gold-dark)), hsl(var(--gold)), hsl(var(--gold-light)));
+  color: hsl(var(--background));
+  font-weight: 700;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fd-suga4u-theme .btn-pink {
+  background: linear-gradient(135deg, hsl(var(--magenta)), hsl(var(--pink)), hsl(var(--pink-light)));
+  color: white;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.fd-suga4u-theme .neon-border-pink {
+  border: 1px solid hsl(var(--pink) / 0.6);
+  box-shadow: inset 0 0 10px hsl(var(--pink-glow) / 0.15), 0 0 10px hsl(var(--pink-glow) / 0.2);
+}
+/* Bar Lounge v2 Theme */
+.fd-bar-lounge-theme-v2 {
+  --background: 270 51% 8%;
+  --foreground: 45 100% 98%;
+  --gold: 42 90% 55%;
+  --gold-light: 42 90% 70%;
+  --gold-dark: 42 90% 40%;
+  --deep-purple: 270 50% 12%;
+  --border-gold: 42 90% 55% / 0.2;
+  --panel-bg: 270 50% 8% / 0.4;
+  
+  font-family: 'Montserrat', sans-serif;
+}
+
+.fd-bar-lounge-theme-v2 .font-title {
+  font-family: 'Playfair Display', serif;
+}
+
+.fd-bar-lounge-theme-v2 .glass-panel {
+  background-color: hsla(270, 50%, 8%, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsla(42, 90%, 55%, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.fd-bar-lounge-theme-v2 .text-gold {
+  color: hsl(var(--gold));
+}
+
+.fd-bar-lounge-theme-v2 .bg-gold {
+  background-color: hsl(var(--gold));
+}
+
+.fd-bar-lounge-theme-v2 .border-gold {
+  border-color: hsla(42, 90%, 55%, 0.3);
+}
+
+.fd-bar-lounge-theme-v2 .btn-gold {
+  background: linear-gradient(135deg, hsl(var(--gold-dark)), hsl(var(--gold)), hsl(var(--gold-light)));
+  color: #140A1F;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+.fd-bar-lounge-theme-v2 .btn-gold:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px hsla(42, 90%, 55%, 0.4);
+  transform: translateY(-1px);
+}
+
+.fd-bar-lounge-theme-v2 .btn-send {
+  background: linear-gradient(135deg, #FF2A6D, #D209FA);
+  color: white;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.fd-bar-lounge-theme-v2 .btn-send:hover {
+  box-shadow: 0 0 15px rgba(210, 9, 250, 0.4);
+  transform: translateY(-1px);
+}
+
+.fd-bar-lounge-theme-v2 .drink-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsla(0, 0%, 100%, 0.05);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.fd-bar-lounge-theme-v2 .drink-item:hover {
+  background: hsla(0, 0%, 100%, 0.05);
+}
+
+.fd-bar-lounge-theme-v2 .chat-bubble {
+  background: hsla(270, 50%, 15%, 0.3);
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.fd-bar-lounge-theme-v2 .pin-badge {
+  background: hsla(42, 90%, 55%, 0.1);
+  border: 1px solid hsla(42, 90%, 55%, 0.3);
+  color: hsl(var(--gold));
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.fd-bar-lounge-theme-v2 .custom-tip-container {
+  display: flex;
+  align-items: center;
+  background: hsla(0, 0%, 0%, 0.3);
+  border: 1px solid hsla(0, 0%, 100%, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.fd-bar-lounge-theme-v2 .tip-circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 2px solid hsla(0, 0%, 100%, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fd-bar-lounge-theme-v2 .tip-circle:hover {
+  border-color: hsl(var(--gold));
+  color: hsl(var(--gold));
 }

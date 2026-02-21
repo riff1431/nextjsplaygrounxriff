@@ -1,93 +1,93 @@
-import React, { useRef, useEffect } from "react";
-import { Crown, Send } from "lucide-react";
-import { cx, toneClasses } from "@/app/rooms/bar-lounge/page";
+import React, { useState, useRef, useEffect } from "react";
+import { MessageSquare, Send, Zap } from "lucide-react";
 
 interface Message {
     id: string;
-    user_id: string;
-    handle: string;
-    content: string;
-    created_at: string;
+    user: string;
+    text: string;
+    isPurchased?: boolean;
 }
 
 interface LoungeChatProps {
     messages: Message[];
-    chatValue: string;
-    hostId: string;
-    currentUserId?: string;
-    onChangeChat: (value: string) => void;
-    onSendMessage: () => void;
+    onSendMessage: (text: string) => void;
 }
 
-const LoungeChat: React.FC<LoungeChatProps> = ({
-    messages,
-    chatValue,
-    hostId,
-    currentUserId,
-    onChangeChat,
-    onSendMessage,
-}) => {
+const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
+    const [inputText, setInputText] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const handleSend = () => {
+        if (inputText.trim()) {
+            onSendMessage(inputText);
+            setInputText("");
+        }
+    };
+
     return (
-        <div className="p-4 flex flex-col h-full border border-violet-500/20 rounded-xl bg-black/40 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-3">
-                <h2 className="font-display text-xl font-bold bl-glow-text-gold text-yellow-400">
-                    Lounge Chat
-                </h2>
-                <span className="bl-live-badge">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-bl-glow-pulse" />
-                    Live
-                </span>
+        <div className="flex flex-col h-full glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+            <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <MessageSquare className="w-5 h-5 text-gold" />
+                    <h2 className="font-title text-xl font-bold text-gold tracking-wide">
+                        Lounge Chat
+                    </h2>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] text-green-500 font-bold tracking-widest uppercase">Live</span>
+                </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin mb-3 h-[400px]">
-                {messages.map((m) => {
-                    const isHost = m.handle === "Host" || m.user_id === hostId;
-                    const isMe = m.user_id === currentUserId;
-
-                    return (
-                        <div key={m.id} className="bl-chat-message flex items-start gap-2">
-                            <span className="text-lg shrink-0">
-                                {isHost ? "👑" : isMe ? "👤" : "🧑"}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 chat-scroll">
+                {messages.map((msg) => (
+                    <div
+                        key={msg.id}
+                        className={`flex flex-col ${msg.isPurchased ? "bg-gold/10 border border-gold/20" : "bg-white/5 border border-white/5"} rounded-xl p-3 transition-colors hover:bg-white/10`}
+                    >
+                        <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-bold uppercase tracking-widest ${msg.isPurchased ? "text-gold" : "text-white/40"}`}>
+                                {msg.user}
                             </span>
-                            <div className="flex-1 min-w-0">
-                                <span className={cx("font-bold text-sm", isHost ? "text-fuchsia-300" : "text-violet-200")}>
-                                    {m.handle || "Guest"}
-                                </span>
-                                {isHost && (
-                                    <Crown className="w-3 h-3 text-yellow-400 inline ml-1 mb-0.5" />
-                                )}
-                                <span className="text-sm text-gray-300 ml-1 block mt-0.5 leading-relaxed">{m.content}</span>
-                            </div>
+                            {msg.isPurchased && (
+                                <div className="flex items-center gap-1 text-[9px] font-black text-gold bg-gold/10 px-1.5 py-0.5 rounded-md uppercase tracking-tighter border border-gold/20">
+                                    <Zap className="w-2.5 h-2.5 fill-gold" /> Purchase
+                                </div>
+                            )}
                         </div>
-                    );
-                })}
-
+                        <p className={`text-sm leading-relaxed ${msg.isPurchased ? "text-white font-medium" : "text-white/80"}`}>
+                            {msg.text}
+                        </p>
+                    </div>
+                ))}
                 <div ref={chatEndRef} />
             </div>
 
-            <div className="flex gap-2 mt-auto">
-                <input
-                    type="text"
-                    value={chatValue}
-                    onChange={(e) => onChangeChat(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") onSendMessage();
-                    }}
-                    placeholder="Send a message..."
-                    className="flex-1 rounded-lg px-3 py-2 text-sm bg-black/50 border border-violet-500/40 text-white placeholder:text-gray-500 focus:outline-none focus:border-fuchsia-500/60"
-                />
-                <button
-                    onClick={onSendMessage}
-                    className="bl-btn-glow rounded-lg px-4 py-2 text-sm font-bold text-white flex items-center gap-1"
-                >
-                    SEND
-                </button>
+            <div className="p-5 bg-black/40 border-t border-white/5 space-y-4">
+                <div className="pin-badge w-fit mx-auto cursor-pointer hover:bg-gold/20 transition-colors">
+                    📍 PIN NAME TO TOP
+                </div>
+
+                <div className="relative group">
+                    <input
+                        type="text"
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        placeholder="Whisper something..."
+                        className="w-full bg-white/5 border border-white/10 py-3.5 pl-4 pr-14 rounded-xl text-white placeholder-white/20 focus:outline-none focus:border-gold/40 focus:bg-white/10 transition-all text-sm"
+                    />
+                    <button
+                        onClick={handleSend}
+                        className="absolute right-1.5 top-1.5 p-2 rounded-lg btn-send"
+                    >
+                        <Send className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
         </div>
     );

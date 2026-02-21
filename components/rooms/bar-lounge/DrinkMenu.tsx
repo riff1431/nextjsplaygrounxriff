@@ -1,6 +1,5 @@
 import React from "react";
 import { Wine, Crown, Sparkles } from "lucide-react";
-import { cx, toneClasses } from "@/app/rooms/bar-lounge/page"; // We will export these utilities from page.tsx or duplicate them
 
 interface Drink {
     id: string;
@@ -8,7 +7,7 @@ interface Drink {
     price: number;
     icon: string | React.ReactNode;
     tone: "pink" | "purple" | "blue" | "green" | "yellow" | "red";
-    special?: "none" | "confetti" | "spotlight";
+    special?: "none" | "confetti" | "spotlight" | "champagne" | "vipbottle";
 }
 
 interface DrinkMenuProps {
@@ -16,7 +15,7 @@ interface DrinkMenuProps {
     creatorName: string;
     vipPrice: number;
     ultraVipPrice: number;
-    onPurchaseDrink: (name: string, price: number, fx: object) => void;
+    onPurchaseDrink: (name: string, price: number, fxArgs: object) => void;
     onPurchaseVip: (name: string, price: number) => void;
     onReserveBooth: (price: number) => void;
 }
@@ -31,70 +30,71 @@ const DrinkMenu: React.FC<DrinkMenuProps> = ({
     onReserveBooth
 }) => {
     return (
-        <div className="p-4 flex flex-col h-full border border-violet-500/20 rounded-xl bg-black/40 backdrop-blur-md">
-            <div className="flex items-center gap-2 mb-1">
-                <Wine className="w-5 h-5 text-neon-purple animate-bl-glow-pulse" />
-                <h2 className="font-display text-xl font-bold bl-glow-text-gold text-yellow-400">
-                    Buy a Drink
-                </h2>
+        <div className="flex flex-col h-full glass-panel rounded-2xl overflow-hidden border border-white/10">
+            <div className="p-5 border-b border-white/5 bg-white/5">
+                <div className="flex items-center gap-3 mb-1">
+                    <Wine className="w-5 h-5 text-gold" />
+                    <h2 className="font-title text-2xl font-bold text-gold tracking-wide">
+                        Buy a Drink
+                    </h2>
+                </div>
+                <p className="text-white/60 text-xs font-medium tracking-wider uppercase">For {creatorName}</p>
             </div>
-            <p className="text-gray-400 text-sm mb-4">for {creatorName}</p>
 
-            <div className="border-t border-violet-500/30 pt-3">
-                <h3 className="text-sm font-semibold text-gray-400 mb-3 tracking-wider uppercase">
-                    Drink Menu
-                </h3>
-                <div className="space-y-2">
-                    {drinks.map((drink) => {
-                        const t = toneClasses(drink.tone);
-                        return (
-                            <div
-                                key={drink.id}
-                                className={cx("bl-drink-item", t.border, t.glow)}
-                                onClick={() => onPurchaseDrink(drink.name, drink.price, { special: drink.special })}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{drink.icon}</span>
-                                    <span className="text-white font-medium text-sm">{drink.name}</span>
-                                </div>
-                                <span className="text-yellow-400 font-semibold">${drink.price}</span>
+            <div className="flex-1 overflow-y-auto chat-scroll">
+                <div className="divide-y divide-white/5">
+                    {drinks.map((drink) => (
+                        <div
+                            key={drink.id}
+                            className="drink-item group"
+                            onClick={() => onPurchaseDrink(drink.name, drink.price, { special: drink.special })}
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className="text-xl group-hover:scale-110 transition-transform">{drink.icon}</span>
+                                <span className="text-white/90 font-medium text-sm">{drink.name}</span>
                             </div>
-                        );
-                    })}
+                            <span className="text-gold font-bold text-sm bg-gold/5 px-2 py-1 rounded-lg border border-gold/10 group-hover:bg-gold/10 transition-colors">
+                                ${drink.price}
+                            </span>
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            <div className="border-t border-violet-500/30 pt-4 mt-4 space-y-3">
-                <h3 className="font-display text-lg font-bold text-white text-center">VIP Lounge</h3>
+            <div className="p-5 bg-black/40 border-t border-white/5 space-y-4">
+                <h3 className="font-title text-xl font-bold text-white text-center tracking-wide">VIP Lounge</h3>
 
                 <button
-                    onClick={() => onPurchaseVip("VIP Booth", vipPrice)}
-                    className="w-full text-left bl-glass-panel p-3 bl-glow-gold space-y-2 hover:-translate-y-0.5 transition-transform"
+                    onClick={() => onPurchaseVip("VIP Upgrade", vipPrice)}
+                    className="w-full text-left p-4 rounded-xl border border-gold/20 bg-gradient-to-br from-gold/10 to-transparent hover:from-gold/20 transition-all group"
                 >
-                    <div className="flex items-center gap-2">
-                        <Crown className="w-5 h-5 text-yellow-400 animate-bl-glow-pulse" />
-                        <span className="font-bold text-yellow-400 bl-glow-text-gold">Upgrade to VIP - ${vipPrice}</span>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <Crown className="w-5 h-5 text-gold animate-pulse" />
+                            <span className="font-bold text-gold uppercase tracking-tighter">Upgrade to VIP</span>
+                        </div>
+                        <span className="text-gold font-black">${vipPrice}</span>
                     </div>
-                    <ul className="text-sm text-gray-300 space-y-1 ml-7">
-                        <li className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-pink-400" /> Exclusive Content</li>
-                    </ul>
+                    <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-gold/60" />
+                        Unlock Exclusive Content & Perks
+                    </p>
                 </button>
 
                 <button
                     onClick={() => onReserveBooth(300)}
-                    className="w-full text-left bl-glass-panel p-3 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
+                    className="w-full flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm group"
                 >
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg">🛋️</span>
+                    <div className="flex items-center gap-3">
+                        <span className="text-xl group-hover:scale-110 transition-transform">🛋️</span>
                         <div>
-                            <span className="font-bold text-white text-sm">Reserve a Booth</span>
-                            <span className="text-yellow-400 font-bold ml-2">$300</span>
-                            <p className="text-xs text-gray-400">🎉 Private (5 mins)</p>
+                            <span className="font-bold text-white block">Reserve a Booth</span>
+                            <span className="text-[10px] text-white/40 uppercase tracking-widest">Private (5 mins)</span>
                         </div>
                     </div>
+                    <span className="text-gold font-bold">$300</span>
                 </button>
             </div>
-
         </div>
     );
 };
