@@ -58,7 +58,7 @@ export default function LiveDropBoard({ onSpend }: LiveDropBoardProps) {
     }, []);
 
     return (
-        <div className="fd-glass-panel fd-neon-border-md rounded-xl p-4 flex flex-col h-full">
+        <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3 flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
                 <h2 className="fd-font-tech text-xl font-bold text-foreground">Live Drop Board</h2>
@@ -88,14 +88,14 @@ export default function LiveDropBoard({ onSpend }: LiveDropBoardProps) {
                     <button
                         key={drop.id}
                         onClick={() => onSpend?.(drop.price, `🎁 Unlocked ${drop.name}`)}
-                        className="text-left p-2.5 rounded-lg border border-primary/25 bg-primary/5 hover:bg-primary/20 hover:border-primary/60 transition-all group"
+                        className="text-left p-2 rounded-lg border border-primary/25 bg-primary/5 hover:bg-primary/20 hover:border-primary/60 transition-all group"
                     >
                         <div className="flex items-start justify-between gap-1">
-                            <span className={`fd-font-body font-bold text-sm leading-tight fd-neon-text-sm ${rarityColor[drop.rarity]}`}>
+                            <span className={`fd-font-body font-bold text-xs leading-tight fd-neon-text-sm ${rarityColor[drop.rarity]}`}>
                                 {drop.name}
                             </span>
                             {drop.price > 0 && (
-                                <span className="fd-font-tech text-sm font-black fd-neon-text shrink-0">${drop.price}</span>
+                                <span className="fd-font-tech text-xs font-black fd-neon-text shrink-0">${drop.price}</span>
                             )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
@@ -108,30 +108,30 @@ export default function LiveDropBoard({ onSpend }: LiveDropBoardProps) {
             </div>
 
             {/* Focused Drop */}
-            <div className="mt-4 rounded-xl border-2 border-yellow-400/60 bg-black/80 p-5 relative overflow-hidden">
+            <div className="mt-4 rounded-xl border-2 border-yellow-400/60 bg-black/80 p-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 left-0 bottom-0 pointer-events-none rounded-xl shadow-[0_0_40px_rgba(250,204,21,0.3)] ring-1 ring-yellow-400/40" />
-                <div className="flex items-center justify-between mb-3 relative z-10">
+                <div className="flex items-center justify-between mb-2 relative z-10">
                     <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                        <span className="fd-font-tech text-sm font-black uppercase tracking-[0.2em] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]">Focused Drop</span>
+                        <div className="w-1 h-1 rounded-full bg-yellow-400 animate-pulse" />
+                        <span className="fd-font-tech text-xs font-black uppercase tracking-[0.2em] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]">Focused Drop</span>
                     </div>
                     <span className="text-[10px] text-yellow-400/60 fd-font-tech uppercase font-bold cursor-pointer hover:text-yellow-400 transition-colors">Close</span>
                 </div>
-                <div className="flex items-center justify-between relative z-10 mb-4">
+                <div className="flex items-center justify-between relative z-10 mb-3">
                     <div>
-                        <div className="fd-font-body font-black text-white text-base leading-tight">VIP Backstage - Full Reel</div>
-                        <div className="text-[11px] text-yellow-400/50 fd-font-tech uppercase font-bold tracking-tighter mt-0.5">Type: <span className="text-yellow-400/80">Premium Access</span></div>
+                        <div className="fd-font-body font-black text-white text-sm leading-tight">VIP Backstage - Full Reel</div>
+                        <div className="text-[10px] text-yellow-400/50 fd-font-tech uppercase font-bold tracking-tighter mt-0.5">Type: <span className="text-yellow-400/80">Premium Access</span></div>
                     </div>
                     <div className="text-right">
-                        <div className="fd-font-tech text-3xl font-black text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.5)]">$250</div>
+                        <div className="fd-font-tech text-2xl font-black text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.5)]">$250</div>
                     </div>
                 </div>
                 <button
                     onClick={() => onSpend?.(250 * 2, "🎁 Unlocked + Gifted VIP Backstage (2x)")}
-                    className="relative z-10 w-full py-3.5 rounded-xl border-2 border-yellow-400/80 bg-yellow-400/20 text-yellow-400 fd-font-tech text-sm font-black hover:bg-yellow-400/30 transition-all uppercase tracking-[0.25em]"
+                    className="relative z-10 w-full py-2.5 rounded-xl border-2 border-yellow-400/80 bg-yellow-400/20 text-yellow-400 fd-font-tech text-xs font-black hover:bg-yellow-400/30 transition-all uppercase tracking-[0.2em]"
                     style={{
-                        boxShadow: "0 0 20px rgba(250,204,21,0.4), 0 0 50px rgba(250,204,21,0.2), inset 0 0 15px rgba(250,204,21,0.1)",
-                        textShadow: "0 0 8px rgba(250,204,21,0.5)"
+                        boxShadow: "0 0 15px rgba(250,204,21,0.3), 0 0 40px rgba(250,204,21,0.15), inset 0 0 10px rgba(250,204,21,0.1)",
+                        textShadow: "0 0 6px rgba(250,204,21,0.5)"
                     }}
                 >
                     Unlock + Gift: (2x)

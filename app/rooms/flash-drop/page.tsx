@@ -128,43 +128,43 @@ export default function FlashDropsRoomPreview() {
                     {/* Main Content Area */}
                     <main className="flex-1 overflow-hidden">
                         <div className="h-full flex flex-col">
-                            {/* Centered layout with adjusted panel widths and gap */}
-                            <div className="flex-1 flex justify-center gap-10 px-4 pt-4 min-h-0 overflow-hidden">
+                            {/* Mid-scale layout for better breathing room */}
+                            <div className="flex-1 flex justify-center gap-20 px-4 pt-4 min-h-0 overflow-hidden">
                                 {/* Left: Drop Board */}
-                                <div className="w-[580px] h-full overflow-hidden pb-4">
+                                <div className="w-[440px] h-full overflow-hidden pb-4">
                                     <LiveDropBoard onSpend={spend} />
                                 </div>
 
                                 {/* Right: Impulse Panel */}
-                                <div className="w-[540px] h-full overflow-y-auto overflow-x-hidden pr-2 custom-scroll pb-4">
+                                <div className="w-[400px] h-full overflow-y-auto overflow-x-hidden pr-2 custom-scroll pb-4">
                                     <ImpulsePanel onSpend={spend} />
                                 </div>
                             </div>
 
-                            {/* Bottom bundle bar - inside the centered container */}
-                            <div className="px-10 py-4 pb-8">
-                                <div className="flex flex-col md:flex-row items-center justify-center gap-0 rounded-2xl overflow-hidden fd-neon-border-md bg-black/40 backdrop-blur-md max-w-5xl mx-auto border border-primary/30">
+                            {/* Adjusted bundle bar - more compact */}
+                            <div className="px-10 py-3 pb-6">
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-0 rounded-2xl overflow-hidden fd-neon-border-md bg-black/40 backdrop-blur-md max-w-4xl mx-auto border border-primary/30">
                                     {bundles.map((bundle, i) => (
-                                        <div key={bundle.name} className="flex-1 w-full flex flex-col items-center gap-0.5 px-6 py-3 relative hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div key={bundle.name} className="flex-1 w-full flex flex-col items-center gap-0.5 px-4 py-2.5 relative hover:bg-white/5 transition-colors cursor-pointer group">
                                             {i < bundles.length - 1 && (
                                                 <div className="hidden md:block absolute right-0 top-3 bottom-3 w-px bg-primary/30" />
                                             )}
                                             <div
-                                                className="fd-font-display text-2xl my-1 group-hover:scale-105 transition-transform"
+                                                className="fd-font-display text-xl my-0.5 group-hover:scale-105 transition-transform"
                                                 style={{
                                                     color: "hsl(330 100% 80%)",
-                                                    textShadow: "0 0 10px hsl(330 100% 70% / 0.8), 0 0 30px hsl(330 100% 70% / 0.4)",
+                                                    textShadow: "0 0 10px hsl(330 100% 70% / 0.8), 0 0 30px hsl(330 100% 70% / 0.2)",
                                                 }}
                                             >
                                                 {bundle.name}
                                             </div>
-                                            <div className="fd-font-body text-sm text-foreground/50 font-bold uppercase tracking-tighter">{bundle.subtitle}</div>
+                                            <div className="fd-font-body text-[10px] text-foreground/40 font-bold uppercase tracking-tight">{bundle.subtitle}</div>
                                             <button
                                                 onClick={() => spend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
-                                                className="mt-3 mb-1 px-8 py-2 rounded-lg fd-font-tech font-black text-sm text-white transition-all hover:scale-110 active:scale-95 uppercase tracking-widest"
+                                                className="mt-2 mb-0.5 px-6 py-1.5 rounded-lg fd-font-tech font-black text-xs text-white transition-all hover:scale-110 active:scale-95 uppercase tracking-widest"
                                                 style={{
                                                     background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
-                                                    boxShadow: "0 0 20px hsl(330 100% 55% / 0.4), 0 0 40px hsl(330 100% 55% / 0.2)",
+                                                    boxShadow: "0 0 15px hsl(330 100% 55% / 0.4), 0 0 30px hsl(330 100% 55% / 0.2)",
                                                 }}
                                             >
                                                 Buy · ${bundle.price.toLocaleString()}

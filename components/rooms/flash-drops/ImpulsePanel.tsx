@@ -41,20 +41,20 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
     return (
         <div className="flex flex-col gap-2 h-full">
             {/* Impulse Spend */}
-            <div className="fd-glass-panel fd-neon-border-md rounded-xl p-4">
-                <h2 className="fd-font-tech text-2xl font-black text-foreground mb-3 tracking-tighter">Impulse Spend</h2>
+            <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
+                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter">Impulse Spend</h2>
                 <div className="grid grid-cols-2 gap-2">
                     {impulseButtons.map((btn) => (
                         <button
                             key={btn.label}
                             onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: $${btn.price}`)}
-                            className="py-2.5 px-3 rounded-xl border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all fd-font-body font-bold text-sm text-foreground flex items-center justify-center gap-2 group"
-                            style={{ boxShadow: "0 0 10px hsl(330 100% 55% / 0.15)" }}
+                            className="py-2 px-2.5 rounded-xl border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all fd-font-body font-bold text-xs text-foreground flex items-center justify-center gap-1.5 group"
+                            style={{ boxShadow: "0 0 8px hsl(330 100% 55% / 0.12)" }}
                         >
-                            <span className="text-sm opacity-80">{btn.icon}</span>
+                            <span className="text-xs opacity-80">{btn.icon}</span>
                             <span>
                                 <span className="fd-neon-text-sm italic tracking-tight">{btn.label}:</span>{" "}
-                                <span className="fd-font-tech font-black fd-neon-text text-lg italic">${btn.price}</span>
+                                <span className="fd-font-tech font-black fd-neon-text text-base italic">${btn.price}</span>
                             </span>
                         </button>
                     ))}
@@ -62,19 +62,19 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
             </div>
 
             {/* High Roller Packs */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-4 flex-1">
-                <h2 className="fd-font-tech text-sm font-black fd-neon-text-sm mb-3 uppercase tracking-widest">High Roller Packs</h2>
-                <div className="space-y-1.5">
+            <div className="fd-glass-panel fd-neon-border rounded-xl p-3 flex-1">
+                <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-2 uppercase tracking-widest">High Roller Packs</h2>
+                <div className="space-y-1">
                     {highRollerPacks.map((pack) => (
                         <button
                             key={pack.name}
                             onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} ($${pack.price})`)}
-                            className="w-full flex items-center justify-between py-2 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
+                            className="w-full flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
                         >
-                            <span className="fd-font-body font-bold text-sm text-foreground/85 group-hover:text-foreground transition-colors">
+                            <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">
                                 {pack.name}
                             </span>
-                            <span className="fd-font-tech font-black text-base fd-neon-text shrink-0 ml-2">
+                            <span className="fd-font-tech font-black text-sm fd-neon-text shrink-0 ml-2">
                                 ${pack.price.toLocaleString()}
                             </span>
                         </button>
@@ -83,11 +83,11 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
             </div>
 
             {/* Request A Drop */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-4">
-                <h2 className="fd-font-tech text-sm font-black fd-neon-text-sm mb-2 uppercase tracking-widest">Request A Drop</h2>
-                <div className="mb-2 flex items-center justify-between">
-                    <span className="fd-font-body font-bold text-xs text-foreground/70">Custom Request</span>
-                    <span className="fd-font-tech text-xs font-black fd-neon-text uppercase tracking-tighter">$250 min</span>
+            <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
+                <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-1.5 uppercase tracking-widest">Request A Drop</h2>
+                <div className="mb-1.5 flex items-center justify-between">
+                    <span className="fd-font-body font-bold text-[10px] text-foreground/70">Custom Request</span>
+                    <span className="fd-font-tech text-[10px] font-black fd-neon-text uppercase tracking-tighter">$250 min</span>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-2">
                     <textarea
@@ -95,21 +95,21 @@ export default function ImpulsePanel({ onSpend }: ImpulsePanelProps) {
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Describe what you'd like to see..."
                         rows={2}
-                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-2 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all resize-none"
+                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all resize-none"
                     />
                     <input
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="Offer Amount $..."
-                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-2 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all"
+                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all"
                     />
                     <button
                         type="submit"
-                        className="w-full py-4 rounded-xl fd-font-tech font-black text-base text-white transition-all uppercase tracking-[0.25em]"
+                        className="w-full py-3 rounded-xl fd-font-tech font-black text-sm text-white transition-all uppercase tracking-[0.2em]"
                         style={{
                             background: "linear-gradient(to right, #ff00ff, #ff2e92)",
-                            boxShadow: "0 0 30px #ff00ff80, 0 0 60px #ff00ff40, inset 0 1px 0 rgba(255,255,255,0.3)",
-                            textShadow: "0 0 10px rgba(255,255,255,0.5)"
+                            boxShadow: "0 0 20px #ff00ff60, 0 0 40px #ff00ff20, inset 0 1px 0 rgba(255,255,255,0.2)",
+                            textShadow: "0 0 8px rgba(255,255,255,0.4)"
                         }}
                     >
                         {submitted ? "✓ Submitted!" : "Submit Request"}
