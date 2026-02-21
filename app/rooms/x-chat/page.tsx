@@ -1,15 +1,54 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "@/app/context/AuthContext";
+import { createClient } from "@/utils/supabase/client";
 import CreatorCard from "@/components/rooms/x-chat/CreatorCard";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
 import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
 
 const XChatRoom = () => {
     const router = useRouter();
+    const supabase = createClient();
+    const [roomId, setRoomId] = useState<string | null>(null);
+    const [hostName, setHostName] = useState("Loading...");
+    const [creatorName, setCreatorName] = useState("Loading...");
+
+    useEffect(() => {
+        async function fetchRoom() {
+            // Find the latest live "X Chat Room"
+            const { data: room, error } = await supabase
+                .from('rooms')
+                .select('id, host_id, title')
+                .eq('status', 'live')
+                .eq('type', 'x-chat')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (room) {
+                setRoomId(room.id);
+                // Fetch host/creator name
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('username, full_name')
+                    .eq('id', room.host_id)
+                    .single();
+
+                if (profile) {
+                    const name = profile.full_name || profile.username || "Host";
+                    setHostName(name);
+                    setCreatorName(name); // Assuming host is the creator for now
+                }
+            } else {
+                setHostName("No Active Room");
+                setCreatorName("None");
+            }
+        }
+        fetchRoom();
+    }, [supabase]);
 
     return (
         <ProtectRoute allowedRoles={["fan"]}>
@@ -39,10 +78,10 @@ const XChatRoom = () => {
 
                         <div className="text-left md:text-right glass-card px-4 py-2">
                             <p className="text-foreground text-sm">
-                                Host – <span className="text-gold-light font-bold">BlueMuse</span>
+                                Host – <span className="text-gold-light font-bold">{hostName}</span>
                             </p>
                             <p className="text-foreground text-sm">
-                                Creator – <span className="text-gold-light font-bold">EllaRose_XXX</span>
+                                Creator – <span className="text-gold-light font-bold">{creatorName}</span>
                             </p>
                         </div>
                     </div>
@@ -60,8 +99,8 @@ const XChatRoom = () => {
                                     Live X Chat
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <CreatorCard username="BlueMuse" tier="Rising" />
-                                    <CreatorCard username="EllaRose_XXX" tier="Popular" price="$2/min metered" />
+                                    <CreatorCard username={hostName} tier="Rising" />
+                                    <CreatorCard username={creatorName} tier="Popular" price="$2/min metered" />
                                 </div>
                             </div>
 
@@ -71,7 +110,7 @@ const XChatRoom = () => {
 
                         {/* Right: Message Terminal */}
                         <div className="lg:col-span-1 h-[calc(100vh-200px)] sticky top-8">
-                            <ChatPanel />
+                            <ChatPanel roomId={roomId} />
                         </div>
 
                     </div>

@@ -161,7 +161,7 @@ export default function CreatorSuga4URoom() {
                 // Auto-create room for demo
                 const { data: newRoom } = await supabase
                     .from('rooms')
-                    .insert([{ host_id: user.id, title: "Suga 4 U Room", status: "live" }])
+                    .insert([{ host_id: user.id, title: "Suga 4 U Room", status: "live", type: "suga-4-u" }])
                     .select()
                     .single();
                 targetRoomId = newRoom?.id;

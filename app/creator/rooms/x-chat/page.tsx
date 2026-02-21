@@ -81,7 +81,7 @@ export default function XChatCreatorView() {
                 // Auto-create room for demo
                 const { data: newRoom } = await supabase
                     .from('rooms')
-                    .insert([{ host_id: user.id, title: "X Chat Room", status: "live" }])
+                    .insert([{ host_id: user.id, title: "X Chat Room", status: "live", type: "x-chat" }])
                     .select()
                     .single();
                 targetRoomId = newRoom?.id;

@@ -8,8 +8,9 @@ import dynamic from "next/dynamic";
 import {
     ArrowLeft, Video, Send, Zap, Star, Sparkles, MessageCircle, Crown,
     Search, Bell, LogOut, User as UserIcon, CreditCard, Users, Settings, Heart,
-    Link as LinkIcon, Loader2, Play, DollarSign, Wine
+    Link as LinkIcon, Loader2, Play, DollarSign, Wine, Home
 } from "lucide-react";
+import Link from "next/link";
 
 import DrinkMenu from "@/components/rooms/bar-lounge/DrinkMenu";
 import LoungeChat from "@/components/rooms/bar-lounge/LoungeChat";
@@ -257,10 +258,18 @@ export default function BarLoungeRoom() {
                     </div>
                     {user && role === 'creator' && (
                         <div className="flex gap-4">
+                            <Link href="/home" className="px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white">
+                                <Home className="w-4 h-4" /> Go Back to Home
+                            </Link>
                             <button onClick={startHosting} className={cx("px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2", mySession ? "bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse" : "bg-violet-600 shadow-[0_0_20px_rgba(139,92,246,0.4)]")}>
                                 <Video className="w-4 h-4" /> {mySession ? "Resume Session" : "Start Lounge"}
                             </button>
                         </div>
+                    )}
+                    {(!user || role !== 'creator') && (
+                        <Link href="/home" className="px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white">
+                            <Home className="w-4 h-4" /> Go Back to Home
+                        </Link>
                     )}
                 </div>
                 {activeSessions.length === 0 ? (

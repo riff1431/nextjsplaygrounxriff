@@ -15,6 +15,7 @@ export async function POST(
 
     if (action === 'answer') {
         updates.status = 'Answered';
+        if (reply) updates.creator_reply = reply;
     } else if (action === 'refund') {
         updates.status = 'Refunded';
     } else if (action === 'pin') {
