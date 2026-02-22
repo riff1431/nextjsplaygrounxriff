@@ -39,7 +39,7 @@ const PaidRequestMenu = ({ roomId }: { roomId: string | null }) => {
                         disabled={!roomId}
                         className="neon-border-pink glass-panel py-2 px-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
-                        <span className="text-[10px] block">{r.emoji} {r.name}</span>
+                        <span className="text-xs block">{r.emoji} {r.name}</span>
                         <p className="text-pink font-bold text-sm">${r.price}</p>
                     </button>
                 ))}

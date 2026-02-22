@@ -20,7 +20,7 @@ const Suga4URoom = () => {
     const router = useRouter();
     const supabase = createClient();
     const [roomId, setRoomId] = React.useState<string | null>(null);
-    const [hostName, setHostName] = React.useState("Loading...");
+    const [hostName, setHostName] = React.useState("Alexis Rose");
 
     React.useEffect(() => {
         async function fetchRoom() {
@@ -59,12 +59,12 @@ const Suga4URoom = () => {
                 {/* Full-screen background */}
                 <div className="fixed inset-0 z-0">
                     <img src="/rooms/suga4u/bg1.jpeg" alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" />
+                    <div className="suga-background-overlay" />
                 </div>
 
-                <div className="relative z-10 p-3 lg:p-4 h-screen flex flex-col max-w-[1600px] mx-auto">
+                <div className="relative z-10 p-3 lg:p-4 h-screen flex flex-col">
                     {/* Header */}
-                    <header className="flex items-center justify-between mb-4 flex-shrink-0 px-4 md:px-8">
+                    <header className="flex items-center justify-between mb-3 flex-shrink-0">
                         <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
                             <SugaLogo />
                         </div>
@@ -72,29 +72,27 @@ const Suga4URoom = () => {
                     </header>
 
                     {/* Main 3-Column Layout - fills remaining viewport */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_320px] gap-4 flex-1 min-h-0 md:px-8 pb-4">
-                        {/* Left Column: Stream + Secrets */}
-                        <div className="flex flex-col gap-4 min-h-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_300px] gap-3 lg:gap-4 flex-1 min-h-0 px-40">
+                        {/* Left Column: Stream + Offers + Secrets */}
+                        <div className="flex flex-col gap-3 min-h-0">
                             <div className="flex-[1.5] min-h-0">
                                 <LiveStream />
                             </div>
-                            <div className="flex-1 min-h-0">
+                            <div className="grid grid-cols lg:grid-cols-[1fr_1fr] gap-3 lg:gap-4 flex-1 min-h-0">
                                 <CreatorSecrets roomId={roomId} />
-                            </div>
-                        </div>
-
-                        {/* Middle Column: Live Chat + Creator Favorites */}
-                        <div className="flex flex-col gap-4 min-h-0">
-                            <div className="flex-[1.5] min-h-0">
-                                <LiveChat roomId={roomId} />
-                            </div>
-                            <div className="flex-1 min-h-0">
                                 <CreatorFavorites roomId={roomId} />
                             </div>
                         </div>
 
+                        {/* Middle Column: Live Chat */}
+                        <div className="flex flex-col gap-3 min-h-0">
+                            <div className="flex-[3] min-h-0">
+                                <LiveChat roomId={roomId} />
+                            </div>
+                        </div>
+
                         {/* Right Column: Paid Requests + Gifts + Actions */}
-                        <div className="flex flex-col gap-4 min-h-0 overflow-y-auto pr-1 chat-scroll">
+                        <div className="flex flex-col gap-3 min-h-0 pr-10 overflow-y-auto chat-scroll">
                             <PaidRequestMenu roomId={roomId} />
                             <SendSugarGifts roomId={roomId} />
                             <QuickPaidActions roomId={roomId} />

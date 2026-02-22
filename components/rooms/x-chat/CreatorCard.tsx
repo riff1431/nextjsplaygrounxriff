@@ -10,7 +10,7 @@ interface CreatorCardProps {
 const CreatorCard = ({ username, tier, price }: CreatorCardProps) => {
     return (
         <div className="glass-card-inner p-4 flex-1 flex flex-col gap-3">
-            <h3 className="text-gold-light fd-font-cinzel text-center text-sm md:text-base">
+            <h3 className="text-gold-light font-display text-center text-sm md:text-base">
                 @{username} · {tier}
             </h3>
             <div className="bg-muted/50 rounded aspect-video flex items-center justify-center">

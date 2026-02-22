@@ -20,8 +20,7 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
     };
 
     const formatActivity = (a: ActivityEvent) => {
-        if (a.type === 'CHAT') return a.label;
-        if (a.type === 'TIP') return `tipped $${a.amount}!`;
+        if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">${a.amount}</span>!</span>;
         if (a.type === 'PAID_REQUEST') return `requested: ${a.label} ($${a.amount})`;
         if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
         return a.label;
@@ -41,7 +40,7 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
 
             <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll">
                 {[...activity].reverse().map((m) => (
-                    <div key={m.id} className="flex items-start gap-2 text-sm animate-in fade-in slide-in-from-bottom-1 duration-300">
+                    <div key={m.id} className="flex items-start gap-2 text-sm">
                         <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center">
                             <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>
                         </div>
@@ -59,14 +58,14 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    onKeyPress={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Type a message..."
-                    className="flex-1 bg-muted/30 rounded-full px-4 py-2 text-sm outline-none border border-gold/20 focus:border-pink/50 transition-colors"
+                    className="flex-1 bg-muted/50 rounded-full px-4 py-2 text-sm outline-none border border-gold/20 focus:border-pink/50 transition-colors"
                 />
                 <button
                     onClick={handleSend}
-                    disabled={!roomId || !inputText.trim()}
-                    className="btn-pink w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-50"
+                    disabled={!roomId}
+                    className="p-2 rounded-full bg-pink text-white hover:bg-pink-light transition-colors disabled:opacity-50"
                 >
                     <Send className="w-4 h-4" />
                 </button>

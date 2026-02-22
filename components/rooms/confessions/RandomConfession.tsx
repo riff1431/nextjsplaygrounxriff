@@ -38,7 +38,7 @@ const RandomConfession: React.FC<RandomConfessionProps> = ({ onSpinComplete }) =
     const cy = 100;
 
     return (
-        <div className="glass-card p-4 space-y-3 overflow-hidden relative">
+        <div className="neon-glass-card p-4 space-y-3 overflow-hidden relative">
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-sm font-semibold tracking-wide">Random Confession</h2>
                 <span className="gold-text font-display font-bold text-sm bg-accent/10 px-2 py-0.5 rounded-md border border-accent/20 flex items-center shadow-inner">$8</span>

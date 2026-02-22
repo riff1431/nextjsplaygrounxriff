@@ -35,7 +35,7 @@ const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
         <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20">
             <div className="flex items-center justify-center p-3 border-b border-gold/20">
                 <div className="h-px flex-1 bg-gold/30" />
-                <span className="section-title px-3 whitespace-nowrap">Creator Favorites</span>
+                <span className="section-title px-3">Creator Favorites</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
 
@@ -56,7 +56,7 @@ const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
                             {item.emoji}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm tracking-tight truncate">{item.name}</p>
+                            <p className="font-bold text-sm tracking-tight truncate">{item.name} {item.emoji}</p>
                             <p className="text-gold font-bold text-xs">${item.price.toLocaleString()}</p>
                         </div>
                         <div className="flex flex-col gap-1 flex-shrink-0">
@@ -64,7 +64,7 @@ const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
                                 <button
                                     onClick={() => handleAction(item, 'REVEAL')}
                                     disabled={!roomId}
-                                    className="btn-pink px-2 py-1 text-[9px] rounded-full disabled:opacity-50"
+                                    className="btn-pink px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
                                 >
                                     REVEAL ${item.reveal}
                                 </button>
@@ -72,7 +72,7 @@ const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
                             <button
                                 onClick={() => handleAction(item, 'BUY')}
                                 disabled={!roomId}
-                                className="btn-gold px-2 py-1 text-[9px] rounded-full disabled:opacity-50"
+                                className="btn-gold px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
                             >
                                 BUY FOR HER
                             </button>

@@ -19,7 +19,7 @@ const PaidReactions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Paid Reactions */}
             <div className="glass-card p-4">
-                <h3 className="fd-font-cinzel text-gold text-sm mb-3">Paid Reactions</h3>
+                <h3 className="font-display text-gold text-sm mb-3">Paid Reactions</h3>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                     {reactions.map((r) => (
                         <button
@@ -36,7 +36,7 @@ const PaidReactions = () => {
 
             {/* Paid Stickers */}
             <div className="glass-card p-4">
-                <h3 className="fd-font-cinzel text-gold text-sm mb-3">Paid Stickers</h3>
+                <h3 className="font-display text-gold text-sm mb-3">Paid Stickers</h3>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                     {stickers.map((s) => (
                         <button
@@ -52,8 +52,8 @@ const PaidReactions = () => {
             </div>
 
             {/* Visibility Boosts */}
-            <div className="glass-card p-4">
-                <h3 className="fd-font-cinzel text-gold text-sm mb-3">Visibility Boosts</h3>
+            <div className="glass-card p-2">
+                <h3 className="font-display text-gold text-sm mb-3">Visibility Boosts</h3>
                 <div className="space-y-2 mb-2">
                     <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
                         <span>Pin my message (1 min)</span><span className="text-gold">$25</span>
@@ -69,8 +69,8 @@ const PaidReactions = () => {
             </div>
 
             {/* Direct Access */}
-            <div className="glass-card p-4">
-                <h3 className="fd-font-cinzel text-gold text-sm mb-3">Direct Access</h3>
+            <div className="glass-card p-2">
+                <h3 className="font-display text-gold text-sm mb-3">Direct Access</h3>
                 <div className="space-y-2 mb-2">
                     <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
                         <span>Private question</span><span className="text-gold">$20</span>

@@ -50,7 +50,7 @@ const ConfessionCard = ({
     const author = confession.creator?.username || "Anonymous";
 
     return (
-        <div className="glass-card p-4 space-y-3 group hover:border-primary/50 transition-all duration-300">
+        <div className="neon-glass-card p-4 space-y-3 group hover:border-primary/50 transition-all duration-300">
             <div className="flex items-start justify-between gap-3">
                 <p className={`text-sm leading-relaxed flex-1 italic ${!isUnlocked ? 'blur-[4px] select-none opacity-60' : 'text-foreground/90'}`}>
                     "{isUnlocked ? (confession.content || confession.teaser) : "This is a hidden confession content that is very spicy and extremely secret..."}"
@@ -127,7 +127,7 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
     setPurchaseConfession
 }) => {
     return (
-        <div className="glass-card p-4 sm:p-5 space-y-4">
+        <div className="neon-glass-card p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-sm sm:text-base font-semibold tracking-wide">Confession Wall</h2>
                 <div className="flex gap-1.5">

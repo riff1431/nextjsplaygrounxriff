@@ -11,7 +11,7 @@ const CreatorSpotlight: React.FC<CreatorSpotlightProps> = ({ goalTotal, pay, isA
     const progress = Math.min((goalTotal / 250) * 100, 100);
 
     return (
-        <div className="glass-card p-4 space-y-4">
+        <div className="neon-glass-card p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-sm font-semibold tracking-wide">Creator Spotlight</h2>
                 <span className="px-2.5 py-0.5 rounded-full bg-destructive/80 text-xs font-bold text-primary-foreground animate-pulse">

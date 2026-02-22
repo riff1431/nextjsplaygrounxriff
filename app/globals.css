@@ -11,6 +11,8 @@
   --color-neon-green: #39ff14;
 
   --font-sans: var(--font-outfit);
+  --font-display: "Cinzel", serif;
+
 
   --animate-flicker: flicker 1.5s infinite alternate;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -47,12 +49,26 @@
   }
 
   /* Confessions UI */
-  .glass-card {
+  .neon-glass-card {
     @apply backdrop-blur-sm border rounded-xl;
     background: transparent;
     border-color: hsl(var(--neon-pink-hsl) / 0.9);
     box-shadow: 0 0 15px hsl(var(--neon-pink-hsl) / 0.1), 0 0 40px hsl(var(--neon-pink-hsl) / 0.18), inset 0 1px 0 hsl(0 0% 100% / 0.18);
     animation: border-glow 3s ease-in-out infinite alternate;
+  }
+
+  .glass-card {
+    background: hsla(30, 10%, 12%, 0.35);
+    backdrop-filter: blur(4px);
+    border: 1px solid hsla(40, 25%, 25%, 0.5);
+    border-radius: 0.5rem;
+  }
+
+  .glass-card-inner {
+    background: hsla(30, 10%, 10%, 0.3);
+    backdrop-filter: blur(2px);
+    border: 1px solid hsla(40, 25%, 25%, 0.35);
+    border-radius: 0.5rem;
   }
 
   .neon-border {
@@ -488,6 +504,10 @@ body {
   --gold: 40 60% 55%;
   --gold-light: 40 70% 70%;
   --gold-dark: 35 50% 35%;
+  --glass: 30 10% 12%;
+  --glass-border: 40 25% 25%;
+
+  font-family: 'Inter', sans-serif !important;
 }
 
 .fd-x-chat-theme h1,
@@ -500,19 +520,6 @@ body {
   font-family: 'Cinzel', serif !important;
 }
 
-.fd-x-chat-theme .glass-card {
-  background: hsla(30, 10%, 12%, 0.35);
-  backdrop-filter: blur(4px);
-  border: 1px solid hsla(40, 25%, 25%, 0.5);
-  border-radius: 0.5rem;
-}
-
-.fd-x-chat-theme .glass-card-inner {
-  background: hsla(30, 10%, 10%, 0.3);
-  backdrop-filter: blur(2px);
-  border: 1px solid hsla(40, 25%, 25%, 0.35);
-  border-radius: 0.5rem;
-}
 
 .fd-x-chat-theme .text-gold {
   color: hsl(40, 60%, 55%);
@@ -535,6 +542,11 @@ body {
 
 .fd-x-chat-theme .chat-scroll::-webkit-scrollbar-track {
   background: hsla(30, 10%, 12%, 0.5);
+}
+
+.fd-x-chat-theme .chat-scroll::-webkit-scrollbar-thumb {
+  background: hsla(40, 25%, 25%, 0.8);
+  border-radius: 2px;
 }
 
 
@@ -570,8 +582,7 @@ body {
   --deep-purple: 270 30% 12%;
 }
 
-.fd-suga4u-theme,
-.fd-suga4u-theme .font-body {
+.fd-suga4u-theme {
   font-family: 'Montserrat', sans-serif !important;
 }
 
@@ -580,48 +591,67 @@ body {
 }
 
 .fd-suga4u-theme .glow-pink {
-  box-shadow: 0 0 15px hsl(var(--pink-glow) / 0.5), 0 0 30px hsl(var(--pink-glow) / 0.2);
+  box-shadow: 0 0 15px hsl(var(--pink-glow) / 0.5), 0 0 30px hsl(var(--pink-glow) / 0.2) !important;
 }
 
 .fd-suga4u-theme .glow-gold {
-  box-shadow: 0 0 15px hsl(var(--gold) / 0.5), 0 0 30px hsl(var(--gold) / 0.2);
+  box-shadow: 0 0 15px hsl(var(--gold) / 0.5), 0 0 30px hsl(var(--gold) / 0.2) !important;
 }
 
 .fd-suga4u-theme .glow-text-pink {
-  text-shadow: 0 0 10px hsl(var(--pink-glow) / 0.6), 0 0 20px hsl(var(--pink-glow) / 0.3);
+  color: rgb(238, 43, 140) !important;
+  text-shadow: rgba(255, 51, 153, 0.6) 0px 0px 10px, rgba(255, 51, 153, 0.3) 0px 0px 20px !important;
 }
 
 .fd-suga4u-theme .glow-text-gold {
-  text-shadow: 0 0 10px hsl(var(--gold) / 0.6), 0 0 20px hsl(var(--gold) / 0.3);
+  color: rgb(230, 168, 26) !important;
+  text-shadow: rgba(230, 168, 26, 0.6) 0px 0px 10px, rgba(230, 168, 26, 0.3) 0px 0px 20px !important;
 }
 
 .fd-suga4u-theme .glass-panel {
-  background: hsl(var(--deep-purple) / 0.15);
-  backdrop-filter: blur(1px);
-  border: 1px solid hsl(var(--gold) / 0.25);
-  border-radius: 0.75rem;
+  background: rgba(31, 21, 40, 0.15) !important;
+  backdrop-filter: blur(1px) !important;
+  border: 1px solid rgba(230, 168, 26, 0.25) !important;
+  border-radius: 12px !important;
+}
+
+.fd-suga4u-theme .suga-background-overlay {
+  background-color: rgba(15, 12, 18, 0.3) !important;
+  position: absolute;
+  inset: 0;
 }
 
 .fd-suga4u-theme .btn-gold {
-  background: linear-gradient(135deg, hsl(var(--gold-dark)), hsl(var(--gold)), hsl(var(--gold-light)));
-  color: hsl(var(--background));
-  font-weight: 700;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, hsl(var(--gold-dark)), hsl(var(--gold)), hsl(var(--gold-light))) !important;
+  color: hsl(var(--background)) !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
 }
 
 .fd-suga4u-theme .btn-pink {
-  background: linear-gradient(135deg, hsl(var(--magenta)), hsl(var(--pink)), hsl(var(--pink-light)));
-  color: white;
-  font-weight: 700;
-  border-radius: 6px;
+  background: linear-gradient(135deg, hsl(var(--magenta)), hsl(var(--pink)), hsl(var(--pink-light))) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
 }
 
 .fd-suga4u-theme .neon-border-pink {
-  border: 1px solid hsl(var(--pink) / 0.6);
-  box-shadow: inset 0 0 10px hsl(var(--pink-glow) / 0.15), 0 0 10px hsl(var(--pink-glow) / 0.2);
+  border: 1px solid hsl(var(--pink) / 0.6) !important;
+  box-shadow: inset 0 0 10px hsl(var(--pink-glow) / 0.15), 0 0 10px hsl(var(--pink-glow) / 0.2) !important;
 }
+
+.fd-suga4u-theme .section-title {
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  color: hsl(var(--gold)) !important;
+  text-shadow: 0 0 8px hsl(var(--gold) / 0.4) !important;
+  font-size: 0.75rem !important;
+}
+
 /* Bar Lounge v2 Theme */
 .fd-bar-lounge-theme-v2 {
   --background: 270 51% 8%;
@@ -632,7 +662,7 @@ body {
   --deep-purple: 270 50% 12%;
   --border-gold: 42 90% 55% / 0.2;
   --panel-bg: 270 50% 8% / 0.4;
-  
+
   font-family: 'Montserrat', sans-serif;
 }
 

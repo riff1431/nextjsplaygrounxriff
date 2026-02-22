@@ -7,6 +7,9 @@ const secrets = [
     { name: "Behind the Scenes", price: 29 },
     { name: "Bath Party", price: 29 },
     { name: "Bedroom Vibes", price: 49 },
+    { name: "Private Diary", price: 29 },
+    { name: "Morning Routine", price: 29 },
+    { name: "Late Night Chat", price: 49 },
 ];
 
 const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
@@ -31,7 +34,7 @@ const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
                 <span className="section-title px-3 whitespace-nowrap">Creator Secrets</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
-            <div className="grid grid-cols-3 gap-3 p-1">
+            <div className="grid grid-cols-3 gap-3 p-4">
                 {secrets.map((s, idx) => (
                     <div key={idx} className="glass-panel neon-border-pink p-3 text-center bg-transparent flex flex-col justify-between">
                         <div>

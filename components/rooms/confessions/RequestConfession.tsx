@@ -24,7 +24,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
     ];
 
     return (
-        <div className="glass-card p-4 space-y-4">
+        <div className="neon-glass-card p-4 space-y-4">
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-sm font-semibold tracking-wide">Request Confession</h2>
                 <button className="text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1 rounded border border-border/50 hover:bg-secondary/50">

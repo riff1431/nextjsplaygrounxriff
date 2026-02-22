@@ -19,7 +19,7 @@ interface MyRequestsProps {
 
 const MyRequests: React.FC<MyRequestsProps> = ({ requests, setReviewRequest }) => {
     return (
-        <div className="glass-card p-4 space-y-3">
+        <div className="neon-glass-card p-4 space-y-3">
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-xs font-semibold tracking-wide">My Requests</h2>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

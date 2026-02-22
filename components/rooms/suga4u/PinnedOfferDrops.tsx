@@ -34,10 +34,10 @@ const PinnedOfferDrops = ({ roomId }: { roomId: string | null }) => {
                             <span className="font-bold text-sm">{o.title}</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 mb-2">
-                            {[mm, ss].map((val, i) => (
+                            {[mm, "12", ss].map((val, i) => (
                                 <div key={i} className="flex items-center gap-1">
                                     <span className="bg-muted px-2 py-1 rounded font-bold text-lg font-mono text-gold">{val}</span>
-                                    {i < 1 && <span className="text-pink font-bold">:</span>}
+                                    {i < 2 && <span className="text-pink font-bold">:</span>}
                                 </div>
                             ))}
                         </div>
