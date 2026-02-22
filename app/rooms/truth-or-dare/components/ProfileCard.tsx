@@ -11,7 +11,7 @@ interface ProfileCardProps {
 }
 
 export const ProfileCard = ({ name, title, avatar, color, amount }: ProfileCardProps) => (
-    <div className="glass-panel p-3 text-center flex-1 border-white/5 bg-black/40 group hover:bg-black/60 transition-all duration-300">
+    <div className="glass-panel p-3 text-center flex-1 border-white/10 bg-white/5 group hover:bg-white/10 transition-all duration-300">
         <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5 ${color === "red" ? "text-red-400" : "text-blue-400"}`}>
             <Crown className={`w-3 h-3 ${color === "red" ? "text-red-500" : "text-blue-500"}`} />
             {title}

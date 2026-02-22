@@ -702,7 +702,7 @@ function TruthOrDareContent() {
             <div
                 className="absolute inset-0 bg-[#0a0a0c] bg-cover bg-center bg-fixed transition-opacity duration-1000"
                 style={{
-                    backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.7), rgba(10, 10, 12, 0.4)), url('/images/truth-or-dare-bg.png')"
+                    backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.4), rgba(10, 10, 12, 0.2)), url('/images/truth-or-dare-bg.png')"
                 }}
             />
 
@@ -739,7 +739,7 @@ function TruthOrDareContent() {
                         </div>
 
                         {/* Prompt Section - 3 columns as in screenshot */}
-                        <div className="glass-panel p-4 border-white/5 bg-black/40">
+                        <div className="glass-panel p-4 border-white/10 bg-white/5">
                             <div className="flex items-center gap-2 mb-4">
                                 <Search className="w-4 h-4 text-pink-400" />
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Choose a Prompt</h3>
@@ -875,7 +875,7 @@ function TruthOrDareContent() {
                         <BottleSpinner />
 
                         {/* Group Voting Section - strictly matching screenshot UI */}
-                        <div className="glass-panel p-4 border-white/5 bg-black/20 flex flex-col gap-4">
+                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col gap-4">
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-amber-500" />
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Group Voting</h3>
@@ -902,9 +902,9 @@ function TruthOrDareContent() {
 
                     {/* Right: Dedicated Chat Column */}
                     <div className="flex flex-col gap-4 w-full lg:w-[380px]">
-                        <div className="glass-panel border-white/5 bg-black/20 flex flex-col h-[700px] lg:h-full overflow-hidden">
+                        <div className="glass-panel border-white/10 bg-white/5 flex flex-col h-[700px] lg:h-full overflow-hidden">
                             {/* Chat Header */}
-                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/40">
+                            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                                     <div className="w-1 h-3 bg-pink-500 rounded-full" />
                                     Live Chat Room
@@ -941,7 +941,7 @@ function TruthOrDareContent() {
                             </div>
 
                             {/* Message Input */}
-                            <div className="p-4 bg-black/40 border-t border-white/5">
+                            <div className="p-4 bg-white/5 border-t border-white/10">
                                 <div className="relative group">
                                     <input
                                         type="text"

@@ -21,13 +21,13 @@ export const BottleSpinner = () => {
     }, [spinning]);
 
     return (
-        <div className="glass-panel p-5 border-white/5 bg-black/20 flex flex-col items-center">
+        <div className="glass-panel p-5 border-white/10 bg-white/5 flex flex-col items-center">
             <div className="w-full flex items-center justify-start gap-2 mb-4">
                 <span className="text-white text-xs font-bold tracking-wide">▸ Spin the Bottle</span>
             </div>
 
             <div
-                className="relative w-40 h-40 rounded-full flex items-center justify-center border border-white/5 bg-black/20"
+                className="relative w-40 h-40 rounded-full flex items-center justify-center border border-white/10 bg-white/5"
                 style={{
                     boxShadow: glowing ? "0 0 40px rgba(251, 191, 36, 0.15), inset 0 0 20px rgba(251, 191, 36, 0.05)" : "none",
                     transition: "box-shadow 0.8s ease",

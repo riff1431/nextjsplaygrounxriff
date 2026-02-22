@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 40 20% 90%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 40 80% 55%;
+    --primary-foreground: 0 0% 5%;
+
+    --secondary: 350 60% 45%;
+    --secondary-foreground: 40 20% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 40 10% 60%;
+
+    --accent: 200 90% 55%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 40 30% 25%;
+    --input: 0 0% 15%;
+    --ring: 40 80% 55%;
+
+    --radius: 0.75rem;
+
+    --glass-bg: 0 0% 10% / 0.6;
+    --glass-border: 40 40% 40% / 0.3;
+    --gold-glow: 40 80% 55%;
+    --neon-blue: 200 100% 60%;
+    --neon-red: 350 100% 60%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 40 20% 90%;
+    --sidebar-primary: 40 80% 55%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 40 20% 90%;
+    --sidebar-border: 40 30% 25%;
+    --sidebar-ring: 40 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: hsla(var(--glass-bg));
+    backdrop-filter: blur(2px);
+    border: 1px solid hsla(var(--glass-border));
+    border-radius: var(--radius);
+  }
+
+  .gold-text {
+    color: hsl(var(--primary));
+  }
+
+  .gold-border {
+    border-color: hsla(40, 40%, 40%, 0.4);
+  }
+
+  .neon-glow-blue {
+    text-shadow: 0 0 10px hsl(var(--neon-blue)), 0 0 30px hsl(var(--neon-blue) / 0.5);
+  }
+
+  .neon-glow-red {
+    text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 30px hsl(var(--neon-red) / 0.5);
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2), inset 0 0 20px hsl(var(--primary) / 0.05);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
