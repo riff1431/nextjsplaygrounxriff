@@ -640,7 +640,7 @@ function TruthOrDareContent() {
             )}
 
             {/* Header - Minimal Style matching screenshot */}
-            <div className="absolute top-0 left-0 z-50 p-6 flex items-center justify-between w-full pointer-events-none">
+            <div className="relative z-50 p-6 flex items-center justify-between">
                 <div className="pointer-events-auto">
                     <BrandLogo showBadge={false} />
                 </div>
