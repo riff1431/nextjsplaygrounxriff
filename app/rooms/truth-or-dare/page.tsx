@@ -702,7 +702,7 @@ function TruthOrDareContent() {
             <div
                 className="absolute inset-0 bg-[#0a0a0c] bg-cover bg-center bg-fixed transition-opacity duration-1000"
                 style={{
-                    backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.4), rgba(10, 10, 12, 0.2)), url('/images/truth-or-dare-bg.png')"
+                    backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.4), rgba(10, 10, 12, 0.2)), url('/images/truth-or-dare-custom-bg.jpg')"
                 }}
             />
 
