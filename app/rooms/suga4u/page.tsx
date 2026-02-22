@@ -79,7 +79,7 @@ const Suga4URoom = () => {
                                 <LiveStream />
                             </div>
                             <div className="flex-1 min-h-0">
-                                <CreatorSecrets />
+                                <CreatorSecrets roomId={roomId} />
                             </div>
                         </div>
 
