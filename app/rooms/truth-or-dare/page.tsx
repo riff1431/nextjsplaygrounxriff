@@ -710,9 +710,9 @@ function TruthOrDareContent() {
 
 
             <div
-                className="absolute inset-0 bg-[#0a0a0c] bg-fixed"
+                className="absolute inset-0 bg-[#0a0a0c] bg-cover bg-center bg-fixed transition-opacity duration-1000"
                 style={{
-                    backgroundImage: "radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%), radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 40%)"
+                    backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.7), rgba(10, 10, 12, 0.4)), url('/images/truth-or-dare-bg.png')"
                 }}
             />
 
