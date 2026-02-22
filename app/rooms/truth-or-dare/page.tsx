@@ -640,7 +640,7 @@ function TruthOrDareContent() {
             )}
 
             {/* Header - Minimal Style matching screenshot */}
-            <div className="relative z-50 p-6 flex items-center justify-between">
+            <div className="relative z-50 pt-4 pb-0 px-6 flex items-center justify-between">
                 <div className="pointer-events-auto">
                     <BrandLogo showBadge={false} />
                 </div>
@@ -706,7 +706,7 @@ function TruthOrDareContent() {
                 }}
             />
 
-            <main className="relative z-10 p-4 lg:p-6 max-w-[1600px] mx-auto">
+            <main className="relative z-10 pt-0 p-4 lg:p-6 lg:pt-2 max-w-[1600px] mx-auto">
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Left: Stream + Prompts */}
                     <div className="flex flex-col gap-4 flex-1 lg:flex-[2]">
