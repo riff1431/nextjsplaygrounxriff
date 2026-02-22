@@ -744,3 +744,39 @@ body {
   border-color: hsl(var(--gold));
   color: hsl(var(--gold));
 }
+
+/* Truth and Dare Redesign Styles */
+:root {
+  --glass-bg: 0 0% 10% / 0.6;
+  --glass-border: 40 40% 40% / 0.3;
+  --neon-blue: 200 100% 60%;
+  --neon-red: 350 100% 60%;
+}
+
+.dark {
+  --glass-bg: 0 0% 10% / 0.6;
+  --glass-border: 40 40% 40% / 0.3;
+  --neon-blue: 200 100% 60%;
+  --neon-red: 350 100% 60%;
+}
+
+@layer utilities {
+  .glass-panel {
+    background: hsla(var(--glass-bg));
+    backdrop-filter: blur(4px);
+    border: 1px solid hsla(var(--glass-border));
+    border-radius: 0.75rem;
+  }
+
+  .neon-glow-blue {
+    text-shadow: 0 0 10px hsl(var(--neon-blue)), 0 0 30px hsl(var(--neon-blue) / 0.5);
+  }
+
+  .neon-glow-red {
+    text-shadow: 0 0 10px hsl(var(--neon-red)), 0 0 30px hsl(var(--neon-red) / 0.5);
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2), inset 0 0 20px hsl(var(--primary) / 0.05);
+  }
+}
