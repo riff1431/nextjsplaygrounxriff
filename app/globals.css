@@ -178,7 +178,14 @@ body {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-
+  --color-gold: hsl(var(--gold));
+  --color-gold-light: hsl(var(--gold-light));
+  --color-gold-dark: hsl(var(--gold-dark));
+  --color-pink: hsl(var(--pink));
+  --color-pink-light: hsl(var(--pink-light));
+  --color-pink-glow: hsl(var(--pink-glow));
+  --color-magenta: hsl(var(--magenta));
+  --color-deep-purple: hsl(var(--deep-purple));
 }
 
 :root {
@@ -683,8 +690,44 @@ body {
   }
 
   /* Custom scrollbar styling scoped to theme */
-  ::-webkit-scrollbar-thumb {
+  scrollbar-width: thin !important;
+  scrollbar-color: hsl(var(--gold) / 0.4) transparent !important;
+
+  &::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  &::-webkit-scrollbar-thumb {
     background: hsl(var(--gold) / 0.4) !important;
+    border-radius: 3px !important;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--gold) / 0.6) !important;
+  }
+
+  /* Support for children scrollbars */
+  *::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--gold) / 0.4) !important;
+    border-radius: 3px !important;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--gold) / 0.6) !important;
   }
 }
 
