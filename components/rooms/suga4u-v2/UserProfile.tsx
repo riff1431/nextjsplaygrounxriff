@@ -1,16 +1,18 @@
-const UserProfile = ({ name }: { name: string }) => (
+import { Bell, Volume2 } from "lucide-react";
+
+const UserProfile = () => (
     <div className="flex items-center gap-3">
-        <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-gold glow-text-gold uppercase">{name}</p>
-            <div className="flex items-center justify-end gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Live Now</span>
-            </div>
+        <div className="flex items-center gap-1 text-muted-foreground">
+            <Volume2 className="w-4 h-4" />
+            <Bell className="w-4 h-4" />
         </div>
-        <div className="w-10 h-10 rounded-full border-2 border-gold/50 p-0.5 glow-gold">
-            <div className="w-full h-full rounded-full bg-muted overflow-hidden">
-                <img src="/rooms/suga4u/creator-photo.jpeg" alt="Avatar" className="w-full h-full object-cover" />
-            </div>
+        <div className="text-right">
+            <p className="text-[10px] text-gold tracking-wider">Gold Tier</p>
+            <p className="text-sm font-bold">Alexis Rose</p>
+        </div>
+        <div className="relative">
+            <div className="w-9 h-9 rounded-full bg-muted border-2 border-gold flex items-center justify-center text-sm">👩</div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border border-background" />
         </div>
     </div>
 );
