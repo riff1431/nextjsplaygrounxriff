@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import React, { useEffect, useMemo, useState, Suspense } from "react";
 
 import {
+    Search,
     Crown,
     Video,
     Users,
@@ -638,23 +639,12 @@ function TruthOrDareContent() {
                 <RoomRequestManager roomId={roomId!} />
             )}
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20 relative z-20 bg-black/50 backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={onBack}
-                        className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Back
-                    </button>
+            {/* Header - Minimal Style matching screenshot */}
+            <div className="absolute top-0 left-0 z-50 p-6 flex items-center justify-between w-full pointer-events-none">
+                <div className="pointer-events-auto">
                     <BrandLogo showBadge={false} />
                 </div>
-                <div className="flex items-center gap-3 text-pink-300 text-sm">
-                    <Crown className="w-4 h-4" /> {sessionInfo?.title || "Truth or Dare Room"}
-                    <span className="hidden sm:inline text-[10px] text-gray-400">
-                        {sessionInfo?.isPrivate ? "Private" : "Public"} Entry ${sessionInfo?.price ?? 0}
-                    </span>
-                </div>
+                {/* Right side of header is empty in screenshot */}
             </div>
 
             {/* Paywall Overlay */}
@@ -724,7 +714,7 @@ function TruthOrDareContent() {
                             {Array.from({ length: creatorCount }).map((_, i) => (
                                 <div
                                     key={`creator-${i}`}
-                                    className="relative rounded-2xl border border-pink-500/40 aspect-video flex items-center justify-center bg-gray-950 overflow-hidden shadow-[0_0_20px_rgba(236,72,153,0.1)]"
+                                    className="relative rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
                                 >
                                     {i === 0 && roomId ? (
                                         <LiveStreamWrapper
@@ -737,106 +727,104 @@ function TruthOrDareContent() {
                                             hostName={hostName}
                                         />
                                     ) : (
-                                        <>
-                                            <Video className="w-10 h-10 text-pink-400" />
-                                            <span className="absolute bottom-2 left-2 text-xs text-pink-300 font-display">Creator {i + 1}</span>
-                                        </>
+                                        <div className="flex flex-col items-center gap-4">
+                                            <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center animate-pulse">
+                                                <div className="w-8 h-8 rounded-full bg-white/5" />
+                                            </div>
+                                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Waiting for host...</span>
+                                        </div>
                                     )}
                                 </div>
                             ))}
                         </div>
 
-                        {/* Dynamic Fan Viewers */}
-                        {roomId && userId && access === 'granted' && (
-                            <div className="glass-panel p-3">
-                                <FanViewersList
-                                    roomId={roomId}
-                                    userId={userId}
-                                    userName={userName}
-                                    userAvatar={userAvatar}
-                                />
-                            </div>
-                        )}
-
-                        {/* Prompt Section */}
-                        <div className="glass-panel gold-glow p-4">
+                        {/* Prompt Section - 3 columns as in screenshot */}
+                        <div className="glass-panel p-4 border-white/5 bg-black/40">
                             <div className="flex items-center gap-2 mb-4">
-                                <Star className="w-4 h-4 text-primary" />
-                                <h3 className="text-sm font-display font-semibold text-foreground">Choose a Prompt</h3>
+                                <Search className="w-4 h-4 text-pink-400" />
+                                <h3 className="text-sm font-semibold text-white tracking-wide">Choose a Prompt</h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:border-r border-border/30 md:pr-4">
-                                    <h4 className="text-xs font-semibold text-neon-blue neon-glow-blue mb-3">System Truths</h4>
-                                    <div className="space-y-2">
+                                {/* Col 1: System Truths */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-widest border-b border-blue-500/20 pb-2">System Truths</h4>
+                                    <div className="space-y-3">
                                         {truthTiers.map((t) => (
                                             <button
                                                 key={`truth-${t.id}`}
                                                 disabled={isSubmitting}
                                                 onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
-                                                className="w-full flex items-baseline justify-between py-1.5 border-b border-border/30 last:border-0 hover:bg-white/5 transition-colors group"
+                                                className="w-full flex items-center justify-between group"
                                             >
                                                 <div className="text-left">
-                                                    <span className="text-sm font-semibold text-neon-blue group-hover:neon-glow-blue transition-all">{t.label}</span>
-                                                    <p className="text-[10px] text-muted-foreground">{t.desc}</p>
+                                                    <span className="text-sm font-bold text-blue-500 group-hover:text-blue-400 transition-colors">{t.label}</span>
+                                                    <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                 </div>
-                                                <span className="text-sm font-semibold text-foreground">${t.price}</span>
+                                                <span className="text-sm font-bold text-white">${t.price}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="md:border-r border-border/30 md:pr-4">
-                                    <h4 className="text-xs font-semibold text-neon-red neon-glow-red mb-3">System Dares</h4>
-                                    <div className="space-y-2">
-                                        {dareTiers.map((t) => (
+
+                                {/* Col 2: System Dares */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[11px] font-bold text-red-400 uppercase tracking-widest border-b border-red-500/20 pb-2">System Dares</h4>
+                                    <div className="space-y-3">
+                                        {[
+                                            { id: "silver", label: "Silver", price: 5, desc: "Spicy" },
+                                            { id: "gold", label: "Gold", price: 5, desc: "Very explicit" },
+                                            { id: "diamond", label: "Diamond", price: 7, desc: "Very explicit" },
+                                        ].map((t) => (
                                             <button
                                                 key={`dare-${t.id}`}
                                                 disabled={isSubmitting}
                                                 onClick={() => openConfirmation('system_dare', t.id, "", t.price)}
-                                                className="w-full flex items-baseline justify-between py-1.5 border-b border-border/30 last:border-0 hover:bg-white/5 transition-colors group"
+                                                className="w-full flex items-center justify-between group"
                                             >
                                                 <div className="text-left">
-                                                    <span className="text-sm font-semibold text-neon-red group-hover:neon-glow-red transition-all">{t.label}</span>
-                                                    <p className="text-[10px] text-muted-foreground">{t.desc}</p>
+                                                    <span className="text-sm font-bold text-red-500 group-hover:text-red-400 transition-colors">{t.label}</span>
+                                                    <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                 </div>
-                                                <span className="text-sm font-semibold text-foreground">${t.price}</span>
+                                                <span className="text-sm font-bold text-white">${t.price}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
-                                <div>
-                                    <h4 className="text-xs font-semibold text-muted-foreground mb-3">Custom Requests</h4>
-                                    <div className="flex gap-2 mb-3">
+
+                                {/* Col 3: Custom Requests */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/5 pb-2">Custom Requests (Fan-Written)</h4>
+                                    <div className="flex gap-2">
                                         <button
                                             onClick={() => setCustomType("truth")}
-                                            className={`glass-panel flex-1 py-1.5 text-xs transition-all ${customType === "truth" ? "text-neon-blue neon-glow-blue bg-neon-blue/10 border-neon-blue/40" : "text-muted-foreground hover:text-neon-blue"}`}
+                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${customType === "truth" ? "bg-blue-600/20 border-blue-500/50 text-blue-400" : "bg-white/5 border-white/10 text-gray-500 hover:text-white"}`}
                                         >
-                                            Truth ($25)
+                                            Custom Truth ($25)
                                         </button>
                                         <button
                                             onClick={() => setCustomType("dare")}
-                                            className={`glass-panel flex-1 py-1.5 text-xs transition-all ${customType === "dare" ? "text-neon-red neon-glow-red bg-neon-red/10 border-neon-red/40" : "text-muted-foreground hover:text-neon-red"}`}
+                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${customType === "dare" ? "bg-red-600/20 border-red-500/50 text-red-400" : "bg-white/5 border-white/10 text-gray-500 hover:text-white"}`}
                                         >
-                                            Dare ($35)
+                                            Custom Dare ($35)
                                         </button>
                                     </div>
                                     <textarea
                                         value={customText}
                                         onChange={(e) => setCustomText(e.target.value)}
                                         placeholder="Write your custom Truth/Dare here..."
-                                        className="w-full bg-muted/20 rounded-xl p-3 text-xs text-foreground placeholder:text-muted-foreground outline-none resize-none h-20 border border-border/30 focus:border-primary/50 transition-colors"
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none h-20 focus:border-white/20 transition-all"
                                     />
                                     <button
                                         disabled={isSubmitting || !customType || !customText.trim()}
-                                        onClick={() => {
-                                            const price = customType === 'truth' ? 25 : 35;
-                                            openConfirmation(`custom_${customType}`, null, customText, price);
-                                        }}
-                                        className="glass-panel w-full mt-3 py-2.5 text-xs gold-text flex items-center justify-center gap-2 hover:bg-primary/10 transition-colors disabled:opacity-50"
+                                        onClick={() => openConfirmation(`custom_${customType}`, null, customText, customType === 'truth' ? 25 : 35)}
+                                        className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-500/20 transition-all disabled:opacity-30"
                                     >
-                                        <CreditCard className="w-4 h-4" />
-                                        {isSubmitting ? "Processing..." : "Pay & Submit"}
+                                        <div className="flex items-center gap-2">
+                                            <MessageCircle className="w-4 h-4" />
+                                            <span>Pay & Submit</span>
+                                        </div>
                                     </button>
-                                    <p className="text-[10px] text-muted-foreground mt-2 text-center">Direct fan→creator request.</p>
+                                    <p className="text-[9px] text-gray-600 text-center">Custom requests are direct fan→creator. No auto-approval.</p>
                                 </div>
                             </div>
                         </div>
@@ -863,61 +851,106 @@ function TruthOrDareContent() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="glass-panel p-4 grid grid-cols-4 gap-2">
-                            <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-                                <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px]">Boost</span>
+                        {/* Action Buttons row - strictly matching icons in screenshot */}
+                        <div className="glass-panel p-4 flex justify-between gap-2 border-white/10 bg-black/20">
+                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
+                                <Zap className="w-4 h-4 group-hover:scale-110 group-hover:text-primary" />
+                                <span className="text-[9px] uppercase tracking-tighter">Boost Room</span>
                             </button>
-                            <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-                                <Trophy className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px]">Board</span>
+                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
+                                <Trophy className="w-4 h-4 group-hover:scale-110 group-hover:text-amber-400" />
+                                <span className="text-[9px] uppercase tracking-tighter">Leaderboard</span>
                             </button>
-                            <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-                                <Timer className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px]">Timer</span>
+                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
+                                <Timer className="w-4 h-4 group-hover:scale-110 group-hover:text-blue-400" />
+                                <span className="text-[9px] uppercase tracking-tighter">Extend Timer</span>
                             </button>
-                            <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors group">
-                                <Lock className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px]">Private</span>
+                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
+                                <Lock className="w-4 h-4 group-hover:scale-110 group-hover:text-purple-400" />
+                                <span className="text-[9px] uppercase tracking-tighter">Private Session</span>
                             </button>
                         </div>
 
                         {/* Bottle Spinner */}
                         <BottleSpinner />
 
-                        {/* Group Voting Sidebar Panel */}
-                        {access === 'granted' && roomId && (
-                            <div className="glass-panel p-4 flex-1">
-                                <GroupVotePanel roomId={roomId} currentUserId={userId || undefined} />
+                        {/* Group Voting Section - strictly matching screenshot UI */}
+                        <div className="glass-panel p-4 border-white/5 bg-black/20 flex flex-col gap-4">
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-amber-500" />
+                                <h3 className="text-sm font-semibold text-white tracking-wide">Group Voting</h3>
                             </div>
-                        )}
+
+                            <div className="flex gap-2">
+                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-blue-600/20 border border-blue-500/50 text-blue-400">Custom Truth ($25)</button>
+                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-gray-500">Custom Dare ($35)</button>
+                            </div>
+
+                            <textarea
+                                placeholder="Write your custom Truth/Dare here..."
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none h-20"
+                            />
+
+                            <button className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2">
+                                <TrendingUp className="w-4 h-4" />
+                                <span>Pay & Vote</span>
+                            </button>
+
+                            <p className="text-[9px] text-gray-600 text-center">Custom requests are direct fan→creator. No auto-approval.</p>
+                        </div>
                     </div>
 
-                    {/* Right: Chat */}
-                    <div className="flex flex-col gap-4 w-full lg:w-[360px]">
-                        {/* Existing Chat Room UI can be wrapped in glass-panel */}
-                        <div className="glass-panel p-4 flex flex-col h-[600px] lg:h-full">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4 text-primary" />
+                    {/* Right: Dedicated Chat Column */}
+                    <div className="flex flex-col gap-4 w-full lg:w-[380px]">
+                        <div className="glass-panel border-white/5 bg-black/20 flex flex-col h-[700px] lg:h-full overflow-hidden">
+                            {/* Chat Header */}
+                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/40">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <div className="w-1 h-3 bg-pink-500 rounded-full" />
                                     Live Chat Room
                                 </h3>
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
-                                    <Users className="w-3 h-3" />
-                                    <span>{fanCount} online</span>
+                                <div className="flex items-center gap-2 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                    <span className="text-[9px] font-bold text-blue-400 uppercase tracking-tighter">{fanCount} online</span>
                                 </div>
                             </div>
 
-                            {/* Reusing existing logic would be here if it was extracted, otherwise we'll see how to integrate it.
-                                Actually, the original code had most logic in the same file.
-                                Let's keep the existing logic flow if possible.
-                            */}
-                            <div className="flex-1 overflow-hidden relative">
-                                {/* This is a placeholder for where the chat messages would go if they were handled here. 
-                                    In the original file, it seems the chat might have been part of the sidebar.
-                                */}
-                                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs italic">
-                                    Chat room active...
+                            {/* Fans list / Chat Messages Area */}
+                            <div className="p-4 flex-1 overflow-y-auto space-y-4">
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+                                    <Users className="w-3 h-3" />
+                                    <span>Fans in Room</span>
+                                </div>
+
+                                {/* Mock Users to match screenshot */}
+                                {[
+                                    { name: "User123", msg: "Welcome to the game!", color: "bg-amber-500" },
+                                    { name: "User456", msg: "Can't wait to start!", color: "bg-pink-500" },
+                                    { name: "User789", msg: "Looking forward to some spicy fun in here!", color: "bg-purple-600" },
+                                ].map((u, i) => (
+                                    <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
+                                        <div className={`w-8 h-8 rounded-full ${u.color} flex items-center justify-center text-[10px] font-bold text-white`}>
+                                            {u.name[0]}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="text-[11px] font-bold text-amber-500">{u.name}</div>
+                                            <div className="text-xs text-gray-300 leading-snug">{u.msg}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Message Input */}
+                            <div className="p-4 bg-black/40 border-t border-white/5">
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        placeholder="Type your message..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-xs text-white placeholder:text-gray-500 focus:border-white/20 focus:bg-white/10 transition-all outline-none"
+                                    />
+                                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pink-500 transition-colors">
+                                        <Flame className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
