@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
 

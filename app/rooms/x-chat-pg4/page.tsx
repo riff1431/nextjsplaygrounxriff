@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { ArrowLeft } from "lucide-react";
 import CreatorCard from "@/components/rooms/x-chat/CreatorCard";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
@@ -54,9 +55,8 @@ const Index = () => {
                         <PaidReactions />
                     </div>
 
-                    {/* Right: Chat panel */}
                     <div className="lg:col-span-1">
-                        <ChatPanel />
+                        <ChatPanel roomId={null} />
                     </div>
                 </div>
             </div>

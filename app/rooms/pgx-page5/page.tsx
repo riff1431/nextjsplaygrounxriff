@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import SugaLogo from "@/components/rooms/suga4u-v5/SugaLogo";
 import UserProfile from "@/components/rooms/suga4u-v5/UserProfile";
 import LiveStream from "@/components/rooms/suga4u-v5/LiveStream";
