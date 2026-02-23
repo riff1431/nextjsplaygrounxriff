@@ -17,7 +17,7 @@ interface MyRequestsProps {
     setReviewRequest: (req: any) => void;
 }
 
-const MyRequests: React.FC<MyRequestsProps> = ({ requests, setReviewRequest }) => {
+const MyRequests: React.FC<MyRequestsProps> = ({ requests = [], setReviewRequest = () => { } }) => {
     return (
         <div className="neon-glass-card p-4 space-y-3">
             <div className="flex items-center justify-between">
