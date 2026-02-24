@@ -18,12 +18,31 @@
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
 
-  /* Competition Theme HSL */
-  --comp-bg: 270 50% 5%;
+  /* Competition Theme Exact Port */
+  --comp-background: 270 50% 5%;
+  --comp-foreground: 300 100% 95%;
   --comp-card: 270 40% 10%;
+  --comp-card-foreground: 300 100% 95%;
+  --comp-popover: 270 40% 10%;
+  --comp-popover-foreground: 300 100% 95%;
   --comp-primary: 300 100% 60%;
+  --comp-primary-foreground: 270 50% 5%;
+  --comp-secondary: 280 60% 20%;
+  --comp-secondary-foreground: 300 100% 90%;
+  --comp-muted: 270 30% 15%;
+  --comp-muted-foreground: 280 20% 60%;
   --comp-accent: 320 100% 55%;
+  --comp-accent-foreground: 0 0% 100%;
+  --comp-destructive: 0 84% 60%;
+  --comp-destructive-foreground: 0 0% 100%;
   --comp-border: 290 60% 30%;
+  --comp-input: 270 40% 15%;
+  --comp-ring: 300 100% 60%;
+  --comp-radius: 0.75rem;
+  --comp-neon-pink: 320 100% 55%;
+  --comp-neon-purple: 280 100% 60%;
+  --comp-neon-magenta: 300 100% 50%;
+  --comp-gold: 45 100% 55%;
 }
 
 /* Custom Utilities */
@@ -72,25 +91,66 @@
     text-shadow: 0 0 8px hsl(var(--gold) / 0.5);
   }
 
-  /* Competition Theme Utilities */
+  /* Competition Theme Utilities (100% Accurate Port) */
   .competition-theme {
-    --background: var(--comp-bg);
+    --background: var(--comp-background);
+    --foreground: var(--comp-foreground);
     --card: var(--comp-card);
+    --card-foreground: var(--comp-card-foreground);
+    --popover: var(--comp-popover);
+    --popover-foreground: var(--comp-popover-foreground);
     --primary: var(--comp-primary);
+    --primary-foreground: var(--comp-primary-foreground);
+    --secondary: var(--comp-secondary);
+    --secondary-foreground: var(--comp-secondary-foreground);
+    --muted: var(--comp-muted);
+    --muted-foreground: var(--comp-muted-foreground);
     --accent: var(--comp-accent);
+    --accent-foreground: var(--comp-accent-foreground);
+    --destructive: var(--comp-destructive);
+    --destructive-foreground: var(--comp-destructive-foreground);
     --border: var(--comp-border);
+    --input: var(--comp-input);
+    --ring: var(--comp-ring);
+    --radius: var(--comp-radius);
+
+    font-family: 'Rajdhani', sans-serif;
   }
 
-  .neon-text-comp {
-    text-shadow: 0 0 10px hsl(var(--comp-primary) / 0.8), 0 0 30px hsl(var(--comp-primary) / 0.4), 0 0 60px hsl(var(--comp-accent) / 0.2);
+  .competition-theme .font-display {
+    font-family: 'Orbitron', sans-serif;
   }
 
-  .neon-border-comp {
+  .competition-theme .font-cursive {
+    font-family: 'Parisienne', cursive;
+  }
+
+  .competition-theme .neon-text {
+    text-shadow: 0 0 10px hsl(var(--comp-primary) / 0.8), 0 0 30px hsl(var(--comp-primary) / 0.4), 0 0 60px hsl(320 100% 55% / 0.2);
+  }
+
+  .competition-theme .neon-border {
     box-shadow: inset 0 0 20px hsl(var(--comp-primary) / 0.1), 0 0 15px hsl(var(--comp-primary) / 0.3), 0 0 30px hsl(var(--comp-primary) / 0.1);
   }
 
-  .neon-border-accent-comp {
-    box-shadow: inset 0 0 15px hsl(var(--comp-accent) / 0.1), 0 0 10px hsl(var(--comp-accent) / 0.4), 0 0 25px hsl(var(--comp-accent) / 0.15);
+  .competition-theme .neon-border-accent {
+    box-shadow: inset 0 0 15px hsl(320 100% 55% / 0.1), 0 0 10px hsl(320 100% 55% / 0.4), 0 0 25px hsl(320 100% 55% / 0.15);
+  }
+
+  .competition-theme .live-badge {
+    animation: pulse-live-comp 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-live-comp {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
   }
 
   .gradient-pink {

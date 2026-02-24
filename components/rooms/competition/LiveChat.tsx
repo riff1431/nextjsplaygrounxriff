@@ -27,7 +27,7 @@ const LiveChat = () => {
             }}
         >
             <div
-                className="flex flex-col h-full bg-card/40  rounded-xl border border-border neon-border-comp overflow-hidden"
+                className="flex flex-col h-full bg-card/40  rounded-xl border border-border neon-border overflow-hidden"
                 style={{
                     transform: "rotateY(12deg) scale(0.97)",
                     transformOrigin: "right center",
@@ -36,7 +36,7 @@ const LiveChat = () => {
                 }}
             >
                 <div className="px-4 py-2 border-b border-border bg-secondary/50">
-                    <h2 className="font-display text-sm font-bold tracking-wider text-foreground neon-text-comp">
+                    <h2 className="font-display text-sm font-bold tracking-wider text-foreground neon-text">
                         LIVE CHAT
                     </h2>
                 </div>

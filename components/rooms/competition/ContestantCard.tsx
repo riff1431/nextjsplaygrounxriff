@@ -11,7 +11,7 @@ interface ContestantProps {
 
 const ContestantCard = ({ rank, name, votes, gradient }: ContestantProps) => {
     return (
-        <div className="relative group cursor-pointer rounded-xl overflow-hidden border border-border neon-border-accent-comp transition-all hover:scale-[1.02] hover:brightness-110 h-full">
+        <div className="relative group cursor-pointer rounded-xl overflow-hidden border border-border neon-border-accent transition-all hover:scale-[1.02] hover:brightness-110 h-full">
             {/* Image placeholder with gradient */}
             <div className={`h-full ${gradient} flex items-center justify-center`}>
                 <span className="text-5xl opacity-30">👤</span>

@@ -12,7 +12,7 @@ const packages = [
 const BuyVotes = () => {
     return (
         <div className="w-full">
-            <h2 className="font-display text-lg md:text-xl font-bold text-center tracking-widest neon-text-comp text-foreground mb-2">
+            <h2 className="font-display text-lg md:text-xl font-bold text-center tracking-widest neon-text text-foreground mb-2">
                 💖 BUY VOTES 💖
             </h2>
             <div className="grid grid-cols-4 gap-2">
@@ -20,8 +20,8 @@ const BuyVotes = () => {
                     <div
                         key={pkg.price}
                         className={`bg-card/20 backdrop-blur-sm border rounded-lg p-2 md:p-3 text-center transition-all hover:scale-105 cursor-pointer ${pkg.popular
-                                ? "border-primary neon-border-comp"
-                                : "border-border neon-border-accent-comp"
+                                ? "border-primary neon-border"
+                                : "border-border neon-border-accent"
                             }`}
                     >
                         <div className="font-display text-xl md:text-2xl font-black text-foreground">
