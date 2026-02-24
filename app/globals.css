@@ -18,37 +18,12 @@
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
 
-  @keyframes pulse-glow {
-
-    0%,
-    100% {
-      opacity: 1;
-    }
-
-    50% {
-      opacity: 0.6;
-    }
-  }
-
-  @keyframes flicker {
-
-    0%,
-    19%,
-    21%,
-    23%,
-    25%,
-    54%,
-    56%,
-    100% {
-      opacity: 1;
-    }
-
-    20%,
-    24%,
-    55% {
-      opacity: 0.5;
-    }
-  }
+  /* Competition Theme HSL */
+  --comp-bg: 270 50% 5%;
+  --comp-card: 270 40% 10%;
+  --comp-primary: 300 100% 60%;
+  --comp-accent: 320 100% 55%;
+  --comp-border: 290 60% 30%;
 }
 
 /* Custom Utilities */
@@ -95,6 +70,27 @@
   .gold-text {
     color: hsl(var(--gold));
     text-shadow: 0 0 8px hsl(var(--gold) / 0.5);
+  }
+
+  /* Competition Theme Utilities */
+  .competition-theme {
+    --background: var(--comp-bg);
+    --card: var(--comp-card);
+    --primary: var(--comp-primary);
+    --accent: var(--comp-accent);
+    --border: var(--comp-border);
+  }
+
+  .neon-text-comp {
+    text-shadow: 0 0 10px hsl(var(--comp-primary) / 0.8), 0 0 30px hsl(var(--comp-primary) / 0.4), 0 0 60px hsl(var(--comp-accent) / 0.2);
+  }
+
+  .neon-border-comp {
+    box-shadow: inset 0 0 20px hsl(var(--comp-primary) / 0.1), 0 0 15px hsl(var(--comp-primary) / 0.3), 0 0 30px hsl(var(--comp-primary) / 0.1);
+  }
+
+  .neon-border-accent-comp {
+    box-shadow: inset 0 0 15px hsl(var(--comp-accent) / 0.1), 0 0 10px hsl(var(--comp-accent) / 0.4), 0 0 25px hsl(var(--comp-accent) / 0.15);
   }
 
   .gradient-pink {
