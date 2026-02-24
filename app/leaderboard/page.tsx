@@ -28,9 +28,6 @@ const LeaderboardPage = () => {
             <div className="relative z-10 max-w-7xl mx-auto py-8 pt-48">
                 {/* Header */}
                 <div className="text-center mb-10">
-                    <h1 className="font-display italic text-6xl md:text-7xl lg:text-8xl text-primary neon-text font-bold tracking-tight">
-                        PlayGround<span className="text-foreground">X</span>
-                    </h1>
                 </div>
 
                 {/* Main Grid */}
