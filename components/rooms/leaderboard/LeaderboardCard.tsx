@@ -17,8 +17,8 @@ const leaders = [
 
 const badgeColors: Record<string, string> = {
     VIP: "bg-primary/20 text-primary border-primary/30 shadow-[0_0_10px_rgba(255,51,153,0.3)]",
-    Star: "bg-blue-500/20 text-blue-400 border-blue-500/50",
-    Elite: "bg-yellow-500/20 text-yellow-400 border-yellow-500/50",
+    Star: "bg-blue-500/20 text-blue-400 border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]",
+    Elite: "bg-yellow-500/20 text-yellow-400 border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.3)]",
 };
 
 const LeaderboardCard = () => (

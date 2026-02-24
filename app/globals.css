@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -182,26 +182,30 @@
 
   /* Leaderboard Theme Utilities */
   .leaderboard-theme {
-    --background: var(--leaderboard-background);
-    --foreground: var(--leaderboard-foreground);
-    --card: var(--leaderboard-card);
-    --card-foreground: var(--leaderboard-card-foreground);
-    --popover: var(--leaderboard-popover);
-    --popover-foreground: var(--leaderboard-popover-foreground);
-    --primary: var(--leaderboard-primary);
-    --primary-foreground: var(--leaderboard-primary-foreground);
-    --secondary: var(--leaderboard-secondary);
-    --secondary-foreground: var(--leaderboard-secondary-foreground);
-    --muted: var(--leaderboard-muted);
-    --muted-foreground: var(--leaderboard-muted-foreground);
-    --accent: var(--leaderboard-accent);
-    --accent-foreground: var(--leaderboard-accent-foreground);
-    --destructive: var(--leaderboard-destructive);
-    --destructive-foreground: var(--leaderboard-destructive-foreground);
-    --border: var(--leaderboard-border);
-    --input: var(--leaderboard-input);
-    --ring: var(--leaderboard-ring);
+    --background: hsl(var(--leaderboard-background));
+    --foreground: hsl(var(--leaderboard-foreground));
+    --card: hsl(var(--leaderboard-card));
+    --card-foreground: hsl(var(--leaderboard-card-foreground));
+    --popover: hsl(var(--leaderboard-popover));
+    --popover-foreground: hsl(var(--leaderboard-popover-foreground));
+    --primary: hsl(var(--leaderboard-primary));
+    --primary-foreground: hsl(var(--leaderboard-primary-foreground));
+    --secondary: hsl(var(--leaderboard-secondary));
+    --secondary-foreground: hsl(var(--leaderboard-secondary-foreground));
+    --muted: hsl(var(--leaderboard-muted));
+    --muted-foreground: hsl(var(--leaderboard-muted-foreground));
+    --accent: hsl(var(--leaderboard-accent));
+    --accent-foreground: hsl(var(--leaderboard-accent-foreground));
+    --destructive: hsl(var(--leaderboard-destructive));
+    --destructive-foreground: hsl(var(--leaderboard-destructive-foreground));
+    --border: hsl(var(--leaderboard-border));
+    --input: hsl(var(--leaderboard-input));
+    --ring: hsl(var(--leaderboard-ring));
     --radius: var(--leaderboard-radius);
+
+    /* Scoped neon colors for utilities */
+    --neon-pink-local: hsl(var(--leaderboard-neon-pink));
+    --neon-blue-local: hsl(var(--leaderboard-neon-blue));
 
     font-family: 'Inter', sans-serif;
   }
@@ -211,35 +215,35 @@
   }
 
   .leaderboard-theme .neon-text {
-    text-shadow: 0 0 10px hsl(var(--leaderboard-primary) / 0.8), 0 0 30px hsl(var(--leaderboard-primary) / 0.4), 0 0 60px hsl(var(--leaderboard-primary) / 0.2);
+    text-shadow: 0 0 10px hsla(330, 90%, 60%, 0.8), 0 0 30px hsla(330, 90%, 60%, 0.4), 0 0 60px hsla(330, 90%, 60%, 0.2);
   }
 
   .leaderboard-theme .neon-border {
-    box-shadow: inset 0 0 20px hsl(var(--leaderboard-primary) / 0.1), 0 0 15px hsl(var(--leaderboard-primary) / 0.15);
+    box-shadow: inset 0 0 20px hsla(330, 90%, 60%, 0.1), 0 0 15px hsla(330, 90%, 60%, 0.15);
   }
 
   .leaderboard-theme .glass-card {
-    background: linear-gradient(135deg, hsl(270 10% 12% / 0.25), hsl(260 25% 8% / 0.9));
+    background: linear-gradient(135deg, hsla(270, 10%, 12%, 0.25), hsla(260, 25%, 8%, 0.9));
     backdrop-filter: blur(1px);
-    border: 1px solid hsl(var(--leaderboard-border) / 0.5);
+    border: 1px solid hsla(330, 40%, 30%, 0.5);
   }
 
   .leaderboard-theme .neon-badge {
-    background: hsl(var(--leaderboard-primary) / 0.15);
-    border: 1px solid hsl(var(--leaderboard-primary) / 0.5);
-    color: hsl(var(--leaderboard-primary));
+    background: hsla(330, 90%, 60%, 0.15);
+    border: 1px solid hsla(330, 90%, 60%, 0.5);
+    color: hsla(330, 90%, 60%, 1);
   }
 
   .leaderboard-theme .vote-btn {
-    background: hsl(var(--leaderboard-primary) / 0.2);
-    border: 1px solid hsl(var(--leaderboard-primary) / 0.6);
-    color: hsl(var(--leaderboard-primary));
+    background: hsla(330, 90%, 60%, 0.2);
+    border: 1px solid hsla(330, 90%, 60%, 0.6);
+    color: hsla(330, 90%, 60%, 1);
     transition: all 0.2s;
   }
 
   .leaderboard-theme .vote-btn:hover {
-    background: hsl(var(--leaderboard-primary) / 0.4);
-    box-shadow: 0 0 15px hsl(var(--leaderboard-primary) / 0.3);
+    background: hsla(330, 90%, 60%, 0.4);
+    box-shadow: 0 0 15px hsla(330, 90%, 60%, 0.3);
   }
 
   .gradient-pink {
