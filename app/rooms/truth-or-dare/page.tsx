@@ -747,7 +747,7 @@ function TruthOrDareContent() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Col 1: System Truths */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-widest border-b border-blue-500/20 pb-2">System Truths</h4>
+                                    <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-widest pb-2 px-2 bg-blue-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(59,130,246,0.6), 0 0 30px rgba(59,130,246,0.3)' }}>System Truths</h4>
                                     <div className="space-y-3">
                                         {truthTiers.map((t) => (
                                             <button
@@ -756,9 +756,11 @@ function TruthOrDareContent() {
                                                 onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
                                                 className="w-full flex items-center justify-between group"
                                             >
-                                                <div className="text-left">
-                                                    <span className="text-sm font-bold text-blue-500 group-hover:text-blue-400 transition-colors">{t.label}</span>
-                                                    <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                <div className="text-left flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded group-hover:bg-blue-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(59,130,246,0.7), 0 0 20px rgba(59,130,246,0.4)' }}>{t.label}</span>
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                    </div>
                                                 </div>
                                                 <span className="text-sm font-bold text-white">${t.price}</span>
                                             </button>
@@ -768,7 +770,7 @@ function TruthOrDareContent() {
 
                                 {/* Col 2: System Dares */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-red-400 uppercase tracking-widest border-b border-red-500/20 pb-2">System Dares</h4>
+                                    <h4 className="text-[11px] font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
                                     <div className="space-y-3">
                                         {[
                                             { id: "silver", label: "Silver", price: 5, desc: "Spicy" },
@@ -781,9 +783,11 @@ function TruthOrDareContent() {
                                                 onClick={() => openConfirmation('system_dare', t.id, "", t.price)}
                                                 className="w-full flex items-center justify-between group"
                                             >
-                                                <div className="text-left">
-                                                    <span className="text-sm font-bold text-red-500 group-hover:text-red-400 transition-colors">{t.label}</span>
-                                                    <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                <div className="text-left flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-red-300 bg-red-500/10 px-2 py-0.5 rounded group-hover:bg-red-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(239,68,68,0.7), 0 0 20px rgba(239,68,68,0.4)' }}>{t.label}</span>
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                    </div>
                                                 </div>
                                                 <span className="text-sm font-bold text-white">${t.price}</span>
                                             </button>
@@ -793,17 +797,17 @@ function TruthOrDareContent() {
 
                                 {/* Col 3: Custom Requests */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/5 pb-2">Custom Requests (Fan-Written)</h4>
+                                    <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-widest pb-2 px-2 bg-purple-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)' }}>Custom Requests (Fan-Written)</h4>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setCustomType("truth")}
-                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${customType === "truth" ? "bg-blue-600/20 border-blue-500/50 text-blue-400" : "bg-white/5 border-white/10 text-gray-500 hover:text-white"}`}
+                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "truth" ? "bg-blue-600/50 shadow-[0_0_20px_rgba(59,130,246,0.5)] text-white scale-105" : "bg-blue-900/10 text-blue-400/70 hover:bg-blue-500/10"}`}
                                         >
                                             Custom Truth ($25)
                                         </button>
                                         <button
                                             onClick={() => setCustomType("dare")}
-                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${customType === "dare" ? "bg-red-600/20 border-red-500/50 text-red-400" : "bg-white/5 border-white/10 text-gray-500 hover:text-white"}`}
+                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "dare" ? "bg-red-600/50 shadow-[0_0_20px_rgba(239,68,68,0.5)] text-white scale-105" : "bg-red-900/10 text-red-400/70 hover:bg-red-500/10"}`}
                                         >
                                             Custom Dare ($35)
                                         </button>
@@ -835,40 +839,43 @@ function TruthOrDareContent() {
                         {/* Profiles */}
                         <div className="flex gap-3">
                             <ProfileCard
-                                name={topTruthKing?.name || "Be first!"}
-                                title="Truth King"
-                                avatar={topTruthKing?.avatar}
-                                color="blue"
-                                amount={topTruthKing?.total}
-                            />
-                            <ProfileCard
                                 name={topDareKing?.name || "Be first!"}
                                 title="Dare King"
                                 avatar={topDareKing?.avatar}
                                 color="red"
                                 amount={topDareKing?.total}
                             />
+                            <ProfileCard
+                                name={topTruthKing?.name || "Be first!"}
+                                title="Truth King"
+                                avatar={topTruthKing?.avatar}
+                                color="blue"
+                                amount={topTruthKing?.total}
+                            />
                         </div>
 
                         {/* Action Buttons */}
                         {/* Action Buttons row - strictly matching icons in screenshot */}
+                        {/* Reaction Bar */}
                         <div className="glass-panel p-4 flex justify-between gap-2 border-white/10 bg-black/20">
-                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
-                                <Zap className="w-4 h-4 group-hover:scale-110 group-hover:text-primary" />
-                                <span className="text-[9px] uppercase tracking-tighter">Boost Room</span>
-                            </button>
-                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
-                                <Trophy className="w-4 h-4 group-hover:scale-110 group-hover:text-amber-400" />
-                                <span className="text-[9px] uppercase tracking-tighter">Leaderboard</span>
-                            </button>
-                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
-                                <Timer className="w-4 h-4 group-hover:scale-110 group-hover:text-blue-400" />
-                                <span className="text-[9px] uppercase tracking-tighter">Extend Timer</span>
-                            </button>
-                            <button className="flex flex-col items-center gap-1.5 text-muted-foreground hover:text-white transition-all group">
-                                <Lock className="w-4 h-4 group-hover:scale-110 group-hover:text-purple-400" />
-                                <span className="text-[9px] uppercase tracking-tighter">Private Session</span>
-                            </button>
+                            {[
+                                { name: "Kiss", emoji: "💋", price: 10 },
+                                { name: "Love", emoji: "❤️", price: 20 },
+                                { name: "Spicy", emoji: "🔥", price: 30 },
+                                { name: "Dark", emoji: "🖤", price: 40 },
+                            ].map((r) => (
+                                <button
+                                    key={r.name}
+                                    onClick={() => openConfirmation('reaction', r.name, "", r.price)}
+                                    className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition-all group shadow-[0_0_12px_rgba(168,85,247,0.2)] hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-105"
+                                >
+                                    <span className="text-xl group-hover:scale-125 transition-transform">{r.emoji}</span>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] uppercase font-bold tracking-tighter text-purple-200">{r.name}</span>
+                                        <span className="text-[8px] font-bold text-white/50">${r.price}</span>
+                                    </div>
+                                </button>
+                            ))}
                         </div>
 
                         {/* Bottle Spinner */}
@@ -882,8 +889,8 @@ function TruthOrDareContent() {
                             </div>
 
                             <div className="flex gap-2">
-                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-blue-600/20 border border-blue-500/50 text-blue-400">Custom Truth ($25)</button>
-                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-gray-500">Custom Dare ($35)</button>
+                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-blue-600/40 text-blue-100 shadow-[0_0_15px_rgba(59,130,246,0.4)]">Custom Truth ($25)</button>
+                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-gray-800/40 text-gray-400 hover:bg-red-600/30 transition-colors">Custom Dare ($35)</button>
                             </div>
 
                             <textarea
@@ -982,9 +989,13 @@ function TruthOrDareContent() {
                             </button>
 
                             <div className="text-center space-y-4">
-                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${confirmModal.type === 'tip' ? 'bg-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : 'bg-pink-500/20'}`}>
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${confirmModal.type === 'tip' ? 'bg-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : confirmModal.type === 'reaction' ? 'bg-purple-500/20' : 'bg-pink-500/20'}`}>
                                     {confirmModal.type === 'tip' ? (
                                         <TrendingUp className="w-8 h-8 text-green-400" />
+                                    ) : confirmModal.type === 'reaction' ? (
+                                        <div className="text-3xl">
+                                            {confirmModal.tier === 'Kiss' ? '💋' : confirmModal.tier === 'Love' ? '❤️' : confirmModal.tier === 'Spicy' ? '🔥' : '🖤'}
+                                        </div>
                                     ) : (
                                         <Crown className="w-8 h-8 text-pink-400" />
                                     )}
@@ -992,11 +1003,13 @@ function TruthOrDareContent() {
 
                                 <div>
                                     <h3 className="text-xl font-bold text-white">
-                                        {confirmModal.type === 'tip' ? 'Send a Tip' : 'Confirm Interaction'}
+                                        {confirmModal.type === 'tip' ? 'Send a Tip' : confirmModal.type === 'reaction' ? 'Send Reaction' : 'Confirm Interaction'}
                                     </h3>
                                     <p className="text-sm text-gray-400 mt-1">
                                         {confirmModal.type === 'tip' ? (
                                             <>Show some love to the creators!</>
+                                        ) : confirmModal.type === 'reaction' ? (
+                                            <>You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier}</span> reaction.</>
                                         ) : (
                                             <>You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier || "Custom"} {confirmModal.type.split('_')[1]}</span>.</>
                                         )}

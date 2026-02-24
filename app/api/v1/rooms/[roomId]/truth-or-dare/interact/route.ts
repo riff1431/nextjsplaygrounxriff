@@ -96,6 +96,10 @@ export async function POST(
             }
 
             finalContent = pool[Math.floor(Math.random() * pool.length)];
+        } else if (type === 'reaction') {
+            // Reaction Logic
+            price = Number(customAmount);
+            finalContent = `Sent a ${tier} reaction!`;
         } else if (type === 'tip') {
             // Tip Logic
             price = Number(customAmount);

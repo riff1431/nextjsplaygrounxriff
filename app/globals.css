@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -718,6 +718,27 @@ body {
   border-radius: 2px;
 }
 
+/* Creator View Panel Glass */
+.fd-x-chat-theme .creator-panel-glass {
+  background: hsla(25, 20%, 12%, 0.45);
+  backdrop-filter: blur(0px);
+  border: 1px solid hsla(40, 70%, 50%, 0.25);
+  box-shadow: 0 4px 30px hsla(0, 0%, 0%, 0.5), inset 0 0px 0 hsla(40, 70%, 50%, 0.1);
+}
+
+.fd-x-chat-theme .creator-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fd-x-chat-theme .creator-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fd-x-chat-theme .creator-scrollbar::-webkit-scrollbar-thumb {
+  background: hsla(40, 70%, 50%, 0.3);
+  border-radius: 2px;
+}
+
 
 /* ==========================================================================
    Suga 4 U Theme (Sugar/Pink/Gold)
@@ -1001,6 +1022,110 @@ body {
 .fd-bar-lounge-theme-v2 .tip-circle:hover {
   border-color: hsl(var(--gold));
   color: hsl(var(--gold));
+}
+
+/* ==========================================================================
+   Bar Lounge Creator Theme (Purple/Pink/Gold)
+   ========================================================================== */
+
+.fd-bar-lounge-creator-theme {
+  --background: 270 50% 8%;
+  --foreground: 300 20% 95%;
+  --primary: 45 90% 55%;
+  --primary-foreground: 270 50% 8%;
+  --secondary: 290 60% 50%;
+  --secondary-foreground: 300 20% 95%;
+  --muted: 270 30% 18%;
+  --muted-foreground: 280 15% 60%;
+  --accent: 320 80% 60%;
+  --accent-foreground: 300 20% 95%;
+  --border: 280 40% 25%;
+  --input: 280 40% 20%;
+  --ring: 45 90% 55%;
+
+  font-family: 'Inter', sans-serif;
+}
+
+.fd-bar-lounge-creator-theme h1,
+.fd-bar-lounge-creator-theme h2,
+.fd-bar-lounge-creator-theme h3,
+.fd-bar-lounge-creator-theme h4,
+.fd-bar-lounge-creator-theme .font-title {
+  font-family: 'Playfair Display', serif;
+}
+
+.fd-bar-lounge-creator-theme .glass-panel {
+  background: hsla(270, 40%, 12%, 0.6);
+  backdrop-filter: blur(1px);
+  border: 1px solid hsla(280, 40%, 35%, 0.4);
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 20px hsla(320, 80%, 60%, 0.1),
+    inset 0 0 20px hsla(280, 70%, 50%, 0.05);
+}
+
+.fd-bar-lounge-creator-theme .text-gold {
+  color: hsl(45, 90%, 55%);
+  text-shadow: 0 0 10px hsla(45, 90%, 55%, 0.6);
+}
+
+.fd-bar-lounge-creator-theme .lounge-glow-button {
+  background: linear-gradient(135deg, hsl(320, 80%, 60%), hsl(290, 60%, 50%));
+  border: 1px solid hsla(320, 80%, 70%, 0.5);
+  box-shadow: 0 0 15px hsla(320, 80%, 60%, 0.4);
+  transition: all 0.3s ease;
+}
+
+.fd-bar-lounge-creator-theme .lounge-glow-button:hover {
+  box-shadow: 0 0 25px hsla(320, 80%, 60%, 0.6);
+  transform: translateY(-1px);
+}
+
+.fd-bar-lounge-creator-theme .lounge-creator-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fd-bar-lounge-creator-theme .lounge-creator-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fd-bar-lounge-creator-theme .lounge-creator-scrollbar::-webkit-scrollbar-thumb {
+  background: hsla(280, 40%, 35%, 0.5);
+  border-radius: 2px;
+}
+
+@keyframes lounge-float-heart {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translateY(-10px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes lounge-sparkle {
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.fd-bar-lounge-creator-theme .lounge-animate-float {
+  animation: lounge-float-heart 3s ease-in-out infinite;
+}
+
+.fd-bar-lounge-creator-theme .lounge-animate-sparkle {
+  animation: lounge-sparkle 2s ease-in-out infinite;
 }
 
 /* Truth and Dare Redesign Styles */
