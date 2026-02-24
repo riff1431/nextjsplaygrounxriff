@@ -16,27 +16,15 @@ const CreatorBarLounge = () => {
             style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-creator.jpeg')" }}
         >
             {/* Top Bar */}
-            <div className="relative z-20 flex items-center justify-center px-4 py-3 glass-panel rounded-none" style={{ borderLeft: 0, borderRight: 0, borderTop: 0 }}>
+            <div className="relative z-20 flex items-center justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0">
                 <button
                     onClick={() => router.push("/home")}
-                    className="absolute left-4 glass-panel px-3 py-2 rounded-lg flex items-center gap-2 hover:opacity-80 transition-colors"
-                    style={{
-                        color: "hsl(45, 90%, 55%)",
-                        border: "1px solid hsla(45, 90%, 55%, 0.35)",
-                    }}
+                    className="absolute left-4 glass-panel gold-border px-3 py-2 rounded-lg flex items-center gap-2 text-primary hover:bg-primary/10 transition-colors"
                 >
                     <ChevronLeft className="w-[18px] h-[18px]" />
                     <span className="text-sm font-medium">Back</span>
                 </button>
-                <h1
-                    className="text-2xl text-gold"
-                    style={{
-                        fontFamily: "'Pacifico', cursive",
-                        textShadow: "0 0 10px hsla(45, 90%, 55%, 0.6)",
-                    }}
-                >
-                    Bar Lounge
-                </h1>
+                <h1 className="text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
             </div>
 
             {/* Content */}

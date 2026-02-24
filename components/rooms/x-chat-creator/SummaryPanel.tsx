@@ -8,18 +8,10 @@ const SummaryPanel = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="creator-panel-glass rounded-lg flex flex-col min-h-0 flex-shrink-0"
+            className="panel-glass rounded-lg flex flex-col min-h-0 flex-shrink-0"
         >
-            <div className="px-4 py-1 border-b" style={{ borderColor: "hsla(40, 25%, 25%, 0.5)" }}>
-                <h2
-                    className="font-display text-sm tracking-widest text-center"
-                    style={{
-                        background: "linear-gradient(135deg, hsl(40, 70%, 55%), hsl(35, 80%, 45%))",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        backgroundClip: "text",
-                    }}
-                >
+            <div className="px-4 py-1 border-b border-border">
+                <h2 className="font-display text-sm tracking-widest gold-text text-center">
                     ✨ SUMMARY
                 </h2>
             </div>
@@ -28,11 +20,11 @@ const SummaryPanel = () => {
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <span>🎉</span>
-                        <span className="font-bold" style={{ color: "hsl(40, 60%, 90%)" }}>120</span>
+                        <span className="font-bold text-foreground">120</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span>🎉</span>
-                        <span className="font-bold" style={{ color: "hsl(40, 60%, 90%)" }}>120</span>
+                        <span className="font-bold text-foreground">120</span>
                     </div>
                 </div>
 
@@ -47,13 +39,13 @@ const SummaryPanel = () => {
                     <div key={i} className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <span>{stat.icon}</span>
-                            <span className="text-xs font-semibold tracking-wider" style={{ color: "hsl(30, 20%, 55%)" }}>
+                            <span className="text-xs font-semibold tracking-wider text-muted-foreground">
                                 {stat.label}
                             </span>
                         </div>
                         <div className="flex items-center gap-1">
                             {stat.icon2 && <span>{stat.icon2}</span>}
-                            <span className="font-bold text-lg" style={{ color: "hsl(40, 60%, 90%)" }}>{stat.value}</span>
+                            <span className="font-bold text-foreground text-lg">{stat.value}</span>
                         </div>
                     </div>
                 ))}

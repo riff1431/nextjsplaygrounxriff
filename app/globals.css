@@ -10,6 +10,10 @@
   --color-neon-purple: #d209fa;
   --color-neon-green: #39ff14;
 
+  /* Success color — makes bg-success and text-success-foreground work globally */
+  --color-success: hsl(145 50% 36%);
+  --color-success-foreground: hsl(0 0% 100%);
+
   --font-sans: var(--font-outfit);
   --font-display: "Cinzel", serif;
 
@@ -96,6 +100,42 @@
     backdrop-filter: blur(4px);
     border: 1px solid hsla(40, 25%, 25%, 0.5);
     border-radius: 0.5rem;
+  }
+
+  /* Creator View Utilities (Global Shared) */
+  .panel-glass {
+    background: hsla(25, 20%, 12%, 0.45);
+    backdrop-filter: blur(0px);
+    border: 1px solid hsla(40, 70%, 50%, 0.25);
+    box-shadow: 0 4px 30px hsla(0, 0%, 0%, 0.5), inset 0 0px 0 hsla(40, 70%, 50%, 0.1);
+  }
+
+  .gold-border {
+    border: 1px solid hsla(40, 70%, 50%, 0.35);
+  }
+
+  .gold-text {
+    background: linear-gradient(135deg, hsl(40, 70%, 55%), hsl(35, 80%, 45%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 20px hsla(40, 70%, 50%, 0.3);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsla(40, 70%, 50%, 0.3);
+    border-radius: 2px;
   }
 
   .glass-card-inner {
@@ -653,28 +693,30 @@ body {
    ========================================================================== */
 
 .fd-x-chat-theme {
-  --background: 30 15% 8%;
-  --foreground: 40 30% 90%;
-  --card: 30 10% 12%;
-  --card-foreground: 40 30% 90%;
-  --popover: 30 10% 12%;
-  --popover-foreground: 40 30% 90%;
-  --primary: 40 60% 55%;
-  --primary-foreground: 30 15% 8%;
-  --secondary: 30 10% 18%;
-  --secondary-foreground: 40 30% 90%;
-  --muted: 30 8% 16%;
-  --muted-foreground: 40 15% 55%;
-  --accent: 40 50% 45%;
-  --accent-foreground: 40 30% 95%;
-  --border: 40 25% 25%;
-  --input: 30 10% 20%;
-  --ring: 40 60% 55%;
-  --gold: 40 60% 55%;
-  --gold-light: 40 70% 70%;
-  --gold-dark: 35 50% 35%;
-  --glass: 30 10% 12%;
-  --glass-border: 40 25% 25%;
+  --background: 25 15% 8%;
+  --foreground: 40 60% 90%;
+  --card: 25 20% 12%;
+  --card-foreground: 40 60% 90%;
+  --popover: 25 20% 12%;
+  --popover-foreground: 40 60% 90%;
+  --primary: 40 70% 50%;
+  --primary-foreground: 25 15% 8%;
+  --secondary: 25 25% 18%;
+  --secondary-foreground: 40 60% 90%;
+  --muted: 25 15% 16%;
+  --muted-foreground: 30 20% 55%;
+  --accent: 40 80% 45%;
+  --accent-foreground: 25 15% 8%;
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 40 60% 90%;
+  --success: 145 50% 36%;
+  --success-foreground: 0 0% 100%;
+  --border: 35 30% 22%;
+  --input: 25 20% 18%;
+  --ring: 40 70% 50%;
+  --radius: 0.5rem;
+  --gold-glow: 0 0 20px hsla(40, 70%, 50%, 0.3);
+  --panel-shadow: 0 4px 30px hsla(0, 0%, 0%, 0.5);
 
   font-family: 'Inter', sans-serif !important;
 }
@@ -718,7 +760,7 @@ body {
   border-radius: 2px;
 }
 
-/* Creator View Panel Glass */
+/* Compatibility aliases (direct CSS, no @apply to avoid TW4 issues) */
 .fd-x-chat-theme .creator-panel-glass {
   background: hsla(25, 20%, 12%, 0.45);
   backdrop-filter: blur(0px);
@@ -1059,26 +1101,37 @@ body {
   backdrop-filter: blur(1px);
   border: 1px solid hsla(280, 40%, 35%, 0.4);
   border-radius: 0.75rem;
-  box-shadow:
-    0 0 20px hsla(320, 80%, 60%, 0.1),
-    inset 0 0 20px hsla(280, 70%, 50%, 0.05);
+  box-shadow: 0 0 20px hsla(320, 80%, 60%, 0.1), inset 0 0 20px hsla(280, 70%, 50%, 0.05);
 }
 
+.fd-bar-lounge-creator-theme .gold-text {
+  background: linear-gradient(135deg, hsl(40, 70%, 55%), hsl(35, 80%, 45%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.fd-bar-lounge-creator-theme .gold-border {
+  border: 1px solid hsla(40, 70%, 50%, 0.35);
+}
+
+.fd-bar-lounge-creator-theme .scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fd-bar-lounge-creator-theme .scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fd-bar-lounge-creator-theme .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsla(280, 40%, 35%, 0.5);
+  border-radius: 2px;
+}
+
+/* Aliases for compatibility */
 .fd-bar-lounge-creator-theme .text-gold {
   color: hsl(45, 90%, 55%);
   text-shadow: 0 0 10px hsla(45, 90%, 55%, 0.6);
-}
-
-.fd-bar-lounge-creator-theme .lounge-glow-button {
-  background: linear-gradient(135deg, hsl(320, 80%, 60%), hsl(290, 60%, 50%));
-  border: 1px solid hsla(320, 80%, 70%, 0.5);
-  box-shadow: 0 0 15px hsla(320, 80%, 60%, 0.4);
-  transition: all 0.3s ease;
-}
-
-.fd-bar-lounge-creator-theme .lounge-glow-button:hover {
-  box-shadow: 0 0 25px hsla(320, 80%, 60%, 0.6);
-  transform: translateY(-1px);
 }
 
 .fd-bar-lounge-creator-theme .lounge-creator-scrollbar::-webkit-scrollbar {

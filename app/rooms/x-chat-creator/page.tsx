@@ -8,16 +8,16 @@ import VideoFeeds from "@/components/rooms/x-chat-creator/VideoFeeds";
 import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests";
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
 
-const CreatorXChatRoom = () => {
+const XChatCreatorPage = () => {
     const router = useRouter();
 
     return (
         <div
-            className="min-h-screen w-full bg-cover bg-center bg-fixed relative fd-x-chat-theme"
+            className="min-h-screen w-full bg-background bg-cover bg-center bg-fixed relative fd-x-chat-theme"
             style={{ backgroundImage: "url('/x-chat/casino-bg.jpeg')" }}
         >
             {/* Dark overlay */}
-            <div className="absolute inset-0" style={{ background: "hsla(25, 15%, 8%, 0.20)" }} />
+            <div className="absolute inset-0 bg-background/20" />
 
             {/* Content */}
             <div className="relative z-10 flex flex-col h-screen overflow-hidden">
@@ -25,25 +25,18 @@ const CreatorXChatRoom = () => {
                 <motion.header
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="creator-panel-glass flex items-center px-4 py-3 relative"
+                    className="panel-glass flex items-center px-4 py-3 relative"
                 >
                     <button
                         onClick={() => router.push("/home")}
-                        className="flex items-center gap-1 hover:opacity-80 transition-colors absolute left-4"
-                        style={{ color: "hsl(40, 60%, 90%)" }}
+                        className="flex items-center gap-1 text-foreground hover:text-primary transition-colors absolute left-4"
                     >
                         <ArrowLeft className="w-5 h-5" />
                         <span className="text-sm hidden sm:inline">Back</span>
                     </button>
                     <h1
-                        className="mx-auto text-2xl md:text-3xl"
-                        style={{
-                            fontFamily: "'Pacifico', cursive",
-                            background: "linear-gradient(135deg, hsl(40, 70%, 55%), hsl(35, 80%, 45%))",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                        }}
+                        className="mx-auto text-2xl md:text-3xl gold-text"
+                        style={{ fontFamily: "'Pacifico', cursive" }}
                     >
                         Creators View for X Chat
                     </h1>
@@ -62,7 +55,7 @@ const CreatorXChatRoom = () => {
                     </div>
 
                     {/* Right - Requests + Summary */}
-                    <div className="hidden lg:flex flex-col gap-1 min-h-0 overflow-y-auto creator-scrollbar">
+                    <div className="hidden lg:flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
                         <IncomingRequests />
                         <SummaryPanel />
                     </div>
@@ -72,4 +65,4 @@ const CreatorXChatRoom = () => {
     );
 };
 
-export default CreatorXChatRoom;
+export default XChatCreatorPage;
