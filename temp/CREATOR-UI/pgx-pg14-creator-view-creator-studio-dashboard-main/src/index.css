@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 280 20% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 280 15% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 280 15% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 320 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 20% 18%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 280 15% 15%;
+    --muted-foreground: 280 10% 60%;
+
+    --accent: 150 80% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 280 20% 20%;
+    --input: 280 15% 18%;
+    --ring: 320 100% 60%;
+
+    --radius: 0.75rem;
+
+    --neon-pink: 320 100% 60%;
+    --neon-green: 150 80% 45%;
+    --neon-yellow: 45 100% 55%;
+    --neon-cyan: 180 100% 50%;
+    --neon-orange: 25 100% 55%;
+    --neon-red: 0 90% 55%;
+    --neon-purple: 280 100% 65%;
+
+    --glass: 280 20% 15%;
+    --glass-border: 280 20% 25%;
+
+    --sidebar-background: 280 20% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 320 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 280 20% 18%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 280 20% 20%;
+    --sidebar-ring: 320 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-glass/20 backdrop-blur-sm border border-glass-border/10 rounded-xl;
+  }
+  .neon-glow-pink {
+    box-shadow: 0 0 15px hsl(320 100% 60% / 0.3), 0 0 40px hsl(320 100% 60% / 0.1);
+  }
+  .neon-glow-green {
+    box-shadow: 0 0 15px hsl(150 80% 45% / 0.4), 0 0 40px hsl(150 80% 45% / 0.15);
+  }
+  .neon-text-pink {
+    text-shadow: 0 0 10px hsl(320 100% 60% / 0.6), 0 0 30px hsl(320 100% 60% / 0.3);
+  }
+  .neon-text-green {
+    text-shadow: 0 0 10px hsl(150 80% 45% / 0.6);
+  }
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+  .coming-soon-badge {
+    @apply text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full;
+    background: hsl(0 90% 55% / 0.8);
+    color: white;
+    box-shadow: 0 0 8px hsl(0 90% 55% / 0.4);
+  }
+}

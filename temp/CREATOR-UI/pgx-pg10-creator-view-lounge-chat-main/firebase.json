@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "site":"pgx-pg10",
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
+  }
+}

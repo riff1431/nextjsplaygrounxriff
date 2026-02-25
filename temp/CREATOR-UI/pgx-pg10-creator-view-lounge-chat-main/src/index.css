@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --background: 270 50% 8%;
+    --foreground: 300 20% 95%;
+
+    --card: 270 40% 12%;
+    --card-foreground: 300 20% 95%;
+
+    --popover: 270 40% 12%;
+    --popover-foreground: 300 20% 95%;
+
+    --primary: 45 90% 55%;
+    --primary-foreground: 270 50% 8%;
+
+    --secondary: 290 60% 50%;
+    --secondary-foreground: 300 20% 95%;
+
+    --muted: 270 30% 18%;
+    --muted-foreground: 280 15% 60%;
+
+    --accent: 320 80% 60%;
+    --accent-foreground: 300 20% 95%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 280 40% 25%;
+    --input: 280 40% 20%;
+    --ring: 45 90% 55%;
+
+    --radius: 0.75rem;
+
+    --glow-pink: 320 80% 60%;
+    --glow-gold: 45 90% 55%;
+    --glow-purple: 280 70% 50%;
+
+    --sidebar-background: 270 40% 12%;
+    --sidebar-foreground: 300 20% 95%;
+    --sidebar-primary: 45 90% 55%;
+    --sidebar-primary-foreground: 270 50% 8%;
+    --sidebar-accent: 290 60% 50%;
+    --sidebar-accent-foreground: 300 20% 95%;
+    --sidebar-border: 280 40% 25%;
+    --sidebar-ring: 45 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: hsla(270, 40%, 12%, 0.6);
+    backdrop-filter: blur(1px);
+    border: 1px solid hsla(280, 40%, 35%, 0.4);
+    border-radius: var(--radius);
+    box-shadow: 
+      0 0 20px hsla(320, 80%, 60%, 0.1),
+      inset 0 0 20px hsla(280, 70%, 50%, 0.05);
+  }
+
+  .gold-border {
+    border: 2px solid hsl(var(--primary));
+    box-shadow: 
+      0 0 15px hsla(45, 90%, 55%, 0.3),
+      inset 0 0 15px hsla(45, 90%, 55%, 0.1);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px hsla(320, 80%, 60%, 0.8), 0 0 30px hsla(320, 80%, 60%, 0.4);
+  }
+
+  .gold-text {
+    color: hsl(var(--primary));
+    text-shadow: 0 0 10px hsla(45, 90%, 55%, 0.6);
+  }
+
+  .glow-button {
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)));
+    border: 1px solid hsla(320, 80%, 70%, 0.5);
+    box-shadow: 0 0 15px hsla(320, 80%, 60%, 0.4);
+    transition: all 0.3s ease;
+  }
+
+  .glow-button:hover {
+    box-shadow: 0 0 25px hsla(320, 80%, 60%, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .earnings-glow {
+    color: hsl(var(--primary));
+    text-shadow: 0 0 20px hsla(45, 90%, 55%, 0.8), 0 0 40px hsla(45, 90%, 55%, 0.4);
+  }
+
+  @keyframes float-heart {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+    50% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+  }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .animate-float {
+    animation: float-heart 3s ease-in-out infinite;
+  }
+
+  .animate-sparkle {
+    animation: sparkle 2s ease-in-out infinite;
+  }
+}

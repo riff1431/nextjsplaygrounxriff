@@ -1216,3 +1216,189 @@ body {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.2), inset 0 0 20px hsl(var(--primary) / 0.05);
   }
 }
+
+/* ==========================================================================
+   Truth or Dare Creator Theme
+   ========================================================================== */
+
+.tod-creator-theme {
+  background: hsl(260, 30%, 8%);
+  color: hsl(0, 0%, 95%);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.tod-creator-panel-bg {
+  background: hsl(260 25% 12% / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tod-creator-neon-border-pink {
+  border: 1px solid hsl(320 80% 55% / 0.6);
+}
+
+.tod-creator-neon-border-blue {
+  border: 1px solid hsl(220 85% 55% / 0.6);
+}
+
+.tod-creator-neon-border-green {
+  border: 1px solid hsl(160 80% 45% / 0.6);
+}
+
+.tod-creator-glow-pink {
+  box-shadow: 0 0 15px hsl(320 80% 55% / 0.4), 0 0 30px hsl(320 80% 55% / 0.2);
+}
+
+.tod-creator-glow-blue {
+  box-shadow: 0 0 15px hsl(220 85% 55% / 0.4), 0 0 30px hsl(220 85% 55% / 0.2);
+}
+
+.tod-creator-glow-green {
+  box-shadow: 0 0 15px hsl(160 80% 45% / 0.4), 0 0 30px hsl(160 80% 45% / 0.2);
+}
+
+.tod-creator-text-neon-pink {
+  color: hsl(320 80% 65%);
+}
+
+.tod-creator-text-neon-blue {
+  color: hsl(220 85% 65%);
+}
+
+.tod-creator-text-neon-green {
+  color: hsl(160 80% 55%);
+}
+
+.tod-creator-text-neon-yellow {
+  color: hsl(45 90% 60%);
+}
+
+.tod-creator-bg-neon-pink {
+  background-color: hsl(320 80% 55%);
+}
+
+.tod-creator-bg-neon-blue {
+  background-color: hsl(220 85% 55%);
+}
+
+.tod-creator-bg-neon-green {
+  background-color: hsl(160 80% 45%);
+}
+
+@keyframes tod-creator-pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.tod-creator-animate-pulse-glow {
+  animation: tod-creator-pulse-glow 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Suga 4U Creator Theme
+   ========================================================================== */
+
+.s4u-creator-theme {
+  font-family: 'Quicksand', 'Inter', sans-serif;
+  color: hsl(340, 20%, 95%);
+}
+
+.s4u-creator-glass-panel {
+  background: hsla(340, 30%, 25%, 0.3);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  border: 1px solid hsla(340, 30%, 40%, 0.4);
+  border-radius: 0.75rem;
+}
+
+.s4u-creator-font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.s4u-creator-text-primary {
+  color: hsl(340, 80%, 65%);
+}
+
+.s4u-creator-text-gold {
+  color: hsl(38, 70%, 60%);
+}
+
+.s4u-creator-neon-glow {
+  text-shadow: 0 0 10px hsl(330, 100%, 70%), 0 0 30px hsl(330, 100%, 70%, 0.5);
+}
+
+@keyframes s4u-creator-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.s4u-creator-animate-pulse {
+  animation: s4u-creator-pulse 2s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Creator Studio Dashboard Theme
+   ========================================================================== */
+
+.cs-theme {
+  background: hsl(280, 20%, 8%);
+  color: hsl(0, 0%, 95%);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.cs-glass-card {
+  background: hsla(280, 20%, 15%, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid hsla(280, 20%, 25%, 0.1);
+  border-radius: 0.75rem;
+}
+
+.cs-font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.cs-neon-text-pink {
+  color: hsl(320, 100%, 60%);
+  text-shadow: 0 0 10px hsl(320 100% 60% / 0.6), 0 0 30px hsl(320 100% 60% / 0.3);
+}
+
+.cs-neon-text-green {
+  color: hsl(150, 80%, 45%);
+  text-shadow: 0 0 10px hsl(150 80% 45% / 0.6);
+}
+
+.cs-neon-glow-pink {
+  box-shadow: 0 0 15px hsl(320 100% 60% / 0.3), 0 0 40px hsl(320 100% 60% / 0.1);
+}
+
+.cs-neon-glow-green {
+  box-shadow: 0 0 15px hsl(150 80% 45% / 0.4), 0 0 40px hsl(150 80% 45% / 0.15);
+}
+
+.cs-coming-soon-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background: hsl(0 90% 55% / 0.8);
+  color: white;
+  box-shadow: 0 0 8px hsl(0 90% 55% / 0.4);
+}
