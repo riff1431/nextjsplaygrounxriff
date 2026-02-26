@@ -204,8 +204,9 @@ export default function CreatorDashboard() {
                         />
 
                         {/* 1. Confessions Studio */}
-                        <button onClick={() => router.push('/creator/rooms/confessions')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/rooms/confessions-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Lock className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
+                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
                             <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
                                 <Lock className="w-6 h-6" />
                             </div>
@@ -247,7 +248,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 5. Truth or Dare */}
-                        <button onClick={() => router.push('/creator/rooms/truth-or-dare')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/rooms/truth-or-dare-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Video className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-green-500/20 text-green-400 mb-4 group-hover:bg-green-500 group-hover:text-white transition">
                                 <Video className="w-6 h-6" />
@@ -257,9 +258,9 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 6. Suga 4 U */}
-                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/rooms/suga4u-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-medium uppercase tracking-wide border border-pink-500/30">Coming Soon</span>
+                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold uppercase tracking-wide border border-pink-500/30">New</span>
                             <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
                                 <Crown className="w-6 h-6" />
                             </div>
@@ -268,9 +269,9 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 7. Competition Manager */}
-                        <button onClick={() => router.push('/coming-soon')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60 transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2">
+                        <button onClick={() => router.push('/rooms/fans-competitions')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60 transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Trophy className="w-12 h-12 text-gray-800 group-hover:text-orange-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-medium uppercase tracking-wide border border-orange-500/30">Coming Soon</span>
+                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
                             <div className="p-3 w-fit rounded-xl bg-orange-500/20 text-orange-400 mb-4 group-hover:bg-orange-500 group-hover:text-white transition">
                                 <Trophy className="w-6 h-6" />
                             </div>
