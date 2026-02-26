@@ -51,9 +51,17 @@ export default function OnboardingGuard({ children }: Props) {
                 .single();
 
             if (error) {
-                console.error("Error checking onboarding status:", error);
+                // Using console.warn instead of error to prevent Next.js developmental red screen overlays
+                // for harmless "PGRST116" (no rows returned) errors right after signup before trigger completes
+                console.warn("Warning checking onboarding status:", error.message || error);
                 setChecking(false);
                 setAllowed(true); // Allow access on error to not block users
+                return;
+            }
+
+            if (!profile) {
+                setChecking(false);
+                setAllowed(true);
                 return;
             }
 
