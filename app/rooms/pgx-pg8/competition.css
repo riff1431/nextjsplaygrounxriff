@@ -115,6 +115,6 @@
 
 @layer base {
     .competition-theme * {
-        @apply border-border;
+        border-color: hsl(var(--border));
     }
 }
