@@ -1,10 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Pacifico&display=swap&family=Italianno&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Pacifico:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Pacifico&family=Niconne&family=Parisienne');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer base {
     .competition-theme {
         --background: 270 50% 5%;
@@ -116,6 +112,7 @@
         }
     }
 }
+
 @layer base {
     .competition-theme * {
         @apply border-border;
