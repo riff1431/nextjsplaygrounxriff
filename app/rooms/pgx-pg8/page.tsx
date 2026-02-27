@@ -21,7 +21,7 @@ export default function CompetitionRoom() {
     return (
         <div className="competition-theme">
             <div
-                className="h-screen w-screen overflow-hidden bg-background bg-cover bg-center bg-fixed relative text-foreground"
+                className="h-screen w-screen overflow-hidden bg-background bg-cover bg-center bg-fixed relative"
                 style={{ backgroundImage: "url('/images/pgx-pg8/bg2.jpeg')" }}
             >
                 {/* Dark overlay */}
@@ -30,10 +30,7 @@ export default function CompetitionRoom() {
                 <div className="relative z-10 mx-auto mx-100 h-full flex flex-col p-3 md:p-4 lg:p-5">
                     {/* Header */}
                     <header className="py-2 flex-shrink-0 flex items-center">
-                        <button
-                            onClick={() => router.back()}
-                            className="flex items-center gap-1 text-foreground/80 hover:text-foreground transition-colors bg-card/40 border border-border rounded-lg px-3 py-1.5 neon-border"
-                        >
+                        <button onClick={() => router.back()} className="flex items-center gap-1 text-foreground/80 hover:text-foreground transition-colors bg-card/40 border border-border rounded-lg px-3 py-1.5 neon-border">
                             <ArrowLeft size={16} />
                             <span className="text-xs font-display tracking-wider">BACK</span>
                         </button>
@@ -51,6 +48,9 @@ export default function CompetitionRoom() {
                             <div className="flex-1 min-h-0">
                                 <LiveChat />
                             </div>
+                            {/* <button className="flex-shrink-0 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-foreground font-display text-sm font-bold tracking-wider py-2 rounded-lg border border-border neon-border transition-all hover:brightness-110">
+                💰 SEND TIP — $5
+              </button> */}
                         </div>
 
                         {/* Right side content */}
