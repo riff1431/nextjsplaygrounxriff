@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Pacifico&display=swap&family=Italianno&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Pacifico:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Pacifico&family=Niconne&family=Parisienne');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    .competition-theme {
+        --background: 270 50% 5%;
+        --foreground: 300 100% 95%;
+
+        --card: 270 40% 10%;
+        --card-foreground: 300 100% 95%;
+
+        --popover: 270 40% 10%;
+        --popover-foreground: 300 100% 95%;
+
+        --primary: 300 100% 60%;
+        --primary-foreground: 270 50% 5%;
+
+        --secondary: 280 60% 20%;
+        --secondary-foreground: 300 100% 90%;
+
+        --muted: 270 30% 15%;
+        --muted-foreground: 280 20% 60%;
+
+        --accent: 320 100% 55%;
+        --accent-foreground: 0 0% 100%;
+
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 290 60% 30%;
+        --input: 270 40% 15%;
+        --ring: 300 100% 60%;
+
+        --radius: 0.75rem;
+
+        --neon-pink: 320 100% 55%;
+        --neon-purple: 280 100% 60%;
+        --neon-magenta: 300 100% 50%;
+        --gold: 45 100% 55%;
+
+        --glow-pink: 0 0 20px hsl(320 100% 55% / 0.6), 0 0 40px hsl(320 100% 55% / 0.3);
+        --glow-purple: 0 0 20px hsl(280 100% 60% / 0.6), 0 0 40px hsl(280 100% 60% / 0.3);
+
+        --sidebar-background: 270 40% 8%;
+        --sidebar-foreground: 300 100% 90%;
+        --sidebar-primary: 300 100% 60%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 280 60% 20%;
+        --sidebar-accent-foreground: 300 100% 90%;
+        --sidebar-border: 290 60% 25%;
+        --sidebar-ring: 300 100% 60%;
+    }
+
+    .competition-theme {
+        font-family: 'Rajdhani', sans-serif;
+    }
+}
+
+@layer utilities {
+    .competition-theme .font-display {
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .competition-theme .niconne-regular {
+        font-family: "Parisienne", cursive;
+        font-weight: 400;
+        font-style: italic;
+    }
+
+    .competition-theme .font-cursive {
+        font-family: 'Italianno', cursive;
+        font-weight: 600;
+    }
+
+    .competition-theme .neon-text {
+        text-shadow: 0 0 10px hsl(300 100% 60% / 0.8), 0 0 30px hsl(300 100% 60% / 0.4), 0 0 60px hsl(320 100% 55% / 0.2);
+    }
+
+    .competition-theme .neon-border {
+        box-shadow: inset 0 0 20px hsl(300 100% 60% / 0.1), 0 0 15px hsl(300 100% 60% / 0.3), 0 0 30px hsl(300 100% 60% / 0.1);
+    }
+
+    .competition-theme .neon-border-accent {
+        box-shadow: inset 0 0 15px hsl(320 100% 55% / 0.1), 0 0 10px hsl(320 100% 55% / 0.4), 0 0 25px hsl(320 100% 55% / 0.15);
+    }
+
+    .competition-theme .live-badge {
+        animation: competition-pulse-live 1.5s ease-in-out infinite;
+    }
+
+    @keyframes competition-pulse-live {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    @keyframes competition-float-up {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+    }
+}
