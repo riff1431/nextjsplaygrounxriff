@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
-import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
+import LiveDropBoard from "@/components/rooms/pgx-page3/LiveDropBoard";
+import ImpulsePanel from "@/components/rooms/pgx-page3/ImpulsePanel";
 
 const bundles = [
     { name: "Weekend Bundle", subtitle: "3 drops + 1 DM", price: 500 },
@@ -25,14 +24,14 @@ const tickerItems = [
     "🎁 Golden Key access — limited",
 ];
 
-export default function FlashDropsPage() {
+export default function Index() {
     return (
-        <div className="relative h-screen overflow-hidden fd-theme fd-font-body">
+        <div className="relative h-screen overflow-hidden fd-font-body fd-theme">
             {/* Background image */}
             <div
                 className="fixed inset-0 z-0"
                 style={{
-                    backgroundImage: `url('/flash-drops/nightclub-bg.png')`,
+                    backgroundImage: `url(/assets/bg1.png)`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
@@ -76,9 +75,8 @@ export default function FlashDropsPage() {
                     </button>
 
                     <h1
-                        className="text-4xl absolute left-1/4 -translate-x-1/2"
+                        className="text-4xl absolute left-1/4 -translate-x-1/2 fd-font-display"
                         style={{
-                            fontFamily: "Pacifico, cursive",
                             color: "hsl(330 100% 70%)",
                             textShadow:
                                 "0 0 10px hsl(330 100% 65% / 0.9), 0 0 30px hsl(330 100% 65% / 0.7), 0 0 60px hsl(330 100% 65% / 0.5)",
@@ -94,15 +92,10 @@ export default function FlashDropsPage() {
                 </header>
 
                 {/* Main 3-column layout */}
-                <main className="flex-1 grid grid-cols-[340px_1fr_320px] gap-2 px-80 py-2 overflow-hidden">
+                <main className="flex-1 grid grid-cols-[480px_480px] gap-80 px-80 py-2 overflow-hidden">
                     {/* Left: Live Drop Board */}
                     <div className="overflow-hidden min-h-0">
                         <LiveDropBoard />
-                    </div>
-
-                    {/* Center: Stage area */}
-                    <div className="flex items-start justify-center pt-3">
-                        {/* Center content if any */}
                     </div>
 
                     {/* Right: Impulse Panel */}
@@ -120,7 +113,7 @@ export default function FlashDropsPage() {
                                     <div className="absolute right-0 top-2 bottom-2 w-px bg-primary/30" />
                                 )}
                                 <div
-                                    className="fd-font-tech text-lg"
+                                    className="fd-font-display text-lg"
                                     style={{
                                         color: "hsl(330 100% 75%)",
                                         textShadow: "0 0 10px hsl(330 100% 70% / 0.8), 0 0 25px hsl(330 100% 70% / 0.5)",

@@ -185,6 +185,17 @@ export default function CreatorDashboard() {
                         <Sparkles className="w-5 h-5 text-pink-500" /> Creator Studio
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* New Dashboard Link */}
+                        <button onClick={() => router.push('/rooms/creator-studio')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-cyan-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-50"><BarChart3 className="w-12 h-12 text-gray-800 group-hover:text-cyan-900/50 transition transform group-hover:scale-110" /></div>
+                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-bold uppercase tracking-wide border border-cyan-500/30">New</span>
+                            <div className="p-3 w-fit rounded-xl bg-cyan-500/20 text-cyan-400 mb-4 group-hover:bg-cyan-500 group-hover:text-white transition">
+                                <BarChart3 className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-100 mb-1">New Dashboard</h3>
+                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Access the new Creator Studio Dashboard UI.</p>
+                        </button>
+
                         {/* 0. Upload Content (New) */}
                         <CreatePostModal
                             currentUserId={user?.id || null}

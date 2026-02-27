@@ -459,12 +459,12 @@ function HomeScreen({
         isNew?: boolean;
     }> = [
             { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/pgx-page3", isNew: true },
-            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-creator", isNew: true },
+            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/pgx-pg1", isNew: true },
             { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-pg4", isNew: true },
             { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/live" },
             { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/pgx-page5", isNew: true },
-            { label: "Fan Competitions", key: "competitions", icon: <Trophy className="w-4 h-4" />, tone: "blue", route: "/rooms/fans-competitions", isNew: true },
+            { label: "Competition", key: "leaderboard", icon: <Trophy className="w-4 h-4" />, tone: "blue", route: "/rooms/pgx-pg8", isNew: true },
         ];
 
     return (
@@ -539,7 +539,7 @@ function HomeScreen({
                             >
                                 <span className="relative z-10 inline-flex items-center gap-2 w-full text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
-                                    Competitions
+                                    Fan Competition
                                     <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-[hsl(330,90%,55%)]/80 text-white font-bold uppercase tracking-wide border border-transparent shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
                                 </span>
                                 {/* Subtle internal glow */}
