@@ -13,7 +13,7 @@ const CreatorStudioDashboardPage = () => {
                 className="fixed inset-0 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: "url('/rooms/creator-studio-bg.jpg')" }}
             />
-            <div className="fixed inset-0 bg-black/20" />
+            <div className="fixed inset-0 bg-black/60" />
 
             {/* Content */}
             <div className="relative z-10 p-4 md:p-8 max-w-[1400px] mx-auto space-y-6">
