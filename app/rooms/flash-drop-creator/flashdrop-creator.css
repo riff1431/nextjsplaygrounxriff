@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+.flashdrop-creator-theme {
+    --background: 300 30% 6%;
+    --foreground: 320 100% 90%;
+
+    --card: 300 40% 10%;
+    --card-foreground: 320 100% 90%;
+
+    --popover: 300 40% 10%;
+    --popover-foreground: 320 100% 90%;
+
+    --primary: 320 100% 60%;
+    --primary-foreground: 300 30% 6%;
+
+    --secondary: 290 60% 20%;
+    --secondary-foreground: 320 100% 90%;
+
+    --muted: 290 30% 15%;
+    --muted-foreground: 320 40% 60%;
+
+    --accent: 310 100% 50%;
+    --accent-foreground: 300 30% 6%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 320 60% 30%;
+    --input: 320 60% 30%;
+    --ring: 320 100% 60%;
+
+    --radius: 0.5rem;
+
+    --neon-glow: 320 100% 55%;
+    --neon-pink: 320 100% 60%;
+    --neon-magenta: 300 100% 50%;
+    --surface-glass: 290 40% 12%;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.flashdrop-creator-theme .font-display {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.flashdrop-creator-theme .font-body {
+    font-family: 'Rajdhani', sans-serif;
+}
+
+.flashdrop-creator-theme .neon-text {
+    color: hsl(var(--neon-pink));
+    text-shadow:
+        0 0 7px hsl(var(--neon-pink) / 0.8),
+        0 0 20px hsl(var(--neon-pink) / 0.5),
+        0 0 40px hsl(var(--neon-pink) / 0.3);
+}
+
+.flashdrop-creator-theme .neon-border {
+    border-color: hsl(var(--neon-pink) / 0.6);
+    box-shadow:
+        0 0 5px hsl(var(--neon-pink) / 0.3),
+        inset 0 0 5px hsl(var(--neon-pink) / 0.1);
+}
+
+.flashdrop-creator-theme .neon-border-active {
+    border-color: hsl(var(--neon-pink));
+    box-shadow:
+        0 0 10px hsl(var(--neon-pink) / 0.6),
+        0 0 20px hsl(var(--neon-pink) / 0.3),
+        inset 0 0 10px hsl(var(--neon-pink) / 0.15);
+}
+
+.flashdrop-creator-theme .glass-panel {
+    background: hsl(var(--surface-glass) / 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--neon-pink) / 0.3);
+}
+
+.flashdrop-creator-theme .glass-card {
+    background: hsl(var(--surface-glass) / 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--neon-pink) / 0.25);
+    transition: all 0.3s ease;
+}
+
+.flashdrop-creator-theme .glass-card:hover {
+    border-color: hsl(var(--neon-pink) / 0.6);
+    box-shadow: 0 0 15px hsl(var(--neon-pink) / 0.3);
+}
+
+@keyframes flashdrop-pulse-neon {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.flashdrop-creator-theme .animate-pulse-neon {
+    animation: flashdrop-pulse-neon 2s ease-in-out infinite;
+}
+
+.flashdrop-creator-theme .themed-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--neon-pink) / 0.5) hsl(var(--surface-glass) / 0.3);
+}
+
+.flashdrop-creator-theme .themed-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.flashdrop-creator-theme .themed-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--surface-glass) / 0.3);
+    border-radius: 3px;
+}
+
+.flashdrop-creator-theme .themed-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--neon-pink) / 0.5);
+    border-radius: 3px;
+}
+
+.flashdrop-creator-theme .themed-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--neon-pink) / 0.7);
+}
