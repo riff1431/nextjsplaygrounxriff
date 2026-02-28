@@ -21,7 +21,7 @@ const chatMessages = [
 const LoungeChat = () => {
   return (
     <div className="pb-28 p-4 flex flex-col h-full border border-border/20 rounded-xl">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="font-display text-xl font-bold glow-text-gold text-gold">
           Lounge Chat
         </h2>
@@ -31,7 +31,16 @@ const LoungeChat = () => {
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin mb-3">
+      {/* Pin Input area moved to top */}
+      <div className="chat-message glow-pink flex items-center gap-2 mb-2 p-2 rounded-lg border border-neon-pink/30 bg-neon-pink/5">
+        <span className="text-lg">🔥</span>
+        <span className="text-sm font-bold text-neon-pink animate-neon-flicker">
+          PIN NAME TO TOP 10 mins
+        </span>
+        <span className="text-gold font-bold ml-auto">+$25</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin mb-3">
         {chatMessages.map((msg, i) => (
           <div key={i} className="chat-message flex items-start gap-2">
             <span className="text-lg shrink-0">{msg.avatar}</span>
@@ -51,15 +60,9 @@ const LoungeChat = () => {
 
       </div>
 
-<div className="chat-message glow-pink flex items-center gap-2">
-          <span className="text-lg">🔥</span>
-          <span className="text-sm font-bold text-neon-pink animate-neon-flicker">
-            PIN NAME TO TOP 10 mins
-          </span>
-          <span className="text-gold font-bold ml-auto">+$25</span>
-        </div>
+
       <div className="flex gap-2">
-        
+
         <input
           type="text"
           placeholder="Send a message..."

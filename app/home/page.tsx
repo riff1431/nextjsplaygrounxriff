@@ -703,7 +703,11 @@ export default function Home() {
                     .rpc('get_creators_with_stats');
 
                 if (creatorsError) {
-                    console.error("Error fetching creators:", creatorsError);
+                    if (creatorsError.message?.includes('AbortError') || (creatorsError as any).name === 'AbortError') {
+                        // ignore
+                    } else {
+                        console.error("Error fetching creators:", creatorsError);
+                    }
                     // fallback to activeCreators if DB fails
                     setRooms(activeCreators);
                 } else if (creatorsData && creatorsData.length > 0) {
@@ -752,12 +756,18 @@ export default function Home() {
                     .order('created_at', { ascending: false })
                     .limit(10);
 
-                if (postsError) console.error("Error fetching posts:", postsError);
-                else {
+                if (postsError) {
+                    if (postsError.message?.includes('AbortError') || (postsError as any).name === 'AbortError') {
+                        // ignore
+                    } else {
+                        console.error("Error fetching posts:", postsError);
+                    }
+                } else {
                     setPosts(postsData as unknown as Post[]);
                 }
 
-            } catch (err) {
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 console.error("Error fetching content:", err);
             } finally {
                 setLoadingRooms(false);
@@ -827,7 +837,8 @@ export default function Home() {
                 if (subData) {
                     setSubscribedCreatorIds(new Set(subData.map(s => s.creator_id)));
                 }
-            } catch (err) {
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 console.error("Error fetching user data:", err);
             }
         };

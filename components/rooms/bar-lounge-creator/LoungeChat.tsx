@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Camera, Heart } from "lucide-react";
+import { Send, Camera } from "lucide-react";
 
 interface ChatMessage {
     user: string;
@@ -62,13 +62,6 @@ const LoungeChat = () => {
                     />
                     <Send className="w-4 h-4 cursor-pointer hover:opacity-80 transition-colors" style={{ color: "hsl(45, 90%, 55%)" }} />
                 </div>
-                <button
-                    className="lounge-glow-button w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2"
-                    style={{ color: "hsl(300, 20%, 95%)" }}
-                >
-                    <Heart className="w-4 h-4" fill="currentColor" />
-                    Send Tip
-                </button>
             </div>
         </div>
     );

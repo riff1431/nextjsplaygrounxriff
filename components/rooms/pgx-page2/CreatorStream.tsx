@@ -5,8 +5,8 @@ const creatorPhoto = "/assets/creator-photo.jpeg";
 
 const CreatorStream = () => {
   return (
-    <div className="relative flex items-center justify-center h-full top-52">
-      <div className="relative glass-panel glow-purple overflow-hidden rounded-xl max-w-md w-full">
+    <div className="relative flex items-center justify-center h-full top-20">
+      <div className="relative glass-panel glow-purple overflow-hidden rounded-xl max-w-xl w-full">
         <img
           src={creatorPhoto}
           alt="Creator"

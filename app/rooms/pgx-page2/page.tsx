@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import './lounge.css';
 import loungeBg from "@/public/assets/lounge-bg.png";
 import DrinkMenu from "@/components/rooms/pgx-page2/DrinkMenu";
@@ -7,6 +9,8 @@ import LoungeChat from "@/components/rooms/pgx-page2/LoungeChat";
 import CreatorStream from "@/components/rooms/pgx-page2/CreatorStream";
 
 const PgxPage2 = () => {
+    const router = useRouter();
+
     return (
         <div className="lounge-theme relative min-h-screen overflow-hidden">
             {/* Background image */}
@@ -39,8 +43,18 @@ const PgxPage2 = () => {
             {/* Content */}
             <div className="relative z-20 min-h-screen p-4 lg:p-6 pb-20">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr_350px] gap-4 lg:gap-6 lg:h-[calc(100vh-3rem)]">
-                    {/* Left panel - Drink Menu */}
-                    <div className="order-2 lg:order-1 overflow-y-auto">
+                    {/* Left panel - Drink Menu & Back Button */}
+                    <div className="order-2 lg:order-1 overflow-y-auto relative">
+                        {/* Back Button matching screenshot */}
+                        <div className="mb-4">
+                            <button
+                                onClick={() => router.push('/home')}
+                                className="p-2 rounded-full border border-white/10 bg-black/40 hover:bg-white/10 text-white transition-all backdrop-blur-md flex items-center justify-center gap-2 px-4 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                <span className="text-xs font-bold font-body">Back</span>
+                            </button>
+                        </div>
                         <DrinkMenu />
                     </div>
 

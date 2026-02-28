@@ -641,7 +641,13 @@ function TruthOrDareContent() {
 
             {/* Header - Minimal Style matching screenshot */}
             <div className="relative z-50 pt-4 pb-0 px-6 flex items-center justify-between">
-                <div className="pointer-events-auto">
+                <div className="pointer-events-auto flex items-center gap-4">
+                    <button
+                        onClick={onBack}
+                        className="p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all backdrop-blur-md"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
                     <BrandLogo showBadge={false} />
                 </div>
                 {/* Right side of header is empty in screenshot */}
@@ -740,10 +746,7 @@ function TruthOrDareContent() {
 
                         {/* Prompt Section - 3 columns as in screenshot */}
                         <div className="glass-panel p-4 border-white/10 bg-white/5">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Search className="w-4 h-4 text-pink-400" />
-                                <h3 className="text-sm font-semibold text-white tracking-wide">Choose a Prompt</h3>
-                            </div>
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Col 1: System Truths */}
                                 <div className="space-y-4">
@@ -797,7 +800,7 @@ function TruthOrDareContent() {
 
                                 {/* Col 3: Custom Requests */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-widest pb-2 px-2 bg-purple-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)' }}>Custom Requests (Fan-Written)</h4>
+                                    <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-widest pb-2 px-2 bg-purple-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)' }}>Custom Requests</h4>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setCustomType("truth")}
@@ -819,16 +822,13 @@ function TruthOrDareContent() {
                                         className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none h-20 focus:border-white/20 transition-all"
                                     />
                                     <button
-                                        disabled={isSubmitting || !customType || !customText.trim()}
                                         onClick={() => openConfirmation(`custom_${customType}`, null, customText, customType === 'truth' ? 25 : 35)}
-                                        className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-500/20 transition-all disabled:opacity-30"
+                                        className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2 hover:bg-amber-500/20 transition-all"
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <MessageCircle className="w-4 h-4" />
-                                            <span>Pay & Submit</span>
-                                        </div>
+                                        <MessageCircle className="w-4 h-4" />
+                                        <span>Pay & Submit</span>
                                     </button>
-                                    <p className="text-[9px] text-gray-600 text-center">Custom requests are direct fan→creator. No auto-approval.</p>
+
                                 </div>
                             </div>
                         </div>
@@ -878,11 +878,10 @@ function TruthOrDareContent() {
                             ))}
                         </div>
 
-                        {/* Bottle Spinner */}
-                        <BottleSpinner />
+
 
                         {/* Group Voting Section - strictly matching screenshot UI */}
-                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col gap-4">
+                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col gap-4 flex-1">
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-amber-500" />
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Group Voting</h3>
@@ -895,7 +894,7 @@ function TruthOrDareContent() {
 
                             <textarea
                                 placeholder="Write your custom Truth/Dare here..."
-                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none h-20"
+                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none flex-1 min-h-[144px] focus:border-white/20 transition-all"
                             />
 
                             <button className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2">

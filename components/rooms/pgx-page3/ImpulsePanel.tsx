@@ -74,24 +74,23 @@ export default function ImpulsePanel() {
 
       {/* Request A Drop */}
       <div className="glass-panel neon-border rounded-xl p-2.5">
-        <h2 className="font-techl font-bold neon-text-sm mb-1.5">Request A Drop</h2>
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="font-body font-semibold text-l text-foreground/70">Request A Drop</span>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-tech text-xl font-bold neon-text-sm">Request A Drop</span>
           <span className="font-tech text-l font-bold neon-text">$250</span>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-1.5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe what you'd like to see..."
-            rows={2}
-            className="w-full bg-input/30 border border-primary/30 rounded-lg px-2 py-1.5 text-xs text-foreground placeholder:text-foreground/30 font-body focus:outline-none focus:border-primary/70 focus:shadow-[0_0_10px_hsl(330_100%_55%/0.3)] transition-all resize-none"
+            rows={4}
+            className="w-full bg-input/30 border border-primary/30 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-foreground/30 font-body focus:outline-none focus:border-primary/70 focus:shadow-[0_0_10px_hsl(330_100%_55%/0.3)] transition-all resize-none"
           />
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Offer Amount $..."
-            className="w-full bg-input/30 border border-primary/30 rounded-lg px-2 py-1.5 text-xs text-foreground placeholder:text-foreground/30 font-body focus:outline-none focus:border-primary/70 focus:shadow-[0_0_10px_hsl(330_100%_55%/0.3)] transition-all"
+            className="w-full bg-input/30 border border-primary/30 rounded-lg px-3 py-3 text-sm text-foreground placeholder:text-foreground/30 font-body focus:outline-none focus:border-primary/70 focus:shadow-[0_0_10px_hsl(330_100%_55%/0.3)] transition-all"
           />
           <button
             type="submit"

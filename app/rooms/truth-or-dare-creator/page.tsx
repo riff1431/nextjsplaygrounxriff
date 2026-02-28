@@ -7,7 +7,6 @@ import TodCreatorStreamViewer from "@/components/rooms/truth-or-dare-creator/Tod
 import TodCreatorRoomEarnings from "@/components/rooms/truth-or-dare-creator/TodCreatorRoomEarnings";
 import TodCreatorGroupVote from "@/components/rooms/truth-or-dare-creator/TodCreatorGroupVote";
 import TodCreatorRequestPanel from "@/components/rooms/truth-or-dare-creator/TodCreatorRequestPanel";
-import TodCreatorSpinBottle from "@/components/rooms/truth-or-dare-creator/TodCreatorSpinBottle";
 
 const truthRequests = [
     { user: "John456", text: "Reveal your last secret!" },
@@ -60,11 +59,8 @@ const TruthOrDareCreatorPage = () => {
                 </div>
             </div>
 
-            {/* Bottom row: GroupVote | Truth | Dare | SpinBottle */}
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr_280px] gap-3 lg:gap-4">
-                <div>
-                    <TodCreatorGroupVote />
-                </div>
+            {/* Bottom row: Truth | Dare | GroupVote */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_280px] gap-3 lg:gap-4">
                 <div>
                     <TodCreatorRequestPanel title="Truth Requests" requests={truthRequests} accentColor="blue" />
                 </div>
@@ -72,7 +68,7 @@ const TruthOrDareCreatorPage = () => {
                     <TodCreatorRequestPanel title="Dare Requests" requests={dareRequests} accentColor="pink" />
                 </div>
                 <div>
-                    <TodCreatorSpinBottle />
+                    <TodCreatorGroupVote />
                 </div>
             </div>
         </div>
