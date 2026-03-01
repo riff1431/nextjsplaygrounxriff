@@ -540,7 +540,6 @@ function HomeScreen({
                                 <span className="relative z-10 inline-flex items-center gap-2 w-full text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
                                     Competition
-                                    <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-[hsl(330,90%,55%)]/80 text-white font-bold uppercase tracking-wide border border-transparent shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
                                 </span>
                                 {/* Subtle internal glow */}
                                 <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
