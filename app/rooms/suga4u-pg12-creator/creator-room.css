@@ -1,0 +1,85 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Quicksand:wght@400;500;600;700&display=swap");
+
+.suga4u-pg12-creator-theme {
+    --background: 340 30% 12%;
+    --foreground: 340 20% 95%;
+
+    --card: 340 30% 20%;
+    --card-foreground: 340 20% 95%;
+
+    --popover: 340 30% 18%;
+    --popover-foreground: 340 20% 95%;
+
+    --primary: 340 80% 65%;
+    --primary-foreground: 340 20% 98%;
+
+    --secondary: 30 50% 55%;
+    --secondary-foreground: 30 10% 98%;
+
+    --muted: 340 20% 25%;
+    --muted-foreground: 340 15% 65%;
+
+    --accent: 320 70% 55%;
+    --accent-foreground: 320 20% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 340 25% 30%;
+    --input: 340 25% 28%;
+    --ring: 340 80% 65%;
+
+    --radius: 0.75rem;
+
+    --glass-bg: 340 30% 25%;
+    --glass-border: 340 30% 40%;
+    --neon-pink: 330 100% 70%;
+    --gold: 38 70% 60%;
+    --gold-foreground: 38 10% 98%;
+
+    font-family: 'Quicksand', sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+}
+
+.suga4u-pg12-creator-theme .glass-panel {
+    background: hsla(var(--glass-bg) / 0.3);
+    backdrop-filter: blur(1px);
+    border: 1px solid hsla(var(--glass-border) / 0.4);
+    border-radius: var(--radius);
+}
+
+.suga4u-pg12-creator-theme .neon-glow {
+    text-shadow: 0 0 10px hsl(var(--neon-pink)), 0 0 30px hsl(var(--neon-pink) / 0.5);
+}
+
+.suga4u-pg12-creator-theme .font-display {
+    font-family: 'Playfair Display', serif;
+}
+
+.suga4u-pg12-creator-theme .sparkle-bg {
+    background-image: url('/images/rooms/suga4u-pg12-creator/background.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.suga4u-pg12-creator-theme [data-radix-scroll-area-viewport]+div [data-orientation="vertical"]>div,
+.suga4u-pg12-creator-theme ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.4) !important;
+    border-radius: 9999px;
+}
+
+.suga4u-pg12-creator-theme ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suga4u-pg12-creator-theme ::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 9999px;
+}
+
+.suga4u-pg12-creator-theme ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
+}

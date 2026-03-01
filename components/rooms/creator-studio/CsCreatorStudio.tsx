@@ -47,7 +47,7 @@ export const CsCreatorStudio = () => {
         { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", comingSoon: true },
         { icon: <Tv size={20} />, title: "Bar Lounge (Host)", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)" },
         { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)" },
-        { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", comingSoon: true },
+        { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", veryNew: true, link: "/rooms/suga4u-pg12-creator" },
         { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", veryNew: true, link: "/rooms/fans-competitions" },
     ];
 

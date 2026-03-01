@@ -93,7 +93,7 @@ export default function CreatorDashboard() {
         // Map types to their specific creation pages or logic
         // For Phase 4, we primarily have Suga4U ready
         if (type === 'suga4u') {
-            router.push('/creator/rooms/suga-4-u');
+            router.push('/rooms/suga4u-pg12-creator');
         } else {
             toast.info("This room type is coming soon!");
         }
@@ -269,7 +269,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 6. Suga 4 U */}
-                        <button onClick={() => router.push('/rooms/suga4u-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/rooms/suga4u-pg12-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
                             <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold uppercase tracking-wide border border-pink-500/30">New</span>
                             <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
