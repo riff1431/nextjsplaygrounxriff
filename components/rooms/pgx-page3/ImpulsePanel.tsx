@@ -11,9 +11,9 @@ const impulseButtons = [
 const highRollerPacks = [
   { name: "Boost My Rank", price: 150 },
   { name: "Priority Unlock Pass", price: 300 },
-  { name: "Golden Key (Vault Access)", price: 750 },
-  { name: "Diamond Patron", price: 1500 },
-  { name: "Private Drop Sponsor", price: 2500 },
+
+
+
   { name: "Legend Crown (Room-wide)", price: 250 },
 ];
 
@@ -31,9 +31,9 @@ export default function ImpulsePanel() {
   };
 
   return (
-    <div className="flex flex-col gap-2 h-full">
+    <div className="flex flex-col gap-2 h-full overflow-hidden">
       {/* Impulse Spend */}
-      <div className="glass-panel neon-border-md rounded-xl p-2.5">
+      <div className="glass-panel neon-border-md rounded-xl p-2.5 shrink-0">
         <h2 className="font-tech text-xl font-bold text-foreground mb-2">Impulse Spend</h2>
         <div className="grid grid-cols-2 gap-1.5">
           {impulseButtons.map((btn) => (
@@ -53,18 +53,18 @@ export default function ImpulsePanel() {
       </div>
 
       {/* High Roller Packs */}
-      <div className="glass-panel neon-border rounded-xl p-2.5 flex-1">
-        <h2 className="font-tech text-xl font-bold neon-text-sm mb-2">High Roller Packs</h2>
-        <div className="space-y-3">
+      <div className="glass-panel neon-border rounded-xl p-4 flex-1 flex flex-col justify-center">
+        <h2 className="font-tech text-2xl font-bold neon-text-sm mb-4">High Roller Packs</h2>
+        <div className="space-y-4">
           {highRollerPacks.map((pack) => (
             <button
               key={pack.name}
-              className="w-full flex items-center justify-between py-1 px-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all group"
+              className="w-full flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all group"
             >
-              <span className="font-body font-semibold text-l text-foreground/80 group-hover:text-foreground transition-colors">
+              <span className="font-body font-bold text-base text-foreground/80 group-hover:text-foreground transition-colors">
                 {pack.name}
               </span>
-              <span className="font-tech font-bold text-l neon-text shrink-0 ml-2">
+              <span className="font-tech font-bold text-base neon-text shrink-0 ml-2">
                 ${pack.price.toLocaleString()}
               </span>
             </button>
@@ -73,7 +73,7 @@ export default function ImpulsePanel() {
       </div>
 
       {/* Request A Drop */}
-      <div className="glass-panel neon-border rounded-xl p-2.5">
+      <div className="glass-panel neon-border rounded-xl p-2.5 shrink-0">
         <div className="mb-2 flex items-center justify-between">
           <span className="font-tech text-xl font-bold neon-text-sm">Request A Drop</span>
           <span className="font-tech text-l font-bold neon-text">$250</span>

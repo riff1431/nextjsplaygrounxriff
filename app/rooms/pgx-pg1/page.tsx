@@ -25,12 +25,13 @@ const Index = () => {
                 <main className="flex-1 p-4 max-w-[1400px] mx-auto w-full overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
                         {/* Left Column */}
-                        <ScrollArea className="h-full">
-                            <div className="space-y-4 pr-2">
+                        <div className="h-full">
+                            <div className="flex flex-col h-full gap-4 pr-2">
                                 <CreatorSpotlight />
+                                <div className="flex-1" />
                                 <MyRequests />
                             </div>
-                        </ScrollArea>
+                        </div>
 
                         {/* Center Column - wider */}
                         <div className="lg:col-span-2 h-full overflow-hidden">
@@ -38,12 +39,13 @@ const Index = () => {
                         </div>
 
                         {/* Right Column */}
-                        <ScrollArea className="h-full">
-                            <div className="space-y-4 pr-2">
+                        <div className="h-full">
+                            <div className="flex flex-col h-full gap-4 pr-2">
                                 <RequestConfession />
+                                <div className="flex-1" />
                                 <RandomConfession />
                             </div>
-                        </ScrollArea>
+                        </div>
                     </div>
                 </main>
             </div>

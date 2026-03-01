@@ -54,12 +54,22 @@ const ConfessionWall = () => {
         <span>◇ 0 Video</span>
       </div> */}
 
-      <div className="flex items-center gap-2 text-xs flex-wrap shrink-0">
-        <span className="font-semibold">Gifts & Reactions</span>
-        {["❤️", "💜", "😜", "🔥", "⭐", "👑", "😎", "🐱"].map((e, i) => (
-          <span key={i} className="cursor-pointer hover:scale-125 transition-transform text-sm">{e}</span>
+      <div className="grid grid-cols-4 gap-2 shrink-0">
+        {[
+          { icon: "💋", label: "KISS", price: "$10" },
+          { icon: "❤️", label: "LOVE", price: "$20" },
+          { icon: "🔥", label: "SPICY", price: "$30" },
+          { icon: "🖤", label: "DARK", price: "$40" },
+        ].map((tip, i) => (
+          <button
+            key={i}
+            className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#2d1b38]/80 border border-primary/10 hover:border-primary/40 transition-all hover:scale-105"
+          >
+            <span className="text-xl mb-1">{tip.icon}</span>
+            <span className="text-[10px] font-bold tracking-wider text-foreground">{tip.label}</span>
+            <span className="text-[10px] text-muted-foreground">{tip.price}</span>
+          </button>
         ))}
-        <span className="text-primary text-xs ml-auto">Tell More $510</span>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">

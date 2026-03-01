@@ -33,11 +33,27 @@ function formatTime(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-const rarityColor: Record<string, string> = {
-  Common: "text-pink-300",
-  Rare: "text-yellow-300",
-  Epic: "text-orange-400",
-  Legendary: "text-red-400",
+const rarityProps: Record<string, { color: string; border: string; glow: string }> = {
+  Common: {
+    color: "text-pink-300",
+    border: "border-pink-500/30",
+    glow: "shadow-[0_0_15px_rgba(236,72,153,0.1)]"
+  },
+  Rare: {
+    color: "text-yellow-300",
+    border: "border-yellow-500/30",
+    glow: "shadow-[0_0_15px_rgba(234,179,8,0.1)]"
+  },
+  Epic: {
+    color: "text-orange-400",
+    border: "border-orange-500/40",
+    glow: "shadow-[0_0_20px_rgba(249,115,22,0.15)]"
+  },
+  Legendary: {
+    color: "text-red-400",
+    border: "border-red-500/50",
+    glow: "shadow-[0_0_25px_rgba(239,68,68,0.2)]"
+  },
 };
 
 export default function LiveDropBoard() {
@@ -82,33 +98,38 @@ export default function LiveDropBoard() {
 
       {/* Grid of drops */}
       <div className="grid grid-cols-3 gap-1.5 flex-1 overflow-y-auto pr-1 custom-scroll min-h-0">
-        {drops.map((drop) => (
-          <button
-            key={drop.id}
-            className="text-left p-1.5 rounded-lg border border-primary/25 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all group"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span className={`font-body font-semibold text-l leading-tight neon-text-sm ${rarityColor[drop.rarity]}`}>
+        {drops.map((drop) => {
+          const isEnded = drop.endTime <= 0;
+          const props = rarityProps[drop.rarity];
+
+          return (
+            <button
+              key={drop.id}
+              disabled={isEnded}
+              className={`flex flex-col items-center justify-center text-center p-2 rounded-lg border transition-all group min-h-[100px] ${isEnded
+                ? "opacity-40 grayscale border-white/10 bg-white/5 cursor-not-allowed"
+                : `bg-primary/5 hover:bg-primary/10 ${props.border} ${props.glow} hover:border-primary/80`
+                }`}
+            >
+              <span className={`font-body font-bold text-sm leading-tight mb-1 ${isEnded ? "text-foreground/50" : props.color}`}>
                 {drop.name}
               </span>
+
               {drop.price > 0 && (
-                <span className="font-tech text-l font-bold neon-text shrink-0">${drop.price}</span>
+                <span className={`font-tech text-base font-bold mb-1 ${isEnded ? "text-foreground/40" : "neon-text"}`}>
+                  ${drop.price}
+                </span>
               )}
-            </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className="text-[9px] text-foreground/50 font-body">
-                Ends · {formatTime(drop.endTime)}
-              </span>
-            </div>
-          </button>
-        ))}
+
+            </button>
+          );
+        })}
       </div>
 
       {/* Focused Drop */}
       <div className="mt-2 rounded-lg border border-primary/60 bg-primary/10 p-2">
         <div className="flex items-center justify-between mb-1">
           <span className="font-tech text-l font-bold neon-text-sm">Focused Drop</span>
-          <span className="text-l text-foreground/60 font-body">Ctare</span>
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -119,7 +140,7 @@ export default function LiveDropBoard() {
         </div>
         <button className="mt-1.5 w-full py-1 rounded border border-yellow-400/80 bg-yellow-400/15 text-yellow-300 font-tech text-l font-bold hover:bg-yellow-400/25 transition-all"
           style={{ boxShadow: "0 0 10px rgba(250,204,21,0.3), 0 0 25px rgba(250,204,21,0.15)" }}>
-          Unlock + Gift: (2x)
+          Unlock This Drop
         </button>
       </div>
     </div>

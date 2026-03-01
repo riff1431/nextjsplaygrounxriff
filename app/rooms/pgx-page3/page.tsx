@@ -6,7 +6,7 @@ import ImpulsePanel from "@/components/rooms/pgx-page3/ImpulsePanel";
 const bundles = [
     { name: "Weekend Bundle", subtitle: "3 drops + 1 DM", price: 500 },
     { name: "Backstage Bundle", subtitle: "5 drops + Vault preview", price: 1000 },
-    { name: "Whale Bundle", subtitle: "All drops + today priority", price: 2500 },
+    { name: "Bedroom Bundle", subtitle: "All drops + today priority", price: 2500 },
 ];
 
 const tickerItems = [
@@ -99,7 +99,7 @@ export default function Index() {
                     </div>
 
                     {/* Right: Impulse Panel */}
-                    <div className="overflow-y-auto overflow-x-hidden min-h-0">
+                    <div className="overflow-hidden min-h-0">
                         <ImpulsePanel />
                     </div>
                 </main>
