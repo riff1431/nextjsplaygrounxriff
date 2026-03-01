@@ -37,7 +37,10 @@ const FansCompetitionsPage = () => {
 
                     {/* Center Column - Enter Room Button */}
                     <div className="lg:col-span-2">
-                        <button className="fc-vote-btn w-full rounded-lg mt-52 h-12 font-semibold flex items-center justify-center transition-all hover:scale-105">
+                        <button
+                            onClick={() => router.push("/rooms/pgx-pg8")}
+                            className="fc-vote-btn w-full rounded-lg mt-52 h-12 font-semibold flex items-center justify-center transition-all hover:scale-105"
+                        >
                             Enter Room
                         </button>
                     </div>
