@@ -14,7 +14,8 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { reactionType, amount } = body;
+    const reactionType = body.reactionType || body.type;
+    const amount = body.amount;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

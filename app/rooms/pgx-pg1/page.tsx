@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import NavBar from "@/components/rooms/pgx-pg1/NavBar";
 import CreatorSpotlight from "@/components/rooms/pgx-pg1/CreatorSpotlight";
 import ConfessionWall from "@/components/rooms/pgx-pg1/ConfessionWall";
@@ -7,9 +8,30 @@ import RequestConfession from "@/components/rooms/pgx-pg1/RequestConfession";
 import MyRequests from "@/components/rooms/pgx-pg1/MyRequests";
 import RandomConfession from "@/components/rooms/pgx-pg1/RandomConfession";
 import FloatingHearts from "@/components/rooms/pgx-pg1/FloatingHearts";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { createClient } from "@/utils/supabase/client";
 
 const Index = () => {
+    const [roomId, setRoomId] = useState<string | null>(null);
+    const [creatorId, setCreatorId] = useState<string | null>(null);
+
+    // Discover the first room
+    useEffect(() => {
+        async function findRoom() {
+            const supabase = createClient();
+            const { data: room } = await supabase
+                .from("rooms")
+                .select("id, host_id")
+                .limit(1)
+                .maybeSingle();
+
+            if (room) {
+                setRoomId(room.id);
+                setCreatorId(room.host_id);
+            }
+        }
+        findRoom();
+    }, []);
+
     return (
         <div className="h-screen flex flex-col overflow-hidden relative">
             {/* Background image */}
@@ -28,20 +50,19 @@ const Index = () => {
                         <div className="h-full">
                             <div className="flex flex-col h-full gap-4 pr-2">
                                 <CreatorSpotlight />
-                                <div className="flex-1" />
-                                <MyRequests />
+                                <MyRequests roomId={roomId} />
                             </div>
                         </div>
 
                         {/* Center Column - wider */}
                         <div className="lg:col-span-2 h-full overflow-hidden">
-                            <ConfessionWall />
+                            <ConfessionWall roomId={roomId} />
                         </div>
 
                         {/* Right Column */}
                         <div className="h-full">
                             <div className="flex flex-col h-full gap-4 pr-2">
-                                <RequestConfession />
+                                <RequestConfession roomId={roomId} creatorId={creatorId} />
                                 <div className="flex-1" />
                                 <RandomConfession />
                             </div>

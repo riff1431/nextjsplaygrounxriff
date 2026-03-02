@@ -1,8 +1,90 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
 
-const SummaryPanel = () => {
+interface SummaryPanelProps {
+    roomId?: string;
+}
+
+const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
+    const supabase = createClient();
+    const [stats, setStats] = useState({
+        totalMessages: 0,
+        queuedMessages: 0,
+        answeredMessages: 0,
+        totalReactions: 0,
+        totalTips: 0,
+        totalRequests: 0,
+    });
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        async function fetchStats() {
+            // Fetch message stats
+            const { data: messages } = await supabase
+                .from("x_chat_messages")
+                .select("id, status, paid_amount")
+                .eq("room_id", roomId);
+
+            // Fetch reactions
+            const { data: reactions } = await supabase
+                .from("x_chat_reactions")
+                .select("id, amount")
+                .eq("room_id", roomId);
+
+            // Fetch requests
+            const { data: requests } = await supabase
+                .from("x_chat_requests")
+                .select("id")
+                .eq("room_id", roomId);
+
+            if (messages) {
+                const queued = messages.filter(m => m.status === "Queued").length;
+                const answered = messages.filter(m => m.status === "Answered").length;
+                const messageTips = messages.reduce((sum, m) => sum + (Number(m.paid_amount) || 0), 0);
+                const reactionTips = reactions?.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) || 0;
+
+                setStats({
+                    totalMessages: messages.length,
+                    queuedMessages: queued,
+                    answeredMessages: answered,
+                    totalReactions: reactions?.length || 0,
+                    totalTips: messageTips + reactionTips,
+                    totalRequests: requests?.length || 0,
+                });
+            }
+        }
+        fetchStats();
+
+        // Subscribe to changes for live updates
+        const channel = supabase
+            .channel(`summary-${roomId}`)
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, () => {
+                fetchStats();
+            })
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, () => {
+                fetchStats();
+            })
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, () => {
+                fetchStats();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId]);
+
+    const statRows = [
+        { icon: "💬", label: "MESSAGES", value: stats.totalMessages.toLocaleString() },
+        { icon: "📥", label: "QUEUED", value: stats.queuedMessages.toLocaleString() },
+        { icon: "✅", label: "ANSWERED", value: stats.answeredMessages.toLocaleString() },
+        { icon: "💕", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
+        { icon: "💰", label: "TIPS (USD)", value: `$${stats.totalTips.toLocaleString()}` },
+        { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
+    ];
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -16,26 +98,7 @@ const SummaryPanel = () => {
                 </h2>
             </div>
             <div className="p-4 space-y-0">
-                {/* Top row with dual stats */}
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <span>🎉</span>
-                        <span className="font-bold text-foreground">120</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span>🎉</span>
-                        <span className="font-bold text-foreground">120</span>
-                    </div>
-                </div>
-
-                {/* Stats rows */}
-                {[
-                    { icon: "💕", label: "REACTIONS", icon2: "😍", value: "324" },
-                    { icon: "🎁", label: "STICKERS", value: "53" },
-                    { icon: "💰", label: "TIPS (USD)", value: "$1,065" },
-                    { icon: "👥", label: "FANS", value: "2,490" },
-                    { icon: "⭐", label: "REQUESTS", value: "8" },
-                ].map((stat, i) => (
+                {statRows.map((stat, i) => (
                     <div key={i} className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <span>{stat.icon}</span>
@@ -44,7 +107,6 @@ const SummaryPanel = () => {
                             </span>
                         </div>
                         <div className="flex items-center gap-1">
-                            {stat.icon2 && <span>{stat.icon2}</span>}
                             <span className="font-bold text-foreground text-lg">{stat.value}</span>
                         </div>
                     </div>

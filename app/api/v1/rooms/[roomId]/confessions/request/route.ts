@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
  * POST /api/v1/rooms/[roomId]/confessions/request
  * Fan submits a confession request (pay from wallet).
  *
- * Body: { type: 'Text'|'Audio'|'Video', topic: string, amount: number }
+ * Body: { type: 'Text'|'Audio'|'Video', topic: string, amount: number, fan_name?: string, is_anonymous?: boolean }
  */
 export async function GET(
     request: NextRequest,
@@ -58,7 +58,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { type, topic, amount } = body;
+    const { type, topic, amount, fan_name, is_anonymous } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -114,6 +114,8 @@ export async function POST(
             type,
             topic,
             amount,
+            fan_name: is_anonymous ? 'Anonymous' : (fan_name || 'Anonymous'),
+            is_anonymous: is_anonymous ?? true,
             status: "pending_approval",
         })
         .select()

@@ -4,14 +4,21 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import CreatorDeliveryModal from "./CreatorDeliveryModal";
 
 interface RequestRow {
     id: string;
+    room_id: string;
     fan: string;
+    fan_name: string;
+    is_anonymous: boolean;
     confession: string;
     amount: number;
     type: string;
+    topic: string;
     status: string;
+    delivery_content?: string;
+    delivery_media_url?: string;
     created_at: string;
 }
 
@@ -20,17 +27,19 @@ const RequestTable = ({
     subtitle,
     rows,
     onAction,
+    onAcceptAndDeliver,
 }: {
     title: string;
     subtitle?: string;
     rows: RequestRow[];
-    onAction: (id: string, action: "accepted" | "declined") => void;
+    onAction: (id: string, action: "in_progress" | "rejected") => void;
+    onAcceptAndDeliver?: (row: RequestRow) => void;
 }) => {
-    const [decisions, setDecisions] = useState<Record<string, "accepted" | "declined">>({});
+    const [decisions, setDecisions] = useState<Record<string, "in_progress" | "rejected">>({});
 
-    const handleAction = (id: string, action: "accepted" | "declined") => {
-        setDecisions((prev) => ({ ...prev, [id]: action }));
-        onAction(id, action);
+    const handleReject = (id: string) => {
+        setDecisions((prev) => ({ ...prev, [id]: "rejected" }));
+        onAction(id, "rejected");
     };
 
     return (
@@ -56,29 +65,33 @@ const RequestTable = ({
                         ) : rows.map((row) => (
                             <tr key={row.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                                 <td className="py-3 px-2 text-white font-medium whitespace-nowrap">
-                                    {row.fan}
+                                    {row.is_anonymous ? "🔒 Anonymous" : row.fan_name || row.fan}
                                 </td>
                                 <td className="py-3 px-2 text-white/60 max-w-[250px] truncate">
-                                    {row.confession}
+                                    {row.topic || row.confession}
                                 </td>
                                 <td className="py-3 px-2 text-amber-400 font-semibold">
                                     ${row.amount}
                                 </td>
                                 <td className="py-3 px-2 text-center" colSpan={2}>
-                                    {decisions[row.id] === "accepted" || row.status === "accepted" ? (
-                                        <span className="text-[hsl(140,60%,45%)] font-medium">Accepted</span>
-                                    ) : decisions[row.id] === "declined" || row.status === "declined" ? (
+                                    {row.status === "in_progress" || decisions[row.id] === "in_progress" ? (
+                                        <span className="text-blue-400 font-medium">In Progress</span>
+                                    ) : row.status === "delivered" ? (
+                                        <span className="text-emerald-400 font-medium">Delivered</span>
+                                    ) : row.status === "completed" ? (
+                                        <span className="text-emerald-400 font-medium">✓ Completed</span>
+                                    ) : decisions[row.id] === "rejected" || row.status === "rejected" ? (
                                         <span className="text-[hsl(0,70%,50%)] font-medium">Declined</span>
                                     ) : (
                                         <div className="flex items-center justify-center gap-2">
                                             <button
-                                                onClick={() => handleAction(row.id, "accepted")}
+                                                onClick={() => onAcceptAndDeliver?.(row)}
                                                 className="bg-[hsl(40,80%,55%)]/90 hover:bg-[hsl(40,80%,55%)] text-black font-bold text-xs px-4 py-1.5 rounded transition-colors"
                                             >
                                                 ACCEPT
                                             </button>
                                             <button
-                                                onClick={() => handleAction(row.id, "declined")}
+                                                onClick={() => handleReject(row.id)}
                                                 className="border border-white/30 hover:border-white text-white font-bold text-xs px-4 py-1.5 rounded transition-colors"
                                             >
                                                 DECLINE
@@ -101,6 +114,8 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
     const [requests, setRequests] = useState<RequestRow[]>([]);
     const [roomId, setRoomId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deliveryRequest, setDeliveryRequest] = useState<RequestRow | null>(null);
+    const [showDeliveryModal, setShowDeliveryModal] = useState(false);
 
     // Discover room on mount
     useEffect(() => {
@@ -126,11 +141,17 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
             if (data.requests) {
                 setRequests(data.requests.map((r: any) => ({
                     id: r.id,
+                    room_id: r.room_id || roomId,
                     fan: r.fan_name || r.fan_id?.substring(0, 8) || "Fan",
+                    fan_name: r.fan_name || "Anonymous",
+                    is_anonymous: r.is_anonymous ?? true,
                     confession: r.topic || r.type,
                     amount: r.amount || 0,
                     type: r.type,
+                    topic: r.topic || "",
                     status: r.status,
+                    delivery_content: r.delivery_content,
+                    delivery_media_url: r.delivery_media_url,
                     created_at: r.created_at,
                 })));
             }
@@ -160,7 +181,7 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
         }
     }, [roomId, fetchRequests]);
 
-    const handleAction = async (id: string, action: "accepted" | "declined") => {
+    const handleAction = async (id: string, action: "in_progress" | "rejected") => {
         if (!roomId) return;
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request/${id}`, {
@@ -170,7 +191,7 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(`Request ${action}`);
+                toast.success(action === "rejected" ? "Request declined" : `Request ${action}`);
                 fetchRequests();
             } else {
                 toast.error(data.error || `Failed to ${action}`);
@@ -180,26 +201,69 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
         }
     };
 
-    const pendingRequests = requests.filter(r => r.status === "pending");
-    const resolvedRequests = requests.filter(r => r.status !== "pending");
+    const handleAcceptAndDeliver = async (row: RequestRow) => {
+        // First accept the request
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request/${row.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "in_progress" }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Then open the delivery modal
+                setDeliveryRequest({ ...row, room_id: roomId, status: "in_progress" });
+                setShowDeliveryModal(true);
+                fetchRequests();
+            } else {
+                toast.error(data.error || "Failed to accept");
+            }
+        } catch (e) {
+            toast.error("Network error");
+        }
+    };
+
+    const pendingRequests = requests.filter(r => r.status === "pending_approval");
+    const activeRequests = requests.filter(r => r.status === "in_progress");
+    const resolvedRequests = requests.filter(r => !["pending_approval", "in_progress"].includes(r.status));
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4 gap-4">
-            <RequestTable
-                title="Pending Requests"
-                subtitle={`${pendingRequests.length} waiting`}
-                rows={pendingRequests}
-                onAction={handleAction}
-            />
-            {resolvedRequests.length > 0 && (
+        <>
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4 gap-4">
                 <RequestTable
-                    title="Resolved Requests"
-                    subtitle={`${resolvedRequests.length} completed`}
-                    rows={resolvedRequests}
+                    title="Pending Requests"
+                    subtitle={`${pendingRequests.length} waiting`}
+                    rows={pendingRequests}
                     onAction={handleAction}
+                    onAcceptAndDeliver={handleAcceptAndDeliver}
                 />
-            )}
-        </div>
+                {activeRequests.length > 0 && (
+                    <RequestTable
+                        title="In Progress"
+                        subtitle={`${activeRequests.length} active`}
+                        rows={activeRequests}
+                        onAction={handleAction}
+                        onAcceptAndDeliver={handleAcceptAndDeliver}
+                    />
+                )}
+                {resolvedRequests.length > 0 && (
+                    <RequestTable
+                        title="Resolved"
+                        subtitle={`${resolvedRequests.length} completed`}
+                        rows={resolvedRequests}
+                        onAction={handleAction}
+                    />
+                )}
+            </div>
+
+            <CreatorDeliveryModal
+                isOpen={showDeliveryModal}
+                onClose={() => setShowDeliveryModal(false)}
+                request={deliveryRequest}
+                onDelivered={fetchRequests}
+            />
+        </>
     );
 };
 

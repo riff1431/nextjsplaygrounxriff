@@ -36,8 +36,8 @@ interface PaidReactionsProps {
 }
 
 const PaidReactions = ({ roomId }: PaidReactionsProps) => {
-    const { balance } = useWallet();
-    const [pending, setPending] = useState<{ label: string; price: number; type: string; emoji?: string } | null>(null);
+    const { balance, refresh } = useWallet();
+    const [pending, setPending] = useState<{ label: string; price: number; reactionType: string; emoji?: string } | null>(null);
     const [animatingEmoji, setAnimatingEmoji] = useState<string | null>(null);
 
     const handleSend = async () => {
@@ -47,15 +47,14 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    type: pending.type,
-                    label: pending.label,
+                    reactionType: pending.reactionType,
                     amount: pending.price,
-                    emoji: pending.emoji,
                 }),
             });
             const data = await res.json();
             if (data.success) {
                 toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
+                refresh?.();
                 // Show floating animation
                 if (pending.emoji) {
                     setAnimatingEmoji(pending.emoji);
@@ -85,7 +84,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     {reactions.map((r) => (
                         <button
                             key={r.label}
-                            onClick={() => setPending({ label: r.label, price: r.price, type: "reaction", emoji: r.emoji })}
+                            onClick={() => setPending({ label: r.label, price: r.price, reactionType: `reaction_${r.label.toLowerCase()}`, emoji: r.emoji })}
                             className="glass-card-inner px-3 py-2 text-sm text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center gap-2 active:scale-95"
                         >
                             <span>{r.emoji}</span>
@@ -103,7 +102,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     {stickers.map((s) => (
                         <button
                             key={s.label}
-                            onClick={() => setPending({ label: s.label, price: s.price, type: "sticker", emoji: s.emoji })}
+                            onClick={() => setPending({ label: s.label, price: s.price, reactionType: `sticker_${s.label.toLowerCase()}`, emoji: s.emoji })}
                             className="glass-card-inner px-3 py-2 text-sm text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center gap-2 active:scale-95"
                         >
                             <span>{s.emoji}</span>
@@ -121,7 +120,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     {boosts.map((b) => (
                         <button
                             key={b.type}
-                            onClick={() => setPending({ label: b.label, price: b.price, type: b.type })}
+                            onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })}
                             className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98]"
                         >
                             <span>{b.label}</span><span className="text-gold">${b.price}</span>
@@ -138,7 +137,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     {directAccess.map((d) => (
                         <button
                             key={d.type}
-                            onClick={() => setPending({ label: d.label, price: d.price, type: d.type })}
+                            onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })}
                             className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98]"
                         >
                             <span>{d.label}</span><span className="text-gold">${d.price}</span>

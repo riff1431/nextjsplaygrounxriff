@@ -1,0 +1,221 @@
+"use client";
+
+import { useState } from "react";
+import { X, Send, Loader2, FileText, Mic, Video } from "lucide-react";
+import { toast } from "sonner";
+
+interface AddConfessionModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    roomId: string;
+    onCreated: () => void;
+}
+
+const tiers = [
+    { id: "Soft", label: "💋 Soft", defaultPrice: 10 },
+    { id: "Spicy", label: "🔥 Spicy", defaultPrice: 20 },
+    { id: "Dirty", label: "🖤 Dirty", defaultPrice: 30 },
+    { id: "Dark", label: "💀 Dark", defaultPrice: 40 },
+    { id: "Forbidden", label: "😈 Forbidden", defaultPrice: 50 },
+];
+
+const types = [
+    { id: "Text", icon: FileText, label: "Text" },
+    { id: "Audio", icon: Mic, label: "Audio" },
+    { id: "Video", icon: Video, label: "Video" },
+];
+
+export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated }: AddConfessionModalProps) {
+    const [title, setTitle] = useState("");
+    const [teaser, setTeaser] = useState("");
+    const [content, setContent] = useState("");
+    const [mediaUrl, setMediaUrl] = useState("");
+    const [type, setType] = useState("Text");
+    const [tier, setTier] = useState("Soft");
+    const [price, setPrice] = useState("10");
+    const [loading, setLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async () => {
+        if (!title.trim()) {
+            toast.error("Please enter a title");
+            return;
+        }
+        if (!content.trim() && !mediaUrl.trim()) {
+            toast.error("Please add content or media");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: title.trim(),
+                    teaser: teaser.trim() || title.trim().substring(0, 50) + "...",
+                    content: content.trim(),
+                    mediaUrl: mediaUrl.trim() || null,
+                    type,
+                    tier,
+                    price: Number(price) || 0,
+                    status: "Published",
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Confession published! 🎉");
+                setTitle("");
+                setTeaser("");
+                setContent("");
+                setMediaUrl("");
+                setPrice("10");
+                onCreated();
+                onClose();
+            } else {
+                toast.error(data.error || "Failed to create");
+            }
+        } catch {
+            toast.error("Network error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+
+            <div className="relative w-full max-w-md mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10">
+                    <h3 className="text-base font-bold text-white">Add to Confession Wall</h3>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto">
+                    {/* Title */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Title *</label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Give it a catchy title..."
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all"
+                        />
+                    </div>
+
+                    {/* Teaser (blurred preview) */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Teaser (preview text for fans)</label>
+                        <input
+                            type="text"
+                            value={teaser}
+                            onChange={(e) => setTeaser(e.target.value)}
+                            placeholder="A blurred preview hint..."
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all"
+                        />
+                    </div>
+
+                    {/* Type */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Type</label>
+                        <div className="flex gap-2">
+                            {types.map((t) => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => setType(t.id)}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all border ${type === t.id
+                                            ? "border-pink-500 bg-pink-500/20 text-white"
+                                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                                        }`}
+                                >
+                                    <t.icon size={14} />
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tier */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Tier</label>
+                        <div className="flex flex-wrap gap-2">
+                            {tiers.map((t) => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => { setTier(t.id); setPrice(String(t.defaultPrice)); }}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${tier === t.id
+                                            ? "border-pink-500 bg-pink-500/20 text-white"
+                                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                                        }`}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Price ($)</label>
+                        <input
+                            type="number"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                            min="0"
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-500/50 transition-all"
+                        />
+                    </div>
+
+                    {/* Content */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Full Content *</label>
+                        <textarea
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder="The juicy confession content fans will see after unlocking..."
+                            className="w-full px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all resize-none h-28"
+                        />
+                    </div>
+
+                    {/* Media URL */}
+                    <div className="space-y-1">
+                        <label className="text-xs text-white/60 font-medium">Media URL (optional)</label>
+                        <input
+                            type="text"
+                            value={mediaUrl}
+                            onChange={(e) => setMediaUrl(e.target.value)}
+                            placeholder="Link to image, audio, or video..."
+                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-white/10">
+                    <button
+                        onClick={onClose}
+                        disabled={loading}
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !title.trim()}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-pink-900/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                        Publish
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

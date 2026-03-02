@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -17,9 +17,14 @@ const XChatRoom = () => {
     const [hostName, setHostName] = useState("Loading...");
     const [creatorName, setCreatorName] = useState("Loading...");
 
+    // Session metering state
+    const [sessionActive, setSessionActive] = useState(false);
+    const [sessionStart, setSessionStart] = useState<Date | null>(null);
+    const [elapsed, setElapsed] = useState(0);
+    const RATE_PER_MIN = 2;
+
     useEffect(() => {
         async function fetchRoom() {
-            // Find the latest live "X Chat Room"
             const { data: room, error } = await supabase
                 .from('rooms')
                 .select('id, host_id, title')
@@ -31,7 +36,6 @@ const XChatRoom = () => {
 
             if (room) {
                 setRoomId(room.id);
-                // Fetch host/creator name
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('username, full_name')
@@ -41,7 +45,7 @@ const XChatRoom = () => {
                 if (profile) {
                     const name = profile.full_name || profile.username || "Host";
                     setHostName(name);
-                    setCreatorName(name); // Assuming host is the creator for now
+                    setCreatorName(name);
                 }
             } else {
                 setHostName("No Active Room");
@@ -51,15 +55,66 @@ const XChatRoom = () => {
         fetchRoom();
     }, [supabase]);
 
+    // Session timer
+    useEffect(() => {
+        if (!sessionActive || !sessionStart) return;
+        const interval = setInterval(() => {
+            setElapsed(Math.floor((Date.now() - sessionStart.getTime()) / 1000));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [sessionActive, sessionStart]);
+
+    const toggleSession = async () => {
+        if (!roomId) return;
+        if (!sessionActive) {
+            try {
+                const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/session`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "start" }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setSessionActive(true);
+                    setSessionStart(new Date());
+                    setElapsed(0);
+                }
+            } catch (e) {
+                console.error("Failed to start session:", e);
+            }
+        } else {
+            try {
+                const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/session`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "end" }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setSessionActive(false);
+                    setSessionStart(null);
+                }
+            } catch (e) {
+                console.error("Failed to end session:", e);
+            }
+        }
+    };
+
+    const formatTime = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const runningCharge = Math.ceil(elapsed / 60) * RATE_PER_MIN;
+
     return (
         <ProtectRoute allowedRoles={["fan"]}>
             <div className="min-h-screen bg-background bg-cover bg-center bg-fixed relative fd-x-chat-theme"
                 style={{ backgroundImage: `url(/x-chat/casino-bg.jpeg)` }}>
 
-                {/* Dark overlay for better readability */}
                 <div className="absolute inset-0 bg-background/10 z-0" />
 
-                {/* Content */}
                 <div className="relative z-10 max-w-8xl mx-auto p-4 px-4 md:px-40 py-8">
 
                     {/* Header */}
@@ -77,24 +132,46 @@ const XChatRoom = () => {
                             </h1>
                         </div>
 
-                        <div className="text-right hidden md:block">
-                            <p className="text-foreground text-sm">
-                                Host – <span className="text-gold-light">{hostName}</span>
-                            </p>
-                            <p className="text-foreground text-sm">
-                                Creator – <span className="text-gold-light">{creatorName}</span>
-                            </p>
-                            <WalletPill className="mt-1" />
+                        <div className="flex items-center gap-4">
+                            {/* Session Meter */}
+                            <div className="glass-card px-4 py-2 flex items-center gap-3">
+                                <button
+                                    onClick={toggleSession}
+                                    disabled={!roomId}
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ${sessionActive
+                                            ? "bg-red-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/30"
+                                            : "bg-green-500/20 border border-green-400/40 text-green-300 hover:bg-green-500/30"
+                                        } disabled:opacity-50`}
+                                >
+                                    <Clock size={12} />
+                                    {sessionActive ? "End Session" : "Start Session"}
+                                </button>
+                                {sessionActive && (
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="text-foreground/70">{formatTime(elapsed)}</span>
+                                        <span className="text-gold font-semibold">${runningCharge}</span>
+                                        <span className="text-foreground/50 text-xs">(${RATE_PER_MIN}/min)</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="text-right hidden md:block">
+                                <p className="text-foreground text-sm">
+                                    Host – <span className="text-gold-light">{hostName}</span>
+                                </p>
+                                <p className="text-foreground text-sm">
+                                    Creator – <span className="text-gold-light">{creatorName}</span>
+                                </p>
+                                <WalletPill className="mt-1" />
+                            </div>
                         </div>
                     </div>
 
                     {/* Main layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-60">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Left: Chat Display + Reactions */}
                         <div className="lg:col-span-2 space-y-2">
-
-                            {/* Live X Chat Header Section */}
                             <div className="glass-card p-4">
                                 <h2 className="font-display text-gold text-base mb-4">
                                     Live X Chat
@@ -105,7 +182,6 @@ const XChatRoom = () => {
                                 </div>
                             </div>
 
-                            {/* Paid Reactions & Global Boosts */}
                             <PaidReactions roomId={roomId} />
                         </div>
 

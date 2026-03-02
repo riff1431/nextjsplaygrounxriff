@@ -1,21 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Plus, DollarSign, User } from "lucide-react";
+import { MessageSquare, Plus, DollarSign, User, Eye } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import AddConfessionModal from "./AddConfessionModal";
+
+interface Confession {
+    id: string;
+    title: string;
+    teaser: string;
+    type: string;
+    tier: string;
+    price: number;
+    status: string;
+    created_at: string;
+}
 
 const ConfessionsLeftSidebar = () => {
     const { user } = useAuth();
-    const supabase = createClient();
     const [stats, setStats] = useState({ fans: 0, confessions: 0, tips: 0, earned: 0 });
     const [viewerCount, setViewerCount] = useState(0);
+    const [roomId, setRoomId] = useState<string | null>(null);
+    const [confessions, setConfessions] = useState<Confession[]>([]);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     useEffect(() => {
         if (!user) return;
+        const supabase = createClient();
 
-        async function fetchStats() {
+        async function init() {
             // Get room
             const { data: room } = await supabase
                 .from("rooms")
@@ -25,6 +40,15 @@ const ConfessionsLeftSidebar = () => {
                 .maybeSingle();
 
             if (!room) return;
+            setRoomId(room.id);
+
+            // Fetch confessions list
+            const { data: confList } = await supabase
+                .from("confessions")
+                .select("id, title, teaser, type, tier, price, status, created_at")
+                .eq("room_id", room.id)
+                .order("created_at", { ascending: false });
+            if (confList) setConfessions(confList);
 
             // Get confession count
             const { count: confCount } = await supabase
@@ -32,15 +56,7 @@ const ConfessionsLeftSidebar = () => {
                 .select("*", { count: "exact", head: true })
                 .eq("room_id", room.id);
 
-            // Get tips total
-            const { data: tips } = await supabase
-                .from("confession_tips")
-                .select("amount")
-                .eq("confession_id", room.id);
-
-            const tipsTotal = tips?.reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0;
-
-            // Get wallet balance as earned
+            // Get wallet balance
             const { data: wallet } = await supabase
                 .from("wallets")
                 .select("balance")
@@ -57,12 +73,12 @@ const ConfessionsLeftSidebar = () => {
             setStats({
                 fans: followers || 0,
                 confessions: confCount || 0,
-                tips: tipsTotal,
+                tips: 0,
                 earned: wallet?.balance || 0,
             });
         }
 
-        fetchStats();
+        init();
 
         // Presence for live viewer count
         const channel = supabase.channel("confessions-presence", {
@@ -79,6 +95,17 @@ const ConfessionsLeftSidebar = () => {
 
         return () => { supabase.removeChannel(channel); };
     }, [user]);
+
+    const refreshConfessions = async () => {
+        if (!roomId) return;
+        const supabase = createClient();
+        const { data } = await supabase
+            .from("confessions")
+            .select("id, title, teaser, type, tier, price, status, created_at")
+            .eq("room_id", roomId)
+            .order("created_at", { ascending: false });
+        if (data) setConfessions(data);
+    };
 
     return (
         <div className="flex flex-col gap-4 w-[260px] shrink-0 overflow-y-auto pb-4">
@@ -137,11 +164,40 @@ const ConfessionsLeftSidebar = () => {
             <div className="conf-glass-card p-4 flex-1 flex flex-col">
                 <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
                 <div className="flex flex-col gap-3 flex-1">
-                    <button className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors">
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
+                    >
                         <Plus className="h-5 w-5" />
                     </button>
+
+                    {/* List existing confessions */}
+                    {confessions.map((c) => (
+                        <div
+                            key={c.id}
+                            className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                        >
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-white font-medium truncate">{c.title}</p>
+                                <p className="text-[10px] text-white/40">{c.tier} • ${c.price}</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-white/40">
+                                <Eye size={12} />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
+
+            {/* Modal - always rendered, controlled by showAddModal state */}
+            {showAddModal && roomId && (
+                <AddConfessionModal
+                    isOpen={showAddModal}
+                    onClose={() => setShowAddModal(false)}
+                    roomId={roomId}
+                    onCreated={refreshConfessions}
+                />
+            )}
         </div>
     );
 };

@@ -64,7 +64,7 @@ export async function GET(
     return NextResponse.json({ confessions: enrichedConfessions });
 }
 
-// POST: Create
+// POST: Create confession (creator only)
 export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
@@ -72,22 +72,42 @@ export async function POST(
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
-    const body = await request.json();
 
-    const { title, teaser, content, mediaUrl, type, tier, status } = body;
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify user is creator (host) of this room
+    const { data: room } = await supabase
+        .from("rooms")
+        .select("host_id")
+        .eq("id", roomId)
+        .single();
+
+    if (!room || room.host_id !== user.id) {
+        return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { title, teaser, content, mediaUrl, type, tier, price, status } = body;
+
+    if (!title || !type || !tier || price === undefined) {
+        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
 
     const { data: newConfession, error } = await supabase
         .from("confessions")
         .insert([{
             room_id: roomId,
             title,
-            teaser,
+            teaser: teaser || title.substring(0, 50) + "...",
             content,
-            media_url: mediaUrl,
+            media_url: mediaUrl || null,
             type,
             tier,
-            status: status || 'Draft',
-            price: 0 // In real app, looked up from tier map
+            price: Number(price),
+            status: status || 'Published',
         }])
         .select()
         .single();
