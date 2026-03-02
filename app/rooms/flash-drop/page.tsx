@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ProtectRoute } from "@/app/context/AuthContext";
+import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
+import { createClient } from "@/utils/supabase/client";
 import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
 
@@ -15,15 +16,59 @@ import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
 
 export default function FlashDropsRoomPreview() {
     const router = useRouter();
+    const { user } = useAuth();
     const onBack = () => router.push("/home");
 
     const [walletSpent, setWalletSpent] = useState(420);
     const [toast, setToast] = useState<string | null>(null);
+    const [roomId, setRoomId] = useState<string | null>(null);
 
-    const spend = (amount: number, msg: string) => {
-        setWalletSpent((s) => s + amount);
-        setToast(msg);
-        window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2500);
+    // Discover room
+    useEffect(() => {
+        if (!user) return;
+        async function findRoom() {
+            const supabase = createClient();
+            const { data } = await supabase
+                .from('rooms')
+                .select('id')
+                .eq('type', 'flash-drop')
+                .eq('status', 'live')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (data?.id) setRoomId(data.id);
+        }
+        findRoom();
+    }, [user]);
+
+    const spend = async (amount: number, msg: string) => {
+        if (!roomId) {
+            // Local fallback if no room discovered
+            setWalletSpent((s) => s + amount);
+            setToast(msg);
+            window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2500);
+            return;
+        }
+        try {
+            const endpoint = msg.includes('Pack') || msg.includes('Bundle')
+                ? `/api/v1/rooms/${roomId}/flash-drops/request`
+                : `/api/v1/rooms/${roomId}/flash-drops/unlock`;
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, description: msg }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setWalletSpent((s) => s + amount);
+                setToast(msg);
+            } else {
+                setToast(data.error || 'Purchase failed');
+            }
+        } catch (e) {
+            setToast('Network error');
+        }
+        window.setTimeout(() => setToast(null), 2500);
     };
 
     const tickerItems = [

@@ -218,17 +218,33 @@ export default function BarLoungeRoom() {
         } catch { }
     };
 
-    const onChampagneEffect = (tier: "champagne" | "vipbottle") => {
+    const onChampagneEffect = async (tier: "champagne" | "vipbottle") => {
+        if (!roomId) return;
         playPop();
-        if (tier === "champagne") pushFx(["confetti", "spotlight"], "🍾 Champagne popped");
-        if (tier === "vipbottle") pushFx(["confetti", "spotlight"], "👑 VIP bottle served");
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/effect`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ effectType: tier, amount: tier === 'champagne' ? 25 : 50 }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (tier === "champagne") pushFx(["confetti", "spotlight"], "🍾 Champagne popped");
+                if (tier === "vipbottle") pushFx(["confetti", "spotlight"], "👑 VIP bottle served");
+            } else { pushFx([], data.error || 'Effect failed'); }
+        } catch (e) { pushFx([], 'Network error'); }
     };
 
     const handlePurchase = async (type: string, label: string, price: number, meta: any = {}) => {
         if (!roomId) return;
         activateBilling();
-        const { error } = await supabase.rpc("purchase_bar_item", { p_room_id: roomId, p_item_type: type, p_item_label: label, p_amount: price, p_metadata: meta });
-        if (error) pushFx([], `Purchase failed: ${error.message || "Insufficient funds"}`);
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/request`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, label, amount: price }),
+            });
+            const data = await res.json();
+            if (!data.success) pushFx([], `Purchase failed: ${data.error || "Insufficient funds"}`);
+        } catch (e) { pushFx([], 'Network error'); }
     };
 
     const doSpin = async () => {
@@ -236,13 +252,22 @@ export default function BarLoungeRoom() {
         setSpinning(true);
         activateBilling();
         setSpentHidden((s) => s + SPIN_PRICE);
-        const { data, error } = await supabase.rpc("spin_bottle_game", { p_room_id: roomId, p_amount: SPIN_PRICE });
-        if (data && data.success) {
-            setSpinResult(data.outcome);
-            setTimeout(() => setSpinning(false), 1100);
-        } else {
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/spin`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: SPIN_PRICE }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSpinResult(data.result || data.spin?.result);
+                setTimeout(() => setSpinning(false), 1100);
+            } else {
+                setSpinning(false);
+                pushFx([], `Spin failed: ${data.error || "Insufficient funds"}`);
+            }
+        } catch (e) {
             setSpinning(false);
-            if (error) pushFx([], `Spin failed: ${error.message || "Insufficient funds"}`);
+            pushFx([], 'Network error');
         }
     };
 

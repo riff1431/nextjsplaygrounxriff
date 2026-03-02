@@ -15,6 +15,9 @@ import {
   Gift,
 } from "lucide-react";
 import BrandLogo from "@/components/common/BrandLogo";
+import { useAuth } from "@/app/context/AuthContext";
+import { createClient } from "@/utils/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 /**
  * PlayGroundX — Suga4U Room (PREVIEW MOCKUP)
@@ -310,6 +313,7 @@ function useDevSanityTests() {
 
 export default function Suga4URoom() {
   useDevSanityTests();
+  const { user } = useAuth();
 
   // In production, these come from creator profile + fan subscription state.
   const [creatorGender] = useState<CreatorGender>("female");
@@ -319,6 +323,25 @@ export default function Suga4URoom() {
   // Entry + time
   const [hasPaidEntry, setHasPaidEntry] = useState<boolean>(false);
 
+  // Room discovery
+  const [roomId, setRoomId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    async function findRoom() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('type', 'suga4u')
+        .eq('status', 'live')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data?.id) setRoomId(data.id);
+    }
+    findRoom();
+  }, [user]);
 
   // Chat + reactions
   const [chat, setChat] = useState<string[]>(["Welcome to Suga4U 💖"]);
@@ -369,13 +392,47 @@ export default function Suga4URoom() {
     setChat((c) => [...c, msg]);
   }
 
-  function addToSuga(amount: number, context: string) {
+  async function addToSuga(amount: number, context: string) {
+    if (roomId) {
+      try {
+        const res = await fetch(`/api/v1/rooms/${roomId}/suga/gift`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, giftType: context }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          sonnerToast.error(data.error || 'Payment failed');
+          return;
+        }
+      } catch (e) {
+        sonnerToast.error('Network error');
+        return;
+      }
+    }
     setTotalSuga((s) => s + amount);
     pushChat(`${context} ($${amount})`);
   }
 
-  function payEntryFee() {
+  async function payEntryFee() {
     if (hasPaidEntry) return;
+    if (roomId) {
+      try {
+        const res = await fetch(`/api/v1/rooms/${roomId}/suga/entry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: ENTRY_FEE }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          sonnerToast.error(data.error || 'Entry payment failed');
+          return;
+        }
+      } catch (e) {
+        sonnerToast.error('Network error');
+        return;
+      }
+    }
     setHasPaidEntry(true);
     addToSuga(ENTRY_FEE, "🚪 Room entry");
   }

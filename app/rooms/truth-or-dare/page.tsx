@@ -537,8 +537,10 @@ function TruthOrDareContent() {
         if (!roomId || !sessionInfo) return;
         setUnlocking(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/unlock`, {
-                method: 'POST'
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/entry`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: sessionInfo.price })
             });
             const data = await res.json();
 
@@ -566,15 +568,27 @@ function TruthOrDareContent() {
         setLastAction("Processing transaction...");
 
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/interact`, {
+            // Route to correct API based on type
+            let endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/entry`;
+            let body: any = {
+                type: confirmModal.type,
+                tier: confirmModal.tier,
+                content: confirmModal.content,
+                amount: confirmModal.price
+            };
+
+            if (confirmModal.type === 'reaction' || confirmModal.type === 'tip') {
+                endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/tip`;
+                body = { amount: confirmModal.price, message: confirmModal.content || confirmModal.tier };
+            } else if (confirmModal.type === 'crowd_vote') {
+                endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/vote`;
+                body = { choice: confirmModal.tier || 'truth', amount: confirmModal.price };
+            }
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: confirmModal.type,
-                    tier: confirmModal.tier,
-                    content: confirmModal.content,
-                    amount: confirmModal.price
-                })
+                body: JSON.stringify(body)
             });
 
             const data = await res.json();

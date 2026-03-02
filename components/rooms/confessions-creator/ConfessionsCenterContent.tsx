@@ -1,48 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 
 interface RequestRow {
-    id: number;
+    id: string;
     fan: string;
     confession: string;
-    emoji?: string;
+    amount: number;
+    type: string;
+    status: string;
+    created_at: string;
 }
-
-const confessionRequests: RequestRow[] = [
-    { id: 1, fan: "Mike92", confession: "I have a motto crush on you, Can I at home planes 11:" },
-    { id: 2, fan: "JamesLover", confession: "Mintt's have ang mess thing write emtype stone 7!", emoji: "💜" },
-    { id: 3, fan: "David89", confession: "Davidet and porter Acquard tqnary nawbe lip." },
-    { id: 4, fan: "TommyBoy", confession: "Confession: is have sitting 32, you do bet mother." },
-    { id: 5, fan: "Frank_H85", confession: "I have a coot t ocer meade, chintcen fron graff0." },
-];
-
-const randomRequests: RequestRow[] = [
-    { id: 1, fan: "Jason25", confession: "Confant. Love have hanning slocc hav." },
-    { id: 2, fan: "Max87", confession: "Maher the lower chirmpct exceeds pyt h. tmith migle?" },
-    { id: 3, fan: "David89", confession: "That outfit is doing things to m,." },
-    { id: 4, fan: "Max87", confession: "I have a pertior atbout ngi liteedq thumb." },
-    { id: 5, fan: "EricFN", confession: "Confessions, poguetto hectericos." },
-    { id: 6, fan: "Jason25", confession: "Confant. Love have hanning slocc hav." },
-    { id: 7, fan: "Max87", confession: "Maher the lower chirmpct exceeds pyt h. tmith migle?" },
-    { id: 8, fan: "David89", confession: "That outfit is doing things to m,." },
-    { id: 9, fan: "Max87", confession: "I have a pertior atbout ngi liteedq thumb." },
-    { id: 10, fan: "EricFN", confession: "Confessions, poguetto hectericos." },
-];
 
 const RequestTable = ({
     title,
     subtitle,
     rows,
+    onAction,
 }: {
     title: string;
     subtitle?: string;
     rows: RequestRow[];
+    onAction: (id: string, action: "accepted" | "declined") => void;
 }) => {
-    const [decisions, setDecisions] = useState<Record<number, "accepted" | "declined">>({});
+    const [decisions, setDecisions] = useState<Record<string, "accepted" | "declined">>({});
 
-    const handleAction = (id: number, action: "accepted" | "declined") => {
+    const handleAction = (id: string, action: "accepted" | "declined") => {
         setDecisions((prev) => ({ ...prev, [id]: action }));
+        onAction(id, action);
     };
 
     return (
@@ -57,25 +45,29 @@ const RequestTable = ({
                     <thead>
                         <tr className="text-white/60 border-b border-white/20">
                             <th className="text-left py-2 px-2 font-medium">Fan</th>
-                            <th className="text-left py-2 px-2 font-medium">
-                                {title.includes("Confession") ? "Confession" : "Fans"}
-                            </th>
-                            <th className="text-center py-2 px-2 font-medium" colSpan={2}>Request</th>
+                            <th className="text-left py-2 px-2 font-medium">Confession</th>
+                            <th className="text-left py-2 px-2 font-medium">Amount</th>
+                            <th className="text-center py-2 px-2 font-medium" colSpan={2}>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row) => (
+                        {rows.length === 0 ? (
+                            <tr><td colSpan={4} className="text-center py-8 text-white/40">No pending requests</td></tr>
+                        ) : rows.map((row) => (
                             <tr key={row.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                                 <td className="py-3 px-2 text-white font-medium whitespace-nowrap">
-                                    {row.fan} {row.emoji && <span>{row.emoji}</span>}
+                                    {row.fan}
                                 </td>
                                 <td className="py-3 px-2 text-white/60 max-w-[250px] truncate">
                                     {row.confession}
                                 </td>
+                                <td className="py-3 px-2 text-amber-400 font-semibold">
+                                    ${row.amount}
+                                </td>
                                 <td className="py-3 px-2 text-center" colSpan={2}>
-                                    {decisions[row.id] === "accepted" ? (
+                                    {decisions[row.id] === "accepted" || row.status === "accepted" ? (
                                         <span className="text-[hsl(140,60%,45%)] font-medium">Accepted</span>
-                                    ) : decisions[row.id] === "declined" ? (
+                                    ) : decisions[row.id] === "declined" || row.status === "declined" ? (
                                         <span className="text-[hsl(0,70%,50%)] font-medium">Declined</span>
                                     ) : (
                                         <div className="flex items-center justify-center gap-2">
@@ -104,15 +96,109 @@ const RequestTable = ({
 };
 
 const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "confessions" | "random" }) => {
-    const isConfessions = variant === "confessions";
+    const { user } = useAuth();
+    const supabase = createClient();
+    const [requests, setRequests] = useState<RequestRow[]>([]);
+    const [roomId, setRoomId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Discover room on mount
+    useEffect(() => {
+        if (!user) return;
+        async function findRoom() {
+            const { data } = await supabase
+                .from("rooms")
+                .select("id")
+                .eq("host_id", user!.id)
+                .limit(1)
+                .maybeSingle();
+            if (data?.id) setRoomId(data.id);
+        }
+        findRoom();
+    }, [user]);
+
+    const fetchRequests = useCallback(async () => {
+        if (!roomId) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`);
+            const data = await res.json();
+            if (data.requests) {
+                setRequests(data.requests.map((r: any) => ({
+                    id: r.id,
+                    fan: r.fan_name || r.fan_id?.substring(0, 8) || "Fan",
+                    confession: r.topic || r.type,
+                    amount: r.amount || 0,
+                    type: r.type,
+                    status: r.status,
+                    created_at: r.created_at,
+                })));
+            }
+        } catch (e) {
+            console.error("Failed to fetch requests", e);
+        } finally {
+            setLoading(false);
+        }
+    }, [roomId]);
+
+    useEffect(() => {
+        if (roomId) {
+            fetchRequests();
+
+            // Realtime subscription for new requests
+            const channel = supabase
+                .channel("creator-confession-requests")
+                .on("postgres_changes", {
+                    event: "*",
+                    schema: "public",
+                    table: "confession_requests",
+                    filter: `room_id=eq.${roomId}`,
+                }, () => { fetchRequests(); })
+                .subscribe();
+
+            return () => { supabase.removeChannel(channel); };
+        }
+    }, [roomId, fetchRequests]);
+
+    const handleAction = async (id: string, action: "accepted" | "declined") => {
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: action }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success(`Request ${action}`);
+                fetchRequests();
+            } else {
+                toast.error(data.error || `Failed to ${action}`);
+            }
+        } catch (e) {
+            toast.error("Network error");
+        }
+    };
+
+    const pendingRequests = requests.filter(r => r.status === "pending");
+    const resolvedRequests = requests.filter(r => r.status !== "pending");
+
     return (
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4">
-            <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4 gap-4">
+            <RequestTable
+                title="Pending Requests"
+                subtitle={`${pendingRequests.length} waiting`}
+                rows={pendingRequests}
+                onAction={handleAction}
+            />
+            {resolvedRequests.length > 0 && (
                 <RequestTable
-                    title={isConfessions ? "Confessions Requests" : "Random Requests"}
-                    rows={isConfessions ? confessionRequests : randomRequests}
+                    title="Resolved Requests"
+                    subtitle={`${resolvedRequests.length} completed`}
+                    rows={resolvedRequests}
+                    onAction={handleAction}
                 />
-            </div>
+            )}
         </div>
     );
 };

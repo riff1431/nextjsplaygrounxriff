@@ -35,7 +35,33 @@ export async function GET(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ confessions });
+    // Check if user is authenticated to get unlock status
+    const { data: { user } } = await supabase.auth.getUser();
+    let unlockedIds: Set<string> = new Set();
+
+    if (user) {
+        const { data: unlocks } = await supabase
+            .from("confession_unlocks")
+            .select("confession_id")
+            .eq("user_id", user.id);
+
+        if (unlocks) {
+            unlockedIds = new Set(unlocks.map((u: any) => u.confession_id));
+        }
+    }
+
+    // Hide full content for locked confessions
+    const enrichedConfessions = (confessions || []).map((c: any) => {
+        const isUnlocked = unlockedIds.has(c.id) || c.price === 0;
+        return {
+            ...c,
+            is_unlocked: isUnlocked,
+            content: isUnlocked ? c.content : null,
+            media_url: isUnlocked ? c.media_url : null,
+        };
+    });
+
+    return NextResponse.json({ confessions: enrichedConfessions });
 }
 
 // POST: Create

@@ -1,15 +1,63 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { createClient } from "@/utils/supabase/client";
 
-const REQUESTS = [
-    { user: "JohnnyBravo", msg: "Shoutout for anniversary! ❤️", avatar: "😎" },
-    { user: "PokerKing77", msg: "5-Minute Q&A Challenge! 🎲", avatar: "👑" },
-    { user: "DaisyBabe", msg: "Let's play a game together! 🎮", avatar: "🌼" },
-    { user: "BenTheFan", msg: "Want to share a funny story! 😂", avatar: "😄" },
-];
+interface XChatRequest {
+    id: string;
+    fan_name: string;
+    message: string;
+    avatar_url?: string;
+    status: "pending" | "accepted" | "declined";
+}
 
-const IncomingRequests = () => {
+const IncomingRequests = ({ roomId }: { roomId?: string }) => {
+    const supabase = createClient();
+    const [requests, setRequests] = useState<XChatRequest[]>([]);
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        async function fetchRequests() {
+            const { data } = await supabase
+                .from("x_chat_requests")
+                .select("*")
+                .eq("room_id", roomId)
+                .order("created_at", { ascending: false })
+                .limit(20);
+            if (data) setRequests(data as XChatRequest[]);
+        }
+        fetchRequests();
+
+        const channel = supabase
+            .channel(`x-chat-requests-${roomId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "x_chat_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                setRequests((prev) => [payload.new as XChatRequest, ...prev]);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId]);
+
+    const handleAction = async (id: string, action: "accepted" | "declined") => {
+        setRequests((prev) =>
+            prev.map((r) => (r.id === id ? { ...r, status: action } : r))
+        );
+        if (roomId) {
+            await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId: id, status: action }),
+            });
+        }
+    };
+
     return (
         <div className="panel-glass rounded-lg flex flex-col min-h-0 flex-1">
             <div className="px-4 py-3 border-b border-border flex-shrink-0">
@@ -18,26 +66,41 @@ const IncomingRequests = () => {
                 </h2>
             </div>
             <div className="p-3 space-y-3 overflow-y-auto scrollbar-thin flex-1">
-                {REQUESTS.map((r, i) => (
+                {requests.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">No requests yet</p>
+                )}
+                {requests.map((r, i) => (
                     <motion.div
-                        key={i}
+                        key={r.id}
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.1 }}
                         className="flex items-start gap-3 p-2 rounded-lg bg-secondary/50"
                     >
-                        <span className="text-2xl flex-shrink-0">{r.avatar}</span>
+                        <span className="text-2xl flex-shrink-0">{r.avatar_url || "😎"}</span>
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-foreground">{r.user}</p>
-                            <p className="text-xs text-muted-foreground">⭐ {r.msg}</p>
-                            <div className="flex gap-2 mt-2">
-                                <button className="bg-success text-success-foreground text-xs font-bold px-4 py-1 rounded hover:opacity-90 transition-opacity">
-                                    ACCEPT
-                                </button>
-                                <button className="bg-secondary text-foreground text-xs font-bold px-4 py-1 rounded border border-border hover:bg-muted transition-colors">
-                                    DECLINE
-                                </button>
-                            </div>
+                            <p className="font-semibold text-sm text-foreground">{r.fan_name}</p>
+                            <p className="text-xs text-muted-foreground">⭐ {r.message}</p>
+                            {r.status === "pending" ? (
+                                <div className="flex gap-2 mt-2">
+                                    <button
+                                        onClick={() => handleAction(r.id, "accepted")}
+                                        className="bg-success text-success-foreground text-xs font-bold px-4 py-1 rounded hover:opacity-90 transition-opacity"
+                                    >
+                                        ACCEPT
+                                    </button>
+                                    <button
+                                        onClick={() => handleAction(r.id, "declined")}
+                                        className="bg-secondary text-foreground text-xs font-bold px-4 py-1 rounded border border-border hover:bg-muted transition-colors"
+                                    >
+                                        DECLINE
+                                    </button>
+                                </div>
+                            ) : (
+                                <span className={`text-xs font-bold mt-1 inline-block ${r.status === "accepted" ? "text-green-400" : "text-muted-foreground"}`}>
+                                    {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
+                                </span>
+                            )}
                         </div>
                     </motion.div>
                 ))}

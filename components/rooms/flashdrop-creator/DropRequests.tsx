@@ -1,28 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 interface DropRequest {
-    id: number;
-    fanName: string;
+    id: string;
+    fan_name: string;
     request: string;
+    amount: number;
     status: "pending" | "accepted" | "declined";
 }
 
-const initialRequests: DropRequest[] = [
-    { id: 1, fanName: "NightOwl23", request: "Exclusive photo set", status: "pending" },
-    { id: 2, fanName: "StarGazer", request: "Behind the scenes", status: "pending" },
-    { id: 3, fanName: "LunaFan99", request: "Custom shoutout", status: "pending" },
-    { id: 4, fanName: "VelvetKing", request: "Live session clip", status: "pending" },
-];
+const DropRequests = ({ className = "", roomId }: { className?: string; roomId?: string }) => {
+    const supabase = createClient();
+    const [requests, setRequests] = useState<DropRequest[]>([]);
 
-const DropRequests = ({ className = "" }: { className?: string }) => {
-    const [requests, setRequests] = useState<DropRequest[]>(initialRequests);
+    useEffect(() => {
+        if (!roomId) return;
 
-    const handleAction = (id: number, action: "accepted" | "declined") => {
+        async function fetchRequests() {
+            const { data } = await supabase
+                .from("flash_drop_requests")
+                .select("*")
+                .eq("room_id", roomId)
+                .order("created_at", { ascending: false })
+                .limit(20);
+            if (data) setRequests(data as DropRequest[]);
+        }
+        fetchRequests();
+
+        const channel = supabase
+            .channel(`flash-drop-requests-${roomId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "flash_drop_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                setRequests((prev) => [payload.new as DropRequest, ...prev]);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId]);
+
+    const handleAction = async (id: string, action: "accepted" | "declined") => {
         setRequests((prev) =>
             prev.map((r) => (r.id === id ? { ...r, status: action } : r))
         );
+        if (roomId) {
+            await fetch(`/api/v1/rooms/${roomId}/flash-drops/request`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId: id, status: action }),
+            });
+        }
     };
 
     return (
@@ -46,13 +78,16 @@ const DropRequests = ({ className = "" }: { className?: string }) => {
                         </tr>
                     </thead>
                     <tbody>
+                        {requests.length === 0 && (
+                            <tr><td colSpan={3} className="py-4 text-center text-muted-foreground text-xs">No requests yet</td></tr>
+                        )}
                         {requests.map((req) => (
                             <tr key={req.id} className="border-b border-border/50">
                                 <td className="py-2.5 px-2 font-semibold text-foreground">
-                                    {req.fanName}
+                                    {req.fan_name}
                                 </td>
                                 <td className="py-2.5 px-2 text-muted-foreground">
-                                    {req.request}
+                                    {req.request} · ${req.amount}
                                 </td>
                                 <td className="py-2.5 px-2">
                                     {req.status === "pending" ? (

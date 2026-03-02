@@ -253,7 +253,7 @@ export default function ConfessionsRoom() {
     const fetchRequests = async () => {
         setLoadingRequests(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/requests`);
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`);
             const data = await res.json();
             if (data.requests) setRequests(data.requests);
         } catch (e) {
@@ -371,7 +371,7 @@ export default function ConfessionsRoom() {
         }
 
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/requests`, {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ type: reqType, amount: reqAmount, topic: reqTopic, paymentMethod: selectedPaymentMethod })
             });
@@ -393,17 +393,17 @@ export default function ConfessionsRoom() {
             return;
         }
         try {
-            const res = await fetch(`/api/v1/confessions/${purchaseConfession.id}/unlock`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paymentMethod: selectedPaymentMethod }) });
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/unlock`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confessionId: purchaseConfession.id }) });
             const data = await res.json();
             if (data.success || data.message === "Already unlocked") {
-                setMyUnlocks(prev => new Set(prev).add(purchaseConfession!.id)); setPurchaseConfession(null); setViewConfession(purchaseConfession); showToast("Confession Unlocked!", 'success');
+                setMyUnlocks(prev => new Set(prev).add(purchaseConfession!.id)); setPurchaseConfession(null); setViewConfession(purchaseConfession); showToast("Confession Unlocked!", 'success'); fetchWallet();
             } else { showToast("Purchase failed: " + data.error, 'error'); }
         } catch (e) { showToast("Payment error", 'error'); }
     };
 
     const handleApproveDelivery = async (reqId: string) => {
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/requests/${reqId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "approve" }) });
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request/${reqId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "completed" }) });
             if (res.ok) { setReviewRequest(null); fetchRequests(); showToast("Approved! Funds Released.", 'success'); }
         } catch (e) { }
     };
@@ -419,13 +419,25 @@ export default function ConfessionsRoom() {
     };
 
     const [bids, setBids] = useState([{ id: "b1", name: "Buzzed_Boi", amount: 50 }, { id: "b2", name: "blurredFan1", amount: 25 }]);
-    function placeBid(amount: number) {
-        setBids((prev) => {
-            const next = [...prev];
-            const me = next.find((x) => x.id === "me");
-            if (me) me.amount += amount; else next.unshift({ id: "me", name: "TopFan?", amount });
-            return next.sort((a, b) => b.amount - a.amount);
-        });
+    async function placeBid(amount: number) {
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/bid`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ confessionId: confessions[0]?.id, amount }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setBids((prev) => {
+                    const next = [...prev];
+                    const me = next.find((x) => x.id === 'me');
+                    if (me) me.amount += amount; else next.unshift({ id: 'me', name: 'You', amount });
+                    return next.sort((a, b) => b.amount - a.amount);
+                });
+                fetchWallet();
+                showToast(`Bid of $${amount} placed!`, 'success');
+            } else { showToast(data.error || 'Bid failed', 'error'); }
+        } catch (e) { showToast('Bid error', 'error'); }
     }
 
     // ========================================================================

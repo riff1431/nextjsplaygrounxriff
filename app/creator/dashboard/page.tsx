@@ -77,6 +77,19 @@ export default function CreatorDashboard() {
                         followers: realStats.totalFollowers || 0,
                         activeRooms: realStats.activeRooms || 0
                     });
+                } else {
+                    // Fallback: get wallet balance as earnings
+                    const { data: wallet } = await supabase
+                        .from('wallets')
+                        .select('balance')
+                        .eq('user_id', user.id)
+                        .single();
+                    setStats({
+                        totalViewers: 0,
+                        earnings: wallet?.balance || 0,
+                        followers: 0,
+                        activeRooms: (myRooms || []).filter((r: any) => r.status === 'live').length,
+                    });
                 }
             } catch (err: any) {
                 console.error("Dashboard error:", err);
@@ -89,13 +102,39 @@ export default function CreatorDashboard() {
         fetchDashboardData();
     }, [router, supabase, user]);
 
-    const handleCreateRoom = (type: string) => {
-        // Map types to their specific creation pages or logic
-        // For Phase 4, we primarily have Suga4U ready
-        if (type === 'suga4u') {
-            router.push('/rooms/suga4u-pg12-creator');
-        } else {
-            toast.info("This room type is coming soon!");
+    const handleCreateRoom = async (type: string) => {
+        // Create room via API, then navigate to the creator page
+        const routeMap: Record<string, string> = {
+            confessions: '/rooms/confessions-creator',
+            'x-chat': '/rooms/x-chat-creator',
+            'flash-drop': '/rooms/flash-drop-creator',
+            'bar-lounge': '/rooms/bar-lounge-creator',
+            'truth-or-dare': '/rooms/truth-or-dare-creator',
+            suga4u: '/rooms/suga4u-pg12-creator',
+        };
+
+        try {
+            // Ensure room exists in DB
+            const res = await fetch('/api/v1/rooms/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, title: `${type} Room` }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || 'Failed to create room');
+                return;
+            }
+
+            const route = routeMap[type];
+            if (route) {
+                router.push(route);
+            } else {
+                toast.info('Room created! Navigate from the menu.');
+            }
+        } catch (err: any) {
+            console.error('Create room error:', err);
+            toast.error('Failed to create room');
         }
     };
 
