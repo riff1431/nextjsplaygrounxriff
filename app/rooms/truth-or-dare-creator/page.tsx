@@ -8,24 +8,6 @@ import TodCreatorRoomEarnings from "@/components/rooms/truth-or-dare-creator/Tod
 import TodCreatorGroupVote from "@/components/rooms/truth-or-dare-creator/TodCreatorGroupVote";
 import TodCreatorRequestPanel from "@/components/rooms/truth-or-dare-creator/TodCreatorRequestPanel";
 
-const truthRequests = [
-    { user: "John456", text: "Reveal your last secret!" },
-    { user: "FunTimes", text: "Tell us about your first kiss!" },
-    { user: "PartyGirl", text: "Show us your craziest text message!" },
-    { user: "JamieK", text: "Confess a silly thing you've done!" },
-    { user: "PlayHard", text: "What's a guilty pleasure of yours!" },
-    { user: "Sarah89", text: "Show an embarrassing photo!" },
-];
-
-const dareRequests = [
-    { user: "Fan123", text: "Dance for 2 minutes!" },
-    { user: "PartyGuy", text: "Do a funny impersonation!" },
-    { user: "SamHere", text: "Send a silly dare message!" },
-    { user: "Jacob99", text: 'Call someone and say "I love you!"' },
-    { user: "Natalie", text: "Hold an ice bucket on head!" },
-    { user: "KinkyKing", text: "Try to twerk for 1 min!" },
-];
-
 const TruthOrDareCreatorPage = () => {
     const router = useRouter();
 
@@ -62,10 +44,10 @@ const TruthOrDareCreatorPage = () => {
             {/* Bottom row: Truth | Dare | GroupVote */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_280px] gap-3 lg:gap-4">
                 <div>
-                    <TodCreatorRequestPanel title="Truth Requests" requests={truthRequests} accentColor="blue" />
+                    <TodCreatorRequestPanel title="Truth Requests" requestType="truth" accentColor="blue" />
                 </div>
                 <div>
-                    <TodCreatorRequestPanel title="Dare Requests" requests={dareRequests} accentColor="pink" />
+                    <TodCreatorRequestPanel title="Dare Requests" requestType="dare" accentColor="pink" />
                 </div>
                 <div>
                     <TodCreatorGroupVote />
