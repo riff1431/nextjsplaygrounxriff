@@ -15,7 +15,7 @@ const tiers = [
     { id: "Soft", label: "💋 Soft", defaultPrice: 10 },
     { id: "Spicy", label: "🔥 Spicy", defaultPrice: 20 },
     { id: "Dirty", label: "🖤 Dirty", defaultPrice: 30 },
-    { id: "Dark", label: "💀 Dark", defaultPrice: 40 },
+    { id: "Diamonds", label: "💎 Diamonds", defaultPrice: 40 },
     { id: "Forbidden", label: "😈 Forbidden", defaultPrice: 50 },
 ];
 
@@ -131,8 +131,8 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
                                     key={t.id}
                                     onClick={() => setType(t.id)}
                                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all border ${type === t.id
-                                            ? "border-pink-500 bg-pink-500/20 text-white"
-                                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                                        ? "border-pink-500 bg-pink-500/20 text-white"
+                                        : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                                         }`}
                                 >
                                     <t.icon size={14} />
@@ -151,8 +151,8 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
                                     key={t.id}
                                     onClick={() => { setTier(t.id); setPrice(String(t.defaultPrice)); }}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${tier === t.id
-                                            ? "border-pink-500 bg-pink-500/20 text-white"
-                                            : "border-white/10 bg-white/5 text-white/50 hover:text-white"
+                                        ? "border-pink-500 bg-pink-500/20 text-white"
+                                        : "border-white/10 bg-white/5 text-white/50 hover:text-white"
                                         }`}
                                 >
                                     {t.label}

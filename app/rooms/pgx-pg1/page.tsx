@@ -6,9 +6,11 @@ import CreatorSpotlight from "@/components/rooms/pgx-pg1/CreatorSpotlight";
 import ConfessionWall from "@/components/rooms/pgx-pg1/ConfessionWall";
 import RequestConfession from "@/components/rooms/pgx-pg1/RequestConfession";
 import MyRequests from "@/components/rooms/pgx-pg1/MyRequests";
-import RandomConfession from "@/components/rooms/pgx-pg1/RandomConfession";
+
 import FloatingHearts from "@/components/rooms/pgx-pg1/FloatingHearts";
 import { createClient } from "@/utils/supabase/client";
+
+import LiveChat from "@/components/rooms/pgx-pg1/LiveChat";
 
 const Index = () => {
     const [roomId, setRoomId] = useState<string | null>(null);
@@ -47,10 +49,10 @@ const Index = () => {
                 <main className="flex-1 p-4 max-w-[1400px] mx-auto w-full overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full">
                         {/* Left Column */}
-                        <div className="h-full">
-                            <div className="flex flex-col h-full gap-4 pr-2">
+                        <div className="h-full overflow-hidden">
+                            <div className="flex flex-col h-full gap-4">
                                 <CreatorSpotlight />
-                                <MyRequests roomId={roomId} />
+                                <LiveChat roomId={roomId} />
                             </div>
                         </div>
 
@@ -60,11 +62,10 @@ const Index = () => {
                         </div>
 
                         {/* Right Column */}
-                        <div className="h-full">
-                            <div className="flex flex-col h-full gap-4 pr-2">
+                        <div className="h-full overflow-hidden">
+                            <div className="flex flex-col h-full gap-4">
                                 <RequestConfession roomId={roomId} creatorId={creatorId} />
-                                <div className="flex-1" />
-                                <RandomConfession />
+                                <MyRequests roomId={roomId} />
                             </div>
                         </div>
                     </div>

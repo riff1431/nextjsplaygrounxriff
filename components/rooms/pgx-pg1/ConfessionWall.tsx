@@ -133,7 +133,7 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
     { icon: "💋", label: "KISS", price: "$10" },
     { icon: "❤️", label: "LOVE", price: "$20" },
     { icon: "🔥", label: "SPICY", price: "$30" },
-    { icon: "🖤", label: "DARK", price: "$40" },
+    { icon: "💎", label: "DIAMONDS", price: "$40" },
   ];
 
   return (
