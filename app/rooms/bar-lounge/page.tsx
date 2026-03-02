@@ -15,6 +15,9 @@ import Link from "next/link";
 import DrinkMenu from "@/components/rooms/bar-lounge/DrinkMenu";
 import LoungeChat from "@/components/rooms/bar-lounge/LoungeChat";
 import TipsSection from "@/components/rooms/bar-lounge/TipsSection";
+import WalletPill from "@/components/common/WalletPill";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { useWallet } from "@/hooks/useWallet";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -53,6 +56,8 @@ export default function BarLoungeRoom() {
     const [hostProfile, setHostProfile] = useState<any>(null);
     const [billingActive, setBillingActive] = useState(false);
     const [spentHidden, setSpentHidden] = useState(32);
+    const { balance: walletBalance } = useWallet();
+    const [pendingPurchase, setPendingPurchase] = useState<{ type: string; label: string; price: number; meta?: any } | null>(null);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -381,6 +386,7 @@ export default function BarLoungeRoom() {
                             </div>
                         </div>
                     </div>
+                    <WalletPill />
                 </div>
 
                 {viewState === 'watching' ? (
@@ -425,6 +431,21 @@ export default function BarLoungeRoom() {
                     </div>
                 )}
             </div>
+
+            {/* Spend Confirm Modal */}
+            <SpendConfirmModal
+                isOpen={!!pendingPurchase}
+                onClose={() => setPendingPurchase(null)}
+                title="Confirm Purchase"
+                itemLabel={pendingPurchase?.label || ''}
+                amount={pendingPurchase?.price || 0}
+                walletBalance={walletBalance}
+                onConfirm={async () => {
+                    if (!pendingPurchase) return;
+                    await handlePurchase(pendingPurchase.type, pendingPurchase.label, pendingPurchase.price, pendingPurchase.meta);
+                    setPendingPurchase(null);
+                }}
+            />
         </div>
     );
 }

@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import CreatorCard from "@/components/rooms/x-chat/CreatorCard";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
 import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
+import WalletPill from "@/components/common/WalletPill";
 
 const XChatRoom = () => {
     const router = useRouter();
@@ -83,6 +84,7 @@ const XChatRoom = () => {
                             <p className="text-foreground text-sm">
                                 Creator – <span className="text-gold-light">{creatorName}</span>
                             </p>
+                            <WalletPill className="mt-1" />
                         </div>
                     </div>
 
@@ -104,7 +106,7 @@ const XChatRoom = () => {
                             </div>
 
                             {/* Paid Reactions & Global Boosts */}
-                            <PaidReactions />
+                            <PaidReactions roomId={roomId} />
                         </div>
 
                         {/* Right: Message Terminal */}

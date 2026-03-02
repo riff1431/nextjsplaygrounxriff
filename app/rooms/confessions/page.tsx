@@ -10,6 +10,9 @@ import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast as sonnerToast } from "sonner";
 import StripePaymentModal from "@/components/live/StripePaymentModal";
+import WalletPill from "@/components/common/WalletPill";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { useWallet } from "@/hooks/useWallet";
 
 import FloatingHearts from "@/components/rooms/confessions/FloatingHearts";
 import CreatorSpotlight from "@/components/rooms/confessions/CreatorSpotlight";
@@ -157,6 +160,7 @@ export default function ConfessionsRoom() {
     const router = useRouter();
     const { user } = useAuth();
     const searchParams = useSearchParams();
+    const { balance: walletBalance, refresh: refreshWallet } = useWallet();
 
     // Dynamic room discovery
     const [roomId, setRoomId] = useState<string | null>(null);
@@ -229,7 +233,15 @@ export default function ConfessionsRoom() {
             }
 
             const supabase = createClient();
-            const channel = supabase
+            // Realtime: new confessions on wall
+            const confessionChannel = supabase
+                .channel('fan-confessions-wall')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'confessions' },
+                    () => { fetchConfessions(creatorSearch, tierFilter); }
+                )
+                .subscribe();
+            // Realtime: notifications for delivered requests
+            const notifChannel = supabase
                 .channel('fan-notifications')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
                     (payload) => {
@@ -240,14 +252,12 @@ export default function ConfessionsRoom() {
                     }
                 )
                 .subscribe();
-            return () => { supabase.removeChannel(channel); };
+            return () => { supabase.removeChannel(confessionChannel); supabase.removeChannel(notifChannel); };
         }
     }, [user, roomId]);
 
     const fetchWallet = async () => {
-        const supabase = createClient();
-        const { data } = await supabase.from('wallets').select('balance').eq('user_id', user?.id).single();
-        if (data) setMyWalletBalance(data.balance);
+        await refreshWallet();
     };
 
     const fetchRequests = async () => {
@@ -470,10 +480,7 @@ export default function ConfessionsRoom() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-950/20 px-3 py-1.5 text-xs font-bold text-amber-200 backdrop-blur-md shadow-inner">
-                                    <Coins className="h-3.5 w-3.5 text-amber-400" />
-                                    <span>${myWalletBalance}</span>
-                                </div>
+                                <WalletPill />
                                 <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all hidden sm:flex border border-transparent hover:border-border/50">
                                     <UserRound className="h-4 w-4 text-primary" /> Requests
                                 </button>
@@ -595,19 +602,16 @@ export default function ConfessionsRoom() {
                 )}
 
                 {/* ── MODAL: Unlock Confession ── */}
-                {purchaseConfession && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="w-full max-w-[360px] rounded-[32px] border border-rose-500/20 bg-[#120205] p-6 shadow-[0_0_50px_rgba(225,29,72,0.25)] relative text-center">
-                            <button onClick={() => setPurchaseConfession(null)} className="absolute top-5 right-5 h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10"><X className="w-4 h-4" /></button>
-                            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/20 flex items-center justify-center border border-rose-500/30 text-rose-400 mb-4"><Lock className="w-5 h-5" /></div>
-                            <h3 className="text-xl font-black text-white mb-2">Unlock Confession</h3>
-                            <p className="text-rose-200/60 text-sm mb-8 px-4">See the full spicy details of this secret.</p>
-                            <Btn variant="rose" onClick={handleUnlockPurchase} className="w-full py-4 rounded-2xl shadow-lg">
-                                Pay ${purchaseConfession.price} to Unlock
-                            </Btn>
-                        </div>
-                    </div>
-                )}
+                <SpendConfirmModal
+                    isOpen={!!purchaseConfession}
+                    onClose={() => setPurchaseConfession(null)}
+                    title="Unlock Confession"
+                    itemLabel={purchaseConfession?.title || 'Secret Confession'}
+                    description="See the full spicy details of this secret."
+                    amount={purchaseConfession?.price || 0}
+                    walletBalance={walletBalance}
+                    onConfirm={handleUnlockPurchase}
+                />
 
                 {/* ── MODAL: View Confession ── */}
                 {viewConfession && (

@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
+import WalletPill from "@/components/common/WalletPill";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { useWallet } from "@/hooks/useWallet";
+import { toast as sonnerToast } from "sonner";
 
 /**
  * Flash Drops Room — Fan View Preview
@@ -18,10 +22,13 @@ export default function FlashDropsRoomPreview() {
     const router = useRouter();
     const { user } = useAuth();
     const onBack = () => router.push("/home");
+    const { balance: walletBalance, refresh: refreshWallet } = useWallet();
 
-    const [walletSpent, setWalletSpent] = useState(420);
     const [toast, setToast] = useState<string | null>(null);
     const [roomId, setRoomId] = useState<string | null>(null);
+
+    // Pending purchase for SpendConfirmModal
+    const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string } | null>(null);
 
     // Discover room
     useEffect(() => {
@@ -41,10 +48,32 @@ export default function FlashDropsRoomPreview() {
         findRoom();
     }, [user]);
 
-    const spend = async (amount: number, msg: string) => {
+    // Realtime listener for flash drop updates
+    useEffect(() => {
+        if (!roomId) return;
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`flash-drops-${roomId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'flash_drops' },
+                () => {
+                    // Drops updated — components will re-fetch
+                    sonnerToast.info("🔥 Drop board updated!");
+                }
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId]);
+
+    // Spend with confirmation
+    const requestSpend = (amount: number, msg: string) => {
+        setPendingSpend({ amount, msg });
+    };
+
+    const executeSpend = useCallback(async () => {
+        if (!pendingSpend) return;
+        const { amount, msg } = pendingSpend;
         if (!roomId) {
             // Local fallback if no room discovered
-            setWalletSpent((s) => s + amount);
             setToast(msg);
             window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2500);
             return;
@@ -60,16 +89,17 @@ export default function FlashDropsRoomPreview() {
             });
             const data = await res.json();
             if (data.success) {
-                setWalletSpent((s) => s + amount);
                 setToast(msg);
+                refreshWallet();
+                sonnerToast.success(`${msg}`);
             } else {
-                setToast(data.error || 'Purchase failed');
+                sonnerToast.error(data.error || 'Purchase failed');
             }
         } catch (e) {
-            setToast('Network error');
+            sonnerToast.error('Network error');
         }
         window.setTimeout(() => setToast(null), 2500);
-    };
+    }, [pendingSpend, roomId, refreshWallet]);
 
     const tickerItems = [
         "🔥 VAULT DROP LIVE NOW",
@@ -130,10 +160,13 @@ export default function FlashDropsRoomPreview() {
                 <div className="relative z-10 flex flex-col min-h-screen max-w-[1500px] mx-auto w-full">
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
-                        <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80">
-                            {tickerItems.map((item, i) => (
-                                <span key={i} className="shrink-0">{item}</span>
-                            ))}
+                        <div className="flex items-center justify-between px-4">
+                            <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80 flex-1">
+                                {tickerItems.map((item, i) => (
+                                    <span key={i} className="shrink-0">{item}</span>
+                                ))}
+                            </div>
+                            <WalletPill compact />
                         </div>
                     </div>
 
@@ -145,12 +178,12 @@ export default function FlashDropsRoomPreview() {
                             <div className="flex-1 flex justify-center gap-20 px-4 pt-20 pb-8">
                                 {/* Left: Drop Board */}
                                 <div className="w-[440px] pb-4">
-                                    <LiveDropBoard onSpend={spend} />
+                                    <LiveDropBoard onSpend={requestSpend} />
                                 </div>
 
                                 {/* Right: Impulse Panel */}
                                 <div className="w-[400px] pb-4">
-                                    <ImpulsePanel onSpend={spend} />
+                                    <ImpulsePanel onSpend={requestSpend} />
                                 </div>
                             </div>
 
@@ -173,7 +206,7 @@ export default function FlashDropsRoomPreview() {
                                             </div>
                                             <div className="fd-font-body text-[10px] text-foreground/40 font-bold uppercase tracking-tight">{bundle.subtitle}</div>
                                             <button
-                                                onClick={() => spend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
+                                                onClick={() => requestSpend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
                                                 className="mt-2 mb-0.5 px-6 py-1.5 rounded-lg fd-font-tech font-black text-xs text-white transition-all hover:scale-110 active:scale-95 uppercase tracking-widest"
                                                 style={{
                                                     background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
@@ -189,6 +222,17 @@ export default function FlashDropsRoomPreview() {
                         </div>
                     </main>
                 </div>
+
+                {/* Spend Confirm Modal */}
+                <SpendConfirmModal
+                    isOpen={!!pendingSpend}
+                    onClose={() => setPendingSpend(null)}
+                    title="Confirm Purchase"
+                    itemLabel={pendingSpend?.msg || ''}
+                    amount={pendingSpend?.amount || 0}
+                    walletBalance={walletBalance}
+                    onConfirm={executeSpend}
+                />
             </div>
         </ProtectRoute>
     );

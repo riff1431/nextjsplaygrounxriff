@@ -15,6 +15,9 @@ import {
   Gift,
 } from "lucide-react";
 import BrandLogo from "@/components/common/BrandLogo";
+import WalletPill from "@/components/common/WalletPill";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast as sonnerToast } from "sonner";
@@ -314,6 +317,10 @@ function useDevSanityTests() {
 export default function Suga4URoom() {
   useDevSanityTests();
   const { user } = useAuth();
+  const { balance: walletBalance, refresh: refreshWallet } = useWallet();
+
+  // Pending spend for SpendConfirmModal
+  const [pendingSpend, setPendingSpend] = useState<{ amount: number; label: string; onConfirm: () => void } | null>(null);
 
   // In production, these come from creator profile + fan subscription state.
   const [creatorGender] = useState<CreatorGender>("female");
@@ -342,6 +349,19 @@ export default function Suga4URoom() {
     }
     findRoom();
   }, [user]);
+
+  // Realtime subscription for suga room updates
+  useEffect(() => {
+    if (!roomId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`suga-room-${roomId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'suga_requests' },
+        () => { sonnerToast.info("💖 New activity in Suga room!"); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [roomId]);
 
   // Chat + reactions
   const [chat, setChat] = useState<string[]>(["Welcome to Suga4U 💖"]);
@@ -542,7 +562,9 @@ export default function Suga4URoom() {
           </span>
 
           {/* Pay-to-stay status (no pricing shown) */}
-
+        </div>
+        <div className="flex items-center gap-3">
+          <WalletPill />
         </div>
       </div>
 
@@ -836,6 +858,23 @@ export default function Suga4URoom() {
         </aside>
       </main>
 
+
+      {/* Spend Confirm Modal */}
+      <SpendConfirmModal
+        isOpen={!!pendingSpend}
+        onClose={() => setPendingSpend(null)}
+        title="Confirm Purchase"
+        itemLabel={pendingSpend?.label || ''}
+        amount={pendingSpend?.amount || 0}
+        walletBalance={walletBalance}
+        onConfirm={async () => {
+          if (pendingSpend) {
+            await pendingSpend.onConfirm();
+            setPendingSpend(null);
+            refreshWallet();
+          }
+        }}
+      />
 
     </div>
   );

@@ -32,6 +32,7 @@ import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New C
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 import { playNotificationSound, playSuccessSound, playErrorSound, playMoneySound } from "@/utils/sounds"; // Added playNotificationSound, playMoneySound
 import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVotePanel
+import WalletPill from "@/components/common/WalletPill";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -664,7 +665,8 @@ function TruthOrDareContent() {
                     </button>
                     <BrandLogo showBadge={false} />
                 </div>
-                {/* Right side of header is empty in screenshot */}
+                {/* Wallet + Status */}
+                <WalletPill />
             </div>
 
             {/* Paywall Overlay */}
@@ -1181,13 +1183,15 @@ function TruthOrDareContent() {
             </AnimatePresence>
 
             {/* Question Countdown & Reveal */}
-            {showCountdown && userId && roomId && (
-                <QuestionCountdown
-                    roomId={roomId}
-                    userId={userId}
-                    onClose={() => setShowCountdown(false)}
-                />
-            )}
+            {
+                showCountdown && userId && roomId && (
+                    <QuestionCountdown
+                        roomId={roomId}
+                        userId={userId}
+                        onClose={() => setShowCountdown(false)}
+                    />
+                )
+            }
 
             {/* Overlay */}
             <InteractionOverlay
