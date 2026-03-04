@@ -3,12 +3,44 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/v1/rooms/[roomId]/bar-lounge/request
- * Fan sends a request (song/drink/champagne/vip_bottle/tip).
+ * Fan sends a request (drink/tip/vip/booth/pin/song/champagne/vip_bottle).
  * Body: { type, label, amount }
  *
  * GET /api/v1/rooms/[roomId]/bar-lounge/request
  * Get all requests for this room.
  */
+
+// Allowed types in bar_lounge_requests check constraint
+const ALLOWED_TYPES = new Set([
+    "song", "champagne", "vip_bottle", "tip", "drink", "vip", "booth", "pin",
+]);
+
+// Normalise any incoming type to a constraint-safe value
+function normaliseType(type: string, label?: string): string {
+    const t = (type || "").toLowerCase().trim();
+    if (ALLOWED_TYPES.has(t)) return t;
+
+    // Map common UI aliases
+    const aliases: Record<string, string> = {
+        "vip upgrade": "vip",
+        "vip_upgrade": "vip",
+        "booth reservation": "booth",
+        "booth_reservation": "booth",
+        "pin name to top": "pin",
+        "pin_name": "pin",
+        "champagne bottle": "champagne",
+        "champagne_bottle": "champagne",
+        "vip bottle": "vip_bottle",
+        "vip_bottle_drink": "vip_bottle",
+    };
+
+    const alias = aliases[t] || aliases[(label || "").toLowerCase().trim()];
+    if (alias) return alias;
+
+    // Fallback — any drink-like thing is "drink"
+    return "drink";
+}
+
 export async function GET(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
@@ -44,6 +76,9 @@ export async function POST(
         return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
+    // Normalise type to allowed constraint values
+    const safeType = normaliseType(type, label);
+
     // Get room creator
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
@@ -58,17 +93,24 @@ export async function POST(
         p_amount: amount,
         p_description: `Bar Lounge: ${label || type}`,
         p_room_id: roomId,
-        p_related_type: `bar_${type}`,
+        p_related_type: `bar_${safeType}`,
         p_related_id: null,
     });
 
     if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
     if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
 
-    // Insert request
+    // Insert request with safe type
     const { data: req, error: reqError } = await supabase
         .from("bar_lounge_requests")
-        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", type, label, amount })
+        .insert({
+            room_id: roomId,
+            fan_id: user.id,
+            fan_name: profile?.username || "Anonymous",
+            type: safeType,
+            label,
+            amount,
+        })
         .select().single();
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
@@ -80,13 +122,23 @@ export async function POST(
         reference_id: req.id,
     });
 
-    // System message in chat feed so both creator and fans see it live
-    const emoji = type === "drink" ? "🍸" : type === "tip" ? "💰" : type === "vip" ? "👑" : type === "booth" ? "🛋️" : "⚡";
+    // System message in chat feed
+    const emoji =
+        safeType === "drink" ? "🍸"
+            : safeType === "champagne" ? "🥂"
+                : safeType === "vip_bottle" ? "🍾"
+                    : safeType === "tip" ? "💰"
+                        : safeType === "vip" ? "👑"
+                            : safeType === "booth" ? "🛋️"
+                                : safeType === "pin" ? "📌"
+                                    : safeType === "song" ? "🎵"
+                                        : "⚡";
+
     await supabase.from("bar_lounge_messages").insert({
         room_id: roomId,
         user_id: user.id,
         handle: profile?.username || "Fan",
-        content: `${emoji} ${profile?.username || "Fan"} ${type === "tip" ? "sent a" : "bought"} ${label || type} ($${amount})`,
+        content: `${emoji} ${profile?.username || "Fan"} ${safeType === "tip" ? "sent a" : "bought"} ${label || type} ($${amount})`,
         is_system: true,
     });
 
