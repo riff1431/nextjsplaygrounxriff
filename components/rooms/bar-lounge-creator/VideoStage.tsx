@@ -1,6 +1,11 @@
 "use client";
 
 import { Heart } from "lucide-react";
+import dynamic from "next/dynamic";
+import { useAuth } from "@/app/context/AuthContext";
+
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const FloatingHeart = ({ delay, left }: { delay: number; left: string }) => (
     <div
@@ -16,7 +21,13 @@ const FloatingHeart = ({ delay, left }: { delay: number; left: string }) => (
     </div>
 );
 
-const VideoStage = () => {
+interface VideoStageProps {
+    roomId?: string;
+}
+
+const VideoStage = ({ roomId }: VideoStageProps) => {
+    const { user } = useAuth();
+
     return (
         <div className="relative flex flex-col items-center justify-center h-full">
             {/* Floating hearts */}
@@ -35,13 +46,29 @@ const VideoStage = () => {
                     background: "hsla(270, 50%, 8%, 0.3)",
                 }}
             >
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background: "linear-gradient(to bottom, hsla(270, 30%, 18%, 0.2), hsla(270, 50%, 8%, 0.9))",
-                    }}
-                />
-                <p className="text-sm z-10" style={{ color: "hsl(280, 15%, 60%)" }}>Live Stream</p>
+                {roomId && user ? (
+                    <LiveStreamWrapper
+                        role="host"
+                        appId={APP_ID}
+                        roomId={roomId}
+                        uid={user.id || 0}
+                        hostId={user.id || ""}
+                        hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                        hostName={user.user_metadata?.full_name || "You"}
+                    />
+                ) : (
+                    <>
+                        <div
+                            className="absolute inset-0"
+                            style={{
+                                background: "linear-gradient(to bottom, hsla(270, 30%, 18%, 0.2), hsla(270, 50%, 8%, 0.9))",
+                            }}
+                        />
+                        <p className="text-sm z-10" style={{ color: "hsl(280, 15%, 60%)" }}>
+                            Connecting to Live Stream...
+                        </p>
+                    </>
+                )}
             </div>
 
             {/* Sparkle effects */}

@@ -80,6 +80,16 @@ export async function POST(
         reference_id: req.id,
     });
 
+    // System message in chat feed so both creator and fans see it live
+    const emoji = type === "drink" ? "🍸" : type === "tip" ? "💰" : type === "vip" ? "👑" : type === "booth" ? "🛋️" : "⚡";
+    await supabase.from("bar_lounge_messages").insert({
+        room_id: roomId,
+        user_id: user.id,
+        handle: profile?.username || "Fan",
+        content: `${emoji} ${profile?.username || "Fan"} ${type === "tip" ? "sent a" : "bought"} ${label || type} ($${amount})`,
+        is_system: true,
+    });
+
     return NextResponse.json({ success: true, request: req, new_balance: result.new_balance });
 }
 
