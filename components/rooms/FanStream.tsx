@@ -57,20 +57,11 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
         }
     }, [client]);
 
-    // Get Active Remote Users
+    // Get Active Remote Users — host is the first broadcaster in the channel.
+    // Agora assigns numeric UIDs so we cannot match by UUID string;
+    // in a Bar Lounge there is always exactly one broadcaster (the host).
     const remoteUsers = useRemoteUsers();
-
-    // We want to watch the specific HOST (hostId).
-    console.log("FanStream: Waiting for hostId:", hostId, typeof hostId);
-    console.log("FanStream: Active Remote Users:", remoteUsers.map(u => ({ uid: u.uid, hasAudio: u.hasAudio, hasVideo: u.hasVideo })));
-
-    const broadcaster = remoteUsers.find(user => {
-        const isMatch = String(user.uid) === String(hostId);
-        console.log(`Checking user ${user.uid} vs host ${hostId}: ${isMatch}`);
-        return isMatch;
-    });
-
-    // Check if host's video is disabled
+    const broadcaster = remoteUsers[0] ?? null; // first (and only) broadcaster
     const hostHasVideo = broadcaster?.hasVideo ?? false;
 
     if (!isReady) return <div className="w-full h-full flex items-center justify-center bg-black text-gray-600 text-xs">Connecting...</div>;

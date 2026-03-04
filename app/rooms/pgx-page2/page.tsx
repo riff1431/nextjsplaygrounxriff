@@ -130,7 +130,7 @@ function PgxPage2Inner() {
     const roomId = searchParams.get("roomId");
     const hostId = searchParams.get("hostId");
 
-    const [hostProfile, setHostProfile] = useState<{ full_name?: string; handle?: string; avatar_url?: string } | null>(null);
+    const [hostProfile, setHostProfile] = useState<{ full_name?: string; username?: string; avatar_url?: string } | null>(null);
     const [drinks, setDrinks] = useState<any[]>(DEFAULT_DRINKS);
     const [vipPrice, setVipPrice] = useState(150);
     const [isLoading, setIsLoading] = useState(true);
@@ -149,7 +149,7 @@ function PgxPage2Inner() {
         (async () => {
             try {
                 if (hostId) {
-                    const { data: p } = await supabase.from("profiles").select("full_name, handle, avatar_url").eq("id", hostId).single();
+                    const { data: p } = await supabase.from("profiles").select("full_name, username, avatar_url").eq("id", hostId).single();
                     if (mounted && p) setHostProfile(p);
                 }
                 const { data: cfg } = await supabase.from("admin_bar_config").select("*").eq("id", 1).single();
@@ -209,7 +209,7 @@ function PgxPage2Inner() {
         setChatInput("");
     };
 
-    const creatorName = hostProfile?.full_name || hostProfile?.handle || "[CreatorName]";
+    const creatorName = hostProfile?.full_name || hostProfile?.username || "[CreatorName]";
 
     /* ── No session fallback ─── */
     if (!isLoading && !roomId) {
