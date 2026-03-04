@@ -7,7 +7,11 @@ import { useBarChat } from "@/hooks/useBarChat";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import WalletPill from "@/components/common/WalletPill";
+import dynamic from "next/dynamic";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Design tokens — exact from reference index.css
@@ -66,10 +70,10 @@ const DEFAULT_DRINKS = [
     { id: "d1", name: "VIP Bottle", price: 550, icon: "🍾" },
     { id: "d2", name: "Champagne", price: 250, icon: "🥂" },
     { id: "d3", name: "69 Bar Shot", price: 50, icon: "♋" },
-    { id: "d4", name: "Blowjob Shot", price: 50, icon: "😮‍💨" },
+    { id: "d4", name: "Blowjob Shot", price: 50, icon: "😮\u200d💨" },
     { id: "d5", name: "Pornstar Shot", price: 50, icon: "🌟" },
     { id: "d6", name: "Quickie Shot", price: 50, icon: "⏱️" },
-    { id: "d7", name: "Liquid Lust Shot", price: 50, icon: "❤️‍🔥" },
+    { id: "d7", name: "Liquid Lust Shot", price: 50, icon: "❤️\u200d🔥" },
     { id: "d8", name: "Cream & Scream Shot", price: 50, icon: "🍦" },
     { id: "d9", name: "Temptation Shot", price: 50, icon: "🍎" },
     { id: "d10", name: "Devil's Kiss Shot", price: 50, icon: "💋" },
@@ -120,7 +124,7 @@ function PgxPage2Inner() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuth();
-    const { balance: walletBalance, refresh: refreshWallet } = useWallet();
+    const { refresh: refreshWallet } = useWallet();
     const { toasts, push: showToast } = useToasts();
 
     const roomId = searchParams.get("roomId");
@@ -131,7 +135,7 @@ function PgxPage2Inner() {
     const [vipPrice, setVipPrice] = useState(150);
     const [isLoading, setIsLoading] = useState(true);
     const [tipAmount, setTipAmount] = useState<number | string>("");
-    const [buying, setBuying] = useState<string | null>(null);   // item ID being purchased
+    const [buying, setBuying] = useState<string | null>(null);
     const [chatInput, setChatInput] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
@@ -168,7 +172,7 @@ function PgxPage2Inner() {
     /* ── Auto-scroll chat ─── */
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-    /* ── INSTANT PURCHASE — no confirm modal ─── */
+    /* ── INSTANT PURCHASE ─── */
     const doPurchase = useCallback(async (type: string, label: string, price: number, itemId: string) => {
         if (!roomId || buying) return;
         setBuying(itemId);
@@ -180,7 +184,6 @@ function PgxPage2Inner() {
             });
             const data = await res.json();
             if (data.success) {
-                // Fan success toast + wallet refresh
                 const emoji = type === "drink" ? "🍸" : type === "tip" ? "💰" : type === "vip" ? "👑" : type === "booth" ? "🛋️" : type === "pin" ? "📌" : "⚡";
                 showToast(`${emoji} ${label} sent! -$${price} from your wallet`, "success");
                 await refreshWallet();
@@ -348,23 +351,56 @@ function PgxPage2Inner() {
                         </div>
                     </div>
 
-                    {/* ═══ CENTER: Creator Stream + Tips ═══ */}
+                    {/* ═══ CENTER: Live Stream + Tips ═══ */}
                     <div style={{ display: "flex", flexDirection: "column" }}>
+
+                        {/* Live stream */}
                         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", height: "100%", top: "208px" }}>
-                            <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", maxWidth: "28rem", width: "100%" }}>
-                                {hostProfile?.avatar_url
-                                    ? <img src={hostProfile.avatar_url} alt={creatorName} style={{ width: "100%", objectFit: "cover", borderRadius: "0.75rem" }} />
-                                    : <div style={{ width: "100%", aspectRatio: "4/3", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "0.75rem" }}>
-                                        <Wine style={{ width: "80px", height: "80px", color: `${GOLD}33` }} />
+                            <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", maxWidth: "28rem", width: "100%", minHeight: "260px" }}>
+
+                                {/* Real Agora fan stream */}
+                                {roomId && user ? (
+                                    <div style={{ width: "100%", minHeight: "260px", borderRadius: "0.75rem", overflow: "hidden" }}>
+                                        <LiveStreamWrapper
+                                            role="fan"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id || 0}
+                                            hostId={hostId || ""}
+                                            hostAvatarUrl={hostProfile?.avatar_url || null}
+                                            hostName={creatorName}
+                                        />
                                     </div>
-                                }
-                                <div className="pg2-float" style={{ position: "absolute", top: "40px", right: "16px" }}>
+                                ) : (
+                                    <div style={{ width: "100%", aspectRatio: "4/3", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "0.75rem" }}>
+                                        <Wine style={{ width: "60px", height: "60px", color: `${GOLD}33` }} />
+                                        <span style={{ fontSize: "13px", color: MUTED }}>Connecting to stream...</span>
+                                    </div>
+                                )}
+
+                                {/* Floating hearts */}
+                                <div className="pg2-float" style={{ position: "absolute", top: "40px", right: "16px", zIndex: 10, pointerEvents: "none" }}>
                                     <Heart className="pg2-glow-pulse" style={{ width: "40px", height: "40px", color: PINK, fill: "hsla(320,100%,65%,0.5)", filter: "drop-shadow(0 0 10px hsla(320,100%,65%,0.6))" }} />
                                 </div>
-                                <div className="pg2-float" style={{ position: "absolute", top: "48px", right: "64px", animationDelay: "1s" }}>
+                                <div className="pg2-float" style={{ position: "absolute", top: "48px", right: "64px", animationDelay: "1s", zIndex: 10, pointerEvents: "none" }}>
                                     <Heart className="pg2-glow-pulse" style={{ width: "24px", height: "24px", color: PINK, fill: "hsla(320,100%,65%,0.3)", filter: "drop-shadow(0 0 8px hsla(320,100%,65%,0.4))" }} />
                                 </div>
-                                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "96px", background: "linear-gradient(to top, hsla(270,50%,8%,0.8), transparent)" }} />
+
+                                {/* Bottom gradient */}
+                                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "64px", background: "linear-gradient(to top, hsla(270,50%,8%,0.8), transparent)", zIndex: 5, pointerEvents: "none" }} />
+
+                                {/* LIVE badge */}
+                                <div style={{ position: "absolute", top: "12px", left: "12px", zIndex: 10, display: "flex", alignItems: "center", gap: "6px", background: "hsla(0,80%,45%,0.9)", border: "1px solid hsla(0,80%,60%,0.5)", borderRadius: "9999px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "#fff", backdropFilter: "blur(8px)", letterSpacing: "0.08em" }}>
+                                    <span className="pg2-glow-pulse" style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#fff", display: "inline-block" }} />
+                                    LIVE
+                                </div>
+
+                                {/* Creator name badge */}
+                                {creatorName !== "[CreatorName]" && (
+                                    <div style={{ position: "absolute", bottom: "12px", left: "12px", zIndex: 10, background: "hsla(270,50%,8%,0.75)", backdropFilter: "blur(8px)", borderRadius: "0.5rem", padding: "4px 10px", fontSize: "12px", fontWeight: 600, color: FG }}>
+                                        {creatorName}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
