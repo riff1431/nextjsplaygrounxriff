@@ -33,6 +33,7 @@ interface FanProfile {
 export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName }: CreatorStreamProps) {
     const supabase = createClient();
     const [token, setToken] = useState<string | null>(null);
+    const [numericUid, setNumericUid] = useState<number>(0);
     const [isStreaming, setIsStreaming] = useState(true);
     const client = useRTCClient();
 
@@ -140,11 +141,12 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                     throw new Error(data.error);
                 }
 
-                if (data.token) {
+                if (data.token !== undefined) {
                     setToken(data.token);
                 } else {
                     throw new Error("No token returned from API");
                 }
+                if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e: any) {
                 console.error("Failed to fetch token", e);
                 if (mounted) setError(e.message || "Failed to load studio token.");
@@ -162,8 +164,8 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     // Let's stick to: Join always (so we can get remote users/chat), Publish only when isStreaming.
 
     useJoin(
-        { appid: appId, channel: channelName, token: token || null, uid: uid },
-        !!token // Join as soon as we have a token
+        { appid: appId, channel: channelName, token: token || null, uid: numericUid || uid },
+        !!token && numericUid > 0
     );
 
     usePublish([localMicrophoneTrack, localCameraTrack], isStreaming && !!token && !!localMicrophoneTrack && !!localCameraTrack);

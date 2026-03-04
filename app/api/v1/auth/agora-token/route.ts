@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RtcTokenBuilder, RtcRole } from 'agora-token';
 
+/**
+ * Convert a UUID / arbitrary string to a deterministic uint32 numeric UID.
+ * Agora RTC requires numeric UIDs. Uses a simple djb2 hash.
+ */
+function toNumericUid(input: string | number): number {
+    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+        hash = hash >>> 0; // keep as uint32
+    }
+    return hash || 1; // never 0 (reserved by Agora)
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { channelName, role, uid, expireTime } = await request.json();
@@ -16,33 +30,34 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Agora App ID not configured' }, { status: 500 });
         }
 
-        // If no certificate, assume "App ID only" mode and return null token
+        // Convert UUID / string → numeric UID (required by Agora RTC)
+        const numericUid = toNumericUid(uid ?? 0);
+
+        // If no certificate, use "App ID only" mode — return null token + numericUid
         if (!appCertificate) {
-            console.warn("Agora App Certificate not found. Returning null token for App ID only mode.");
-            return NextResponse.json({ token: null });
+            console.warn("Agora App Certificate not found. Using App ID only mode.");
+            return NextResponse.json({ token: null, numericUid });
         }
 
-        // Set role: PUBLISHER (1) or SUBSCRIBER (2)
+        // Set role: PUBLISHER (broadcaster) or SUBSCRIBER (audience)
         const rtcRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
 
-        // Token expiration time (default to 24 hours if not provided)
         const expirationTimeInSeconds = expireTime || 3600 * 24;
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
-        // Build token
-        // Use buildTokenWithUserAccount to support String UIDs (Supabase UUIDs)
-        const token = RtcTokenBuilder.buildTokenWithUserAccount(
+        // Build token with numeric UID — reliable, no User Management service needed
+        const token = RtcTokenBuilder.buildTokenWithUid(
             appId,
             appCertificate,
             channelName,
-            String(uid || 0), // Ensure it is a string
+            numericUid,
             rtcRole,
             privilegeExpiredTs,
-            privilegeExpiredTs // agora-token v2 requires this twice
+            privilegeExpiredTs
         );
 
-        return NextResponse.json({ token });
+        return NextResponse.json({ token, numericUid });
 
     } catch (error: any) {
         console.error("Agora Token Error:", error);
