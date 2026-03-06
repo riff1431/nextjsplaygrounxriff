@@ -19,6 +19,7 @@ import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/Interactio
 import BrandLogo from "@/components/common/BrandLogo";
 
 // ---------- Pricing / constants ----------
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 const CREATOR_SESSION_FEE = 15;
 const TIP_SPLIT_CREATOR = 0.9; // 90/10
 const TIERS = [
@@ -514,7 +515,10 @@ export default function TruthOrDareCreatorPage() {
                     });
                     playMoneySound();
                     // Update session earnings
-                    setSessionEarnings(prev => prev + (data.earnedAmount || 0));
+                    setSessionEarnings(prev => ({
+                        ...prev,
+                        total: prev.total + (data.earnedAmount || 0)
+                    }));
                 }, 3000);
             })
             .subscribe();
@@ -957,10 +961,17 @@ export default function TruthOrDareCreatorPage() {
             {/* Top row: Chat | Stream | Earnings */}
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-3 lg:gap-4 mb-3 lg:mb-4">
                 <div className="h-[420px]">
-                    <TodCreatorLiveChat roomId={roomId} />
+                    <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
                 </div>
                 <div className="h-[420px]">
-                    <TodCreatorStreamViewer />
+                    <TodCreatorStreamViewer
+                        roomId={roomId}
+                        userId={me.id}
+                        appId={APP_ID}
+                        avatarUrl={myAvatarUrl}
+                        creatorName={me.name}
+                        viewerCount={fans.length}
+                    />
                 </div>
                 <div className="h-[420px]">
                     <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
@@ -988,7 +999,7 @@ export default function TruthOrDareCreatorPage() {
                     />
                 </div>
                 <div className="h-[400px] lg:h-[450px] overflow-hidden">
-                    <GroupVoteManager />
+                    <GroupVoteManager roomId={roomId} />
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Search, Send } from "lucide-react";
+import { Heart, Send, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -8,34 +8,46 @@ import { toast } from "sonner";
 interface ChatMessage {
     id: string;
     room_id: string;
-    sender_id: string;
-    sender_name: string;
-    body: string;
-    tip_amount: number;
-    has_attachment: boolean;
-    is_pinned: boolean;
-    created_at?: string;
+    user_id: string;
+    username: string;
+    message: string;
+    created_at: string;
 }
 
 interface TodCreatorLiveChatProps {
     roomId: string | null;
+    viewerCount?: number;
 }
 
-const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
+const TodCreatorLiveChat = ({ roomId, viewerCount = 0 }: TodCreatorLiveChatProps) => {
     const supabase = createClient();
     const [msg, setMsg] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [viewerCount, setViewerCount] = useState(0);
+    const [sending, setSending] = useState(false);
+    const [loading, setLoading] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const [myProfile, setMyProfile] = useState<{ id: string, name: string } | null>(null);
+    const [myProfile, setMyProfile] = useState<{ id: string; name: string } | null>(null);
+
+    const scrollToBottom = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    };
 
     // Fetch user profile
     useEffect(() => {
         const fetchProfile = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data } = await supabase.from("profiles").select("id, name").eq("id", user.id).single();
-                if (data) setMyProfile({ id: data.id, name: data.name || "User" });
+                const { data } = await supabase
+                    .from("profiles")
+                    .select("id, full_name, username")
+                    .eq("id", user.id)
+                    .single();
+                if (data) {
+                    const name = data.full_name || data.username || user.email?.split("@")[0] || "Creator";
+                    setMyProfile({ id: data.id, name });
+                }
             }
         };
         fetchProfile();
@@ -48,7 +60,7 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
         const fetchMessages = async () => {
             const { data, error } = await supabase
                 .from("chat_messages")
-                .select("*")
+                .select("id, room_id, user_id, username, message, created_at")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(100);
@@ -56,6 +68,8 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
             if (data && !error) {
                 setMessages(data);
             }
+            setLoading(false);
+            setTimeout(scrollToBottom, 100);
         };
 
         fetchMessages();
@@ -72,7 +86,9 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
                     filter: `room_id=eq.${roomId}`,
                 },
                 (payload) => {
-                    setMessages((prev) => [...prev, payload.new as ChatMessage]);
+                    const newMsg = payload.new as ChatMessage;
+                    setMessages((prev) => [...prev, newMsg]);
+                    setTimeout(scrollToBottom, 100);
                 }
             )
             .subscribe();
@@ -82,24 +98,20 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
         };
     }, [roomId]);
 
-    // Auto-scroll
+    // Auto-scroll on new messages
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        scrollToBottom();
     }, [messages]);
 
     const handleSend = async () => {
-        if (!msg.trim() || !roomId || !myProfile) return;
+        if (!msg.trim() || !roomId || !myProfile || sending) return;
+        setSending(true);
 
         const { error } = await supabase.from("chat_messages").insert({
             room_id: roomId,
-            sender_id: myProfile.id,
-            sender_name: myProfile.name,
-            body: msg.trim(),
-            tip_amount: 0,
-            has_attachment: false,
-            is_pinned: false,
+            user_id: myProfile.id,
+            username: myProfile.name,
+            message: msg.trim(),
         });
 
         if (error) {
@@ -107,6 +119,12 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
         } else {
             setMsg("");
         }
+        setSending(false);
+    };
+
+    const formatTime = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
     return (
@@ -118,7 +136,7 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
                 </div>
                 <div className="flex items-center gap-1.5 tod-creator-text-neon-pink text-sm">
                     <Heart className="w-4 h-4 fill-current" />
-                    <span className="font-bold">{viewerCount || (messages.length > 0 ? messages.length * 3 : 1)}</span>
+                    <span className="font-bold">{viewerCount || messages.length}</span>
                 </div>
             </div>
 
@@ -126,31 +144,35 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
                 ref={scrollRef}
                 className="flex-1 space-y-3 overflow-y-auto pr-1 min-h-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
             >
-                {messages.length === 0 ? (
+                {loading ? (
+                    <div className="flex items-center justify-center h-full">
+                        <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+                    </div>
+                ) : messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-white/40 text-xs tracking-wider uppercase">No messages yet</p>
                     </div>
                 ) : (
                     messages.map((m) => {
-                        const isMe = m.sender_id === myProfile?.id;
+                        const isMe = m.user_id === myProfile?.id;
                         return (
                             <div key={m.id} className="flex items-start gap-2.5 group">
                                 <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white border ${isMe ? 'bg-blue-600/30 border-blue-400' : 'bg-pink-600/30 border-pink-400'}`}>
-                                    {m.sender_name?.charAt(0).toUpperCase() || '?'}
+                                    {m.username?.charAt(0).toUpperCase() || '?'}
                                 </div>
-                                <div>
+                                <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline gap-1.5">
                                         <span className={`font-bold text-xs ${isMe ? 'tod-creator-text-neon-blue' : 'tod-creator-text-neon-pink'}`}>
-                                            {m.sender_name || "Unknown"}
+                                            {m.username || "Unknown"}
                                         </span>
-                                        {m.tip_amount > 0 && (
-                                            <span className="text-[10px] text-yellow-400 font-bold bg-yellow-400/10 px-1.5 py-0.5 rounded-full">
-                                                tipped ${m.tip_amount}
+                                        {m.created_at && (
+                                            <span className="text-[10px] text-white/30 ml-auto shrink-0">
+                                                {formatTime(m.created_at)}
                                             </span>
                                         )}
                                     </div>
                                     <p className="text-sm text-white/80 mt-0.5 break-words max-w-[200px] leading-snug">
-                                        {m.body}
+                                        {m.message}
                                     </p>
                                 </div>
                             </div>
@@ -162,18 +184,27 @@ const TodCreatorLiveChat = ({ roomId }: TodCreatorLiveChatProps) => {
             <div className="mt-3 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2 shrink-0">
                 <input
                     className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
-                    placeholder="Send a message..."
+                    placeholder={myProfile ? "Send a message..." : "Loading..."}
                     value={msg}
                     onChange={(e) => setMsg(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                    disabled={!roomId}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                        }
+                    }}
+                    disabled={!roomId || !myProfile}
                 />
                 <button
                     onClick={handleSend}
-                    disabled={!msg.trim() || !roomId}
+                    disabled={!msg.trim() || !roomId || !myProfile || sending}
                     className="p-1 hover:bg-white/10 rounded-md transition-colors disabled:opacity-50"
                 >
-                    <Send className="w-4 h-4 tod-creator-text-neon-blue" />
+                    {sending ? (
+                        <Loader2 className="w-4 h-4 animate-spin tod-creator-text-neon-blue" />
+                    ) : (
+                        <Send className="w-4 h-4 tod-creator-text-neon-blue" />
+                    )}
                 </button>
             </div>
         </div>

@@ -11,18 +11,70 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
-        // Fetch active sessions (public ones, + any private ones user has access to)
-        const { data: sessions, error } = await supabase
+        // Fetch active sessions (without FK join — fetch profiles separately)
+        const { data: rawSessions, error } = await supabase
             .from("truth_dare_sessions")
             .select(`
                 id, title, description, session_type, is_private, price,
-                status, started_at, creator_id, room_id,
-                creator:profiles!truth_dare_sessions_creator_id_fkey(full_name, username, avatar_url)
+                status, started_at, creator_id, room_id
             `)
             .eq("status", "active")
             .order("started_at", { ascending: false });
 
         if (error) throw error;
+
+        // Cross-reference with rooms table: only show sessions whose room is currently 'live'
+        const roomIds = [...new Set((rawSessions || []).map((s: any) => s.room_id).filter(Boolean))];
+        let liveRoomIds = new Set<string>();
+
+        if (roomIds.length > 0) {
+            const { data: liveRooms } = await supabase
+                .from("rooms")
+                .select("id")
+                .in("id", roomIds)
+                .eq("status", "live");
+
+            if (liveRooms) {
+                for (const r of liveRooms) {
+                    liveRoomIds.add(r.id);
+                }
+            }
+        }
+
+        // Filter to only sessions with live rooms
+        const liveFiltered = (rawSessions || []).filter((s: any) => liveRoomIds.has(s.room_id));
+
+        // Deduplicate: keep only the most recent (latest) session per room
+        // rawSessions is already ordered by started_at DESC, so the first per room_id is the newest
+        const seenRooms = new Set<string>();
+        const activeSessions = liveFiltered.filter((s: any) => {
+            if (seenRooms.has(s.room_id)) return false;
+            seenRooms.add(s.room_id);
+            return true;
+        });
+
+        // Fetch creator profiles separately
+        const creatorIds = [...new Set(activeSessions.map((s: any) => s.creator_id).filter(Boolean))];
+        let profileMap: Record<string, any> = {};
+
+        if (creatorIds.length > 0) {
+            const { data: profiles } = await supabase
+                .from("profiles")
+                .select("id, full_name, username, avatar_url")
+                .in("id", creatorIds);
+
+            if (profiles) {
+                for (const p of profiles) {
+                    profileMap[p.id] = { full_name: p.full_name, username: p.username, avatar_url: p.avatar_url };
+                }
+            }
+        }
+
+        // Merge creator info into sessions
+        const sessions = activeSessions.map((s: any) => ({
+            ...s,
+            creator: profileMap[s.creator_id] || null,
+        }));
 
         // Filter: public sessions + private sessions where user has approved request
         let filteredSessions = (sessions || []).filter((s: any) => !s.is_private);

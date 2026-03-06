@@ -91,6 +91,9 @@ export async function POST(
 
             if (updateError) throw updateError;
 
+            // C. Set room status to 'ended' so it no longer appears as live
+            await supabase.from('rooms').update({ status: 'ended' }).eq('id', roomId);
+
             return NextResponse.json({ success: true, message: "Session ended" });
         }
 
