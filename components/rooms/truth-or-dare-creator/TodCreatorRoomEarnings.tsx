@@ -1,11 +1,21 @@
 "use client";
 
-const TodCreatorRoomEarnings = () => {
+interface SessionEarnings {
+    total: number;
+    tips: number;
+    truths: number;
+    dares: number;
+    custom: number;
+}
+
+const TodCreatorRoomEarnings = ({ earnings }: { earnings?: SessionEarnings }) => {
+    const data = earnings || { total: 0, tips: 0, truths: 0, dares: 0, custom: 0 };
+
     const items = [
-        { label: "Tips", amount: "$0.00" },
-        { label: "Truths", amount: "$0.00" },
-        { label: "Dares", amount: "$0.00" },
-        { label: "Custom", amount: "$0.00" },
+        { label: "Tips", amount: `$${data.tips.toFixed(2)}` },
+        { label: "Truths", amount: `$${data.truths.toFixed(2)}` },
+        { label: "Dares", amount: `$${data.dares.toFixed(2)}` },
+        { label: "Custom", amount: `$${data.custom.toFixed(2)}` },
     ];
 
     return (
@@ -13,7 +23,7 @@ const TodCreatorRoomEarnings = () => {
             <h3 className="font-bold text-white mb-3">Room Earnings</h3>
             <div className="text-center mb-4 py-3 rounded-lg tod-creator-neon-border-green tod-creator-glow-green">
                 <p className="text-xs tod-creator-text-neon-green font-semibold tracking-wider uppercase">Total Earned</p>
-                <p className="text-4xl font-black tod-creator-text-neon-green">$ 0.00</p>
+                <p className="text-4xl font-black tod-creator-text-neon-green">$ {data.total.toFixed(2)}</p>
             </div>
             <div className="space-y-2">
                 {items.map((item) => (

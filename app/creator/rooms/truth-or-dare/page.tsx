@@ -279,6 +279,15 @@ export default function TruthOrDareCreatorRoom() {
     });
     const [sessionInfo, setSessionInfo] = useState<{ title: string; isPrivate: boolean; price: number } | null>(null);
 
+    // Wallet & Fee State
+    const CREATOR_SESSION_FEE = 10;
+    const [creatorWalletBalance, setCreatorWalletBalance] = useState<number | null>(null);
+    const [isCreatingSession, setIsCreatingSession] = useState(false);
+
+    // Private session join requests
+    const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
 
@@ -887,17 +896,88 @@ export default function TruthOrDareCreatorRoom() {
         return Math.max(0, currentPrompt.durationSeconds - elapsed);
     }, [currentPrompt, promptElapsed]);
 
-    // Session Actions
+    // Fetch wallet balance for fee display
+    useEffect(() => {
+        async function fetchWalletBalance() {
+            const { data: { user: u } } = await supabase.auth.getUser();
+            if (!u) return;
+            const { data: wallet } = await supabase
+                .from('wallets')
+                .select('balance')
+                .eq('user_id', u.id)
+                .single();
+            if (wallet) setCreatorWalletBalance(wallet.balance);
+        }
+        fetchWalletBalance();
+    }, []);
+
+    // Fetch pending requests for active private sessions
+    useEffect(() => {
+        if (!roomId || !sessionActive || !sessionInfo?.isPrivate) return;
+        async function fetchRequests() {
+            const { data: reqs } = await supabase
+                .from('room_requests')
+                .select('*, profile:profiles(full_name, username, avatar_url)')
+                .eq('room_id', roomId!)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+            if (reqs) setPendingRequests(reqs);
+        }
+        fetchRequests();
+
+        // Realtime subscription for new requests
+        const reqChannel = supabase.channel(`requests_${roomId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'room_requests', filter: `room_id=eq.${roomId}` }, () => {
+                fetchRequests();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(reqChannel); };
+    }, [roomId, sessionActive, sessionInfo?.isPrivate]);
+
+    async function handleRequest(requestId: string, action: 'accept' | 'decline') {
+        if (!roomId) return;
+        setProcessingRequestId(requestId);
+        try {
+            // Find the active session
+            const activeSession = history.find((s: any) => s.status === 'active');
+            if (!activeSession) return;
+
+            const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${activeSession.id}/requests`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requestId, action })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            // Remove from local list
+            setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+            toast.success(action === 'accept' ? 'Request approved!' : 'Request declined.');
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to process request');
+        } finally {
+            setProcessingRequestId(null);
+        }
+    }
+
+    // Session Actions — Uses new sessions API with fee deduction
     async function startSession() {
         if (!roomId) return;
+        if (creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE) {
+            toast.error(`Insufficient wallet balance. You need $${CREATOR_SESSION_FEE} to start a session. Current balance: $${creatorWalletBalance.toFixed(2)}`);
+            return;
+        }
+        setIsCreatingSession(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
+            const res = await fetch('/api/v1/rooms/truth-dare-sessions', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'START_SESSION',
+                    room_id: roomId,
                     title: sessionForm.title || "Live Truth or Dare",
                     description: sessionForm.description,
-                    isPrivate: sessionForm.isPrivate,
+                    session_type: sessionForm.isPrivate ? 'private' : 'public',
                     price: Number(sessionForm.price)
                 })
             });
@@ -905,9 +985,15 @@ export default function TruthOrDareCreatorRoom() {
             console.log("Start Session Response:", data);
             if (!res.ok) throw new Error(data.error);
 
+            // Update wallet balance
+            if (data.new_balance !== undefined) {
+                setCreatorWalletBalance(data.new_balance);
+            }
+
+            toast.success(`Session created! $${CREATOR_SESSION_FEE} fee charged.`);
+
             // Optimistic update
             setSessionActive(true);
-            setIsInStudio(true); // Enter Studio Immediately
             setSessionInfo({
                 title: sessionForm.title || "Live Truth or Dare",
                 isPrivate: sessionForm.isPrivate,
@@ -915,9 +1001,15 @@ export default function TruthOrDareCreatorRoom() {
             });
             setShowStartModal(false);
 
+            router.push('/rooms/truth-or-dare-creator');
+
+            // Reload history
+            if (roomId && me.id) loadGameData(roomId, me.id);
         } catch (e: any) {
             console.error(e);
-            alert("Failed to start session: " + e.message);
+            toast.error("Failed to start session: " + e.message);
+        } finally {
+            setIsCreatingSession(false);
         }
     }
 
@@ -1054,11 +1146,11 @@ export default function TruthOrDareCreatorRoom() {
             )}
 
             {/* Dashboard View (History + Create/Resume Button) */}
-            {!isInStudio && !showStartModal && (
+            {!isInStudio && (
                 <div className="max-w-5xl mx-auto p-8">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">Truth or Dare Studio</h1>
+                            <h1 className="text-3xl font-bold text-white mb-2">Truth & Dare Sessions</h1>
                             <p className="text-gray-400">Manage your live interactive game sessions.</p>
                         </div>
                         {sessionActive ? (
@@ -1068,7 +1160,7 @@ export default function TruthOrDareCreatorRoom() {
                                     <div className="text-white font-bold">{sessionInfo?.title}</div>
                                 </div>
                                 <button
-                                    onClick={() => setIsInStudio(true)}
+                                    onClick={() => router.push('/rooms/truth-or-dare-creator')}
                                     className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2 animate-pulse"
                                 >
                                     <Video className="w-5 h-5 fill-current" /> Resume Live Session
@@ -1079,61 +1171,129 @@ export default function TruthOrDareCreatorRoom() {
                                 onClick={() => setShowStartModal(true)}
                                 className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2"
                             >
-                                <Play className="w-5 h-5 fill-current" /> Create New Session
+                                <Play className="w-5 h-5 fill-current" /> Start New Session
                             </button>
                         )}
                     </div>
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        <div className="p-6 rounded-2xl bg-gray-900 border border-white/5">
-                            <div className="text-gray-400 text-sm mb-1">Total Sessions</div>
-                            <div className="text-3xl font-bold text-white">{history ? history.length : 0}</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
+                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Total Sessions</div>
+                            <div className="text-2xl font-bold text-white">{history ? history.length : 0}</div>
                         </div>
-                        <div className="p-6 rounded-2xl bg-gray-900 border border-white/5">
-                            <div className="text-gray-400 text-sm mb-1">Latest Session</div>
-                            <div className="text-3xl font-bold text-blue-400">
-                                {history && history[0] ? formatCanadaDate(history[0].started_at || history[0].created_at) : "-"}
+                        <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
+                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Latest Session</div>
+                            <div className="text-lg font-bold text-blue-400">
+                                {history && history[0] ? formatCanadaDate(history[0].started_at || history[0].created_at) : "—"}
                             </div>
                         </div>
+                        <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
+                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Wallet Balance</div>
+                            <div className="text-2xl font-bold text-green-400">
+                                {creatorWalletBalance !== null ? `$${creatorWalletBalance.toFixed(2)}` : "..."}
+                            </div>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
+                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Session Fee</div>
+                            <div className="text-2xl font-bold text-amber-400">${CREATOR_SESSION_FEE}</div>
+                        </div>
                     </div>
+
+                    {/* Pending Join Requests (for active private session) */}
+                    {sessionActive && sessionInfo?.isPrivate && pendingRequests.length > 0 && (
+                        <div className="rounded-2xl border border-purple-500/20 bg-gray-950 overflow-hidden mb-6">
+                            <div className="px-6 py-4 border-b border-purple-500/20 bg-purple-500/5 flex items-center justify-between">
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    <Shield className="w-4 h-4 text-purple-400" />
+                                    Pending Join Requests
+                                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs">{pendingRequests.length}</span>
+                                </h3>
+                            </div>
+                            <div className="divide-y divide-white/5">
+                                {pendingRequests.map((req) => (
+                                    <div key={req.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center overflow-hidden">
+                                                {req.profile?.avatar_url ? (
+                                                    <img src={req.profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Users className="w-5 h-5 text-purple-400" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-white text-sm">{req.profile?.full_name || req.profile?.username || "Unknown"}</div>
+                                                <div className="text-[11px] text-gray-500">Requested {new Date(req.created_at).toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleRequest(req.id, 'accept')}
+                                                disabled={processingRequestId === req.id}
+                                                className="px-3 py-1.5 rounded-lg bg-green-600/20 border border-green-500/30 text-green-400 text-xs font-bold hover:bg-green-600/30 transition disabled:opacity-50"
+                                            >
+                                                <CheckCircle2 className="w-3.5 h-3.5 inline mr-1" />Accept
+                                            </button>
+                                            <button
+                                                onClick={() => handleRequest(req.id, 'decline')}
+                                                disabled={processingRequestId === req.id}
+                                                className="px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-600/30 transition disabled:opacity-50"
+                                            >
+                                                <XCircle className="w-3.5 h-3.5 inline mr-1" />Decline
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Session History */}
                     <div className="rounded-2xl border border-white/10 bg-gray-950 overflow-hidden">
                         <div className="px-6 py-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
-                            <h3 className="font-bold text-white">Previous Sessions</h3>
+                            <h3 className="font-bold text-white">Session History</h3>
+                            <span className="text-[11px] text-gray-500 uppercase tracking-wider">{history.length} sessions</span>
                         </div>
                         <div className="divide-y divide-white/5">
                             {history.length === 0 ? (
-                                <div className="p-12 text-center text-gray-500">
-                                    No session history found. Start your first game!
+                                <div className="p-12 text-center">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                        <Zap className="w-8 h-8 text-gray-600" />
+                                    </div>
+                                    <p className="text-gray-500 mb-1">No sessions yet</p>
+                                    <p className="text-gray-600 text-sm">Start your first Truth or Dare session!</p>
                                 </div>
                             ) : (
-                                history.map((session) => (
-                                    <div key={session.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition">
-                                        <div>
-                                            <div className="font-bold text-white mb-1">{session.session_title || "Untitled Session"}</div>
-                                            <div className="text-xs text-gray-400 flex items-center gap-2">
+                                history.map((session: any) => (
+                                    <div key={session.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition group">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-white mb-1 truncate">{session.session_title || session.title || "Untitled Session"}</div>
+                                            <div className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
                                                 <span>{formatCanadaDate(session.started_at || session.created_at)}</span>
-                                                <span>•</span>
-                                                <span className={session.is_private ? "text-purple-400" : "text-green-400"}>
+                                                <span className="text-gray-600">•</span>
+                                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${session.is_private
+                                                    ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                                    : "bg-green-500/10 text-green-400 border border-green-500/20"
+                                                    }`}>
                                                     {session.is_private ? "Private" : "Public"}
                                                 </span>
+                                                <span className="text-gray-600">•</span>
+                                                <span className="text-gray-300 font-medium">${Number(session.price || 0).toFixed(0)} entry</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-right">
-                                                <div className={`text-xs font-bold px-2 py-1 rounded-full border ${session.status === 'active'
-                                                    ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                                        <div className="flex items-center gap-3 ml-4">
+                                            <div className={`text-xs font-bold px-2.5 py-1 rounded-full border ${session.status === 'active'
+                                                ? 'border-green-500/30 bg-green-500/10 text-green-400 animate-pulse'
+                                                : session.status === 'cancelled'
+                                                    ? 'border-red-500/30 bg-red-500/10 text-red-400'
                                                     : 'border-white/10 bg-white/5 text-gray-400'
-                                                    }`}>
-                                                    {session.status === 'active' ? 'LIVE' : 'ENDED'}
-                                                </div>
+                                                }`}>
+                                                {session.status === 'active' ? '● LIVE' : session.status === 'cancelled' ? 'CANCELLED' : 'ENDED'}
                                             </div>
                                             {session.status === 'active' && (
                                                 <button
-                                                    onClick={() => setIsInStudio(true)}
-                                                    className="p-2 rounded-full border border-green-500/30 text-green-400 hover:bg-green-500/10"
+                                                    onClick={() => router.push('/rooms/truth-or-dare-creator')}
+                                                    className="p-2 rounded-full border border-green-500/30 text-green-400 hover:bg-green-500/10 transition"
                                                     title="Resume Session"
                                                 >
                                                     <Play className="w-4 h-4 fill-current" />
@@ -1167,6 +1327,23 @@ export default function TruthOrDareCreatorRoom() {
                             <p className="text-gray-400 mt-2">Configure your live room details.</p>
                         </div>
 
+                        {/* Platform Fee Warning */}
+                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <TrendingUp className="w-4 h-4 text-amber-400" />
+                                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Platform Fee</span>
+                            </div>
+                            <p className="text-sm text-amber-200">
+                                A <span className="font-bold">${CREATOR_SESSION_FEE} USD</span> fee will be charged from your wallet.
+                            </p>
+                            <p className="text-xs text-amber-400/70 mt-1">
+                                Wallet Balance: <span className="font-bold">{creatorWalletBalance !== null ? `$${creatorWalletBalance.toFixed(2)}` : 'Loading...'}</span>
+                                {creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE && (
+                                    <span className="text-red-400 ml-2">⚠ Insufficient balance</span>
+                                )}
+                            </p>
+                        </div>
+
                         <div className="space-y-4">
                             <div>
                                 <label className="text-xs text-gray-400 mb-1 block">Session Title</label>
@@ -1180,12 +1357,12 @@ export default function TruthOrDareCreatorRoom() {
                             </div>
 
                             <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Description</label>
+                                <label className="text-xs text-gray-400 mb-1 block">Description (optional)</label>
                                 <textarea
                                     value={sessionForm.description}
                                     onChange={e => setSessionForm({ ...sessionForm, description: e.target.value })}
                                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500/50 outline-none resize-none"
-                                    rows={3}
+                                    rows={2}
                                     placeholder="Briefly describe what fans can expect..."
                                 />
                             </div>
@@ -1195,453 +1372,55 @@ export default function TruthOrDareCreatorRoom() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: false })}
-                                        className={`p-3 rounded-xl border text-sm transition ${!sessionForm.isPrivate ? "border-green-500/50 bg-green-500/10 text-white" : "border-white/10 text-gray-400"}`}
+                                        className={`p-3 rounded-xl border text-sm font-medium transition ${!sessionForm.isPrivate ? "border-green-500/50 bg-green-500/10 text-white" : "border-white/10 text-gray-400 hover:bg-white/5"}`}
                                     >
-                                        Public
+                                        🌍 Public
                                     </button>
                                     <button
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: true })}
-                                        className={`p-3 rounded-xl border text-sm transition ${sessionForm.isPrivate ? "border-purple-500/50 bg-purple-500/10 text-white" : "border-white/10 text-gray-400"}`}
+                                        className={`p-3 rounded-xl border text-sm font-medium transition ${sessionForm.isPrivate ? "border-purple-500/50 bg-purple-500/10 text-white" : "border-white/10 text-gray-400 hover:bg-white/5"}`}
                                     >
-                                        Private
+                                        🔒 Private
                                     </button>
                                 </div>
+                                {sessionForm.isPrivate && (
+                                    <p className="text-[10px] text-purple-400/70 mt-1">Fans must request access. You approve or decline each request.</p>
+                                )}
                             </div>
 
                             <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Entry Price ($)</label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={10}
-                                        readOnly
-                                        disabled
-                                        className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-gray-400 text-sm cursor-not-allowed opacity-70 outline-none"
-                                    />
-                                    <span className="absolute right-4 top-3 text-[10px] text-gray-500 uppercase font-bold tracking-wider">Fixed</span>
-                                </div>
+                                <label className="text-xs text-gray-400 mb-1 block">Fan Entry Price ($)</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={sessionForm.price}
+                                    onChange={e => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500/50 outline-none"
+                                    placeholder="0 for free entry"
+                                />
                                 <p className="text-[10px] text-gray-500 mt-1">
-                                    Standard entry fee for all Truth or Dare sessions.
+                                    Set to 0 for free entry. Fans pay this to join.
                                 </p>
                             </div>
 
                             <button
                                 onClick={startSession}
-                                className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition mt-4"
+                                disabled={isCreatingSession || (creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE)}
+                                className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                Go Live
+                                {isCreatingSession ? (
+                                    <>
+                                        <span className="animate-spin">⏳</span> Creating Session...
+                                    </>
+                                ) : (
+                                    <>🚀 Go Live — Pay ${CREATOR_SESSION_FEE} Fee</>
+                                )}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Main Dashboard - Only Render if In Studio */}
-            {isInStudio && (
-                <main className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 max-w-7xl mx-auto">
-                    {/* MAIN STAGE */}
-                    <div className="lg:col-span-3 flex flex-col gap-4 relative">
-                        {/* Creator Grid */}
-                        <div className={`grid gap-4 ${creators.length === 1 ? 'grid-cols-1 aspect-video' : 'grid-cols-2 grid-rows-2'}`}>
-                            {creators.map((c, i) => {
-                                const isMe = c.id === me.id;
-                                return (
-                                    <div
-                                        key={`creator-${i}`}
-                                        className={`relative rounded-2xl border aspect-video flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-[1.02] ${creators.length === 1
-                                            ? 'border-pink-500/60 bg-gradient-to-br from-gray-950 via-pink-950/10 to-gray-950 shadow-[0_0_40px_rgba(236,72,153,0.3),0_0_80px_rgba(236,72,153,0.15)] hover:shadow-[0_0_60px_rgba(236,72,153,0.4),0_0_100px_rgba(236,72,153,0.2)]'
-                                            : 'border-pink-500/40 bg-gray-950/80 backdrop-blur-sm shadow-[0_0_20px_rgba(236,72,153,0.2)]'
-                                            }`}
-                                    >
-                                        {isMe && roomId ? (
-                                            isBroadcasting ? (
-                                                <div className="w-full h-full">
-                                                    <LiveStreamWrapper
-                                                        role="host"
-                                                        appId={APP_ID}
-                                                        roomId={roomId}
-                                                        uid={me.id}
-                                                        hostId={me.id}
-                                                        hostAvatarUrl={myAvatarUrl}
-                                                        hostName={me.name}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-4 z-10 w-full h-full relative p-6">
-                                                    {countdown !== null ? (
-                                                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in zoom-in duration-300">
-                                                            <div className="text-8xl font-black italic bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent animate-bounce">
-                                                                {countdown === 0 ? "GO!" : countdown}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <div className="w-16 h-16 rounded-full bg-pink-500/10 flex items-center justify-center animate-pulse border border-pink-500/20 shadow-[0_0_50px_rgba(236,72,153,0.5),0_0_100px_rgba(236,72,153,0.3)] backdrop-blur-sm">
-                                                                <Video className="w-8 h-8 text-pink-400" />
-                                                            </div>
-                                                            <div className="text-center space-y-2">
-                                                                <h3 className="text-xl font-bold text-white">Ready to Stream?</h3>
-                                                                <p className="text-xs text-pink-300/80 max-w-[200px] mx-auto">
-                                                                    You are about to go live to the public. Make sure your camera and mic are ready.
-                                                                </p>
-                                                            </div>
-                                                            <button
-                                                                onClick={startCountdown}
-                                                                className="mt-2 px-8 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-pink-900/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
-                                                            >
-                                                                <Zap className="w-5 h-5 fill-current group-hover:text-yellow-300 transition-colors" />
-                                                                Start Live Stream
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )
-                                        ) : (
-                                            <>
-                                                <Video className="w-10 h-10 text-pink-400" />
-                                                <span className="absolute bottom-2 left-2 text-xs text-pink-200">
-                                                    {c.name}
-                                                </span>
-                                            </>
-                                        )}
-
-                                        {c.isHost && (
-                                            <span className="absolute top-4 left-4 text-xs px-2 py-1 rounded-full border border-yellow-400/40 text-yellow-200 bg-black/60 backdrop-blur-md shadow-[0_0_20px_rgba(250,204,21,0.3)]">
-                                                Host
-                                            </span>
-                                        )}
-
-                                        {/* Stop Stream Button (overlay when live) */}
-                                        {isMe && isBroadcasting && (
-                                            <button
-                                                onClick={() => setIsBroadcasting(false)}
-                                                className="absolute bottom-4 right-4 p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg backdrop-blur-md transition"
-                                                title="Stop Streaming"
-                                            >
-                                                <Video className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                );
-                            })}
-
-                            {/* Placeholder for Invite control (Future) */}
-                            {creators.length < 4 && isHost && (
-                                <div className="hidden">
-                                    {/* Hidden for now: Invite UI logic would go here */}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Fan Camera Strip (opt-in only) */}
-                        <div className="rounded-2xl border border-blue-500/30 bg-gray-950/60 backdrop-blur-md p-4 shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-all duration-300 hover:shadow-[0_0_40px_rgba(59,130,246,0.25)]">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-blue-200 text-sm flex items-center gap-2">
-                                    <Users className="w-4 h-4" /> Live Viewers
-                                </div>
-                                <div className="text-[10px] text-gray-400">{fans.length} watching</div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-3">
-                                {fans.length === 0 ? (
-                                    <div className="text-[11px] text-gray-500">No viewers yet. Share the room link to invite fans!</div>
-                                ) : (
-                                    fans.map((f) => (
-                                        <div
-                                            key={f.id}
-                                            className="relative rounded-xl border border-blue-400/40 p-3 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all duration-200 hover:scale-105 hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] min-w-[80px]"
-                                        >
-                                            {/* Avatar or Initials */}
-                                            {f.avatar ? (
-                                                <img
-                                                    src={f.avatar}
-                                                    alt={f.name}
-                                                    className="w-10 h-10 rounded-full object-cover border-2 border-blue-400/50"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm border-2 border-blue-400/50">
-                                                    {f.name.charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
-                                            <span className="mt-2 text-[10px] text-blue-200 truncate max-w-[70px]">{f.name}</span>
-                                            {!f.walletOk && (
-                                                <span className="absolute top-1 right-1 text-[8px] px-1 py-[1px] rounded border border-red-400/40 text-red-200">
-                                                    Low $
-                                                </span>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    {/* CONTROL PANEL */}
-                    <aside className="rounded-2xl border border-pink-500/40 bg-gray-950/70 backdrop-blur-xl p-4 space-y-4 shadow-[0_0_50px_rgba(236,72,153,0.15)] lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-pink-500/20 scrollbar-track-transparent">
-                        {/* Host controls */}
-                        {roomId && <GroupVoteManager roomId={roomId} />}
-
-                        {/* NEW: Earnings Dashboard */}
-                        <div className="rounded-xl border border-green-500/40 bg-gradient-to-br from-green-950/30 to-emerald-950/30 backdrop-blur-md p-4 shadow-[0_0_40px_rgba(34,197,94,0.2)] transition-all duration-300 hover:shadow-[0_0_60px_rgba(34,197,94,0.3)]">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-green-200 text-sm flex items-center gap-2 font-bold">
-                                    <TrendingUp className="w-4 h-4" /> Room Earnings
-                                </div>
-                                <div className="text-xs text-gray-400">This Session</div>
-                            </div>
-
-                            {/* Total Earnings */}
-                            <div className="rounded-xl bg-black/60 backdrop-blur-sm border border-green-500/30 p-4 mb-3 shadow-[inset_0_0_30px_rgba(34,197,94,0.1)]">
-                                <div className="text-xs text-green-400 uppercase tracking-wider mb-1">Total Earned</div>
-                                <div className="text-3xl font-black text-white flex items-baseline gap-1">
-                                    <span className="text-green-400">$</span>
-                                    <span className="tabular-nums">{(sessionEarnings?.total ?? 0).toFixed(2)}</span>
-                                </div>
-                            </div>
-
-                            {/* Breakdown */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-400">Tips</span>
-                                    <span className="text-white font-bold">${(sessionEarnings?.tips ?? 0).toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-400">Truths</span>
-                                    <span className="text-cyan-300 font-bold">${(sessionEarnings?.truths ?? 0).toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-400">Dares</span>
-                                    <span className="text-pink-300 font-bold">${(sessionEarnings?.dares ?? 0).toFixed(2)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-400">Custom</span>
-                                    <span className="text-purple-300 font-bold">${(sessionEarnings?.custom ?? 0).toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* NEW: Live Activity Feed */}
-                        <div className="rounded-xl border border-cyan-500/30 bg-black/60 backdrop-blur-md p-3 shadow-[0_0_30px_rgba(6,182,212,0.15)]">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="text-cyan-200 text-sm flex items-center gap-2">
-                                    <Zap className="w-4 h-4" /> Live Activity
-                                </div>
-                                <div className="text-[10px] text-gray-400">{activityFeed.length} recent</div>
-                            </div>
-
-                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                                {activityFeed.length === 0 ? (
-                                    <div className="text-[11px] text-gray-500 text-center py-4">
-                                        No activity yet. Waiting for fan interactions...
-                                    </div>
-                                ) : (
-                                    activityFeed.map((activity) => {
-                                        const tierColor = activity.tier === 'gold' ? 'text-yellow-400' :
-                                            activity.tier === 'silver' ? 'text-cyan-400' :
-                                                'text-amber-400';
-                                        const typeColor = activity.type === 'truth' || activity.type === 'custom_truth' ? 'text-cyan-300' :
-                                            activity.type === 'dare' || activity.type === 'custom_dare' ? 'text-pink-300' :
-                                                'text-green-300';
-
-                                        return (
-                                            <div
-                                                key={activity.id}
-                                                className="rounded-lg border border-white/10 bg-gradient-to-r from-black/60 to-black/40 p-2.5 animate-in slide-in-from-right duration-300"
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-xs">
-                                                            <span className="text-white font-bold">{activity.fanName}</span>
-                                                            {' '}
-                                                            <span className="text-gray-400">bought</span>
-                                                            {' '}
-                                                            {activity.tier && (
-                                                                <span className={`${tierColor} font-bold uppercase`}>
-                                                                    {activity.tier}
-                                                                </span>
-                                                            )}
-                                                            {' '}
-                                                            <span className={`${typeColor} font-bold capitalize`}>
-                                                                {activity.type.replace('_', ' ')}
-                                                            </span>
-                                                        </div>
-                                                        {activity.message && (
-                                                            <div className="text-[10px] text-gray-400 mt-1 truncate">
-                                                                "{activity.message}"
-                                                            </div>
-                                                        )}
-                                                        <div className="text-[10px] text-gray-500 mt-1">
-                                                            {timeAgo(activity.timestamp)}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-xs font-bold text-green-400">
-                                                        +${activity.amount}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Queue */}
-                        <div className="rounded-xl border border-pink-500/30 bg-black/60 backdrop-blur-md p-3 shadow-[0_0_25px_rgba(236,72,153,0.15)]">
-                            <div className="flex items-center justify-between">
-                                <div className="text-pink-200 text-sm flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4" /> Incoming Queue
-                                </div>
-                                <div className="text-[10px] text-gray-400">{queue.length} items</div>
-                            </div>
-
-                            <div className="mt-3 space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                                {queue.map((q) => {
-                                    const isPrompt =
-                                        q.type === "TIER_PURCHASE" || q.type === "CUSTOM_TRUTH" || q.type === "CUSTOM_DARE";
-                                    return (
-                                        <div key={q.id} className="rounded-xl border border-pink-500/20 bg-black/50 backdrop-blur-sm p-2.5 shadow-[0_0_10px_rgba(236,72,153,0.1)] transition-all duration-200 hover:border-pink-500/40 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <div className="text-xs text-gray-100">
-                                                        <span className="text-pink-200">{q.fanName ?? "—"}</span>{" "}
-                                                        <span className="text-gray-300">· {q.type.replaceAll("_", " ")}</span>
-                                                    </div>
-                                                    <div className="text-[11px] text-gray-400 mt-1">
-                                                        {q.type === "TIER_PURCHASE" && (
-                                                            <>Tier: <span className="text-gray-200">{String(q.meta.tier).toUpperCase()}</span></>
-                                                        )}
-                                                        {(q.type === "CUSTOM_TRUTH" || q.type === "CUSTOM_DARE") && (
-                                                            <>“{String(q.meta.text)}”</>
-                                                        )}
-                                                        {q.type === "TIP" && <>Tip received</>}
-                                                        {q.type === "CROWD_VOTE_TIER" && <>Vote Tier: {String(q.meta.tier).toUpperCase()}</>}
-                                                        {q.type === "CROWD_VOTE_TV" && <>Vote: {String(q.meta.pick).toUpperCase()}</>}
-                                                    </div>
-                                                    <div className="text-[10px] text-gray-500 mt-1">{timeAgo(q.createdAt)}</div>
-                                                </div>
-
-                                                <div className="text-right">
-                                                    <div className="text-xs text-pink-200">{money(q.amount)}</div>
-                                                    {isPrompt ? (
-                                                        <button
-                                                            onClick={() => serveQueueItem(q)}
-                                                            className="mt-2 w-full rounded-lg border border-green-400/25 py-1 text-[11px] text-green-200 hover:bg-green-600/10 inline-flex items-center justify-center gap-1"
-                                                        >
-                                                            <Play className="w-4 h-4" /> Serve
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => setQueue((qq) => qq.filter((x) => x.id !== q.id))}
-                                                            className="mt-2 w-full rounded-lg border border-gray-600 py-1 text-[11px] text-gray-300 hover:bg-white/5 inline-flex items-center justify-center gap-1"
-                                                            title="Preview-only: dismiss non-prompt items"
-                                                        >
-                                                            <Pause className="w-4 h-4" /> Dismiss
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                {queue.length === 0 && <div className="text-[11px] text-gray-500">Queue empty.</div>}
-                            </div>
-
-                            <div className="mt-2 text-[10px] text-gray-500">
-                                Note: In production, safe-word decline triggers a same-tier replacement; no refund.
-                            </div>
-                        </div>
-
-                    </aside>
-                </main >
-            )
-            }
-
-            {/* NEW: Cute Real-time Tip Alert Dialog */}
-            {
-                activeTip && (
-                    <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
-                        <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
-                            {/* Confetti/Glow Effect */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-green-500/10 animate-pulse" />
-
-                            {/* Content */}
-                            <div className="relative z-10 flex flex-col items-center">
-                                <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(34,197,94,0.3)] animate-bounce">
-                                    <TrendingUp className="w-10 h-10 text-green-400" />
-                                </div>
-
-                                <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-wider drop-shadow-lg">
-                                    New Tip!
-                                </h2>
-                                <p className="text-green-200 font-medium mb-6 text-lg">
-                                    {activeTip.message || "Someone loves your vibes!"}
-                                </p>
-
-                                <div className="bg-green-900/40 border border-green-500/30 rounded-2xl p-4 w-full mb-4">
-                                    <div className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">From</div>
-                                    <div className="text-2xl font-bold text-white">{activeTip.fanName}</div>
-                                </div>
-
-                                <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]">
-                                    ${activeTip.amount}
-                                </div>
-                            </div>
-
-                            {/* Close Button (Optional if they want to dismiss it early) */}
-                            <button
-                                onClick={() => setActiveTip(null)}
-                                className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
-                            >
-                                <XCircle className="w-6 h-6" />
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Private Session Join Requests */}
-            {roomId && <RoomRequestManager roomId={roomId} />}
-
-            {/* Creator Countdown Overlay */}
-            <CreatorCountdown
-                request={activeCountdown}
-                roomId={roomId || ''}
-                onComplete={(earnedAmount) => {
-                    setActiveCountdown(null);
-                    // Update session earnings immediately
-                    if (earnedAmount > 0) {
-                        setSessionEarnings(prev => ({
-                            ...prev,
-                            total: prev.total + earnedAmount
-                        }));
-                        // Show earnings notification after a brief delay
-                        setTimeout(() => {
-                            setEarningsNotification({
-                                amount: earnedAmount,
-                                fanName: activeCountdown?.fanName || 'Fan',
-                                type: activeCountdown?.type || 'dare',
-                                tier: activeCountdown?.tier
-                            });
-                        }, 500);
-                    }
-                }}
-                onDismiss={() => setActiveCountdown(null)}
-            />
-
-            {/* Overlay */}
-            <InteractionOverlay
-                prompt={overlayPrompt}
-                isVisible={showOverlay}
-                onClose={() => setShowOverlay(false)}
-            />
-
-            {/* Earnings Notification Modal */}
-            <EarningsModal
-                notification={earningsNotification}
-                onClose={() => setEarningsNotification(null)}
-            />
         </div >
     );
 }

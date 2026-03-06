@@ -109,7 +109,7 @@ export default function CreatorDashboard() {
             'x-chat': '/rooms/x-chat-creator',
             'flash-drop': '/rooms/flash-drop-creator',
             'bar-lounge': '/rooms/bar-lounge-creator',
-            'truth-or-dare': '/rooms/truth-or-dare-creator',
+            'truth-or-dare': '/creator/rooms/truth-or-dare',
             suga4u: '/rooms/suga4u-pg12-creator',
         };
 
@@ -298,7 +298,7 @@ export default function CreatorDashboard() {
                         </button>
 
                         {/* 5. Truth or Dare */}
-                        <button onClick={() => router.push('/rooms/truth-or-dare-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                        <button onClick={() => router.push('/creator/rooms/truth-or-dare')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-50"><Video className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
                             <div className="p-3 w-fit rounded-xl bg-green-500/20 text-green-400 mb-4 group-hover:bg-green-500 group-hover:text-white transition">
                                 <Video className="w-6 h-6" />

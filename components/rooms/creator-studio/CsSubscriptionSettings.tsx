@@ -1,11 +1,36 @@
 "use client";
 
-import { Crown, Lock } from "lucide-react";
-import { useState } from "react";
+import { Crown, Lock, Loader2, Check, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 
-export const CsSubscriptionSettings = () => {
+interface CsSubscriptionSettingsProps {
+    weeklyPrice: number | null;
+    monthlyPrice: number | null;
+    onSave: (weekly: string, monthly: string) => Promise<boolean>;
+}
+
+export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscriptionSettingsProps) => {
     const [weekly, setWeekly] = useState("");
     const [monthly, setMonthly] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
+
+    // Sync initial values from props
+    useEffect(() => {
+        setWeekly(weeklyPrice != null ? String(weeklyPrice) : "");
+        setMonthly(monthlyPrice != null ? String(monthlyPrice) : "");
+    }, [weeklyPrice, monthlyPrice]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        setFeedback(null);
+        const ok = await onSave(weekly, monthly);
+        setFeedback(ok ? "success" : "error");
+        setSaving(false);
+        if (ok) {
+            setTimeout(() => setFeedback(null), 3000);
+        }
+    };
 
     return (
         <div className="cs-glass-card p-5">
@@ -42,8 +67,20 @@ export const CsSubscriptionSettings = () => {
                         />
                     </div>
                 </div>
-                <button className="cs-neon-glow-green bg-[hsl(150,80%,45%)] text-white font-semibold px-6 py-2.5 rounded-lg flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap">
-                    <Lock size={16} /> Save Changes
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="cs-neon-glow-green bg-[hsl(150,80%,45%)] text-white font-semibold px-6 py-2.5 rounded-lg flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap disabled:opacity-60"
+                >
+                    {saving ? (
+                        <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                    ) : feedback === "success" ? (
+                        <><Check size={16} /> Saved!</>
+                    ) : feedback === "error" ? (
+                        <><AlertCircle size={16} /> Error</>
+                    ) : (
+                        <><Lock size={16} /> Save Changes</>
+                    )}
                 </button>
             </div>
         </div>

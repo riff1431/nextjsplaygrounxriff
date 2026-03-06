@@ -4,8 +4,11 @@ import { CsDashboardHeader, CsStatsBar } from "@/components/rooms/creator-studio
 import { CsCreatorStudio } from "@/components/rooms/creator-studio/CsCreatorStudio";
 import { CsSubscriptionSettings } from "@/components/rooms/creator-studio/CsSubscriptionSettings";
 import { CsRecentRoomHistory } from "@/components/rooms/creator-studio/CsRecentRoomHistory";
+import { useCreatorDashboard } from "@/hooks/useCreatorDashboard";
 
 const CreatorStudioDashboardPage = () => {
+    const { profile, stats, recentRooms, isLoading, saveSubscriptionPrices } = useCreatorDashboard();
+
     return (
         <div className="cs-theme min-h-screen relative">
             {/* Background */}
@@ -17,11 +20,29 @@ const CreatorStudioDashboardPage = () => {
 
             {/* Content */}
             <div className="relative z-10 p-4 md:p-8 max-w-[1400px] mx-auto space-y-6">
-                <CsDashboardHeader />
-                <CsStatsBar />
+                <CsDashboardHeader
+                    username={profile?.username}
+                    avatarUrl={profile?.avatar_url}
+                />
+                <CsStatsBar
+                    tipsEarned={stats.tipsEarned}
+                    giftsCount={stats.giftsCount}
+                    totalFollowers={stats.totalFollowers}
+                    activeRooms={stats.activeRooms}
+                    subscribers={stats.subscribers}
+                    subscriptionEarnings={stats.subscriptionEarnings}
+                    isLoading={isLoading}
+                />
                 <CsCreatorStudio />
-                <CsSubscriptionSettings />
-                <CsRecentRoomHistory />
+                <CsSubscriptionSettings
+                    weeklyPrice={profile?.subscription_price_weekly ?? null}
+                    monthlyPrice={profile?.subscription_price_monthly ?? null}
+                    onSave={saveSubscriptionPrices}
+                />
+                <CsRecentRoomHistory
+                    rooms={recentRooms}
+                    isLoading={isLoading}
+                />
             </div>
         </div>
     );

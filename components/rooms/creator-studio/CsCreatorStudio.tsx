@@ -41,12 +41,12 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
 
 export const CsCreatorStudio = () => {
     const cards: StudioCardProps[] = [
-        { icon: <Upload size={20} />, title: "Upload Content", description: "Post new photos, videos, status updates to your feed.", borderColor: "hsl(150, 80%, 45%)" },
+        { icon: <Upload size={20} />, title: "Upload Content", description: "Post new photos, videos, status updates to your feed.", borderColor: "hsl(150, 80%, 45%)", link: "/home" },
         { icon: <MessageSquare size={20} />, title: "Confessions Studio", description: "Manage backlog, publish text/voice/video confessions.", borderColor: "hsl(45, 100%, 55%)", veryNew: true, link: "/rooms/confessions-creator" },
-        { icon: <Monitor size={20} />, title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", comingSoon: true },
-        { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", comingSoon: true },
-        { icon: <Tv size={20} />, title: "Bar Lounge (Host)", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)" },
-        { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)" },
+        { icon: <Monitor size={20} />, title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", veryNew: true, link: "/rooms/x-chat-creator" },
+        { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", veryNew: true, link: "/rooms/flash-drop-creator" },
+        { icon: <Tv size={20} />, title: "Bar Lounge (Host)", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)", link: "/rooms/bar-lounge-creator" },
+        { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)", link: "/creator/rooms/truth-or-dare" },
         { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", veryNew: true, link: "/rooms/suga4u-pg12-creator" },
         { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", veryNew: true, link: "/rooms/fans-competitions" },
     ];
