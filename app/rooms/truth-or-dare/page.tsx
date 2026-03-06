@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import React, { useEffect, useMemo, useState, Suspense } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback, Suspense } from "react";
 
 import {
     Search,
@@ -125,6 +125,18 @@ function TruthOrDareContent() {
     const [userName, setUserName] = useState<string>('Anonymous');
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
+    // Chat State
+    const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
+    const [chatInput, setChatInput] = useState("");
+    const [chatSending, setChatSending] = useState(false);
+    const chatScrollRef = useRef<HTMLDivElement>(null);
+
+    const scrollChatToBottom = useCallback(() => {
+        if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        }
+    }, []);
+
     // Modal States
     const [confirmModal, setConfirmModal] = useState<{
         isOpen: boolean;
@@ -166,7 +178,7 @@ function TruthOrDareContent() {
     const [topTruthKing, setTopTruthKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
 
     const [creatorCount] = useState(1);
-    const [fanCount] = useState(2);
+    const [fanCount, setFanCount] = useState(0);
 
     // Load Session Data
     useEffect(() => {
@@ -392,6 +404,10 @@ function TruthOrDareContent() {
 
             presenceChannel
                 .on('presence', { event: 'sync' }, () => {
+                    const state = presenceChannel?.presenceState();
+                    if (state) {
+                        setFanCount(Object.keys(state).length);
+                    }
                     console.log('📡 Fan presence synced');
                 })
                 .subscribe(async (status) => {
@@ -407,15 +423,50 @@ function TruthOrDareContent() {
                 });
         }
 
+        // Live Chat — fetch existing + subscribe to new messages
+        const fetchChatMessages = async () => {
+            const { data, error } = await supabase
+                .from('chat_messages')
+                .select('id, room_id, user_id, username, message, created_at')
+                .eq('room_id', roomId)
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            if (data && !error) {
+                setChatMessages(data);
+            }
+            setTimeout(scrollChatToBottom, 150);
+        };
+        fetchChatMessages();
+
+        const chatChannel = supabase
+            .channel(`fan-chat-${roomId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'chat_messages',
+                    filter: `room_id=eq.${roomId}`,
+                },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    setChatMessages((prev) => [...prev, newMsg]);
+                    setTimeout(scrollChatToBottom, 100);
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(gameStatusChannel);
             supabase.removeChannel(roomRequestChannel);
             supabase.removeChannel(gameChannel);
+            supabase.removeChannel(chatChannel);
             if (presenceChannel) {
                 supabase.removeChannel(presenceChannel);
             }
         };
-    }, [roomId, userId, userName, userAvatar, supabase]);
+    }, [roomId, userId, userName, userAvatar, supabase, scrollChatToBottom]);
 
     // Calculate and subscribe to Top Spenders (Truth King / Dare King)
     useEffect(() => {
@@ -514,6 +565,31 @@ function TruthOrDareContent() {
             supabase.removeChannel(topSpenderChannel);
         };
     }, [roomId, supabase]);
+
+    // Chat send handler
+    const handleChatSend = async () => {
+        if (!chatInput.trim() || !roomId || !userId || chatSending) return;
+        setChatSending(true);
+
+        const { error } = await supabase.from('chat_messages').insert({
+            room_id: roomId,
+            user_id: userId,
+            username: userName,
+            message: chatInput.trim(),
+        });
+
+        if (error) {
+            toast.error('Failed to send message');
+        } else {
+            setChatInput('');
+        }
+        setChatSending(false);
+    };
+
+    const formatChatTime = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     async function sendJoinRequest() {
         if (!roomId || !userId) return;
@@ -791,11 +867,7 @@ function TruthOrDareContent() {
                                 <div className="space-y-4">
                                     <h4 className="text-[11px] font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
                                     <div className="space-y-3">
-                                        {[
-                                            { id: "silver", label: "Silver", price: 5, desc: "Spicy" },
-                                            { id: "gold", label: "Gold", price: 5, desc: "Very explicit" },
-                                            { id: "diamond", label: "Diamond", price: 7, desc: "Very explicit" },
-                                        ].map((t) => (
+                                        {dareTiers.map((t) => (
                                             <button
                                                 key={`dare-${t.id}`}
                                                 disabled={isSubmitting}
@@ -896,30 +968,13 @@ function TruthOrDareContent() {
 
 
 
-                        {/* Group Voting Section - strictly matching screenshot UI */}
-                        <div className="glass-panel p-4 border-white/10 bg-white/5 flex flex-col gap-4 flex-1">
-                            <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-amber-500" />
-                                <h3 className="text-sm font-semibold text-white tracking-wide">Group Voting</h3>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-blue-600/40 text-blue-100 shadow-[0_0_15px_rgba(59,130,246,0.4)]">Custom Truth ($25)</button>
-                                <button className="flex-1 py-1.5 rounded-lg text-[10px] font-bold bg-gray-800/40 text-gray-400 hover:bg-red-600/30 transition-colors">Custom Dare ($35)</button>
-                            </div>
-
-                            <textarea
-                                placeholder="Write your custom Truth/Dare here..."
-                                className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-gray-600 outline-none resize-none flex-1 min-h-[144px] focus:border-white/20 transition-all"
+                        {/* Group Voting Section — wired with GroupVotePanel */}
+                        {roomId && (
+                            <GroupVotePanel
+                                roomId={roomId}
+                                currentUserId={userId || undefined}
                             />
-
-                            <button className="w-full py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center justify-center gap-2">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>Pay & Vote</span>
-                            </button>
-
-                            <p className="text-[9px] text-gray-600 text-center">Custom requests are direct fan→creator. No auto-approval.</p>
-                        </div>
+                        )}
                     </div>
 
                     {/* Right: Dedicated Chat Column */}
@@ -937,41 +992,65 @@ function TruthOrDareContent() {
                                 </div>
                             </div>
 
-                            {/* Fans list / Chat Messages Area */}
-                            <div className="p-4 flex-1 overflow-y-auto space-y-4">
-                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-                                    <Users className="w-3 h-3" />
-                                    <span>Fans in Room</span>
-                                </div>
-
-                                {/* Mock Users to match screenshot */}
-                                {[
-                                    { name: "User123", msg: "Welcome to the game!", color: "bg-amber-500" },
-                                    { name: "User456", msg: "Can't wait to start!", color: "bg-pink-500" },
-                                    { name: "User789", msg: "Looking forward to some spicy fun in here!", color: "bg-purple-600" },
-                                ].map((u, i) => (
-                                    <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-right-4 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                                        <div className={`w-8 h-8 rounded-full ${u.color} flex items-center justify-center text-[10px] font-bold text-white`}>
-                                            {u.name[0]}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="text-[11px] font-bold text-amber-500">{u.name}</div>
-                                            <div className="text-xs text-gray-300 leading-snug">{u.msg}</div>
-                                        </div>
+                            {/* Live Chat Messages Area */}
+                            <div
+                                ref={chatScrollRef}
+                                className="p-4 flex-1 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                            >
+                                {chatMessages.length === 0 ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <p className="text-white/30 text-xs tracking-wider uppercase">No messages yet — say hello!</p>
                                     </div>
-                                ))}
+                                ) : (
+                                    chatMessages.map((m) => {
+                                        const isMe = m.user_id === userId;
+                                        return (
+                                            <div key={m.id} className="flex items-start gap-2.5 group">
+                                                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white border ${isMe ? 'bg-pink-600/30 border-pink-400' : 'bg-purple-600/30 border-purple-400'}`}>
+                                                    {m.username?.charAt(0).toUpperCase() || '?'}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-baseline gap-1.5">
+                                                        <span className={`font-bold text-[11px] ${isMe ? 'text-pink-400' : 'text-amber-400'}`}>
+                                                            {m.username || 'Anonymous'}
+                                                        </span>
+                                                        <span className="text-[9px] text-white/25 ml-auto shrink-0">
+                                                            {formatChatTime(m.created_at)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-white/80 mt-0.5 break-words leading-snug">
+                                                        {m.message}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
 
                             {/* Message Input */}
                             <div className="p-4 bg-white/5 border-t border-white/10">
-                                <div className="relative group">
+                                <div className="flex items-center gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Type your message..."
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-xs text-white placeholder:text-gray-500 focus:border-white/20 focus:bg-white/10 transition-all outline-none"
+                                        placeholder={userId ? "Type your message..." : "Sign in to chat"}
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleChatSend();
+                                            }
+                                        }}
+                                        disabled={!userId || !roomId}
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl py-2.5 pl-4 pr-3 text-xs text-white placeholder:text-gray-500 focus:border-white/20 focus:bg-white/10 transition-all outline-none disabled:opacity-40"
                                     />
-                                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pink-500 transition-colors">
-                                        <Flame className="w-4 h-4" />
+                                    <button
+                                        onClick={handleChatSend}
+                                        disabled={!chatInput.trim() || !userId || chatSending}
+                                        className="p-2 rounded-lg bg-pink-600/20 hover:bg-pink-600/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Flame className={`w-4 h-4 ${chatSending ? 'animate-pulse text-pink-300' : 'text-pink-400'}`} />
                                     </button>
                                 </div>
                             </div>
