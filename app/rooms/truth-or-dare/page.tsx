@@ -23,6 +23,7 @@ import {
     X,
     TrendingUp,
     Flame, // Added Flame icon
+    Send, // Added Send icon for tips
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -359,6 +360,18 @@ function TruthOrDareContent() {
                     }
                 }
             })
+            .on('broadcast', { event: 'tip_event' }, (payload) => {
+                const tipData = payload.payload;
+                if (tipData && tipData.userId !== userId) {
+                    // Show toast for other fans' tips
+                    toast(`🎉 ${tipData.userName} tipped $${tipData.amount}!`, {
+                        duration: 4000,
+                        position: 'top-center',
+                        style: { background: '#1a1a2e', border: '1px solid rgba(236,72,153,0.4)', color: '#f9a8d4' }
+                    });
+                    playMoneySound();
+                }
+            })
             .on('broadcast', { event: 'question_revealed' }, (payload) => {
                 // Check if this answer is for the current user's request
                 console.log('📢 Question revealed event received:', payload.payload);
@@ -690,6 +703,23 @@ function TruthOrDareContent() {
                 if (confirmModal.type === 'system_truth' || confirmModal.type === 'system_dare') {
                     setShowCountdown(true);
                 }
+
+                // Broadcast tip event so all fans see it
+                if (confirmModal.type === 'tip' || confirmModal.type === 'reaction') {
+                    playMoneySound();
+                    const tipChannel = supabase.channel(`room:${roomId}`);
+                    tipChannel.send({
+                        type: 'broadcast',
+                        event: 'tip_event',
+                        payload: {
+                            userId,
+                            userName,
+                            amount: confirmModal.price,
+                            type: confirmModal.type,
+                            emoji: confirmModal.tier || '💰',
+                        },
+                    }).catch(() => { });
+                }
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
                 setResultModal({
@@ -966,7 +996,27 @@ function TruthOrDareContent() {
                             ))}
                         </div>
 
-
+                        {/* Tip Creator Section */}
+                        <div className="glass-panel p-4 border-white/10 bg-black/20">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Send className="w-4 h-4 text-green-400" />
+                                <h3 className="text-sm font-semibold text-white tracking-wide">Tip Creator</h3>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2">
+                                {TIP_AMOUNTS.map((amount) => (
+                                    <button
+                                        key={`tip-${amount}`}
+                                        disabled={isSubmitting}
+                                        onClick={() => openConfirmation('tip', `$${amount}`, `Tip $${amount}`, amount)}
+                                        className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-all group hover:scale-105 shadow-[0_0_8px_rgba(34,197,94,0.15)] hover:shadow-[0_0_16px_rgba(34,197,94,0.3)]"
+                                    >
+                                        <span className="text-lg group-hover:scale-110 transition-transform">💰</span>
+                                        <span className="text-[10px] font-bold text-green-300">${amount}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-[9px] text-gray-500 text-center mt-2">Show your appreciation — tips go directly to the creator</p>
+                        </div>
 
                         {/* Group Voting Section — wired with GroupVotePanel */}
                         {roomId && (
