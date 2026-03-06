@@ -1,7 +1,10 @@
 "use client";
 
-import { DollarSign, Gift, Users, Play, Star, Lock, ChevronLeft, Bell, ChevronDown } from "lucide-react";
+import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import ProfileMenu from "@/components/navigation/ProfileMenu";
+import { NotificationIcon } from "@/components/common/NotificationIcon";
 
 interface StatCardProps {
     icon: React.ReactNode;
@@ -64,6 +67,7 @@ interface CsDashboardHeaderProps {
 
 export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProps) => {
     const router = useRouter();
+    const { user, logout } = useAuth();
     const displayName = username || "Creator";
 
     return (
@@ -76,22 +80,31 @@ export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProp
             </div>
             <div className="flex items-center gap-3">
                 <button
-                    onClick={() => router.push("/home")}
-                    className="cs-glass-card px-4 py-2 flex items-center gap-2 text-sm text-white hover:bg-white/10 transition-colors"
+                    onClick={() => router.push('/home')}
+                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-medium flex items-center gap-2 transition"
                 >
-                    <ChevronLeft size={16} /> Back
+                    <ArrowLeft className="w-4 h-4" /> Back
                 </button>
-                <button className="cs-glass-card p-2 text-white hover:bg-white/10 transition-colors">
-                    <Bell size={18} />
+
+                <NotificationIcon role="creator" />
+
+                <button
+                    onClick={() => router.push('/account/messages')}
+                    className="px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
+                    title="Messages"
+                >
+                    <MessageSquare className="w-4 h-4" />
                 </button>
-                <button className="cs-glass-card px-3 py-2 flex items-center gap-2 text-sm text-white hover:bg-white/10 transition-colors">
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-pink-500/50" />
-                    ) : (
-                        <div className="w-7 h-7 rounded-full bg-pink-500/30 border border-pink-500/50" />
-                    )}
-                    {displayName} <ChevronDown size={14} />
-                </button>
+
+                <div className="relative z-50">
+                    <ProfileMenu
+                        user={user}
+                        profile={{ username: displayName, avatar_url: avatarUrl }}
+                        role="creator"
+                        router={router}
+                        onSignOut={logout}
+                    />
+                </div>
             </div>
         </div>
     );
