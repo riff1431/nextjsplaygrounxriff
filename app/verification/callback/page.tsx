@@ -22,7 +22,7 @@ function VerificationCallbackContent() {
         if (currentStatus === 'Approved' || currentStatus === 'approved') {
             // Auto-redirect to dashboard after a short delay
             const timer = setTimeout(() => {
-                router.push('/creator/dashboard');
+                router.push('/rooms/creator-studio');
             }, 2000);
             return () => clearTimeout(timer);
         }

@@ -1044,7 +1044,7 @@ export default function TruthOrDareCreatorRoom() {
         if (sessionActive && (!history[0] || history[0].status === 'active')) {
             setShowExitConfirmation(true);
         } else {
-            router.push('/creator/dashboard');
+            router.push('/rooms/creator-studio');
         }
     };
 

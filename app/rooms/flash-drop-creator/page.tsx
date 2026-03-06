@@ -22,7 +22,7 @@ const FlashdropCreatorRoom = () => {
                 {/* Top Bar */}
                 <div className="flex items-center shrink-0 relative">
                     <Link
-                        href="/creator/dashboard"
+                        href="/rooms/creator-studio"
                         className="glass-card rounded-lg p-2 hover:bg-primary/20 transition-colors absolute left-0 flex items-center justify-center cursor-pointer"
                     >
                         <ArrowLeft className="text-primary" size={20} />

@@ -343,7 +343,7 @@ export default function CreatorSuga4URoom() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-pink-500/20">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => router.push('/creator/dashboard')}
+                        onClick={() => router.push('/rooms/creator-studio')}
                         className="rounded-xl border border-pink-500/25 bg-black/40 px-3 py-2 text-sm text-pink-200 hover:bg-white/5 inline-flex items-center gap-2"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back

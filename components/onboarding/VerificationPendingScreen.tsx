@@ -103,7 +103,7 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
         if (data?.kyc_status === "approved") {
             setStatus("approved");
             setTimeout(() => {
-                router.push("/creator/dashboard");
+                router.push("/rooms/creator-studio");
             }, 1500);
         } else if (data?.kyc_status === "rejected") {
             setStatus("rejected");
@@ -137,7 +137,7 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
                     </button>
 
                     <button
-                        onClick={() => router.push("/creator/dashboard")}
+                        onClick={() => router.push("/rooms/creator-studio")}
                         className="mt-3 w-full py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-medium hover:bg-white/10 transition-all"
                     >
                         Go to Creator Dashboard

@@ -685,7 +685,7 @@ export default function Home() {
     // Redirect creators to dashboard
     useEffect(() => {
         if (!authLoading && role === "creator") {
-            router.push("/creator/dashboard");
+            router.push("/rooms/creator-studio");
         }
     }, [role, authLoading, router]);
 

@@ -85,7 +85,7 @@ export default function OnboardingPage() {
             return;
         } else if (profile.role === "creator" && profile.kyc_status === "approved") {
             // Creator is done, redirect
-            router.push("/creator/dashboard");
+            router.push("/rooms/creator-studio");
             return;
         }
 

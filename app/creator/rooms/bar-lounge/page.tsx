@@ -124,7 +124,7 @@ function nowId(prefix: string) {
 
 export default function BarLoungeCreatorStudioPage() {
     const router = useRouter();
-    const onBack = () => router.push('/creator/dashboard');
+    const onBack = () => router.push('/rooms/creator-studio');
 
     // --- State ---
     const [viewState, setViewState] = useState<"loading" | "history" | "new" | "live">("loading");

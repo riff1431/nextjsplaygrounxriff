@@ -12,7 +12,7 @@ export default function LandingPage() {
   useEffect(() => {
     if (!isLoading && user) {
       if (role === 'admin') router.push('/admin/dashboard');
-      else if (role === 'creator') router.push('/creator/dashboard');
+      else if (role === 'creator') router.push('/rooms/creator-studio');
       else router.push('/home');
     }
   }, [user, role, isLoading, router]);
