@@ -713,8 +713,9 @@ export default function TruthOrDareCreatorPage() {
             setShowOverlay(true);
             setTimeout(() => setShowOverlay(false), 6000); // Hide after 6s
 
-            // Remove from queue
+            // Remove from queue and activity feed
             setQueue(q => q.filter(x => x.id !== item.id));
+            setActivityFeed(af => af.filter(x => x.id !== item.id));
             if (doubleDareArmed) setDoubleDareArmed(false);
 
         } catch (err) {
@@ -958,50 +959,191 @@ export default function TruthOrDareCreatorPage() {
                 </div>
             </div>
 
-            {/* Top row: GroupVote | Stream | Chat */}
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-3 lg:gap-4 mb-3 lg:mb-4">
-                <div className="h-[420px] overflow-hidden">
-                    <GroupVoteManager roomId={roomId} />
-                </div>
-                <div className="h-[420px]">
-                    <TodCreatorStreamViewer
-                        roomId={roomId}
-                        userId={me.id}
-                        appId={APP_ID}
-                        avatarUrl={myAvatarUrl}
-                        creatorName={me.name}
-                        viewerCount={fans.length}
-                    />
-                </div>
-                <div className="h-[420px]">
-                    <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
-                </div>
-            </div>
+            {/* ─── DASHBOARD (No Active Session) ─── */}
+            {!sessionActive ? (
+                <div className="flex-1 flex flex-col items-center justify-start px-4 py-8 gap-8 max-w-3xl mx-auto w-full">
+                    {/* Start Session Card */}
+                    <div className="w-full tod-creator-panel-bg rounded-2xl tod-creator-neon-border-pink p-6 lg:p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
+                                <span className="text-2xl">🎭</span>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Start a New Session</h2>
+                                <p className="text-sm text-white/50">Create a live Truth or Dare experience for your fans</p>
+                            </div>
+                        </div>
 
-            {/* Bottom row: Truth | Dare | Earnings */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_280px] gap-3 lg:gap-4 flex-1">
-                <div className="h-[400px] lg:h-[450px]">
-                    <TodCreatorRequestPanel
-                        title="Truth Requests"
-                        accentColor="blue"
-                        queue={queue.filter(q => q.type.includes("TRUTH") || q.type === "TIER_PURCHASE" || q.type === "TIP") as any}
-                        onServe={serveQueueItem as any}
-                        onDismiss={(q: any) => setQueue(qq => qq.filter(x => x.id !== q.id))}
-                    />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Session Title</label>
+                                <input
+                                    className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                    placeholder="e.g. Late Night Truth or Dare 🔥"
+                                    value={sessionForm.title}
+                                    onChange={(e) => setSessionForm({ ...sessionForm, title: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Description (optional)</label>
+                                <textarea
+                                    className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-20"
+                                    placeholder="Tell fans what to expect..."
+                                    value={sessionForm.description}
+                                    onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Entry Price ($)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                        value={sessionForm.price}
+                                        min={0}
+                                        onChange={(e) => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Access Type</label>
+                                    <button
+                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: !sessionForm.isPrivate })}
+                                        className={`w-full py-3 rounded-xl text-sm font-bold transition border ${sessionForm.isPrivate
+                                            ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                                            : 'bg-green-500/10 border-green-500/30 text-green-300'
+                                            }`}
+                                    >
+                                        {sessionForm.isPrivate ? '🔒 Private (Approval)' : '🌐 Public (Open)'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {creatorWalletBalance !== null && (
+                                <div className="flex items-center justify-between text-xs text-white/40 px-1">
+                                    <span>Wallet Balance: <span className="text-green-400 font-bold">${creatorWalletBalance.toFixed(2)}</span></span>
+                                    <span>Session fee: <span className="text-white/60">Free</span></span>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={startSession}
+                                disabled={isCreatingSession || !sessionForm.title.trim()}
+                                className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-base shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isCreatingSession ? (
+                                    <>⏳ Creating Session...</>
+                                ) : (
+                                    <><Play className="w-5 h-5" /> Go Live</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Past Sessions History */}
+                    {history.length > 0 && (
+                        <div className="w-full tod-creator-panel-bg rounded-2xl tod-creator-neon-border-blue p-6">
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <TrendingUp className="w-5 h-5 tod-creator-text-neon-blue" />
+                                Past Sessions
+                            </h3>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                                {history.filter((s: any) => s.status !== 'active').slice(0, 10).map((s: any, i: number) => (
+                                    <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-4 py-3">
+                                        <div>
+                                            <div className="text-sm text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
+                                            <div className="text-[10px] text-white/40 mt-0.5">{formatCanadaDate(s.started_at || s.created_at)}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm font-bold text-green-400">${(s.total_earnings || 0).toFixed(2)}</div>
+                                            <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="h-[400px] lg:h-[450px]">
-                    <TodCreatorRequestPanel
-                        title="Dare Requests"
-                        accentColor="pink"
-                        queue={queue.filter(q => q.type.includes("DARE") || q.type === "CROWD_VOTE_TIER" || q.type === "CROWD_VOTE_TV") as any}
-                        onServe={serveQueueItem as any}
-                        onDismiss={(q: any) => setQueue(qq => qq.filter(x => x.id !== q.id))}
-                    />
-                </div>
-                <div className="h-[400px] lg:h-[450px]">
-                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
-                </div>
-            </div>
+            ) : (
+                /* ─── LIVE STUDIO (Session Active) ─── */
+                <>
+                    {/* Top row: GroupVote | Stream | Chat */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-3 lg:gap-4 mb-3 lg:mb-4">
+                        <div className="h-[420px] overflow-hidden">
+                            <GroupVoteManager roomId={roomId} />
+                        </div>
+                        <div className="h-[420px]">
+                            <TodCreatorStreamViewer
+                                roomId={roomId}
+                                userId={me.id}
+                                appId={APP_ID}
+                                avatarUrl={myAvatarUrl}
+                                creatorName={me.name}
+                                viewerCount={fans.length}
+                            />
+                        </div>
+                        <div className="h-[420px]">
+                            <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
+                        </div>
+                    </div>
+
+                    {/* Bottom row: Truth | Dare | Earnings */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_280px] gap-3 lg:gap-4 flex-1">
+                        <div className="h-[400px] lg:h-[450px]">
+                            <TodCreatorRequestPanel
+                                title="Truth Requests"
+                                accentColor="blue"
+                                queue={[
+                                    ...queue.filter(q => q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
+                                    ...activityFeed
+                                        .filter(a => a.type === 'truth' || a.type === 'custom_truth')
+                                        .filter(a => !queue.some(q => q.id === a.id))
+                                        .map(a => ({
+                                            id: a.id,
+                                            type: a.type === 'custom_truth' ? 'CUSTOM_TRUTH' : 'TIER_PURCHASE',
+                                            createdAt: a.timestamp,
+                                            fanName: a.fanName,
+                                            amount: a.amount,
+                                            meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Truth` }
+                                        }))
+                                ] as any}
+                                onServe={serveQueueItem as any}
+                                onDismiss={(q: any) => {
+                                    setQueue(qq => qq.filter(x => x.id !== q.id));
+                                    setActivityFeed(af => af.filter(x => x.id !== q.id));
+                                }}
+                            />
+                        </div>
+                        <div className="h-[400px] lg:h-[450px]">
+                            <TodCreatorRequestPanel
+                                title="Dare Requests"
+                                accentColor="pink"
+                                queue={[
+                                    ...queue.filter(q => q.type.includes("DARE")),
+                                    ...activityFeed
+                                        .filter(a => a.type === 'dare' || a.type === 'custom_dare')
+                                        .filter(a => !queue.some(q => q.id === a.id))
+                                        .map(a => ({
+                                            id: a.id,
+                                            type: a.type === 'custom_dare' ? 'CUSTOM_DARE' : 'TIER_PURCHASE',
+                                            createdAt: a.timestamp,
+                                            fanName: a.fanName,
+                                            amount: a.amount,
+                                            meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Dare` }
+                                        }))
+                                ] as any}
+                                onServe={serveQueueItem as any}
+                                onDismiss={(q: any) => {
+                                    setQueue(qq => qq.filter(x => x.id !== q.id));
+                                    setActivityFeed(af => af.filter(x => x.id !== q.id));
+                                }}
+                            />
+                        </div>
+                        <div className="h-[400px] lg:h-[450px]">
+                            <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Exit/End Confirmation Modal */}
             {showExitConfirmation && (

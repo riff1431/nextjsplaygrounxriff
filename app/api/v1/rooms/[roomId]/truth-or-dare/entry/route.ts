@@ -48,6 +48,12 @@ export async function POST(
 
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
+    // Also insert into truth_dare_unlocks for backward-compatible access checks
+    await supabase
+        .from("truth_dare_unlocks")
+        .upsert({ room_id: roomId, fan_id: user.id, amount }, { onConflict: "room_id,fan_id" })
+        .select();
+
     return NextResponse.json({ success: true, entry, new_balance: result.new_balance });
 }
 

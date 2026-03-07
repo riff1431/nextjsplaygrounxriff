@@ -242,7 +242,7 @@ function TruthOrDareContent() {
                         setUserAvatar(profile.avatar_url);
                     }
 
-                    // A. Check Payment (Unlocks table) - Valid for both Public and Private
+                    // A. Check Payment (Unlocks table + Entries table) - Valid for both Public and Private
                     const { data: unlock } = await supabase
                         .from('truth_dare_unlocks')
                         .select('id')
@@ -251,7 +251,21 @@ function TruthOrDareContent() {
                         .maybeSingle();
 
                     if (unlock) {
-                        console.log("Access Granted: User has paid.");
+                        console.log("Access Granted: User has paid (unlocks).");
+                        setAccess('granted');
+                        return; // Done
+                    }
+
+                    // Also check truth_dare_entries (new entry fee table)
+                    const { data: entry } = await supabase
+                        .from('truth_dare_entries')
+                        .select('id')
+                        .eq('room_id', roomId)
+                        .eq('fan_id', user.id)
+                        .maybeSingle();
+
+                    if (entry) {
+                        console.log("Access Granted: User has paid (entries).");
                         setAccess('granted');
                         return; // Done
                     }
@@ -659,7 +673,7 @@ function TruthOrDareContent() {
 
         try {
             // Route to correct API based on type
-            let endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/entry`;
+            let endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/interact`;
             let body: any = {
                 type: confirmModal.type,
                 tier: confirmModal.tier,
@@ -667,10 +681,7 @@ function TruthOrDareContent() {
                 amount: confirmModal.price
             };
 
-            if (confirmModal.type === 'reaction' || confirmModal.type === 'tip') {
-                endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/tip`;
-                body = { amount: confirmModal.price, message: confirmModal.content || confirmModal.tier };
-            } else if (confirmModal.type === 'crowd_vote') {
+            if (confirmModal.type === 'crowd_vote') {
                 endpoint = `/api/v1/rooms/${roomId}/truth-or-dare/vote`;
                 body = { choice: confirmModal.tier || 'truth', amount: confirmModal.price };
             }
