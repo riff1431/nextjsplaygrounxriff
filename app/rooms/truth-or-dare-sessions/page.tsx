@@ -449,8 +449,8 @@ export default function TruthOrDareSessionsBrowse() {
                     /* ── Sessions Grid ── */
                     <div style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
-                        gap: "20px",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
+                        gap: "14px",
                     }}>
                         {filteredSessions.map((session, i) => {
                             const isHovered = hoveredCard === session.id;
@@ -464,7 +464,7 @@ export default function TruthOrDareSessionsBrowse() {
                                     onMouseLeave={() => setHoveredCard(null)}
                                     style={{
                                         position: "relative",
-                                        borderRadius: "20px",
+                                        borderRadius: "14px",
                                         background: isHovered
                                             ? "linear-gradient(145deg, rgba(45,15,55,0.9), rgba(30,10,40,0.95))"
                                             : "linear-gradient(145deg, rgba(28,10,35,0.7), rgba(20,5,30,0.8))",
@@ -473,7 +473,7 @@ export default function TruthOrDareSessionsBrowse() {
                                             : "1px solid rgba(236,72,153,0.1)",
                                         overflow: "hidden",
                                         transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                                        transform: isHovered ? "translateY(-4px)" : "translateY(0)",
+                                        transform: isHovered ? "translateY(-3px)" : "translateY(0)",
                                         boxShadow: isHovered
                                             ? "0 20px 60px rgba(236,72,153,0.15), 0 0 0 1px rgba(236,72,153,0.2)"
                                             : "0 4px 20px rgba(0,0,0,0.3)",
@@ -492,23 +492,23 @@ export default function TruthOrDareSessionsBrowse() {
                                     )}
 
                                     {/* Card top section */}
-                                    <div style={{ padding: "20px 20px 0" }}>
+                                    <div style={{ padding: "12px 14px 0" }}>
                                         {/* Status row */}
-                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                 {/* Live badge */}
                                                 <span style={{
-                                                    display: "inline-flex", alignItems: "center", gap: "5px",
-                                                    padding: "4px 10px", borderRadius: "8px",
+                                                    display: "inline-flex", alignItems: "center", gap: "4px",
+                                                    padding: "2px 7px", borderRadius: "6px",
                                                     background: "rgba(236,72,153,0.15)",
                                                     border: "1px solid rgba(236,72,153,0.3)",
-                                                    fontSize: "10px", fontWeight: 800,
+                                                    fontSize: "8px", fontWeight: 800,
                                                     color: "#f472b6", letterSpacing: "1px",
                                                     textTransform: "uppercase" as const,
                                                     boxShadow: "0 0 10px rgba(236,72,153,0.15)",
                                                 }}>
                                                     <span style={{
-                                                        width: 5, height: 5, borderRadius: "50%",
+                                                        width: 4, height: 4, borderRadius: "50%",
                                                         background: "#ec4899",
                                                         boxShadow: "0 0 8px rgba(236,72,153,0.8)",
                                                         animation: "todPulsePink 1.5s ease-in-out infinite",
@@ -517,70 +517,70 @@ export default function TruthOrDareSessionsBrowse() {
                                                 </span>
                                                 {/* Access badge */}
                                                 <span style={{
-                                                    display: "inline-flex", alignItems: "center", gap: "4px",
-                                                    padding: "4px 8px", borderRadius: "8px",
+                                                    display: "inline-flex", alignItems: "center", gap: "3px",
+                                                    padding: "2px 6px", borderRadius: "6px",
                                                     background: session.is_private
                                                         ? "rgba(168,85,247,0.15)"
                                                         : "rgba(217,70,239,0.1)",
                                                     border: `1px solid ${session.is_private ? "rgba(168,85,247,0.3)" : "rgba(217,70,239,0.2)"}`,
-                                                    fontSize: "10px", fontWeight: 700,
+                                                    fontSize: "8px", fontWeight: 700,
                                                     color: session.is_private ? "#c084fc" : "#f0abfc",
                                                     textTransform: "uppercase" as const,
                                                     letterSpacing: "0.5px",
                                                 }}>
                                                     {session.is_private
-                                                        ? <><Lock style={{ width: 9, height: 9 }} /> Locked</>
-                                                        : <><Globe style={{ width: 9, height: 9 }} /> Open</>
+                                                        ? <><Lock style={{ width: 8, height: 8 }} /> Locked</>
+                                                        : <><Globe style={{ width: 8, height: 8 }} /> Open</>
                                                     }
                                                 </span>
                                             </div>
                                             {/* User status badge */}
                                             {session.user_joined && (
                                                 <span style={{
-                                                    display: "inline-flex", alignItems: "center", gap: "4px",
-                                                    padding: "4px 10px", borderRadius: "8px",
+                                                    display: "inline-flex", alignItems: "center", gap: "3px",
+                                                    padding: "2px 7px", borderRadius: "6px",
                                                     background: "rgba(236,72,153,0.15)",
                                                     border: "1px solid rgba(236,72,153,0.3)",
-                                                    fontSize: "10px", fontWeight: 700,
+                                                    fontSize: "8px", fontWeight: 700,
                                                     color: "#f472b6", textTransform: "uppercase" as const,
                                                     boxShadow: "0 0 10px rgba(236,72,153,0.2)",
                                                 }}>
-                                                    <CheckCircle2 style={{ width: 10, height: 10 }} /> Joined
+                                                    <CheckCircle2 style={{ width: 8, height: 8 }} /> Joined
                                                 </span>
                                             )}
                                             {session.user_request_status === "pending" && (
                                                 <span style={{
-                                                    display: "inline-flex", alignItems: "center", gap: "4px",
-                                                    padding: "4px 10px", borderRadius: "8px",
+                                                    display: "inline-flex", alignItems: "center", gap: "3px",
+                                                    padding: "2px 7px", borderRadius: "6px",
                                                     background: "rgba(245,158,11,0.15)",
                                                     border: "1px solid rgba(245,158,11,0.3)",
-                                                    fontSize: "10px", fontWeight: 700,
+                                                    fontSize: "8px", fontWeight: 700,
                                                     color: "#fcd34d", textTransform: "uppercase" as const,
                                                     boxShadow: "0 0 10px rgba(245,158,11,0.2)",
                                                 }}>
-                                                    <Clock style={{ width: 10, height: 10 }} /> Pending
+                                                    <Clock style={{ width: 8, height: 8 }} /> Pending
                                                 </span>
                                             )}
                                             {session.user_request_status === "rejected" && (
                                                 <span style={{
-                                                    display: "inline-flex", alignItems: "center", gap: "4px",
-                                                    padding: "4px 10px", borderRadius: "8px",
+                                                    display: "inline-flex", alignItems: "center", gap: "3px",
+                                                    padding: "2px 7px", borderRadius: "6px",
                                                     background: "rgba(225,29,72,0.15)",
                                                     border: "1px solid rgba(225,29,72,0.3)",
-                                                    fontSize: "10px", fontWeight: 700,
+                                                    fontSize: "8px", fontWeight: 700,
                                                     color: "#fb7185", textTransform: "uppercase" as const,
                                                     boxShadow: "0 0 10px rgba(225,29,72,0.2)",
                                                 }}>
-                                                    <XCircle style={{ width: 10, height: 10 }} /> Denied
+                                                    <XCircle style={{ width: 8, height: 8 }} /> Denied
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Title */}
                                         <h3 style={{
-                                            fontSize: "18px", fontWeight: 700,
+                                            fontSize: "14px", fontWeight: 700,
                                             color: isHovered ? "#fbcfe8" : "#fff",
-                                            margin: "0 0 6px", lineHeight: 1.3,
+                                            margin: "0 0 4px", lineHeight: 1.3,
                                             transition: "color 0.3s ease",
                                             overflow: "hidden", textOverflow: "ellipsis",
                                             whiteSpace: "nowrap" as const,
@@ -592,10 +592,10 @@ export default function TruthOrDareSessionsBrowse() {
                                         {/* Description */}
                                         {session.description && (
                                             <p style={{
-                                                fontSize: "13px", color: "rgba(244,114,182,0.6)",
-                                                margin: "0 0 14px", lineHeight: 1.5,
+                                                fontSize: "11px", color: "rgba(244,114,182,0.6)",
+                                                margin: "0 0 8px", lineHeight: 1.4,
                                                 overflow: "hidden", display: "-webkit-box",
-                                                WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
+                                                WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as const,
                                             }}>
                                                 {session.description}
                                             </p>
@@ -604,14 +604,14 @@ export default function TruthOrDareSessionsBrowse() {
 
                                     {/* Creator row */}
                                     <div style={{
-                                        padding: "12px 20px",
-                                        display: "flex", alignItems: "center", gap: "12px",
+                                        padding: "8px 14px",
+                                        display: "flex", alignItems: "center", gap: "8px",
                                         borderTop: "1px solid rgba(236,72,153,0.1)",
                                         borderBottom: "1px solid rgba(236,72,153,0.1)",
                                         background: "rgba(236,72,153,0.02)",
                                     }}>
                                         <div style={{
-                                            width: 38, height: 38, borderRadius: "12px",
+                                            width: 28, height: 28, borderRadius: "8px",
                                             background: "linear-gradient(135deg, #ec4899, #8b5cf6)",
                                             display: "flex", alignItems: "center", justifyContent: "center",
                                             overflow: "hidden", flexShrink: 0,
@@ -622,14 +622,14 @@ export default function TruthOrDareSessionsBrowse() {
                                                 <img src={session.creator.avatar_url} alt=""
                                                     style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                             ) : (
-                                                <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>
+                                                <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>
                                                     {creatorName[0]?.toUpperCase()}
                                                 </span>
                                             )}
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
                                             <div style={{
-                                                fontSize: "14px", fontWeight: 600, color: "#fff",
+                                                fontSize: "12px", fontWeight: 600, color: "#fff",
                                                 overflow: "hidden", textOverflow: "ellipsis",
                                                 whiteSpace: "nowrap" as const,
                                                 textShadow: "0 0 5px rgba(236,72,153,0.3)",
@@ -637,14 +637,14 @@ export default function TruthOrDareSessionsBrowse() {
                                                 {creatorName}
                                             </div>
                                             <div style={{
-                                                fontSize: "11px", color: "rgba(244,114,182,0.6)",
-                                                marginTop: "2px",
+                                                fontSize: "10px", color: "rgba(244,114,182,0.6)",
+                                                marginTop: "1px",
                                             }}>
                                                 Uplink {timeAgo(session.started_at)}
                                             </div>
                                         </div>
                                         <Flame style={{
-                                            width: 16, height: 16,
+                                            width: 13, height: 13,
                                             color: isHovered ? "#f472b6" : "rgba(236,72,153,0.3)",
                                             filter: isHovered ? "drop-shadow(0 0 5px #ec4899)" : "none",
                                             transition: "all 0.3s ease",
@@ -653,30 +653,30 @@ export default function TruthOrDareSessionsBrowse() {
 
                                     {/* Stats row */}
                                     <div style={{
-                                        padding: "12px 20px",
+                                        padding: "8px 14px",
                                         display: "flex", alignItems: "center", justifyContent: "space-between",
                                     }}>
                                         <div style={{
-                                            display: "flex", alignItems: "center", gap: "6px",
-                                            fontSize: "12px", color: "rgba(244,114,182,0.7)", fontWeight: 500,
+                                            display: "flex", alignItems: "center", gap: "4px",
+                                            fontSize: "10px", color: "rgba(244,114,182,0.7)", fontWeight: 500,
                                         }}>
-                                            <Users style={{ width: 13, height: 13 }} />
+                                            <Users style={{ width: 11, height: 11 }} />
                                             <span>{session.participant_count} viewers</span>
                                         </div>
                                         <div style={{
-                                            display: "flex", alignItems: "center", gap: "6px",
-                                            fontSize: "12px", fontWeight: 800,
+                                            display: "flex", alignItems: "center", gap: "4px",
+                                            fontSize: "10px", fontWeight: 800,
                                             color: price > 0 ? "#fcd34d" : "#f472b6",
                                             textShadow: price > 0 ? "0 0 10px rgba(251,191,36,0.3)" : "0 0 10px rgba(236,72,153,0.3)",
                                         }}>
                                             {price > 0 ? (
                                                 <>
-                                                    <DollarSign style={{ width: 13, height: 13 }} />
+                                                    <DollarSign style={{ width: 11, height: 11 }} />
                                                     <span>${price}</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Zap style={{ width: 13, height: 13 }} />
+                                                    <Zap style={{ width: 11, height: 11 }} />
                                                     <span>Free Access</span>
                                                 </>
                                             )}
@@ -684,15 +684,15 @@ export default function TruthOrDareSessionsBrowse() {
                                     </div>
 
                                     {/* Action Button */}
-                                    <div style={{ padding: "0 16px 16px" }}>
+                                    <div style={{ padding: "0 12px 12px" }}>
                                         {session.user_joined ? (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
                                                 style={{
-                                                    width: "100%", padding: "13px",
-                                                    borderRadius: "14px", border: "1px solid rgba(236,72,153,0.5)",
+                                                    width: "100%", padding: "9px",
+                                                    borderRadius: "10px", border: "1px solid rgba(236,72,153,0.5)",
                                                     background: "linear-gradient(135deg, rgba(219,39,119,0.8), rgba(190,24,93,0.9))",
-                                                    color: "#fff", fontSize: "14px", fontWeight: 700,
+                                                    color: "#fff", fontSize: "11px", fontWeight: 700,
                                                     cursor: "pointer", transition: "all 0.3s ease",
                                                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                                                     boxShadow: "0 0 20px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
@@ -701,53 +701,53 @@ export default function TruthOrDareSessionsBrowse() {
                                                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 0 30px rgba(236,72,153,0.5), inset 0 1px 0 rgba(255,255,255,0.2)"; e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(219,39,119,1))"; }}
                                                 onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"; e.currentTarget.style.background = "linear-gradient(135deg, rgba(219,39,119,0.8), rgba(190,24,93,0.9))"; }}
                                             >
-                                                <Play style={{ width: 16, height: 16, fill: "#fff" }} /> Enter Server
+                                                <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Server
                                             </button>
                                         ) : session.user_request_status === "pending" ? (
                                             <button
                                                 disabled
                                                 style={{
-                                                    width: "100%", padding: "13px",
-                                                    borderRadius: "14px",
+                                                    width: "100%", padding: "9px",
+                                                    borderRadius: "10px",
                                                     background: "rgba(245,158,11,0.1)",
                                                     border: "1px solid rgba(245,158,11,0.3)",
-                                                    color: "#fcd34d", fontSize: "14px", fontWeight: 600,
+                                                    color: "#fcd34d", fontSize: "11px", fontWeight: 600,
                                                     cursor: "not-allowed",
                                                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                                                     boxShadow: "0 0 15px rgba(245,158,11,0.1)", textTransform: "uppercase",
                                                 }}
                                             >
-                                                <Clock style={{ width: 15, height: 15 }} /> Connecting...
+                                                <Clock style={{ width: 12, height: 12 }} /> Connecting...
                                             </button>
                                         ) : session.user_request_status === "rejected" ? (
                                             <button
                                                 disabled
                                                 style={{
-                                                    width: "100%", padding: "13px",
-                                                    borderRadius: "14px",
+                                                    width: "100%", padding: "9px",
+                                                    borderRadius: "10px",
                                                     background: "rgba(225,29,72,0.1)",
                                                     border: "1px solid rgba(225,29,72,0.3)",
-                                                    color: "#fb7185", fontSize: "14px", fontWeight: 600,
+                                                    color: "#fb7185", fontSize: "11px", fontWeight: 600,
                                                     cursor: "not-allowed",
                                                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
                                                     boxShadow: "0 0 15px rgba(225,29,72,0.1)", textTransform: "uppercase",
                                                 }}
                                             >
-                                                <XCircle style={{ width: 15, height: 15 }} /> Access Denied
+                                                <XCircle style={{ width: 12, height: 12 }} /> Access Denied
                                             </button>
                                         ) : (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
                                                 disabled={joiningSessionId === session.id}
                                                 style={{
-                                                    width: "100%", padding: "13px",
-                                                    borderRadius: "14px", border: "1px solid rgba(236,72,153,0.3)",
+                                                    width: "100%", padding: "9px",
+                                                    borderRadius: "10px", border: "1px solid rgba(236,72,153,0.3)",
                                                     background: session.is_private
                                                         ? "linear-gradient(135deg, rgba(168,85,247,0.8), rgba(147,51,234,0.9))"
                                                         : price > 0
                                                             ? "linear-gradient(135deg, rgba(219,39,119,0.8), rgba(190,24,93,0.9))"
                                                             : "linear-gradient(135deg, rgba(236,72,153,0.8), rgba(219,39,119,0.9))",
-                                                    color: "#fff", fontSize: "14px", fontWeight: 800,
+                                                    color: "#fff", fontSize: "11px", fontWeight: 800,
                                                     cursor: joiningSessionId === session.id ? "wait" : "pointer",
                                                     transition: "all 0.3s ease",
                                                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
@@ -787,13 +787,13 @@ export default function TruthOrDareSessionsBrowse() {
                                                 }}
                                             >
                                                 {joiningSessionId === session.id ? (
-                                                    <><Loader2 style={{ width: 15, height: 15, animation: "spin 1s linear infinite" }} /> Initialize...</>
+                                                    <><Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> Initialize...</>
                                                 ) : session.is_private ? (
-                                                    <><Lock style={{ width: 15, height: 15 }} /> Request Access</>
+                                                    <><Lock style={{ width: 12, height: 12 }} /> Request Access</>
                                                 ) : price > 0 ? (
-                                                    <><DollarSign style={{ width: 15, height: 15 }} /> Connect — ${price}</>
+                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Connect — ${price}</>
                                                 ) : (
-                                                    <><Zap style={{ width: 15, height: 15, fill: "#fff" }} /> Connect Grid</>
+                                                    <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Connect Grid</>
                                                 )}
                                             </button>
                                         )}

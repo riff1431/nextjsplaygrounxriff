@@ -20,6 +20,8 @@ import {
     Check,
     Sparkles,
     Martini,
+    DoorOpen,
+    Banknote,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -75,16 +77,25 @@ type AdminModule =
     | "scheduling" // Placeholder
     | "moderation"
     | "messaging" // Placeholder
-    | "monitoring"; // Placeholder
+    | "monitoring" // Placeholder
+    | "room-settings" // Links to /admin/rooms
+    | "finance-payouts"; // Links to /admin/finance/payouts
 
 export default function AdminDashboardPage() {
     const router = useRouter();
     const [bizModule, setBizModule] = useState<AdminModule>("home");
     const [showMobileNav, setShowMobileNav] = useState(false);
 
+    // These modules navigate to separate pages instead of switching state
+    const ROUTE_MAP: Record<string, string> = {
+        "room-settings": "/admin/rooms",
+        "finance-payouts": "/admin/finance/payouts",
+    };
+
     const NAV: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink" }> = [
         { id: "home", label: "Admin Home", icon: <Home className="w-4 h-4" />, tone: "cyan" },
         { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
+        { id: "room-settings", label: "Room Settings", icon: <DoorOpen className="w-4 h-4" />, tone: "pink" },
         { id: "prompts", label: "System Truth & Dare", icon: <MessageCircle className="w-4 h-4" />, tone: "pink" },
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
@@ -98,6 +109,7 @@ export default function AdminDashboardPage() {
         { id: "bar-lounge", label: "Bar Lounge", icon: <Martini className="w-4 h-4" />, tone: "pink" },
         { id: "bank-payments", label: "Bank Payments", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
+        { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "audit", label: "Audit Logs", icon: <Lock className="w-4 h-4" />, tone: "cyan" },
         { id: "moderation", label: "Moderation", icon: <Bell className="w-4 h-4" />, tone: "red" },
@@ -179,7 +191,11 @@ export default function AdminDashboardPage() {
                                 <button
                                     key={n.id}
                                     onClick={() => {
-                                        setBizModule(n.id);
+                                        if (ROUTE_MAP[n.id]) {
+                                            router.push(ROUTE_MAP[n.id]);
+                                        } else {
+                                            setBizModule(n.id);
+                                        }
                                         setShowMobileNav(false);
                                     }}
                                     className={cx(
@@ -190,6 +206,7 @@ export default function AdminDashboardPage() {
                                     <span className="inline-flex items-center gap-2">
                                         {n.icon}
                                         {n.label}
+                                        {ROUTE_MAP[n.id] && <span className="text-[9px] text-gray-500 ml-1">↗</span>}
                                     </span>
                                 </button>
                             ))}
@@ -211,6 +228,19 @@ export default function AdminDashboardPage() {
 
                             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <Tile id="dashboard" label="Dashboard" icon={<Star className="w-4 h-4" />} tone="green" desc="Revenue overview" />
+                                <button
+                                    onClick={() => router.push('/admin/rooms')}
+                                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-left hover:bg-white/5 transition"
+                                >
+                                    <div className="inline-flex items-center gap-2 text-cyan-200 text-sm">
+                                        <DoorOpen className="w-4 h-4" /> Room Settings
+                                    </div>
+                                    <div className="mt-2 text-[11px] text-gray-400">Fees, toggles & sessions</div>
+                                    <div className="mt-3 text-[11px] text-gray-500 inline-flex items-center gap-2">
+                                        <AdminPill tone="pink">Open ↗</AdminPill>
+                                        <span className="text-gray-500">→</span>
+                                    </div>
+                                </button>
                                 <Tile id="prompts" label="System Truth & Dare" icon={<MessageCircle className="w-4 h-4" />} tone="pink" desc="Manage prompts" />
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
                                 <Tile id="users" label="Users" icon={<Users className="w-4 h-4" />} tone="cyan" desc="Manage access" />

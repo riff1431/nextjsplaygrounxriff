@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
                 status, started_at, creator_id, room_id
             `)
             .eq("status", "active")
+            .is("ended_at", null)
             .order("started_at", { ascending: false });
 
         if (error) throw error;

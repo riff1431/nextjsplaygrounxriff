@@ -1164,7 +1164,7 @@ export default function TruthOrDareCreatorRoom() {
                             </div>
                         ) : (
                             <button
-                                onClick={() => setShowStartModal(true)}
+                                onClick={() => router.push('/rooms/truth-or-dare-creator')}
                                 className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg transition flex items-center gap-2"
                             >
                                 <Play className="w-5 h-5 fill-current" /> Start New Session
@@ -1173,7 +1173,7 @@ export default function TruthOrDareCreatorRoom() {
                     </div>
 
                     {/* Stats Overview */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="grid grid-cols-3 gap-4 mb-8">
                         <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
                             <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Total Sessions</div>
                             <div className="text-2xl font-bold text-white">{history ? history.length : 0}</div>
@@ -1189,10 +1189,6 @@ export default function TruthOrDareCreatorRoom() {
                             <div className="text-2xl font-bold text-green-400">
                                 {creatorWalletBalance !== null ? `$${creatorWalletBalance.toFixed(2)}` : "..."}
                             </div>
-                        </div>
-                        <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
-                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Fan Entry Price</div>
-                            <div className="text-2xl font-bold text-amber-400">${sessionInfo?.price ?? sessionForm.price}</div>
                         </div>
                     </div>
 
@@ -1304,100 +1300,6 @@ export default function TruthOrDareCreatorRoom() {
                 </div>
             )}
 
-            {/* Session Create Modal */}
-            {!sessionActive && showStartModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
-                    <div className="max-w-md w-full bg-gray-950 border border-green-500/30 rounded-3xl p-8 shadow-[0_0_50px_rgba(34,197,94,0.1)] relative">
-                        <button
-                            onClick={() => setShowStartModal(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
-                        >
-                            <XCircle className="w-6 h-6" />
-                        </button>
-
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                                <Play className="w-8 h-8 text-green-400 ml-1" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-white">Start New Session</h2>
-                            <p className="text-gray-400 mt-2">Configure your live room details.</p>
-                        </div>
-
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Session Title</label>
-                                <input
-                                    type="text"
-                                    value={sessionForm.title}
-                                    onChange={e => setSessionForm({ ...sessionForm, title: e.target.value })}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500/50 outline-none"
-                                    placeholder="e.g. Friday Night Truths"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Description (optional)</label>
-                                <textarea
-                                    value={sessionForm.description}
-                                    onChange={e => setSessionForm({ ...sessionForm, description: e.target.value })}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500/50 outline-none resize-none"
-                                    rows={2}
-                                    placeholder="Briefly describe what fans can expect..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Session Type</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: false })}
-                                        className={`p-3 rounded-xl border text-sm font-medium transition ${!sessionForm.isPrivate ? "border-green-500/50 bg-green-500/10 text-white" : "border-white/10 text-gray-400 hover:bg-white/5"}`}
-                                    >
-                                        🌍 Public
-                                    </button>
-                                    <button
-                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: true })}
-                                        className={`p-3 rounded-xl border text-sm font-medium transition ${sessionForm.isPrivate ? "border-purple-500/50 bg-purple-500/10 text-white" : "border-white/10 text-gray-400 hover:bg-white/5"}`}
-                                    >
-                                        🔒 Private
-                                    </button>
-                                </div>
-                                {sessionForm.isPrivate && (
-                                    <p className="text-[10px] text-purple-400/70 mt-1">Fans must request access. You approve or decline each request.</p>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="text-xs text-gray-400 mb-1 block">Fan Entry Price ($)</label>
-                                <input
-                                    type="number"
-                                    value={sessionForm.price}
-                                    readOnly
-                                    className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-white/70 text-sm outline-none cursor-not-allowed"
-                                />
-                                <p className="text-[10px] text-gray-500 mt-1">
-                                    Fixed platform entry fee. Fans pay this to join.
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={startSession}
-                                disabled={isCreatingSession}
-                                className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {isCreatingSession ? (
-                                    <>
-                                        <span className="animate-spin">⏳</span> Creating Session...
-                                    </>
-                                ) : (
-                                    <>🚀 Go Live</>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
         </div >
     );

@@ -913,9 +913,9 @@ export default function TruthOrDareCreatorPage() {
 
 
     return (
-        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-3 lg:p-4">
+        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3">
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-3 lg:mb-4 px-2">
+            <div className="flex items-center justify-between mb-2 lg:mb-3 px-1">
                 <button
                     onClick={() => handleBackNavigation()}
                     className="tod-creator-panel-bg tod-creator-neon-border-blue px-3 py-2 rounded-lg flex items-center gap-2 text-white/80 hover:text-white transition-colors"
@@ -959,33 +959,33 @@ export default function TruthOrDareCreatorPage() {
 
             {/* ─── DASHBOARD (No Active Session) ─── */}
             {!sessionActive ? (
-                <div className="flex-1 flex flex-col items-center justify-start px-4 py-8 gap-8 max-w-3xl mx-auto w-full">
+                <div className="flex-1 flex flex-col items-center justify-start px-4 py-4 gap-4 max-w-2xl mx-auto w-full">
                     {/* Start Session Card */}
-                    <div className="w-full tod-creator-panel-bg rounded-2xl tod-creator-neon-border-pink p-6 lg:p-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
-                                <span className="text-2xl">🎭</span>
+                    <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-pink p-4 lg:p-5">
+                        <div className="flex items-center gap-2.5 mb-4">
+                            <div className="w-9 h-9 rounded-lg bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
+                                <span className="text-lg">🎭</span>
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">Start a New Session</h2>
-                                <p className="text-sm text-white/50">Create a live Truth or Dare experience for your fans</p>
+                                <h2 className="text-base font-bold text-white leading-tight">Start a New Session</h2>
+                                <p className="text-xs text-white/50">Create a live Truth or Dare experience for your fans</p>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
-                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Session Title</label>
+                                <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Session Title</label>
                                 <input
-                                    className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
                                     placeholder="e.g. Late Night Truth or Dare 🔥"
                                     value={sessionForm.title}
                                     onChange={(e) => setSessionForm({ ...sessionForm, title: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Description (optional)</label>
+                                <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Description (optional)</label>
                                 <textarea
-                                    className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-20"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-14"
                                     placeholder="Tell fans what to expect..."
                                     value={sessionForm.description}
                                     onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
@@ -993,11 +993,11 @@ export default function TruthOrDareCreatorPage() {
                             </div>
                             {/* Session Type Toggle */}
                             <div>
-                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-2 block">Session Type</label>
-                                <div className="grid grid-cols-2 gap-3">
+                                <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Session Type</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: false, price: 10 })}
-                                        className={`py-3 rounded-xl text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
+                                        className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
                                             ? 'bg-green-500/20 border-green-500/50 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
                                             : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                             }`}
@@ -1006,7 +1006,7 @@ export default function TruthOrDareCreatorPage() {
                                     </button>
                                     <button
                                         onClick={() => setSessionForm({ ...sessionForm, isPrivate: true, price: Math.max(20, sessionForm.price) })}
-                                        className={`py-3 rounded-xl text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
+                                        className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
                                             ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
                                             : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                             }`}
@@ -1014,53 +1014,39 @@ export default function TruthOrDareCreatorPage() {
                                         🔒 Private
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-white/30 mt-1.5 px-1">
-                                    {sessionForm.isPrivate
-                                        ? 'Fans must request access. You approve or decline each request.'
-                                        : 'Anyone can join by paying the fixed entry fee.'}
-                                </p>
+                                {sessionForm.isPrivate && (
+                                    <p className="text-[10px] text-white/30 mt-1 px-1">
+                                        Fans must request access. You approve or decline each request.
+                                    </p>
+                                )}
                             </div>
 
-                            {/* Fan Entry Price */}
-                            <div>
-                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Fan Entry Price ($)</label>
-                                {sessionForm.isPrivate ? (
+                            {/* Fan Entry Price - Only shown for Private sessions */}
+                            {sessionForm.isPrivate && (
+                                <div>
+                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Fan Entry Price ($)</label>
                                     <input
                                         type="number"
-                                        className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
+                                        className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
                                         value={sessionForm.price}
                                         min={20}
                                         onChange={(e) => setSessionForm({ ...sessionForm, price: Math.max(20, Number(e.target.value)) })}
                                     />
-                                ) : (
-                                    <div className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white/60 border border-white/10 cursor-not-allowed flex items-center justify-between">
-                                        <span>$10</span>
-                                        <span className="text-[10px] text-white/30 uppercase tracking-wider">Fixed</span>
-                                    </div>
-                                )}
-                                <p className="text-[10px] text-white/30 mt-1 px-1">
-                                    {sessionForm.isPrivate
-                                        ? `Minimum $20. Fans pay this to join your private session.`
-                                        : 'Fixed platform entry fee. Fans pay this to join.'}
-                                </p>
-                            </div>
-
-                            {creatorWalletBalance !== null && (
-                                <div className="flex items-center justify-between text-xs text-white/40 px-1">
-                                    <span>Wallet Balance: <span className="text-green-400 font-bold">${creatorWalletBalance.toFixed(2)}</span></span>
-                                    <span>Session fee: <span className="text-white/60">Free</span></span>
+                                    <p className="text-[10px] text-white/30 mt-1 px-1">
+                                        Minimum $20. Fans pay this to join your private session.
+                                    </p>
                                 </div>
                             )}
 
                             <button
                                 onClick={startSession}
                                 disabled={isCreatingSession || !sessionForm.title.trim()}
-                                className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-base shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isCreatingSession ? (
                                     <>⏳ Creating Session...</>
                                 ) : (
-                                    <><Play className="w-5 h-5" /> Go Live</>
+                                    <><Play className="w-4 h-4" /> Go Live</>
                                 )}
                             </button>
                         </div>
@@ -1068,20 +1054,20 @@ export default function TruthOrDareCreatorPage() {
 
                     {/* Past Sessions History */}
                     {history.length > 0 && (
-                        <div className="w-full tod-creator-panel-bg rounded-2xl tod-creator-neon-border-blue p-6">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 tod-creator-text-neon-blue" />
+                        <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4">
+                            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 tod-creator-text-neon-blue" />
                                 Past Sessions
                             </h3>
-                            <div className="space-y-3 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                            <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
                                 {history.filter((s: any) => s.status !== 'active').slice(0, 10).map((s: any, i: number) => (
-                                    <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-4 py-3">
+                                    <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-3 py-2">
                                         <div>
-                                            <div className="text-sm text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
+                                            <div className="text-xs text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
                                             <div className="text-[10px] text-white/40 mt-0.5">{formatCanadaDate(s.started_at || s.created_at)}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-sm font-bold text-green-400">${(s.total_earnings || 0).toFixed(2)}</div>
+                                            <div className="text-xs font-bold text-green-400">${(s.total_earnings || 0).toFixed(2)}</div>
                                             <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
                                         </div>
                                     </div>
