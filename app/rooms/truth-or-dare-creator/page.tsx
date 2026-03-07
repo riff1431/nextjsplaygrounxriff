@@ -958,10 +958,10 @@ export default function TruthOrDareCreatorPage() {
                 </div>
             </div>
 
-            {/* Top row: Chat | Stream | Earnings */}
+            {/* Top row: GroupVote | Stream | Chat */}
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] gap-3 lg:gap-4 mb-3 lg:mb-4">
-                <div className="h-[420px]">
-                    <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
+                <div className="h-[420px] overflow-hidden">
+                    <GroupVoteManager roomId={roomId} />
                 </div>
                 <div className="h-[420px]">
                     <TodCreatorStreamViewer
@@ -974,11 +974,11 @@ export default function TruthOrDareCreatorPage() {
                     />
                 </div>
                 <div className="h-[420px]">
-                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
+                    <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
                 </div>
             </div>
 
-            {/* Bottom row: Truth | Dare | GroupVote */}
+            {/* Bottom row: Truth | Dare | Earnings */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_280px] gap-3 lg:gap-4 flex-1">
                 <div className="h-[400px] lg:h-[450px]">
                     <TodCreatorRequestPanel
@@ -998,8 +998,8 @@ export default function TruthOrDareCreatorPage() {
                         onDismiss={(q: any) => setQueue(qq => qq.filter(x => x.id !== q.id))}
                     />
                 </div>
-                <div className="h-[400px] lg:h-[450px] overflow-hidden">
-                    <GroupVoteManager roomId={roomId} />
+                <div className="h-[400px] lg:h-[450px]">
+                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
                 </div>
             </div>
 

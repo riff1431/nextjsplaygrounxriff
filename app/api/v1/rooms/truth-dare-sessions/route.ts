@@ -1,8 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-/** Platform fee charged to creator per session (USD). */
-const DEFAULT_CREATOR_FEE = 10;
+/** Platform fee is no longer charged to creators. Kept for reference. */
+const DEFAULT_CREATOR_FEE = 0;
 
 /**
  * Platform account that receives the creator fee.
@@ -120,36 +120,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Room not found or unauthorized" }, { status: 403 });
         }
 
-        // 2. Get configurable fee from admin_settings
-        let creatorFee = DEFAULT_CREATOR_FEE;
-        const { data: feeSetting } = await supabase
-            .from("admin_settings")
-            .select("value")
-            .eq("key", "truth_dare_creator_fee")
-            .single();
+        // Fee is no longer charged to creators — fans pay entry fee instead
+        const creatorFee = 0;
 
-        if (feeSetting?.value) {
-            const parsed = typeof feeSetting.value === "string"
-                ? Number(JSON.parse(feeSetting.value))
-                : Number(feeSetting.value);
-            if (!isNaN(parsed) && parsed > 0) creatorFee = parsed;
-        }
-
-        // 3. Deduct creator fee via deduct_balance RPC
-        const { error: deductError } = await supabase.rpc("deduct_balance", {
-            p_user_id: user.id,
-            p_amount: creatorFee,
-        });
-
-        if (deductError) {
-            console.error("Deduct error :", deductError);
-            return NextResponse.json({
-                error: deductError.message || "Insufficient wallet balance to pay session fee",
-                required_fee: creatorFee,
-            }, { status: 400 });
-        }
-
-        // Fetch updated balance to return
+        // Fetch wallet balance for response
         const { data: walletData } = await supabase
             .from("wallets")
             .select("balance")
@@ -215,9 +189,9 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             type: "truth_dare_session_created",
             title: "Session Created! 🎮",
-            message: `"${title}" is now live. $${creatorFee} platform fee charged.`,
+            message: `"${title}" is now live!`,
             link: `/creator/rooms/truth-or-dare`,
-            metadata: { session_id: session.id, fee: creatorFee },
+            metadata: { session_id: session.id },
         });
 
         return NextResponse.json({

@@ -961,13 +961,9 @@ export default function TruthOrDareCreatorRoom() {
         }
     }
 
-    // Session Actions — Uses new sessions API with fee deduction
+    // Session Actions
     async function startSession() {
         if (!roomId) return;
-        if (creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE) {
-            toast.error(`Insufficient wallet balance. You need $${CREATOR_SESSION_FEE} to start a session. Current balance: $${creatorWalletBalance.toFixed(2)}`);
-            return;
-        }
         setIsCreatingSession(true);
         try {
             const res = await fetch('/api/v1/rooms/truth-dare-sessions', {
@@ -990,7 +986,7 @@ export default function TruthOrDareCreatorRoom() {
                 setCreatorWalletBalance(data.new_balance);
             }
 
-            toast.success(`Session created! $${CREATOR_SESSION_FEE} fee charged.`);
+            toast.success('Session created! You are now live.');
 
             // Optimistic update
             setSessionActive(true);
@@ -1195,8 +1191,8 @@ export default function TruthOrDareCreatorRoom() {
                             </div>
                         </div>
                         <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
-                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Session Fee</div>
-                            <div className="text-2xl font-bold text-amber-400">${CREATOR_SESSION_FEE}</div>
+                            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Fan Entry Price</div>
+                            <div className="text-2xl font-bold text-amber-400">${sessionInfo?.price ?? sessionForm.price}</div>
                         </div>
                     </div>
 
@@ -1327,22 +1323,6 @@ export default function TruthOrDareCreatorRoom() {
                             <p className="text-gray-400 mt-2">Configure your live room details.</p>
                         </div>
 
-                        {/* Platform Fee Warning */}
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-5">
-                            <div className="flex items-center gap-2 mb-1">
-                                <TrendingUp className="w-4 h-4 text-amber-400" />
-                                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">Platform Fee</span>
-                            </div>
-                            <p className="text-sm text-amber-200">
-                                A <span className="font-bold">${CREATOR_SESSION_FEE} USD</span> fee will be charged from your wallet.
-                            </p>
-                            <p className="text-xs text-amber-400/70 mt-1">
-                                Wallet Balance: <span className="font-bold">{creatorWalletBalance !== null ? `$${creatorWalletBalance.toFixed(2)}` : 'Loading...'}</span>
-                                {creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE && (
-                                    <span className="text-red-400 ml-2">⚠ Insufficient balance</span>
-                                )}
-                            </p>
-                        </div>
 
                         <div className="space-y-4">
                             <div>
@@ -1392,20 +1372,18 @@ export default function TruthOrDareCreatorRoom() {
                                 <label className="text-xs text-gray-400 mb-1 block">Fan Entry Price ($)</label>
                                 <input
                                     type="number"
-                                    min={0}
                                     value={sessionForm.price}
-                                    onChange={e => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-green-500/50 outline-none"
-                                    placeholder="0 for free entry"
+                                    readOnly
+                                    className="w-full bg-black/30 border border-white/5 rounded-xl px-4 py-3 text-white/70 text-sm outline-none cursor-not-allowed"
                                 />
                                 <p className="text-[10px] text-gray-500 mt-1">
-                                    Set to 0 for free entry. Fans pay this to join.
+                                    Fixed platform entry fee. Fans pay this to join.
                                 </p>
                             </div>
 
                             <button
                                 onClick={startSession}
-                                disabled={isCreatingSession || (creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE)}
+                                disabled={isCreatingSession}
                                 className="w-full py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-lg shadow-lg shadow-green-900/20 transition mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isCreatingSession ? (
@@ -1413,7 +1391,7 @@ export default function TruthOrDareCreatorRoom() {
                                         <span className="animate-spin">⏳</span> Creating Session...
                                     </>
                                 ) : (
-                                    <>🚀 Go Live — Pay ${CREATOR_SESSION_FEE} Fee</>
+                                    <>🚀 Go Live</>
                                 )}
                             </button>
                         </div>
