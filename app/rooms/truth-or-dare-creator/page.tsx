@@ -829,10 +829,8 @@ export default function TruthOrDareCreatorPage() {
     // Session Actions — Uses new sessions API with fee deduction
     async function startSession() {
         if (!roomId) return;
-        if (creatorWalletBalance !== null && creatorWalletBalance < CREATOR_SESSION_FEE) {
-            toast.error(`Insufficient wallet balance. You need $${CREATOR_SESSION_FEE} to start a session. Current balance: $${creatorWalletBalance.toFixed(2)}`);
-            return;
-        }
+        // Enforce pricing rules
+        const finalPrice = sessionForm.isPrivate ? Math.max(20, Number(sessionForm.price)) : 10;
         setIsCreatingSession(true);
         try {
             const res = await fetch('/api/v1/rooms/truth-dare-sessions', {
@@ -843,7 +841,7 @@ export default function TruthOrDareCreatorPage() {
                     title: sessionForm.title || "Live Truth or Dare",
                     description: sessionForm.description,
                     session_type: sessionForm.isPrivate ? 'private' : 'public',
-                    price: Number(sessionForm.price)
+                    price: finalPrice
                 })
             });
             const data = await res.json();
@@ -855,14 +853,14 @@ export default function TruthOrDareCreatorPage() {
                 setCreatorWalletBalance(data.new_balance);
             }
 
-            toast.success(`Session created! $${CREATOR_SESSION_FEE} fee charged.`);
+            toast.success(`Session "${sessionForm.title}" is now live! 🎭`);
 
             // Optimistic update
             setSessionActive(true);
             setSessionInfo({
                 title: sessionForm.title || "Live Truth or Dare",
                 isPrivate: sessionForm.isPrivate,
-                price: Number(sessionForm.price)
+                price: finalPrice
             });
             setShowStartModal(false);
 
@@ -993,29 +991,58 @@ export default function TruthOrDareCreatorPage() {
                                     onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Entry Price ($)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none border border-white/10 focus:border-pink-500/50 transition"
-                                        value={sessionForm.price}
-                                        min={0}
-                                        onChange={(e) => setSessionForm({ ...sessionForm, price: Number(e.target.value) })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Access Type</label>
+                            {/* Session Type Toggle */}
+                            <div>
+                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-2 block">Session Type</label>
+                                <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: !sessionForm.isPrivate })}
-                                        className={`w-full py-3 rounded-xl text-sm font-bold transition border ${sessionForm.isPrivate
-                                            ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                                            : 'bg-green-500/10 border-green-500/30 text-green-300'
+                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: false, price: 10 })}
+                                        className={`py-3 rounded-xl text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
+                                            ? 'bg-green-500/20 border-green-500/50 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
+                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                             }`}
                                     >
-                                        {sessionForm.isPrivate ? '🔒 Private (Approval)' : '🌐 Public (Open)'}
+                                        🌐 Public
+                                    </button>
+                                    <button
+                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: true, price: Math.max(20, sessionForm.price) })}
+                                        className={`py-3 rounded-xl text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
+                                            ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        🔒 Private
                                     </button>
                                 </div>
+                                <p className="text-[10px] text-white/30 mt-1.5 px-1">
+                                    {sessionForm.isPrivate
+                                        ? 'Fans must request access. You approve or decline each request.'
+                                        : 'Anyone can join by paying the fixed entry fee.'}
+                                </p>
+                            </div>
+
+                            {/* Fan Entry Price */}
+                            <div>
+                                <label className="text-xs text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Fan Entry Price ($)</label>
+                                {sessionForm.isPrivate ? (
+                                    <input
+                                        type="number"
+                                        className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
+                                        value={sessionForm.price}
+                                        min={20}
+                                        onChange={(e) => setSessionForm({ ...sessionForm, price: Math.max(20, Number(e.target.value)) })}
+                                    />
+                                ) : (
+                                    <div className="w-full bg-white/5 rounded-xl px-4 py-3 text-sm text-white/60 border border-white/10 cursor-not-allowed flex items-center justify-between">
+                                        <span>$10</span>
+                                        <span className="text-[10px] text-white/30 uppercase tracking-wider">Fixed</span>
+                                    </div>
+                                )}
+                                <p className="text-[10px] text-white/30 mt-1 px-1">
+                                    {sessionForm.isPrivate
+                                        ? `Minimum $20. Fans pay this to join your private session.`
+                                        : 'Fixed platform entry fee. Fans pay this to join.'}
+                                </p>
                             </div>
 
                             {creatorWalletBalance !== null && (
