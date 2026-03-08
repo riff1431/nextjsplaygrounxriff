@@ -1198,26 +1198,23 @@ export default function TruthOrDareCreatorPage() {
                     </div>
 
                     {/* ─── RIGHT MAIN AREA ─── */}
-                    <div className="flex-1 flex flex-col gap-3 lg:gap-4 min-h-0">
-                        {/* Top: Stream (square) + Chat side by side */}
-                        <div className="flex gap-3 lg:gap-4 flex-1 min-h-0">
-                            {/* Live Stream — Square */}
-                            <div className="relative" style={{ width: '500px', minWidth: '400px', aspectRatio: '1 / 1' }}>
-                                <div className="absolute inset-0">
-                                    <TodCreatorStreamViewer
-                                        roomId={roomId}
-                                        userId={me.id}
-                                        appId={APP_ID}
-                                        avatarUrl={myAvatarUrl}
-                                        creatorName={me.name}
-                                        viewerCount={fans.length}
-                                    />
-                                </div>
+                    <div className="flex-1 flex gap-3 lg:gap-4 min-h-0">
+                        {/* Live Stream — Square, fills full height */}
+                        <div className="relative" style={{ height: '100%', aspectRatio: '1 / 1' }}>
+                            <div className="absolute inset-0">
+                                <TodCreatorStreamViewer
+                                    roomId={roomId}
+                                    userId={me.id}
+                                    appId={APP_ID}
+                                    avatarUrl={myAvatarUrl}
+                                    creatorName={me.name}
+                                    viewerCount={fans.length}
+                                />
                             </div>
-                            {/* Live Chat — right sidebar */}
-                            <div className="flex-1 min-w-[250px] min-h-0">
-                                <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
-                            </div>
+                        </div>
+                        {/* Live Chat — right of stream */}
+                        <div className="flex-1 min-w-[250px] min-h-0">
+                            <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
                         </div>
                     </div>
                 </div>
