@@ -29,6 +29,7 @@ export default function StartSessionModal({
     const [description, setDescription] = useState("");
     const [sessionType, setSessionType] = useState<"public" | "private">("public");
     const [price, setPrice] = useState<string>("20");
+    const [costPerMin, setCostPerMin] = useState<string>("4");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +51,7 @@ export default function StartSessionModal({
             description: description.trim() || undefined,
             session_type: sessionType,
             price: sessionType === "private" ? Number(price) : undefined,
+            cost_per_min: sessionType === "private" ? Number(costPerMin) : undefined,
         });
 
         setIsSubmitting(false);
@@ -263,6 +265,48 @@ export default function StartSessionModal({
                                     }}
                                 />
                             </div>
+                        </div>
+                    )}
+
+                    {/* Cost Per Minute field - Private sessions only */}
+                    {sessionType === "private" && (
+                        <div style={{ marginBottom: "16px" }}>
+                            <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
+                                Cost Per Min ($)
+                            </label>
+                            <div style={{ position: "relative" }}>
+                                <DollarSign
+                                    size={16}
+                                    style={{
+                                        position: "absolute",
+                                        left: "14px",
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        color: "rgba(255,255,255,0.4)",
+                                    }}
+                                />
+                                <input
+                                    type="number"
+                                    value={costPerMin}
+                                    onChange={(e) => setCostPerMin(String(Math.max(4, Number(e.target.value))))}
+                                    min={4}
+                                    step={1}
+                                    style={{
+                                        width: "100%",
+                                        background: "rgba(255,255,255,0.06)",
+                                        border: "1px solid rgba(255,255,255,0.12)",
+                                        borderRadius: "10px",
+                                        padding: "12px 14px 12px 36px",
+                                        color: "#fff",
+                                        fontSize: "14px",
+                                        outline: "none",
+                                        boxSizing: "border-box",
+                                    }}
+                                />
+                            </div>
+                            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", marginTop: "4px", paddingLeft: "4px" }}>
+                                Minimum $4. Fans are charged per minute in your private session.
+                            </p>
                         </div>
                     )}
 

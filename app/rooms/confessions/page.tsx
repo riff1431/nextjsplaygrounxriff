@@ -8,11 +8,15 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import dynamic from "next/dynamic";
 import { toast as sonnerToast } from "sonner";
 import StripePaymentModal from "@/components/live/StripePaymentModal";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
+
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 import FloatingHearts from "@/components/rooms/confessions/FloatingHearts";
 import CreatorSpotlight from "@/components/rooms/confessions/CreatorSpotlight";
@@ -164,6 +168,9 @@ export default function ConfessionsRoom() {
 
     // Dynamic room discovery
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [hostId, setHostId] = useState<string | null>(null);
+    const [hostAvatar, setHostAvatar] = useState<string | null>(null);
+    const [hostStreamName, setHostStreamName] = useState("Creator");
 
     // State
     const [requests, setRequests] = useState<ConfessionRequest[]>([]);
@@ -210,10 +217,40 @@ export default function ConfessionsRoom() {
 
         async function discoverRoom() {
             const supabase = createClient();
+            // Try confessions-type room first
+            const { data: confRoom } = await supabase
+                .from('rooms')
+                .select('id, host_id')
+                .eq('type', 'confessions')
+                .eq('status', 'live')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (confRoom) {
+                setRoomId(confRoom.id);
+                setHostId(confRoom.host_id);
+                // Fetch host profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, username, avatar_url')
+                    .eq('id', confRoom.host_id)
+                    .single();
+                if (profile) {
+                    setHostStreamName(profile.full_name || profile.username || 'Creator');
+                    setHostAvatar(profile.avatar_url || null);
+                }
+                return;
+            }
+
+            // Fallback: confessions table
             const { data: confessionRoom } = await supabase.from('confessions').select('room_id').limit(1).maybeSingle();
             if (confessionRoom?.room_id) { setRoomId(confessionRoom.room_id); return; }
-            const { data: anyRoom } = await supabase.from('rooms').select('id').limit(1).maybeSingle();
-            if (anyRoom?.id) setRoomId(anyRoom.id);
+            const { data: anyRoom } = await supabase.from('rooms').select('id, host_id').limit(1).maybeSingle();
+            if (anyRoom) {
+                setRoomId(anyRoom.id);
+                setHostId(anyRoom.host_id);
+            }
         }
         discoverRoom();
     }, [user]);
@@ -511,6 +548,27 @@ export default function ConfessionsRoom() {
 
                             {/* Center Column - wider */}
                             <div className="lg:col-span-2 space-y-4 xl:space-y-6 w-full max-w-full">
+                                {/* Live Stream */}
+                                <section className="group relative overflow-hidden rounded-3xl border border-rose-500/10 bg-[#120205]/70 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                                    <div style={{ aspectRatio: "16/9" }}>
+                                        {roomId && user && hostId ? (
+                                            <LiveStreamWrapper
+                                                role="fan"
+                                                appId={APP_ID}
+                                                roomId={roomId}
+                                                uid={user.id}
+                                                hostId={hostId}
+                                                hostAvatarUrl={hostAvatar || ""}
+                                                hostName={hostStreamName}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-black/50 text-rose-200/40 text-sm">
+                                                {roomId ? "Connecting to stream..." : "No active session"}
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+
                                 <ConfessionWall
                                     confessions={confessions}
                                     myUnlocks={myUnlocks}

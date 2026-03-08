@@ -5,12 +5,16 @@ import { ArrowLeft, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import dynamic from "next/dynamic";
 import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import { toast as sonnerToast } from "sonner";
+
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 /**
  * Flash Drops Room — Fan View Preview
@@ -26,6 +30,9 @@ export default function FlashDropsRoomPreview() {
 
     const [toast, setToast] = useState<string | null>(null);
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [hostId, setHostId] = useState<string | null>(null);
+    const [hostAvatar, setHostAvatar] = useState<string | null>(null);
+    const [hostName, setHostName] = useState("Creator");
 
     // Pending purchase for SpendConfirmModal
     const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string } | null>(null);
@@ -37,13 +44,26 @@ export default function FlashDropsRoomPreview() {
             const supabase = createClient();
             const { data } = await supabase
                 .from('rooms')
-                .select('id')
+                .select('id, host_id')
                 .eq('type', 'flash-drop')
                 .eq('status', 'live')
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
-            if (data?.id) setRoomId(data.id);
+            if (data) {
+                setRoomId(data.id);
+                setHostId(data.host_id);
+                // Fetch host profile
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, username, avatar_url')
+                    .eq('id', data.host_id)
+                    .single();
+                if (profile) {
+                    setHostName(profile.full_name || profile.username || 'Creator');
+                    setHostAvatar(profile.avatar_url || null);
+                }
+            }
         }
         findRoom();
     }, [user]);
@@ -175,9 +195,27 @@ export default function FlashDropsRoomPreview() {
                     <main className="flex-1">
                         <div className="flex flex-col">
                             {/* Mid-scale layout for better breathing room - Increased top padding */}
-                            <div className="flex-1 flex justify-center gap-20 px-4 pt-20 pb-8">
-                                {/* Left: Drop Board */}
-                                <div className="w-[440px] pb-4">
+                            <div className="flex-1 flex justify-center gap-20 px-4 pt-8 pb-8">
+                                {/* Left: Stream + Drop Board */}
+                                <div className="w-[440px] space-y-4 pb-4">
+                                    {/* Live Stream */}
+                                    <div className="rounded-2xl overflow-hidden fd-neon-border-md" style={{ aspectRatio: "16/9" }}>
+                                        {roomId && user && hostId ? (
+                                            <LiveStreamWrapper
+                                                role="fan"
+                                                appId={APP_ID}
+                                                roomId={roomId}
+                                                uid={user.id}
+                                                hostId={hostId}
+                                                hostAvatarUrl={hostAvatar || ""}
+                                                hostName={hostName}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-black/50 text-white/40 text-sm">
+                                                {roomId ? "Connecting to stream..." : "No active session"}
+                                            </div>
+                                        )}
+                                    </div>
                                     <LiveDropBoard onSpend={requestSpend} />
                                 </div>
 

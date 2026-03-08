@@ -5,14 +5,18 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { ProtectRoute } from "@/app/context/AuthContext";
+import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
+import dynamic from "next/dynamic";
 import LiveChat from "@/components/rooms/x-chat-creator/LiveChat";
-import VideoFeeds from "@/components/rooms/x-chat-creator/VideoFeeds";
 import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests";
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
 
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
 const XChatCreatorPage = () => {
     const router = useRouter();
+    const { user } = useAuth();
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
 
@@ -88,9 +92,25 @@ const XChatCreatorPage = () => {
                             <LiveChat roomId={roomId} />
                         </div>
 
-                        {/* Center - Video Feeds */}
+                        {/* Center - Live Stream */}
                         <div className="flex items-center justify-center w-full">
-                            <VideoFeeds />
+                            <div className="w-full h-full rounded-xl overflow-hidden gold-border gold-glow" style={{ aspectRatio: "16/9" }}>
+                                {roomId && user ? (
+                                    <LiveStreamWrapper
+                                        role="host"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={user.id}
+                                        hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                        hostName={user.user_metadata?.full_name || "Creator"}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
+                                        Connecting to stream...
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Right - Requests + Summary */}

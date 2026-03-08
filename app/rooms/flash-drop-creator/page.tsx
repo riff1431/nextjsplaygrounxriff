@@ -1,7 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/app/context/AuthContext";
 import LiveDropBoard from "@/components/rooms/flashdrop-creator/LiveDropBoard";
 import SummaryBox from "@/components/rooms/flashdrop-creator/SummaryBox";
 import HighRollerPacks from "@/components/rooms/flashdrop-creator/HighRollerPacks";
@@ -9,7 +13,40 @@ import DropRequests from "@/components/rooms/flashdrop-creator/DropRequests";
 import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
 import "./flashdrop-creator.css";
 
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
 const FlashdropCreatorRoom = () => {
+    const { user } = useAuth();
+    const [roomId, setRoomId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!user) return;
+        const supabase = createClient();
+        async function findRoom() {
+            const { data: room } = await supabase
+                .from("rooms")
+                .select("id")
+                .eq("host_id", user!.id)
+                .eq("type", "flash-drop")
+                .eq("status", "live")
+                .limit(1)
+                .maybeSingle();
+
+            if (room) {
+                setRoomId(room.id);
+            } else {
+                const { data: newRoom } = await supabase
+                    .from("rooms")
+                    .insert({ host_id: user!.id, title: "Flash Drop Session", status: "live", type: "flash-drop" })
+                    .select()
+                    .single();
+                if (newRoom) setRoomId(newRoom.id);
+            }
+        }
+        findRoom();
+    }, [user]);
+
     return (
         <div
             className="flashdrop-creator-theme h-screen overflow-hidden bg-background bg-cover bg-center bg-no-repeat relative"
@@ -37,7 +74,27 @@ const FlashdropCreatorRoom = () => {
                     {/* Left two columns */}
                     <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
-                            <LiveDropBoard />
+                            <div className="flex flex-col gap-4 min-h-0">
+                                {/* Live Stream */}
+                                <div className="rounded-xl overflow-hidden" style={{ height: "200px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                    {roomId && user ? (
+                                        <LiveStreamWrapper
+                                            role="host"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id}
+                                            hostId={user.id}
+                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                            hostName={user.user_metadata?.full_name || "Creator"}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
+                                            Connecting to stream...
+                                        </div>
+                                    )}
+                                </div>
+                                <LiveDropBoard />
+                            </div>
                             <div className="flex flex-col gap-4 min-h-0">
                                 <SummaryBox />
                                 <HighRollerPacks />

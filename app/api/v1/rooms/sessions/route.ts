@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { room_type, title, description, session_type, price } = body;
+        const { room_type, title, description, session_type, price, cost_per_min } = body;
 
         if (!room_type || !title) {
             return NextResponse.json({ error: "room_type and title are required" }, { status: 400 });
@@ -101,6 +101,17 @@ export async function POST(request: NextRequest) {
             if (entryFee < Number(settings.min_private_entry_fee)) {
                 return NextResponse.json({
                     error: `Private session fee must be at least $${settings.min_private_entry_fee}`,
+                }, { status: 400 });
+            }
+        }
+
+        // 3b. Validate cost per minute for private sessions
+        let costPerMin = 0;
+        if (sType === "private" && cost_per_min !== undefined) {
+            costPerMin = Number(cost_per_min) || 0;
+            if (costPerMin < 4) {
+                return NextResponse.json({
+                    error: "Cost per minute must be at least $4 for private sessions",
                 }, { status: 400 });
             }
         }
@@ -146,6 +157,7 @@ export async function POST(request: NextRequest) {
                 description: description || null,
                 session_type: sType,
                 entry_fee: entryFee,
+                cost_per_min: sType === "private" ? costPerMin : 0,
                 status: "active",
                 agora_channel: agoraChannel,
             })

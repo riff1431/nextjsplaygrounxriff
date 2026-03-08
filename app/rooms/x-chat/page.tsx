@@ -3,17 +3,24 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ProtectRoute } from "@/app/context/AuthContext";
+import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import dynamic from "next/dynamic";
 import CreatorCard from "@/components/rooms/x-chat/CreatorCard";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
 import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
 import WalletPill from "@/components/common/WalletPill";
 
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
 const XChatRoom = () => {
     const router = useRouter();
+    const { user } = useAuth();
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [hostId, setHostId] = useState<string | null>(null);
+    const [hostAvatar, setHostAvatar] = useState<string | null>(null);
     const [hostName, setHostName] = useState("Loading...");
     const [creatorName, setCreatorName] = useState("Loading...");
 
@@ -36,9 +43,10 @@ const XChatRoom = () => {
 
             if (room) {
                 setRoomId(room.id);
+                setHostId(room.host_id);
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('username, full_name')
+                    .select('username, full_name, avatar_url')
                     .eq('id', room.host_id)
                     .single();
 
@@ -46,6 +54,7 @@ const XChatRoom = () => {
                     const name = profile.full_name || profile.username || "Host";
                     setHostName(name);
                     setCreatorName(name);
+                    setHostAvatar(profile.avatar_url || null);
                 }
             } else {
                 setHostName("No Active Room");
@@ -139,8 +148,8 @@ const XChatRoom = () => {
                                     onClick={toggleSession}
                                     disabled={!roomId}
                                     className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all ${sessionActive
-                                            ? "bg-red-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/30"
-                                            : "bg-green-500/20 border border-green-400/40 text-green-300 hover:bg-green-500/30"
+                                        ? "bg-red-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/30"
+                                        : "bg-green-500/20 border border-green-400/40 text-green-300 hover:bg-green-500/30"
                                         } disabled:opacity-50`}
                                 >
                                     <Clock size={12} />
@@ -170,8 +179,27 @@ const XChatRoom = () => {
                     {/* Main layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                        {/* Left: Chat Display + Reactions */}
+                        {/* Left: Stream + Chat Display + Reactions */}
                         <div className="lg:col-span-2 space-y-2">
+                            {/* Live Stream */}
+                            <div className="glass-card overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                                {roomId && user && hostId ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={hostId}
+                                        hostAvatarUrl={hostAvatar || ""}
+                                        hostName={hostName}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
+                                        {roomId ? "Connecting to stream..." : "No active session"}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="glass-card p-4">
                                 <h2 className="font-display text-gold text-base mb-4">
                                     Live X Chat

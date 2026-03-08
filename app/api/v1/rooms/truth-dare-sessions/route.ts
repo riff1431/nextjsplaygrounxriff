@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { title, description, session_type, price, room_id } = body;
+        const { title, description, session_type, price, room_id, cost_per_min } = body;
 
         if (!title || !room_id) {
             return NextResponse.json({ error: "Title and room_id are required" }, { status: 400 });
@@ -134,6 +134,16 @@ export async function POST(request: NextRequest) {
 
         // 4. Create session record
         const isPrivate = session_type === "private";
+
+        // Validate cost per minute for private sessions
+        let costPerMin = 0;
+        if (isPrivate && cost_per_min !== undefined) {
+            costPerMin = Number(cost_per_min) || 0;
+            if (costPerMin < 4) {
+                return NextResponse.json({ error: "Cost per minute must be at least $4 for private sessions" }, { status: 400 });
+            }
+        }
+
         const { data: session, error: sessionError } = await supabase
             .from("truth_dare_sessions")
             .insert({
@@ -144,6 +154,7 @@ export async function POST(request: NextRequest) {
                 session_type: session_type || "public",
                 is_private: isPrivate,
                 price: Number(price) || 0,
+                cost_per_min: isPrivate ? costPerMin : 0,
                 creator_start_fee: creatorFee,
                 status: "active",
             })

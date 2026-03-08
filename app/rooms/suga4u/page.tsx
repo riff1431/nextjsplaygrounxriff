@@ -2,10 +2,10 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ProtectRoute } from "@/app/context/AuthContext";
+import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
+import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
 import UserProfile from "@/components/rooms/suga4u/UserProfile";
-import LiveStream from "@/components/rooms/suga4u/LiveStream";
 import PinnedOfferDrops from "@/components/rooms/suga4u/PinnedOfferDrops";
 import CreatorSecrets from "@/components/rooms/suga4u/CreatorSecrets";
 import LiveChat from "@/components/rooms/suga4u/LiveChat";
@@ -16,10 +16,16 @@ import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
 
 import { createClient } from "@/utils/supabase/client";
 
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
 const Suga4URoom = () => {
     const router = useRouter();
+    const { user } = useAuth();
     const supabase = createClient();
     const [roomId, setRoomId] = React.useState<string | null>(null);
+    const [hostId, setHostId] = React.useState<string | null>(null);
+    const [hostAvatar, setHostAvatar] = React.useState<string | null>(null);
     const [hostName, setHostName] = React.useState("Alexis Rose");
 
     React.useEffect(() => {
@@ -36,15 +42,17 @@ const Suga4URoom = () => {
 
             if (room) {
                 setRoomId(room.id);
-                // Fetch host name
+                setHostId(room.host_id);
+                // Fetch host name + avatar
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('username, full_name')
+                    .select('username, full_name, avatar_url')
                     .eq('id', room.host_id)
                     .single();
 
                 if (profile) {
                     setHostName(profile.full_name || profile.username || "Creator");
+                    setHostAvatar(profile.avatar_url || null);
                 }
             } else {
                 setHostName("No Active Room");
@@ -76,7 +84,29 @@ const Suga4URoom = () => {
                         {/* Left Column: Stream + Offers + Secrets */}
                         <div className="flex flex-col gap-3 min-h-0">
                             <div className="flex-[1.5] min-h-0">
-                                <LiveStream />
+                                <div className="glass-panel overflow-hidden flex flex-col h-full bg-transparent border-gold/20">
+                                    <div className="relative flex-1 min-h-[250px]">
+                                        {roomId && user && hostId ? (
+                                            <LiveStreamWrapper
+                                                role="fan"
+                                                appId={APP_ID}
+                                                roomId={roomId}
+                                                uid={user.id}
+                                                hostId={hostId}
+                                                hostAvatarUrl={hostAvatar || ""}
+                                                hostName={hostName}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-black/30 text-white/40 text-sm">
+                                                {roomId ? "Connecting to stream..." : "No active session"}
+                                            </div>
+                                        )}
+                                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/70 backdrop-blur-sm px-3 py-1 rounded-full">
+                                            <span className="w-2 h-2 rounded-full bg-destructive animate-pulse-glow" />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Live</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div className="grid grid-cols lg:grid-cols-[1fr_1fr] gap-3 lg:gap-4 flex-1 min-h-0">
                                 <CreatorSecrets roomId={roomId} />

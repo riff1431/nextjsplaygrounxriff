@@ -132,6 +132,7 @@ export function useRoomSession(options: UseRoomSessionOptions = {}) {
             description?: string;
             session_type: "public" | "private";
             price?: number;
+            cost_per_min?: number;
         }) => {
             try {
                 setError(null);
