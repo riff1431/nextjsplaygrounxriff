@@ -152,7 +152,7 @@ export default function TruthOrDareCreatorPage() {
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
-    const [activeTab, setActiveTab] = useState<'vote' | 'truth' | 'dare' | 'chat' | 'earnings'>('vote');
+    const [activeTab, setActiveTab] = useState<'vote' | 'truth' | 'dare' | 'earnings'>('vote');
 
     // 1. Initialize Room ID & Load Data
     useEffect(() => {
@@ -1107,7 +1107,6 @@ export default function TruthOrDareCreatorPage() {
                                 { key: 'vote' as const, label: 'Group Vote', icon: <Vote className="w-3.5 h-3.5" />, color: '#a855f7' },
                                 { key: 'truth' as const, label: 'Truth', icon: <MessageCircle className="w-3.5 h-3.5" />, color: '#06b6d4' },
                                 { key: 'dare' as const, label: 'Dare', icon: <Flame className="w-3.5 h-3.5" />, color: '#ec4899' },
-                                { key: 'chat' as const, label: 'Chat', icon: <MessageCircle className="w-3.5 h-3.5" />, color: '#22c55e' },
                                 { key: 'earnings' as const, label: 'Earnings', icon: <TrendingUp className="w-3.5 h-3.5" />, color: '#10b981' },
                             ].map(tab => (
                                 <button
@@ -1189,11 +1188,7 @@ export default function TruthOrDareCreatorPage() {
                                     />
                                 </div>
                             )}
-                            {activeTab === 'chat' && (
-                                <div className="h-full">
-                                    <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
-                                </div>
-                            )}
+
                             {activeTab === 'earnings' && (
                                 <div className="h-full overflow-auto">
                                     <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
@@ -1204,17 +1199,24 @@ export default function TruthOrDareCreatorPage() {
 
                     {/* ─── RIGHT MAIN AREA ─── */}
                     <div className="flex-1 flex flex-col gap-3 lg:gap-4 min-h-0">
-                        {/* Live Stream — Square */}
-                        <div className="relative" style={{ width: '100%', maxWidth: '500px', aspectRatio: '1 / 1' }}>
-                            <div className="absolute inset-0">
-                                <TodCreatorStreamViewer
-                                    roomId={roomId}
-                                    userId={me.id}
-                                    appId={APP_ID}
-                                    avatarUrl={myAvatarUrl}
-                                    creatorName={me.name}
-                                    viewerCount={fans.length}
-                                />
+                        {/* Top: Stream (square) + Chat side by side */}
+                        <div className="flex gap-3 lg:gap-4 flex-1 min-h-0">
+                            {/* Live Stream — Square */}
+                            <div className="relative" style={{ width: '500px', minWidth: '400px', aspectRatio: '1 / 1' }}>
+                                <div className="absolute inset-0">
+                                    <TodCreatorStreamViewer
+                                        roomId={roomId}
+                                        userId={me.id}
+                                        appId={APP_ID}
+                                        avatarUrl={myAvatarUrl}
+                                        creatorName={me.name}
+                                        viewerCount={fans.length}
+                                    />
+                                </div>
+                            </div>
+                            {/* Live Chat — right sidebar */}
+                            <div className="flex-1 min-w-[250px] min-h-0">
+                                <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
                             </div>
                         </div>
                     </div>
