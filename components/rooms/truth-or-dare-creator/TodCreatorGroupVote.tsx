@@ -31,6 +31,7 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
     const supabase = createClient();
     const [state, setState] = useState<GroupVoteState>(DEFAULT_STATE);
     const [loading, setLoading] = useState<{ truth: boolean; dare: boolean }>({ truth: false, dare: false });
+    const [activeVoteTab, setActiveVoteTab] = useState<'truth' | 'dare'>('truth');
 
     // Form fields for creating new campaigns
     const [truthForm, setTruthForm] = useState({ label: "", target: "50", price: "10" });
@@ -161,89 +162,68 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
         const progress = campaign.target > 0 ? Math.min(100, (campaign.current / campaign.target) * 100) : 0;
         const isLoading = loading[type];
 
-        const labelColor = type === "truth" ? "tod-creator-text-neon-blue" : "tod-creator-text-neon-pink";
         const btnBg = type === "truth" ? "tod-creator-bg-neon-blue tod-creator-glow-blue" : "tod-creator-bg-neon-pink tod-creator-glow-pink";
         const progressBg = type === "truth" ? "bg-blue-500" : "bg-pink-500";
-        const icon = type === "truth" ? "⚡" : "🎭";
-        const label = type === "truth" ? "GROUP TRUTH" : "GROUP DARE";
 
         return (
-            <div className={type === "truth" ? "mb-4" : ""}>
-                <div className="flex items-center gap-2 mb-2">
-                    <span className={`${labelColor} font-bold text-sm`}>{icon} {label}</span>
-                    <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded ${isActive
-                            ? "text-green-300 bg-green-500/20 border border-green-500/30"
-                            : "text-white/40 bg-white/5"
-                            }`}
-                    >
-                        {isActive ? "ACTIVE" : "INACTIVE"}
-                    </span>
-                </div>
-
+            <div>
                 {isActive ? (
                     <>
-                        {/* Active campaign display */}
-                        <div className="bg-black/40 border border-white/10 rounded-lg p-3 mb-2">
-                            <p className="text-sm text-white font-medium mb-2 line-clamp-2">"{campaign.label}"</p>
-                            <div className="flex items-center justify-between text-xs text-white/60 mb-1.5">
-                                <span>
-                                    {campaign.current} / {campaign.target} votes
-                                </span>
+                        <div className="bg-black/40 border border-white/10 rounded-lg p-2 mb-1.5">
+                            <p className="text-xs text-white font-medium mb-1 line-clamp-1">"{campaign.label}"</p>
+                            <div className="flex items-center justify-between text-[10px] text-white/60 mb-1">
+                                <span>{campaign.current}/{campaign.target} votes</span>
                                 <span className="font-bold text-green-400">${campaign.price}/vote</span>
                             </div>
-                            {/* Progress bar */}
-                            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                     className={`h-full ${progressBg} rounded-full transition-all duration-500`}
                                     style={{ width: `${progress}%` }}
                                 />
                             </div>
-                            <div className="text-right text-[10px] text-white/40 mt-1">{Math.round(progress)}%</div>
                         </div>
                         <button
                             onClick={() => handleAction(type, "STOP")}
                             disabled={isLoading}
-                            className="w-full py-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-sm transition-all disabled:opacity-50"
+                            className="w-full py-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-[11px] transition-all disabled:opacity-50"
                         >
-                            {isLoading ? "Stopping..." : "⏹ Stop Campaign"}
+                            {isLoading ? "Stopping..." : "⏹ Stop"}
                         </button>
                     </>
                 ) : (
                     <>
-                        {/* Create new campaign form */}
                         <input
-                            className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none mb-2 border border-white/5 focus:border-white/20 transition"
-                            placeholder={type === "truth" ? "Prompt (e.g. Tell secret about ex)" : "Prompt (e.g. Do 50 squats)"}
+                            className="w-full bg-white/5 rounded-lg px-2 py-1.5 text-xs text-white placeholder:text-white/40 outline-none mb-1.5 border border-white/5 focus:border-white/20 transition"
+                            placeholder={type === "truth" ? "Prompt (e.g. Tell secret)" : "Prompt (e.g. Do 50 squats)"}
                             value={form.label}
                             onChange={(e) => setForm({ ...form, label: e.target.value })}
                         />
-                        <div className="flex gap-2 mb-2">
+                        <div className="flex gap-1.5 mb-1.5">
                             <div className="w-1/2 relative">
                                 <input
-                                    className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm text-white outline-none border border-white/5 focus:border-white/20 transition"
+                                    className="w-full bg-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none border border-white/5 focus:border-white/20 transition"
                                     value={form.target}
                                     onChange={(e) => setForm({ ...form, target: e.target.value })}
                                     type="number"
                                     min={1}
                                 />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/30">votes</span>
+                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-white/30">votes</span>
                             </div>
                             <div className="w-1/2 relative">
                                 <input
-                                    className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm text-white outline-none border border-white/5 focus:border-white/20 transition"
+                                    className="w-full bg-white/5 rounded-lg px-2 py-1.5 text-xs text-white outline-none border border-white/5 focus:border-white/20 transition"
                                     value={form.price}
                                     onChange={(e) => setForm({ ...form, price: e.target.value })}
                                     type="number"
                                     min={1}
                                 />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/30">$/vote</span>
+                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-white/30">$/vote</span>
                             </div>
                         </div>
                         <button
                             onClick={() => handleAction(type, "START")}
                             disabled={isLoading}
-                            className={`w-full py-2 rounded-lg ${btnBg} text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50`}
+                            className={`w-full py-1.5 rounded-lg ${btnBg} text-white font-bold text-[11px] hover:opacity-90 transition-opacity disabled:opacity-50`}
                         >
                             {isLoading ? "Starting..." : `▶ Start ${type === "truth" ? "Truth" : "Dare"}`}
                         </button>
@@ -254,14 +234,42 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
     };
 
     return (
-        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-            <div className="flex items-center gap-2 mb-4 shrink-0">
-                <Zap className="w-4 h-4 tod-creator-text-neon-yellow" />
-                <h3 className="font-bold text-white">Group Vote Campaigns</h3>
+        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-2.5 flex flex-col h-full">
+            <div className="flex items-center gap-1.5 mb-2 shrink-0">
+                <Zap className="w-3.5 h-3.5 tod-creator-text-neon-yellow" />
+                <h3 className="font-bold text-white text-xs">Group Vote</h3>
             </div>
 
-            {renderCampaign("truth")}
-            {renderCampaign("dare")}
+            {/* Truth / Dare Tab Toggle */}
+            <div className="flex rounded-lg overflow-hidden mb-2 shrink-0" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                <button
+                    onClick={() => setActiveVoteTab('truth')}
+                    className="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                        background: activeVoteTab === 'truth' ? 'rgba(59,130,246,0.15)' : 'transparent',
+                        color: activeVoteTab === 'truth' ? '#60a5fa' : 'rgba(255,255,255,0.35)',
+                        borderBottom: activeVoteTab === 'truth' ? '2px solid #3b82f6' : '2px solid transparent',
+                    }}
+                >
+                    ⚡ Truth
+                </button>
+                <button
+                    onClick={() => setActiveVoteTab('dare')}
+                    className="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                        background: activeVoteTab === 'dare' ? 'rgba(236,72,153,0.15)' : 'transparent',
+                        color: activeVoteTab === 'dare' ? '#f472b6' : 'rgba(255,255,255,0.35)',
+                        borderBottom: activeVoteTab === 'dare' ? '2px solid #ec4899' : '2px solid transparent',
+                    }}
+                >
+                    🎭 Dare
+                </button>
+            </div>
+
+            {/* Active Campaign Content */}
+            <div className="flex-1 min-h-0">
+                {renderCampaign(activeVoteTab)}
+            </div>
         </div>
     );
 };

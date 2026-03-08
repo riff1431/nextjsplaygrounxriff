@@ -19,15 +19,15 @@ const TodCreatorRoomEarnings = ({ earnings }: { earnings?: SessionEarnings }) =>
     ];
 
     return (
-        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-green p-4">
-            <h3 className="font-bold text-white mb-3">Room Earnings</h3>
-            <div className="text-center mb-4 py-3 rounded-lg tod-creator-neon-border-green tod-creator-glow-green">
-                <p className="text-xs tod-creator-text-neon-green font-semibold tracking-wider uppercase">Total Earned</p>
-                <p className="text-4xl font-black tod-creator-text-neon-green">$ {data.total.toFixed(2)}</p>
+        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-green p-2.5 h-full flex flex-col">
+            <h3 className="font-bold text-white text-xs mb-1.5">Room Earnings</h3>
+            <div className="text-center py-1.5 rounded-lg tod-creator-neon-border-green tod-creator-glow-green mb-1.5">
+                <p className="text-[9px] tod-creator-text-neon-green font-semibold tracking-wider uppercase leading-none">Total Earned</p>
+                <p className="text-2xl font-black tod-creator-text-neon-green leading-tight">$ {data.total.toFixed(2)}</p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-0.5">
                 {items.map((item) => (
-                    <div key={item.label} className="flex justify-between text-sm">
+                    <div key={item.label} className="flex justify-between text-[11px]">
                         <span className="text-white/60">{item.label}</span>
                         <span className="text-white font-medium">{item.amount}</span>
                     </div>

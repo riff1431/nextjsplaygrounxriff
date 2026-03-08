@@ -152,7 +152,6 @@ export default function TruthOrDareCreatorPage() {
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
-    const [activeTab, setActiveTab] = useState<'vote' | 'truth' | 'dare' | 'earnings'>('vote');
 
     // 1. Initialize Room ID & Load Data
     useEffect(() => {
@@ -1097,125 +1096,125 @@ export default function TruthOrDareCreatorPage() {
                     )}
                 </div>
             ) : (
-                /* ─── LIVE STUDIO (Session Active) — Sidebar + Stream Layout ─── */
-                <div className="flex-1 flex gap-3 lg:gap-4 min-h-0" style={{ height: 'calc(100vh - 70px)' }}>
-                    {/* ─── LEFT SIDEBAR ─── */}
-                    <div className="flex flex-col" style={{ width: '320px', minWidth: '320px' }}>
-                        {/* Tab Bar */}
-                        <div className="flex rounded-xl overflow-hidden mb-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            {[
-                                { key: 'vote' as const, label: 'Group Vote', icon: <Vote className="w-3.5 h-3.5" />, color: '#a855f7' },
-                                { key: 'truth' as const, label: 'Truth', icon: <MessageCircle className="w-3.5 h-3.5" />, color: '#06b6d4' },
-                                { key: 'dare' as const, label: 'Dare', icon: <Flame className="w-3.5 h-3.5" />, color: '#ec4899' },
-                                { key: 'earnings' as const, label: 'Earnings', icon: <TrendingUp className="w-3.5 h-3.5" />, color: '#10b981' },
-                            ].map(tab => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className="flex-1 flex flex-col items-center gap-1 py-2.5 px-1 transition-all relative"
-                                    style={{
-                                        background: activeTab === tab.key ? `${tab.color}15` : 'transparent',
-                                        color: activeTab === tab.key ? tab.color : 'rgba(255,255,255,0.4)',
-                                    }}
-                                >
-                                    {tab.icon}
-                                    <span className="text-[9px] font-semibold uppercase tracking-wider leading-none">{tab.label}</span>
-                                    {activeTab === tab.key && (
-                                        <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full" style={{ background: tab.color }} />
-                                    )}
-                                </button>
-                            ))}
+                /* ─── LIVE STUDIO — Wireframe Layout ─── */
+                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0" style={{ height: 'calc(100vh - 70px)' }}>
+
+                    {/* ═══ LEFT SECTION: Video Grid + Bottom Row ═══ */}
+                    <div className="flex flex-col gap-2 lg:gap-3" style={{ width: '42%', minWidth: '380px' }}>
+                        {/* 2x2 Video Grid */}
+                        <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                            {/* Vid 1 — Main Stream */}
+                            <div className="relative overflow-hidden">
+                                <div className="absolute inset-0">
+                                    <TodCreatorStreamViewer
+                                        roomId={roomId}
+                                        userId={me.id}
+                                        appId={APP_ID}
+                                        avatarUrl={myAvatarUrl}
+                                        creatorName={me.name}
+                                        viewerCount={fans.length}
+                                    />
+                                </div>
+                            </div>
+                            {/* Vid 2 — Empty slot */}
+                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div className="text-center">
+                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
+                                        <Video className="w-4 h-4 text-white/20" />
+                                    </div>
+                                    <span className="text-[10px] text-white/20 font-medium">Vid 2</span>
+                                </div>
+                            </div>
+                            {/* Vid 3 — Empty slot */}
+                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div className="text-center">
+                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
+                                        <Video className="w-4 h-4 text-white/20" />
+                                    </div>
+                                    <span className="text-[10px] text-white/20 font-medium">Vid 3</span>
+                                </div>
+                            </div>
+                            {/* Vid 4 — Empty slot */}
+                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div className="text-center">
+                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
+                                        <Video className="w-4 h-4 text-white/20" />
+                                    </div>
+                                    <span className="text-[10px] text-white/20 font-medium">Vid 4</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Active Tab Content — fills remaining sidebar height */}
-                        <div className="flex-1 min-h-0 overflow-hidden">
-                            {activeTab === 'vote' && (
-                                <div className="h-full overflow-auto">
-                                    <GroupVoteManager roomId={roomId} />
-                                </div>
-                            )}
-                            {activeTab === 'truth' && (
-                                <div className="h-full">
-                                    <TodCreatorRequestPanel
-                                        title="Truth Requests"
-                                        accentColor="blue"
-                                        queue={[
-                                            ...queue.filter(q => q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
-                                            ...activityFeed
-                                                .filter(a => a.type === 'truth' || a.type === 'custom_truth')
-                                                .filter(a => !queue.some(q => q.id === a.id))
-                                                .map(a => ({
-                                                    id: a.id,
-                                                    type: a.type === 'custom_truth' ? 'CUSTOM_TRUTH' : 'TIER_PURCHASE',
-                                                    createdAt: a.timestamp,
-                                                    fanName: a.fanName,
-                                                    amount: a.amount,
-                                                    meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Truth` }
-                                                }))
-                                        ] as any}
-                                        onServe={serveQueueItem as any}
-                                        onDismiss={(q: any) => {
-                                            setQueue(qq => qq.filter(x => x.id !== q.id));
-                                            setActivityFeed(af => af.filter(x => x.id !== q.id));
-                                        }}
-                                    />
-                                </div>
-                            )}
-                            {activeTab === 'dare' && (
-                                <div className="h-full">
-                                    <TodCreatorRequestPanel
-                                        title="Dare Requests"
-                                        accentColor="pink"
-                                        queue={[
-                                            ...queue.filter(q => q.type.includes("DARE")),
-                                            ...activityFeed
-                                                .filter(a => a.type === 'dare' || a.type === 'custom_dare')
-                                                .filter(a => !queue.some(q => q.id === a.id))
-                                                .map(a => ({
-                                                    id: a.id,
-                                                    type: a.type === 'custom_dare' ? 'CUSTOM_DARE' : 'TIER_PURCHASE',
-                                                    createdAt: a.timestamp,
-                                                    fanName: a.fanName,
-                                                    amount: a.amount,
-                                                    meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Dare` }
-                                                }))
-                                        ] as any}
-                                        onServe={serveQueueItem as any}
-                                        onDismiss={(q: any) => {
-                                            setQueue(qq => qq.filter(x => x.id !== q.id));
-                                            setActivityFeed(af => af.filter(x => x.id !== q.id));
-                                        }}
-                                    />
-                                </div>
-                            )}
-
-                            {activeTab === 'earnings' && (
-                                <div className="h-full overflow-auto">
-                                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
-                                </div>
-                            )}
+                        {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
+                        <div className="grid grid-cols-2 gap-2 lg:gap-3" style={{ height: '200px', minHeight: '180px' }}>
+                            {/* Summary / Earnings */}
+                            <div className="min-h-0 overflow-auto">
+                                <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
+                            </div>
+                            {/* Group Voting */}
+                            <div className="min-h-0 overflow-auto">
+                                <GroupVoteManager roomId={roomId} />
+                            </div>
                         </div>
                     </div>
 
-                    {/* ─── RIGHT MAIN AREA ─── */}
-                    <div className="flex-1 flex gap-3 lg:gap-4 min-h-0">
-                        {/* Live Stream — Square, fills full height */}
-                        <div className="relative" style={{ height: '100%', aspectRatio: '1 / 1' }}>
-                            <div className="absolute inset-0">
-                                <TodCreatorStreamViewer
-                                    roomId={roomId}
-                                    userId={me.id}
-                                    appId={APP_ID}
-                                    avatarUrl={myAvatarUrl}
-                                    creatorName={me.name}
-                                    viewerCount={fans.length}
-                                />
-                            </div>
-                        </div>
-                        {/* Live Chat — right of stream */}
-                        <div className="flex-1 min-w-[250px] min-h-0">
-                            <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
-                        </div>
+                    {/* ═══ COL: Dares Requests (full height) ═══ */}
+                    <div className="flex-1 min-w-[180px] min-h-0">
+                        <TodCreatorRequestPanel
+                            title="Dare Requests"
+                            accentColor="pink"
+                            queue={[
+                                ...queue.filter(q => q.type.includes("DARE")),
+                                ...activityFeed
+                                    .filter(a => a.type === 'dare' || a.type === 'custom_dare')
+                                    .filter(a => !queue.some(q => q.id === a.id))
+                                    .map(a => ({
+                                        id: a.id,
+                                        type: a.type === 'custom_dare' ? 'CUSTOM_DARE' : 'TIER_PURCHASE',
+                                        createdAt: a.timestamp,
+                                        fanName: a.fanName,
+                                        amount: a.amount,
+                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Dare` }
+                                    }))
+                            ] as any}
+                            onServe={serveQueueItem as any}
+                            onDismiss={(q: any) => {
+                                setQueue(qq => qq.filter(x => x.id !== q.id));
+                                setActivityFeed(af => af.filter(x => x.id !== q.id));
+                            }}
+                        />
+                    </div>
+
+                    {/* ═══ COL: Truth Requests (full height) ═══ */}
+                    <div className="flex-1 min-w-[180px] min-h-0">
+                        <TodCreatorRequestPanel
+                            title="Truth Requests"
+                            accentColor="blue"
+                            queue={[
+                                ...queue.filter(q => q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
+                                ...activityFeed
+                                    .filter(a => a.type === 'truth' || a.type === 'custom_truth')
+                                    .filter(a => !queue.some(q => q.id === a.id))
+                                    .map(a => ({
+                                        id: a.id,
+                                        type: a.type === 'custom_truth' ? 'CUSTOM_TRUTH' : 'TIER_PURCHASE',
+                                        createdAt: a.timestamp,
+                                        fanName: a.fanName,
+                                        amount: a.amount,
+                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Truth` }
+                                    }))
+                            ] as any}
+                            onServe={serveQueueItem as any}
+                            onDismiss={(q: any) => {
+                                setQueue(qq => qq.filter(x => x.id !== q.id));
+                                setActivityFeed(af => af.filter(x => x.id !== q.id));
+                            }}
+                        />
+                    </div>
+
+                    {/* ═══ COL: Live Chat (full height) ═══ */}
+                    <div className="flex-1 min-w-[200px] min-h-0">
+                        <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
                     </div>
                 </div>
             )}
