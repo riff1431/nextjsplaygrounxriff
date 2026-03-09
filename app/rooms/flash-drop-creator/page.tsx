@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageSquare, ClipboardList } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import LiveDropBoard from "@/components/rooms/flashdrop-creator/LiveDropBoard";
@@ -13,6 +13,7 @@ import HighRollerPacks from "@/components/rooms/flashdrop-creator/HighRollerPack
 import DropRequests from "@/components/rooms/flashdrop-creator/DropRequests";
 import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
+import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
 import "./flashdrop-creator.css";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -22,6 +23,7 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 function FlashdropCreatorStudio() {
     const { user } = useAuth();
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [rightTab, setRightTab] = useState<"requests" | "chat">("requests");
 
     useEffect(() => {
         if (!user) return;
@@ -96,18 +98,58 @@ function FlashdropCreatorStudio() {
                                         </div>
                                     )}
                                 </div>
-                                <LiveDropBoard />
+                                <LiveDropBoard roomId={roomId ?? undefined} />
                             </div>
                             <div className="flex flex-col gap-4 min-h-0">
-                                <SummaryBox />
+                                <SummaryBox roomId={roomId} />
                                 <HighRollerPacks />
                             </div>
                         </div>
-                        <BottomStrip />
+                        <BottomStrip roomId={roomId} />
                     </div>
 
-                    {/* Right column stretches full height */}
-                    <DropRequests className="flex col-span-2" />
+                    {/* Right column — tabbed: Drop Requests | Live Chat */}
+                    <div className="lg:col-span-2 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
+                        {/* Tab bar */}
+                        <div className="flex shrink-0 border-b border-border/50">
+                            <button
+                                onClick={() => setRightTab("requests")}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold font-display tracking-wider transition-all ${rightTab === "requests"
+                                    ? "border-b-2 border-primary text-primary neon-text"
+                                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                                    }`}
+                            >
+                                <ClipboardList size={13} />
+                                Drop Requests
+                            </button>
+                            <button
+                                onClick={() => setRightTab("chat")}
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold font-display tracking-wider transition-all ${rightTab === "chat"
+                                    ? "border-b-2 border-primary text-primary neon-text"
+                                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                                    }`}
+                            >
+                                <MessageSquare size={13} />
+                                Live Chat
+                            </button>
+                        </div>
+
+                        {/* Tab contents */}
+                        <div className="flex-1 min-h-0 overflow-hidden">
+                            {rightTab === "requests" ? (
+                                <DropRequests
+                                    className="h-full border-none rounded-none"
+                                    roomId={roomId ?? undefined}
+                                />
+                            ) : (
+                                <FlashDropLiveChat
+                                    roomId={roomId}
+                                    hostId={user?.id}
+                                    variant="creator"
+                                />
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

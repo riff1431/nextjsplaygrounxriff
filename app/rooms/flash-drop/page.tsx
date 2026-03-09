@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
+import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
@@ -33,15 +34,56 @@ export default function FlashDropsRoomPreview() {
     const [hostId, setHostId] = useState<string | null>(null);
     const [hostAvatar, setHostAvatar] = useState<string | null>(null);
     const [hostName, setHostName] = useState("Creator");
+    const [tickerItems, setTickerItems] = useState<string[]>([
+        "🔥 VAULT DROP LIVE NOW",
+        "💎 Diamond Patron unlocked",
+        "⚡ Flash drop session is live!",
+        "🌟 Rare items available — grab fast",
+        "💰 High Roller Packs available",
+        "🎁 Limited inventory on select drops",
+        "🔥 VAULT DROP LIVE NOW",
+        "💎 Diamond Patron unlocked",
+        "⚡ Flash drop session is live!",
+        "🌟 Rare items available — grab fast",
+    ]);
 
     // Pending purchase for SpendConfirmModal
     const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string } | null>(null);
 
-    // Discover room
+    // Discover room — prefer rooms that have active live drops
     useEffect(() => {
         if (!user) return;
         async function findRoom() {
             const supabase = createClient();
+
+            // First: find a live flash-drop room that has active drops
+            const { data: roomWithDrops } = await supabase
+                .from('flash_drops')
+                .select('room_id, rooms!inner(id, host_id, status, type)')
+                .eq('status', 'Live')
+                .eq('rooms.type', 'flash-drop')
+                .eq('rooms.status', 'live')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (roomWithDrops) {
+                const room = roomWithDrops.rooms as any;
+                setRoomId(room.id);
+                setHostId(room.host_id);
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, username, avatar_url')
+                    .eq('id', room.host_id)
+                    .single();
+                if (profile) {
+                    setHostName(profile.full_name || profile.username || 'Creator');
+                    setHostAvatar(profile.avatar_url || null);
+                }
+                return;
+            }
+
+            // Fallback: any live flash-drop room
             const { data } = await supabase
                 .from('rooms')
                 .select('id, host_id')
@@ -50,9 +92,11 @@ export default function FlashDropsRoomPreview() {
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
+
             if (data) {
                 setRoomId(data.id);
                 setHostId(data.host_id);
+
                 // Fetch host profile
                 const { data: profile } = await supabase
                     .from('profiles')
@@ -68,25 +112,45 @@ export default function FlashDropsRoomPreview() {
         findRoom();
     }, [user]);
 
-    // Realtime listener for flash drop updates
+    // Realtime ticker + drop event feed
     useEffect(() => {
         if (!roomId) return;
         const supabase = createClient();
+
+        const addTickerItem = (item: string) => {
+            setTickerItems(prev => [item, ...prev].slice(0, 16));
+        };
+
         const channel = supabase
-            .channel(`flash-drops-${roomId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}` },
-                () => {
-                    // Drops updated — components will re-fetch
-                    sonnerToast.info("🔥 Drop board updated!");
+            .channel(`flash-drops-ticker-${roomId}`)
+            .on('postgres_changes', {
+                event: 'INSERT', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}`
+            }, (payload) => {
+                const drop = payload.new as any;
+                addTickerItem(`⚡ NEW DROP: ${drop.title} — $${drop.price} · ${drop.rarity}`);
+                sonnerToast.info(`⚡ New drop: ${drop.title} just went live!`);
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}`
+            }, (payload) => {
+                const drop = payload.new as any;
+                if (drop.status === 'Ended') {
+                    addTickerItem(`💀 DROP ENDED: ${drop.title}`);
                 }
-            )
+            })
+            .on('postgres_changes', {
+                event: 'INSERT', schema: 'public', table: 'flash_drop_requests', filter: `room_id=eq.${roomId}`
+            }, (payload) => {
+                const req = payload.new as any;
+                if (req.fan_name) {
+                    addTickerItem(`💰 ${req.fan_name} submitted a $${req.amount} drop request!`);
+                }
+            })
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('✅ Flash drops realtime connected');
+                    console.log('✅ Flash drops realtime ticker connected');
                 } else if (status === 'CHANNEL_ERROR') {
                     console.warn('⚠️ Flash drops realtime subscription failed — continuing without live updates');
-                } else if (status === 'TIMED_OUT') {
-                    console.warn('⏱️ Flash drops subscription timed out');
                 }
             });
         return () => { supabase.removeChannel(channel); };
@@ -129,20 +193,8 @@ export default function FlashDropsRoomPreview() {
         window.setTimeout(() => setToast(null), 2500);
     }, [pendingSpend, roomId, refreshWallet]);
 
-    const tickerItems = [
-        "🔥 VAULT DROP LIVE NOW",
-        "💎 Diamond Patron unlocked",
-        "⚡ New flash drop in 3 minutes",
-        "🌟 Lux Dungeon Preview RARE",
-        "💰 Whale Bundle — 2 slots left",
-        "🎁 Golden Key access — limited",
-        "🔥 VAULT DROP LIVE NOW",
-        "💎 Diamond Patron unlocked",
-        "⚡ New flash drop in 3 minutes",
-        "🌟 Lux Dungeon Preview RARE",
-        "💰 Whale Bundle — 2 slots left",
-        "🎁 Golden Key access — limited",
-    ];
+
+
 
     const bundles = [
         { name: "Weekend Bundle", subtitle: "3 drops + 1 DM", price: 500 },
@@ -152,7 +204,7 @@ export default function FlashDropsRoomPreview() {
 
     return (
         <ProtectRoute allowedRoles={["fan"]}>
-            <div className="min-h-screen bg-black text-white fd-theme font-body">
+            <div className="h-screen overflow-hidden bg-black text-white fd-theme font-body flex flex-col">
                 {toast && (
                     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] rounded-2xl border border-primary/50 bg-black/80 px-4 py-2 text-sm text-foreground shadow-[0_0_40px_hsl(330_100%_55%/0.3)] animate-float">
                         {toast}
@@ -185,7 +237,7 @@ export default function FlashDropsRoomPreview() {
                 />
 
                 {/* Main content */}
-                <div className="relative z-10 flex flex-col min-h-screen max-w-[1500px] mx-auto w-full">
+                <div className="relative z-10 flex flex-col h-screen max-w-[1400px] mx-auto w-full">
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
                         <div className="flex items-center justify-between px-4">
@@ -199,71 +251,75 @@ export default function FlashDropsRoomPreview() {
                     </div>
 
 
-                    {/* Main Content Area */}
-                    <main className="flex-1">
-                        <div className="flex flex-col">
-                            {/* Mid-scale layout for better breathing room - Increased top padding */}
-                            <div className="flex-1 flex justify-center gap-20 px-4 pt-8 pb-8">
-                                {/* Left: Stream + Drop Board */}
-                                <div className="w-[440px] space-y-4 pb-4">
-                                    {/* Live Stream */}
-                                    <div className="rounded-2xl overflow-hidden fd-neon-border-md" style={{ aspectRatio: "16/9" }}>
-                                        {roomId && user && hostId ? (
-                                            <LiveStreamWrapper
-                                                role="fan"
-                                                appId={APP_ID}
-                                                roomId={roomId}
-                                                uid={user.id}
-                                                hostId={hostId}
-                                                hostAvatarUrl={hostAvatar || ""}
-                                                hostName={hostName}
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-black/50 text-white/40 text-sm">
-                                                {roomId ? "Connecting to stream..." : "No active session"}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <LiveDropBoard onSpend={requestSpend} />
+                    {/* Main Content Area — fills remaining viewport height */}
+                    <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                        {/* 3-column layout: Left (stream + board) | Center (chat) | Right (impulse) */}
+                        <div className="flex-1 min-h-0 flex gap-3 px-3 pt-3">
+                            {/* Left: Stream + Drop Board */}
+                            <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
+                                {/* Live Stream */}
+                                <div className="rounded-xl overflow-hidden fd-neon-border-md shrink-0" style={{ aspectRatio: "16/9" }}>
+                                    {roomId && user && hostId ? (
+                                        <LiveStreamWrapper
+                                            role="fan"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id}
+                                            hostId={hostId}
+                                            hostAvatarUrl={hostAvatar || ""}
+                                            hostName={hostName}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-black/50 text-white/40 text-sm">
+                                            {roomId ? "Connecting..." : "No active session"}
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Right: Impulse Panel */}
-                                <div className="w-[400px] pb-4">
-                                    <ImpulsePanel onSpend={requestSpend} />
+                                <div className="flex-1 min-h-0 overflow-hidden">
+                                    <LiveDropBoard roomId={roomId} onSpend={requestSpend} />
                                 </div>
                             </div>
 
-                            {/* Adjusted bundle bar - more compact */}
-                            <div className="px-10 py-3 pb-6">
-                                <div className="flex flex-col md:flex-row items-center justify-center gap-0 rounded-2xl overflow-hidden fd-neon-border-md bg-black/40 backdrop-blur-md max-w-4xl mx-auto border border-primary/30">
-                                    {bundles.map((bundle, i) => (
-                                        <div key={bundle.name} className="flex-1 w-full flex flex-col items-center gap-0.5 px-4 py-2.5 relative hover:bg-white/5 transition-colors cursor-pointer group">
-                                            {i < bundles.length - 1 && (
-                                                <div className="hidden md:block absolute right-0 top-3 bottom-3 w-px bg-primary/30" />
-                                            )}
-                                            <div
-                                                className="fd-font-display text-xl my-0.5 group-hover:scale-105 transition-transform"
-                                                style={{
-                                                    color: "hsl(330 100% 80%)",
-                                                    textShadow: "0 0 10px hsl(330 100% 70% / 0.8), 0 0 30px hsl(330 100% 70% / 0.2)",
-                                                }}
+                            {/* Center: Live Chat */}
+                            <div className="flex-[27] min-w-0 min-h-0">
+                                <FlashDropLiveChat roomId={roomId} hostId={hostId} />
+                            </div>
+
+                            {/* Right: Impulse Panel */}
+                            <div className="flex-[29] min-w-0 min-h-0 overflow-y-auto">
+                                <ImpulsePanel roomId={roomId} onSpend={requestSpend} />
+                            </div>
+                        </div>
+
+                        {/* Bundle strip — compact bottom bar */}
+                        <div className="shrink-0 px-4 py-2">
+                            <div className="flex items-center justify-center gap-0 rounded-xl overflow-hidden bg-black/40 backdrop-blur-md border border-primary/25 max-w-3xl mx-auto">
+                                {bundles.map((bundle, i) => (
+                                    <div key={bundle.name} className="flex-1 flex items-center justify-between px-4 py-2 relative hover:bg-white/5 transition-colors cursor-pointer group">
+                                        {i < bundles.length - 1 && (
+                                            <div className="absolute right-0 top-2 bottom-2 w-px bg-primary/25" />
+                                        )}
+                                        <div className="flex flex-col">
+                                            <span
+                                                className="text-sm font-black"
+                                                style={{ color: "hsl(330 100% 80%)", textShadow: "0 0 8px hsl(330 100% 70% / 0.6)" }}
                                             >
                                                 {bundle.name}
-                                            </div>
-                                            <div className="fd-font-body text-[10px] text-foreground/40 font-bold uppercase tracking-tight">{bundle.subtitle}</div>
-                                            <button
-                                                onClick={() => requestSpend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
-                                                className="mt-2 mb-0.5 px-6 py-1.5 rounded-lg fd-font-tech font-black text-xs text-white transition-all hover:scale-110 active:scale-95 uppercase tracking-widest"
-                                                style={{
-                                                    background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
-                                                    boxShadow: "0 0 15px hsl(330 100% 55% / 0.4), 0 0 30px hsl(330 100% 55% / 0.2)",
-                                                }}
-                                            >
-                                                Buy · ${bundle.price.toLocaleString()}
-                                            </button>
+                                            </span>
+                                            <span className="text-[10px] text-white/35 uppercase tracking-wide">{bundle.subtitle}</span>
                                         </div>
-                                    ))}
-                                </div>
+                                        <button
+                                            onClick={() => requestSpend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
+                                            className="ml-3 px-3 py-1 rounded-lg fd-font-tech font-black text-[11px] text-white transition-all hover:scale-105 active:scale-95 uppercase tracking-wider shrink-0"
+                                            style={{
+                                                background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
+                                                boxShadow: "0 0 10px hsl(330 100% 55% / 0.35)",
+                                            }}
+                                        >
+                                            Buy · ${bundle.price.toLocaleString()}
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </main>
