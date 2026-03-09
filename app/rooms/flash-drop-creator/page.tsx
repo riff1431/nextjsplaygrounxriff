@@ -18,26 +18,10 @@ import "./flashdrop-creator.css";
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
-const FlashdropCreatorRoom = () => {
+/** Inner component that renders the live studio (only when sessionId is present) */
+function FlashdropCreatorStudio() {
     const { user } = useAuth();
-    const searchParams = useSearchParams();
-    const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
-
-    // If no sessionId in URL, show session dashboard
-    if (!sessionId) {
-        return (
-            <RoomSessionDashboard
-                roomType="flash-drop"
-                roomEmoji="⚡"
-                roomLabel="Flash Drops"
-                creatorPageRoute="/rooms/flash-drop-creator"
-                accentHsl="170, 80%, 50%"
-                accentHslSecondary="150, 70%, 45%"
-                backgroundImage="/images/bg-flashdrop.jpeg"
-            />
-        );
-    }
 
     useEffect(() => {
         if (!user) return;
@@ -128,6 +112,29 @@ const FlashdropCreatorRoom = () => {
             </div>
         </div>
     );
+}
+
+/** Page component — shows session dashboard or live studio based on URL */
+const FlashdropCreatorRoom = () => {
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
+
+    // If no sessionId in URL, show session dashboard
+    if (!sessionId) {
+        return (
+            <RoomSessionDashboard
+                roomType="flash-drop"
+                roomEmoji="⚡"
+                roomLabel="Flash Drops"
+                creatorPageRoute="/rooms/flash-drop-creator"
+                accentHsl="170, 80%, 50%"
+                accentHslSecondary="150, 70%, 45%"
+                backgroundImage="/images/bg-flashdrop.jpeg"
+            />
+        );
+    }
+
+    return <FlashdropCreatorStudio />;
 };
 
 export default FlashdropCreatorRoom;

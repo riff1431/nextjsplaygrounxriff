@@ -74,13 +74,21 @@ export default function FlashDropsRoomPreview() {
         const supabase = createClient();
         const channel = supabase
             .channel(`flash-drops-${roomId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'flash_drops' },
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}` },
                 () => {
                     // Drops updated — components will re-fetch
                     sonnerToast.info("🔥 Drop board updated!");
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ Flash drops realtime connected');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.warn('⚠️ Flash drops realtime subscription failed — continuing without live updates');
+                } else if (status === 'TIMED_OUT') {
+                    console.warn('⏱️ Flash drops subscription timed out');
+                }
+            });
         return () => { supabase.removeChannel(channel); };
     }, [roomId]);
 
