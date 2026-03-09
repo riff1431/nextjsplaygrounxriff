@@ -52,11 +52,11 @@ export async function POST(
         const isPrivate = session.is_private || session.session_type === "private";
 
         if (isPrivate) {
-            // Check for existing request
+            // Check for existing request (using room_join_requests table)
             const { data: existingReq } = await supabase
-                .from("room_requests")
+                .from("room_join_requests")
                 .select("id, status")
-                .eq("room_id", session.room_id)
+                .eq("session_id", sessionId)
                 .eq("user_id", user.id)
                 .maybeSingle();
 
@@ -75,9 +75,9 @@ export async function POST(
 
             // Create join request
             const { error: reqError } = await supabase
-                .from("room_requests")
+                .from("room_join_requests")
                 .insert({
-                    room_id: session.room_id,
+                    session_id: sessionId,
                     user_id: user.id,
                     status: "pending",
                 });
@@ -98,16 +98,10 @@ export async function POST(
 
             await supabase.from("notifications").insert({
                 user_id: session.creator_id || session.room?.host_id,
+                actor_id: user.id,
                 type: "truth_dare_join_request",
-                title: "New Join Request 🎯",
                 message: `${fanProfile?.full_name || fanProfile?.username || "A fan"} wants to join "${session.title}"`,
-                link: `/creator/rooms/truth-or-dare`,
-                metadata: {
-                    session_id: sessionId,
-                    fan_id: user.id,
-                    fan_name: fanProfile?.full_name || fanProfile?.username,
-                    fan_avatar: fanProfile?.avatar_url,
-                },
+                reference_id: sessionId,
             });
 
             return NextResponse.json({ success: true, status: "pending", message: "Join request sent! Awaiting creator approval." });

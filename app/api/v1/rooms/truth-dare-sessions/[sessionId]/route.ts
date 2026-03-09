@@ -38,9 +38,9 @@ export async function GET(
         let pendingRequests: any[] = [];
         if (session.creator_id === user.id && session.is_private) {
             const { data: requests } = await supabase
-                .from("room_requests")
+                .from("room_join_requests")
                 .select("*, profile:profiles(full_name, username, avatar_url)")
-                .eq("room_id", session.room_id)
+                .eq("session_id", sessionId)
                 .eq("status", "pending")
                 .order("created_at", { ascending: false });
 

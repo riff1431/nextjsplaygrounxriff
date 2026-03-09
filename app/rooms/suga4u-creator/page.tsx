@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import S4uDashboardHeader from "@/components/rooms/suga4u-creator/S4uDashboardHeader";
@@ -10,13 +11,30 @@ import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsF
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
 import S4uCreatorSecrets from "@/components/rooms/suga4u-creator/S4uCreatorSecrets";
 import S4uSessionSummary from "@/components/rooms/suga4u-creator/S4uSessionSummary";
+import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const Suga4UCreatorPage = () => {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+
+    if (!sessionId) {
+        return (
+            <RoomSessionDashboard
+                roomType="suga-4-u"
+                roomEmoji="🍬"
+                roomLabel="Suga 4 U"
+                creatorPageRoute="/rooms/suga4u-creator"
+                accentHsl="340, 75%, 55%"
+                accentHslSecondary="320, 70%, 50%"
+                backgroundImage="/rooms/suga4u-creator-bg.jpeg"
+            />
+        );
+    }
 
     useEffect(() => {
         if (!user) return;

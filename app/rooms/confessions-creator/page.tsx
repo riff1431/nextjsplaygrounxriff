@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import ConfessionsTopBar from "@/components/rooms/confessions-creator/ConfessionsTopBar";
 import ConfessionsLeftSidebar from "@/components/rooms/confessions-creator/ConfessionsLeftSidebar";
 import ConfessionsCenterContent from "@/components/rooms/confessions-creator/ConfessionsCenterContent";
@@ -9,13 +10,30 @@ import ConfessionsLiveChat from "@/components/rooms/confessions-creator/Confessi
 import ConfessionsFloatingHearts from "@/components/rooms/confessions-creator/ConfessionsFloatingHearts";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const ConfessionsCreatorPage = () => {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+
+    if (!sessionId) {
+        return (
+            <RoomSessionDashboard
+                roomType="confessions"
+                roomEmoji="💜"
+                roomLabel="Confessions"
+                creatorPageRoute="/rooms/confessions-creator"
+                accentHsl="280, 70%, 60%"
+                accentHslSecondary="320, 65%, 55%"
+                backgroundImage="/rooms/confessions-creator-bg.png"
+            />
+        );
+    }
 
     useEffect(() => {
         if (!user) return;

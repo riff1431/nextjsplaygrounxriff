@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import LiveChat from "@/components/rooms/x-chat-creator/LiveChat";
 import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests";
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
+import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -17,8 +18,26 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 const XChatCreatorPage = () => {
     const router = useRouter();
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
+
+    if (!sessionId) {
+        return (
+            <ProtectRoute allowedRoles={["creator"]}>
+                <RoomSessionDashboard
+                    roomType="x-chat"
+                    roomEmoji="💬"
+                    roomLabel="X Chat"
+                    creatorPageRoute="/rooms/x-chat-creator"
+                    accentHsl="45, 90%, 55%"
+                    accentHslSecondary="35, 85%, 50%"
+                    backgroundImage="/x-chat/casino-bg.jpeg"
+                />
+            </ProtectRoute>
+        );
+    }
 
     useEffect(() => {
         async function init() {

@@ -40,12 +40,12 @@ export async function GET(
         }
 
         const { data: requests, error } = await supabase
-            .from("room_requests")
+            .from("room_join_requests")
             .select(`
                 *,
-                profile:profiles!room_requests_user_id_fkey(full_name, username, avatar_url)
+                profile:profiles(full_name, username, avatar_url)
             `)
-            .eq("room_id", session.room_id)
+            .eq("session_id", sessionId)
             .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -104,12 +104,12 @@ export async function PATCH(
 
         // Get the request
         const { data: req } = await supabase
-            .from("room_requests")
+            .from("room_join_requests")
             .select("*")
             .eq("id", requestId)
             .single();
 
-        if (!req || req.room_id !== session.room_id) {
+        if (!req || req.session_id !== sessionId) {
             return NextResponse.json({ error: "Request not found" }, { status: 404 });
         }
 
@@ -117,10 +117,10 @@ export async function PATCH(
 
         // Update request status
         const { error: updateError } = await supabase
-            .from("room_requests")
+            .from("room_join_requests")
             .update({
                 status: newStatus,
-                updated_at: new Date().toISOString(),
+                responded_at: new Date().toISOString(),
             })
             .eq("id", requestId);
 
@@ -128,7 +128,6 @@ export async function PATCH(
 
         // Notify fan
         const notifType = action === "accept" ? "truth_dare_request_accepted" : "truth_dare_request_declined";
-        const notifTitle = action === "accept" ? "Request Approved! ✅" : "Request Declined ❌";
         const notifMessage = action === "accept"
             ? `Your request to join "${session.title}" was approved! You can now pay and enter.`
             : `Your request to join "${session.title}" was declined.`;
@@ -136,10 +135,8 @@ export async function PATCH(
         await supabase.from("notifications").insert({
             user_id: req.user_id,
             type: notifType,
-            title: notifTitle,
             message: notifMessage,
-            link: `/rooms/truth-or-dare-sessions`,
-            metadata: { session_id: sessionId, room_id: session.room_id },
+            reference_id: sessionId,
         });
 
         return NextResponse.json({ success: true, status: newStatus });

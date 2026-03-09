@@ -272,15 +272,29 @@ function TruthOrDareContent() {
 
                     // B. If Private, check Request Status
                     if (game.is_private) {
-                        const { data: req } = await supabase
-                            .from('room_requests')
-                            .select('status')
+                        // Get active session for this room to query join requests
+                        const { data: activeSession } = await supabase
+                            .from('truth_dare_sessions')
+                            .select('id')
                             .eq('room_id', roomId)
-                            .eq('user_id', user.id)
+                            .eq('status', 'active')
+                            .order('started_at', { ascending: false })
+                            .limit(1)
                             .maybeSingle();
 
-                        if (req) {
-                            setRequestStatus(req.status as any);
+                        if (activeSession) {
+                            const { data: req } = await supabase
+                                .from('room_join_requests')
+                                .select('status')
+                                .eq('session_id', activeSession.id)
+                                .eq('user_id', user.id)
+                                .maybeSingle();
+
+                            if (req) {
+                                setRequestStatus(req.status as any);
+                            } else {
+                                setRequestStatus('none');
+                            }
                         } else {
                             setRequestStatus('none');
                         }
@@ -321,10 +335,10 @@ function TruthOrDareContent() {
             })
             .subscribe();
 
-        const roomRequestChannel = supabase.channel(`room_requests_${roomId}`)
+        const roomRequestChannel = supabase.channel(`room_join_requests_${roomId}`)
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'room_requests', filter: `room_id=eq.${roomId}` },
+                { event: 'UPDATE', schema: 'public', table: 'room_join_requests' },
                 (payload) => {
                     const newRecord = payload.new as any;
                     // If my request was updated
@@ -622,9 +636,21 @@ function TruthOrDareContent() {
         if (!roomId || !userId) return;
         setUnlocking(true);
         try {
+            // Look up the active session for this room
+            const { data: activeSession } = await supabase
+                .from('truth_dare_sessions')
+                .select('id')
+                .eq('room_id', roomId)
+                .eq('status', 'active')
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!activeSession) throw new Error('No active session found');
+
             const { error } = await supabase
-                .from('room_requests')
-                .insert({ room_id: roomId, user_id: userId, status: 'pending' });
+                .from('room_join_requests')
+                .insert({ session_id: activeSession.id, user_id: userId, status: 'pending' });
 
             if (error) throw error;
             setRequestStatus('pending');

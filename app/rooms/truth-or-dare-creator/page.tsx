@@ -781,10 +781,22 @@ export default function TruthOrDareCreatorPage() {
     useEffect(() => {
         if (!roomId || !sessionActive || !sessionInfo?.isPrivate) return;
         async function fetchRequests() {
-            const { data: reqs } = await supabase
-                .from('room_requests')
-                .select('*, profile:profiles(full_name, username, avatar_url)')
+            // First find the active session for this room
+            const { data: activeSession } = await supabase
+                .from('truth_dare_sessions')
+                .select('id')
                 .eq('room_id', roomId!)
+                .eq('status', 'active')
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!activeSession) return;
+
+            const { data: reqs } = await supabase
+                .from('room_join_requests')
+                .select('*, profile:profiles(full_name, username, avatar_url)')
+                .eq('session_id', activeSession.id)
                 .eq('status', 'pending')
                 .order('created_at', { ascending: false });
             if (reqs) setPendingRequests(reqs);
@@ -793,7 +805,7 @@ export default function TruthOrDareCreatorPage() {
 
         // Realtime subscription for new requests
         const reqChannel = supabase.channel(`requests_${roomId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'room_requests', filter: `room_id=eq.${roomId}` }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'room_join_requests' }, () => {
                 fetchRequests();
             })
             .subscribe();

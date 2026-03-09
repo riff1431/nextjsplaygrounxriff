@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -11,6 +12,7 @@ import SummaryBox from "@/components/rooms/flashdrop-creator/SummaryBox";
 import HighRollerPacks from "@/components/rooms/flashdrop-creator/HighRollerPacks";
 import DropRequests from "@/components/rooms/flashdrop-creator/DropRequests";
 import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
+import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import "./flashdrop-creator.css";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -18,7 +20,24 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const FlashdropCreatorRoom = () => {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+
+    // If no sessionId in URL, show session dashboard
+    if (!sessionId) {
+        return (
+            <RoomSessionDashboard
+                roomType="flash-drop"
+                roomEmoji="⚡"
+                roomLabel="Flash Drops"
+                creatorPageRoute="/rooms/flash-drop-creator"
+                accentHsl="170, 80%, 50%"
+                accentHslSecondary="150, 70%, 45%"
+                backgroundImage="/images/bg-flashdrop.jpeg"
+            />
+        );
+    }
 
     useEffect(() => {
         if (!user) return;

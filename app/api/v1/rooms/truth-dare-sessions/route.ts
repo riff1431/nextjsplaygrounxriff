@@ -53,21 +53,20 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // Fetch join request counts for private sessions (via room_requests)
+            // Fetch join request counts for private sessions (via room_join_requests)
             const privateSessions = (sessions || []).filter((s: any) => s.session_type === "private" || s.is_private);
-            const privateRoomIds = privateSessions.map((s: any) => s.room_id);
+            const privateSessionIds = privateSessions.map((s: any) => s.id);
 
-            if (privateRoomIds.length > 0) {
+            if (privateSessionIds.length > 0) {
                 const { data: requests } = await supabase
-                    .from("room_requests")
-                    .select("room_id, status")
-                    .in("room_id", privateRoomIds)
+                    .from("room_join_requests")
+                    .select("session_id, status")
+                    .in("session_id", privateSessionIds)
                     .eq("status", "pending");
 
                 if (requests) {
-                    // Map room_id request count to session_id
                     for (const s of privateSessions) {
-                        const count = requests.filter((r: any) => r.room_id === s.room_id).length;
+                        const count = requests.filter((r: any) => r.session_id === s.id).length;
                         requestCounts[s.id] = count;
                     }
                 }
@@ -199,10 +198,8 @@ export async function POST(request: NextRequest) {
         await supabase.from("notifications").insert({
             user_id: user.id,
             type: "truth_dare_session_created",
-            title: "Session Created! 🎮",
             message: `"${title}" is now live!`,
-            link: `/creator/rooms/truth-or-dare`,
-            metadata: { session_id: session.id },
+            reference_id: session.id,
         });
 
         return NextResponse.json({
