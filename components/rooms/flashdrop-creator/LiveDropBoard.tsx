@@ -56,6 +56,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [tick, setTick] = useState(0);
+    const [kindFilter, setKindFilter] = useState<"all" | "photos" | "videos">("all");
     const [mediaFile, setMediaFile] = useState<File | null>(null);
     const [mediaPreview, setMediaPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,15 +186,40 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
         }
     };
 
-    const activeDrops = drops.filter(d => d.status === "Live");
-    const endedDrops = drops.filter(d => d.status === "Ended");
+    const activeDrops = drops.filter(d => {
+        if (d.status !== "Live") return false;
+        if (kindFilter === "photos") return d.kind === "Photo";
+        if (kindFilter === "videos") return d.kind === "Video";
+        return true;
+    });
+
+    const endedDrops = drops.filter(d => {
+        if (d.status !== "Ended") return false;
+        if (kindFilter === "photos") return d.kind === "Photo";
+        if (kindFilter === "videos") return d.kind === "Video";
+        return true;
+    });
 
     return (
         <div className="glass-panel rounded-xl p-4 flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-3 shrink-0">
-                <h2 className="font-display text-lg font-bold neon-text tracking-wider">
-                    Live Drop Board
-                </h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="font-display text-lg font-bold neon-text tracking-wider">
+                        Live Drop Board
+                    </h2>
+                    {(["all", "photos", "videos"] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setKindFilter(tab)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all ${kindFilter === tab
+                                ? "border-primary bg-primary/20 text-primary"
+                                : "border-white/20 text-white/50 hover:border-primary/50"
+                                }`}
+                        >
+                            {tab === "all" ? "All" : tab === "photos" ? "Photos" : "Videos"}
+                        </button>
+                    ))}
+                </div>
                 <button
                     onClick={() => setShowModal(true)}
                     disabled={!roomId}

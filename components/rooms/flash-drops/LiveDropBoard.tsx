@@ -52,7 +52,7 @@ export default function LiveDropBoard({ roomId, onSpend }: LiveDropBoardProps) {
     const { user } = useAuth();
     const [drops, setDrops] = useState<FlashDrop[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState<"all" | "limited" | "whale">("all");
+    const [activeFilter, setActiveFilter] = useState<"all" | "photos" | "videos">("all");
     const [, setTick] = useState(0);
     const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
     const [unlockingId, setUnlockingId] = useState<string | null>(null);
@@ -137,8 +137,8 @@ export default function LiveDropBoard({ roomId, onSpend }: LiveDropBoardProps) {
     };
 
     const filteredDrops = drops.filter(drop => {
-        if (activeFilter === "limited") return isLimitedTime(drop.ends_at);
-        if (activeFilter === "whale") return drop.price >= 500;
+        if (activeFilter === "photos") return drop.kind === "Photo";
+        if (activeFilter === "videos") return drop.kind === "Video";
         return true;
     });
 
@@ -152,24 +152,18 @@ export default function LiveDropBoard({ roomId, onSpend }: LiveDropBoardProps) {
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
                 <h2 className="fd-font-tech text-xl font-bold text-foreground">Live Drop Board</h2>
-                <button
-                    onClick={() => setActiveFilter(activeFilter === "limited" ? "all" : "limited")}
-                    className={`px-2 py-0.5 rounded text-xs fd-font-body font-semibold border transition-all ${activeFilter === "limited"
-                        ? "fd-neon-border bg-primary/20 fd-neon-text"
-                        : "border-foreground/30 text-foreground/60 hover:border-primary/50"
-                        }`}
-                >
-                    Limited Time
-                </button>
-                <button
-                    onClick={() => setActiveFilter(activeFilter === "whale" ? "all" : "whale")}
-                    className={`px-2 py-0.5 rounded text-xs fd-font-body font-semibold border transition-all ${activeFilter === "whale"
-                        ? "fd-neon-border bg-primary/20 fd-neon-text"
-                        : "border-foreground/30 text-foreground/60 hover:border-primary/50"
-                        }`}
-                >
-                    Whale
-                </button>
+                {(["all", "photos", "videos"] as const).map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveFilter(tab)}
+                        className={`px-2 py-0.5 rounded text-xs fd-font-body font-semibold border transition-all ${activeFilter === tab
+                            ? "fd-neon-border bg-primary/20 fd-neon-text"
+                            : "border-foreground/30 text-foreground/60 hover:border-primary/50"
+                            }`}
+                    >
+                        {tab === "all" ? "All" : tab === "photos" ? "Photos" : "Videos"}
+                    </button>
+                ))}
             </div>
 
             {/* Loading / Empty state */}
