@@ -52,6 +52,7 @@ const BottomStrip = ({ roomId }: BottomStripProps) => {
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         const p = parseFloat(price);
+        if (bundles.length >= 3) { toast.error("Maximum 3 bundles allowed"); return; }
         if (!name.trim()) { toast.error("Bundle name required"); return; }
         if (isNaN(p) || p <= 0) { toast.error("Valid price required"); return; }
         if (!roomId) return;
@@ -99,10 +100,11 @@ const BottomStrip = ({ roomId }: BottomStripProps) => {
                 <h3 className="text-sm font-bold neon-text tracking-wider uppercase font-display">Bundles</h3>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 transition-all"
+                    disabled={bundles.length >= 3}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                     <Plus size={14} />
-                    Add
+                    {bundles.length >= 3 ? "Max Limit (3)" : "Add"}
                 </button>
             </div>
 

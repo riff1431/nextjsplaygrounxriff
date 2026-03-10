@@ -40,6 +40,17 @@ export async function POST(
         return NextResponse.json({ error: "Name and valid price required" }, { status: 400 });
     }
 
+    // ENFORCE LIMIT: Max 3 bundles per room
+    const { count, error: countError } = await supabase
+        .from("flash_drop_bundles")
+        .select("*", { count: 'exact', head: true })
+        .eq("room_id", roomId);
+    
+    if (countError) return NextResponse.json({ error: countError.message }, { status: 500 });
+    if (count !== null && count >= 3) {
+        return NextResponse.json({ error: "Maximum of 3 bundles allowed per room" }, { status: 400 });
+    }
+
     const { data, error } = await supabase
         .from("flash_drop_bundles")
         .insert({
