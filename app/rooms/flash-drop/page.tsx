@@ -196,11 +196,34 @@ export default function FlashDropsRoomPreview() {
 
 
 
-    const bundles = [
-        { name: "Weekend Bundle", subtitle: "3 drops + 1 DM", price: 500 },
-        { name: "Backstage Bundle", subtitle: "5 drops + Vault preview", price: 1000 },
-        { name: "Whale Bundle", subtitle: "All drops + today priority", price: 2500 },
-    ];
+    // Dynamic bundles
+    const [bundles, setBundles] = useState<{ id: string; name: string; subtitle?: string; price: number }[]>([]);
+
+    const fetchBundles = useCallback(async () => {
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/bundles`);
+            const data = await res.json();
+            if (data.bundles) setBundles(data.bundles);
+        } catch { /* ignore */ }
+    }, [roomId]);
+
+    useEffect(() => {
+        fetchBundles();
+    }, [fetchBundles]);
+
+    // Realtime bundle updates
+    useEffect(() => {
+        if (!roomId) return;
+        const supabase = createClient();
+        const channel = supabase
+            .channel(`fan-bundles-${roomId}`)
+            .on("postgres_changes", {
+                event: "*", schema: "public", table: "flash_drop_bundles", filter: `room_id=eq.${roomId}`,
+            }, fetchBundles)
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, fetchBundles]);
 
     return (
         <ProtectRoute allowedRoles={["fan"]}>
@@ -292,36 +315,40 @@ export default function FlashDropsRoomPreview() {
                         </div>
 
                         {/* Bundle strip — compact bottom bar */}
-                        <div className="shrink-0 px-4 py-2">
-                            <div className="flex items-center justify-center gap-0 rounded-xl overflow-hidden bg-black/40 backdrop-blur-md border border-primary/25 max-w-3xl mx-auto">
-                                {bundles.map((bundle, i) => (
-                                    <div key={bundle.name} className="flex-1 flex items-center justify-between px-4 py-2 relative hover:bg-white/5 transition-colors cursor-pointer group">
-                                        {i < bundles.length - 1 && (
-                                            <div className="absolute right-0 top-2 bottom-2 w-px bg-primary/25" />
-                                        )}
-                                        <div className="flex flex-col">
-                                            <span
-                                                className="text-sm font-black"
-                                                style={{ color: "hsl(330 100% 80%)", textShadow: "0 0 8px hsl(330 100% 70% / 0.6)" }}
+                        {bundles.length > 0 && (
+                            <div className="shrink-0 px-4 py-2">
+                                <div className="flex items-center justify-center gap-0 rounded-xl overflow-hidden bg-black/40 backdrop-blur-md border border-primary/25 max-w-3xl mx-auto">
+                                    {bundles.map((bundle, i) => (
+                                        <div key={bundle.id} className="flex-1 flex items-center justify-between px-4 py-2 relative hover:bg-white/5 transition-colors cursor-pointer group">
+                                            {i < bundles.length - 1 && (
+                                                <div className="absolute right-0 top-2 bottom-2 w-px bg-primary/25" />
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span
+                                                    className="text-sm font-black"
+                                                    style={{ color: "hsl(330 100% 80%)", textShadow: "0 0 8px hsl(330 100% 70% / 0.6)" }}
+                                                >
+                                                    {bundle.name}
+                                                </span>
+                                                {bundle.subtitle && (
+                                                    <span className="text-[10px] text-white/35 uppercase tracking-wide">{bundle.subtitle}</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => requestSpend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
+                                                className="ml-3 px-3 py-1 rounded-lg fd-font-tech font-black text-[11px] text-white transition-all hover:scale-105 active:scale-95 uppercase tracking-wider shrink-0"
+                                                style={{
+                                                    background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
+                                                    boxShadow: "0 0 10px hsl(330 100% 55% / 0.35)",
+                                                }}
                                             >
-                                                {bundle.name}
-                                            </span>
-                                            <span className="text-[10px] text-white/35 uppercase tracking-wide">{bundle.subtitle}</span>
+                                                Buy · ${bundle.price.toLocaleString()}
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => requestSpend(bundle.price, `🎁 Pack Unlocked: ${bundle.name}`)}
-                                            className="ml-3 px-3 py-1 rounded-lg fd-font-tech font-black text-[11px] text-white transition-all hover:scale-105 active:scale-95 uppercase tracking-wider shrink-0"
-                                            style={{
-                                                background: `linear-gradient(135deg, hsl(330 100% 40%), hsl(330 100% 55%))`,
-                                                boxShadow: "0 0 10px hsl(330 100% 55% / 0.35)",
-                                            }}
-                                        >
-                                            Buy · ${bundle.price.toLocaleString()}
-                                        </button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </main>
                 </div>
 
