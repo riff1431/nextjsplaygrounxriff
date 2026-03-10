@@ -222,11 +222,16 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    disabled={!roomId}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={!roomId || drops.length >= 12}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative"
                 >
                     <Plus size={14} />
                     Add Drop
+                    {drops.length >= 12 && (
+                        <div className="absolute bottom-full right-0 mb-2 invisible group-hover:visible bg-black/90 border border-primary/40 px-2 py-1 rounded text-[10px] whitespace-nowrap z-50">
+                            Max 12 drops reached
+                        </div>
+                    )}
                 </button>
             </div>
 

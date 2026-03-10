@@ -93,85 +93,92 @@ const BottomStrip = ({ roomId }: BottomStripProps) => {
     };
 
     return (
-        <div className="shrink-0">
+        <div className="shrink-0 glass-panel rounded-xl p-4 border border-primary/20 shadow-[0_0_15px_rgba(255,42,109,0.05)]">
             {/* Header */}
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold neon-text tracking-wide uppercase">Bundles</h3>
+            <div className="flex items-center justify-between mb-3 shrink-0">
+                <h3 className="text-sm font-bold neon-text tracking-wider uppercase font-display">Bundles</h3>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 transition-all"
                 >
-                    <Plus size={10} />
+                    <Plus size={14} />
                     Add
                 </button>
             </div>
 
-            {/* Add Form */}
-            {showForm && (
-                <form onSubmit={handleAdd} className="mb-2 p-2 rounded-lg border border-primary/30 bg-primary/5 flex flex-wrap gap-2">
-                    <input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Bundle name"
-                        className="flex-1 min-w-[120px] bg-black/40 border border-primary/40 rounded-lg px-2 py-1 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80"
-                    />
-                    <input
-                        value={subtitle}
-                        onChange={(e) => setSubtitle(e.target.value)}
-                        placeholder="Subtitle (optional)"
-                        className="flex-1 min-w-[120px] bg-black/40 border border-primary/40 rounded-lg px-2 py-1 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80"
-                    />
-                    <input
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        placeholder="Price ($)"
-                        type="number"
-                        min="1"
-                        className="w-20 bg-black/40 border border-primary/40 rounded-lg px-2 py-1 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80"
-                    />
-                    <button type="submit" disabled={submitting} className="px-3 py-1 rounded-lg text-xs font-bold text-white bg-primary/60 hover:bg-primary/80 transition-all disabled:opacity-50">
-                        {submitting ? "..." : "Add"}
-                    </button>
-                    <button type="button" onClick={() => setShowForm(false)} className="px-2 py-1 rounded-lg text-xs text-white/50 hover:text-white border border-white/15 transition-all">
-                        Cancel
-                    </button>
-                </form>
-            )}
+            {/* Content Area */}
+            <div className="min-h-0 flex flex-col">
+                {/* Add Form */}
+                {showForm && (
+                    <form onSubmit={handleAdd} className="mb-3 p-3 rounded-lg border border-primary/30 bg-primary/5 flex flex-wrap gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <input
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Bundle name"
+                            className="flex-1 min-w-[120px] bg-black/40 border border-primary/40 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
+                        />
+                        <input
+                            value={subtitle}
+                            onChange={(e) => setSubtitle(e.target.value)}
+                            placeholder="Subtitle (optional)"
+                            className="flex-1 min-w-[120px] bg-black/40 border border-primary/40 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
+                        />
+                        <input
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                            placeholder="Price ($)"
+                            type="number"
+                            min="1"
+                            className="w-24 bg-black/40 border border-primary/40 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
+                        />
+                        <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg text-xs font-bold text-white bg-primary/60 hover:bg-primary/80 transition-all disabled:opacity-50 shadow-[0_0_10px_rgba(255,42,109,0.3)]">
+                            {submitting ? "..." : "Add Bundle"}
+                        </button>
+                        <button type="button" onClick={() => setShowForm(false)} className="px-3 py-2 rounded-lg text-xs text-white/50 hover:text-white border border-white/10 transition-all">
+                            Cancel
+                        </button>
+                    </form>
+                )}
 
-            {/* Bundle Cards */}
-            {bundles.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 py-3 text-white/30 text-xs">
-                    <Package size={14} className="text-primary/30" />
-                    <span>No bundles yet — add one above</span>
-                </div>
-            ) : (
-                <div className="grid grid-cols-3 gap-3">
-                    {bundles.map((bundle) => (
-                        <div key={bundle.id} className="group relative flex flex-col gap-1">
-                            <span className="text-xs font-semibold neon-text tracking-wide uppercase truncate pr-4">
-                                {bundle.name}
-                            </span>
-                            {bundle.subtitle && (
-                                <span className="text-[9px] text-white/40 truncate">{bundle.subtitle}</span>
-                            )}
-                            <div className="glass-card rounded-lg flex flex-col items-center justify-center h-16 w-full border border-primary/20 hover:border-primary/50 transition-all">
-                                <span className="font-display text-xl font-black text-primary">
-                                    ${bundle.price.toLocaleString()}
+                {/* Bundle Cards */}
+                {bundles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-white/20 text-xs border border-dashed border-white/10 rounded-lg">
+                        <Package size={24} className="mb-2 opacity-20" />
+                        <span>No bundles active. Create one to increase sales!</span>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                        {bundles.map((bundle) => (
+                            <div key={bundle.id} className="group relative flex flex-col gap-1">
+                                <span className="text-[10px] font-bold neon-text tracking-widest uppercase truncate pr-6 mb-1">
+                                    {bundle.name}
                                 </span>
-                                <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">
-                                    {bundle.sold_count || 0} sold
-                                </span>
+                                <div className="glass-card rounded-xl flex flex-col items-center justify-center h-20 w-full border border-primary/20 group-hover:border-primary/50 group-hover:shadow-[0_0_15px_rgba(255,42,109,0.1)] transition-all overflow-hidden relative">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="font-display text-2xl font-black text-primary relative z-10">
+                                        ${bundle.price.toLocaleString()}
+                                    </span>
+                                    {bundle.subtitle && (
+                                        <span className="text-[9px] text-white/40 truncate relative z-10 px-2 text-center w-full">{bundle.subtitle}</span>
+                                    )}
+                                </div>
+                                <div className="mt-1 flex items-center justify-between px-1">
+                                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold">
+                                        {bundle.sold_count || 0} sold
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => handleRemove(bundle)}
+                                    className="absolute top-0 right-0 w-5 h-5 rounded-full bg-red-500/20 text-red-500/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                    title="Delete bundle"
+                                >
+                                    <X size={10} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => handleRemove(bundle)}
-                                className="absolute top-0 right-0 w-4 h-4 rounded-full bg-red-500/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                            >
-                                <X size={8} className="text-white" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

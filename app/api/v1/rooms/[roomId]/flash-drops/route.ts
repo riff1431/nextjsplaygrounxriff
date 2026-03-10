@@ -31,6 +31,21 @@ export async function POST(
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
+
+    // Check existing count
+    const { count, error: countError } = await supabase
+        .from("flash_drops")
+        .select("*", { count: 'exact', head: true })
+        .eq("room_id", roomId);
+
+    if (countError) {
+        return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
+
+    if (count !== null && count >= 12) {
+        return NextResponse.json({ error: "Maximum limit of 12 drops reached for this room." }, { status: 400 });
+    }
+
     const body = await request.json();
 
     const { title, kind, rarity, price, endsInMin, inventoryTotal, status, media_url } = body;
