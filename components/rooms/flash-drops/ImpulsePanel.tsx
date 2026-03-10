@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -12,14 +12,12 @@ const impulseButtons = [
     { label: "Flex", price: 50, icon: "✉️" },
 ];
 
-const highRollerPacks = [
-    { name: "Boost My Rank", price: 150 },
-    { name: "Priority Unlock Pass", price: 300 },
-    { name: "Golden Key (Vault Access)", price: 750 },
-    { name: "Diamond Patron", price: 1500 },
-    { name: "Private Drop Sponsor", price: 2500 },
-    { name: "Legend Crown (Room-wide)", price: 250 },
-];
+interface RollerPack {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+}
 
 interface ImpulsePanelProps {
     roomId: string | null;
@@ -34,6 +32,36 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
     const [submitting, setSubmitting] = useState(false);
     const [requestStatus, setRequestStatus] = useState<"idle" | "submitted" | "accepted" | "declined">("idle");
     const [myRequestId, setMyRequestId] = useState<string | null>(null);
+    const [rollerPacks, setRollerPacks] = useState<RollerPack[]>([]);
+
+    // Fetch dynamic roller packs
+    const fetchPacks = useCallback(async () => {
+        if (!roomId) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/roller-packs`);
+            const data = await res.json();
+            if (data.packs) setRollerPacks(data.packs);
+        } catch { /* ignore */ }
+    }, [roomId]);
+
+    useEffect(() => {
+        fetchPacks();
+    }, [fetchPacks]);
+
+    // Realtime updates for roller packs
+    useEffect(() => {
+        if (!roomId) return;
+        const channel = supabase
+            .channel(`fan-roller-packs-${roomId}`)
+            .on("postgres_changes", {
+                event: "*",
+                schema: "public",
+                table: "flash_drop_roller_packs",
+                filter: `room_id=eq.${roomId}`,
+            }, fetchPacks)
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, fetchPacks]);
 
     // Listen for status updates on the fan's own request
     useEffect(() => {
@@ -125,22 +153,26 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
             {/* High Roller Packs */}
             <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
                 <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-2 uppercase tracking-widest">High Roller Packs</h2>
-                <div className="space-y-1">
-                    {highRollerPacks.map((pack) => (
-                        <button
-                            key={pack.name}
-                            onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} ($${pack.price})`)}
-                            className="w-full flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
-                        >
-                            <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">
-                                {pack.name}
-                            </span>
-                            <span className="fd-font-tech font-black text-sm fd-neon-text shrink-0 ml-2">
-                                ${pack.price.toLocaleString()}
-                            </span>
-                        </button>
-                    ))}
-                </div>
+                {rollerPacks.length > 0 ? (
+                    <div className="space-y-1">
+                        {rollerPacks.map((pack) => (
+                            <button
+                                key={pack.id}
+                                onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} ($${pack.price})`)}
+                                className="w-full flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
+                            >
+                                <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">
+                                    {pack.name}
+                                </span>
+                                <span className="fd-font-tech font-black text-sm fd-neon-text shrink-0 ml-2">
+                                    ${pack.price.toLocaleString()}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-foreground/30 text-[10px] py-2 fd-font-body">No packs available yet</p>
+                )}
             </div>
 
             {/* Request A Drop */}

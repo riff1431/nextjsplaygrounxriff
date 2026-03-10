@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Zap } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Plus, X, Zap, Image, Video, Upload } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
@@ -15,10 +15,11 @@ interface FlashDrop {
     status: string;
     inventory_total: number;
     inventory_remaining: number;
+    media_url?: string;
 }
 
 const RARITIES = ["Common", "Rare", "Epic", "Legendary"] as const;
-const KINDS = ["Photo Set", "Video Clip", "VIP Access", "Live Replay", "Custom"] as const;
+const KINDS = ["Photo", "Video"] as const;
 
 const rarityColor: Record<string, string> = {
     Common: "text-pink-300 border-pink-400/30",
@@ -55,16 +56,33 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [tick, setTick] = useState(0);
+    const [mediaFile, setMediaFile] = useState<File | null>(null);
+    const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form state
     const [form, setForm] = useState({
         title: "",
-        kind: "Photo Set" as typeof KINDS[number],
+        kind: "Photo" as typeof KINDS[number],
         rarity: "Common" as typeof RARITIES[number],
         price: "",
         endsInMin: "15",
         inventoryTotal: "100",
     });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setMediaFile(file);
+        const url = URL.createObjectURL(file);
+        setMediaPreview(url);
+    };
+
+    const clearMediaFile = () => {
+        setMediaFile(null);
+        setMediaPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
     // Tick every second for countdown
     useEffect(() => {
@@ -105,6 +123,27 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
         if (!roomId || !form.title.trim()) return;
         setSubmitting(true);
         try {
+            let media_url: string | undefined;
+
+            // Upload media file via server-side API (admin privileges)
+            if (mediaFile) {
+                const uploadForm = new FormData();
+                uploadForm.append("file", mediaFile);
+                uploadForm.append("folder", `flash-drops/${roomId}`);
+
+                const uploadRes = await fetch("/api/v1/storage/upload", {
+                    method: "POST",
+                    body: uploadForm,
+                });
+                const uploadData = await uploadRes.json();
+                if (!uploadRes.ok || !uploadData.success) {
+                    toast.error("Failed to upload media: " + (uploadData.error || "Unknown error"));
+                    setSubmitting(false);
+                    return;
+                }
+                media_url = uploadData.publicUrl;
+            }
+
             const res = await fetch(`/api/v1/rooms/${roomId}/flash-drops`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -116,13 +155,15 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                     endsInMin: parseInt(form.endsInMin) || 15,
                     inventoryTotal: parseInt(form.inventoryTotal) || 100,
                     status: "Live",
+                    media_url,
                 }),
             });
             const data = await res.json();
             if (data.success) {
                 toast.success(`⚡ Drop "${form.title}" is now LIVE!`);
                 setShowModal(false);
-                setForm({ title: "", kind: "Photo Set", rarity: "Common", price: "", endsInMin: "15", inventoryTotal: "100" });
+                setForm({ title: "", kind: "Photo", rarity: "Common", price: "", endsInMin: "15", inventoryTotal: "100" });
+                clearMediaFile();
             } else {
                 toast.error(data.error || "Failed to add drop");
             }
@@ -248,17 +289,69 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                                     className="w-full bg-black/40 border border-primary/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/70 transition-all"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Kind</label>
-                                    <select
-                                        value={form.kind}
-                                        onChange={e => setForm(f => ({ ...f, kind: e.target.value as any }))}
-                                        className="w-full bg-black/40 border border-primary/30 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:border-primary/70"
-                                    >
-                                        {KINDS.map(k => <option key={k} value={k}>{k}</option>)}
-                                    </select>
+                            {/* Kind selector — Photo / Video */}
+                            <div>
+                                <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1.5 block">Kind</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {KINDS.map(k => (
+                                        <button
+                                            key={k}
+                                            type="button"
+                                            onClick={() => { setForm(f => ({ ...f, kind: k })); clearMediaFile(); }}
+                                            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-bold font-display tracking-wider transition-all ${form.kind === k
+                                                ? "border-primary bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--neon-pink)/0.3)]"
+                                                : "border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                                }`}
+                                        >
+                                            {k === "Photo" ? <Image size={16} /> : <Video size={16} />}
+                                            {k}
+                                        </button>
+                                    ))}
                                 </div>
+                            </div>
+
+                            {/* File upload area */}
+                            <div>
+                                <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1.5 block">
+                                    {form.kind === "Photo" ? "Attach Photo" : "Attach Video"}
+                                </label>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept={form.kind === "Photo" ? "image/*" : "video/*"}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    id="drop-media-upload"
+                                />
+                                {!mediaPreview ? (
+                                    <label
+                                        htmlFor="drop-media-upload"
+                                        className="flex flex-col items-center justify-center gap-2 py-5 rounded-xl border-2 border-dashed border-primary/30 bg-black/30 cursor-pointer hover:border-primary/60 hover:bg-primary/5 transition-all"
+                                    >
+                                        <Upload size={24} className="text-primary/60" />
+                                        <span className="text-xs text-muted-foreground">
+                                            Click to upload {form.kind === "Photo" ? "an image" : "a video"}
+                                        </span>
+                                    </label>
+                                ) : (
+                                    <div className="relative rounded-xl overflow-hidden border border-primary/30 bg-black/30">
+                                        {form.kind === "Photo" ? (
+                                            <img src={mediaPreview} alt="Preview" className="w-full h-28 object-cover" />
+                                        ) : (
+                                            <video src={mediaPreview} className="w-full h-28 object-cover" controls />
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={clearMediaFile}
+                                            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-500/40 text-white transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Rarity</label>
                                     <select

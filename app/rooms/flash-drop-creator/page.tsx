@@ -23,7 +23,6 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 function FlashdropCreatorStudio() {
     const { user } = useAuth();
     const [roomId, setRoomId] = useState<string | null>(null);
-    const [rightTab, setRightTab] = useState<"requests" | "chat">("requests");
 
     useEffect(() => {
         if (!user) return;
@@ -60,7 +59,7 @@ function FlashdropCreatorStudio() {
             {/* Overlay for readability */}
             <div className="absolute inset-0 bg-background/40" />
 
-            <div className="relative z-10 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto flex flex-col gap-4 h-screen overflow-hidden">
+            <div className="relative z-10 px-3 py-2 flex flex-col gap-3 h-screen overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex items-center shrink-0 relative">
                     <Link
@@ -102,52 +101,41 @@ function FlashdropCreatorStudio() {
                             </div>
                             <div className="flex flex-col gap-4 min-h-0">
                                 <SummaryBox roomId={roomId} />
-                                <HighRollerPacks />
+                                <HighRollerPacks roomId={roomId} />
                             </div>
                         </div>
                         <BottomStrip roomId={roomId} />
                     </div>
 
-                    {/* Right column — tabbed: Drop Requests | Live Chat */}
-                    <div className="lg:col-span-2 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
-                        {/* Tab bar */}
-                        <div className="flex shrink-0 border-b border-border/50">
-                            <button
-                                onClick={() => setRightTab("requests")}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold font-display tracking-wider transition-all ${rightTab === "requests"
-                                    ? "border-b-2 border-primary text-primary neon-text"
-                                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-                                    }`}
-                            >
-                                <ClipboardList size={13} />
-                                Drop Requests
-                            </button>
-                            <button
-                                onClick={() => setRightTab("chat")}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold font-display tracking-wider transition-all ${rightTab === "chat"
-                                    ? "border-b-2 border-primary text-primary neon-text"
-                                    : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-                                    }`}
-                            >
-                                <MessageSquare size={13} />
-                                Live Chat
-                            </button>
-                        </div>
-
-                        {/* Tab contents */}
-                        <div className="flex-1 min-h-0 overflow-hidden">
-                            {rightTab === "requests" ? (
+                    {/* Right column — Drop Requests & Live Chat side by side */}
+                    <div className="lg:col-span-2 flex flex-row gap-4 min-h-0">
+                        {/* Drop Requests section */}
+                        <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
+                                <ClipboardList size={13} className="text-primary" />
+                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Drop Requests</span>
+                            </div>
+                            <div className="flex-1 min-h-0 overflow-hidden">
                                 <DropRequests
                                     className="h-full border-none rounded-none"
                                     roomId={roomId ?? undefined}
                                 />
-                            ) : (
+                            </div>
+                        </div>
+
+                        {/* Live Chat section */}
+                        <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
+                                <MessageSquare size={13} className="text-primary" />
+                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Live Chat</span>
+                            </div>
+                            <div className="flex-1 min-h-0 overflow-hidden">
                                 <FlashDropLiveChat
                                     roomId={roomId}
                                     hostId={user?.id}
                                     variant="creator"
                                 />
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>

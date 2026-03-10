@@ -33,7 +33,7 @@ export async function POST(
     const supabase = await createClient();
     const body = await request.json();
 
-    const { title, kind, rarity, price, endsInMin, inventoryTotal, status } = body;
+    const { title, kind, rarity, price, endsInMin, inventoryTotal, status, media_url } = body;
 
     const endsAt = new Date();
     endsAt.setMinutes(endsAt.getMinutes() + (endsInMin || 15));
@@ -43,15 +43,16 @@ export async function POST(
         .insert([{
             room_id: roomId,
             title,
-            kind: kind || 'Photo Set',
+            kind: kind || 'Photo',
             rarity: rarity || 'Common',
             price: price || 0,
             ends_at: endsAt.toISOString(),
             status: status || 'Scheduled',
             inventory_total: inventoryTotal || 100,
-            inventory_remaining: inventoryTotal || 100, // Starts full
+            inventory_remaining: inventoryTotal || 100,
             gross_preview: 0,
-            unlocks_preview: 0
+            unlocks_preview: 0,
+            ...(media_url ? { media_url } : {}),
         }])
         .select()
         .single();
