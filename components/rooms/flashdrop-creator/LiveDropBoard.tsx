@@ -128,6 +128,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
 
             // Upload media file via server-side API (admin privileges)
             if (mediaFile) {
+                console.log("[LiveDropBoard] Uploading media file:", mediaFile.name, mediaFile.size);
                 const uploadForm = new FormData();
                 uploadForm.append("file", mediaFile);
                 uploadForm.append("folder", `flash-drops/${roomId}`);
@@ -136,13 +137,24 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                     method: "POST",
                     body: uploadForm,
                 });
+
+                if (!uploadRes.ok) {
+                    const errorText = await uploadRes.text();
+                    console.error("[LiveDropBoard] Upload HTTP Error:", uploadRes.status, errorText);
+                    toast.error(`Media upload failed: ${uploadRes.status}`);
+                    setSubmitting(false);
+                    return;
+                }
+
                 const uploadData = await uploadRes.json();
-                if (!uploadRes.ok || !uploadData.success) {
-                    toast.error("Failed to upload media: " + (uploadData.error || "Unknown error"));
+                if (!uploadData.success) {
+                    console.error("[LiveDropBoard] Upload Data Error:", uploadData.error);
+                    toast.error("Upload Error: " + (uploadData.error || "Unknown error"));
                     setSubmitting(false);
                     return;
                 }
                 media_url = uploadData.publicUrl;
+                console.log("[LiveDropBoard] Media uploaded successfully:", media_url);
             }
 
             const res = await fetch(`/api/v1/rooms/${roomId}/flash-drops`, {
@@ -159,6 +171,20 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                     media_url,
                 }),
             });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("[LiveDropBoard] API Error:", res.status, errorText);
+                try {
+                    const errorData = JSON.parse(errorText);
+                    toast.error(errorData.error || `API Error: ${res.status}`);
+                } catch {
+                    toast.error(`Server Error: ${res.status}`);
+                }
+                setSubmitting(false);
+                return;
+            }
+
             const data = await res.json();
             if (data.success) {
                 toast.success(`⚡ Drop "${form.title}" is now LIVE!`);
@@ -168,8 +194,9 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
             } else {
                 toast.error(data.error || "Failed to add drop");
             }
-        } catch {
-            toast.error("Network error");
+        } catch (err: any) {
+            console.error("[LiveDropBoard] Network/Unexpected Error:", err);
+            toast.error(`Network error: ${err.message || 'Unknown'}`);
         }
         setSubmitting(false);
     };

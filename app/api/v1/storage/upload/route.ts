@@ -18,7 +18,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse the multipart form data
-    const formData = await request.formData();
+    const start = Date.now();
+    let formData;
+    try {
+        formData = await request.formData();
+    } catch (err: any) {
+        console.error("[upload] Failed to parse form data:", err.message);
+        return NextResponse.json({ error: "Failed to parse form data: " + err.message }, { status: 400 });
+    }
+
     const file = formData.get("file") as File | null;
     const folder = formData.get("folder") as string || "uploads";
 
@@ -26,13 +34,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    console.log(`[upload] Processing file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) to folder: ${folder}`);
+
     const ext = file.name.split(".").pop() || "bin";
     const filePath = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-    // Convert File to ArrayBuffer for server-side upload
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8 = new Uint8Array(arrayBuffer);
+    // Convert File to Uint8Array for server-side upload
+    const bytes = await file.arrayBuffer();
+    const uint8 = new Uint8Array(bytes);
+    console.log(`[upload] Converted to Uint8Array in ${Date.now() - start}ms`);
 
+    const uploadStart = Date.now();
     const { error: uploadErr } = await supabase.storage
         .from("media")
         .upload(filePath, uint8, {
@@ -41,9 +53,11 @@ export async function POST(request: NextRequest) {
         });
 
     if (uploadErr) {
-        console.error("[upload] Upload error:", uploadErr.message);
+        console.error("[upload] Supabase upload error:", uploadErr.message);
         return NextResponse.json({ error: uploadErr.message }, { status: 500 });
     }
+
+    console.log(`[upload] Supabase upload completed in ${Date.now() - uploadStart}ms`);
 
     const { data: urlData } = supabase.storage.from("media").getPublicUrl(filePath);
 

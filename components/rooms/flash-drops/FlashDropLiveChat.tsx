@@ -63,7 +63,7 @@ export default function FlashDropLiveChat({
     useEffect(() => {
         if (!roomId) return;
         const channel = supabase
-            .channel(`fd-chat-${roomId}-${variant}`)
+            .channel(`fd-chat-${roomId}`) // Removed variant to consolidate
             .on(
                 "postgres_changes",
                 {
@@ -73,9 +73,9 @@ export default function FlashDropLiveChat({
                     filter: `room_id=eq.${roomId}`,
                 },
                 (payload) => {
+                    const newMsg = payload.new as ChatMessage;
                     setMessages((prev) => {
-                        // Avoid duplicates (optimistic inserts)
-                        const newMsg = payload.new as ChatMessage;
+                        // Avoid duplicates (optimistic inserts or multiple clients)
                         if (prev.some((m) => m.id === newMsg.id)) return prev;
                         return [...prev, newMsg];
                     });
@@ -87,68 +87,7 @@ export default function FlashDropLiveChat({
                 }
             });
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, variant]);
-
-    // Also listen to flash_drop_requests to inject event messages
-    useEffect(() => {
-        if (!roomId) return;
-        const channel = supabase
-            .channel(`fd-events-${roomId}-${variant}`)
-            .on("postgres_changes", {
-                event: "INSERT",
-                schema: "public",
-                table: "flash_drop_requests",
-                filter: `room_id=eq.${roomId}`,
-            }, async (payload) => {
-                const req = payload.new as any;
-                // Insert a system event message into chat
-                await supabase.from("room_chat_messages").insert({
-                    room_id: roomId,
-                    sender_id: null,
-                    sender_name: "System",
-                    message: `💰 ${req.fan_name} submitted a $${req.amount} custom drop request!`,
-                    is_system: true,
-                    system_type: "drop_request",
-                });
-            })
-            .on("postgres_changes", {
-                event: "INSERT",
-                schema: "public",
-                table: "flash_drops",
-                filter: `room_id=eq.${roomId}`,
-            }, async (payload) => {
-                const drop = payload.new as any;
-                await supabase.from("room_chat_messages").insert({
-                    room_id: roomId,
-                    sender_id: null,
-                    sender_name: "System",
-                    message: `⚡ NEW DROP: "${drop.title}" is now LIVE — $${drop.price} · ${drop.rarity}`,
-                    is_system: true,
-                    system_type: "drop_new",
-                });
-            })
-            .on("postgres_changes", {
-                event: "UPDATE",
-                schema: "public",
-                table: "flash_drops",
-                filter: `room_id=eq.${roomId}`,
-            }, async (payload) => {
-                const drop = payload.new as any;
-                if (drop.status === "Ended") {
-                    await supabase.from("room_chat_messages").insert({
-                        room_id: roomId,
-                        sender_id: null,
-                        sender_name: "System",
-                        message: `💀 Drop ended: "${drop.title}"`,
-                        is_system: true,
-                        system_type: "drop_ended",
-                    });
-                }
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, [roomId, variant]);
+    }, [roomId]);
 
     // Auto-scroll to bottom
     useEffect(() => {

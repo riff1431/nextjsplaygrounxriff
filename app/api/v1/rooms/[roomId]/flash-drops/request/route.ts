@@ -64,6 +64,16 @@ export async function POST(
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
 
+    // Insert System Message into Chat (Server-side to avoid duplication)
+    await supabase.from("room_chat_messages").insert({
+        room_id: roomId,
+        sender_id: null,
+        sender_name: "System",
+        message: `💰 ${profile?.username || "Anonymous"} submitted a $${amount} custom drop request!`,
+        is_system: true,
+        system_type: "drop_request",
+    });
+
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
         message: `New drop request ($${amount}): "${content}"`,

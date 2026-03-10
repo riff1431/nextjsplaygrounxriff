@@ -24,39 +24,51 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
     const fetchStats = useCallback(async () => {
         if (!roomId) return;
 
-        // Drops stats
-        const { data: drops } = await supabase
-            .from("flash_drops")
-            .select("id, kind, status")
-            .eq("room_id", roomId);
+        try {
+            // Drops count
+            const { count: dropsCount } = await supabase
+                .from("flash_drops")
+                .select("*", { count: 'exact', head: true })
+                .eq("room_id", roomId)
+                .eq("status", "Live");
 
-        // Requests stats
-        const { data: requests } = await supabase
-            .from("flash_drop_requests")
-            .select("id, status, content")
-            .eq("room_id", roomId);
+            // Packs count
+            const { count: packsCount } = await supabase
+                .from("flash_drop_roller_packs")
+                .select("*", { count: 'exact', head: true })
+                .eq("room_id", roomId);
 
-        // Unique fans from requests
-        const { data: fanData } = await supabase
-            .from("flash_drop_requests")
-            .select("fan_id")
-            .eq("room_id", roomId);
+            // Bundles count
+            const { count: bundlesCount } = await supabase
+                .from("flash_drop_bundles")
+                .select("*", { count: 'exact', head: true })
+                .eq("room_id", roomId);
 
-        const uniqueFans = new Set(fanData?.map(r => r.fan_id) ?? []).size;
-        const liveDrops = (drops ?? []).filter(d => d.status === "Live").length;
-        const packCount = (drops ?? []).filter(d => d.kind === "Pack").length;
-        const bundleCount = (requests ?? []).filter(r =>
-            r.content?.toLowerCase().includes("bundle")
-        ).length;
-        const pending = (requests ?? []).filter(r => r.status === "pending").length;
+            // Pending requests count
+            const { count: pendingCount } = await supabase
+                .from("flash_drop_requests")
+                .select("*", { count: 'exact', head: true })
+                .eq("room_id", roomId)
+                .eq("status", "pending");
 
-        setStats({
-            fans: uniqueFans,
-            drops: liveDrops,
-            packs: packCount,
-            bundles: bundleCount,
-            pendingRequests: pending,
-        });
+            // Unique fans from requests
+            const { data: fanData } = await supabase
+                .from("flash_drop_requests")
+                .select("fan_id")
+                .eq("room_id", roomId);
+
+            const uniqueFans = new Set(fanData?.map(r => r.fan_id) ?? []).size;
+
+            setStats({
+                fans: uniqueFans,
+                drops: dropsCount || 0,
+                packs: packsCount || 0,
+                bundles: bundlesCount || 0,
+                pendingRequests: pendingCount || 0,
+            });
+        } catch (err) {
+            console.error("[SummaryBox] Error fetching stats:", err);
+        }
     }, [roomId]);
 
     useEffect(() => {
@@ -70,6 +82,12 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
             }, fetchStats)
             .on("postgres_changes", {
                 event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}`,
+            }, fetchStats)
+            .on("postgres_changes", {
+                event: "*", schema: "public", table: "flash_drop_roller_packs", filter: `room_id=eq.${roomId}`,
+            }, fetchStats)
+            .on("postgres_changes", {
+                event: "*", schema: "public", table: "flash_drop_bundles", filter: `room_id=eq.${roomId}`,
             }, fetchStats)
             .subscribe();
 
