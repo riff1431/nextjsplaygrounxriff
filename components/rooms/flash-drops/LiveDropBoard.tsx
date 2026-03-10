@@ -190,7 +190,7 @@ export default function LiveDropBoard({ roomId, onSpend }: LiveDropBoardProps) {
 
             {/* Grid of drops */}
             {filteredDrops.length > 0 && (
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-4 gap-2.5">
                     {filteredDrops.map((drop) => {
                         const isPaid = drop.price > 0;
                         const isUnlocked = unlockedIds.has(drop.id);
@@ -207,8 +207,8 @@ export default function LiveDropBoard({ roomId, onSpend }: LiveDropBoardProps) {
                                 }}
                                 disabled={isUnlocking || (!isLocked && isPaid)}
                                 className={`text-left rounded-xl border bg-black/40 transition-all group overflow-hidden flex flex-col ${isLocked
-                                        ? "border-primary/40 hover:border-primary/80 cursor-pointer hover:shadow-[0_0_20px_hsl(330_100%_55%/0.3)]"
-                                        : "border-primary/25 cursor-default"
+                                    ? "border-primary/40 hover:border-primary/80 cursor-pointer hover:shadow-[0_0_20px_hsl(330_100%_55%/0.3)]"
+                                    : "border-primary/25 cursor-default"
                                     }`}
                             >
                                 {/* Media thumbnail */}

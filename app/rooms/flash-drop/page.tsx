@@ -263,7 +263,13 @@ export default function FlashDropsRoomPreview() {
                 <div className="relative z-10 flex flex-col h-screen max-w-[1400px] mx-auto w-full">
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
-                        <div className="flex items-center justify-between px-4">
+                        <div className="flex items-center gap-2 px-4">
+                            <button
+                                onClick={() => router.back()}
+                                className="shrink-0 w-7 h-7 rounded-lg border border-primary/40 bg-black/40 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
+                            >
+                                <ArrowLeft size={14} className="text-primary" />
+                            </button>
                             <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80 flex-1">
                                 {tickerItems.map((item, i) => (
                                     <span key={i} className="shrink-0">{item}</span>
