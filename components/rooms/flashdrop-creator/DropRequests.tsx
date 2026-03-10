@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 interface DropRequest {
     id: string;
     fan_name: string;
-    request: string;
+    content: string;
     amount: number;
     status: "pending" | "accepted" | "declined";
 }
@@ -58,10 +58,7 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
     };
 
     return (
-        <div className={`glass-panel rounded-xl p-4 flex flex-col min-h-0 ${className}`}>
-            <h2 className="font-display text-lg font-bold neon-text mb-3 tracking-wider shrink-0">
-                Drop Requests
-            </h2>
+        <div className={`glass-panel rounded-xl p-0 flex flex-col min-h-0 ${className}`}>
             <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 rounded-lg">
                 <table className="w-full text-sm">
                     <thead>
@@ -87,7 +84,7 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
                                     {req.fan_name}
                                 </td>
                                 <td className="py-2.5 px-2 text-muted-foreground">
-                                    {req.request} · ${req.amount}
+                                    {req.content} · ${req.amount}
                                 </td>
                                 <td className="py-2.5 px-2">
                                     {req.status === "pending" ? (

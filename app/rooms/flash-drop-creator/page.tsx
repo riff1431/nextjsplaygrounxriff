@@ -113,7 +113,7 @@ function FlashdropCreatorStudio() {
                         <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
                             <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
                                 <ClipboardList size={13} className="text-primary" />
-                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Drop Requests</span>
+                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Custom Request Drops</span>
                             </div>
                             <div className="flex-1 min-h-0 overflow-hidden">
                                 <DropRequests
