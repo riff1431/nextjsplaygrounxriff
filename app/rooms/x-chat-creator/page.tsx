@@ -20,29 +20,21 @@ const XChatCreatorPage = () => {
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
+    const urlRoomId = searchParams.get("roomId");
     const supabase = createClient();
-    const [roomId, setRoomId] = useState<string | undefined>(undefined);
+    const [roomId, setRoomId] = useState<string | undefined>(urlRoomId || undefined);
 
-    if (!sessionId) {
-        return (
-            <ProtectRoute allowedRoles={["creator"]}>
-                <RoomSessionDashboard
-                    roomType="x-chat"
-                    roomEmoji="💬"
-                    roomLabel="X Chat"
-                    creatorPageRoute="/rooms/x-chat-creator"
-                    accentHsl="45, 90%, 55%"
-                    accentHslSecondary="35, 85%, 50%"
-                    backgroundImage="/x-chat/casino-bg.jpeg"
-                />
-            </ProtectRoute>
-        );
-    }
-
+    // Must be called before any conditional return to satisfy Rules of Hooks
     useEffect(() => {
+        if (!sessionId) return; // Only init when we have an active session
         async function init() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
+
+            if (urlRoomId) {
+                setRoomId(urlRoomId);
+                return;
+            }
 
             // Find creator's x-chat room
             const { data: room } = await supabase
@@ -70,7 +62,23 @@ const XChatCreatorPage = () => {
             }
         }
         init();
-    }, []);
+    }, [sessionId]);
+
+    if (!sessionId) {
+        return (
+            <ProtectRoute allowedRoles={["creator"]}>
+                <RoomSessionDashboard
+                    roomType="x-chat"
+                    roomEmoji="💬"
+                    roomLabel="X Chat"
+                    creatorPageRoute="/rooms/x-chat-creator"
+                    accentHsl="45, 90%, 55%"
+                    accentHslSecondary="35, 85%, 50%"
+                    backgroundImage="/x-chat/casino-bg.jpeg"
+                />
+            </ProtectRoute>
+        );
+    }
 
     return (
         <ProtectRoute allowedRoles={["creator"]}>
@@ -111,9 +119,21 @@ const XChatCreatorPage = () => {
                             <LiveChat roomId={roomId} />
                         </div>
 
-                        {/* Center - Live Stream */}
-                        <div className="flex items-center justify-center w-full">
-                            <div className="w-full h-full rounded-xl overflow-hidden gold-border gold-glow" style={{ aspectRatio: "16/9" }}>
+                        {/* Center - Video Feeds */}
+                        <div className="flex flex-col gap-4 items-center justify-center w-full px-4 lg:px-12">
+                            {/* Top Feed - Creator Live Stream */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="relative w-full rounded-xl overflow-hidden"
+                                style={{
+                                    height: 'calc(50% - 8px)',
+                                    maxHeight: '320px',
+                                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
+                                    border: '2px solid rgba(255, 215, 0, 0.5)',
+                                }}
+                            >
                                 {roomId && user ? (
                                     <LiveStreamWrapper
                                         role="host"
@@ -125,11 +145,45 @@ const XChatCreatorPage = () => {
                                         hostName={user.user_metadata?.full_name || "Creator"}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
-                                        Connecting to stream...
+                                    <div className="w-full h-full flex items-center justify-center bg-black/60">
+                                        <img
+                                            src="/x-chat/streamer-male.png"
+                                            alt="Creator stream"
+                                            className="w-full h-full object-cover object-top"
+                                        />
                                     </div>
                                 )}
-                            </div>
+                                {/* Stat badge */}
+                                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                    <span className="text-red-500 text-sm">❤️</span>
+                                    <span className="text-sm font-bold text-foreground">800</span>
+                                </div>
+                            </motion.div>
+
+                            {/* Bottom Feed - Secondary View */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.35 }}
+                                className="relative w-full rounded-xl overflow-hidden"
+                                style={{
+                                    height: 'calc(50% - 8px)',
+                                    maxHeight: '320px',
+                                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
+                                    border: '2px solid rgba(255, 215, 0, 0.5)',
+                                }}
+                            >
+                                <img
+                                    src="/x-chat/streamer-female.png"
+                                    alt="Fan stream"
+                                    className="w-full h-full object-cover object-top"
+                                />
+                                {/* Stat badge */}
+                                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                    <span className="text-primary text-sm">💎</span>
+                                    <span className="text-sm font-bold text-foreground">650</span>
+                                </div>
+                            </motion.div>
                         </div>
 
                         {/* Right - Requests + Summary */}

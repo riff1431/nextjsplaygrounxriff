@@ -77,11 +77,10 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
     }, [roomId]);
 
     const statRows = [
-        { icon: "💬", label: "MESSAGES", value: stats.totalMessages.toLocaleString() },
-        { icon: "📥", label: "QUEUED", value: stats.queuedMessages.toLocaleString() },
-        { icon: "✅", label: "ANSWERED", value: stats.answeredMessages.toLocaleString() },
-        { icon: "💕", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
+        { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
+        { icon: "🎭", label: "STICKERS", value: stats.totalReactions.toLocaleString() },
         { icon: "💰", label: "TIPS (USD)", value: `$${stats.totalTips.toLocaleString()}` },
+        { icon: "👥", label: "FANS", value: stats.totalMessages.toLocaleString() },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];
 

@@ -38,7 +38,8 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { content, amount } = body;
+    const { content, amount, description } = body;
+    const finalContent = description || content || "Custom Request";
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,7 +49,7 @@ export async function POST(
 
     const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
         p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: amount,
-        p_description: `Flash Drop request`, p_room_id: roomId,
+        p_description: finalContent, p_room_id: roomId,
         p_related_type: "flash_drop_request", p_related_id: null,
     });
 
@@ -59,24 +60,39 @@ export async function POST(
 
     const { data: req, error: reqError } = await supabase
         .from("flash_drop_requests")
-        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content, amount })
+        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content: finalContent, amount })
         .select().single();
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
 
+    const systemMsg = finalContent.includes('Pack') || finalContent.includes('Bundle')
+        ? `🎁 ${profile?.username || "Anonymous"} ${finalContent.replace('🎁 ', '')}`
+        : `💰 ${profile?.username || "Anonymous"} submitted a $${amount} custom drop request!`;
+
     // Insert System Message into Chat (Server-side to avoid duplication)
-    await supabase.from("room_chat_messages").insert({
-        room_id: roomId,
-        sender_id: null,
-        sender_name: "System",
-        message: `💰 ${profile?.username || "Anonymous"} submitted a $${amount} custom drop request!`,
-        is_system: true,
-        system_type: "drop_request",
-    });
+    const { data: existingMsg } = await supabase
+        .from("room_chat_messages")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("is_system", true)
+        .eq("message", systemMsg)
+        .gt("created_at", new Date(Date.now() - 2000).toISOString())
+        .limit(1);
+
+    if (!existingMsg || existingMsg.length === 0) {
+        await supabase.from("room_chat_messages").insert({
+            room_id: roomId,
+            sender_id: null,
+            sender_name: "System",
+            message: systemMsg,
+            is_system: true,
+            system_type: "drop_request",
+        });
+    }
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
-        message: `New drop request ($${amount}): "${content}"`,
+        message: `New drop request ($${amount}): "${finalContent}"`,
         reference_id: req.id,
     });
 

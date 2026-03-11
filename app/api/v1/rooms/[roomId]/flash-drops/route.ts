@@ -76,15 +76,28 @@ export async function POST(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — $${price || 0} · ${rarity || 'Common'}`;
+
     // Insert System Message into Chat (Server-side to avoid duplication)
-    await supabase.from("room_chat_messages").insert({
-        room_id: roomId,
-        sender_id: null,
-        sender_name: "System",
-        message: `⚡ NEW DROP: "${title}" is now LIVE — $${price || 0} · ${rarity || 'Common'}`,
-        is_system: true,
-        system_type: "drop_new",
-    });
+    const { data: existingMsg } = await supabase
+        .from("room_chat_messages")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("is_system", true)
+        .eq("message", systemMsg)
+        .gt("created_at", new Date(Date.now() - 2000).toISOString())
+        .limit(1);
+
+    if (!existingMsg || existingMsg.length === 0) {
+        await supabase.from("room_chat_messages").insert({
+            room_id: roomId,
+            sender_id: null,
+            sender_name: "System",
+            message: systemMsg,
+            is_system: true,
+            system_type: "drop_new",
+        });
+    }
 
     return NextResponse.json({ success: true, drop: newDrop });
 }

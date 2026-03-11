@@ -72,16 +72,27 @@ export default function FlashDropLiveChat({
                     table: "room_chat_messages",
                     filter: `room_id=eq.${roomId}`,
                 },
-                (payload) => {
+                (payload: any) => {
                     const newMsg = payload.new as ChatMessage;
                     setMessages((prev) => {
                         // Avoid duplicates (optimistic inserts or multiple clients)
                         if (prev.some((m) => m.id === newMsg.id)) return prev;
+
+                        // Extra safety for system messages (ignore identical ones within 3 seconds)
+                        if (newMsg.is_system) {
+                            const isDuplicate = prev.some(m =>
+                                m.is_system &&
+                                m.message === newMsg.message &&
+                                Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 3000
+                            );
+                            if (isDuplicate) return prev;
+                        }
+
                         return [...prev, newMsg];
                     });
                 }
             )
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 if (status === "CHANNEL_ERROR") {
                     console.warn("⚠️ Flash drop chat subscription failed");
                 }

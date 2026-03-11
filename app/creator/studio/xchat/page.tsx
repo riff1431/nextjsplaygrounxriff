@@ -1,2 +1,2 @@
-import XChatFanView from "@/app/rooms/x-chat/page";
-export default XChatFanView;
+import XChatCreatorPage from "@/app/rooms/x-chat-creator/page";
+export default XChatCreatorPage;
