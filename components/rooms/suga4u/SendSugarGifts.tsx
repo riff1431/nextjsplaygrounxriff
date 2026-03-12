@@ -1,6 +1,7 @@
 import React from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 
 const gifts = [
     { name: "Diamond", amount: 10, emoji: "💎" },
@@ -18,7 +19,7 @@ const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await sendGift(g.amount, fanName, `Sent ${g.name}`);
-            alert(`Gift sent: ${g.name} ($${g.amount})`);
+            toast.success(`💎 Gift sent: ${g.name}`, { description: `$${g.amount} sent to creator` });
         } catch (err) {
             console.error("Failed to send gift:", err);
         }

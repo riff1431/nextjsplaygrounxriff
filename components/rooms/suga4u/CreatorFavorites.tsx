@@ -4,6 +4,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -39,7 +40,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
         const result = await pay(hostId, amount, description, roomId, 'suga_favorite', item.id);
 
         if (!result.success) {
-            alert(result.error || "Payment failed");
+            toast.error(result.error || "Payment failed");
             throw new Error(result.error);
         }
 
@@ -49,6 +50,9 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
         // If REVEAL, mark as revealed
         if (type === 'REVEAL') {
             setRevealedIds(prev => new Set(prev).add(item.id));
+            toast.success(`🔓 Revealed: ${item.name}`, { description: item.description || "Item details unlocked!" });
+        } else {
+            toast.success(`🎁 Bought "${item.name}" for her!`, { description: `$${amount} sent to creator` });
         }
     };
 

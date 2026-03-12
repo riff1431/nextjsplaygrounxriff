@@ -1,6 +1,7 @@
 import React from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 
 const actions = [
     { name: "Say My Name", price: 20, emoji: "💋" },
@@ -19,7 +20,7 @@ const QuickPaidActions = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await sendGift(a.price, fanName, `Unlocked: ${a.name}`);
-            alert(`Action triggered: ${a.name}`);
+            toast.success(`${a.emoji} ${a.name} activated!`, { description: `$${a.price} sent to creator` });
         } catch (err) {
             console.error("Failed to trigger action:", err);
         }

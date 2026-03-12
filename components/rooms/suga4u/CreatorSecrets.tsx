@@ -2,6 +2,7 @@ import React from "react";
 import { Lock } from "lucide-react";
 import { useSuga4U, CreatorSecret } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 
 const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
     const { secrets, sendGift } = useSuga4U(roomId);
@@ -12,7 +13,7 @@ const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await sendGift(s.unlock_price, fanName, `Unlocked Secret: ${s.name}`);
-            alert(`Secret unlocked: ${s.name}`);
+            toast.success(`🔓 Secret unlocked: ${s.name}`, { description: s.description || `$${s.unlock_price} spent` });
         } catch (err) {
             console.error("Failed to unlock secret:", err);
         }
