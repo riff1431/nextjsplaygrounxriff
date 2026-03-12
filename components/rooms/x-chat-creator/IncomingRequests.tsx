@@ -37,7 +37,7 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                 schema: "public",
                 table: "x_chat_requests",
                 filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
+            }, (payload: any) => {
                 setRequests((prev) => [payload.new as XChatRequest, ...prev]);
             })
             .subscribe();
@@ -77,7 +77,13 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                         transition={{ delay: i * 0.1 }}
                         className="flex items-start gap-3 p-2 rounded-lg bg-secondary/50"
                     >
-                        <span className="text-2xl flex-shrink-0">{r.avatar_url || "😎"}</span>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-black/40 border border-border">
+                            {r.avatar_url ? (
+                                <img src={r.avatar_url} alt={r.fan_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-2xl text-center leading-none">😎</span>
+                            )}
+                        </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm text-foreground">{r.fan_name}</p>
                             <p className="text-xs text-muted-foreground">⭐ {r.message}</p>
