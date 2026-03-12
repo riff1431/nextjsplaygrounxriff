@@ -85,13 +85,15 @@ const Suga4URoom = () => {
                         <UserProfile name={hostName} />
                     </header>
 
-                    {/* Main 3-Column Layout - fills remaining viewport */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_300px] gap-3 lg:gap-4 flex-1 min-h-0 px-40">
-                        {/* Left Column: Stream + Offers + Secrets */}
+                    {/* Main Layout matching wireframe */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[55%_1fr_280px] gap-3 flex-1 min-h-0">
+
+                        {/* LEFT: Video (top) + Secrets & Favorites (bottom) */}
                         <div className="flex flex-col gap-3 min-h-0">
-                            <div className="flex-[1.5] min-h-0">
+                            {/* Video Stream - takes ~60% height */}
+                            <div className="flex-[1.6] min-h-0">
                                 <div className="glass-panel overflow-hidden flex flex-col h-full bg-transparent border-gold/20">
-                                    <div className="relative flex-1 min-h-[250px]">
+                                    <div className="relative flex-1 min-h-[200px]">
                                         {roomId && user && hostId ? (
                                             <LiveStreamWrapper
                                                 role="fan"
@@ -114,21 +116,21 @@ const Suga4URoom = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="grid grid-cols lg:grid-cols-[1fr_1fr] gap-3 lg:gap-4 flex-1 min-h-0">
+
+                            {/* Secrets + Favorites side by side - takes ~40% height */}
+                            <div className="flex-1 grid grid-cols-[1fr_1.5fr] gap-3 min-h-0">
                                 <CreatorSecrets roomId={roomId} />
                                 <CreatorFavorites roomId={roomId} />
                             </div>
                         </div>
 
-                        {/* Middle Column: Live Chat */}
-                        <div className="flex flex-col gap-3 min-h-0">
-                            <div className="flex-[3] min-h-0">
-                                <LiveChat roomId={roomId} />
-                            </div>
+                        {/* MIDDLE: Live Chat - full height */}
+                        <div className="flex flex-col min-h-0">
+                            <LiveChat roomId={roomId} />
                         </div>
 
-                        {/* Right Column: Paid Requests + Gifts + Actions */}
-                        <div className="flex flex-col gap-3 min-h-0 pr-10 overflow-y-auto chat-scroll">
+                        {/* RIGHT: Paid Requests + Gifts + Actions + Offers - full height scrollable */}
+                        <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
                             <PaidRequestMenu roomId={roomId} />
                             <SendSugarGifts roomId={roomId} />
                             <QuickPaidActions roomId={roomId} />
