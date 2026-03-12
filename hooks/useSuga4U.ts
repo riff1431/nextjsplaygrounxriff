@@ -48,6 +48,7 @@ export type CreatorSecret = {
     creator_id: string;
     name: string;
     description: string;
+    category: string;
     unlock_price: number;
     created_at: number;
 };
@@ -240,11 +241,11 @@ export function useSuga4U(roomId: string | null) {
         if (error) throw error;
     }, [roomId, supabase]);
     
-    const createSecret = useCallback(async (name: string, description: string, unlock_price: number) => {
+    const createSecret = useCallback(async (name: string, description: string, unlock_price: number, category: string = 'CUTE') => {
         if (!roomId) return;
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/secrets`, {
             method: 'POST',
-            body: JSON.stringify({ name, description, unlock_price })
+            body: JSON.stringify({ name, description, unlock_price, category })
         });
         return await res.json();
     }, [roomId]);

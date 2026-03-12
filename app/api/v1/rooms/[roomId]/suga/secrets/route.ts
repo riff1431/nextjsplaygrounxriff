@@ -10,7 +10,7 @@ export async function POST(
     
     try {
         const body = await request.json();
-        const { name, description, unlock_price } = body;
+        const { name, description, unlock_price, category } = body;
         
         const supabase = await createClient();
         
@@ -35,7 +35,8 @@ export async function POST(
                 creator_id: user.id,
                 name,
                 description: description || "",
-                unlock_price: Number(unlock_price)
+                unlock_price: Number(unlock_price),
+                category: category || "CUTE"
             })
             .select()
             .single();

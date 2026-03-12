@@ -4,21 +4,31 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 
+const categories = [
+    { label: "CUTE", emoji: "🎀" },
+    { label: "LUXURY", emoji: "💎" },
+    { label: "DREAM", emoji: "👑" },
+];
+
 const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
     const { secrets, createSecret, deleteSecret } = useSuga4U(roomId || null);
     const [isAdding, setIsAdding] = useState(false);
     const [name, setName] = useState("");
     const [desc, setDesc] = useState("");
     const [price, setPrice] = useState("");
+    const [category, setCategory] = useState("CUTE");
 
     const handleAdd = async () => {
         if (!name || !price) return;
-        await createSecret(name, desc, Number(price));
+        await createSecret(name, desc, Number(price), category);
         setIsAdding(false);
         setName("");
         setDesc("");
         setPrice("");
+        setCategory("CUTE");
     };
+
+    const getCategoryEmoji = (cat: string) => categories.find(c => c.label === cat)?.emoji || "🌸";
 
     return (
         <div className="s4u-creator-glass-panel p-4 flex flex-col h-full">
@@ -32,8 +42,11 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                         <div key={s.id} className="bg-white/5 rounded-lg px-3 py-2.5 relative group">
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-lg">🌸</span>
-                                    <span className="text-sm font-semibold text-white">{s.name}</span>
+                                    <span className="text-lg">{getCategoryEmoji(s.category)}</span>
+                                    <div>
+                                        <span className="text-sm font-semibold text-white">{s.name}</span>
+                                        <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded-full bg-white/10 text-white/50">{s.category}</span>
+                                    </div>
                                 </div>
                                 <span className="text-sm font-bold s4u-creator-text-gold">${s.unlock_price}</span>
                             </div>
@@ -49,6 +62,22 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                     
                     {isAdding && (
                         <div className="bg-white/10 border border-gold/30 rounded-lg p-3 space-y-2">
+                            {/* Category selector */}
+                            <div className="flex gap-1">
+                                {categories.map((c) => (
+                                    <button
+                                        key={c.label}
+                                        onClick={() => setCategory(c.label)}
+                                        className={`flex-1 border rounded-full px-1 py-1.5 text-[10px] font-bold tracking-wider transition-colors ${
+                                            category === c.label
+                                                ? 'bg-pink-500/30 border-pink-500 text-white'
+                                                : 'bg-white/5 border-white/10 text-white/50 hover:border-pink-500/50'
+                                        }`}
+                                    >
+                                        {c.emoji} {c.label}
+                                    </button>
+                                ))}
+                            </div>
                             <input type="text" placeholder="Secret Title" value={name} onChange={e => setName(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
                             <input type="text" placeholder="Description (optional)" value={desc} onChange={e => setDesc(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
                             <input type="number" placeholder="Price ($)" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />

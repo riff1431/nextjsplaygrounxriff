@@ -4,9 +4,16 @@ import { useSuga4U, CreatorSecret } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 
+const categories = [
+    { label: "CUTE", emoji: "🎀" },
+    { label: "LUXURY", emoji: "💎" },
+    { label: "DREAM", emoji: "👑" },
+];
+
 const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
     const { secrets, sendGift } = useSuga4U(roomId);
     const { user } = useAuth();
+    const [activeTab, setActiveTab] = React.useState("CUTE");
 
     const handleUnlock = async (s: CreatorSecret) => {
         if (!roomId) return;
@@ -19,36 +26,61 @@ const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
         }
     };
 
+    const getCategoryEmoji = (cat: string) => categories.find(c => c.label === cat)?.emoji || "🌸";
+    const filteredSecrets = secrets.filter(s => s.category === activeTab);
+
     return (
-        <div className="glass-panel p-3 bg-transparent border-gold/20 h-full">
-            <div className="flex items-center justify-center mb-3">
+        <div className="glass-panel p-3 bg-transparent border-gold/20 h-full flex flex-col">
+            <div className="flex items-center justify-center mb-2">
                 <div className="h-px flex-1 bg-gold/30" />
                 <span className="section-title px-3 whitespace-nowrap">Creator Secrets</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
-            {secrets.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center text-white/40 text-sm italic min-h-[100px]">
-                    No secrets available yet
-                </div>
-            ) : (
-                <div className="grid grid-cols-3 gap-3 p-4">
-                    {secrets.map((s) => (
-                        <div key={s.id} className="glass-panel neon-border-pink p-3 text-center bg-transparent flex flex-col justify-between">
-                            <div>
-                                <Lock className="w-5 h-5 mx-auto mb-1 text-gold" />
-                                <p className="text-[11px] font-semibold mb-2 leading-tight">{s.name}</p>
+
+            {/* Category Tabs */}
+            <div className="flex gap-1.5 mb-2 px-1">
+                {categories.map((c) => (
+                    <button 
+                        key={c.label} 
+                        onClick={() => setActiveTab(c.label)}
+                        className={`flex-1 border rounded-full px-1 py-1 text-[10px] font-bold tracking-wider transition-colors ${
+                            activeTab === c.label 
+                                ? 'bg-pink/20 border-pink' 
+                                : 'bg-muted/50 border-gold/20 hover:border-pink/50'
+                        }`}
+                    >
+                        {c.emoji} {c.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Secrets grid */}
+            <div className="flex-1 overflow-y-auto chat-scroll min-h-0">
+                {filteredSecrets.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-white/40 text-sm italic min-h-[80px]">
+                        No {activeTab.toLowerCase()} secrets yet
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-2 p-1">
+                        {filteredSecrets.map((s) => (
+                            <div key={s.id} className="glass-panel neon-border-pink p-2.5 text-center bg-transparent flex flex-col justify-between">
+                                <div>
+                                    <span className="text-lg">{getCategoryEmoji(s.category)}</span>
+                                    <Lock className="w-4 h-4 mx-auto mb-1 text-gold" />
+                                    <p className="text-[11px] font-semibold mb-1.5 leading-tight">{s.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => handleUnlock(s)}
+                                    disabled={!roomId}
+                                    className="btn-gold w-full py-1 text-[10px] disabled:opacity-50"
+                                >
+                                    ${s.unlock_price} UNLOCK
+                                </button>
                             </div>
-                            <button
-                                onClick={() => handleUnlock(s)}
-                                disabled={!roomId}
-                                className="btn-gold w-full py-1 text-[10px] disabled:opacity-50"
-                            >
-                                ${s.unlock_price} UNLOCK
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
