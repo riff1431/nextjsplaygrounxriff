@@ -30,6 +30,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const [message, setMessage] = useState("");
     const [senderName, setSenderName] = useState("Anonymous");
     const [selectedLane, setSelectedLane] = useState<Lane>("Free");
+    const [activeFilter, setActiveFilter] = useState<"All" | "Paid" | "Priority">("All");
     const [pendingSend, setPendingSend] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +47,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, activeFilter]);
 
     const handleSend = async () => {
         if (!message.trim() || !roomId || pendingSend) return;
@@ -135,38 +136,37 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
         return null;
     };
 
+    const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
+
     return (
-        <div className="glass-card p-4 flex flex-col h-full min-h-[400px]">
-            {/* Lane Selector */}
-            <div className="flex gap-1.5 mb-3">
-                {(Object.keys(LANE_CONFIG) as Lane[]).map((lane) => {
-                    const config = LANE_CONFIG[lane];
-                    const isActive = selectedLane === lane;
-                    return (
-                        <button
-                            key={lane}
-                            onClick={() => setSelectedLane(lane)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all ${isActive
-                                ? `glass-card-inner ${config.borderColor} ${config.color} border`
-                                : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/30"
-                                }`}
-                        >
-                            {config.icon}
-                            {lane}
-                            {config.price > 0 && <span className="text-gold text-[10px]">${config.price}</span>}
-                        </button>
-                    );
-                })}
+        <div className="glass-card flex flex-col h-full min-h-[400px]">
+            {/* Display Filters */}
+            <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3">
+                {(["All", "Paid", "Priority"] as const).map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveFilter(tab)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                            activeFilter === tab
+                                ? tab === "Priority" ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                : tab === "Paid" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                : "bg-primary/20 text-primary border border-primary/30"
+                            : "text-muted-foreground hover:bg-muted/50 border border-transparent"
+                        }`}
+                    >
+                        {tab === "Priority" ? "👑 Priority" : tab === "Paid" ? "💰 Paid" : "All"}
+                    </button>
+                ))}
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll space-y-3 mb-4 pr-1">
-                {messages.length === 0 && (
+            <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll space-y-3 px-4 mb-2">
+                {filteredMessages.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-8 italic">
                         No messages yet. Start the conversation!
                     </p>
                 )}
-                {messages.map((msg) => (
+                {filteredMessages.map((msg) => (
                     <div key={msg.id} className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-primary font-medium text-sm">@{msg.sender_name}</span>
@@ -189,36 +189,60 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                 ))}
             </div>
 
-            {/* Input */}
-            <div className="flex gap-2">
-                <input
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                    placeholder={
-                        !roomId
-                            ? "Waiting for room..."
-                            : selectedLane === "Free"
-                                ? "Type message..."
-                                : `${selectedLane} message ($${LANE_CONFIG[selectedLane].price})...`
-                    }
-                    disabled={!roomId}
-                    className="flex-1 bg-input border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                />
-                <button
-                    onClick={handleSend}
-                    disabled={!message.trim() || !roomId}
-                    className={`glass-card-inner px-4 py-2 transition-colors flex items-center gap-1.5 text-sm disabled:opacity-50 ${selectedLane === "Priority"
-                        ? "text-yellow-300 hover:text-yellow-200"
-                        : selectedLane === "Paid"
-                            ? "text-cyan-300 hover:text-cyan-200"
-                            : "text-gold hover:text-gold-light"
-                        }`}
-                >
-                    {LANE_CONFIG[selectedLane].icon}
-                    {LANE_CONFIG[selectedLane].price > 0 ? `$${LANE_CONFIG[selectedLane].price}` : "Send"}
-                </button>
+            {/* Input Section */}
+            <div className="px-4 pb-4 mt-auto">
+                {/* Send Lane Selector - Moved above input */}
+                <div className="flex gap-1.5 mb-3">
+                    {(Object.keys(LANE_CONFIG) as Lane[]).map((lane) => {
+                        const config = LANE_CONFIG[lane];
+                        const isActive = selectedLane === lane;
+                        return (
+                            <button
+                                key={lane}
+                                onClick={() => setSelectedLane(lane)}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all ${isActive
+                                    ? `glass-card-inner ${config.borderColor} ${config.color} border`
+                                    : "text-muted-foreground hover:text-foreground/80 hover:bg-muted/30"
+                                    }`}
+                            >
+                                {config.icon}
+                                {lane}
+                                {config.price > 0 && <span className="text-gold text-[10px]">${config.price}</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        placeholder={
+                            !roomId
+                                ? "Waiting for room..."
+                                : selectedLane === "Free"
+                                    ? "Type message..."
+                                    : `${selectedLane} message ($${LANE_CONFIG[selectedLane].price})...`
+                        }
+                        disabled={!roomId}
+                        className="flex-1 bg-input border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={!message.trim() || !roomId}
+                        className={`glass-card-inner px-4 py-2 transition-colors flex items-center gap-1.5 text-sm disabled:opacity-50 ${selectedLane === "Priority"
+                            ? "text-yellow-300 hover:text-yellow-200"
+                            : selectedLane === "Paid"
+                                ? "text-cyan-300 hover:text-cyan-200"
+                                : "text-gold hover:text-gold-light"
+                            }`}
+                    >
+                        {LANE_CONFIG[selectedLane].icon}
+                        {LANE_CONFIG[selectedLane].price > 0 ? `$${LANE_CONFIG[selectedLane].price}` : "Send"}
+                    </button>
+                </div>
             </div>
 
             {/* Spend Confirm Modal for paid messages */}

@@ -20,6 +20,7 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
     const supabase = createClient();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [message, setMessage] = useState("");
+    const [activeFilter, setActiveFilter] = useState<"All" | "Paid" | "Priority">("All");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -45,7 +46,7 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
                 schema: "public",
                 table: "x_chat_messages",
                 filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
+            }, (payload: any) => {
                 setMessages((prev) => {
                     if (prev.some(m => m.id === (payload.new as ChatMsg).id)) return prev;
                     return [...prev, payload.new as ChatMsg];
@@ -56,7 +57,7 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
                 schema: "public",
                 table: "x_chat_messages",
                 filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
+            }, (payload: any) => {
                 const updated = payload.new as ChatMsg;
                 setMessages((prev) => prev.map(m => m.id === updated.id ? updated : m));
             })
@@ -70,7 +71,7 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, activeFilter]);
 
     const handleSend = async () => {
         if (!message.trim() || !roomId) return;
@@ -92,28 +93,51 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
         return null;
     };
 
+    const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
+
     return (
         <div className="panel-glass rounded-lg flex flex-col h-full w-full">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                <h2 className="font-display text-sm tracking-widest gold-text flex items-center gap-2">
-                    💬 LIVE CHAT
-                    {messages.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground font-normal">({messages.length})</span>
-                    )}
-                </h2>
-                <div className="flex gap-2 text-muted-foreground">
-                    <ArrowUp className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
-                    <Settings className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
+            <div className="flex flex-col border-b border-border">
+                <div className="flex items-center justify-between px-4 py-3 pb-2">
+                    <h2 className="font-display text-sm tracking-widest gold-text flex items-center gap-2">
+                        💬 LIVE CHAT
+                        {messages.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground font-normal">({messages.length})</span>
+                        )}
+                    </h2>
+                    <div className="flex gap-2 text-muted-foreground">
+                        <ArrowUp className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
+                        <Settings className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
+                    </div>
+                </div>
+                
+                {/* Lane Filters */}
+                <div className="flex gap-2 px-3 pb-2">
+                    {(["All", "Paid", "Priority"] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveFilter(tab)}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                                activeFilter === tab
+                                    ? tab === "Priority" ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                    : tab === "Paid" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                    : "bg-primary/20 text-primary border border-primary/30"
+                                : "text-muted-foreground hover:bg-muted/50 border border-transparent"
+                            }`}
+                        >
+                            {tab === "Priority" ? "👑 Priority" : tab === "Paid" ? "💰 Paid" : "All"}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-3 py-2 space-y-2">
-                {messages.length === 0 && (
+                {filteredMessages.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">No messages yet</p>
                 )}
-                {messages.map((m, i) => (
+                {filteredMessages.map((m, i) => (
                     <motion.div
                         key={m.id}
                         initial={{ opacity: 0, x: -10 }}
