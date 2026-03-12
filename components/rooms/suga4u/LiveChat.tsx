@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Heart, Send } from "lucide-react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
@@ -7,6 +7,14 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
     const { activity, sendMessage } = useSuga4U(roomId);
     const { user } = useAuth();
     const [inputText, setInputText] = useState("");
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to bottom when new messages arrive
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [activity]);
 
     const handleSend = async () => {
         if (!inputText.trim()) return;
@@ -38,8 +46,8 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll flex flex-col-reverse">
-                {[...activity].map((m) => (
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll flex flex-col">
+                {[...activity].reverse().map((m) => (
                     <div key={m.id} className="flex items-start gap-2 text-sm">
                         <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center">
                             <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>

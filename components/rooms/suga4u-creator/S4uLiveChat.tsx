@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart, Smile } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -9,6 +9,14 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
     const [input, setInput] = useState("");
     const { activity, sendMessage } = useSuga4U(roomId || null);
     const { user } = useAuth();
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to bottom when new messages arrive
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [activity]);
 
     const handleSend = async () => {
         if (!input.trim() || !roomId) return;
@@ -38,8 +46,8 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
                 <Heart className="w-4 h-4 s4u-creator-text-primary fill-current" />
                 Live Chat
             </h3>
-            <div className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col-reverse">
-                {[{id: "1", type: "CHAT", fanName: "Test", label: "Message 1", amount: 0}, {id: "2", type: "CHAT", fanName: "Test", label: "Message 2", amount: 0}, ...activity].map((msg, i) => (
+            <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col">
+                {[...activity].reverse().map((msg, i) => (
                     <div key={msg.id || i} className="flex items-start gap-2">
                         <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>
                         <div className="flex-1 min-w-0">
