@@ -39,7 +39,7 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
                 Live Chat
             </h3>
             <div className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col-reverse">
-                {[...activity].map((msg, i) => (
+                {[{id: "1", type: "CHAT", fanName: "Test", label: "Message 1", amount: 0}, {id: "2", type: "CHAT", fanName: "Test", label: "Message 2", amount: 0}, ...activity].map((msg, i) => (
                     <div key={msg.id || i} className="flex items-start gap-2">
                         <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>
                         <div className="flex-1 min-w-0">

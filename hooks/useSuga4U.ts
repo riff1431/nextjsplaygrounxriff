@@ -150,14 +150,17 @@ export function useSuga4U(roomId: string | null) {
         const channel = supabase.channel(`room_${roomId}_suga`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_activity_events', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const a = payload.new;
-                setActivity(prev => [{
-                    id: a.id,
-                    ts: new Date(a.created_at).getTime(),
-                    type: a.type,
-                    fanName: a.fan_name,
-                    label: a.label,
-                    amount: Number(a.amount)
-                }, ...prev].slice(0, 50));
+                setActivity(prev => {
+                    const newEvents = [{
+                        id: a.id,
+                        ts: new Date(a.created_at).getTime(),
+                        type: a.type,
+                        fanName: a.fan_name,
+                        label: a.label,
+                        amount: Number(a.amount)
+                    }, ...prev];
+                    return newEvents.slice(0, 50);
+                });
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const r = payload.new;
