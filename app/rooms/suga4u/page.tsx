@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
@@ -21,6 +21,8 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const Suga4URoom = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const urlRoomId = searchParams.get("roomId");
     const { user } = useAuth();
     const supabase = createClient();
     const [roomId, setRoomId] = React.useState<string | null>(null);
@@ -30,15 +32,19 @@ const Suga4URoom = () => {
 
     React.useEffect(() => {
         async function fetchRoom() {
-            // Find the latest live "suga-4-u" room
-            const { data: room } = await supabase
+            let query = supabase
                 .from('rooms')
                 .select('id, host_id')
                 .eq('status', 'live')
-                .eq('type', 'suga-4-u')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
+                .eq('type', 'suga-4-u');
+
+            if (urlRoomId) {
+                query = query.eq('id', urlRoomId);
+            } else {
+                query = query.order('created_at', { ascending: false }).limit(1);
+            }
+
+            const { data: room } = await query.maybeSingle();
 
             if (room) {
                 setRoomId(room.id);

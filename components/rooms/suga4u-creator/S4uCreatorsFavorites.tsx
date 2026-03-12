@@ -1,42 +1,81 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useSuga4U } from "@/hooks/useSuga4U";
 
-const items = [
-    { emoji: "👙", name: "Pink Lingerie", detail: "I Love You set ✨", price: "$200" },
-    { emoji: "🌸", name: "Chanel #5", detail: "250ml", price: "$75" },
-    { emoji: "💎", name: "Crystal Toy", detail: "$100 💜", price: "$100" },
-    { emoji: "👠", name: "Red Heels", detail: "Size 7, Louboutin", price: "$650" },
-    { emoji: "🎀", name: "Silk Robe", detail: "Rose gold satin", price: "$120" },
-    { emoji: "💄", name: "MAC Lipstick Set", detail: "Ruby Woo collection", price: "$85" },
-    { emoji: "🧴", name: "Body Oil", detail: "Shimmer gold 200ml", price: "$45" },
-    { emoji: "🌹", name: "Rose Bouquet", detail: "50 red roses 🌹", price: "$150" },
-    { emoji: "📱", name: "Ring Light Pro", detail: "18 inch RGB", price: "$90" },
-];
+const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
+    const { favorites, createFavorite, deleteFavorite } = useSuga4U(roomId || null);
+    const [isAdding, setIsAdding] = useState(false);
+    
+    // Form state
+    const [emoji, setEmoji] = useState("💖");
+    const [name, setName] = useState("");
+    const [detail, setDetail] = useState("");
+    const [buyPrice, setBuyPrice] = useState("");
+    const [revealPrice, setRevealPrice] = useState("");
 
-const S4uCreatorsFavorites = () => {
+    const handleAdd = async () => {
+        if (!name || !buyPrice) return;
+        await createFavorite(name, detail, "CUTE", emoji, Number(buyPrice), revealPrice ? Number(revealPrice) : null);
+        setIsAdding(false);
+        setName("");
+        setDetail("");
+        setBuyPrice("");
+        setRevealPrice("");
+    };
+
     return (
         <div className="s4u-creator-glass-panel p-4 flex flex-col h-full">
             <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3">Creators Favorites</h3>
-            <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0 chat-scroll">
                 <div className="space-y-3 pr-2">
-                    {items.map((item, i) => (
-                        <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2">
+                    {favorites.length === 0 && !isAdding && (
+                        <p className="text-xs text-white/50 text-center py-4">No favorites created yet</p>
+                    )}
+                    {favorites.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2 relative group">
                             <div className="flex items-center gap-3">
                                 <span className="text-xl">{item.emoji}</span>
                                 <div>
                                     <p className="text-sm font-semibold text-white">{item.name}</p>
-                                    <p className="text-xs text-white/50">{item.detail}</p>
+                                    {item.description && <p className="text-xs text-white/50">{item.description}</p>}
                                 </div>
                             </div>
-                            <span className="text-sm font-bold s4u-creator-text-gold">{item.price}</span>
+                            <span className="text-sm font-bold s4u-creator-text-gold pr-6">${item.buy_price}</span>
+                            <button 
+                                onClick={() => deleteFavorite(item.id)}
+                                className="absolute right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-1"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
                     ))}
+                    
+                    {isAdding && (
+                        <div className="bg-white/10 border border-gold/30 rounded-lg p-3 space-y-2 mt-2">
+                            <div className="flex gap-2">
+                                <input type="text" placeholder="Emoji" value={emoji} onChange={e => setEmoji(e.target.value)} className="w-12 bg-black/20 rounded px-2 py-1 text-center text-sm text-white" />
+                                <input type="text" placeholder="Item Name" value={name} onChange={e => setName(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                            </div>
+                            <input type="text" placeholder="Description (optional)" value={detail} onChange={e => setDetail(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                            <div className="flex gap-2">
+                                <input type="number" placeholder="Buy Price ($)" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                                <input type="number" placeholder="Reveal Price (optional)" value={revealPrice} onChange={e => setRevealPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                                <button onClick={handleAdd} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-1.5 rounded">Save</button>
+                                <button onClick={() => setIsAdding(false)} className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-1.5 rounded">Cancel</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-            <button className="mt-3 flex items-center gap-1 text-sm s4u-creator-text-primary hover:opacity-80 transition-opacity">
-                <Plus className="w-4 h-4" /> Add item
-            </button>
+            {!isAdding && (
+                <button onClick={() => setIsAdding(true)} className="mt-3 flex items-center gap-1 text-sm s4u-creator-text-primary hover:opacity-80 transition-opacity">
+                    <Plus className="w-4 h-4" /> Add item
+                </button>
+            )}
         </div>
     );
 };

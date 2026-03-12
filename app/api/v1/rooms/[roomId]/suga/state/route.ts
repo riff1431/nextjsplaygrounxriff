@@ -24,15 +24,36 @@ export async function GET(
         .order("created_at", { ascending: false })
         .limit(50);
 
-    // 3. Fetch Analytics (Secrets / Favorites)
-    const { data: analytics } = await supabase
-        .from("suga_item_analytics")
-        .select("*")
-        .eq("room_id", roomId);
+    // Fetch room host
+    const { data: room } = await supabase
+        .from('rooms')
+        .select('host_id')
+        .eq('id', roomId)
+        .single();
+        
+    let secrets = [];
+    let favorites = [];
+    
+    if (room && room.host_id) {
+        const { data: sData } = await supabase
+            .from("suga_creator_secrets")
+            .select("*")
+            .eq("creator_id", room.host_id)
+            .order("created_at", { ascending: false });
+        secrets = sData || [];
+
+        const { data: fData } = await supabase
+            .from("suga_creator_favorites")
+            .select("*")
+            .eq("creator_id", room.host_id)
+            .order("created_at", { ascending: false });
+        favorites = fData || [];
+    }
 
     return NextResponse.json({
         offers: offers || [],
         activity: activity || [],
-        analytics: analytics || []
+        secrets,
+        favorites
     });
 }
