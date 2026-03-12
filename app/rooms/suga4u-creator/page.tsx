@@ -100,7 +100,7 @@ const Suga4UCreatorPage = () => {
                     {/* Middle column (spans 2): Creators Favorites + Pending Requests */}
                     <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uCreatorsFavorites />
+                            <S4uCreatorsFavorites roomId={roomId || undefined} />
                         </div>
                         <div className="shrink-0">
                             <S4uPendingRequests roomId={roomId || undefined} />
@@ -110,7 +110,7 @@ const Suga4UCreatorPage = () => {
                     {/* Right column: Creator Secrets + Live Stream */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uCreatorSecrets />
+                            <S4uCreatorSecrets roomId={roomId || undefined} />
                         </div>
                         <div className="shrink-0">
                             <div className="s4u-creator-glass-panel p-4">
