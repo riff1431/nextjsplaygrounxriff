@@ -68,3 +68,30 @@ export async function POST(
 
     return NextResponse.json({ success: true, request: newRequest });
 }
+
+// PATCH: Update request status
+export async function PATCH(
+    request: NextRequest,
+    props: { params: Promise<{ roomId: string }> }
+) {
+    const params = await props.params;
+    const { roomId } = params;
+    const supabase = await createClient();
+    const body = await request.json();
+
+    const { requestId, status } = body;
+
+    const { data: updatedRequest, error } = await supabase
+        .from("suga_paid_requests")
+        .update({ status })
+        .eq("id", requestId)
+        .eq("room_id", roomId)
+        .select()
+        .single();
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, request: updatedRequest });
+}

@@ -2,24 +2,35 @@
 
 import { Heart, Smile } from "lucide-react";
 import { useState } from "react";
+import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
+import { useAuth } from "@/app/context/AuthContext";
 
-const messages = [
-    { user: "SugaFan17", avatar: "🌸", text: "Hello beautiful! 💕✨", tip: null },
-    { user: "LoveStruck23", avatar: "💜", text: "You look amazing!", tip: null },
-    { user: "HottieHunter", avatar: "🔥", text: "Hey Suga! Hope you're having a great day! 🌹", tip: null },
-    { user: "Candy4U", avatar: "🍬", text: "Hey Suga! 🥰 🎁", tip: "$50" },
-    { user: "DreamyNight", avatar: "🌙", text: "Just dropped by to say hi! 💫", tip: null },
-    { user: "RoseQueen", avatar: "🌹", text: "Love the vibe tonight!", tip: "$25" },
-    { user: "SweetTalker", avatar: "🍯", text: "You're absolutely glowing 🔥", tip: null },
-    { user: "GoldenBoy", avatar: "⭐", text: "Can't stop watching! 💛", tip: "$100" },
-    { user: "MidnightRider", avatar: "🌃", text: "What's the song playing?", tip: null },
-    { user: "CherryPop", avatar: "🍒", text: "Sending love your way! 💋", tip: "$30" },
-    { user: "BlueVelvet", avatar: "💎", text: "You deserve the world 🌍", tip: null },
-    { user: "StarlightX", avatar: "✨", text: "First time here, already a fan!", tip: "$15" },
-];
-
-const S4uLiveChat = () => {
+const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
     const [input, setInput] = useState("");
+    const { activity, sendMessage } = useSuga4U(roomId || null);
+    const { user } = useAuth();
+
+    const handleSend = async () => {
+        if (!input.trim() || !roomId) return;
+        try {
+            const senderName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Creator";
+            await sendMessage(input, senderName);
+            setInput("");
+        } catch (err) {
+            console.error("Failed to send message:", err);
+        }
+    };
+
+    const formatActivityText = (a: ActivityEvent) => {
+        if (a.type === 'TIP') return "tipped you!";
+        if (a.type === 'PAID_REQUEST') return `requested: ${a.label}`;
+        if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
+        return a.label;
+    };
+
+    const isHighlight = (a: ActivityEvent) => {
+        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(a.type);
+    };
 
     return (
         <div className="s4u-creator-glass-panel p-4 flex flex-col h-full">
@@ -27,20 +38,22 @@ const S4uLiveChat = () => {
                 <Heart className="w-4 h-4 s4u-creator-text-primary fill-current" />
                 Live Chat
             </h3>
-            <div className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0">
-                {messages.map((msg, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                        <span className="text-xl">{msg.avatar}</span>
+            <div className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col-reverse">
+                {[...activity].map((msg, i) => (
+                    <div key={msg.id || i} className="flex items-start gap-2">
+                        <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold s4u-creator-text-primary">{msg.user}</span>
-                                {msg.tip && (
-                                    <span className="text-xs bg-pink-500/20 s4u-creator-text-primary px-2 py-0.5 rounded-full font-semibold">
-                                        {msg.tip}
+                                <span className={`text-sm font-semibold ${isHighlight(msg) ? "s4u-creator-text-gold" : "s4u-creator-text-primary"}`}>
+                                    {msg.fanName}
+                                </span>
+                                {msg.amount > 0 && (
+                                    <span className="text-xs bg-pink-500/20 s4u-creator-text-primary px-2 py-0.5 rounded-full font-semibold border border-pink-500/30">
+                                        ${msg.amount}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-sm text-white/80 break-words">{msg.text}</p>
+                            <p className="text-sm text-white/80 break-words">{formatActivityText(msg)}</p>
                         </div>
                     </div>
                 ))}
@@ -50,12 +63,17 @@ const S4uLiveChat = () => {
                     <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && handleSend()}
                         placeholder="Enter message"
                         className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
                     />
                     <Smile className="w-4 h-4 text-white/40 cursor-pointer hover:s4u-creator-text-primary transition-colors" />
                 </div>
-                <button className="bg-pink-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-400 transition-colors">
+                <button
+                    onClick={handleSend}
+                    disabled={!roomId}
+                    className="bg-pink-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-400 transition-colors disabled:opacity-50"
+                >
                     Send
                 </button>
             </div>

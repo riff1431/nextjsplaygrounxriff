@@ -1,61 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Diamond } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
-
-interface SugaRequest {
-    id: string;
-    fan_name: string;
-    message: string;
-    amount: number;
-    type: string;
-    status: "pending" | "accepted" | "declined";
-}
+import { useSuga4U } from "@/hooks/useSuga4U";
 
 const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
-    const supabase = createClient();
-    const [requests, setRequests] = useState<SugaRequest[]>([]);
-
-    useEffect(() => {
-        if (!roomId) return;
-
-        async function fetchRequests() {
-            const { data } = await supabase
-                .from("suga_requests")
-                .select("*")
-                .eq("room_id", roomId)
-                .order("created_at", { ascending: false })
-                .limit(20);
-            if (data) setRequests(data as SugaRequest[]);
-        }
-        fetchRequests();
-
-        const channel = supabase
-            .channel(`suga-requests-${roomId}`)
-            .on("postgres_changes", {
-                event: "INSERT",
-                schema: "public",
-                table: "suga_requests",
-                filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
-                setRequests((prev) => [payload.new as SugaRequest, ...prev]);
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    const { requests } = useSuga4U(roomId || null);
 
     const handleAction = async (id: string, action: "accepted" | "declined") => {
-        setRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: action } : r))
-        );
-        if (roomId) {
-            await fetch(`/api/v1/rooms/${roomId}/suga/request`, {
+        if (!roomId) return;
+        try {
+            await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ requestId: id, status: action }),
             });
+        } catch (err) {
+            console.error("Failed to update request status:", err);
         }
     };
 
@@ -71,13 +31,13 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
                         <div className="flex items-center gap-3">
                             <span className="text-xl">🌸</span>
                             <div>
-                                <p className="text-sm font-semibold text-white">{req.fan_name}</p>
-                                <p className="text-xs text-white/50">{req.message}</p>
+                                <p className="text-sm font-semibold text-white">{req.fanName}</p>
+                                <p className="text-xs text-white/50">{req.label} {req.note ? ` - ${req.note}` : ""}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-bold s4u-creator-text-gold flex items-center gap-1">
-                                ${req.amount} <Diamond className="w-3 h-3" />
+                                ${req.price} <Diamond className="w-3 h-3" />
                             </span>
                             {req.status === "pending" ? (
                                 <>

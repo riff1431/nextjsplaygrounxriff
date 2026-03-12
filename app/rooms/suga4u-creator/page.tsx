@@ -22,22 +22,8 @@ const Suga4UCreatorPage = () => {
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
 
-    if (!sessionId) {
-        return (
-            <RoomSessionDashboard
-                roomType="suga-4-u"
-                roomEmoji="🍬"
-                roomLabel="Suga 4 U"
-                creatorPageRoute="/rooms/suga4u-creator"
-                accentHsl="340, 75%, 55%"
-                accentHslSecondary="320, 70%, 50%"
-                backgroundImage="/rooms/suga4u-creator-bg.jpeg"
-            />
-        );
-    }
-
     useEffect(() => {
-        if (!user) return;
+        if (!user || !sessionId) return;
         const supabase = createClient();
         async function findRoom() {
             const { data: room } = await supabase
@@ -62,7 +48,21 @@ const Suga4UCreatorPage = () => {
             }
         }
         findRoom();
-    }, [user]);
+    }, [user, sessionId]);
+
+    if (!sessionId) {
+        return (
+            <RoomSessionDashboard
+                roomType="suga-4-u"
+                roomEmoji="🍬"
+                roomLabel="Suga 4 U"
+                creatorPageRoute="/rooms/suga4u-creator"
+                accentHsl="340, 75%, 55%"
+                accentHslSecondary="320, 70%, 50%"
+                backgroundImage="/rooms/suga4u-creator-bg.jpeg"
+            />
+        );
+    }
 
     return (
         <div
