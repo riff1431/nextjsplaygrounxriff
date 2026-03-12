@@ -1,6 +1,9 @@
 import React from "react";
 import { useSuga4U, CreatorFavorite } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { Eye, EyeOff } from "lucide-react";
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -8,25 +11,49 @@ const categories = [
     { label: "DREAM", emoji: "👑" },
 ];
 
-const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
+const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
     const { favorites, sendGift } = useSuga4U(roomId);
     const { user } = useAuth();
+    const { balance, pay } = useWallet();
     const [activeTab, setActiveTab] = React.useState("CUTE");
+    const [revealedIds, setRevealedIds] = React.useState<Set<string>>(new Set());
+    const [confirmItem, setConfirmItem] = React.useState<{ item: CreatorFavorite; type: 'BUY' | 'REVEAL' } | null>(null);
 
     const handleAction = async (item: CreatorFavorite, type: 'BUY' | 'REVEAL') => {
-        if (!roomId) return;
-        try {
-            const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
-            const amount = type === 'BUY' ? item.buy_price : (item.reveal_price || 0);
-            const label = type === 'BUY' ? `Bought ${item.name}` : `Revealed ${item.name}`;
-            await sendGift(amount, fanName, label);
-            alert(`${type === 'BUY' ? 'Purchase' : 'Reveal'} successful: ${item.name}`);
-        } catch (err) {
-            console.error(`Failed to ${type}:`, err);
+        if (!roomId || !hostId) return;
+        const amount = type === 'BUY' ? item.buy_price : (item.reveal_price || 0);
+        if (amount <= 0) return;
+
+        // Show confirmation modal
+        setConfirmItem({ item, type });
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!confirmItem || !roomId || !hostId) return;
+        const { item, type } = confirmItem;
+        const amount = type === 'BUY' ? item.buy_price : (item.reveal_price || 0);
+        const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+        const description = type === 'BUY' ? `Bought ${item.name}` : `Revealed ${item.name}`;
+
+        // Deduct from fan wallet and transfer to creator
+        const result = await pay(hostId, amount, description, roomId, 'suga_favorite', item.id);
+
+        if (!result.success) {
+            alert(result.error || "Payment failed");
+            throw new Error(result.error);
+        }
+
+        // Log activity event
+        await sendGift(amount, fanName, description);
+
+        // If REVEAL, mark as revealed
+        if (type === 'REVEAL') {
+            setRevealedIds(prev => new Set(prev).add(item.id));
         }
     };
 
     const filteredFavorites = favorites.filter(f => f.category === activeTab);
+    const isRevealed = (id: string) => revealedIds.has(id);
 
     return (
         <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20">
@@ -57,36 +84,74 @@ const CreatorFavorites = ({ roomId }: { roomId: string | null }) => {
                     </div>
                 ) : (
                     filteredFavorites.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 glass-panel neon-border-pink p-1 bg-transparent">
-                            <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center text-2xl flex-shrink-0">
-                                {item.emoji}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-bold text-sm tracking-tight truncate">{item.name} {item.emoji}</p>
-                                <p className="text-gold font-bold text-xs">${item.buy_price.toLocaleString()}</p>
-                            </div>
-                            <div className="flex flex-col gap-1 flex-shrink-0">
-                                {item.reveal_price !== null && (
+                        <div key={item.id} className="glass-panel neon-border-pink p-2 bg-transparent">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-2xl flex-shrink-0">
+                                    {item.emoji}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    {isRevealed(item.id) ? (
+                                        <>
+                                            <p className="font-bold text-sm tracking-tight truncate text-pink-light">
+                                                {item.emoji} {item.name}
+                                            </p>
+                                            {item.description && (
+                                                <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{item.description}</p>
+                                            )}
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <Eye className="w-3 h-3 text-emerald-400" />
+                                                <span className="text-[10px] text-emerald-400 font-semibold">REVEALED</span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="font-bold text-sm tracking-tight truncate text-white/50 flex items-center gap-1">
+                                                <EyeOff className="w-3.5 h-3.5 inline" /> Hidden Favorite
+                                            </p>
+                                            <p className="text-gold font-bold text-xs">${item.buy_price.toLocaleString()}</p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-1 flex-shrink-0">
+                                    {!isRevealed(item.id) && item.reveal_price !== null && (
+                                        <button
+                                            onClick={() => handleAction(item, 'REVEAL')}
+                                            disabled={!roomId}
+                                            className="btn-pink px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
+                                        >
+                                            REVEAL ${item.reveal_price}
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => handleAction(item, 'REVEAL')}
+                                        onClick={() => handleAction(item, 'BUY')}
                                         disabled={!roomId}
-                                        className="btn-pink px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
+                                        className="btn-gold px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
                                     >
-                                        REVEAL ${item.reveal_price}
+                                        BUY FOR HER
                                     </button>
-                                )}
-                                <button
-                                    onClick={() => handleAction(item, 'BUY')}
-                                    disabled={!roomId}
-                                    className="btn-gold px-3 py-1 text-[10px] rounded-full disabled:opacity-50"
-                                >
-                                    BUY FOR HER
-                                </button>
+                                </div>
                             </div>
                         </div>
                     ))
                 )}
             </div>
+
+            {/* Spend Confirmation Modal */}
+            {confirmItem && (
+                <SpendConfirmModal
+                    isOpen={true}
+                    onClose={() => setConfirmItem(null)}
+                    onConfirm={handleConfirmPayment}
+                    title={confirmItem.type === 'REVEAL' ? "Reveal Favorite" : "Buy For Her"}
+                    itemLabel={confirmItem.type === 'REVEAL' ? `Reveal: ${confirmItem.item.name}` : confirmItem.item.name}
+                    amount={confirmItem.type === 'BUY' ? confirmItem.item.buy_price : (confirmItem.item.reveal_price || 0)}
+                    walletBalance={balance}
+                    description={confirmItem.type === 'REVEAL'
+                        ? "This will reveal the item's name and description to you."
+                        : `Gift "${confirmItem.item.name}" to the creator.`}
+                    confirmLabel={confirmItem.type === 'REVEAL' ? "Reveal Now" : "Buy Now"}
+                />
+            )}
         </div>
     );
 };
