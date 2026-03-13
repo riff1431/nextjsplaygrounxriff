@@ -6,7 +6,7 @@ import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
 import UserProfile from "@/components/rooms/suga4u/UserProfile";
-import PinnedOfferDrops from "@/components/rooms/suga4u/PinnedOfferDrops";
+import S4uGroupVotePanel from "@/components/rooms/suga4u/S4uGroupVotePanel";
 import CreatorSecrets from "@/components/rooms/suga4u/CreatorSecrets";
 import LiveChat from "@/components/rooms/suga4u/LiveChat";
 import CreatorFavorites from "@/components/rooms/suga4u/CreatorFavorites";
@@ -134,7 +134,7 @@ const Suga4URoom = () => {
                             <PaidRequestMenu roomId={roomId} />
                             <SendSugarGifts roomId={roomId} />
                             <QuickPaidActions roomId={roomId} />
-                            <PinnedOfferDrops roomId={roomId} />
+                            <S4uGroupVotePanel roomId={roomId} />
                         </div>
                     </div>
                 </div>

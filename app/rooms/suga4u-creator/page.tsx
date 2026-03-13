@@ -11,6 +11,7 @@ import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsF
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
 import S4uCreatorSecrets from "@/components/rooms/suga4u-creator/S4uCreatorSecrets";
 import S4uSessionSummary from "@/components/rooms/suga4u-creator/S4uSessionSummary";
+import S4uCreatorGroupVote from "@/components/rooms/suga4u-creator/S4uCreatorGroupVote";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -94,6 +95,9 @@ const Suga4UCreatorPage = () => {
                         </div>
                         <div className="shrink-0">
                             <S4uSessionSummary />
+                        </div>
+                        <div className="shrink-0 h-[260px] flex flex-col">
+                            <S4uCreatorGroupVote roomId={roomId || undefined} />
                         </div>
                     </div>
 
