@@ -27,37 +27,46 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
                     <p className="text-xs text-white/40 text-center py-2">No requests yet</p>
                 )}
                 {requests.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2.5">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xl">🌸</span>
-                            <div>
-                                <p className="text-sm font-semibold text-white">{req.fanName}</p>
-                                <p className="text-xs text-white/50">{req.label} {req.note ? ` - ${req.note}` : ""}</p>
+                    <div key={req.id} className="flex flex-col gap-2 bg-white/5 rounded-lg p-3">
+                        {/* Top Profile & Details */}
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-xl shrink-0">🌸</span>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-white truncate">{req.fanName}</p>
+                                    <p className="text-[11px] text-white/50 leading-tight line-clamp-2 mt-0.5" title={`${req.label} ${req.note ? `- ${req.note}` : ""}`}>
+                                        {req.label} {req.note ? ` - ${req.note}` : ""}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold s4u-creator-text-gold flex items-center gap-1">
+                            <span className="text-sm font-bold s4u-creator-text-gold flex items-center gap-1 shrink-0 mt-0.5">
                                 ${req.price} <Diamond className="w-3 h-3" />
                             </span>
+                        </div>
+                        
+                        {/* Bottom Actions Row */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-white/5 mt-1">
                             {req.status === "pending" ? (
                                 <>
                                     <button
                                         onClick={() => handleAction(req.id, "accepted")}
-                                        className="text-xs bg-pink-500 text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-pink-600 transition-colors"
+                                        className="text-xs bg-pink-500 text-white py-1.5 rounded-lg font-semibold hover:bg-pink-600 transition-colors flex-1 text-center"
                                     >
                                         Accept
                                     </button>
                                     <button
                                         onClick={() => handleAction(req.id, "declined")}
-                                        className="text-xs bg-white/10 text-white/60 px-3 py-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                                        className="text-xs bg-white/10 text-white/60 py-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-300 transition-colors flex-1 text-center"
                                     >
                                         Decline
                                     </button>
                                 </>
                             ) : (
-                                <span className={`text-xs font-semibold ${req.status === "accepted" ? "text-green-400" : "text-red-400"}`}>
-                                    {req.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
-                                </span>
+                                <div className="flex-1 text-right">
+                                    <span className={`text-xs font-semibold ${req.status === "accepted" ? "text-green-400" : "text-red-400"}`}>
+                                        {req.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </div>
