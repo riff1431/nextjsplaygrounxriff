@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 
@@ -17,15 +17,39 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
     const [desc, setDesc] = useState("");
     const [price, setPrice] = useState("");
     const [category, setCategory] = useState("CUTE");
+    const [file, setFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleAdd = async () => {
         if (!name || !price) return;
-        await createSecret(name, desc, Number(price), category);
+        setIsUploading(true);
+        let mediaUrl = null;
+        let mediaType = null;
+
+        if (file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("folder", "secrets");
+            try {
+                const res = await fetch("/api/v1/storage/upload", { method: "POST", body: formData });
+                const data = await res.json();
+                if (data.publicUrl) {
+                    mediaUrl = data.publicUrl;
+                    mediaType = file.type.startsWith("image/") ? "image" : "video";
+                }
+            } catch (err) {
+                console.error("Upload failed", err);
+            }
+        }
+
+        await createSecret(name, desc, Number(price), category, mediaUrl, mediaType);
         setIsAdding(false);
+        setIsUploading(false);
         setName("");
         setDesc("");
         setPrice("");
         setCategory("CUTE");
+        setFile(null);
     };
 
     const getCategoryEmoji = (cat: string) => categories.find(c => c.label === cat)?.emoji || "🌸";
@@ -44,7 +68,10 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg">{getCategoryEmoji(s.category)}</span>
                                     <div>
-                                        <span className="text-sm font-semibold text-white">{s.name}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm font-semibold text-white">{s.name}</span>
+                                            {s.media_url && <ImageIcon className="w-3 h-3 text-pink-400" />}
+                                        </div>
                                         <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded-full bg-white/10 text-white/50">{s.category}</span>
                                     </div>
                                 </div>
@@ -81,9 +108,35 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                             <input type="text" placeholder="Secret Title" value={name} onChange={e => setName(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
                             <input type="text" placeholder="Description (optional)" value={desc} onChange={e => setDesc(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
                             <input type="number" placeholder="Price ($)" value={price} onChange={e => setPrice(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
-                            <div className="flex gap-2">
-                                <button onClick={handleAdd} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-1 rounded">Save</button>
-                                <button onClick={() => setIsAdding(false)} className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-1 rounded">Cancel</button>
+                            
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => document.getElementById('secret-file-upload')?.click()}
+                                    className="flex flex-1 items-center justify-center bg-black/20 hover:bg-black/40 rounded px-3 py-1.5 text-[11px] text-pink-300 font-bold border border-pink-500/30 transition-colors truncate"
+                                    disabled={isUploading}
+                                >
+                                    <ImageIcon className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
+                                    <span className="truncate">{file ? file.name : "Attach Image/Video"}</span>
+                                </button>
+                                <input 
+                                    id="secret-file-upload"
+                                    type="file" 
+                                    accept="image/*,video/*" 
+                                    className="hidden" 
+                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                />
+                                {file && (
+                                    <button onClick={() => setFile(null)} className="text-red-400 p-1.5 hover:text-red-300 bg-red-500/10 rounded">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2 pt-1">
+                                <button onClick={handleAdd} disabled={isUploading} className="flex-1 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white text-xs font-bold py-1.5 rounded">
+                                    {isUploading ? "Uploading..." : "Save"}
+                                </button>
+                                <button onClick={() => setIsAdding(false)} disabled={isUploading} className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-1.5 rounded">Cancel</button>
                             </div>
                         </div>
                     )}
