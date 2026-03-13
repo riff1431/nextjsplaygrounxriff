@@ -45,13 +45,16 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                                     {item.link && <p className="text-[10px] text-pink-400/80 truncate mt-0.5">🔗 {item.link}</p>}
                                 </div>
                             </div>
-                            <span className="text-sm font-bold s4u-creator-text-gold pr-6 shrink-0">${item.buy_price}</span>
-                            <button 
-                                onClick={() => deleteFavorite(item.id)}
-                                className="absolute right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-1"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
+                                <span className="text-sm font-bold s4u-creator-text-gold">${item.buy_price}</span>
+                                <button 
+                                    onClick={() => deleteFavorite(item.id)}
+                                    className="text-white/40 hover:text-red-400 transition-colors p-1"
+                                    title="Delete favorite"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     ))}
                     

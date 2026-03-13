@@ -75,15 +75,18 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                                         <span className="text-[10px] ml-2 px-1.5 py-0.5 rounded-full bg-white/10 text-white/50">{s.category}</span>
                                     </div>
                                 </div>
-                                <span className="text-sm font-bold s4u-creator-text-gold">${s.unlock_price}</span>
+                                <div className="flex items-center gap-2 hover:text-red-400 transition-colors">
+                                    <span className="text-sm font-bold s4u-creator-text-gold">${s.unlock_price}</span>
+                                    <button 
+                                        onClick={() => deleteSecret(s.id)}
+                                        className="text-white/40 hover:text-red-400 transition-colors p-1"
+                                        title="Delete secret"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                             {s.description && <p className="text-xs text-white/50 mb-2 ml-7">{s.description}</p>}
-                            <button 
-                                onClick={() => deleteSecret(s.id)}
-                                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-1"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
                         </div>
                     ))}
                     
