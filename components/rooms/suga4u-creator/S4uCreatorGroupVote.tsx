@@ -193,44 +193,44 @@ const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-2">
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase text-white/50 font-bold ml-1">Reward Title</label>
+                    <div className="flex flex-col gap-1.5">
+                        <div className="space-y-0.5">
+                            <label className="text-[10px] uppercase text-white/50 font-bold ml-1 tracking-tight">Reward Title</label>
                             <input
-                                className="w-full bg-black/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                className="w-full bg-black/50 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
                                 placeholder="e.g. Do a 2-minute dance"
                                 value={form.label}
                                 onChange={(e) => setForm({ ...form, label: e.target.value })}
                             />
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-[10px] uppercase text-white/50 font-bold ml-1">Short Description (Optional)</label>
+                        <div className="space-y-0.5">
+                            <label className="text-[10px] uppercase text-white/50 font-bold ml-1 tracking-tight">Short Description (Optional)</label>
                             <input
-                                className="w-full bg-black/50 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                className="w-full bg-black/50 rounded-lg px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
                                 placeholder="Explain what happens when goal is met..."
                                 value={form.description}
                                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                             />
                         </div>
 
-                        <div className="flex gap-2 mt-1">
-                            <div className="w-1/2 space-y-1 relative">
-                                <label className="text-[10px] uppercase text-white/50 font-bold ml-1">Votes Needed</label>
+                        <div className="flex gap-2">
+                            <div className="w-1/2 space-y-0.5 relative">
+                                <label className="text-[10px] uppercase text-white/50 font-bold ml-1 tracking-tight">Votes Needed</label>
                                 <input
-                                    className="w-full bg-black/50 rounded-lg px-3 py-2 text-sm text-white outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                    className="w-full bg-black/50 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none border border-white/10 focus:border-pink-500/50 transition"
                                     value={form.target}
                                     onChange={(e) => setForm({ ...form, target: e.target.value })}
                                     type="number"
                                     min={1}
                                 />
                             </div>
-                            <div className="w-1/2 space-y-1 relative">
-                                <label className="text-[10px] uppercase text-white/50 font-bold ml-1">Price Per Vote</label>
+                            <div className="w-1/2 space-y-0.5 relative">
+                                <label className="text-[10px] uppercase text-white/50 font-bold ml-1 tracking-tight">Price Per Vote</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gold font-bold">$</span>
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gold font-bold text-xs">$</span>
                                     <input
-                                        className="w-full bg-black/50 rounded-lg pl-7 pr-3 py-2 text-sm text-gold font-bold outline-none border border-white/10 focus:border-gold/50 transition"
+                                        className="w-full bg-black/50 rounded-lg pl-6 pr-2 py-1.5 text-xs text-gold font-bold outline-none border border-white/10 focus:border-gold/50 transition"
                                         value={form.price}
                                         onChange={(e) => setForm({ ...form, price: e.target.value })}
                                         type="number"
@@ -240,11 +240,11 @@ const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
                             </div>
                         </div>
                         
-                        <div className="mt-4">
+                        <div className="mt-1">
                             <button
                                 onClick={() => handleAction("START")}
                                 disabled={loading}
-                                className={`w-full py-2.5 rounded-lg bg-pink-600 text-white font-bold text-xs hover:bg-pink-500 transition-colors disabled:opacity-50`}
+                                className={`w-full py-2 rounded-lg bg-pink-600 text-white font-bold text-xs hover:bg-pink-500 transition-colors disabled:opacity-50`}
                             >
                                 {loading ? "Starting..." : `▶ Start Group Vote`}
                             </button>

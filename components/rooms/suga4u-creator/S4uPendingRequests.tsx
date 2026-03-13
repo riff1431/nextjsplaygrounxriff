@@ -20,9 +20,9 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
     };
 
     return (
-        <div className="s4u-creator-glass-panel p-4">
-            <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3">Pending Requests</h3>
-            <div className="space-y-3">
+        <div className="s4u-creator-glass-panel p-3 flex flex-col h-full min-h-0">
+            <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-2 shrink-0">Pending Requests</h3>
+            <div className="space-y-2 flex-1 overflow-y-auto custom-scroll pr-1">
                 {requests.length === 0 && (
                     <p className="text-xs text-white/40 text-center py-2">No requests yet</p>
                 )}

@@ -107,7 +107,7 @@ const Suga4UCreatorPage = () => {
                         <div className="flex-1 min-h-0 flex flex-col">
                             <S4uPendingRequests roomId={roomId || undefined} />
                         </div>
-                        <div className="shrink-0 h-[260px] flex flex-col">
+                        <div className="shrink-0 flex flex-col">
                             <S4uCreatorGroupVote roomId={roomId || undefined} />
                         </div>
                     </div>
