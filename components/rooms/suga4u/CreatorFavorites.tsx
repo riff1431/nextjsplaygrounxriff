@@ -3,7 +3,7 @@ import { useSuga4U, CreatorFavorite } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
-import { Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Eye, EyeOff, ExternalLink, X } from "lucide-react";
 import { toast } from "sonner";
 
 const categories = [
@@ -19,6 +19,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
     const [activeTab, setActiveTab] = React.useState("CUTE");
     const [revealedIds, setRevealedIds] = React.useState<Set<string>>(new Set());
     const [confirmItem, setConfirmItem] = React.useState<{ item: CreatorFavorite; type: 'BUY' | 'REVEAL' } | null>(null);
+    const [selectedItem, setSelectedItem] = React.useState<CreatorFavorite | null>(null);
 
     const handleAction = async (item: CreatorFavorite, type: 'BUY' | 'REVEAL') => {
         if (!roomId || !hostId) return;
@@ -102,22 +103,12 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                                             {item.description && (
                                                 <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{item.description}</p>
                                             )}
-                                            {item.link && (
-                                                <a 
-                                                    href={item.link.startsWith('http') ? item.link : `https://${item.link}`} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 mt-1 text-[11px] text-pink-400 hover:text-pink-300 font-bold bg-pink-500/10 px-2 py-0.5 rounded-full transition-colors truncate max-w-full"
-                                                    title={item.link}
-                                                >
-                                                    <ExternalLink className="w-3 h-3 shrink-0" />
-                                                    <span className="truncate">{item.link}</span>
-                                                </a>
-                                            )}
-                                            <div className="flex items-center gap-1 mt-1">
-                                                <Eye className="w-3 h-3 text-emerald-400" />
-                                                <span className="text-[10px] text-emerald-400 font-semibold">REVEALED</span>
-                                            </div>
+                                            <button
+                                                onClick={() => setSelectedItem(item)}
+                                                className="mt-1.5 flex items-center gap-1.5 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white font-bold text-[10px] rounded-full transition-colors w-fit shadow-md"
+                                            >
+                                                OPEN
+                                            </button>
                                         </>
                                     ) : (
                                         <>
@@ -167,6 +158,49 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                         : `Gift "${confirmItem.item.name}" to the creator.`}
                     confirmLabel={confirmItem.type === 'REVEAL' ? "Reveal Now" : "Buy Now"}
                 />
+            )}
+
+            {/* Item Details Modal */}
+            {selectedItem && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    onClick={() => setSelectedItem(null)}
+                >
+                    <div 
+                        className="relative w-full max-w-sm glass-panel p-5 animate-in fade-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setSelectedItem(null)}
+                            className="absolute top-3 right-3 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-1.5 transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <div className="flex flex-col items-center text-center mt-2">
+                            <div className="w-16 h-16 rounded-2xl bg-muted/30 flex items-center justify-center text-4xl mb-4 border border-white/10 shadow-lg">
+                                {selectedItem.emoji}
+                            </div>
+                            
+                            <h3 className="text-xl font-bold text-white mb-2">{selectedItem.name}</h3>
+                            
+                            {selectedItem.description && (
+                                <p className="text-sm text-white/70 mb-5">{selectedItem.description}</p>
+                            )}
+                            
+                            {selectedItem.link && (
+                                <a 
+                                    href={selectedItem.link.startsWith('http') ? selectedItem.link : `https://${selectedItem.link}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg transition-colors shadow-lg"
+                                >
+                                    <ExternalLink className="w-4 h-4" /> Open Link
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
