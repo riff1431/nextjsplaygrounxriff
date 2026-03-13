@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
-import S4uDashboardHeader from "@/components/rooms/suga4u-creator/S4uDashboardHeader";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
 import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsFavorites";
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
@@ -80,13 +79,9 @@ const Suga4UCreatorPage = () => {
 
             {/* Content */}
             <div className="relative z-10 p-4 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
-                {/* Header */}
-                <div className="mb-4 shrink-0">
-                    <S4uDashboardHeader />
-                </div>
-
+                
                 {/* Main 4-col grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 pt-4">
 
                     {/* Left column: Live Chat (Full Height) */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
