@@ -88,26 +88,30 @@ const Suga4UCreatorPage = () => {
                 {/* Main 4-col grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0">
 
-                    {/* Left column: Live Chat + Summary */}
+                    {/* Left column: Live Chat (Full Height) */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
                             <S4uLiveChat roomId={roomId || undefined} />
                         </div>
-                        <div className="shrink-0">
-                            <S4uSessionSummary />
+                    </div>
+
+                    {/* Column 2: Pending Requests + Group Vote */}
+                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
+                        <div className="flex-1 min-h-0 flex flex-col">
+                            <S4uPendingRequests roomId={roomId || undefined} />
                         </div>
                         <div className="shrink-0 h-[260px] flex flex-col">
                             <S4uCreatorGroupVote roomId={roomId || undefined} />
                         </div>
                     </div>
 
-                    {/* Middle column (spans 2): Creators Favorites + Pending Requests */}
-                    <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
+                    {/* Column 3: Creators Favorites + Session Summary */}
+                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
                             <S4uCreatorsFavorites roomId={roomId || undefined} />
                         </div>
                         <div className="shrink-0">
-                            <S4uPendingRequests roomId={roomId || undefined} />
+                            <S4uSessionSummary />
                         </div>
                     </div>
 
