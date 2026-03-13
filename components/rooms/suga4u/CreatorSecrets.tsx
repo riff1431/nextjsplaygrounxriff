@@ -63,16 +63,16 @@ const CreatorSecrets = ({ roomId }: { roomId: string | null }) => {
                 ) : (
                     <div className="grid grid-cols-2 gap-2 p-1">
                         {filteredSecrets.map((s) => (
-                            <div key={s.id} className="glass-panel neon-border-pink p-2.5 text-center bg-transparent flex flex-col justify-between">
+                            <div key={s.id} className="glass-panel neon-border-pink p-2 text-center bg-transparent flex flex-col justify-between min-h-[110px]">
                                 <div>
-                                    <span className="text-lg">{getCategoryEmoji(s.category)}</span>
-                                    <Lock className="w-4 h-4 mx-auto mb-1 text-gold" />
-                                    <p className="text-[11px] font-semibold mb-1.5 leading-tight">{s.name}</p>
+                                    <span className="text-base">{getCategoryEmoji(s.category)}</span>
+                                    <Lock className="w-3 h-3 mx-auto mb-1 text-gold" />
+                                    <p className="text-[10px] font-semibold mb-1 leading-tight line-clamp-2">{s.name}</p>
                                 </div>
                                 <button
                                     onClick={() => handleUnlock(s)}
                                     disabled={!roomId}
-                                    className="btn-gold w-full py-1 text-[10px] disabled:opacity-50"
+                                    className="btn-gold w-full py-1 text-[9px] disabled:opacity-50 mt-1"
                                 >
                                     ${s.unlock_price} UNLOCK
                                 </button>
