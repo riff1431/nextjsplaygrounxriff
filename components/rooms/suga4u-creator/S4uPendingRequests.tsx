@@ -27,47 +27,49 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
                     <p className="text-xs text-white/40 text-center py-2">No requests yet</p>
                 )}
                 {requests.map((req) => (
-                    <div key={req.id} className="flex flex-col gap-2 bg-white/5 rounded-lg p-3">
-                        {/* Top Profile & Details */}
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-xl shrink-0">🌸</span>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-white truncate">{req.fanName}</p>
-                                    <p className="text-[11px] text-white/50 leading-tight line-clamp-2 mt-0.5" title={`${req.label} ${req.note ? `- ${req.note}` : ""}`}>
-                                        {req.label} {req.note ? ` - ${req.note}` : ""}
-                                    </p>
+                    <div key={req.id} className="flex gap-2.5 bg-white/5 rounded-lg p-2.5 items-start">
+                        {/* Icon */}
+                        <span className="text-lg shrink-0 mt-0.5">🌸</span>
+                        
+                        {/* Content Container */}
+                        <div className="flex-1 min-w-0 flex flex-col">
+                            
+                            {/* Top Row: Name, Price, Status/Actions */}
+                            <div className="flex items-center justify-between gap-2 w-full">
+                                <p className="text-sm font-semibold text-white truncate flex-1">{req.fanName}</p>
+                                
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="text-[11px] font-bold s4u-creator-text-gold flex items-center gap-0.5 shrink-0">
+                                        ${req.price} <Diamond className="w-2.5 h-2.5" />
+                                    </span>
+                                    
+                                    {req.status === "pending" ? (
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => handleAction(req.id, "accepted")}
+                                                className="text-[10px] bg-pink-500 text-white px-2.5 py-1 rounded-md font-semibold hover:bg-pink-600 transition-colors"
+                                            >
+                                                Accept
+                                            </button>
+                                            <button
+                                                onClick={() => handleAction(req.id, "declined")}
+                                                className="text-[10px] bg-white/10 text-white/60 px-2 py-1 rounded-md hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                                            >
+                                                Decline
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span className={`text-[10px] font-semibold ${req.status === "accepted" ? "text-green-400" : "text-red-400"}`}>
+                                            {req.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            <span className="text-sm font-bold s4u-creator-text-gold flex items-center gap-1 shrink-0 mt-0.5">
-                                ${req.price} <Diamond className="w-3 h-3" />
-                            </span>
-                        </div>
-                        
-                        {/* Bottom Actions Row */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-white/5 mt-1">
-                            {req.status === "pending" ? (
-                                <>
-                                    <button
-                                        onClick={() => handleAction(req.id, "accepted")}
-                                        className="text-xs bg-pink-500 text-white py-1.5 rounded-lg font-semibold hover:bg-pink-600 transition-colors flex-1 text-center"
-                                    >
-                                        Accept
-                                    </button>
-                                    <button
-                                        onClick={() => handleAction(req.id, "declined")}
-                                        className="text-xs bg-white/10 text-white/60 py-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-300 transition-colors flex-1 text-center"
-                                    >
-                                        Decline
-                                    </button>
-                                </>
-                            ) : (
-                                <div className="flex-1 text-right">
-                                    <span className={`text-xs font-semibold ${req.status === "accepted" ? "text-green-400" : "text-red-400"}`}>
-                                        {req.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
-                                    </span>
-                                </div>
-                            )}
+                            
+                            {/* Bottom Row: Description */}
+                            <p className="text-[11px] text-white/50 truncate mt-0.5 w-full pr-2" title={`${req.label} ${req.note ? `- ${req.note}` : ""}`}>
+                                {req.label} {req.note ? ` - ${req.note}` : ""}
+                            </p>
                         </div>
                     </div>
                 ))}
