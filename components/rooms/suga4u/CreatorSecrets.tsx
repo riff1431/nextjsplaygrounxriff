@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock, Image as ImageIcon, Video, Eye } from "lucide-react";
+import { Lock, Image as ImageIcon, Video, Eye, X } from "lucide-react";
 import { useSuga4U, CreatorSecret } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
@@ -21,6 +21,7 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
     // Track locally unlocked secrets during this session
     const [unlockedIds, setUnlockedIds] = React.useState<Set<string>>(new Set());
     const [confirmSecret, setConfirmSecret] = React.useState<CreatorSecret | null>(null);
+    const [selectedMedia, setSelectedMedia] = React.useState<CreatorSecret | null>(null);
 
     const handleUnlockPrompt = (s: CreatorSecret) => {
         if (!roomId || !hostId) return;
@@ -88,7 +89,15 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
                             const isUnlocked = unlockedIds.has(s.id);
                             
                             return (
-                                <div key={s.id} className="relative glass-panel neon-border-pink text-center bg-transparent flex flex-col justify-between min-h-[110px] overflow-hidden group">
+                                <div 
+                                    key={s.id} 
+                                    className={`relative glass-panel neon-border-pink text-center bg-transparent flex flex-col justify-between min-h-[110px] overflow-hidden group ${isUnlocked && s.media_url ? 'cursor-pointer hover:border-pink-400' : ''}`}
+                                    onClick={() => {
+                                        if (isUnlocked && s.media_url) {
+                                            setSelectedMedia(s);
+                                        }
+                                    }}
+                                >
                                     {/* Media Background */}
                                     {s.media_url && (
                                         <div className="absolute inset-0 z-0 bg-black/50">
@@ -101,7 +110,7 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
                                     )}
 
                                     {/* Content Overlay */}
-                                    <div className={`relative z-10 flex flex-col h-full p-2 transition-opacity ${isUnlocked ? 'opacity-0 hover:opacity-100 bg-black/60' : ''}`}>
+                                    <div className={`relative z-10 flex flex-col h-full p-2 transition-opacity ${isUnlocked ? 'opacity-0 hover:opacity-100 bg-black/60' : ''} ${!isUnlocked ? '' : 'pointer-events-none'}`}>
                                         <div>
                                             {/* Top Icons */}
                                             <div className="flex items-center justify-between mb-1">
@@ -120,15 +129,18 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
                                         
                                         {!isUnlocked && (
                                             <button
-                                                onClick={() => handleUnlockPrompt(s)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleUnlockPrompt(s);
+                                                }}
                                                 disabled={!roomId || !hostId}
-                                                className="btn-gold w-full py-1.5 text-[10px] disabled:opacity-50 mt-1 shadow-lg"
+                                                className="btn-gold w-full py-1.5 text-[10px] disabled:opacity-50 mt-1 shadow-lg pointer-events-auto"
                                             >
                                                 ${s.unlock_price} UNLOCK
                                             </button>
                                         )}
                                         {isUnlocked && s.description && (
-                                            <p className="text-[9px] text-white/80 line-clamp-3 mt-auto mb-1">{s.description}</p>
+                                            <p className="text-[9px] text-white/80 line-clamp-3 mt-auto mb-1 pointer-events-none">{s.description}</p>
                                         )}
                                     </div>
                                 </div>
@@ -151,6 +163,51 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
                     description={`Permanently unlock the secret "${confirmSecret.name}" to view its contents during this session.`}
                     confirmLabel="Unlock Secret"
                 />
+            )}
+
+            {/* Media Lightbox Modal */}
+            {selectedMedia && selectedMedia.media_url && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+                    onClick={() => setSelectedMedia(null)}
+                >
+                    <button 
+                        onClick={() => setSelectedMedia(null)}
+                        className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-colors z-50"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                    
+                    <div 
+                        className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {selectedMedia.media_type === 'video' ? (
+                            <video 
+                                src={selectedMedia.media_url} 
+                                className="max-w-full max-h-[85vh] rounded-lg shadow-2xl ring-1 ring-white/10" 
+                                controls
+                                autoPlay 
+                                playsInline 
+                            />
+                        ) : (
+                            <img 
+                                src={selectedMedia.media_url} 
+                                alt={selectedMedia.name}
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl ring-1 ring-white/10" 
+                            />
+                        )}
+                        
+                        {(selectedMedia.name || selectedMedia.description) && (
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 rounded-b-lg">
+                                <h3 className="text-xl font-bold text-white drop-shadow-md">{selectedMedia.name}</h3>
+                                {selectedMedia.description && (
+                                    <p className="text-sm text-white/80 mt-1 max-w-2xl">{selectedMedia.description}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
