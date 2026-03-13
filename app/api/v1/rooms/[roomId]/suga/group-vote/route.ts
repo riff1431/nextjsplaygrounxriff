@@ -22,6 +22,14 @@ export async function POST(
         .eq('id', roomId)
         .single();
 
+    if (roomError) {
+        console.error("Group vote DB error:", roomError);
+        if (roomError.message.includes("group_vote_state")) {
+            return NextResponse.json({ error: "Check Supabase: Run 'migration_group_vote.sql' to add group_vote_state to rooms table." }, { status: 500 });
+        }
+        return NextResponse.json({ error: "Failed to fetch room state" }, { status: 500 });
+    }
+
     if (!room || room.host_id !== user.id) {
         return NextResponse.json({ error: "Only host can manage group votes" }, { status: 403 });
     }

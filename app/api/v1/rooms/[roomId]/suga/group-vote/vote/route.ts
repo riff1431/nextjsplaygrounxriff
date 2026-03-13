@@ -25,7 +25,13 @@ export async function POST(
             .eq('id', roomId)
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error("Group vote DB error:", error);
+            if (error.message.includes("group_vote_state")) {
+                return NextResponse.json({ error: "Feature not fully set up. Run 'migration_group_vote.sql'." }, { status: 500 });
+            }
+            throw error;
+        }
         room = data;
     } catch (e) {
         console.error("Error fetching room for group vote:", e);
