@@ -62,6 +62,7 @@ export type CreatorFavorite = {
     description: string;
     buy_price: number;
     reveal_price: number | null;
+    link?: string | null;
     created_at: number;
 };
 
@@ -118,6 +119,7 @@ export function useSuga4U(roomId: string | null) {
                     ...f,
                     buy_price: Number(f.buy_price),
                     reveal_price: f.reveal_price ? Number(f.reveal_price) : null,
+                    link: f.link || null,
                     created_at: new Date(f.created_at).getTime()
                 })));
             }
@@ -256,11 +258,11 @@ export function useSuga4U(roomId: string | null) {
         return await res.json();
     }, [roomId]);
     
-    const createFavorite = useCallback(async (name: string, description: string, category: string, emoji: string, buy_price: number, reveal_price: number | null) => {
+    const createFavorite = useCallback(async (name: string, description: string, category: string, emoji: string, buy_price: number, reveal_price: number | null, link: string | null = null) => {
         if (!roomId) return;
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/favorites`, {
             method: 'POST',
-            body: JSON.stringify({ name, description, category, emoji, buy_price, reveal_price })
+            body: JSON.stringify({ name, description, category, emoji, buy_price, reveal_price, link })
         });
         return await res.json();
     }, [roomId]);

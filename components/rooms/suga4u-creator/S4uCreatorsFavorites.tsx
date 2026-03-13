@@ -12,15 +12,17 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
     const [emoji, setEmoji] = useState("💖");
     const [name, setName] = useState("");
     const [detail, setDetail] = useState("");
+    const [link, setLink] = useState("");
     const [buyPrice, setBuyPrice] = useState("");
     const [revealPrice, setRevealPrice] = useState("");
 
     const handleAdd = async () => {
         if (!name || !buyPrice) return;
-        await createFavorite(name, detail, "CUTE", emoji, Number(buyPrice), revealPrice ? Number(revealPrice) : null);
+        await createFavorite(name, detail, "CUTE", emoji, Number(buyPrice), revealPrice ? Number(revealPrice) : null, link || null);
         setIsAdding(false);
         setName("");
         setDetail("");
+        setLink("");
         setBuyPrice("");
         setRevealPrice("");
     };
@@ -35,14 +37,15 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                     )}
                     {favorites.map((item) => (
                         <div key={item.id} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2 relative group">
-                            <div className="flex items-center gap-3">
-                                <span className="text-xl">{item.emoji}</span>
-                                <div>
-                                    <p className="text-sm font-semibold text-white">{item.name}</p>
-                                    {item.description && <p className="text-xs text-white/50">{item.description}</p>}
+                            <div className="flex items-center gap-3 w-[70%]">
+                                <span className="text-xl shrink-0">{item.emoji}</span>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-white truncate">{item.name}</p>
+                                    {item.description && <p className="text-[11px] text-white/50 truncate mt-0.5">{item.description}</p>}
+                                    {item.link && <p className="text-[10px] text-pink-400/80 truncate mt-0.5">🔗 {item.link}</p>}
                                 </div>
                             </div>
-                            <span className="text-sm font-bold s4u-creator-text-gold pr-6">${item.buy_price}</span>
+                            <span className="text-sm font-bold s4u-creator-text-gold pr-6 shrink-0">${item.buy_price}</span>
                             <button 
                                 onClick={() => deleteFavorite(item.id)}
                                 className="absolute right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity p-1"
@@ -55,13 +58,14 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                     {isAdding && (
                         <div className="bg-white/10 border border-gold/30 rounded-lg p-3 space-y-2 mt-2">
                             <div className="flex gap-2">
-                                <input type="text" placeholder="Emoji" value={emoji} onChange={e => setEmoji(e.target.value)} className="w-12 bg-black/20 rounded px-2 py-1 text-center text-sm text-white" />
-                                <input type="text" placeholder="Item Name" value={name} onChange={e => setName(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                                <input type="text" placeholder="Emoji" value={emoji} onChange={e => setEmoji(e.target.value)} className="w-12 bg-black/20 rounded px-2 py-1 text-center text-sm text-white border border-white/5 focus:border-pink-500/50 outline-none" />
+                                <input type="text" placeholder="Item Name" value={name} onChange={e => setName(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white border border-white/5 focus:border-pink-500/50 outline-none" />
                             </div>
-                            <input type="text" placeholder="Description (optional)" value={detail} onChange={e => setDetail(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                            <input type="text" placeholder="Description (optional)" value={detail} onChange={e => setDetail(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-xs text-white border border-white/5 focus:border-pink-500/50 outline-none" />
+                            <input type="url" placeholder="Secret Link (optional, e.g. mega.nz/...)" value={link} onChange={e => setLink(e.target.value)} className="w-full bg-black/20 rounded px-2 py-1 text-xs text-pink-200 placeholder:text-pink-200/40 border border-white/5 focus:border-pink-500/50 outline-none" />
                             <div className="flex gap-2">
-                                <input type="number" placeholder="Buy Price ($)" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
-                                <input type="number" placeholder="Reveal Price (optional)" value={revealPrice} onChange={e => setRevealPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white outline-none" />
+                                <input type="number" placeholder="Buy Price ($)" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white border border-white/5 focus:border-gold/50 outline-none" />
+                                <input type="number" placeholder="Reveal Price (opt)" value={revealPrice} onChange={e => setRevealPrice(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white border border-white/5 focus:border-gold/50 outline-none" />
                             </div>
                             <div className="flex gap-2 pt-1">
                                 <button onClick={handleAdd} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-1.5 rounded">Save</button>

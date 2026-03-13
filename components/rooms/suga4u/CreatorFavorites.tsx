@@ -3,7 +3,7 @@ import { useSuga4U, CreatorFavorite } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const categories = [
@@ -102,7 +102,19 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                                             {item.description && (
                                                 <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{item.description}</p>
                                             )}
-                                            <div className="flex items-center gap-1 mt-0.5">
+                                            {item.link && (
+                                                <a 
+                                                    href={item.link.startsWith('http') ? item.link : `https://${item.link}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 mt-1 text-[11px] text-pink-400 hover:text-pink-300 font-bold bg-pink-500/10 px-2 py-0.5 rounded-full transition-colors truncate max-w-full"
+                                                    title={item.link}
+                                                >
+                                                    <ExternalLink className="w-3 h-3 shrink-0" />
+                                                    <span className="truncate">{item.link}</span>
+                                                </a>
+                                            )}
+                                            <div className="flex items-center gap-1 mt-1">
                                                 <Eye className="w-3 h-3 text-emerald-400" />
                                                 <span className="text-[10px] text-emerald-400 font-semibold">REVEALED</span>
                                             </div>
