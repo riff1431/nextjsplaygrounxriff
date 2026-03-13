@@ -80,10 +80,10 @@ const Suga4UCreatorPage = () => {
             <div className="absolute inset-0 bg-black/30" />
 
             {/* Content */}
-            <div className="relative z-10 p-4 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
+            <div className="relative z-10 p-2 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
                 
                 {/* Back Button */}
-                <div className="mb-2 shrink-0">
+                <div className="mb-0 shrink-0">
                     <button
                         onClick={() => router.back()}
                         className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
@@ -93,7 +93,7 @@ const Suga4UCreatorPage = () => {
                 </div>
 
                 {/* Main 4-col grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 pt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 pt-2">
 
                     {/* Left column: Live Chat (Full Height) */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
