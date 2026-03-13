@@ -4,16 +4,12 @@ import { Diamond } from "lucide-react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 
 const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
-    const { requests } = useSuga4U(roomId || null);
+    const { requests, updateRequestStatus } = useSuga4U(roomId || null);
 
     const handleAction = async (id: string, action: "accepted" | "declined") => {
-        if (!roomId) return;
+        if (!roomId || !updateRequestStatus) return;
         try {
-            await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: id, status: action }),
-            });
+            await updateRequestStatus(id, action);
         } catch (err) {
             console.error("Failed to update request status:", err);
         }
@@ -22,17 +18,18 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
     return (
         <div className="s4u-creator-glass-panel p-3 flex flex-col h-full min-h-0">
             <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-2 shrink-0">Pending Requests</h3>
-            <div className="space-y-2 flex-1 overflow-y-auto custom-scroll pr-1">
-                {requests.length === 0 && (
-                    <p className="text-xs text-white/40 text-center py-2">No requests yet</p>
-                )}
-                {requests.map((req) => (
-                    <div key={req.id} className="flex gap-2.5 bg-white/5 rounded-lg p-2.5 items-start">
-                        {/* Icon */}
-                        <span className="text-lg shrink-0 mt-0.5">🌸</span>
-                        
-                        {/* Content Container */}
-                        <div className="flex-1 min-w-0 flex flex-col">
+            
+            {requests.length === 0 ? (
+                <p className="text-xs text-white/40 text-center py-4">No requests yet</p>
+            ) : (
+                <div className="space-y-2 flex-1 overflow-y-auto custom-scroll pr-1">
+                    {requests.map((req) => (
+                        <div key={req.id} className="flex gap-2.5 bg-white/5 rounded-lg p-2.5 items-start">
+                            {/* Icon */}
+                            <span className="text-lg shrink-0 mt-0.5">🌸</span>
+                            
+                            {/* Content Container */}
+                            <div className="flex-1 min-w-0 flex flex-col">
                             
                             {/* Top Row: Name, Price, Status/Actions */}
                             <div className="flex items-center justify-between gap-2 w-full">
@@ -66,14 +63,15 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
                                 </div>
                             </div>
                             
-                            {/* Bottom Row: Description */}
-                            <p className="text-[11px] text-white/50 truncate mt-0.5 w-full pr-2" title={`${req.label} ${req.note ? `- ${req.note}` : ""}`}>
-                                {req.label} {req.note ? ` - ${req.note}` : ""}
-                            </p>
+                                {/* Bottom Row: Description */}
+                                <p className="text-[11px] text-white/50 truncate mt-0.5 w-full pr-2" title={`${req.label} ${req.note ? `- ${req.note}` : ""}`}>
+                                    {req.label} {req.note ? ` - ${req.note}` : ""}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

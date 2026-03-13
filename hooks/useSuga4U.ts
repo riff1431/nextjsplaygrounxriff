@@ -277,6 +277,15 @@ export function useSuga4U(roomId: string | null) {
         return await res.json();
     }, [roomId]);
 
+    const updateRequestStatus = useCallback(async (requestId: string, status: 'accepted' | 'declined') => {
+        if (!roomId) return;
+        const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
+            method: 'PATCH',
+            body: JSON.stringify({ requestId, status })
+        });
+        return await res.json();
+    }, [roomId]);
+
     return {
         activity,
         offers,
@@ -291,6 +300,7 @@ export function useSuga4U(roomId: string | null) {
         createSecret,
         deleteSecret,
         createFavorite,
-        deleteFavorite
+        deleteFavorite,
+        updateRequestStatus
     };
 }
