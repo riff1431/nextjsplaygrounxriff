@@ -65,8 +65,8 @@ export default function WorldTruthDareList() {
                     session_description: g.session_description,
                     is_private: g.is_private,
                     unlock_price: g.unlock_price,
-                    host_name: profileMap.get(g.rooms.host_id)?.username || "Unknown",
-                    host_avatar: profileMap.get(g.rooms.host_id)?.avatar_url || null
+                    host_name: (profileMap.get(g.rooms.host_id) as any)?.username || "Unknown",
+                    host_avatar: (profileMap.get(g.rooms.host_id) as any)?.avatar_url || null
                 }));
 
                 setSessions(mapped);

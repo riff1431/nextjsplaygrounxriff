@@ -35,7 +35,7 @@ export default function LiveFeed() {
 
         const channel = supabase
             .channel('live_feed_updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'truth_dare_games' }, (payload) => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'truth_dare_games' }, (payload: any) => {
                 console.log("LiveFeed: Realtime update!", payload);
                 fetchStreams();
             })
@@ -87,7 +87,7 @@ export default function LiveFeed() {
                 const streamsWithProfiles = rawStreams.map(s => ({
                     ...s,
                     id: s.room_id,
-                    host: profiles?.find(p => p.id === s.room?.host_id)
+                    host: profiles?.find(p => p.id === s.room?.host_id) as any
                 }));
                 setStreams(streamsWithProfiles);
             } else {

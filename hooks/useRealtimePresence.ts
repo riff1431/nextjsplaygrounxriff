@@ -34,7 +34,7 @@ export function useRealtimePresence(roomId: string | null) {
 
         channel
             .on("presence", { event: "sync" }, () => {
-                const state = channel.presenceState<PresenceUser>();
+                const state = channel.presenceState() as any;
                 const users: PresenceUser[] = [];
                 for (const key of Object.keys(state)) {
                     const presences = state[key] as PresenceUser[];

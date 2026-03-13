@@ -79,10 +79,15 @@ function MessagesContent() {
 
                 // Find participants for this specific conversation
                 const convoParticipants = allParticipants?.filter(p => p.conversation_id === cId) || [];
-                const fullParticipants = convoParticipants.map(p => ({
-                    user_id: p.user_id,
-                    ...profileMap.get(p.user_id) || { username: 'Unknown User' }
-                }));
+                const fullParticipants = convoParticipants.map(p => {
+                    const profile = profileMap.get(p.user_id) as any;
+                    return {
+                        user_id: p.user_id,
+                        username: profile?.username || 'Unknown User',
+                        avatar_url: profile?.avatar_url || null,
+                        full_name: profile?.full_name || null
+                    };
+                });
 
                 // Get updated_at from message or fallback
                 const { data: convParams } = await supabase.from('dm_conversations').select('updated_at').eq('id', cId).single();
@@ -172,7 +177,12 @@ function MessagesContent() {
                 updated_at: new Date().toISOString(),
                 participants: [
                     { user_id: user.id, username: 'Me', avatar_url: null }, // Self (not critically needed for "other" logic but needed for structure)
-                    { user_id: targetUserId, ...targetProfile }
+                    { 
+                        user_id: targetUserId, 
+                        username: (targetProfile as any)?.username || 'Unknown User',
+                        avatar_url: (targetProfile as any)?.avatar_url || null,
+                        full_name: (targetProfile as any)?.full_name || null
+                    }
                 ],
                 last_message: null
             };
