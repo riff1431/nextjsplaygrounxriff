@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import { ArrowLeft } from "lucide-react";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
 import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsFavorites";
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
@@ -18,6 +19,7 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const Suga4UCreatorPage = () => {
     const { user } = useAuth();
+    const router = useRouter();
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
@@ -80,6 +82,16 @@ const Suga4UCreatorPage = () => {
             {/* Content */}
             <div className="relative z-10 p-4 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
                 
+                {/* Back Button */}
+                <div className="mb-2 shrink-0">
+                    <button
+                        onClick={() => router.back()}
+                        className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                </div>
+
                 {/* Main 4-col grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 pt-4">
 
