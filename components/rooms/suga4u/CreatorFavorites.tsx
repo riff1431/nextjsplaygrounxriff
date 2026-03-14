@@ -103,12 +103,24 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                                             {item.description && (
                                                 <p className="text-xs text-white/60 mt-0.5 line-clamp-2">{item.description}</p>
                                             )}
-                                            <button
-                                                onClick={() => setSelectedItem(item)}
-                                                className="mt-1.5 flex items-center gap-1.5 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white font-bold text-[10px] rounded-full transition-colors w-fit shadow-md"
-                                            >
-                                                OPEN
-                                            </button>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <button
+                                                    onClick={() => setSelectedItem(item)}
+                                                    className="flex items-center gap-1.5 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white font-bold text-[10px] rounded-full transition-colors w-fit shadow-md"
+                                                >
+                                                    OPEN
+                                                </button>
+                                                {item.link && (
+                                                    <a
+                                                        href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 px-3 py-1 bg-gold/20 hover:bg-gold/40 text-gold font-bold text-[10px] rounded-full transition-colors w-fit border border-gold/50 shadow-md"
+                                                    >
+                                                        Get Link
+                                                    </a>
+                                                )}
+                                            </div>
                                         </>
                                     ) : (
                                         <>
