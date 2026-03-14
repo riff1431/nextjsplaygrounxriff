@@ -29,13 +29,13 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
 
     const formatActivity = (a: ActivityEvent) => {
         if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">${a.amount}</span>!</span>;
-        if (a.type === 'PAID_REQUEST') return `requested: ${a.label} ($${a.amount})`;
-        if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
-        return a.label;
+        if (a.type === 'PAID_REQUEST') return <span>requested: {a.label} (${a.amount})</span>;
+        if (a.type === 'OFFER_CLAIM') return <span>claimed offer: {a.label}</span>;
+        return <span>{a.label}</span>;
     };
 
-    const isHighlight = (a: ActivityEvent) => {
-        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(a.type);
+    const isHighlight = (type: string) => {
+        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(type);
     };
 
     return (
@@ -53,9 +53,9 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
                             <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>
                         </div>
                         <p className="leading-snug">
-                            <span className={`font-bold ${isHighlight(m) ? "text-gold" : "text-pink-light"}`}>{m.fanName}:</span>{" "}
+                            <span className={`font-bold ${isHighlight(m.type) ? "text-gold" : "text-pink-light"}`}>{m.fanName}:</span>{" "}
                             <span className="text-foreground/80">{formatActivity(m)}</span>
-                            {isHighlight(m) && <Heart className="inline w-3 h-3 text-pink fill-pink ml-1" />}
+                            {isHighlight(m.type) && <Heart className="inline w-3 h-3 text-pink fill-pink ml-1" />}
                         </p>
                     </div>
                 ))}
