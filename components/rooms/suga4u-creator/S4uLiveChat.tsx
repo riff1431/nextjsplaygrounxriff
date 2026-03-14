@@ -36,8 +36,8 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
         return a.label;
     };
 
-    const isHighlight = (a: ActivityEvent) => {
-        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(a.type);
+    const isHighlight = (type: string) => {
+        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(type);
     };
 
     return (
@@ -52,11 +52,11 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
                         <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className={`text-sm font-semibold ${isHighlight(msg) ? "s4u-creator-text-gold" : "s4u-creator-text-primary"}`}>
+                                <span className={`text-sm font-semibold ${isHighlight(msg.type) ? "s4u-creator-text-gold" : "text-pink-400"}`}>
                                     {msg.fanName}
                                 </span>
                                 {msg.amount > 0 && (
-                                    <span className="text-xs bg-pink-500/20 s4u-creator-text-primary px-2 py-0.5 rounded-full font-semibold border border-pink-500/30">
+                                    <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full font-semibold border border-pink-500/30">
                                         ${msg.amount}
                                     </span>
                                 )}
