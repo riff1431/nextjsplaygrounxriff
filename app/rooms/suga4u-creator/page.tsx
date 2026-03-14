@@ -79,6 +79,19 @@ const Suga4UCreatorPage = () => {
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/30" />
 
+            {/* Scrollbar overrides for Creator Dashboard */}
+            <style dangerouslySetInnerHTML={{__html: `
+                .s4u-creator-theme .chat-scroll::-webkit-scrollbar,
+                .s4u-creator-theme .custom-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+                .s4u-creator-theme .chat-scroll,
+                .s4u-creator-theme .custom-scroll {
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
+            `}} />
+
             {/* Content */}
             <div className="relative z-10 p-2 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
                 
