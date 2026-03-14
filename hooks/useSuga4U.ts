@@ -253,7 +253,20 @@ export function useSuga4U(roomId: string | null) {
             method: 'POST',
             body: JSON.stringify({ name, description, unlock_price, category, media_url, media_type })
         });
-        return await res.json();
+        const data = await res.json();
+        if (data.secret) {
+            setSecrets(prev => {
+                if (prev.some(s => s.id === data.secret.id)) return prev;
+                return [{
+                    ...data.secret,
+                    unlock_price: Number(data.secret.unlock_price),
+                    media_url: data.secret.media_url || null,
+                    media_type: data.secret.media_type || null,
+                    created_at: new Date(data.secret.created_at).getTime()
+                }, ...prev];
+            });
+        }
+        return data;
     }, [roomId]);
     
     const deleteSecret = useCallback(async (id: string) => {
@@ -269,7 +282,20 @@ export function useSuga4U(roomId: string | null) {
             method: 'POST',
             body: JSON.stringify({ name, description, category, emoji, buy_price, reveal_price, link })
         });
-        return await res.json();
+        const data = await res.json();
+        if (data.favorite) {
+            setFavorites(prev => {
+                if (prev.some(f => f.id === data.favorite.id)) return prev;
+                return [{
+                    ...data.favorite,
+                    buy_price: Number(data.favorite.buy_price),
+                    reveal_price: data.favorite.reveal_price ? Number(data.favorite.reveal_price) : null,
+                    link: data.favorite.link || null,
+                    created_at: new Date(data.favorite.created_at).getTime()
+                }, ...prev];
+            });
+        }
+        return data;
     }, [roomId]);
     
     const deleteFavorite = useCallback(async (id: string) => {
@@ -281,6 +307,8 @@ export function useSuga4U(roomId: string | null) {
 
     const updateRequestStatus = useCallback(async (requestId: string, status: 'accepted' | 'declined') => {
         if (!roomId) return;
+        // Optimistic UI update
+        setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status } : r));
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
             method: 'PATCH',
             body: JSON.stringify({ requestId, status })
