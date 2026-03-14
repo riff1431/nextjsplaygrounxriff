@@ -258,6 +258,7 @@ export function useSuga4U(roomId: string | null) {
     
     const deleteSecret = useCallback(async (id: string) => {
         if (!roomId) return;
+        setSecrets(prev => prev.filter(s => s.id !== id));
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/secrets?id=${id}`, { method: 'DELETE' });
         return await res.json();
     }, [roomId]);
@@ -273,6 +274,7 @@ export function useSuga4U(roomId: string | null) {
     
     const deleteFavorite = useCallback(async (id: string) => {
         if (!roomId) return;
+        setFavorites(prev => prev.filter(f => f.id !== id));
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/favorites?id=${id}`, { method: 'DELETE' });
         return await res.json();
     }, [roomId]);
