@@ -4,6 +4,12 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 
+const categories = [
+    { label: "CUTE", emoji: "🎀" },
+    { label: "LUXURY", emoji: "💎" },
+    { label: "DREAM", emoji: "👑" },
+];
+
 const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
     const { favorites, createFavorite, deleteFavorite } = useSuga4U(roomId || null);
     const [isAdding, setIsAdding] = useState(false);
@@ -13,16 +19,18 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
     const [name, setName] = useState("");
     const [detail, setDetail] = useState("");
     const [link, setLink] = useState("");
+    const [category, setCategory] = useState("CUTE");
     const [buyPrice, setBuyPrice] = useState("");
     const [revealPrice, setRevealPrice] = useState("");
 
     const handleAdd = async () => {
         if (!name || !buyPrice) return;
-        await createFavorite(name, detail, "CUTE", emoji, Number(buyPrice), revealPrice ? Number(revealPrice) : null, link || null);
+        await createFavorite(name, detail, category, emoji, Number(buyPrice), revealPrice ? Number(revealPrice) : null, link || null);
         setIsAdding(false);
         setName("");
         setDetail("");
         setLink("");
+        setCategory("CUTE");
         setBuyPrice("");
         setRevealPrice("");
     };
@@ -40,7 +48,10 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                             <div className="flex items-center gap-3 w-[70%]">
                                 <span className="text-xl shrink-0">{item.emoji}</span>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-white truncate">{item.name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-semibold text-white truncate">{item.name}</p>
+                                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/50">{item.category}</span>
+                                    </div>
                                     {item.description && <p className="text-[11px] text-white/50 truncate mt-0.5">{item.description}</p>}
                                     {item.link && <p className="text-[10px] text-pink-400/80 truncate mt-0.5">🔗 {item.link}</p>}
                                 </div>
@@ -60,6 +71,22 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                     
                     {isAdding && (
                         <div className="bg-white/10 border border-gold/30 rounded-lg p-3 space-y-2 mt-2">
+                            {/* Category selector */}
+                            <div className="flex gap-1 mb-1">
+                                {categories.map((c) => (
+                                    <button
+                                        key={c.label}
+                                        onClick={() => setCategory(c.label)}
+                                        className={`flex-1 border rounded-full px-1 py-1 text-[10px] font-bold tracking-wider transition-colors ${
+                                            category === c.label
+                                                ? 'bg-pink-500/30 border-pink-500 text-white'
+                                                : 'bg-white/5 border-white/10 text-white/50 hover:border-pink-500/50'
+                                        }`}
+                                    >
+                                        {c.emoji} {c.label}
+                                    </button>
+                                ))}
+                            </div>
                             <div className="flex gap-2">
                                 <input type="text" placeholder="Emoji" value={emoji} onChange={e => setEmoji(e.target.value)} className="w-12 bg-black/20 rounded px-2 py-1 text-center text-sm text-white border border-white/5 focus:border-pink-500/50 outline-none" />
                                 <input type="text" placeholder="Item Name" value={name} onChange={e => setName(e.target.value)} className="flex-1 bg-black/20 rounded px-2 py-1 text-sm text-white border border-white/5 focus:border-pink-500/50 outline-none" />
