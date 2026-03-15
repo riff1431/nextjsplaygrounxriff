@@ -530,19 +530,22 @@ function HomeScreen({
 
                         <div className="mt-8 mb-4">
                             <button
-                                onClick={() => router.push("/rooms/fans-competitions")}
+                                onClick={() => router.push("/coming-soon")}
                                 className={cx(
-                                    "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group",
+                                    "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group flex items-center justify-between",
                                     "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10",
                                     "shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
                                 )}
                             >
-                                <span className="relative z-10 inline-flex items-center gap-2 w-full text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
+                                <span className="relative z-10 inline-flex items-center gap-2 text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
                                     Competition
                                 </span>
+                                <span className="relative z-10 text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold uppercase tracking-wide border border-yellow-500/30">
+                                    Coming Soon
+                                </span>
                                 {/* Subtle internal glow */}
-                                <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
+                                <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
                             </button>
                         </div>
 

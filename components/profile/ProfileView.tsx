@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star, ScrollText } from "lucide-react";
+import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star, ScrollText, CalendarClock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { useState, useEffect } from "react";
@@ -358,19 +358,32 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                 </div>
 
                 {/* 4. Stats Row */}
-                <div className="grid grid-cols-3 gap-8 py-6 mb-2 border-y border-white/5 max-w-lg">
-                    <div className="text-center md:text-left">
-                        <div className="text-2xl font-bold text-white leading-none mb-1">{stats.following}</div>
-                        <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Following</div>
+                <div className="flex items-center gap-6 py-6 mb-2 border-y border-white/5">
+                    <div className="grid grid-cols-3 gap-8 max-w-lg">
+                        <div className="text-center md:text-left">
+                            <div className="text-2xl font-bold text-white leading-none mb-1">{stats.following}</div>
+                            <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Following</div>
+                        </div>
+                        <div className="text-center md:text-left">
+                            <div className="text-2xl font-bold text-white leading-none mb-1">{stats.followers}</div>
+                            <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Followers</div>
+                        </div>
+                        <div className="text-center md:text-left">
+                            <div className="text-2xl font-bold text-white leading-none mb-1">{stats.unlocks}</div>
+                            <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Unlocks</div>
+                        </div>
                     </div>
-                    <div className="text-center md:text-left">
-                        <div className="text-2xl font-bold text-white leading-none mb-1">{stats.followers}</div>
-                        <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Followers</div>
-                    </div>
-                    <div className="text-center md:text-left">
-                        <div className="text-2xl font-bold text-white leading-none mb-1">{stats.unlocks}</div>
-                        <div className="text-[10px] md:text-xs text-zinc-500 font-bold uppercase tracking-widest">Unlocks</div>
-                    </div>
+
+                    {/* Schedule Button – Owner Creators only */}
+                    {isOwner && profile.role === 'creator' && (
+                        <button
+                            onClick={() => router.push("/rooms/creator-studio/schedule")}
+                            className="ml-4 px-5 py-2.5 rounded-full bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 font-bold text-sm flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(245,158,11,0.1)] hover:shadow-[0_0_20px_rgba(245,158,11,0.25)]"
+                        >
+                            <CalendarClock className="w-4 h-4" />
+                            Schedule
+                        </button>
+                    )}
                 </div>
 
                 {/* 5. Tabs Navigation */}

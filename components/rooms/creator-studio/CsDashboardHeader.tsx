@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare } from "lucide-react";
+import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare, CalendarClock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
@@ -42,6 +42,7 @@ export const CsStatsBar = ({
     subscriptionEarnings,
     isLoading,
 }: CsStatsBarProps) => {
+    const router = useRouter();
     const stats: StatCardProps[] = [
         { icon: <DollarSign size={20} />, label: "Tips Earned", value: isLoading ? "..." : `$${tipsEarned}`, color: "text-[hsl(150,80%,45%)]" },
         { icon: <Gift size={20} />, label: "Gifts", value: isLoading ? "..." : `${giftsCount}`, color: "text-[hsl(320,100%,60%)]" },
@@ -52,10 +53,19 @@ export const CsStatsBar = ({
     ];
 
     return (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
             {stats.map((stat) => (
                 <StatCard key={stat.label} {...stat} />
             ))}
+            {/* Schedule Button */}
+            <button
+                onClick={() => router.push("/rooms/creator-studio/schedule")}
+                className="cs-glass-card px-5 py-3 flex items-center gap-2.5 min-w-[120px] cursor-pointer transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] group"
+                style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1px" }}
+            >
+                <CalendarClock size={20} className="text-amber-400 group-hover:text-amber-300 transition-colors shrink-0" />
+                <span className="text-base font-bold text-amber-400 group-hover:text-amber-300 transition-colors">Schedule</span>
+            </button>
         </div>
     );
 };

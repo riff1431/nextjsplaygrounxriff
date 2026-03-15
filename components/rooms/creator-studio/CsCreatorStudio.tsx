@@ -48,7 +48,7 @@ export const CsCreatorStudio = () => {
         { icon: <Tv size={20} />, title: "Bar Lounge (Host)", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)", link: "/rooms/bar-lounge-creator" },
         { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)", link: "/rooms/truth-or-dare-creator" },
         { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", veryNew: true, link: "/rooms/suga4u-creator" },
-        { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", veryNew: true, link: "/rooms/competition-creator" },
+        { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", comingSoon: true, link: "/coming-soon" },
     ];
 
     return (
