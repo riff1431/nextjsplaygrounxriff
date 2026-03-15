@@ -24,6 +24,8 @@ import {
     TrendingUp,
     Flame, // Added Flame icon
     Send, // Added Send icon for tips
+    UserPlus, // Added for Invite button
+    Wallet, // Added Wallet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -34,6 +36,8 @@ import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/Interactio
 import { playNotificationSound, playSuccessSound, playErrorSound, playMoneySound } from "@/utils/sounds"; // Added playNotificationSound, playMoneySound
 import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVotePanel
 import WalletPill from "@/components/common/WalletPill";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -123,6 +127,7 @@ function TruthOrDareContent() {
     const [userId, setUserId] = useState<string | null>(null);
     const [unlocking, setUnlocking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [userName, setUserName] = useState<string>('Anonymous');
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
@@ -654,10 +659,10 @@ function TruthOrDareContent() {
 
             if (error) throw error;
             setRequestStatus('pending');
-            alert("Request sent! Waiting for host approval.");
+            toast.success("Request sent! Waiting for host approval.");
         } catch (e) {
             console.error("Request failed", e);
-            alert("Failed to send request.");
+            toast.error("Failed to send request.");
         } finally {
             setUnlocking(false);
         }
@@ -677,10 +682,10 @@ function TruthOrDareContent() {
             if (res.ok) {
                 setAccess('granted');
             } else {
-                alert(data.error || "Failed to unlock");
+                toast.error(data.error || "Failed to unlock");
             }
         } catch (e) {
-            alert("Payment failed");
+            toast.error("Payment failed");
         } finally {
             setUnlocking(false);
         }
@@ -808,8 +813,18 @@ function TruthOrDareContent() {
                     </button>
                     <BrandLogo showBadge={false} />
                 </div>
-                {/* Wallet + Status */}
-                <WalletPill />
+                {/* Invite + Wallet */}
+                <div className="pointer-events-auto flex items-center gap-3">
+                    <button
+                        onClick={() => setShowInviteModal(true)}
+                        className="p-2 rounded-full border border-pink-500/30 bg-pink-500/15 hover:bg-pink-500/25 text-pink-300 transition-all hover:scale-105 backdrop-blur-md flex items-center gap-1.5 px-3"
+                        title="Invite Friends"
+                    >
+                        <UserPlus className="w-4 h-4" />
+                        <span className="text-xs font-bold hidden sm:inline">Invite</span>
+                    </button>
+                    <WalletPill />
+                </div>
             </div>
 
             {/* Paywall Overlay */}
@@ -852,6 +867,14 @@ function TruthOrDareContent() {
                                     <>Unlock Access <Play className="w-5 h-5 fill-current" /></>
                                 )}
                             </button>
+
+                            <button
+                                onClick={() => router.push('/account/wallet')}
+                                className="w-full mt-3 py-4 rounded-xl font-bold text-lg border-2 border-purple-500/40 bg-background/50 backdrop-blur shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-purple-500/10 hover:border-purple-500/60 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2 text-purple-300"
+                            >
+                                <Wallet className="w-5 h-5" /> Wallet
+                            </button>
+
                             <p className="mt-4 text-xs text-gray-600">
                                 {sessionInfo.isPrivate && requestStatus !== 'approved'
                                     ? "Host must approve your request before payment."
@@ -1371,6 +1394,16 @@ function TruthOrDareContent() {
                 notification={answerNotification}
                 onClose={() => setAnswerNotification(null)}
             />
+
+            {/* Invite Modal */}
+            <InviteModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                roomId={roomId}
+            />
+
+            {/* Invitation Popup (receiver side) */}
+            <InvitationPopup />
         </div >
     );
 }

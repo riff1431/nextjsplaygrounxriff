@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { UserPlus } from "lucide-react";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
@@ -13,6 +14,8 @@ import CreatorFavorites from "@/components/rooms/suga4u/CreatorFavorites";
 import PaidRequestMenu from "@/components/rooms/suga4u/PaidRequestMenu";
 import SendSugarGifts from "@/components/rooms/suga4u/SendSugarGifts";
 import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -29,6 +32,7 @@ const Suga4URoom = () => {
     const [hostId, setHostId] = React.useState<string | null>(null);
     const [hostAvatar, setHostAvatar] = React.useState<string | null>(null);
     const [hostName, setHostName] = React.useState("Alexis Rose");
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     React.useEffect(() => {
         async function fetchRoom() {
@@ -79,8 +83,17 @@ const Suga4URoom = () => {
                 <div className="relative z-10 p-3 lg:p-4 h-screen flex flex-col">
                     {/* Header */}
                     <header className="flex items-center justify-between mb-3 flex-shrink-0">
-                        <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
-                            <SugaLogo />
+                        <div className="flex items-center gap-3">
+                            <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
+                                <SugaLogo />
+                            </div>
+                            <button
+                                onClick={() => setShowInviteModal(true)}
+                                className="btn-pink px-3.5 py-1.5 text-xs flex items-center gap-1.5 rounded-full transition-all hover:scale-105 shadow-lg shadow-pink-500/20"
+                            >
+                                <UserPlus size={14} />
+                                Invite
+                            </button>
                         </div>
                         <UserProfile name={hostName} />
                     </header>
@@ -138,6 +151,16 @@ const Suga4URoom = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Invite Modal */}
+                <InviteModal
+                    isOpen={showInviteModal}
+                    onClose={() => setShowInviteModal(false)}
+                    roomId={roomId}
+                />
+
+                {/* Invitation Popup (receiver side) */}
+                <InvitationPopup />
             </div>
         </ProtectRoute>
     );

@@ -58,7 +58,22 @@ export default function MessageBubble({ message, isOwn, senderName, senderAvatar
                 {/* Text Content */}
                 {message.content && (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                        {message.content}
+                        {message.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                            /^https?:\/\//.test(part) ? (
+                                <a
+                                    key={i}
+                                    href={part}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline decoration-pink-400/60 underline-offset-2 text-pink-300 hover:text-pink-200 transition-colors break-all"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {part}
+                                </a>
+                            ) : (
+                                <span key={i}>{part}</span>
+                            )
+                        )}
                     </p>
                 )}
 

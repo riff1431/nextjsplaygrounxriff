@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, MessageCircle, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, MessageCircle, Clock, CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -9,6 +9,8 @@ import dynamic from "next/dynamic";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
 import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
 import WalletPill from "@/components/common/WalletPill";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -36,6 +38,7 @@ const XChatRoom = () => {
     const [sessionStart, setSessionStart] = useState<Date | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const RATE_PER_MIN = 2;
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     // 1. Discover the live x-chat room
     useEffect(() => {
@@ -267,15 +270,28 @@ const XChatRoom = () => {
 
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-8">
+                        <div className="flex items-center gap-4 sm:gap-8">
                             <button
                                 onClick={() => router.push("/home")}
                                 className="glass-card px-4 py-2 text-foreground hover:text-gold transition-colors flex items-center gap-2 text-sm"
                             >
                                 <ArrowLeft size={16} />
-                                Back
+                                <span className="hidden sm:inline">Back</span>
                             </button>
-                            <h1 className="text-gold-gradient text-2xl md:text-3xl font-display">
+
+                            {/* Invite Button - Moved to top left */}
+                            {roomId && (
+                                <button
+                                    onClick={() => setShowInviteModal(true)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-gold/15 border border-gold/30 text-gold hover:bg-gold/25 transition-all hover:scale-105"
+                                    title="Invite Friends"
+                                >
+                                    <UserPlus size={14} />
+                                    <span className="hidden sm:inline">Invite</span>
+                                </button>
+                            )}
+
+                            <h1 className="text-gold-gradient text-2xl md:text-3xl font-display hidden lg:block">
                                 X Chat Room
                             </h1>
                         </div>
@@ -330,6 +346,16 @@ const XChatRoom = () => {
 
                     </div>
                 </div>
+
+                {/* Invite Modal */}
+                <InviteModal
+                    isOpen={showInviteModal}
+                    onClose={() => setShowInviteModal(false)}
+                    roomId={roomId}
+                />
+
+                {/* Invitation Popup (receiver side) */}
+                <InvitationPopup />
             </div>
         </ProtectRoute>
     );

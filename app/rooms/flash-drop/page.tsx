@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Video } from "lucide-react";
+import { ArrowLeft, Video, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -13,6 +13,8 @@ import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import { toast as sonnerToast } from "sonner";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -30,6 +32,7 @@ export default function FlashDropsRoomPreview() {
     const { balance: walletBalance, refresh: refreshWallet } = useWallet();
 
     const [toast, setToast] = useState<string | null>(null);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [roomId, setRoomId] = useState<string | null>(null);
     const [hostId, setHostId] = useState<string | null>(null);
     const [hostAvatar, setHostAvatar] = useState<string | null>(null);
@@ -284,17 +287,37 @@ export default function FlashDropsRoomPreview() {
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
                         <div className="flex items-center gap-2 px-4">
-                            <button
-                                onClick={() => router.back()}
-                                className="shrink-0 w-7 h-7 rounded-lg border border-primary/40 bg-black/40 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
-                            >
-                                <ArrowLeft size={14} className="text-primary" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => router.back()}
+                                    className="shrink-0 w-7 h-7 rounded-lg border border-primary/40 bg-black/40 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
+                                >
+                                    <ArrowLeft size={14} className="text-primary" />
+                                </button>
+                                {roomId && (
+                                    <button
+                                        onClick={() => setShowInviteModal(true)}
+                                        className="shrink-0 h-7 px-2 rounded-lg border border-primary/40 bg-primary/10 flex items-center gap-1.5 justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary"
+                                        title="Invite Friends"
+                                    >
+                                        <UserPlus size={12} />
+                                        <span className="text-[10px] uppercase font-bold tracking-wider">Invite</span>
+                                    </button>
+                                )}
+                            </div>
                             <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80 flex-1">
                                 {tickerItems.map((item, i) => (
                                     <span key={i} className="shrink-0">{item}</span>
                                 ))}
                             </div>
+                            <button
+                                onClick={() => setShowInviteModal(true)}
+                                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-primary/40 bg-primary/15 text-primary text-xs font-bold hover:bg-primary/25 transition-all hover:scale-105"
+                                title="Invite Friends"
+                            >
+                                <UserPlus size={12} />
+                                <span className="hidden sm:inline">Invite</span>
+                            </button>
                             <WalletPill compact />
                         </div>
                     </div>
@@ -451,6 +474,16 @@ export default function FlashDropsRoomPreview() {
                     walletBalance={walletBalance}
                     onConfirm={executeSpend}
                 />
+
+                {/* Invite Modal */}
+                <InviteModal
+                    isOpen={showInviteModal}
+                    onClose={() => setShowInviteModal(false)}
+                    roomId={roomId}
+                />
+
+                {/* Invitation Popup (receiver side) */}
+                <InvitationPopup />
             </div>
         </ProtectRoute>
     );

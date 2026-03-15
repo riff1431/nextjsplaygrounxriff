@@ -81,14 +81,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     // const audio = new Audio('/sounds/notification.mp3');
                     // audio.play().catch(e => console.log('Audio play failed', e));
 
-                    // Toast
-                    toast(newNotif.title, {
-                        description: newNotif.message,
-                        action: newNotif.link ? {
-                            label: "View",
-                            onClick: () => window.location.href = newNotif.link!
-                        } : undefined,
-                    });
+                    // Toast — enhanced for room invitations
+                    if (newNotif.type === "room_invitation" && newNotif.link) {
+                        toast("💖 Room Invitation", {
+                            description: newNotif.message,
+                            duration: 15000,
+                            action: {
+                                label: "Join Session",
+                                onClick: () => window.location.href = newNotif.link!,
+                            },
+                        });
+                    } else {
+                        toast(newNotif.title, {
+                            description: newNotif.message,
+                            action: newNotif.link ? {
+                                label: "View",
+                                onClick: () => window.location.href = newNotif.link!
+                            } : undefined,
+                        });
+                    }
                 }
             )
             .subscribe();

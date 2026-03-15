@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
-    MessageSquareText, Flame, Heart, Sparkles, Gift, Search
+    MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -14,6 +14,8 @@ import StripePaymentModal from "@/components/live/StripePaymentModal";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -210,6 +212,7 @@ export default function ConfessionsRoom() {
     // Countdown
     const [goalTotal, setGoalTotal] = useState(140);
     const pay = (amount: number) => setGoalTotal(g => g + amount);
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     // Discover room on mount
     useEffect(() => {
@@ -517,6 +520,14 @@ export default function ConfessionsRoom() {
                             </div>
 
                             <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setShowInviteModal(true)}
+                                    className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-bold transition-all border border-primary/30 hover:scale-105"
+                                    title="Invite Friends"
+                                >
+                                    <UserPlus className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Invite</span>
+                                </button>
                                 <WalletPill />
                                 <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all hidden sm:flex border border-transparent hover:border-border/50">
                                     <UserRound className="h-4 w-4 text-primary" /> Requests
@@ -702,6 +713,15 @@ export default function ConfessionsRoom() {
                     </div>
                 )}
 
+                {/* Invite Modal */}
+                <InviteModal
+                    isOpen={showInviteModal}
+                    onClose={() => setShowInviteModal(false)}
+                    roomId={roomId}
+                />
+
+                {/* Invitation Popup (receiver side) */}
+                <InvitationPopup />
             </div>
         </ProtectRoute>
     );
