@@ -60,11 +60,11 @@ export const CsStatsBar = ({
             {/* Schedule Button */}
             <button
                 onClick={() => router.push("/rooms/creator-studio/schedule")}
-                className="cs-glass-card px-5 py-3 flex items-center gap-2.5 min-w-[120px] cursor-pointer transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] group"
-                style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1px" }}
+                className="cs-glass-card flex-1 px-6 py-3 flex items-center justify-center gap-2.5 min-w-[140px] cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] group"
+                style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1.5px" }}
             >
-                <CalendarClock size={20} className="text-amber-400 group-hover:text-amber-300 transition-colors shrink-0" />
-                <span className="text-base font-bold text-amber-400 group-hover:text-amber-300 transition-colors">Schedule</span>
+                <CalendarClock size={20} className="text-cyan-400 group-hover:text-cyan-300 transition-colors shrink-0" />
+                <span className="text-base font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors">Schedule</span>
             </button>
         </div>
     );
