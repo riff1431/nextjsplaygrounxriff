@@ -20,7 +20,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { data: callerProfile } = await supabase
+        const adminClient = createAdminClient();
+
+        const { data: callerProfile } = await adminClient
             .from("profiles")
             .select("role")
             .eq("id", caller.id)
@@ -42,7 +44,6 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Delete profile row (and related data via cascades)
-        const adminClient = createAdminClient();
 
         const { error: profileError } = await adminClient
             .from("profiles")
