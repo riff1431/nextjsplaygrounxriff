@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing userId" }, { status: 400 });
         }
 
-        // 1. Verify the caller is an admin
+        // 1. Get the current user's session via cookies
         const supabase = await createClient();
         const {
             data: { user: caller },
@@ -20,22 +20,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // 2. Verify admin using the admin client (bypasses RLS completely)
         const adminClient = createAdminClient();
 
-        const { data: callerProfile } = await adminClient
+        const { data: callerProfile, error: profileErr } = await adminClient
             .from("profiles")
             .select("role")
             .eq("id", caller.id)
-            .single();
+            .maybeSingle();
 
-        if (callerProfile?.role !== "admin") {
+        console.log("[DELETE USER] Caller:", caller.id, 
+            "| JWT meta role:", caller.user_metadata?.role,
+            "| Profile role:", callerProfile?.role,
+            "| Profile error:", profileErr?.message || "none");
+
+        const isAdmin = 
+            callerProfile?.role === "admin" || 
+            caller.user_metadata?.role === "admin" ||
+            caller.app_metadata?.role === "admin";
+
+        if (!isAdmin) {
             return NextResponse.json(
                 { error: "Access denied: Only admins can delete users" },
                 { status: 403 }
             );
         }
 
-        // 2. Prevent self-deletion
+        // 3. Prevent self-deletion
         if (userId === caller.id) {
             return NextResponse.json(
                 { error: "Cannot delete your own account" },
@@ -43,8 +54,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 3. Delete profile row (and related data via cascades)
-
+        // 4. Delete profile row first (and related data via cascades)
         const { error: profileError } = await adminClient
             .from("profiles")
             .delete()
@@ -52,10 +62,9 @@ export async function POST(req: NextRequest) {
 
         if (profileError) {
             console.error("Profile delete error:", profileError);
-            // Continue to auth deletion even if profile delete fails
         }
 
-        // 4. Delete from auth.users using admin API
+        // 5. Delete from auth.users using admin API
         const { error: authError } =
             await adminClient.auth.admin.deleteUser(userId);
 
