@@ -31,7 +31,7 @@ export function NeonButton({
     children: React.ReactNode;
     onClick?: () => void;
     className?: string;
-    variant?: "pink" | "blue" | "ghost";
+    variant?: "pink" | "blue" | "red" | "ghost";
     disabled?: boolean;
     title?: string;
 }) {
@@ -42,7 +42,9 @@ export function NeonButton({
             ? "bg-pink-600 hover:bg-pink-700 border-pink-500/30"
             : variant === "blue"
                 ? "bg-blue-600 hover:bg-blue-700 border-blue-500/30"
-                : "bg-black/40 hover:bg-white/5 border-pink-500/25";
+                : variant === "red"
+                    ? "bg-red-600 hover:bg-red-700 border-red-500/30"
+                    : "bg-black/40 hover:bg-white/5 border-pink-500/25";
 
     return (
         <button title={title} disabled={disabled} onClick={onClick} className={cx(base, styles, className)}>

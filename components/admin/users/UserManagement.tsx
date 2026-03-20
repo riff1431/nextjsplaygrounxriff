@@ -1,6 +1,6 @@
 "use strict";
 import React, { useEffect, useState } from "react";
-import { Users, Edit, Wallet, Crown, Star, X, Save } from "lucide-react";
+import { Users, Edit, Wallet, Crown, Star, X, Save, Trash2, AlertTriangle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
@@ -46,6 +46,10 @@ export default function UserManagement() {
     const [selectedCreatorLevel, setSelectedCreatorLevel] = useState<string>("");
     const [selectedKycStatus, setSelectedKycStatus] = useState<string>("");
     const [isSaving, setIsSaving] = useState(false);
+
+    // Delete Confirmation Modal State
+    const [confirmDeleteUser, setConfirmDeleteUser] = useState<UserProfile | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Metadata State
     const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
@@ -99,6 +103,47 @@ export default function UserManagement() {
         toast.success(`User ${newStatus === 'Restricted' ? 'restricted' : 'activated'}`);
         await logAction('UPDATE_USER_STATUS', userId, { from: currentStatus, to: newStatus });
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+    };
+
+    const deleteUser = async (user: UserProfile) => {
+        setIsDeleting(true);
+        try {
+            const res = await fetch('/api/admin/users/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id }),
+            });
+
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Delete failed');
+
+            toast.success(`User "${user.full_name || user.username}" deleted`);
+            await logAction('DELETE_USER', user.id, { name: user.full_name, username: user.username });
+            setUsers(prev => prev.filter(u => u.id !== user.id));
+            setConfirmDeleteUser(null);
+        } catch (err: any) {
+            toast.error('Failed to delete user: ' + err.message);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const updateRole = async (userId: string, currentRole: string, newRole: string) => {
+        if (newRole === currentRole) return;
+
+        const { error } = await supabase.rpc('admin_update_user_role', {
+            target_user_id: userId,
+            new_role: newRole,
+        });
+
+        if (error) {
+            toast.error('Failed to update role: ' + error.message);
+            return;
+        }
+
+        toast.success(`Role changed to ${newRole}`);
+        await logAction('UPDATE_USER_ROLE', userId, { from: currentRole, to: newRole });
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     };
 
     const openEditModal = async (user: UserProfile) => {
@@ -175,18 +220,42 @@ export default function UserManagement() {
                             { key: "role", label: "Role", w: "100px" },
                             { key: "status", label: "Status", w: "100px" },
                             { key: "joined", label: "Joined", w: "120px" },
-                            { key: "act", label: "Actions", w: "180px", right: true },
+                            { key: "act", label: "Actions", w: "240px", right: true },
                         ]}
                         rows={users.map((u) => ({
                             info: (
-                                <div>
-                                    <div className="text-white font-medium">{u.full_name || "Unknown"}</div>
-                                    <div className="text-[10px] text-gray-400">@{u.username} • {u.id.slice(0, 8)}...</div>
+                                <div className="flex items-center gap-3">
+                                    {u.avatar_url ? (
+                                        <img
+                                            src={u.avatar_url}
+                                            alt={u.full_name || "User"}
+                                            className="w-8 h-8 rounded-full object-cover border border-white/10 shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 border border-white/10 flex items-center justify-center text-xs font-bold text-white/70 shrink-0">
+                                            {(u.full_name || u.username || "?").charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <div>
+                                        <div className="text-white font-medium">{u.full_name || "Unknown"}</div>
+                                        <div className="text-[10px] text-gray-400">@{u.username} • {u.id.slice(0, 8)}...</div>
+                                    </div>
                                 </div>
                             ),
                             role: (
                                 <div className="flex flex-col gap-1">
-                                    <AdminPill tone={u.role === "creator" ? "pink" : "cyan"}>{u.role || "fan"}</AdminPill>
+                                    <select
+                                        value={u.role || "fan"}
+                                        onChange={(e) => updateRole(u.id, u.role || "fan", e.target.value)}
+                                        className={`text-xs font-bold px-2 py-1 rounded-lg border cursor-pointer outline-none transition-colors appearance-none text-center
+                                            ${u.role === 'creator' ? 'bg-pink-500/15 text-pink-400 border-pink-500/30 hover:border-pink-400/50' :
+                                              u.role === 'admin' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:border-amber-400/50' :
+                                              'bg-cyan-500/15 text-cyan-400 border-cyan-500/30 hover:border-cyan-400/50'}`}
+                                    >
+                                        <option value="fan">fan</option>
+                                        <option value="creator">creator</option>
+                                        <option value="admin">admin</option>
+                                    </select>
                                     {u.role === "creator" && u.kyc_status && (
                                         <span className={`text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border text-center
                                             ${u.kyc_status === 'approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
@@ -215,6 +284,14 @@ export default function UserManagement() {
                                         className="scale-90"
                                     >
                                         {u.status === "Restricted" ? "Lift" : "Restrict"}
+                                    </NeonButton>
+                                    <NeonButton
+                                        variant="red"
+                                        onClick={() => setConfirmDeleteUser(u)}
+                                        className="scale-90"
+                                        title="Delete user"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </NeonButton>
                                 </div>
                             ),
@@ -324,6 +401,51 @@ export default function UserManagement() {
                                 disabled={isSaving}
                             >
                                 {isSaving ? "Saving..." : "Save Changes"}
+                            </NeonButton>
+                        </div>
+                    </NeonCard>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {confirmDeleteUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <NeonCard className="w-full max-w-md p-6 bg-black border-red-500/30 relative">
+                        <button
+                            onClick={() => setConfirmDeleteUser(null)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20">
+                                <AlertTriangle className="w-6 h-6 text-red-500" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Delete User</h3>
+                        </div>
+
+                        <p className="text-gray-300 text-sm mb-2">
+                            Are you sure you want to permanently delete this user?
+                        </p>
+                        <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 mb-6">
+                            <div className="text-white font-medium">{confirmDeleteUser.full_name || "Unknown"}</div>
+                            <div className="text-xs text-gray-400">@{confirmDeleteUser.username} • {confirmDeleteUser.id.slice(0, 8)}...</div>
+                        </div>
+                        <p className="text-red-400 text-xs mb-6">
+                            This action is irreversible. The user&apos;s profile, wallet, and auth account will be permanently removed.
+                        </p>
+
+                        <div className="flex justify-end gap-3">
+                            <NeonButton variant="ghost" onClick={() => setConfirmDeleteUser(null)} disabled={isDeleting}>
+                                Cancel
+                            </NeonButton>
+                            <NeonButton
+                                variant="red"
+                                onClick={() => deleteUser(confirmDeleteUser)}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Deleting..." : "Delete Permanently"}
                             </NeonButton>
                         </div>
                     </NeonCard>

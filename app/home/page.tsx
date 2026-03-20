@@ -860,7 +860,7 @@ export default function Home() {
     // Greeting / top-bar personalization (preview)
     const firstName = role === "creator"
         ? "Creator"
-        : (currentProfile?.full_name?.split(" ")[0] || currentProfile?.username || "Fan");
+        : (currentProfile?.full_name?.split(" ")[0] || user?.user_metadata?.full_name?.split(" ")[0] || currentProfile?.username || user?.user_metadata?.username || "Fan");
     const [revealWelcome, setRevealWelcome] = useState(false);
     useEffect(() => {
         const t = window.setTimeout(() => setRevealWelcome(true), 120);
