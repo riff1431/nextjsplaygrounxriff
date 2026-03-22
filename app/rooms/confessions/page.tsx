@@ -25,7 +25,7 @@ import CreatorSpotlight from "@/components/rooms/confessions/CreatorSpotlight";
 import MyRequests from "@/components/rooms/confessions/MyRequests";
 import ConfessionWall from "@/components/rooms/confessions/ConfessionWall";
 import RequestConfession from "@/components/rooms/confessions/RequestConfession";
-import RandomConfession from "@/components/rooms/confessions/RandomConfession";
+
 
 /* ----------------------------- Tiny UI helpers ---------------------------- */
 
@@ -168,6 +168,10 @@ export default function ConfessionsRoom() {
     const searchParams = useSearchParams();
     const { balance: walletBalance, refresh: refreshWallet } = useWallet();
 
+    // URL params (set when coming from confessions-sessions browse)
+    const urlRoomId = searchParams?.get('roomId');
+    const urlSessionId = searchParams?.get('sessionId');
+
     // Dynamic room discovery
     const [roomId, setRoomId] = useState<string | null>(null);
     const [hostId, setHostId] = useState<string | null>(null);
@@ -193,6 +197,7 @@ export default function ConfessionsRoom() {
     const [reqTopic, setReqTopic] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isAnon, setIsAnon] = useState(true);
+    const [confessionMode, setConfessionMode] = useState<'1on1' | 'global'>('1on1');
 
     // Modals
     const [reviewRequest, setReviewRequest] = useState<ConfessionRequest | null>(null);
@@ -214,18 +219,45 @@ export default function ConfessionsRoom() {
     const pay = (amount: number) => setGoalTotal(g => g + amount);
     const [showInviteModal, setShowInviteModal] = useState(false);
 
-    // Discover room on mount
+    // Discover room on mount — prefer roomId from URL, then auto-discover
     useEffect(() => {
         if (!user) return;
 
         async function discoverRoom() {
             const supabase = createClient();
-            // Try confessions-type room first
+
+            // ── Case 1: roomId provided via URL (from confessions-sessions browse) ──
+            // Always show fan UI — this page is for fan watching regardless of role.
+            if (urlRoomId) {
+                const { data: room } = await supabase
+                    .from('rooms')
+                    .select('id, host_id')
+                    .eq('id', urlRoomId)
+                    .maybeSingle();
+
+                if (room) {
+                    setRoomId(room.id);
+                    setHostId(room.host_id);
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, username, avatar_url')
+                        .eq('id', room.host_id)
+                        .single();
+                    if (profile) {
+                        setHostStreamName(profile.full_name || profile.username || 'Creator');
+                        setHostAvatar(profile.avatar_url || null);
+                    }
+                    return;
+                }
+            }
+
+            // ── Case 2: No URL roomId — auto-discover any live confessions room ──
             const { data: confRoom } = await supabase
                 .from('rooms')
                 .select('id, host_id')
                 .eq('type', 'confessions')
                 .eq('status', 'live')
+                .neq('host_id', user.id)   // skip own rooms — creator should use creator page
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
@@ -233,7 +265,6 @@ export default function ConfessionsRoom() {
             if (confRoom) {
                 setRoomId(confRoom.id);
                 setHostId(confRoom.host_id);
-                // Fetch host profile
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('full_name, username, avatar_url')
@@ -249,6 +280,7 @@ export default function ConfessionsRoom() {
             // Fallback: confessions table
             const { data: confessionRoom } = await supabase.from('confessions').select('room_id').limit(1).maybeSingle();
             if (confessionRoom?.room_id) { setRoomId(confessionRoom.room_id); return; }
+            // Last resort — any room (even own, for preview purposes)
             const { data: anyRoom } = await supabase.from('rooms').select('id, host_id').limit(1).maybeSingle();
             if (anyRoom) {
                 setRoomId(anyRoom.id);
@@ -256,7 +288,7 @@ export default function ConfessionsRoom() {
             }
         }
         discoverRoom();
-    }, [user]);
+    }, [user, urlRoomId, urlSessionId]);
 
     useEffect(() => {
         if (user && roomId) {
@@ -423,7 +455,7 @@ export default function ConfessionsRoom() {
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: reqType, amount: reqAmount, topic: reqTopic, paymentMethod: selectedPaymentMethod })
+                body: JSON.stringify({ type: reqType, amount: reqAmount, topic: reqTopic, paymentMethod: selectedPaymentMethod, is_anonymous: isAnon, confession_mode: confessionMode })
             });
             const data = await res.json();
             if (data.success) {
@@ -602,12 +634,12 @@ export default function ConfessionsRoom() {
                                     setReqTopic={setReqTopic}
                                     isAnon={isAnon}
                                     setIsAnon={setIsAnon}
+                                    confessionMode={confessionMode}
+                                    setConfessionMode={setConfessionMode}
                                     handleOpenConfirm={handleOpenConfirm}
                                     isSending={isSending}
                                 />
-                                <RandomConfession
-                                    onSpinComplete={() => { showToast('Random Secret Unlocked!', 'success') }}
-                                />
+
                             </div>
                         </div>
                     </main>
