@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Lock, User, MessageSquare, Mic, Video } from "lucide-react";
+import { Send, Lock, User, MessageSquare, Mic, Video, Users, Globe } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
@@ -17,6 +17,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
   const { balance, refresh } = useWallet();
   const [activeTab, setActiveTab] = useState<"Text" | "Audio" | "Video">("Text");
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [confessionMode, setConfessionMode] = useState<"1on1" | "global">("1on1");
   const [amount, setAmount] = useState("10");
   const [topic, setTopic] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -59,6 +60,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
           amount: parsedAmount,
           fan_name: user.user_metadata?.display_name || user.email?.split("@")[0] || "Fan",
           is_anonymous: isAnonymous,
+          confession_mode: confessionMode,
         }),
       });
       const data = await res.json();
@@ -159,8 +161,32 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
           </button>
         </div>
 
+        {/* Confession Mode: 1on1 vs Global */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setConfessionMode("1on1")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all border ${confessionMode === "1on1"
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-secondary text-muted-foreground"
+              }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            1 on 1
+          </button>
+          <button
+            onClick={() => setConfessionMode("global")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all border ${confessionMode === "global"
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-secondary text-muted-foreground"
+              }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            Global
+          </button>
+        </div>
+
         <div className="text-xs text-muted-foreground text-right">
-          ${parsedAmount} {isAnonymous ? "Anonymous" : "Public"}
+          ${parsedAmount} {isAnonymous ? "Anonymous" : "Public"} · {confessionMode === "1on1" ? "1 on 1" : "Global"}
         </div>
 
         {/* Submit */}

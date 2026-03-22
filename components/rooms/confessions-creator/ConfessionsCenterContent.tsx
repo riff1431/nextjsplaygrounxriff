@@ -112,10 +112,12 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
     const { user } = useAuth();
     const supabase = createClient();
     const [requests, setRequests] = useState<RequestRow[]>([]);
+    const [globalRequests, setGlobalRequests] = useState<RequestRow[]>([]);
     const [roomId, setRoomId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [deliveryRequest, setDeliveryRequest] = useState<RequestRow | null>(null);
     const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+    const [activeView, setActiveView] = useState<"my" | "global">("my");
 
     // Discover room on mount
     useEffect(() => {
@@ -162,6 +164,32 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
         }
     }, [roomId]);
 
+    const fetchGlobalRequests = useCallback(async () => {
+        try {
+            const res = await fetch(`/api/v1/confessions/global`);
+            const data = await res.json();
+            if (data.requests) {
+                setGlobalRequests(data.requests.map((r: any) => ({
+                    id: r.id,
+                    room_id: r.room_id,
+                    fan: r.fan_name || "Fan",
+                    fan_name: r.fan_name || "Anonymous",
+                    is_anonymous: r.is_anonymous ?? true,
+                    confession: r.topic || r.type,
+                    amount: r.amount || 0,
+                    type: r.type,
+                    topic: r.topic || "",
+                    status: r.status,
+                    delivery_content: r.delivery_content,
+                    delivery_media_url: r.delivery_media_url,
+                    created_at: r.created_at,
+                })));
+            }
+        } catch (e) {
+            console.error("Failed to fetch global requests", e);
+        }
+    }, []);
+
     useEffect(() => {
         if (roomId) {
             fetchRequests();
@@ -180,6 +208,26 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
             return () => { supabase.removeChannel(channel); };
         }
     }, [roomId, fetchRequests]);
+
+    // Fetch and subscribe to global requests
+    useEffect(() => {
+        fetchGlobalRequests();
+
+        const channel = supabase
+            .channel("global-confession-requests")
+            .on("postgres_changes", {
+                event: "*",
+                schema: "public",
+                table: "confession_requests",
+            }, (payload: any) => {
+                if (payload.new?.confession_mode === 'global' || payload.old?.confession_mode === 'global') {
+                    fetchGlobalRequests();
+                }
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [fetchGlobalRequests]);
 
     const handleAction = async (id: string, action: "in_progress" | "rejected") => {
         if (!roomId) return;
@@ -224,6 +272,29 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
         }
     };
 
+    const handleGlobalAccept = async (row: RequestRow) => {
+        try {
+            const res = await fetch(`/api/v1/confessions/global/accept`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ request_id: row.id }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Global request accepted! 🎉");
+                fetchGlobalRequests();
+                fetchRequests();
+                // Open delivery modal
+                setDeliveryRequest({ ...row, room_id: roomId || row.room_id, status: "in_progress" });
+                setShowDeliveryModal(true);
+            } else {
+                toast.error(data.error || "Failed to accept");
+            }
+        } catch (e) {
+            toast.error("Network error");
+        }
+    };
+
     const pendingRequests = requests.filter(r => r.status === "pending_approval");
     const activeRequests = requests.filter(r => r.status === "in_progress");
     const resolvedRequests = requests.filter(r => !["pending_approval", "in_progress"].includes(r.status));
@@ -231,28 +302,69 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
     return (
         <>
             <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4 gap-4">
-                <RequestTable
-                    title="Pending Requests"
-                    subtitle={`${pendingRequests.length} waiting`}
-                    rows={pendingRequests}
-                    onAction={handleAction}
-                    onAcceptAndDeliver={handleAcceptAndDeliver}
-                />
-                {activeRequests.length > 0 && (
+                {/* Tab Bar: My Requests vs Global Requests */}
+                <div className="conf-glass-card p-1 flex gap-1 shrink-0">
+                    <button
+                        onClick={() => setActiveView("my")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                            activeView === "my"
+                                ? "bg-white/15 text-white conf-font-cinzel"
+                                : "text-white/50 hover:text-white/70 hover:bg-white/5"
+                        }`}
+                    >
+                        My Requests
+                    </button>
+                    <button
+                        onClick={() => setActiveView("global")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all relative ${
+                            activeView === "global"
+                                ? "bg-white/15 text-white conf-font-cinzel"
+                                : "text-white/50 hover:text-white/70 hover:bg-white/5"
+                        }`}
+                    >
+                        Global Requests
+                        {globalRequests.length > 0 && (
+                            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-[hsl(340,80%,55%)] text-white rounded-full">
+                                {globalRequests.length}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
+                {activeView === "my" ? (
+                    <>
+                        <RequestTable
+                            title="Pending Requests"
+                            subtitle={`${pendingRequests.length} waiting`}
+                            rows={pendingRequests}
+                            onAction={handleAction}
+                            onAcceptAndDeliver={handleAcceptAndDeliver}
+                        />
+                        {activeRequests.length > 0 && (
+                            <RequestTable
+                                title="In Progress"
+                                subtitle={`${activeRequests.length} active`}
+                                rows={activeRequests}
+                                onAction={handleAction}
+                                onAcceptAndDeliver={handleAcceptAndDeliver}
+                            />
+                        )}
+                        {resolvedRequests.length > 0 && (
+                            <RequestTable
+                                title="Resolved"
+                                subtitle={`${resolvedRequests.length} completed`}
+                                rows={resolvedRequests}
+                                onAction={handleAction}
+                            />
+                        )}
+                    </>
+                ) : (
                     <RequestTable
-                        title="In Progress"
-                        subtitle={`${activeRequests.length} active`}
-                        rows={activeRequests}
+                        title="Global Requests"
+                        subtitle={`${globalRequests.length} available`}
+                        rows={globalRequests}
                         onAction={handleAction}
-                        onAcceptAndDeliver={handleAcceptAndDeliver}
-                    />
-                )}
-                {resolvedRequests.length > 0 && (
-                    <RequestTable
-                        title="Resolved"
-                        subtitle={`${resolvedRequests.length} completed`}
-                        rows={resolvedRequests}
-                        onAction={handleAction}
+                        onAcceptAndDeliver={handleGlobalAccept}
                     />
                 )}
             </div>

@@ -58,7 +58,8 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { type, topic, amount, fan_name, is_anonymous } = body;
+    const { type, topic, amount, fan_name, is_anonymous, confession_mode } = body;
+    const mode = confession_mode === 'global' ? 'global' : '1on1';
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -82,26 +83,43 @@ export async function POST(
 
     const creatorId = room.host_id;
 
-    // Transfer funds
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id,
-        p_to_user_id: creatorId,
-        p_amount: amount,
-        p_description: `Confession request: ${type} - ${topic}`,
-        p_room_id: roomId,
-        p_related_type: "confession_request",
-        p_related_id: null, // Will be the request ID after creation
-    });
+    // For 1on1: transfer funds immediately to the creator
+    // For global: hold funds (no transfer yet — funds move when a creator accepts)
+    if (mode === '1on1') {
+        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
+            p_from_user_id: user.id,
+            p_to_user_id: creatorId,
+            p_amount: amount,
+            p_description: `Confession request: ${type} - ${topic}`,
+            p_room_id: roomId,
+            p_related_type: "confession_request",
+            p_related_id: null,
+        });
 
-    if (rpcError) {
-        return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    }
+        if (rpcError) {
+            return NextResponse.json({ error: rpcError.message }, { status: 500 });
+        }
 
-    if (!result?.success) {
-        return NextResponse.json(
-            { error: result?.error || "Payment failed" },
-            { status: 400 }
-        );
+        if (!result?.success) {
+            return NextResponse.json(
+                { error: result?.error || "Payment failed" },
+                { status: 400 }
+            );
+        }
+    } else {
+        // Global: verify the fan has enough balance
+        const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!wallet || wallet.balance < amount) {
+            return NextResponse.json(
+                { error: "Insufficient balance" },
+                { status: 400 }
+            );
+        }
     }
 
     // Create the request
@@ -116,6 +134,7 @@ export async function POST(
             amount,
             fan_name: is_anonymous ? 'Anonymous' : (fan_name || 'Anonymous'),
             is_anonymous: is_anonymous ?? true,
+            confession_mode: mode,
             status: "pending_approval",
         })
         .select()
