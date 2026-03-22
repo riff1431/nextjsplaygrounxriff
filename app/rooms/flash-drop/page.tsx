@@ -287,37 +287,11 @@ export default function FlashDropsRoomPreview() {
                     {/* Top ticker bar */}
                     <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
                         <div className="flex items-center gap-2 px-4">
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => router.back()}
-                                    className="shrink-0 w-7 h-7 rounded-lg border border-primary/40 bg-black/40 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
-                                >
-                                    <ArrowLeft size={14} className="text-primary" />
-                                </button>
-                                {roomId && (
-                                    <button
-                                        onClick={() => setShowInviteModal(true)}
-                                        className="shrink-0 h-7 px-2 rounded-lg border border-primary/40 bg-primary/10 flex items-center gap-1.5 justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary"
-                                        title="Invite Friends"
-                                    >
-                                        <UserPlus size={12} />
-                                        <span className="text-[10px] uppercase font-bold tracking-wider">Invite</span>
-                                    </button>
-                                )}
-                            </div>
                             <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80 flex-1">
                                 {tickerItems.map((item, i) => (
                                     <span key={i} className="shrink-0">{item}</span>
                                 ))}
                             </div>
-                            <button
-                                onClick={() => setShowInviteModal(true)}
-                                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-primary/40 bg-primary/15 text-primary text-xs font-bold hover:bg-primary/25 transition-all hover:scale-105"
-                                title="Invite Friends"
-                            >
-                                <UserPlus size={12} />
-                                <span className="hidden sm:inline">Invite</span>
-                            </button>
                             <WalletPill compact />
                         </div>
                     </div>
@@ -325,8 +299,27 @@ export default function FlashDropsRoomPreview() {
 
                     {/* Main Content Area — fills remaining viewport height */}
                     <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                        {/* 3-column layout: Left (stream + board) | Center (chat) | Right (impulse) */}
+                        {/* Left sidebar buttons + 3-column layout */}
                         <div className="flex-1 min-h-0 flex gap-3 px-3 pt-3">
+                            {/* Left sidebar — Back + Invite */}
+                            <div className="shrink-0 flex flex-col gap-2 pt-1">
+                                <button
+                                    onClick={() => router.back()}
+                                    className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
+                                    title="Go Back"
+                                >
+                                    <ArrowLeft size={16} className="text-primary" />
+                                </button>
+                                {roomId && (
+                                    <button
+                                        onClick={() => setShowInviteModal(true)}
+                                        className="w-9 h-9 rounded-lg border border-primary/40 bg-primary/10 flex items-center justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary"
+                                        title="Invite Friends"
+                                    >
+                                        <UserPlus size={16} />
+                                    </button>
+                                )}
+                            </div>
                             {/* Left: Stream + Drop Board */}
                             <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
                                 {/* Live Stream */}

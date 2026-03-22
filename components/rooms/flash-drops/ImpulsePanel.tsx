@@ -168,9 +168,6 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                 <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">
                                     {pack.name}
                                 </span>
-                                <span className="fd-font-tech font-black text-sm fd-neon-text shrink-0 ml-2">
-                                    ${pack.price.toLocaleString()}
-                                </span>
                             </button>
                         ))}
                     </div>
@@ -184,7 +181,6 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                 <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-1.5 uppercase tracking-widest">Request A Drop</h2>
                 <div className="mb-1.5 flex items-center justify-between">
                     <span className="fd-font-body font-bold text-[10px] text-foreground/70">Custom Request</span>
-                    <span className="fd-font-tech text-[10px] font-black fd-neon-text uppercase tracking-tighter">$10 - $1000</span>
                 </div>
 
                 {requestStatus === "submitted" && (
@@ -215,7 +211,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                     <input
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
-                        placeholder="Offer Amount $... ($10 - $1000)"
+                        placeholder="Offer Amount $..."
                         disabled={submitting || requestStatus === "submitted"}
                         className="w-full bg-black/40 border border-primary/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all disabled:opacity-50"
                     />
