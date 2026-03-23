@@ -219,15 +219,7 @@ const XChatRoom = () => {
 
         if (requestStatus === "accepted") {
             if (!sessionActive) {
-                return (
-                    <button
-                        onClick={startSession}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-green-500/20 border border-green-400/40 text-green-300 hover:bg-green-500/30 transition-all animate-pulse"
-                    >
-                        <CheckCircle size={14} />
-                        Accepted! Start Session (${RATE_PER_MIN}/min)
-                    </button>
-                );
+                return null;
             }
             return (
                 <div className="flex items-center gap-3">
@@ -300,14 +292,8 @@ const XChatRoom = () => {
                             {/* Request / Session Status */}
                             {renderRequestBanner()}
 
-                            <div className="text-right hidden md:block">
-                                <p className="text-foreground text-sm">
-                                    Host – <span className="text-gold-light">{hostName}</span>
-                                </p>
-                                <p className="text-foreground text-sm">
-                                    Creator – <span className="text-gold-light">{creatorName}</span>
-                                </p>
-                                <WalletPill className="mt-1" />
+                            <div className="hidden md:block">
+                                <WalletPill />
                             </div>
                         </div>
                     </div>

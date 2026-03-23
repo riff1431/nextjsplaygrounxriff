@@ -92,7 +92,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                         </button>
                     ))}
                 </div>
-                <p className="text-xs text-muted-foreground italic">One-tap micro-spend to surface in chat</p>
+
             </div>
 
             {/* Paid Stickers */}
@@ -110,7 +110,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                         </button>
                     ))}
                 </div>
-                <p className="text-xs text-muted-foreground italic">Stickers trigger on-stream overlays.</p>
+
             </div>
 
             {/* Visibility Boosts */}
@@ -127,7 +127,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                         </button>
                     ))}
                 </div>
-                <p className="text-xs text-muted-foreground italic">Boosts are time-bound and non-refundable.</p>
+
             </div>
 
             {/* Direct Access */}
@@ -144,7 +144,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                         </button>
                     ))}
                 </div>
-                <p className="text-xs text-muted-foreground italic">Creates a paid lane independent of chat velocity.</p>
+
             </div>
 
             {/* Spend Confirm Modal */}
