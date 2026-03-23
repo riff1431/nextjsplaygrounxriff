@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard, { Post } from "@/components/posts/PostCard";
 import SubscriptionModal from "@/components/subscriptions/SubscriptionModal";
+import CreatorScheduleModal from "@/components/schedules/CreatorScheduleModal";
 
 export interface Profile {
     id: string;
@@ -68,6 +69,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
     const router = useRouter();
@@ -353,6 +355,18 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                 <ScrollText className="w-4 h-4 mr-2" />
                                 <span>Get Confession</span>
                             </Button>
+
+                            {/* View Schedule Button — visible to fans on a creator profile */}
+                            {!isOwner && profile.role === 'creator' && (
+                                <Button
+                                    onClick={() => setIsScheduleModalOpen(true)}
+                                    className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-400 hover:text-amber-300 rounded-full px-4 border border-amber-500/30 font-semibold transition-all shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+                                    title="View creator's schedule"
+                                >
+                                    <CalendarClock className="w-4 h-4 mr-2" />
+                                    <span>Schedule</span>
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -535,6 +549,16 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Schedule Modal for fans */}
+            {profile.role === 'creator' && (
+                <CreatorScheduleModal
+                    isOpen={isScheduleModalOpen}
+                    onClose={() => setIsScheduleModalOpen(false)}
+                    creatorId={profile.id}
+                    creatorName={profile.full_name || profile.username || 'Creator'}
+                />
+            )}
         </div >
     );
 }
