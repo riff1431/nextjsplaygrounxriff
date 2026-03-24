@@ -7,13 +7,12 @@ import { useTheme } from "@/app/context/ThemeContext";
 export default function BrandLogo({ className, showBadge = true }: { className?: string, showBadge?: boolean }) {
     const { theme } = useTheme();
 
-    // Just to force dependency update
-    const siteName = theme?.siteName || "PlayGround"; // Fallback name logic if needed
+    const logoSrc = theme?.logoUrl || "/logo.png";
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>
             <img
-                src="/logo.png"
+                src={logoSrc}
                 alt={theme?.siteName || "PlayGroundX"}
                 className="h-9 w-auto object-contain"
             />
