@@ -456,14 +456,13 @@ function HomeScreen({
         primary?: boolean;
         route: string;
         comingSoon?: boolean;
-        isNew?: boolean;
     }> = [
-            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", isNew: true },
-            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", isNew: true },
-            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", isNew: true },
-            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", isNew: true },
+            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions" },
+            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse" },
+            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions" },
+            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", isNew: true },
+            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions" },
         ];
 
     return (
@@ -515,9 +514,7 @@ function HomeScreen({
                                                 {cat.comingSoon && (
                                                     <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
                                                 )}
-                                                {cat.isNew && (
-                                                    <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-pink-500/80 text-white font-medium uppercase tracking-wide shadow-[0_0_8px_rgba(236,72,153,0.5)]">New</span>
-                                                )}
+
                                             </span>
                                         </button>
                                     );
@@ -539,9 +536,7 @@ function HomeScreen({
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
                                     Competition
                                 </span>
-                                <span className="relative z-10 text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-bold uppercase tracking-wide border border-yellow-500/30">
-                                    Coming Soon
-                                </span>
+
                                 {/* Subtle internal glow */}
                                 <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
                             </button>
