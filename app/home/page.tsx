@@ -478,9 +478,7 @@ function HomeScreen({
                     </div>
 
                     <div className="relative">
-                        <div className="text-fuchsia-300 text-sm mb-3 neon-flicker drop-shadow-[0_0_58px_rgba(255,0,200,1)]">
-                            Browse
-                        </div>
+
 
                         <div>
                             <div className="mt-3 space-y-2">
@@ -549,7 +547,7 @@ function HomeScreen({
                             </button>
                         </div>
 
-                        <div className="mt-6 text-fuchsia-200 text-sm drop-shadow-[0_0_44px_rgba(255,0,200,0.75)]">Account</div>
+
                         <div className="mt-2 space-y-3">
                             <div className="grid grid-cols-1 gap-2">
                                 <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
