@@ -574,10 +574,10 @@ export default function ConfessionsRoom() {
 
                     {/* Main grid */}
                     <main className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 xl:gap-6">
+                        <div className="flex flex-col lg:flex-row gap-4 xl:gap-6">
 
                             {/* Left Column */}
-                            <div className="space-y-4 xl:space-y-6 lg:min-w-[280px]">
+                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[280px] shrink-0">
                                 <CreatorSpotlight
                                     goalTotal={goalTotal}
                                     pay={pay}
@@ -605,7 +605,7 @@ export default function ConfessionsRoom() {
                             </div>
 
                             {/* Center Column - wider */}
-                            <div className="lg:col-span-2 space-y-4 xl:space-y-6 w-full max-w-full">
+                            <div className="flex-1 min-w-0 space-y-4 xl:space-y-6">
                                 <ConfessionWall
                                     confessions={confessions}
                                     myUnlocks={myUnlocks}
@@ -618,7 +618,7 @@ export default function ConfessionsRoom() {
                             </div>
 
                             {/* Right Column */}
-                            <div className="space-y-4 xl:space-y-6 lg:min-w-[320px]">
+                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0">
                                 <RequestConfession
                                     reqType={reqType}
                                     setReqType={setReqType}
