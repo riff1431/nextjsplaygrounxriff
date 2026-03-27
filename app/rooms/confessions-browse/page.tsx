@@ -346,6 +346,26 @@ export default function FanConfessionsBrowsePage() {
 
                     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
 
+                        {/* ── Enter Session CTA (Top) ────────────────── */}
+                        <div className="mb-8 rounded-3xl border border-rose-500/15 bg-gradient-to-br from-rose-950/40 via-black/40 to-purple-950/30 p-8 text-center backdrop-blur-sm">
+                            <div className="flex justify-center mb-4 gap-2">
+                                <Heart className="w-5 h-5 text-rose-400 fill-rose-500/30 animate-pulse" />
+                                <Flame className="w-5 h-5 text-orange-400" />
+                            </div>
+                            <h3 className="text-white font-black text-lg mb-2">Want to make your own confession?</h3>
+                            <p className="text-white/40 text-sm mb-5 max-w-sm mx-auto">
+                                Join a live creator session and send your private confession directly.
+                            </p>
+                            <button
+                                onClick={() => router.push("/rooms/confessions-sessions")}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:brightness-110 text-white font-bold px-6 py-3 rounded-2xl border border-rose-500/30 shadow-[0_4px_20px_rgba(225,29,72,0.3)] hover:shadow-[0_6px_28px_rgba(225,29,72,0.45)] transition"
+                            >
+                                <Heart className="w-4 h-4" />
+                                Browse Live Sessions
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+
                         {/* ── HERO STATS ─────────────────────────────── */}
                         <div className="grid grid-cols-3 gap-3 mb-6">
                             {[
@@ -459,26 +479,6 @@ export default function FanConfessionsBrowsePage() {
                                             onUnlock={setUnlockTarget}
                                         />
                                     ))}
-                                </div>
-
-                                {/* Enter Session CTA */}
-                                <div className="mt-10 rounded-3xl border border-rose-500/15 bg-gradient-to-br from-rose-950/40 via-black/40 to-purple-950/30 p-8 text-center backdrop-blur-sm">
-                                    <div className="flex justify-center mb-4 gap-2">
-                                        <Heart className="w-5 h-5 text-rose-400 fill-rose-500/30 animate-pulse" />
-                                        <Flame className="w-5 h-5 text-orange-400" />
-                                    </div>
-                                    <h3 className="text-white font-black text-lg mb-2">Want to make your own confession?</h3>
-                                    <p className="text-white/40 text-sm mb-5 max-w-sm mx-auto">
-                                        Join a live creator session and send your private confession directly.
-                                    </p>
-                                    <button
-                                        onClick={() => router.push("/rooms/confessions-sessions")}
-                                        className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:brightness-110 text-white font-bold px-6 py-3 rounded-2xl border border-rose-500/30 shadow-[0_4px_20px_rgba(225,29,72,0.3)] hover:shadow-[0_6px_28px_rgba(225,29,72,0.45)] transition"
-                                    >
-                                        <Heart className="w-4 h-4" />
-                                        Browse Live Sessions
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
                                 </div>
                             </>
                         )}

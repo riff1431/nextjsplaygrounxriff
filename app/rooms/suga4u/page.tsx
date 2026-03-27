@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ArrowLeft } from "lucide-react";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
@@ -122,9 +122,18 @@ const Suga4URoom = () => {
                                                 {roomId ? "Connecting to stream..." : "No active session"}
                                             </div>
                                         )}
-                                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-background/70 backdrop-blur-sm px-3 py-1 rounded-full">
-                                            <span className="w-2 h-2 rounded-full bg-destructive animate-pulse-glow" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Live</span>
+                                        <div className="absolute top-3 left-3 flex items-center gap-2">
+                                            <button
+                                                onClick={() => router.push("/home")}
+                                                className="flex items-center justify-center w-8 h-8 rounded-full bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-all cursor-pointer"
+                                                title="Go back"
+                                            >
+                                                <ArrowLeft size={16} className="text-white" />
+                                            </button>
+                                            <div className="flex items-center gap-1.5 bg-background/70 backdrop-blur-sm px-3 py-1 rounded-full">
+                                                <span className="w-2 h-2 rounded-full bg-destructive animate-pulse-glow" />
+                                                <span className="text-xs font-bold uppercase tracking-wider">Live</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -5,9 +5,10 @@ interface CreatorSpotlightProps {
     pay: (amount: number) => void;
     isAnon: boolean;
     setIsAnon: (val: boolean) => void;
+    liveStreamNode?: React.ReactNode;
 }
 
-const CreatorSpotlight: React.FC<CreatorSpotlightProps> = ({ goalTotal, pay, isAnon, setIsAnon }) => {
+const CreatorSpotlight: React.FC<CreatorSpotlightProps> = ({ goalTotal, pay, isAnon, setIsAnon, liveStreamNode }) => {
     const progress = Math.min((goalTotal / 250) * 100, 100);
 
     return (
@@ -20,8 +21,12 @@ const CreatorSpotlight: React.FC<CreatorSpotlightProps> = ({ goalTotal, pay, isA
             </div>
 
             <div className="relative rounded-lg overflow-hidden aspect-[4/3]">
-                <img src="/confessions/creator-spotlight.jpg" alt="Creator" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                {liveStreamNode || (
+                    <>
+                        <img src="/confessions/creator-spotlight.jpg" alt="Creator" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+                    </>
+                )}
             </div>
 
             <div className="space-y-2">

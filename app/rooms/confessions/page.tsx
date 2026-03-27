@@ -25,6 +25,7 @@ import CreatorSpotlight from "@/components/rooms/confessions/CreatorSpotlight";
 import MyRequests from "@/components/rooms/confessions/MyRequests";
 import ConfessionWall from "@/components/rooms/confessions/ConfessionWall";
 import RequestConfession from "@/components/rooms/confessions/RequestConfession";
+import LiveChatBox from "@/components/rooms/confessions/LiveChatBox";
 
 
 /* ----------------------------- Tiny UI helpers ---------------------------- */
@@ -582,19 +583,8 @@ export default function ConfessionsRoom() {
                                     pay={pay}
                                     isAnon={isAnon}
                                     setIsAnon={setIsAnon}
-                                />
-                                <MyRequests
-                                    requests={requests}
-                                    setReviewRequest={setReviewRequest}
-                                />
-                            </div>
-
-                            {/* Center Column - wider */}
-                            <div className="lg:col-span-2 space-y-4 xl:space-y-6 w-full max-w-full">
-                                {/* Live Stream */}
-                                <section className="group relative overflow-hidden rounded-3xl border border-rose-500/10 bg-[#120205]/70 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                                    <div style={{ aspectRatio: "16/9" }}>
-                                        {roomId && user && hostId ? (
+                                    liveStreamNode={
+                                        roomId && user && hostId ? (
                                             <LiveStreamWrapper
                                                 role="fan"
                                                 appId={APP_ID}
@@ -608,10 +598,14 @@ export default function ConfessionsRoom() {
                                             <div className="w-full h-full flex items-center justify-center bg-black/50 text-rose-200/40 text-sm">
                                                 {roomId ? "Connecting to stream..." : "No active session"}
                                             </div>
-                                        )}
-                                    </div>
-                                </section>
+                                        )
+                                    }
+                                />
+                                <LiveChatBox roomId={roomId} />
+                            </div>
 
+                            {/* Center Column - wider */}
+                            <div className="lg:col-span-2 space-y-4 xl:space-y-6 w-full max-w-full">
                                 <ConfessionWall
                                     confessions={confessions}
                                     myUnlocks={myUnlocks}
@@ -639,7 +633,10 @@ export default function ConfessionsRoom() {
                                     handleOpenConfirm={handleOpenConfirm}
                                     isSending={isSending}
                                 />
-
+                                <MyRequests
+                                    requests={requests}
+                                    setReviewRequest={setReviewRequest}
+                                />
                             </div>
                         </div>
                     </main>
