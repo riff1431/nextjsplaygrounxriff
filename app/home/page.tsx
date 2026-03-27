@@ -480,7 +480,8 @@ function HomeScreen({
 
 
                         <div>
-                            <div className="mt-3 space-y-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 mt-3 px-1">Browse Room</div>
+                            <div className="mt-1 space-y-2">
                                 {CATS.map((cat) => {
                                     const t = toneClasses(cat.tone);
                                     const isPrimary = !!cat.primary;
@@ -547,6 +548,12 @@ function HomeScreen({
                             <div className="grid grid-cols-1 gap-2">
                                 <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
                                     <User className="w-4 h-4" /> My Profile
+                                </button>
+                                <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/subscriptions")}>
+                                    <Star className="w-4 h-4" /> My Subscription
+                                </button>
+                                <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/newsfeed")}>
+                                    <Bell className="w-4 h-4" /> NewsFeed
                                 </button>
                                 <button className="w-full rounded-xl border border-fuchsia-500/90 bg-black px-3 py-2 text-sm text-fuchsia-200 hover:bg-fuchsia-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/messages")}>
                                     <MessageCircle className="w-4 h-4" /> Messages
