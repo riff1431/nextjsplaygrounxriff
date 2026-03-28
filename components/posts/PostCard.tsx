@@ -316,14 +316,14 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                     </div>
 
                     {post.content_type === 'image' && post.media_url && (
-                        <div className="w-full bg-black flex items-center justify-center max-h-[600px] overflow-hidden">
-                            <img src={post.media_url} alt="Post content" className="w-full object-contain max-h-[600px]" />
+                        <div className="w-full bg-black aspect-square overflow-hidden">
+                            <img src={post.media_url} alt="Post content" className="w-full h-full object-cover" />
                         </div>
                     )}
 
                     {post.content_type === 'video' && post.media_url && (
-                        <div className="w-full bg-black aspect-video">
-                            <video src={post.media_url} controls={canView} className="w-full h-full" />
+                        <div className="w-full bg-black aspect-square overflow-hidden">
+                            <video src={post.media_url} controls={canView} className="w-full h-full object-cover" />
                         </div>
                     )}
                 </div>

@@ -314,50 +314,40 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
         <button
             onClick={onOpen}
             className={cx(
-                "group relative h-full rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
+                "group relative rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
                 "hover:border-pink-500/45 transition",
-                "flex flex-col text-left"
+                "flex flex-col text-left",
+                "aspect-square" // Instagram-style square tile
             )}
             title={creator.tags.includes("Suga 4 U") ? "Open Suga4U (preview)" : "Join Room"}
         >
-            {/* Background Image (Cover) */}
+            {/* Background Image (Cover) - fills the entire square */}
             {creator.cover_url ? (
                 <div
-                    className="absolute inset-0 bg-cover bg-top opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+                    className="absolute inset-0 bg-cover bg-center opacity-80 group-hover:opacity-100 transition-opacity duration-700"
                     style={{ backgroundImage: `url(${creator.cover_url})` }}
                 />
-            ) : (
-                // Fallback gradient logic if no cover (or keep as overlay?)
-                // keeping overlay div below to Ensure text readability regardless of image
-                null
-            )}
+            ) : null}
 
-            {/* Gradient Overlay for Text Readability - made slightly darker at bottom since avatars are bigger */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/90 pointer-events-none" />
+            {/* Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/15 to-black/85 pointer-events-none" />
 
+            {/* Flex spacer to push body to bottom of the square */}
+            <div className="flex-1" />
 
-            {/* Media area (aspect ratio spacer if needed, or just allow flex-grow) 
-                Actually, the original design had a fixed top area. 
-                With bg image, we might want the whole tile to be the image.
-                Let's stick to the visual structure but use the image as the full tile bg.
-            */}
-            <div className="h-32 w-full" /> {/* Spacer to push content down roughly as before */}
-
-
-            {/* Body (fixed rhythm) */}
-            <div className="relative p-3 flex-1 flex flex-col z-10">
+            {/* Body at the bottom */}
+            <div className="relative p-3 flex flex-col z-10">
                 {/* Row: Avatar + name + level */}
-                <div className="flex items-center justify-between gap-3 min-h-[22px]">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        {/* Avatar - Increased size ~3x (w-6 is 1.5rem/24px -> w-20 is 5rem/80px) */}
+                <div className="flex items-center justify-between gap-2 min-h-[22px]">
+                    <div className="flex items-center gap-2 overflow-hidden">
                         {creator.avatar_url ? (
-                            <img src={creator.avatar_url} alt="" className="w-20 h-20 rounded-full border-2 border-white/20 object-cover shrink-0" />
+                            <img src={creator.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-white/30 object-cover shrink-0" />
                         ) : (
-                            <div className="w-20 h-20 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
-                                <User className="w-8 h-8 text-pink-300" />
+                            <div className="w-10 h-10 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
+                                <User className="w-5 h-5 text-pink-300" />
                             </div>
                         )}
-                        <div className="text-lg text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
+                        <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
                             {creator.name}
                         </div>
                     </div>
@@ -367,8 +357,8 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                     </span>
                 </div>
 
-                {/* Row: tags (consistent height) */}
-                <div className="mt-2 flex flex-wrap gap-1 min-h-[28px]">
+                {/* Row: tags */}
+                <div className="mt-1.5 flex flex-wrap gap-1">
                     {tags.map((t, idx) =>
                         t ? (
                             <span
@@ -387,9 +377,6 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                         )
                     )}
                 </div>
-
-                {/* Spacer to keep tiles identical even when tags vary */}
-                <div className="flex-1" />
             </div>
         </button>
     );
@@ -467,9 +454,9 @@ function HomeScreen({
 
     return (
         <div className="w-full mx-auto px-6 py-6">
-            <div className="flex flex-col lg:flex-row gap-6">
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Left rail (always-expanded categories) */}
-                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4">
+                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6">
                     {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
@@ -626,7 +613,7 @@ function HomeScreen({
                     </div>
 
                     {/* Creator tiles */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {filtered.map((c) => (
                             <CreatorTile
                                 key={c.id}
@@ -645,27 +632,72 @@ function HomeScreen({
                         ))}
                     </div>
                 </div>
-                {/* Right rail (Cleaned) */}
-                <NeonCard className="w-full lg:w-96 shrink-0 p-4">
+                {/* Right rail (Cleaned) – Auto-scrolling Creator Feed */}
+                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Creator Feed
                     </div>
-                    <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
-                        {posts.map((post) => (
-                            <PostCard
-                                key={post.id}
-                                post={post as any}
-                                user={post.profiles as any}
-                                currentUserId={userId || null}
-                                isSubscribed={post.user_id ? subscribedCreatorIds.has(post.user_id) : false}
-                            />
-                        ))}
-                        {posts.length === 0 && (
-                            <div className="text-center py-6 text-gray-500 text-sm">
-                                No recent updates.
+
+                    {posts.length === 0 ? (
+                        <div className="text-center py-6 text-gray-500 text-sm">
+                            No recent updates.
+                        </div>
+                    ) : (
+                        <>
+                            <style>{`
+                                @keyframes creatorFeedScroll {
+                                    0% { transform: translateY(0); }
+                                    100% { transform: translateY(-50%); }
+                                }
+                                .creator-feed-scroll-viewport {
+                                    overflow: hidden;
+                                    max-height: 78vh;
+                                    position: relative;
+                                }
+                                .creator-feed-scroll-viewport::before,
+                                .creator-feed-scroll-viewport::after {
+                                    content: '';
+                                    position: absolute;
+                                    left: 0;
+                                    right: 0;
+                                    height: 28px;
+                                    z-index: 2;
+                                    pointer-events: none;
+                                }
+                                .creator-feed-scroll-viewport::before {
+                                    top: 0;
+                                    background: linear-gradient(to bottom, black, transparent);
+                                }
+                                .creator-feed-scroll-viewport::after {
+                                    bottom: 0;
+                                    background: linear-gradient(to top, black, transparent);
+                                }
+                                .creator-feed-scroll-track {
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 1rem;
+                                    animation: creatorFeedScroll 60s linear infinite;
+                                }
+                                .creator-feed-scroll-viewport:hover .creator-feed-scroll-track {
+                                    animation-play-state: paused;
+                                }
+                            `}</style>
+                            <div className="creator-feed-scroll-viewport">
+                                <div className="creator-feed-scroll-track">
+                                    {/* Render posts twice for seamless infinite loop */}
+                                    {[...posts, ...posts].map((post, idx) => (
+                                        <PostCard
+                                            key={`${post.id}-feed-${idx}`}
+                                            post={post as any}
+                                            user={post.profiles as any}
+                                            currentUserId={userId || null}
+                                            isSubscribed={post.user_id ? subscribedCreatorIds.has(post.user_id) : false}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        )}
-                    </div>
+                        </>
+                    )}
                 </NeonCard>
             </div>
         </div >
