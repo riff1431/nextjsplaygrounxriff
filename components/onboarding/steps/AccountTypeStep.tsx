@@ -50,7 +50,11 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
             toast.error("Failed to load account types");
             console.error(error);
         } else {
-            setAccountTypes(data || []);
+            // Only show Sugar Daddy and Sugar Mama to fan users (exclude Sugar Baby)
+            const fanTypes = (data || []).filter(
+                (t: AccountType) => !t.name.toLowerCase().includes("baby")
+            );
+            setAccountTypes(fanTypes);
         }
         setLoading(false);
     };

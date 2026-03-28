@@ -215,9 +215,7 @@ export default function ConfessionsRoom() {
         onSuccess: () => void;
     } | null>(null);
 
-    // Countdown
-    const [goalTotal, setGoalTotal] = useState(140);
-    const pay = (amount: number) => setGoalTotal(g => g + amount);
+    // Invite Modal
     const [showInviteModal, setShowInviteModal] = useState(false);
 
     // Discover room on mount — prefer roomId from URL, then auto-discover
@@ -579,10 +577,6 @@ export default function ConfessionsRoom() {
                             {/* Left Column */}
                             <div className="space-y-4 xl:space-y-6 w-full lg:w-[280px] shrink-0">
                                 <CreatorSpotlight
-                                    goalTotal={goalTotal}
-                                    pay={pay}
-                                    isAnon={isAnon}
-                                    setIsAnon={setIsAnon}
                                     liveStreamNode={
                                         roomId && user && hostId ? (
                                             <LiveStreamWrapper

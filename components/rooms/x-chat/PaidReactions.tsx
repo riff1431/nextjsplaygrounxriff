@@ -20,14 +20,12 @@ const stickers = [
 ];
 
 const boosts = [
-    { label: "Pin my message (1 min)", price: 25, type: "pin" },
-    { label: "Highlight badge (2 min)", price: 40, type: "highlight" },
-    { label: "Priority queue (5 min)", price: 75, type: "priority" },
+    { label: "Pin my name to top (1 min)", price: 25, type: "pin" },
+    { label: "Voice note reply", price: 35, type: "voice_note_boost" },
 ];
 
 const directAccess = [
     { label: "Private question", price: 20, type: "private_question" },
-    { label: "Voice note reply", price: 35, type: "voice_note" },
     { label: "1:1 mini chat (2 min)", price: 60, type: "mini_chat" },
 ];
 

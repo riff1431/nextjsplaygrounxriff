@@ -346,15 +346,29 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                 <span className="hidden md:inline">Share</span>
                             </Button>
 
-                            {/* Get Confession Button — visible to everyone viewing this profile */}
-                            <Button
-                                onClick={() => router.push(`/rooms/pgx-pg1?creator=${encodeURIComponent(profile.username || profile.full_name || profile.id)}`)}
-                                className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(225,29,72,0.35)] border border-rose-400/20 font-semibold transition-all"
-                                title="See this creator's confessions"
-                            >
-                                <ScrollText className="w-4 h-4 mr-2" />
-                                <span>Get Confession</span>
-                            </Button>
+                            {/* Get Confession Button — hidden for fan owners */}
+                            {!(isOwner && profile.role !== 'creator') && (
+                                <Button
+                                    onClick={() => router.push(`/rooms/pgx-pg1?creator=${encodeURIComponent(profile.username || profile.full_name || profile.id)}`)}
+                                    className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(225,29,72,0.35)] border border-rose-400/20 font-semibold transition-all"
+                                    title="See this creator's confessions"
+                                >
+                                    <ScrollText className="w-4 h-4 mr-2" />
+                                    <span>Get Confession</span>
+                                </Button>
+                            )}
+
+                            {/* Membership Button — visible only for fan owners */}
+                            {isOwner && profile.role !== 'creator' && (
+                                <Button
+                                    onClick={() => router.push('/account/subscription')}
+                                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(147,51,234,0.35)] border border-purple-400/20 font-semibold transition-all"
+                                    title="Manage your membership"
+                                >
+                                    <Crown className="w-4 h-4 mr-2" />
+                                    <span>Membership</span>
+                                </Button>
+                            )}
 
                             {/* View Schedule Button — visible to fans on a creator profile */}
                             {!isOwner && profile.role === 'creator' && (

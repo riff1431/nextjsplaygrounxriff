@@ -51,6 +51,7 @@ export default function MembershipPage() {
     const [saving, setSaving] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentContext, setPaymentContext] = useState<"membership" | "account_type">("membership");
+    const [viewFilter, setViewFilter] = useState<"all" | "memberships" | "badges">("all");
 
     useEffect(() => {
         if (user) {
@@ -85,7 +86,11 @@ export default function MembershipPage() {
         if (error) {
             console.error("Error fetching account types:", error);
         } else {
-            setAccountTypes(data || []);
+            // Only show Sugar Daddy and Sugar Mama to fan users (exclude Sugar Baby)
+            const fanTypes = (data || []).filter(
+                (t: AccountType) => !t.name.toLowerCase().includes("baby")
+            );
+            setAccountTypes(fanTypes);
         }
     };
 
@@ -212,8 +217,31 @@ export default function MembershipPage() {
                     </div>
                 </div>
 
+                {/* Filter Options */}
+                <div className="flex gap-3 mb-8 overflow-x-auto pb-2 scrollbar-none">
+                    {[
+                        { id: "all", label: "All Plans" },
+                        { id: "memberships", label: "Memberships" },
+                        { id: "badges", label: "Identity Badges" },
+                    ].map((f) => (
+                        <button
+                            key={f.id}
+                            onClick={() => setViewFilter(f.id as "all" | "memberships" | "badges")}
+                            className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                                viewFilter === f.id
+                                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/25 border border-transparent"
+                                    : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+                            }`}
+                        >
+                            {f.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Membership Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(viewFilter === "all" || viewFilter === "memberships") && (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {plans.map((plan) => {
                         const isCurrent = currentPlanId === plan.id;
                         const isSelected = selectedPlan?.id === plan.id;
@@ -332,10 +360,12 @@ export default function MembershipPage() {
                         )}
                     </button>
                 </div>
+                </>
+                )}
 
                 {/* Account Types Section */}
-                {accountTypes.length > 0 && (
-                    <div className="mt-16 border-t border-white/10 pt-12">
+                {accountTypes.length > 0 && (viewFilter === "all" || viewFilter === "badges") && (
+                    <div className={viewFilter === "all" ? "mt-16 border-t border-white/10 pt-12" : ""}>
                         <div className="text-center mb-8">
                             <div className="inline-flex items-center gap-2 text-pink-400 mb-2">
                                 <Sparkles className="w-5 h-5" />

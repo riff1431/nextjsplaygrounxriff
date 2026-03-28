@@ -485,7 +485,7 @@ export default function RoomSessionsBrowse({
                                                 onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
                                                 style={{ width: "100%", padding: "9px", borderRadius: "10px", border: `1px solid ${accentBorder}`, background: accentGradient, color: "#fff", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: accentGlow, letterSpacing: "0.5px", textTransform: "uppercase" }}
                                             >
-                                                <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Session
+                                                <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room
                                             </button>
                                         ) : session.user_request_status === "pending" ? (
                                             <button disabled style={{ width: "100%", padding: "9px", borderRadius: "10px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fcd34d", fontSize: "11px", fontWeight: 600, cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", textTransform: "uppercase" }}>
@@ -516,11 +516,11 @@ export default function RoomSessionsBrowse({
                                                 {joiningSessionId === session.id ? (
                                                     <><Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> Joining...</>
                                                 ) : session.is_private ? (
-                                                    <><Lock style={{ width: 12, height: 12 }} /> Request Access</>
+                                                    <><Lock style={{ width: 12, height: 12 }} /> Enter Room</>
                                                 ) : price > 0 ? (
-                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Join — ${price}</>
+                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Enter Room</>
                                                 ) : (
-                                                    <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Join Session</>
+                                                    <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room</>
                                                 )}
                                             </button>
                                         )}

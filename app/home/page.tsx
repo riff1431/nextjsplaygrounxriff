@@ -536,7 +536,7 @@ function HomeScreen({
                                 <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
                                     <User className="w-4 h-4" /> My Profile
                                 </button>
-                                <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/subscriptions")}>
+                                <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/subscription")}>
                                     <Star className="w-4 h-4" /> My Subscription
                                 </button>
                                 <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/newsfeed")}>
@@ -635,7 +635,7 @@ function HomeScreen({
                 {/* Right rail (Cleaned) – Auto-scrolling Creator Feed */}
                 <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
-                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Creator Feed
+                        <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Featured Creators
                     </div>
 
                     {posts.length === 0 ? (

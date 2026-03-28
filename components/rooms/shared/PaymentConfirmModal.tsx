@@ -85,7 +85,7 @@ export default function PaymentConfirmModal({
                 <div style={{ textAlign: "center", marginBottom: "20px" }}>
                     <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎬</div>
                     <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 700, margin: "0 0 4px" }}>
-                        Join Session
+                        Enter Room
                     </h3>
                     <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", margin: 0 }}>
                         {sessionTitle}

@@ -465,7 +465,7 @@ export default function FanConfessionsBrowsePage() {
                                         onClick={() => router.push("/rooms/confessions")}
                                         className="inline-flex items-center gap-1.5 text-rose-400 text-xs font-bold hover:text-rose-300 transition"
                                     >
-                                        Enter a Live Session
+                                        Enter Room
                                         <ChevronRight className="w-3 h-3" />
                                     </button>
                                 </div>

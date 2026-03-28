@@ -164,7 +164,7 @@ export default function ActiveSessionsList({
                                 transition: "all 0.2s",
                             }}
                         >
-                            Join Session • ${session.entry_fee}
+                            Enter Room
                         </button>
                     ) : (
                         <button
@@ -183,7 +183,7 @@ export default function ActiveSessionsList({
                             }}
                         >
                             <Lock size={12} style={{ verticalAlign: "middle", marginRight: "4px" }} />
-                            Request to Join • ${session.entry_fee}
+                            Enter Room
                         </button>
                     )}
                 </div>

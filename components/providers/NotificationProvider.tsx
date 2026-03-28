@@ -87,7 +87,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             description: newNotif.message,
                             duration: 15000,
                             action: {
-                                label: "Join Session",
+                                label: "Enter Room",
                                 onClick: () => window.location.href = newNotif.link!,
                             },
                         });

@@ -701,7 +701,7 @@ export default function TruthOrDareSessionsBrowse() {
                                                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 0 30px rgba(236,72,153,0.5), inset 0 1px 0 rgba(255,255,255,0.2)"; e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(219,39,119,1))"; }}
                                                 onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(236,72,153,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"; e.currentTarget.style.background = "linear-gradient(135deg, rgba(219,39,119,0.8), rgba(190,24,93,0.9))"; }}
                                             >
-                                                <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Server
+                                                <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room
                                             </button>
                                         ) : session.user_request_status === "pending" ? (
                                             <button
@@ -789,11 +789,11 @@ export default function TruthOrDareSessionsBrowse() {
                                                 {joiningSessionId === session.id ? (
                                                     <><Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> Initialize...</>
                                                 ) : session.is_private ? (
-                                                    <><Lock style={{ width: 12, height: 12 }} /> Request Access</>
+                                                    <><Lock style={{ width: 12, height: 12 }} /> Enter Room</>
                                                 ) : price > 0 ? (
-                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Connect — ${price}</>
+                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Enter Room</>
                                                 ) : (
-                                                    <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Connect Grid</>
+                                                    <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room</>
                                                 )}
                                             </button>
                                         )}
