@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Heart } from "lucide-react";
+import { Heart, Lock } from "lucide-react";
 
 export interface CreatorInfo {
     id: string;
@@ -31,92 +31,65 @@ interface ConfessionWallProps {
     setPurchaseConfession: (c: Confession) => void;
 }
 
-const ConfessionCard = ({
+/* ─── Locked Confession Card ─── */
+const LockedConfessionCard = ({
     confession,
-    isUnlocked,
-    setViewConfession,
-    setPurchaseConfession
+    onUnlock,
 }: {
     confession: Confession;
-    isUnlocked: boolean;
-    setViewConfession: (c: Confession) => void;
-    setPurchaseConfession: (c: Confession) => void;
+    onUnlock: (c: Confession) => void;
 }) => {
-    // Fake data for display purposes to match design
-    const amount = Math.floor(Math.random() * 200) + 100;
-    const goal = amount + Math.floor(Math.random() * 200) + 100;
-    const fans = Math.floor(Math.random() * 60) + 10;
-    const progress = (amount / goal) * 100;
-    const author = confession.creator?.username || "Anonymous";
-
     return (
-        <div className="neon-glass-card p-4 space-y-3 group hover:border-primary/50 transition-all duration-300">
-            <div className="flex items-start justify-between gap-3">
-                <p className={`text-sm leading-relaxed flex-1 italic ${!isUnlocked ? 'blur-[4px] select-none opacity-60' : 'text-foreground/90'}`}>
-                    "{isUnlocked ? (confession.content || confession.teaser) : "This is a hidden confession content that is very spicy and extremely secret..."}"
-                </p>
-                <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-xs text-muted-foreground mr-1">@{author}</span>
-                    <span className="gold-text text-xs font-bold">${confession.price}</span>
-                    <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
-                </div>
+        <div className="confession-wall-card group">
+            {/* Teaser text */}
+            <p className="text-xs text-foreground/60 leading-relaxed line-clamp-2 text-center px-2 pt-1">
+                {confession.teaser || confession.title}
+            </p>
+
+            {/* Lock icon */}
+            <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center my-2 group-hover:scale-110 group-hover:border-primary/40 transition-all duration-300">
+                <Lock className="w-7 h-7 text-primary/70 group-hover:text-primary transition-colors" />
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Users className="w-3.5 h-3.5" />
-                    {fans} Fans contributed <span className="font-bold text-foreground">{fans}</span>
-                </div>
-                <span className="gold-text font-display text-lg font-bold">${amount}</span>
-            </div>
-
-            <div className="space-y-1">
-                <div className="w-full h-1.5 rounded-full bg-secondary overflow-hidden">
-                    <div
-                        className="h-full rounded-full bg-gold progress-bar-glow transition-all duration-500"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
-                    />
-                </div>
-                <div className="flex justify-end text-xs text-muted-foreground uppercase tracking-widest text-[9px] mt-1">
-                    TARGET ${goal}
-                </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-border/30 mt-2">
-                <div className="flex items-center gap-2 text-[10px]">
-                    <span className="font-semibold uppercase tracking-wider text-muted-foreground">Top Fans</span>
-                    <span className="text-muted-foreground truncate max-w-[100px]">TopFan?, User12</span>
-                </div>
-                <div className="flex gap-1.5 items-center">
-                    {[5, 10].map((val) => (
-                        <button
-                            key={val}
-                            className="px-2 py-1 rounded-md bg-secondary hover:bg-secondary/80 text-xs font-semibold transition-colors border border-border hover:border-primary/50"
-                        >
-                            <span className="gold-text">+${val}</span>
-                        </button>
-                    ))}
-                    {isUnlocked ? (
-                        <button
-                            onClick={() => setViewConfession(confession)}
-                            className="px-4 py-1.5 rounded-md border border-primary/50 text-primary text-xs font-bold hover:bg-primary/10 ml-2"
-                        >
-                            Open
-                        </button>
-                    ) : (
-                        <button
-                            onClick={() => setPurchaseConfession(confession)}
-                            className="px-4 py-1.5 rounded-md gradient-pink text-primary-foreground text-xs font-bold neon-border hover:opacity-90 ml-2 animate-pulse hover:animate-none"
-                        >
-                            Unlock ${confession.price}
-                        </button>
-                    )}
-                </div>
-            </div>
+            {/* Unlock button */}
+            <button
+                onClick={() => onUnlock(confession)}
+                className="w-full py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 mt-auto"
+                style={{
+                    background: 'linear-gradient(135deg, #f59e0b, #ec4899, #d946ef)',
+                }}
+            >
+                <Heart className="w-3 h-3 fill-current text-white" />
+                <span className="text-white font-bold drop-shadow-sm">Unlock for ${confession.price}</span>
+            </button>
         </div>
     );
 };
 
+/* ─── Unlocked Confession Card ─── */
+const UnlockedConfessionCard = ({
+    confession,
+    onClick,
+}: {
+    confession: Confession;
+    onClick: (c: Confession) => void;
+}) => {
+    return (
+        <div
+            onClick={() => onClick(confession)}
+            className="confession-wall-card cursor-pointer group hover:border-primary/40"
+        >
+            <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3 text-center px-2 pt-1 flex-1">
+                {confession.content || confession.teaser}
+            </p>
+            <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1 mt-2">
+                ✓ Unlocked
+            </span>
+        </div>
+    );
+};
+
+/* ─── Main Confession Wall ─── */
 const ConfessionWall: React.FC<ConfessionWallProps> = ({
     confessions,
     myUnlocks,
@@ -128,34 +101,35 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
 }) => {
     return (
         <div className="neon-glass-card p-4 sm:p-5 space-y-4">
+            {/* Header row */}
             <div className="flex items-center justify-between">
-                <h2 className="font-display text-sm sm:text-base font-semibold tracking-wide">Confession Wall</h2>
+                <h2 className="font-display text-base sm:text-lg font-bold tracking-wide text-foreground">
+                    Confession Wall
+                </h2>
+
+                {/* Reaction buttons */}
                 <div className="flex gap-1.5">
-                    {["❤️", "🔥", "👀", "💀", "😈", "💋"].map((e, i) => (
-                        <span key={i} className="text-sm cursor-pointer hover:scale-125 transition-transform opacity-80 hover:opacity-100">{e}</span>
+                    {[
+                        { icon: "💋", label: "KISS", price: "$10" },
+                        { icon: "❤️", label: "LOVE", price: "$20" },
+                        { icon: "🔥", label: "SPICY", price: "$30" },
+                        { icon: "💎", label: "DARK", price: "$40" },
+                    ].map((tip, i) => (
+                        <button
+                            key={i}
+                            className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl border border-primary/15 hover:border-primary/40 transition-all duration-200 hover:scale-105 cursor-pointer"
+                            style={{ background: 'rgba(45, 27, 56, 0.8)' }}
+                        >
+                            <span className="text-base mb-0.5">{tip.icon}</span>
+                            <span className="text-[9px] font-bold tracking-wider text-foreground/90">{tip.label}</span>
+                            <span className="text-[9px] text-muted-foreground">{tip.price}</span>
+                        </button>
                     ))}
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                <span>Current Pot <span className="gold-text font-display font-bold text-base md:text-lg ml-1">$265</span></span>
-                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold tracking-wider">RECEIVED GOAL</span>
-                <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> 41 Fans</span>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-2">
-                {['All', 'Soft', 'Spicy', 'Dirty', 'Dark', 'Forbidden'].map(t => (
-                    <button key={t} onClick={() => handleTierFilter(t)}
-                        className={`px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase transition-all duration-300 ${tierFilter === t || (t === 'All' && tierFilter === '')
-                            ? "gradient-pink border-transparent text-primary-foreground shadow-[0_0_15px_rgba(255,42,109,0.4)] scale-105"
-                            : "bg-secondary border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                            }`}>
-                        {t === 'All' ? '✨ All' : t}
-                    </button>
-                ))}
-            </div>
-
-            <div className="space-y-4 mt-4">
+            {/* Confession grid - 2 columns */}
+            <div className="space-y-0">
                 {loadingWall && (
                     <div className="text-center py-10">
                         <div className="inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -167,17 +141,27 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                         No confessions found.
                     </div>
                 )}
-                {confessions.map((c, i) => (
-                    <ConfessionCard
-                        key={c.id || i}
-                        confession={c}
-                        isUnlocked={myUnlocks.has(c.id)}
-                        setViewConfession={setViewConfession}
-                        setPurchaseConfession={setPurchaseConfession}
-                    />
-                ))}
+                {!loadingWall && confessions.length > 0 && (
+                    <div className="grid grid-cols-2 gap-3">
+                        {confessions.map((c, i) => {
+                            const isUnlocked = myUnlocks.has(c.id);
+                            return isUnlocked ? (
+                                <UnlockedConfessionCard
+                                    key={c.id || i}
+                                    confession={c}
+                                    onClick={setViewConfession}
+                                />
+                            ) : (
+                                <LockedConfessionCard
+                                    key={c.id || i}
+                                    confession={c}
+                                    onUnlock={setPurchaseConfession}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
             </div>
-
         </div>
     );
 };

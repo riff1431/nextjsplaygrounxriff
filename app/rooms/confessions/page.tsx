@@ -530,16 +530,16 @@ export default function ConfessionsRoom() {
     return (
         <ProtectRoute allowedRoles={["fan", "creator"]}>
             <div className="min-h-screen relative text-foreground font-sans selection:bg-primary/30">
-                {/* BACKGROUND */}
-                <div className="fixed inset-0 z-0 bg-background pointer-events-none">
-                    <img src="/confessions/bg-flames.png" alt="" className="w-full h-full object-cover opacity-[0.85] mix-blend-screen" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/60 to-transparent" />
+                {/* BACKGROUND — Vibrant pink flames */}
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <img src="/assets/bg-flames.png" alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-background/40" />
                 </div>
                 <FloatingHearts />
 
                 <div className="relative z-10">
                     {/* Header */}
-                    <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+                    <header className="sticky top-0 z-30 border-b border-border bg-background/60 backdrop-blur-xl">
                         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-3">
                             <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all" onClick={() => router.push("/home")}>
                                 <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>

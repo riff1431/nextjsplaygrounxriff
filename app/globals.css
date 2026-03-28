@@ -89,10 +89,9 @@
   /* Confessions UI */
   .neon-glass-card {
     @apply backdrop-blur-sm border rounded-xl;
-    background: transparent;
-    border-color: hsl(var(--neon-pink-hsl) / 0.9);
-    box-shadow: 0 0 15px hsl(var(--neon-pink-hsl) / 0.1), 0 0 40px hsl(var(--neon-pink-hsl) / 0.18), inset 0 1px 0 hsl(0 0% 100% / 0.18);
-    animation: border-glow 3s ease-in-out infinite alternate;
+    background: hsla(30, 10%, 12%, 0.35);
+    border-color: hsla(40, 25%, 25%, 0.5);
+    box-shadow: 0 0 15px hsla(330, 90%, 55%, 0.1), 0 0 40px hsla(330, 90%, 55%, 0.05);
   }
 
   .glass-card {
@@ -294,18 +293,85 @@
     box-shadow: 0 0 8px hsl(var(--gold) / 0.6);
   }
 
+  /* Confession Wall Card (fan view - locked/unlocked cards) */
+  .confession-wall-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0.75rem;
+    gap: 0.25rem;
+    border-radius: 0.75rem;
+    background: hsla(30, 10%, 10%, 0.3);
+    border: 1px solid hsla(40, 25%, 25%, 0.35);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+  }
+
+  .confession-wall-card:hover {
+    border-color: hsla(330, 80%, 55%, 0.5);
+    background: hsla(30, 10%, 12%, 0.5);
+    box-shadow: 0 4px 20px hsla(330, 80%, 50%, 0.15);
+  }
+
 
 }
 
 @keyframes border-glow {
   0% {
-    box-shadow: 0 0 10px hsl(var(--neon-pink-hsl) / 0.2), 0 0 30px hsl(var(--neon-pink-hsl) / 0.08);
-    border-color: hsl(var(--neon-pink-hsl) / 0.25);
+    box-shadow: 0 0 12px hsla(330, 90%, 55%, 0.2), 0 0 35px hsla(330, 90%, 55%, 0.08);
+    border-color: hsla(330, 90%, 55%, 0.35);
   }
 
   100% {
-    box-shadow: 0 0 20px hsl(var(--neon-pink-hsl) / 0.35), 0 0 50px hsl(var(--neon-pink-hsl) / 0.15);
-    border-color: hsl(var(--neon-pink-hsl) / 0.5);
+    box-shadow: 0 0 25px hsla(330, 90%, 55%, 0.35), 0 0 60px hsla(330, 90%, 55%, 0.15);
+    border-color: hsla(330, 90%, 55%, 0.6);
+  }
+}
+
+/* ── Confessions Animated Background ── */
+.confessions-gradient-layer {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, hsla(330, 85%, 35%, 0.6) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 20%, hsla(280, 70%, 30%, 0.5) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 70% at 50% 50%, hsla(340, 80%, 25%, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 40% at 70% 90%, hsla(310, 75%, 30%, 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 10% 30%, hsla(350, 70%, 28%, 0.45) 0%, transparent 50%);
+  animation: confessions-bg-shift 20s ease-in-out infinite alternate;
+}
+
+@keyframes confessions-bg-shift {
+  0% {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 80%, hsla(330, 85%, 35%, 0.6) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 20%, hsla(280, 70%, 30%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 70% at 50% 50%, hsla(340, 80%, 25%, 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse 90% 40% at 70% 90%, hsla(310, 75%, 30%, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 10% 30%, hsla(350, 70%, 28%, 0.45) 0%, transparent 50%);
+  }
+  33% {
+    background:
+      radial-gradient(ellipse 70% 70% at 35% 70%, hsla(340, 80%, 38%, 0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 40% at 65% 35%, hsla(290, 65%, 32%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 80% at 80% 60%, hsla(320, 75%, 28%, 0.45) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 50% at 15% 85%, hsla(335, 80%, 32%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 40% at 50% 15%, hsla(300, 60%, 25%, 0.4) 0%, transparent 50%);
+  }
+  66% {
+    background:
+      radial-gradient(ellipse 60% 80% at 75% 75%, hsla(325, 80%, 32%, 0.6) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 25% 40%, hsla(310, 70%, 35%, 0.45) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 60% at 60% 25%, hsla(280, 65%, 28%, 0.5) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 40% 90%, hsla(345, 75%, 30%, 0.55) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 40% at 90% 50%, hsla(300, 70%, 26%, 0.4) 0%, transparent 50%);
+  }
+  100% {
+    background:
+      radial-gradient(ellipse 90% 50% at 45% 65%, hsla(335, 85%, 36%, 0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 90% 30%, hsla(295, 70%, 30%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 20% 50%, hsla(330, 80%, 30%, 0.45) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 60% at 55% 85%, hsla(315, 75%, 35%, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 70% at 70% 10%, hsla(285, 60%, 28%, 0.4) 0%, transparent 50%);
   }
 }
 
