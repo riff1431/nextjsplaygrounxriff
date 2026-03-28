@@ -9,12 +9,15 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
 
     const logoSrc = theme?.logoUrl || "/logo.png";
 
+    const logoHeight = theme?.logoSize || 36;
+
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>
             <img
                 src={logoSrc}
                 alt={theme?.siteName || "PlayGroundX"}
-                className="h-9 w-auto object-contain"
+                className="w-auto object-contain"
+                style={{ height: `${logoHeight}px` }}
             />
 
             {/* {showBadge && (

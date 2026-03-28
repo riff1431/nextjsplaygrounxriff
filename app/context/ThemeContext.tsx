@@ -8,6 +8,7 @@ interface ThemeSettings {
     logoUrl: string | null;
     faviconUrl: string | null;
     primaryColor: string;
+    logoSize: number;
 }
 
 const DEFAULT_THEME: ThemeSettings = {
@@ -15,6 +16,7 @@ const DEFAULT_THEME: ThemeSettings = {
     logoUrl: null,
     faviconUrl: null,
     primaryColor: "#ec4899", // pink-500
+    logoSize: 36, // default logo height in px
 };
 
 interface ThemeContextType {
@@ -69,7 +71,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                     logoUrl: val.logoUrl || val.logo_url || null,
                     faviconUrl: val.faviconUrl || val.favicon_url || null,
                     siteName: val.siteName || val.site_name || DEFAULT_THEME.siteName,
-                    primaryColor: val.primaryColor || val.primary_color || DEFAULT_THEME.primaryColor
+                    primaryColor: val.primaryColor || val.primary_color || DEFAULT_THEME.primaryColor,
+                    logoSize: val.logoSize || val.logo_size || DEFAULT_THEME.logoSize,
                 };
                 setTheme(normalized);
             }
