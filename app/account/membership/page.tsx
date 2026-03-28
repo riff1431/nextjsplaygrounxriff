@@ -375,7 +375,7 @@ export default function MembershipPage() {
                             <p className="text-gray-400 text-sm mt-2">Express your style with a premium identity badge</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
                             {accountTypes.map((type) => {
                                 const isCurrent = currentAccountTypeId === type.id;
                                 const isSelected = selectedAccountType?.id === type.id;
@@ -384,71 +384,84 @@ export default function MembershipPage() {
                                     <button
                                         key={type.id}
                                         onClick={() => handleSelectAccountType(type)}
-                                        className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left ${isSelected
-                                            ? "border-pink-500 bg-gradient-to-br from-pink-500/10 to-purple-500/10 scale-[1.02] shadow-lg shadow-pink-500/25"
+                                        disabled={isCurrent}
+                                        className={`relative p-8 rounded-[2rem] border-2 transition-all duration-500 flex flex-col items-center text-center group ${isSelected
+                                            ? "border-pink-500 bg-gradient-to-br from-pink-500/15 to-purple-500/15 scale-[1.03] shadow-2xl shadow-pink-500/20 z-10"
                                             : isCurrent
-                                                ? "border-green-500/50 bg-green-500/5"
-                                                : "border-white/10 bg-black/40 hover:border-white/20"
+                                                ? "border-green-500/40 bg-gradient-to-b from-green-500/10 to-transparent cursor-default ring-1 ring-inset ring-green-500/20"
+                                                : "border-white/10 bg-black/40 hover:border-white/30 hover:bg-white/[0.04] hover:-translate-y-1 hover:shadow-2xl hover:shadow-white/5"
                                             }`}
                                     >
+                                        {/* Background Glow Effect on Hover */}
+                                        <div 
+                                            className={`absolute inset-0 opacity-0 transition-opacity duration-500 rounded-[2rem] pointer-events-none ${!isCurrent && !isSelected ? "group-hover:opacity-100" : ""}`}
+                                            style={{ background: `radial-gradient(circle at center, ${type.badge_color}10 0%, transparent 70%)` }}
+                                        />
+
                                         {isCurrent && (
-                                            <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
-                                                <Check className="w-3 h-3" />
+                                            <div className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-xs font-bold ring-1 ring-green-500/40 shadow-lg backdrop-blur-md z-20">
+                                                <Check className="w-3.5 h-3.5" />
                                                 Active
                                             </div>
                                         )}
 
                                         {isSelected && !isCurrent && (
-                                            <div className="absolute top-4 right-4 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                                            <div className="absolute top-5 right-5 w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(236,72,153,0.5)] transform transition-transform scale-110 z-20 ring-2 ring-black">
                                                 <Check className="w-4 h-4 text-white" />
                                             </div>
                                         )}
 
                                         {/* Badge Icon */}
                                         <div
-                                            className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 overflow-hidden relative"
-                                            style={{ backgroundColor: `${type.badge_color}20` }}
+                                            className={`w-28 h-28 rounded-[1.5rem] flex items-center justify-center text-6xl mb-6 overflow-hidden relative shadow-xl border border-white/10 transition-transform duration-500 z-10 ${!isCurrent && "group-hover:scale-110"}`}
+                                            style={{ backgroundColor: `${type.badge_color}15` }}
                                         >
-                                            {type.badge_icon_url ? (
-                                                <img
-                                                    src={type.badge_icon_url}
-                                                    alt={type.display_name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            ) : (
-                                                type.badge_icon || "✨"
-                                            )}
+                                            <div className="absolute inset-0 opacity-60" style={{ background: `radial-gradient(circle at top left, ${type.badge_color}40 0%, transparent 60%)` }} />
+                                            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent z-0 pointer-events-none" />
+                                            <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
+                                                {type.badge_icon_url ? (
+                                                    <img
+                                                        src={type.badge_icon_url}
+                                                        alt={type.display_name}
+                                                        className="w-full h-full object-contain drop-shadow-2xl"
+                                                    />
+                                                ) : (
+                                                    <span className="drop-shadow-2xl">{type.badge_icon || "✨"}</span>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Display Name */}
                                         <div
-                                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold mb-3"
+                                            className="relative z-10 inline-flex items-center gap-2 px-6 py-2 rounded-full text-base font-extrabold tracking-wide mb-5"
                                             style={{
                                                 backgroundColor: `${type.badge_color}15`,
                                                 color: type.badge_color,
                                                 border: `1px solid ${type.badge_color}40`,
+                                                boxShadow: `0 0 20px ${type.badge_color}20`
                                             }}
                                         >
-                                            {/* Small preview of icon if it's an emoji/text, else just name */}
                                             {!type.badge_icon_url && <span>{type.badge_icon}</span>}
                                             {type.display_name}
                                         </div>
 
                                         {/* Price */}
-                                        <div className="mb-3">
+                                        <div className="relative z-10 mb-4 transition-transform duration-300 transform group-hover:scale-105">
                                             {type.price === 0 ? (
-                                                <span className="text-xl font-bold text-green-400">Free</span>
+                                                <span className="text-4xl font-black text-green-400 drop-shadow-md">Free</span>
                                             ) : (
-                                                <div className="flex items-baseline gap-1">
-                                                    <span className="text-xl font-bold text-white">${type.price}</span>
-                                                    <span className="text-gray-400 text-sm">/month</span>
+                                                <div className="flex items-baseline gap-1 justify-center">
+                                                    <span className="text-5xl font-black text-white drop-shadow-md">${type.price}</span>
+                                                    <span className="text-gray-400 text-base font-bold uppercase tracking-wider">/mo</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Description */}
                                         {type.description && (
-                                            <p className="text-gray-400 text-sm">{type.description}</p>
+                                            <p className="relative z-10 text-gray-400 text-sm leading-relaxed max-w-[85%] font-medium">
+                                                {type.description}
+                                            </p>
                                         )}
                                     </button>
                                 );

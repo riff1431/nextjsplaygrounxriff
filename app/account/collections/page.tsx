@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { Star, Filter, Heart, Lock, Play, Image as ImageIcon, Video, LayoutGrid, X, ChevronDown } from "lucide-react";
+import { Star, Filter, Heart, Lock, Play, Image as ImageIcon, Video, LayoutGrid, X, ChevronDown, ArrowLeft } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { Post } from "@/components/posts/PostCard";
 import PostCard from "@/components/posts/PostCard";
@@ -105,10 +105,18 @@ export default function CollectionXPage() {
         <div className="min-h-screen bg-black text-white p-6 pb-20 lg:pb-6">
             <div className="max-w-6xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold flex items-center gap-3">
-                        <Star className="w-6 h-6 text-yellow-400" />
-                        CollectionX
-                    </h1>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-2xl font-bold flex items-center gap-3">
+                            <Star className="w-6 h-6 text-yellow-400" />
+                            CollectionX
+                        </h1>
+                    </div>
 
                     {/* Filter Dropdown */}
                     <div className="relative" ref={filterRef}>
