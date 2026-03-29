@@ -524,6 +524,9 @@ function HomeScreen({
                                     <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
                                     Competition
                                 </span>
+                                <span className="relative z-10 text-[8px] px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-400/40 text-yellow-300 font-bold uppercase tracking-wider animate-pulse drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]">
+                                    Coming Soon
+                                </span>
 
                                 {/* Subtle internal glow */}
                                 <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
@@ -713,7 +716,8 @@ export default function Home() {
     const [posts, setPosts] = useState<Post[]>([]);
 
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null, fan_membership_id?: string | null } | null>(null);
-    const [userAccountType, setUserAccountType] = useState<{ display_name: string, badge_icon: string, badge_color: string } | null>(null);
+    const [userAccountType, setUserAccountType] = useState<{ display_name: string, badge_icon: string, badge_color: string, badge_icon_url?: string | null } | null>(null);
+    const [membershipPlan, setMembershipPlan] = useState<{ display_name: string, badge_color: string, name: string } | null>(null);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
@@ -827,35 +831,51 @@ export default function Home() {
         const fetchUserData = async () => {
             if (!user) return;
             try {
-                // Profile with account type
-                const { data: profileData } = await supabase
+                // Fetch profile data (without account_types join to avoid PGRST201 ambiguous FK error)
+                const { data: profileData, error: profileError } = await supabase
                     .from('profiles')
-                    .select('username, full_name, avatar_url, fan_membership_id, account_types(display_name, badge_icon, badge_color)')
+                    .select('username, full_name, avatar_url, fan_membership_id, account_type_id')
                     .eq('id', user.id)
                     .single();
+
+                if (profileError) {
+                    console.error("[Home] Profile fetch error:", profileError);
+                }
 
                 if (profileData) {
                     setCurrentProfile(profileData);
 
-                    // Set account type if exists
-                    if (profileData.account_types) {
-                        // Cast to handle potential array or object return although single is expected for many-to-one
-                        const at = Array.isArray(profileData.account_types) ? profileData.account_types[0] : profileData.account_types;
-                        setUserAccountType(at as any);
+                    // Fetch account type separately using account_type_id
+                    if ((profileData as any).account_type_id) {
+                        const { data: atData, error: atError } = await supabase
+                            .from('account_types')
+                            .select('display_name, badge_icon, badge_color, badge_icon_url')
+                            .eq('id', (profileData as any).account_type_id)
+                            .single();
+                        if (atError) {
+                            console.error("[Home] Account type fetch error:", atError);
+                        }
+                        if (atData && atData.display_name) {
+                            setUserAccountType(atData as any);
+                        }
                     }
 
                     // Fetch membership tier if exists
                     if (profileData.fan_membership_id) {
-                        const { data: planData } = await supabase
+                        const { data: planData, error: planError } = await supabase
                             .from('fan_membership_plans')
-                            .select('name')
+                            .select('name, display_name, badge_color')
                             .eq('id', profileData.fan_membership_id)
                             .single();
 
+                        if (planError) {
+                            console.error("[Home] Membership plan fetch error:", planError);
+                        }
+
                         if (planData?.name) {
-                            // Convert DB plan name (e.g. "gold") to BadgeTier (e.g. "Gold")
                             const tierName = planData.name.charAt(0).toUpperCase() + planData.name.slice(1).toLowerCase();
                             setFanTier(tierName as BadgeTier);
+                            setMembershipPlan(planData as any);
                         }
                     }
                 }
@@ -1017,36 +1037,51 @@ export default function Home() {
                             <span className="font-semibold neon-write-stroke">{firstName}</span>
                         </div>
 
+                        {/* Membership Plan Badge */}
                         {showTierBadge && (
-                            <span
+                            <button
+                                onClick={() => router.push('/account/membership')}
                                 className={cx(
-                                    "inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[10px] border",
-                                    fanTierClasses(fanTier),
-                                    fanTierBg(fanTier),
+                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border cursor-pointer",
+                                    "transition-all duration-300 hover:scale-105",
+                                    membershipPlan
+                                        ? ""
+                                        : cx(fanTierClasses(fanTier), fanTierBg(fanTier)),
                                     "vip-glow"
                                 )}
-                                title="Membership tier"
+                                style={membershipPlan ? {
+                                    backgroundColor: `${membershipPlan.badge_color}20`,
+                                    color: membershipPlan.badge_color,
+                                    borderColor: `${membershipPlan.badge_color}50`,
+                                    boxShadow: `0 0 14px ${membershipPlan.badge_color}40, 0 0 40px ${membershipPlan.badge_color}15`
+                                } : undefined}
+                                title={`Membership: ${membershipPlan?.display_name || tierLabel}`}
                             >
                                 <Crown className="w-3 h-3" />
-                                {tierLabel}
-                            </span>
+                                {membershipPlan?.display_name || tierLabel}
+                            </button>
                         )}
 
                         {/* Account Type Badge */}
                         {userAccountType && (
-                            <span
-                                className="inline-flex items-center gap-1 px-2 py-[2px] rounded-full text-[10px] border font-medium"
+                            <button
+                                onClick={() => router.push('/account/membership')}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border cursor-pointer transition-all duration-300 hover:scale-105"
                                 style={{
                                     backgroundColor: `${userAccountType.badge_color || '#ec4899'}20`,
                                     color: userAccountType.badge_color || '#ec4899',
-                                    borderColor: `${userAccountType.badge_color || '#ec4899'}40`,
-                                    boxShadow: `0 0 10px ${userAccountType.badge_color || '#ec4899'}30`
+                                    borderColor: `${userAccountType.badge_color || '#ec4899'}50`,
+                                    boxShadow: `0 0 14px ${userAccountType.badge_color || '#ec4899'}40, 0 0 40px ${userAccountType.badge_color || '#ec4899'}15`
                                 }}
-                                title="Account Type"
+                                title={`Account Type: ${userAccountType.display_name}`}
                             >
-                                <span>{userAccountType.badge_icon || '✨'}</span>
+                                {userAccountType.badge_icon_url ? (
+                                    <img src={userAccountType.badge_icon_url} alt="" className="w-4 h-4 object-contain" />
+                                ) : (
+                                    <span className="text-xs">{userAccountType.badge_icon || '✨'}</span>
+                                )}
                                 {userAccountType.display_name}
-                            </span>
+                            </button>
                         )}
                     </div>
                 </div>
