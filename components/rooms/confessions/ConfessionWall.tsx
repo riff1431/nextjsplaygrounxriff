@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface CreatorInfo {
     id: string;
@@ -123,6 +124,27 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                         </button>
                     ))}
                 </div>
+            </div>
+
+            {/* Filter System */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 pb-4">
+                {['All', 'Soft', 'Juicy', 'Spicy', 'Dark'].map((tier) => {
+                    const isActive = tierFilter === tier;
+                    return (
+                        <button
+                            key={tier}
+                            onClick={() => handleTierFilter(tier)}
+                            className={cn(
+                                "px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border backdrop-blur-md",
+                                isActive
+                                    ? "bg-gradient-to-r from-rose-600 to-pink-500 text-white border-transparent shadow-[0_4px_20px_rgba(225,29,72,0.4)] scale-105"
+                                    : "bg-black/40 text-rose-100/70 border-white/5 hover:border-rose-500/50 hover:text-white hover:bg-rose-950/40"
+                            )}
+                        >
+                            {tier}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Confession grid - 2 columns */}
