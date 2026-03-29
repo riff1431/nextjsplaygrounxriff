@@ -23,6 +23,7 @@ import {
     Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
 
 interface Session {
     id: string;
@@ -67,6 +68,8 @@ export default function TruthOrDareSessionsBrowse() {
     const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    const [showEntryInfo, setShowEntryInfo] = useState(false);
+    const [pendingSession, setPendingSession] = useState<Session | null>(null);
 
     useEffect(() => {
         async function getUser() {
@@ -152,6 +155,20 @@ export default function TruthOrDareSessionsBrowse() {
         } finally {
             setJoiningSessionId(null);
         }
+    }
+
+    /* ── Entry Info Intercept ── */
+    function interceptJoin(session: Session) {
+        if (session.user_joined) {
+            handleJoin(session);
+            return;
+        }
+        if (isRoomEntryDismissed("truth-or-dare")) {
+            handleJoin(session);
+            return;
+        }
+        setPendingSession(session);
+        setShowEntryInfo(true);
     }
 
     const filteredSessions = searchQuery
@@ -480,7 +497,7 @@ export default function TruthOrDareSessionsBrowse() {
                                         cursor: "pointer",
                                         animation: `todCardEntry 0.5s ease-out ${i * 0.08}s both`,
                                     }}
-                                    onClick={() => session.user_joined ? handleJoin(session) : undefined}
+                                    onClick={() => session.user_joined ? interceptJoin(session) : undefined}
                                 >
                                     {/* Cyberpunk Glow effect on hover */}
                                     {isHovered && (
@@ -687,7 +704,7 @@ export default function TruthOrDareSessionsBrowse() {
                                     <div style={{ padding: "0 12px 12px" }}>
                                         {session.user_joined ? (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
+                                                onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
                                                 style={{
                                                     width: "100%", padding: "9px",
                                                     borderRadius: "10px", border: "1px solid rgba(236,72,153,0.5)",
@@ -737,7 +754,7 @@ export default function TruthOrDareSessionsBrowse() {
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
+                                                onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
                                                 disabled={joiningSessionId === session.id}
                                                 style={{
                                                     width: "100%", padding: "9px",
@@ -833,6 +850,24 @@ export default function TruthOrDareSessionsBrowse() {
                     to { transform: rotate(360deg); }
                 }
             `}</style>
+
+            {/* ── Room Entry Info Modal ── */}
+            <RoomEntryInfoModal
+                isOpen={showEntryInfo}
+                onClose={() => { setShowEntryInfo(false); setPendingSession(null); }}
+                onEnter={() => {
+                    setShowEntryInfo(false);
+                    if (pendingSession) {
+                        handleJoin(pendingSession);
+                        setPendingSession(null);
+                    }
+                }}
+                roomType="truth-or-dare"
+                roomLabel="Truth or Dare"
+                roomEmoji="🎭"
+                accentHsl="330, 85%, 55%"
+                accentHslSecondary="280, 80%, 55%"
+            />
         </div>
     );
 }

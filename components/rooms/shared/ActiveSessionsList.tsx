@@ -1,12 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRoomSession } from "@/hooks/useRoomSession";
 import { Users, Lock, Globe, Eye, Loader2 } from "lucide-react";
+import RoomEntryInfoModal, { isRoomEntryDismissed } from "./RoomEntryInfoModal";
 
 interface ActiveSessionsListProps {
     roomType: string;
     roomDisplayName?: string;
+    roomLabel?: string;
+    roomEmoji?: string;
+    accentHsl?: string;
+    accentHslSecondary?: string;
     onJoinSession?: (session: any) => void;
     onRequestJoin?: (session: any) => void;
 }
@@ -18,10 +23,28 @@ interface ActiveSessionsListProps {
 export default function ActiveSessionsList({
     roomType,
     roomDisplayName,
+    roomLabel,
+    roomEmoji,
+    accentHsl,
+    accentHslSecondary,
     onJoinSession,
     onRequestJoin,
 }: ActiveSessionsListProps) {
     const { sessions, isLoading, error, refresh } = useRoomSession({ roomType, status: "active" });
+    const [showEntryInfo, setShowEntryInfo] = useState(false);
+    const [pendingSession, setPendingSession] = useState<any>(null);
+    const [pendingAction, setPendingAction] = useState<"join" | "request">("join");
+
+    function interceptAction(session: any, action: "join" | "request") {
+        if (isRoomEntryDismissed(roomType)) {
+            if (action === "join") onJoinSession?.(session);
+            else onRequestJoin?.(session);
+            return;
+        }
+        setPendingSession(session);
+        setPendingAction(action);
+        setShowEntryInfo(true);
+    }
 
     if (isLoading) {
         return (
@@ -66,6 +89,7 @@ export default function ActiveSessionsList({
     }
 
     return (
+        <>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
             {sessions.map((session) => (
                 <div
@@ -150,7 +174,7 @@ export default function ActiveSessionsList({
                     {/* Action button */}
                     {session.session_type === "public" ? (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onJoinSession?.(session); }}
+                            onClick={(e) => { e.stopPropagation(); interceptAction(session, "join"); }}
                             style={{
                                 width: "100%",
                                 padding: "10px",
@@ -168,7 +192,7 @@ export default function ActiveSessionsList({
                         </button>
                     ) : (
                         <button
-                            onClick={(e) => { e.stopPropagation(); onRequestJoin?.(session); }}
+                            onClick={(e) => { e.stopPropagation(); interceptAction(session, "request"); }}
                             style={{
                                 width: "100%",
                                 padding: "10px",
@@ -189,5 +213,25 @@ export default function ActiveSessionsList({
                 </div>
             ))}
         </div>
+
+        {/* Room Entry Info Modal */}
+        <RoomEntryInfoModal
+            isOpen={showEntryInfo}
+            onClose={() => { setShowEntryInfo(false); setPendingSession(null); }}
+            onEnter={() => {
+                setShowEntryInfo(false);
+                if (pendingSession) {
+                    if (pendingAction === "join") onJoinSession?.(pendingSession);
+                    else onRequestJoin?.(pendingSession);
+                    setPendingSession(null);
+                }
+            }}
+            roomType={roomType}
+            roomLabel={roomLabel || roomDisplayName || roomType}
+            roomEmoji={roomEmoji}
+            accentHsl={accentHsl || "280, 80%, 60%"}
+            accentHslSecondary={accentHslSecondary}
+        />
+        </>
     );
 }

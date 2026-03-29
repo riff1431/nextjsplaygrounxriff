@@ -9,6 +9,7 @@ import {
     RefreshCw, Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import RoomEntryInfoModal, { isRoomEntryDismissed } from "./RoomEntryInfoModal";
 
 /* ─────────── Types ─────────── */
 interface Session {
@@ -78,6 +79,8 @@ export default function RoomSessionsBrowse({
     const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+    const [showEntryInfo, setShowEntryInfo] = useState(false);
+    const [pendingSession, setPendingSession] = useState<Session | null>(null);
 
     /* ── Auth ── */
     useEffect(() => {
@@ -164,6 +167,23 @@ export default function RoomSessionsBrowse({
         } finally {
             setJoiningSessionId(null);
         }
+    }
+
+    /* ── Entry Info Intercept ── */
+    function interceptJoin(session: Session) {
+        // Already joined → go directly
+        if (session.user_joined) {
+            handleJoin(session);
+            return;
+        }
+        // Check if dismissed
+        if (isRoomEntryDismissed(roomType)) {
+            handleJoin(session);
+            return;
+        }
+        // Show entry info modal
+        setPendingSession(session);
+        setShowEntryInfo(true);
     }
 
     /* ── Filter ── */
@@ -406,7 +426,7 @@ export default function RoomSessionsBrowse({
                                         boxShadow: isHovered ? `0 20px 60px hsla(${accentHsl}, 0.15)` : "0 4px 20px rgba(0,0,0,0.3)",
                                         cursor: "pointer",
                                     }}
-                                    onClick={() => session.user_joined ? handleJoin(session) : undefined}
+                                    onClick={() => session.user_joined ? interceptJoin(session) : undefined}
                                 >
                                     {/* Glow line on hover */}
                                     {isHovered && (
@@ -482,7 +502,7 @@ export default function RoomSessionsBrowse({
                                     <div style={{ padding: "0 12px 12px" }}>
                                         {session.user_joined ? (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
+                                                onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
                                                 style={{ width: "100%", padding: "9px", borderRadius: "10px", border: `1px solid ${accentBorder}`, background: accentGradient, color: "#fff", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: accentGlow, letterSpacing: "0.5px", textTransform: "uppercase" }}
                                             >
                                                 <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room
@@ -497,7 +517,7 @@ export default function RoomSessionsBrowse({
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); handleJoin(session); }}
+                                                onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
                                                 disabled={joiningSessionId === session.id}
                                                 style={{
                                                     width: "100%", padding: "9px", borderRadius: "10px",
@@ -539,6 +559,27 @@ export default function RoomSessionsBrowse({
                 @keyframes todPulsePink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 @keyframes todCardEntry { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
+
+            {/* ── Room Entry Info Modal ── */}
+            <RoomEntryInfoModal
+                isOpen={showEntryInfo}
+                onClose={() => { setShowEntryInfo(false); setPendingSession(null); }}
+                onEnter={() => {
+                    setShowEntryInfo(false);
+                    if (pendingSession) {
+                        handleJoin(pendingSession);
+                        setPendingSession(null);
+                    }
+                }}
+                roomType={roomType}
+                roomLabel={roomLabel}
+                roomEmoji={roomEmoji}
+                accentHsl={accentHsl}
+                accentHslSecondary={accentHslSecondary}
+            />
+
+            <style jsx global>{`
             `}</style>
         </div>
     );

@@ -74,6 +74,8 @@ export async function PUT(request: NextRequest) {
             "public_entry_fee", "min_private_entry_fee",
             "public_sessions_enabled", "private_sessions_enabled",
             "tips_enabled", "custom_requests_enabled", "sort_order",
+            "entry_info_section1", "entry_info_section2",
+            "entry_info_section3", "entry_info_pro_tip",
         ];
 
         const filteredUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
