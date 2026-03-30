@@ -293,17 +293,16 @@ export default function FanConfessionsBrowsePage() {
 
                 {/* ── BG ─────────────────────────────────────────────── */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                    {/* Deep rose gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0a0005] via-[#110008] to-[#0a0010]" />
-                    {/* Ambient glows */}
-                    <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-rose-900/20 blur-[120px]" />
-                    <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-purple-900/15 blur-[100px]" />
-                    <div className="absolute bottom-0 left-1/3 w-[500px] h-[300px] rounded-full bg-rose-950/25 blur-[90px]" />
-                    {/* Subtle grid overlay */}
-                    <div className="absolute inset-0 opacity-[0.03]" style={{
-                        backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-                        backgroundSize: "40px 40px"
+                    {/* Flames background image */}
+                    <div className="absolute inset-0 bg-cover bg-center bg-fixed" style={{
+                        backgroundImage: "url('/assets/bg-flames.png')"
                     }} />
+                    {/* Dark overlay for readability */}
+                    <div className="absolute inset-0 bg-black/50" />
+                    {/* Ambient glows */}
+                    <div className="absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full bg-rose-900/15 blur-[120px]" />
+                    <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-purple-900/10 blur-[100px]" />
+                    <div className="absolute bottom-0 left-1/3 w-[500px] h-[300px] rounded-full bg-rose-950/15 blur-[90px]" />
                 </div>
 
                 <div className="relative z-10">
