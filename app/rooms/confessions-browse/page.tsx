@@ -11,7 +11,7 @@ import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
-import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
+
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface ActiveConfession {
@@ -185,7 +185,7 @@ export default function FanConfessionsBrowsePage() {
     const [unlockTarget, setUnlockTarget] = useState<ActiveConfession | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
     const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
-    const [showEntryInfo, setShowEntryInfo] = useState(false);
+
 
     /* Fetch confessions */
     const fetchConfessions = useCallback(async (q: string, t: string) => {
@@ -358,13 +358,7 @@ export default function FanConfessionsBrowsePage() {
                                 Join a live creator session and send your private confession directly.
                             </p>
                             <button
-                                onClick={() => {
-                                    if (isRoomEntryDismissed("confessions")) {
-                                        router.push("/rooms/confessions-sessions");
-                                    } else {
-                                        setShowEntryInfo(true);
-                                    }
-                                }}
+                                onClick={() => router.push("/rooms/confessions-sessions")}
                                 className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:brightness-110 text-white font-bold px-6 py-3 rounded-2xl border border-rose-500/30 shadow-[0_4px_20px_rgba(225,29,72,0.3)] hover:shadow-[0_6px_28px_rgba(225,29,72,0.45)] transition"
                             >
                                 <Heart className="w-4 h-4" />
@@ -504,20 +498,7 @@ export default function FanConfessionsBrowsePage() {
                     onConfirm={handleUnlockConfirm}
                 />
 
-                {/* Room Entry Info Modal */}
-                <RoomEntryInfoModal
-                    isOpen={showEntryInfo}
-                    onClose={() => setShowEntryInfo(false)}
-                    onEnter={() => {
-                        setShowEntryInfo(false);
-                        router.push("/rooms/confessions-sessions");
-                    }}
-                    roomType="confessions"
-                    roomLabel="Confessions X"
-                    roomEmoji="💜"
-                    accentHsl="330, 85%, 55%"
-                    accentHslSecondary="280, 80%, 55%"
-                />
+
             </div>
         </ProtectRoute>
     );

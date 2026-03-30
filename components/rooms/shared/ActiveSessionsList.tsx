@@ -231,6 +231,9 @@ export default function ActiveSessionsList({
             roomEmoji={roomEmoji}
             accentHsl={accentHsl || "280, 80%, 60%"}
             accentHslSecondary={accentHslSecondary}
+            sessionTitle={pendingSession?.title}
+            sessionDescription={pendingSession?.description || undefined}
+            sessionType={pendingSession?.session_type === "private" ? "private" : "public"}
         />
         </>
     );

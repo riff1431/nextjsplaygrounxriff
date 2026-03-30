@@ -867,6 +867,9 @@ export default function TruthOrDareSessionsBrowse() {
                 roomEmoji="🎭"
                 accentHsl="330, 85%, 55%"
                 accentHslSecondary="280, 80%, 55%"
+                sessionTitle={pendingSession?.title}
+                sessionDescription={pendingSession?.description || undefined}
+                sessionType={pendingSession?.is_private ? "private" : "public"}
             />
         </div>
     );

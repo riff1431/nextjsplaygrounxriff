@@ -29,6 +29,10 @@ interface RoomEntryInfoModalProps {
     roomEmoji?: string;
     accentHsl: string;           // e.g. "330, 85%, 55%"
     accentHslSecondary?: string;
+    /* ── Dynamic session props ── */
+    sessionTitle?: string;
+    sessionDescription?: string;
+    sessionType?: string;        // "public" | "private"
 }
 
 /* ── Room theme presets ───────────────────────────────── */
@@ -119,6 +123,9 @@ export default function RoomEntryInfoModal({
     roomEmoji,
     accentHsl,
     accentHslSecondary,
+    sessionTitle,
+    sessionDescription,
+    sessionType,
 }: RoomEntryInfoModalProps) {
     const [section1, setSection1] = useState<InfoSection | null>(null);
     const [section2, setSection2] = useState<InfoSection | null>(null);
@@ -335,9 +342,72 @@ export default function RoomEntryInfoModal({
                                 LIVE NOW!
                             </span>
                         </div>
-                        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: 0 }}>
-                            Share and unlock secrets anonymously!
-                        </p>
+
+                        {/* ── Dynamic Session Details ── */}
+                        {sessionTitle && (
+                            <div style={{
+                                marginTop: "10px",
+                                padding: "10px 16px",
+                                borderRadius: "12px",
+                                background: `hsla(${accent}, 0.08)`,
+                                border: `1px solid hsla(${accent}, 0.15)`,
+                                textAlign: "left",
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: sessionDescription ? "6px" : "0" }}>
+                                    <span style={{
+                                        fontSize: "14px",
+                                        fontWeight: 700,
+                                        color: "#fff",
+                                        flex: 1,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap" as const,
+                                    }}>
+                                        {sessionTitle}
+                                    </span>
+                                    {sessionType && (
+                                        <span style={{
+                                            padding: "2px 8px",
+                                            borderRadius: "6px",
+                                            background: sessionType === "private"
+                                                ? "rgba(168,85,247,0.2)"
+                                                : `hsla(${accent}, 0.15)`,
+                                            border: `1px solid ${sessionType === "private"
+                                                ? "rgba(168,85,247,0.35)"
+                                                : `hsla(${accent}, 0.25)`}`,
+                                            fontSize: "9px",
+                                            fontWeight: 700,
+                                            color: sessionType === "private" ? "#c084fc" : accentColor,
+                                            textTransform: "uppercase" as const,
+                                            letterSpacing: "0.5px",
+                                            flexShrink: 0,
+                                        }}>
+                                            {sessionType === "private" ? "🔒 Private" : "🌐 Public"}
+                                        </span>
+                                    )}
+                                </div>
+                                {sessionDescription && (
+                                    <p style={{
+                                        fontSize: "12px",
+                                        color: "rgba(255,255,255,0.5)",
+                                        margin: 0,
+                                        lineHeight: 1.4,
+                                        overflow: "hidden",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical" as const,
+                                    }}>
+                                        {sessionDescription}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {!sessionTitle && (
+                            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: "4px 0 0" }}>
+                                Share and unlock secrets anonymously!
+                            </p>
+                        )}
                     </div>
 
                     {loading ? (

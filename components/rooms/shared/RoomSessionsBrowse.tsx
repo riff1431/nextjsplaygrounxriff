@@ -595,6 +595,9 @@ export default function RoomSessionsBrowse({
                 roomEmoji={roomEmoji}
                 accentHsl={accentHsl}
                 accentHslSecondary={accentHslSecondary}
+                sessionTitle={pendingSession?.title}
+                sessionDescription={pendingSession?.description || undefined}
+                sessionType={pendingSession?.is_private ? "private" : "public"}
             />
 
             <style jsx global>{`
