@@ -284,7 +284,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                     <Button
                                         onClick={() => {
                                             if (isSubscribed) {
-                                                router.push('/account/subscription');
+                                                router.push('/account/membership');
                                             } else if ((profile.subscription_price_weekly || 0) > 0 || (profile.subscription_price_monthly || 0) > 0) {
                                                 setIsSubscriptionModalOpen(true);
                                             } else {
@@ -361,7 +361,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                             {/* Membership Button — visible only for fan owners */}
                             {isOwner && profile.role !== 'creator' && (
                                 <Button
-                                    onClick={() => router.push('/account/subscription')}
+                                    onClick={() => router.push('/account/membership')}
                                     className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(147,51,234,0.35)] border border-purple-400/20 font-semibold transition-all"
                                     title="Manage your membership"
                                 >

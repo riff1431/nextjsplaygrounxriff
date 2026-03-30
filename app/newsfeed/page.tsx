@@ -496,7 +496,7 @@ export default function NewsFeedPage() {
                                             <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
                                                 <User className="w-4 h-4" /> My Profile
                                             </button>
-                                            <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/subscription")}>
+                                            <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/membership")}>
                                                 <Star className="w-4 h-4" /> My Subscription
                                             </button>
                                             <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start font-semibold ring-1 ring-sky-400/30" onClick={() => router.push("/newsfeed")}>
