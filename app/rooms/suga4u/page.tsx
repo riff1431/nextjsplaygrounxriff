@@ -95,7 +95,7 @@ const Suga4URoom = () => {
                                 Invite
                             </button>
                         </div>
-                        <UserProfile name={hostName} />
+                        <UserProfile name={hostName} avatarUrl={hostAvatar} />
                     </header>
 
                     {/* Main Layout matching wireframe */}

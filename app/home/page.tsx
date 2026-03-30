@@ -339,12 +339,12 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             <div className="relative p-3 flex flex-col z-10">
                 {/* Row: Avatar + name + level */}
                 <div className="flex items-center justify-between gap-2 min-h-[22px]">
-                    <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="flex items-center gap-3 overflow-hidden">
                         {creator.avatar_url ? (
-                            <img src={creator.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-white/30 object-cover shrink-0" />
+                            <img src={creator.avatar_url} alt="" className="w-16 h-16 rounded-full border-2 border-white/30 object-cover shrink-0" />
                         ) : (
-                            <div className="w-10 h-10 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
-                                <User className="w-5 h-5 text-pink-300" />
+                            <div className="w-16 h-16 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
+                                <User className="w-8 h-8 text-pink-300" />
                             </div>
                         )}
                         <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
@@ -1037,13 +1037,13 @@ export default function Home() {
                             <span className="font-semibold neon-write-stroke">{firstName}</span>
                         </div>
 
-                        {/* Membership Plan Badge */}
+                        {/* Membership Plan Badge - Icon Only */}
                         {showTierBadge && (
                             <button
                                 onClick={() => router.push('/account/membership')}
                                 className={cx(
-                                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border cursor-pointer",
-                                    "transition-all duration-300 hover:scale-105",
+                                    "inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer",
+                                    "transition-all duration-300 hover:scale-110",
                                     membershipPlan
                                         ? ""
                                         : cx(fanTierClasses(fanTier), fanTierBg(fanTier)),
@@ -1057,30 +1057,27 @@ export default function Home() {
                                 } : undefined}
                                 title={`Membership: ${membershipPlan?.display_name || tierLabel}`}
                             >
-                                <Crown className="w-3 h-3" />
-                                {membershipPlan?.display_name || tierLabel}
+                                <Crown className="w-4 h-4" />
                             </button>
                         )}
 
-                        {/* Account Type Badge */}
+                        {/* Account Type Badge - Icon Only */}
                         {userAccountType && (
                             <button
                                 onClick={() => router.push('/account/membership')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border cursor-pointer transition-all duration-300 hover:scale-105"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden"
                                 style={{
                                     backgroundColor: `${userAccountType.badge_color || '#ec4899'}20`,
-                                    color: userAccountType.badge_color || '#ec4899',
                                     borderColor: `${userAccountType.badge_color || '#ec4899'}50`,
                                     boxShadow: `0 0 14px ${userAccountType.badge_color || '#ec4899'}40, 0 0 40px ${userAccountType.badge_color || '#ec4899'}15`
                                 }}
                                 title={`Account Type: ${userAccountType.display_name}`}
                             >
                                 {userAccountType.badge_icon_url ? (
-                                    <img src={userAccountType.badge_icon_url} alt="" className="w-4 h-4 object-contain" />
+                                    <img src={userAccountType.badge_icon_url} alt={userAccountType.display_name} className="w-5 h-5 object-contain" />
                                 ) : (
-                                    <span className="text-xs">{userAccountType.badge_icon || '✨'}</span>
+                                    <span className="text-sm">{userAccountType.badge_icon || '✨'}</span>
                                 )}
-                                {userAccountType.display_name}
                             </button>
                         )}
                     </div>

@@ -680,6 +680,28 @@ export default function NewsFeedPage() {
                         {/* ── Right Sidebar: Trending / Suggestions ── */}
                         <aside className="w-full lg:w-72 shrink-0 hidden xl:block">
                             <div className="lg:sticky lg:top-20 space-y-4">
+                                {/* Quick Stats */}
+                                <div className="rounded-2xl border border-blue-500/20 bg-black p-4">
+                                    <h3 className="text-sm font-bold text-blue-200 flex items-center gap-2 mb-3">
+                                        <Sparkles className="w-4 h-4 text-blue-400" />
+                                        Feed Stats
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="text-center p-2 rounded-xl bg-pink-500/10 border border-pink-500/15">
+                                            <div className="text-lg font-black text-pink-300">{imageCount}</div>
+                                            <div className="text-[9px] text-white/30 uppercase font-bold">Photos</div>
+                                        </div>
+                                        <div className="text-center p-2 rounded-xl bg-blue-500/10 border border-blue-500/15">
+                                            <div className="text-lg font-black text-blue-300">{videoCount}</div>
+                                            <div className="text-[9px] text-white/30 uppercase font-bold">Videos</div>
+                                        </div>
+                                        <div className="text-center p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
+                                            <div className="text-lg font-black text-emerald-300">{textCount}</div>
+                                            <div className="text-[9px] text-white/30 uppercase font-bold">Text</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Trending Creators - Auto-scroll bottom-to-top */}
                                 <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14)]">
                                     <style>{`
@@ -689,8 +711,8 @@ export default function NewsFeedPage() {
                                         }
                                         .trending-scroll-container {
                                             overflow: hidden;
-                                            /* Show 5 items: each item ~52px (py-2 + gap) */
-                                            max-height: 260px;
+                                            /* Show 8 items: each item ~52px (py-2 + gap) */
+                                            max-height: 416px;
                                             position: relative;
                                         }
                                         .trending-scroll-container::before,
@@ -745,28 +767,6 @@ export default function NewsFeedPage() {
                                                     <Flame className="w-3.5 h-3.5 text-orange-400/50 group-hover:text-orange-400 transition" />
                                                 </button>
                                             ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Quick Stats */}
-                                <div className="rounded-2xl border border-blue-500/20 bg-black p-4">
-                                    <h3 className="text-sm font-bold text-blue-200 flex items-center gap-2 mb-3">
-                                        <Sparkles className="w-4 h-4 text-blue-400" />
-                                        Feed Stats
-                                    </h3>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div className="text-center p-2 rounded-xl bg-pink-500/10 border border-pink-500/15">
-                                            <div className="text-lg font-black text-pink-300">{imageCount}</div>
-                                            <div className="text-[9px] text-white/30 uppercase font-bold">Photos</div>
-                                        </div>
-                                        <div className="text-center p-2 rounded-xl bg-blue-500/10 border border-blue-500/15">
-                                            <div className="text-lg font-black text-blue-300">{videoCount}</div>
-                                            <div className="text-[9px] text-white/30 uppercase font-bold">Videos</div>
-                                        </div>
-                                        <div className="text-center p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/15">
-                                            <div className="text-lg font-black text-emerald-300">{textCount}</div>
-                                            <div className="text-[9px] text-white/30 uppercase font-bold">Text</div>
                                         </div>
                                     </div>
                                 </div>
