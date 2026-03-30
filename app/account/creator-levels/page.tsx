@@ -91,7 +91,11 @@ export default function CreatorLevelsPage() {
         if (error) {
             console.error("Error fetching account types:", error);
         } else {
-            setAccountTypes(data || []);
+            // Only show Sugar Baby to creator users (exclude Sugar Daddy and Sugar Mama)
+            const creatorTypes = (data || []).filter(
+                (t: AccountType) => t.name.toLowerCase().includes("baby")
+            );
+            setAccountTypes(creatorTypes);
         }
     };
 

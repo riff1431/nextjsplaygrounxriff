@@ -8,8 +8,10 @@ export default function ConfessionsSessionsPage() {
             roomEmoji="💜"
             roomLabel="Confessions"
             fanPageRoute="/rooms/confessions"
-            accentHsl="280, 70%, 60%"
-            accentHslSecondary="320, 65%, 55%"
+            accentHsl="340, 82%, 52%"
+            accentHslSecondary="330, 80%, 60%"
+            backgroundImage="/assets/bg-flames.png"
+            backgroundOverlay="rgba(0,0,0,0.45)"
         />
     );
 }

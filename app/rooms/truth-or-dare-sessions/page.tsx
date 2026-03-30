@@ -181,7 +181,7 @@ export default function TruthOrDareSessionsBrowse() {
     return (
         <div style={{
             minHeight: "100vh",
-            backgroundImage: "linear-gradient(to bottom, rgba(13, 4, 21, 0.85), rgba(45, 11, 63, 0.8)), url('/images/truth-or-dare-custom-bg.jpg')",
+            backgroundImage: "linear-gradient(to bottom, rgba(10, 10, 12, 0.4), rgba(10, 10, 12, 0.3)), url('/images/truth-or-dare-custom-bg.jpg')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundAttachment: "fixed",

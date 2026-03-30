@@ -8,8 +8,10 @@ export default function FlashDropSessionsPage() {
             roomEmoji="⚡"
             roomLabel="Flash Drops"
             fanPageRoute="/rooms/flash-drop"
-            accentHsl="170, 80%, 50%"
-            accentHslSecondary="150, 70%, 45%"
+            accentHsl="330, 100%, 55%"
+            accentHslSecondary="280, 80%, 60%"
+            backgroundImage="/flash-drops/nightclub-bg.png"
+            backgroundOverlay="rgba(0,0,0,0.50)"
         />
     );
 }

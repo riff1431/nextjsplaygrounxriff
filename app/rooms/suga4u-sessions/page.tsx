@@ -10,6 +10,8 @@ export default function Suga4USessionsPage() {
             fanPageRoute="/rooms/suga4u"
             accentHsl="340, 75%, 55%"
             accentHslSecondary="320, 70%, 50%"
+            backgroundImage="/rooms/suga4u/bg1.jpeg"
+            backgroundOverlay="rgba(0,0,0,0.45)"
         />
     );
 }

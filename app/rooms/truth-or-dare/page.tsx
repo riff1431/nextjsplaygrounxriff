@@ -930,32 +930,9 @@ function TruthOrDareContent() {
                         <div className="glass-panel p-4 border-white/10 bg-white/5">
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Col 1: System Truths */}
+                                {/* Col 1: System Dares (now on left) */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-blue-400 uppercase tracking-widest pb-2 px-2 bg-blue-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(59,130,246,0.6), 0 0 30px rgba(59,130,246,0.3)' }}>System Truths</h4>
-                                    <div className="space-y-3">
-                                        {truthTiers.map((t) => (
-                                            <button
-                                                key={`truth-${t.id}`}
-                                                disabled={isSubmitting}
-                                                onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
-                                                className="w-full flex items-center justify-between group"
-                                            >
-                                                <div className="text-left flex items-center gap-2">
-                                                    <span className="text-[10px] font-black text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded group-hover:bg-blue-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(59,130,246,0.7), 0 0 20px rgba(59,130,246,0.4)' }}>{t.label}</span>
-                                                    <div>
-                                                        <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
-                                                    </div>
-                                                </div>
-                                                <span className="text-sm font-bold text-white">${t.price}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Col 2: System Dares */}
-                                <div className="space-y-4">
-                                    <h4 className="text-[11px] font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
+                                    <h4 className="text-sm font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
                                     <div className="space-y-3">
                                         {dareTiers.map((t) => (
                                             <button
@@ -965,12 +942,35 @@ function TruthOrDareContent() {
                                                 className="w-full flex items-center justify-between group"
                                             >
                                                 <div className="text-left flex items-center gap-2">
-                                                    <span className="text-[10px] font-black text-red-300 bg-red-500/10 px-2 py-0.5 rounded group-hover:bg-red-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(239,68,68,0.7), 0 0 20px rgba(239,68,68,0.4)' }}>{t.label}</span>
+                                                    <span className="text-[13px] font-black text-red-300 bg-red-500/10 px-2 py-0.5 rounded group-hover:bg-red-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(239,68,68,0.7), 0 0 20px rgba(239,68,68,0.4)' }}>{t.label}</span>
                                                     <div>
-                                                        <p className="text-[9px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                        <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-sm font-bold text-white">${t.price}</span>
+                                                <span className="text-base font-bold text-white">${t.price}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Col 2: System Truths (now on right) */}
+                                <div className="space-y-4">
+                                    <h4 className="text-sm font-bold text-blue-400 uppercase tracking-widest pb-2 px-2 bg-blue-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(59,130,246,0.6), 0 0 30px rgba(59,130,246,0.3)' }}>System Truths</h4>
+                                    <div className="space-y-3">
+                                        {truthTiers.map((t) => (
+                                            <button
+                                                key={`truth-${t.id}`}
+                                                disabled={isSubmitting}
+                                                onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
+                                                className="w-full flex items-center justify-between group"
+                                            >
+                                                <div className="text-left flex items-center gap-2">
+                                                    <span className="text-[13px] font-black text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded group-hover:bg-blue-500/20 transition-colors uppercase tracking-tight" style={{ textShadow: '0 0 8px rgba(59,130,246,0.7), 0 0 20px rgba(59,130,246,0.4)' }}>{t.label}</span>
+                                                    <div>
+                                                        <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-base font-bold text-white">${t.price}</span>
                                             </button>
                                         ))}
                                     </div>

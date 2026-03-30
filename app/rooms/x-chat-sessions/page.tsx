@@ -10,6 +10,8 @@ export default function XChatSessionsPage() {
             fanPageRoute="/rooms/x-chat"
             accentHsl="45, 90%, 55%"
             accentHslSecondary="35, 85%, 50%"
+            backgroundImage="/x-chat/casino-bg.jpeg"
+            backgroundOverlay="rgba(0,0,0,0.50)"
         />
     );
 }

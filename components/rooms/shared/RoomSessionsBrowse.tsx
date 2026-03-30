@@ -42,6 +42,8 @@ interface RoomSessionsBrowseProps {
     accentHsl: string;             // primary accent e.g. "280, 80%, 60%"
     accentHslSecondary?: string;
     backRoute?: string;
+    backgroundImage?: string;      // optional URL to a bg image
+    backgroundOverlay?: string;    // overlay tint, e.g. "rgba(0,0,0,0.55)"
 }
 
 /* ─────────── Helpers ─────────── */
@@ -67,6 +69,8 @@ export default function RoomSessionsBrowse({
     accentHsl,
     accentHslSecondary,
     backRoute,
+    backgroundImage,
+    backgroundOverlay,
 }: RoomSessionsBrowseProps) {
     const router = useRouter();
     const supabase = createClient();
@@ -210,7 +214,9 @@ export default function RoomSessionsBrowse({
         <div
             style={{
                 minHeight: "100vh",
-                backgroundImage: `linear-gradient(to bottom, rgba(13,4,21,0.85), rgba(45,11,63,0.8))`,
+                backgroundImage: backgroundImage
+                    ? `url(${backgroundImage})`
+                    : `linear-gradient(to bottom, rgba(13,4,21,0.85), rgba(45,11,63,0.8))`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundAttachment: "fixed",
@@ -220,6 +226,18 @@ export default function RoomSessionsBrowse({
                 overflow: "hidden",
             }}
         >
+            {/* Dark overlay for background image readability */}
+            {backgroundImage && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: backgroundOverlay || "rgba(0,0,0,0.55)",
+                        zIndex: 0,
+                        pointerEvents: "none",
+                    }}
+                />
+            )}
             {/* Animated background orbs */}
             <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
                 <div

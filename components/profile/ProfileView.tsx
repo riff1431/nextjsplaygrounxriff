@@ -169,7 +169,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     return (
         <div className="min-h-screen bg-black text-white pb-20 font-sans">
             {/* 1. Cover Area with Hex Grid */}
-            <div className="relative h-48 md:h-64 w-full overflow-hidden">
+            <div className="relative h-64 md:h-80 w-full overflow-hidden">
                 {profile.cover_url ? (
                     <div className="absolute inset-0 z-0">
                         <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />

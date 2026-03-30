@@ -575,7 +575,7 @@ export default function ConfessionsRoom() {
                         <div className="flex flex-col lg:flex-row gap-4 xl:gap-6">
 
                             {/* Left Column */}
-                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[280px] shrink-0">
+                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[280px] shrink-0 lg:sticky lg:top-[90px] lg:h-[calc(100vh-110px)]">
                                 <CreatorSpotlight
                                     liveStreamNode={
                                         roomId && user && hostId ? (
@@ -595,7 +595,7 @@ export default function ConfessionsRoom() {
                                         )
                                     }
                                 />
-                                <LiveChatBox roomId={roomId} />
+                                <LiveChatBox roomId={roomId} className="flex-1 min-h-0 w-full" />
                             </div>
 
                             {/* Center Column - wider */}

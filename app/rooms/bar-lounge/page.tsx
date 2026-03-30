@@ -16,8 +16,6 @@ import { useRouter } from "next/navigation";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
-import InviteModal from "@/components/rooms/InviteModal";
-import InvitationPopup from "@/components/rooms/InvitationPopup";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -79,7 +77,6 @@ export default function BarLoungeRoom() {
     const [pendingPurchase, setPendingPurchase] = useState<{ type: string; label: string; price: number; meta?: any } | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const [chatInput, setChatInput] = useState("");
-    const [showInviteModal, setShowInviteModal] = useState(false);
 
     const [drinks, setDrinks] = useState<any[]>([]);
     const [spinOutcomes, setSpinOutcomes] = useState<any[]>([]);
@@ -228,13 +225,6 @@ export default function BarLoungeRoom() {
                                 <ArrowLeft className="w-4 h-4" /> Back
                             </Link>
 
-                            <button
-                                onClick={() => setShowInviteModal(true)}
-                                style={{ ...glassPanel, padding: "8px 16px", borderRadius: "0.75rem", fontSize: "12px", fontWeight: 700, color: `${C.neonPink}`, border: `1px solid hsla(320,100%,65%,0.3)`, display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
-                            >
-                                <UserPlus className="w-4 h-4" /> Invite
-                            </button>
-
                             <div>
                                 <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.875rem", fontWeight: 700, color: C.gold, ...glowTextGold }}>Bar Lounge</h1>
                                 <p style={{ color: "hsla(45,100%,95%,0.4)", fontSize: "14px", marginTop: "4px" }}>Join a live chill session. Vibes only.</p>
@@ -368,12 +358,6 @@ export default function BarLoungeRoom() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setShowInviteModal(true)}
-                            style={{ ...glassPanel, padding: "8px 16px", borderRadius: "0.75rem", fontSize: "12px", fontWeight: 700, color: `${C.neonPink}`, border: `1px solid hsla(320,100%,65%,0.3)`, display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
-                        >
-                            <UserPlus className="w-4 h-4" /> Invite
-                        </button>
                         <WalletPill />
                     </div>
                 </div>
@@ -555,15 +539,6 @@ export default function BarLoungeRoom() {
                 }}
             />
 
-            {/* Invite Modal */}
-            <InviteModal
-                isOpen={showInviteModal}
-                onClose={() => setShowInviteModal(false)}
-                roomId={roomId}
-            />
-
-            {/* Invitation Popup (receiver side) */}
-            <InvitationPopup />
         </div>
     );
 }

@@ -15,9 +15,10 @@ interface ChatMsg {
 
 interface LiveChatBoxProps {
     roomId?: string | null;
+    className?: string;
 }
 
-const LiveChatBox = ({ roomId }: LiveChatBoxProps) => {
+const LiveChatBox = ({ roomId, className }: LiveChatBoxProps) => {
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -110,7 +111,7 @@ const LiveChatBox = ({ roomId }: LiveChatBoxProps) => {
     };
 
     return (
-        <div className="neon-glass-card flex flex-col h-[360px]">
+        <div className={`neon-glass-card flex flex-col ${className || ""}`}>
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
                 <MessageSquare className="w-4 h-4 text-rose-400" />

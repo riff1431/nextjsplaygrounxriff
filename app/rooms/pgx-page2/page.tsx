@@ -7,8 +7,9 @@ import { useBarChat } from "@/hooks/useBarChat";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import WalletPill from "@/components/common/WalletPill";
+import InviteModal from "@/components/rooms/InviteModal";
 import dynamic from "next/dynamic";
-import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus } from "lucide-react";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
@@ -137,6 +138,7 @@ function PgxPage2Inner() {
     const [tipAmount, setTipAmount] = useState<number | string>("");
     const [buying, setBuying] = useState<string | null>(null);
     const [chatInput, setChatInput] = useState("");
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
@@ -271,9 +273,17 @@ function PgxPage2Inner() {
 
             {/* Header */}
             <div style={{ position: "relative", zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
-                <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: `${GOLD}cc`, cursor: "pointer" }}>
-                    <ArrowLeft style={{ width: "14px", height: "14px" }} /> Exit Lounge
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: `${GOLD}cc`, cursor: "pointer" }}>
+                        <ArrowLeft style={{ width: "14px", height: "14px" }} /> Exit Lounge
+                    </button>
+                    <button
+                        onClick={() => setShowInviteModal(true)}
+                        style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: PINK, cursor: "pointer", border: "1px solid hsla(320,80%,55%,0.35)", background: "hsla(320,60%,30%,0.2)", transition: "all 0.3s" }}
+                    >
+                        <UserPlus style={{ width: "14px", height: "14px" }} /> Invite
+                    </button>
+                </div>
                 <WalletPill />
             </div>
 
@@ -493,6 +503,13 @@ function PgxPage2Inner() {
 
                 </div>
             </div>
+
+            {/* Invite Modal */}
+            <InviteModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                roomId={roomId}
+            />
         </div>
     );
 }
