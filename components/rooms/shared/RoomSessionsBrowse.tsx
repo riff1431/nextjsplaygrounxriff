@@ -175,12 +175,7 @@ export default function RoomSessionsBrowse({
 
     /* ── Entry Info Intercept ── */
     function interceptJoin(session: Session) {
-        // Already joined → go directly
-        if (session.user_joined) {
-            handleJoin(session);
-            return;
-        }
-        // Check if dismissed
+        // Check if user previously dismissed the modal
         if (isRoomEntryDismissed(roomType)) {
             handleJoin(session);
             return;

@@ -159,10 +159,7 @@ export default function TruthOrDareSessionsBrowse() {
 
     /* ── Entry Info Intercept ── */
     function interceptJoin(session: Session) {
-        if (session.user_joined) {
-            handleJoin(session);
-            return;
-        }
+        // Check if user previously dismissed the modal
         if (isRoomEntryDismissed("truth-or-dare")) {
             handleJoin(session);
             return;

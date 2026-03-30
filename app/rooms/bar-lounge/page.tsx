@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
+import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -76,6 +77,8 @@ export default function BarLoungeRoom() {
     const { balance: walletBalance } = useWallet();
     const [pendingPurchase, setPendingPurchase] = useState<{ type: string; label: string; price: number; meta?: any } | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const [showEntryInfo, setShowEntryInfo] = useState(false);
+    const [pendingEntrySession, setPendingEntrySession] = useState<Room | null>(null);
     const [chatInput, setChatInput] = useState("");
 
     const [drinks, setDrinks] = useState<any[]>([]);
@@ -140,6 +143,14 @@ export default function BarLoungeRoom() {
 
     const joinSession = (room: Room) => {
         router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}`);
+    };
+    const interceptJoin = (session: Room) => {
+        if (isRoomEntryDismissed("bar-lounge")) {
+            joinSession(session);
+            return;
+        }
+        setPendingEntrySession(session);
+        setShowEntryInfo(true);
     };
     const startHosting = async () => {
         if (!user || role !== 'creator') return; setIsLoading(true);
@@ -253,7 +264,7 @@ export default function BarLoungeRoom() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {activeSessions.map((session: any) => (
-                                    <div key={session.id} className="group relative rounded-2xl overflow-hidden cursor-pointer" onClick={() => joinSession(session)} style={{ background: `${C.bg}99`, border: `1px solid hsla(42,90%,55%,0.15)`, transition: "all 0.2s" }}>
+                                    <div key={session.id} className="group relative rounded-2xl overflow-hidden cursor-pointer" onClick={() => interceptJoin(session)} style={{ background: `${C.bg}99`, border: `1px solid hsla(42,90%,55%,0.15)`, transition: "all 0.2s" }}>
                                         <div className="h-44 relative overflow-hidden">
                                             {session.profiles?.avatar_url ? <img src={session.profiles.avatar_url} className="w-full h-full object-cover" style={{ filter: "brightness(0.5) saturate(1.3)" }} /> : <div className="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-black/40 to-transparent" />}
                                             <div className="absolute inset-0 bl-shimmer" />
@@ -288,6 +299,26 @@ export default function BarLoungeRoom() {
                             </div>
                         </>
                     )}
+
+                    {/* ── Room Entry Info Modal ── */}
+                    <RoomEntryInfoModal
+                        isOpen={showEntryInfo}
+                        onClose={() => { setShowEntryInfo(false); setPendingEntrySession(null); }}
+                        onEnter={() => {
+                            setShowEntryInfo(false);
+                            if (pendingEntrySession) {
+                                joinSession(pendingEntrySession);
+                                setPendingEntrySession(null);
+                            }
+                        }}
+                        roomType="bar-lounge"
+                        roomLabel="Bar Lounge"
+                        roomEmoji="🍸"
+                        accentHsl="45, 90%, 55%"
+                        accentHslSecondary="280, 40%, 50%"
+                        sessionTitle={pendingEntrySession?.title || undefined}
+                        sessionType="public"
+                    />
                 </div>
             </div>
         );

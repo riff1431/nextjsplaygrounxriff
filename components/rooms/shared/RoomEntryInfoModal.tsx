@@ -105,7 +105,7 @@ const DEFAULT_THEME = ROOM_THEMES.confessions;
 
 /* ── Local storage key ────────────────────────────────── */
 function getDismissKey(roomType: string) {
-    return `room_entry_dismissed_${roomType}`;
+    return `room_entry_dismissed_v2_${roomType}`;
 }
 
 export function isRoomEntryDismissed(roomType: string): boolean {
@@ -180,50 +180,50 @@ export default function RoomEntryInfoModal({
     const accentColor = `hsl(${accent})`;
     const accentLight = `hsla(${accent}, 0.6)`;
 
-    /* ── Section renderer ── */
+    /* ── Section renderer (compact) ── */
     const renderSection = (section: InfoSection | null, isNumbered = false) => {
         if (!section || !section.items?.length) return null;
         return (
             <fieldset
                 style={{
                     border: `1px dashed ${theme.sectionBorder}`,
-                    borderRadius: "14px",
-                    padding: "16px 18px",
-                    margin: "0 0 14px",
+                    borderRadius: "10px",
+                    padding: "8px 12px",
+                    margin: "0 0 6px",
                     background: theme.cardBg,
                     position: "relative",
                 }}
             >
                 <legend
                     style={{
-                        padding: "0 10px",
-                        fontSize: "14px",
+                        padding: "0 8px",
+                        fontSize: "12px",
                         fontWeight: 800,
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
+                        gap: "5px",
                     }}
                 >
                     {section.title}
-                    <span style={{ fontSize: "16px", filter: `drop-shadow(0 0 4px ${accentLight})` }}>
+                    <span style={{ fontSize: "12px", filter: `drop-shadow(0 0 4px ${accentLight})` }}>
                         {theme.heartEmoji}
                     </span>
                 </legend>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
                     {section.items.map((item, i) => (
                         <div
                             key={i}
                             style={{
                                 display: "flex",
                                 alignItems: "flex-start",
-                                gap: "8px",
-                                fontSize: "13px",
+                                gap: "6px",
+                                fontSize: "11px",
                                 color: "rgba(255,255,255,0.85)",
-                                lineHeight: 1.5,
+                                lineHeight: 1.35,
                             }}
                         >
-                            <span style={{ fontSize: "14px", flexShrink: 0, width: "22px", textAlign: "center" }}>
+                            <span style={{ fontSize: "11px", flexShrink: 0, width: "16px", textAlign: "center" }}>
                                 {isNumbered ? `${i + 1}.` : item.emoji}
                             </span>
                             <span>{item.text}</span>
@@ -246,7 +246,7 @@ export default function RoomEntryInfoModal({
                 background: "rgba(0,0,0,0.8)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
-                padding: "16px",
+                padding: "10px",
             }}
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
@@ -254,13 +254,15 @@ export default function RoomEntryInfoModal({
                 style={{
                     background: theme.bgGradient,
                     border: `1px solid ${theme.borderColor}`,
-                    borderRadius: "20px",
+                    borderRadius: "16px",
                     width: "100%",
-                    maxWidth: "480px",
-                    maxHeight: "90vh",
-                    overflowY: "auto",
-                    boxShadow: `0 20px 80px ${theme.glowColor}, 0 0 40px ${theme.glowColor}`,
+                    maxWidth: "400px",
+                    maxHeight: "96vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    boxShadow: `0 16px 60px ${theme.glowColor}, 0 0 30px ${theme.glowColor}`,
                     position: "relative",
+                    overflow: "hidden",
                 }}
             >
                 {/* ── Sparkle top accent ── */}
@@ -270,9 +272,10 @@ export default function RoomEntryInfoModal({
                         top: 0,
                         left: 0,
                         right: 0,
-                        height: "3px",
+                        height: "2px",
                         background: `linear-gradient(90deg, transparent, hsl(${accent}), hsl(${accent2}), transparent)`,
-                        borderRadius: "20px 20px 0 0",
+                        borderRadius: "16px 16px 0 0",
+                        zIndex: 1,
                     }}
                 />
 
@@ -281,10 +284,10 @@ export default function RoomEntryInfoModal({
                     onClick={onClose}
                     style={{
                         position: "absolute",
-                        top: "14px",
-                        right: "14px",
-                        width: "32px",
-                        height: "32px",
+                        top: "8px",
+                        right: "8px",
+                        width: "26px",
+                        height: "26px",
                         borderRadius: "50%",
                         background: "rgba(255,255,255,0.08)",
                         border: `1px solid ${theme.borderColor}`,
@@ -297,20 +300,31 @@ export default function RoomEntryInfoModal({
                         zIndex: 2,
                     }}
                 >
-                    <X style={{ width: 16, height: 16 }} />
+                    <X style={{ width: 13, height: 13 }} />
                 </button>
 
                 {/* ── Content ── */}
-                <div style={{ padding: "28px 24px 24px" }}>
-                    {/* ── Header ── */}
-                    <div style={{ textAlign: "center", marginBottom: "20px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
-                            <span style={{ fontSize: "28px", filter: `drop-shadow(0 0 8px ${accentLight})` }}>
+                <div style={{
+                    padding: "14px 16px 14px",
+                    overflowY: "auto",
+                    flex: 1,
+                }}>
+                    {/* ── Header (compact) ── */}
+                    <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            marginBottom: "3px",
+                            flexWrap: "wrap",
+                        }}>
+                            <span style={{ fontSize: "20px", filter: `drop-shadow(0 0 6px ${accentLight})` }}>
                                 {theme.heartEmoji}
                             </span>
                             <h2
                                 style={{
-                                    fontSize: "22px",
+                                    fontSize: "17px",
                                     fontWeight: 900,
                                     background: `linear-gradient(135deg, #fff, hsl(${accent}))`,
                                     WebkitBackgroundClip: "text",
@@ -321,20 +335,20 @@ export default function RoomEntryInfoModal({
                             >
                                 {roomLabel}
                             </h2>
-                            <span style={{ fontSize: "28px", filter: `drop-shadow(0 0 8px ${accentLight})` }}>
+                            <span style={{ fontSize: "20px", filter: `drop-shadow(0 0 6px ${accentLight})` }}>
                                 {theme.heartEmoji}
                             </span>
                             {/* LIVE badge */}
                             <span
                                 style={{
-                                    padding: "3px 10px",
-                                    borderRadius: "8px",
+                                    padding: "2px 7px",
+                                    borderRadius: "5px",
                                     background: `hsla(${accent}, 0.2)`,
                                     border: `1px solid hsla(${accent}, 0.4)`,
-                                    fontSize: "10px",
+                                    fontSize: "8px",
                                     fontWeight: 800,
                                     color: accentColor,
-                                    letterSpacing: "1.5px",
+                                    letterSpacing: "1.2px",
                                     textTransform: "uppercase",
                                     animation: "entryModalPulse 2s ease-in-out infinite",
                                 }}
@@ -346,16 +360,16 @@ export default function RoomEntryInfoModal({
                         {/* ── Dynamic Session Details ── */}
                         {sessionTitle && (
                             <div style={{
-                                marginTop: "10px",
-                                padding: "10px 16px",
-                                borderRadius: "12px",
+                                marginTop: "6px",
+                                padding: "7px 10px",
+                                borderRadius: "8px",
                                 background: `hsla(${accent}, 0.08)`,
                                 border: `1px solid hsla(${accent}, 0.15)`,
                                 textAlign: "left",
                             }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: sessionDescription ? "6px" : "0" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: sessionDescription ? "3px" : "0" }}>
                                     <span style={{
-                                        fontSize: "14px",
+                                        fontSize: "12px",
                                         fontWeight: 700,
                                         color: "#fff",
                                         flex: 1,
@@ -367,15 +381,15 @@ export default function RoomEntryInfoModal({
                                     </span>
                                     {sessionType && (
                                         <span style={{
-                                            padding: "2px 8px",
-                                            borderRadius: "6px",
+                                            padding: "1px 6px",
+                                            borderRadius: "4px",
                                             background: sessionType === "private"
                                                 ? "rgba(168,85,247,0.2)"
                                                 : `hsla(${accent}, 0.15)`,
                                             border: `1px solid ${sessionType === "private"
                                                 ? "rgba(168,85,247,0.35)"
                                                 : `hsla(${accent}, 0.25)`}`,
-                                            fontSize: "9px",
+                                            fontSize: "8px",
                                             fontWeight: 700,
                                             color: sessionType === "private" ? "#c084fc" : accentColor,
                                             textTransform: "uppercase" as const,
@@ -388,10 +402,10 @@ export default function RoomEntryInfoModal({
                                 </div>
                                 {sessionDescription && (
                                     <p style={{
-                                        fontSize: "12px",
+                                        fontSize: "10px",
                                         color: "rgba(255,255,255,0.5)",
                                         margin: 0,
-                                        lineHeight: 1.4,
+                                        lineHeight: 1.3,
                                         overflow: "hidden",
                                         display: "-webkit-box",
                                         WebkitLineClamp: 2,
@@ -404,80 +418,66 @@ export default function RoomEntryInfoModal({
                         )}
 
                         {!sessionTitle && (
-                            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", margin: "4px 0 0" }}>
+                            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", margin: "2px 0 0" }}>
                                 Share and unlock secrets anonymously!
                             </p>
                         )}
                     </div>
 
                     {loading ? (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0", gap: "10px", color: accentLight }}>
-                            <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite" }} />
-                            <span style={{ fontSize: "14px" }}>Loading room info...</span>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 0", gap: "8px", color: accentLight }}>
+                            <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+                            <span style={{ fontSize: "12px" }}>Loading room info...</span>
                         </div>
                     ) : (
                         <>
-                            {/* ── Section 1 ── */}
+                            {/* ── Sections (no dividers — compact) ── */}
                             {renderSection(section1)}
-
-                            {/* ── Decorative heart divider ── */}
-                            <div style={{ textAlign: "center", margin: "4px 0", opacity: 0.4 }}>
-                                <span style={{ fontSize: "14px" }}>{theme.heartEmoji}</span>
-                            </div>
-
-                            {/* ── Section 2 (numbered) ── */}
                             {renderSection(section2, true)}
-
-                            {/* ── Decorative heart divider ── */}
-                            <div style={{ textAlign: "center", margin: "4px 0", opacity: 0.4 }}>
-                                <span style={{ fontSize: "14px" }}>{theme.heartEmoji}</span>
-                            </div>
-
-                            {/* ── Section 3 ── */}
                             {renderSection(section3)}
 
-                            {/* ── Pro Tip ── */}
+                            {/* ── Pro Tip (compact) ── */}
                             {proTip && (
                                 <div
                                     style={{
                                         display: "flex",
                                         alignItems: "flex-start",
-                                        gap: "8px",
-                                        padding: "12px 16px",
-                                        borderRadius: "12px",
+                                        gap: "5px",
+                                        padding: "6px 10px",
+                                        borderRadius: "8px",
                                         background: `hsla(${accent}, 0.08)`,
                                         border: `1px solid hsla(${accent}, 0.15)`,
-                                        marginBottom: "16px",
-                                        fontSize: "12px",
+                                        marginBottom: "8px",
+                                        fontSize: "10px",
                                         color: "rgba(255,255,255,0.7)",
-                                        lineHeight: 1.5,
+                                        lineHeight: 1.35,
                                     }}
                                 >
-                                    <span style={{ fontSize: "14px", flexShrink: 0 }}>🧠</span>
+                                    <span style={{ fontSize: "11px", flexShrink: 0 }}>🧠</span>
                                     <span>
                                         <strong style={{ color: "#fff" }}>Pro Tip:</strong> {proTip}
                                     </span>
                                 </div>
                             )}
 
-                            {/* ── Checkboxes ── */}
-                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
+                            {/* ── Checkboxes (side by side) ── */}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginBottom: "10px" }}>
                                 <label
                                     style={{
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "10px",
+                                        gap: "6px",
                                         cursor: "pointer",
-                                        fontSize: "13px",
+                                        fontSize: "11px",
                                         color: "rgba(255,255,255,0.8)",
                                         userSelect: "none",
                                     }}
                                     onClick={() => setAcknowledged(!acknowledged)}
                                 >
                                     {acknowledged ? (
-                                        <CheckSquare style={{ width: 18, height: 18, color: accentColor, flexShrink: 0 }} />
+                                        <CheckSquare style={{ width: 15, height: 15, color: accentColor, flexShrink: 0 }} />
                                     ) : (
-                                        <Square style={{ width: 18, height: 18, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                                        <Square style={{ width: 15, height: 15, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
                                     )}
                                     I have read and understand
                                 </label>
@@ -485,39 +485,39 @@ export default function RoomEntryInfoModal({
                                     style={{
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "10px",
+                                        gap: "6px",
                                         cursor: "pointer",
-                                        fontSize: "13px",
+                                        fontSize: "11px",
                                         color: "rgba(255,255,255,0.8)",
                                         userSelect: "none",
                                     }}
                                     onClick={() => setDontShowAgain(!dontShowAgain)}
                                 >
                                     {dontShowAgain ? (
-                                        <CheckSquare style={{ width: 18, height: 18, color: accentColor, flexShrink: 0 }} />
+                                        <CheckSquare style={{ width: 15, height: 15, color: accentColor, flexShrink: 0 }} />
                                     ) : (
-                                        <Square style={{ width: 18, height: 18, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                                        <Square style={{ width: 15, height: 15, color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
                                     )}
                                     Don&apos;t show this again
                                 </label>
                             </div>
 
-                            {/* ── Enter Room button ── */}
+                            {/* ── Enter Room button (compact) ── */}
                             <button
                                 onClick={handleEnter}
                                 disabled={!acknowledged}
                                 style={{
                                     width: "100%",
-                                    padding: "14px 24px",
-                                    borderRadius: "14px",
+                                    padding: "10px 18px",
+                                    borderRadius: "10px",
                                     border: `1px solid ${theme.borderColor}`,
                                     background: acknowledged ? theme.buttonGradient : "rgba(255,255,255,0.06)",
                                     color: acknowledged ? "#fff" : "rgba(255,255,255,0.3)",
-                                    fontSize: "16px",
+                                    fontSize: "13px",
                                     fontWeight: 800,
                                     cursor: acknowledged ? "pointer" : "not-allowed",
                                     transition: "all 0.3s ease",
-                                    boxShadow: acknowledged ? `0 4px 20px ${theme.glowColor}` : "none",
+                                    boxShadow: acknowledged ? `0 4px 16px ${theme.glowColor}` : "none",
                                     letterSpacing: "0.5px",
                                     textTransform: "uppercase",
                                     display: "flex",
@@ -525,12 +525,13 @@ export default function RoomEntryInfoModal({
                                     justifyContent: "center",
                                     gap: "8px",
                                     opacity: acknowledged ? 1 : 0.6,
+                                    flexShrink: 0,
                                 }}
                             >
                                 Enter Room
                             </button>
                             {!acknowledged && (
-                                <p style={{ textAlign: "center", fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "6px" }}>
+                                <p style={{ textAlign: "center", fontSize: "9px", color: "rgba(255,255,255,0.35)", marginTop: "3px", marginBottom: 0 }}>
                                     Please confirm you understand before entering
                                 </p>
                             )}
