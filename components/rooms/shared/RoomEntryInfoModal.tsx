@@ -33,6 +33,8 @@ interface RoomEntryInfoModalProps {
     sessionTitle?: string;
     sessionDescription?: string;
     sessionType?: string;        // "public" | "private"
+    entryFee?: number;           // session entry fee
+    costPerMin?: number;         // per-minute billing rate
 }
 
 /* ── Room theme presets ───────────────────────────────── */
@@ -126,6 +128,8 @@ export default function RoomEntryInfoModal({
     sessionTitle,
     sessionDescription,
     sessionType,
+    entryFee,
+    costPerMin,
 }: RoomEntryInfoModalProps) {
     const [section1, setSection1] = useState<InfoSection | null>(null);
     const [section2, setSection2] = useState<InfoSection | null>(null);
@@ -422,6 +426,60 @@ export default function RoomEntryInfoModal({
                                 Share and unlock secrets anonymously!
                             </p>
                         )}
+
+                        {/* ── Dynamic Pricing Bar ── */}
+                        {(entryFee !== undefined && entryFee > 0) || (costPerMin !== undefined && costPerMin > 0) ? (
+                            <div style={{
+                                marginTop: "8px",
+                                display: "flex",
+                                gap: "6px",
+                                justifyContent: "center",
+                                flexWrap: "wrap",
+                            }}>
+                                {entryFee !== undefined && entryFee > 0 && (
+                                    <div style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "5px",
+                                        padding: "5px 10px",
+                                        borderRadius: "8px",
+                                        background: "rgba(251,191,36,0.1)",
+                                        border: "1px solid rgba(251,191,36,0.25)",
+                                    }}>
+                                        <span style={{ fontSize: "13px" }}>🎟️</span>
+                                        <span style={{
+                                            fontSize: "11px",
+                                            fontWeight: 700,
+                                            color: "#fcd34d",
+                                            letterSpacing: "0.3px",
+                                        }}>
+                                            Entry: ${entryFee}
+                                        </span>
+                                    </div>
+                                )}
+                                {costPerMin !== undefined && costPerMin > 0 && (
+                                    <div style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "5px",
+                                        padding: "5px 10px",
+                                        borderRadius: "8px",
+                                        background: `hsla(${accent}, 0.1)`,
+                                        border: `1px solid hsla(${accent}, 0.25)`,
+                                    }}>
+                                        <span style={{ fontSize: "13px" }}>⏱️</span>
+                                        <span style={{
+                                            fontSize: "11px",
+                                            fontWeight: 700,
+                                            color: accentColor,
+                                            letterSpacing: "0.3px",
+                                        }}>
+                                            ${costPerMin}/min
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
                     </div>
 
                     {loading ? (

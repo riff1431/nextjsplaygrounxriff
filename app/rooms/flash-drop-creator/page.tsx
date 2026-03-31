@@ -28,24 +28,16 @@ function FlashdropCreatorStudio() {
         if (!user) return;
         const supabase = createClient();
         async function findRoom() {
-            const { data: room } = await supabase
+            const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")
                 .eq("host_id", user!.id)
                 .eq("type", "flash-drop")
-                .eq("status", "live")
-                .limit(1)
-                .maybeSingle();
+                .order("created_at", { ascending: true })
+                .limit(1);
 
-            if (room) {
-                setRoomId(room.id);
-            } else {
-                const { data: newRoom } = await supabase
-                    .from("rooms")
-                    .insert({ host_id: user!.id, title: "Flash Drop Session", status: "live", type: "flash-drop" })
-                    .select()
-                    .single();
-                if (newRoom) setRoomId(newRoom.id);
+            if (rooms && rooms.length > 0) {
+                setRoomId(rooms[0].id);
             }
         }
         findRoom();

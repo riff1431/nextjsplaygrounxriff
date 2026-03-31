@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         const { data: rawSessions, error } = await supabase
             .from("truth_dare_sessions")
             .select(`
-                id, title, description, session_type, is_private, price,
+                id, title, description, session_type, is_private, price, cost_per_min,
                 status, started_at, creator_id, room_id
             `)
             .eq("status", "active")
@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
             creator: profileMap[s.creator_id] || null,
         }));
 
-        // Filter: public sessions + private sessions where user has approved request
-        let filteredSessions = (sessions || []).filter((s: any) => !s.is_private);
+        // 6. Enrich: include ALL sessions (public and private) but add access info
+        let filteredSessions = [...(sessions || [])];
         let userRequests: Record<string, string> = {};  // sessionId -> request_status
         let userParticipation: Set<string> = new Set();
 
@@ -95,10 +95,6 @@ export async function GET(request: NextRequest) {
                 if (requests) {
                     for (const req of requests) {
                         userRequests[req.session_id] = req.status;
-                        if (req.status === "approved") {
-                            const session = (sessions || []).find((s: any) => s.id === req.session_id);
-                            if (session) filteredSessions.push(session);
-                        }
                     }
                 }
             }
@@ -118,12 +114,6 @@ export async function GET(request: NextRequest) {
                     }
                 }
             }
-
-            // Also include private sessions where user has pending request
-            const pendingSessions = (sessions || []).filter(
-                (s: any) => s.is_private && userRequests[s.id] === "pending"
-            );
-            filteredSessions = [...filteredSessions, ...pendingSessions];
         }
 
         // De-duplicate

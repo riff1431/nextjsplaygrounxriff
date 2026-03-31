@@ -97,8 +97,8 @@ export default function BarLoungeRoom() {
         const init = async () => {
             try {
                 if (user && role === "creator") {
-                    const { data: myRoom } = await supabase.from("rooms").select("*").eq("host_id", user.id).eq("status", "live").eq("type", "bar-lounge").single();
-                    if (isMounted && myRoom) setMySession(myRoom);
+                    const { data: myRooms } = await supabase.from("rooms").select("*").eq("host_id", user.id).eq("type", "bar-lounge").order("created_at", { ascending: true }).limit(1);
+                    if (isMounted && myRooms && myRooms.length > 0) setMySession(myRooms[0]);
                 }
                 const fetchSessions = async () => {
                     let { data: sessions, error } = await supabase.from("rooms").select("id, title, status, host_id, created_at, viewer_count, profiles:host_id(handle, avatar_url, full_name, id)").eq("status", "live").eq("type", "bar-lounge").order("created_at", { ascending: false });
@@ -154,7 +154,13 @@ export default function BarLoungeRoom() {
     };
     const startHosting = async () => {
         if (!user || role !== 'creator') return; setIsLoading(true);
-        if (mySession) { setRoomId(mySession.id); setHostId(user.id); setViewState("hosting"); setIsLoading(false); return; }
+        if (mySession) { 
+            if (mySession.status !== "live") {
+                await supabase.from("rooms").update({ status: "live" }).eq("id", mySession.id);
+                setMySession({ ...mySession, status: "live" });
+            }
+            setRoomId(mySession.id); setHostId(user.id); setViewState("hosting"); setIsLoading(false); return; 
+        }
         const { data } = await supabase.from("rooms").insert({ host_id: user.id, title: `${user.user_metadata?.full_name || user.email?.split('@')[0]}'s Lounge`, status: "live", type: "bar-lounge" }).select().single();
         if (data) { setMySession(data); setRoomId(data.id); setHostId(user.id); setViewState("hosting"); }
         setIsLoading(false);
@@ -318,6 +324,7 @@ export default function BarLoungeRoom() {
                         accentHslSecondary="280, 40%, 50%"
                         sessionTitle={pendingEntrySession?.title || undefined}
                         sessionType="public"
+                        entryFee={ENTRY_FEE}
                     />
                 </div>
             </div>

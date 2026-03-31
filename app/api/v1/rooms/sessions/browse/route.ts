@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         let query = supabase
             .from("room_sessions")
             .select(`
-                id, title, description, session_type, entry_fee,
+                id, title, description, session_type, entry_fee, cost_per_min,
                 status, started_at, creator_id, room_id, room_type, viewer_count
             `)
             .eq("status", "active")
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
             creator: profileMap[s.creator_id] || null,
         }));
 
-        // 6. Filter: show public + private where user has access
-        let filteredSessions = sessions.filter((s: any) => !s.is_private);
+        // 6. Enrich with user access/request state (but do not hide private sessions!)
+        let filteredSessions = [...sessions];
         let userRequests: Record<string, string> = {};
         let userParticipation = new Set<string>();
 
@@ -100,10 +100,6 @@ export async function GET(request: NextRequest) {
                 if (requests) {
                     for (const req of requests) {
                         userRequests[req.session_id] = req.status;
-                        if (req.status === "approved") {
-                            const sesh = sessions.find((s: any) => s.id === req.session_id);
-                            if (sesh) filteredSessions.push(sesh);
-                        }
                     }
                 }
 
@@ -117,16 +113,10 @@ export async function GET(request: NextRequest) {
                 if (participations) {
                     for (const p of participations) userParticipation.add(p.session_id);
                 }
-
-                // Include private sessions with pending requests
-                const pendingSessions = sessions.filter(
-                    (s: any) => s.is_private && userRequests[s.id] === "pending"
-                );
-                filteredSessions = [...filteredSessions, ...pendingSessions];
             }
         }
 
-        // 7. De-duplicate
+        // 7. De-duplicate (just in case)
         const seen = new Set<string>();
         filteredSessions = filteredSessions.filter((s: any) => {
             if (seen.has(s.id)) return false;

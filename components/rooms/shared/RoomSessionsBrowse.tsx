@@ -19,6 +19,7 @@ interface Session {
     session_type: string;
     is_private: boolean;
     entry_fee: number;
+    cost_per_min: number;
     status: string;
     started_at: string;
     creator_id: string;
@@ -155,17 +156,8 @@ export default function RoomSessionsBrowse({
                 throw new Error(data.error);
             }
 
-            if (data.status === "pending") {
-                toast.success("Join request sent! Waiting for creator approval.");
-                setSessions((prev) =>
-                    prev.map((s) =>
-                        s.id === session.id ? { ...s, user_request_status: "pending" } : s
-                    )
-                );
-            } else {
-                toast.success(data.message || "Joined successfully!");
-                router.push(`${fanPageRoute}?roomId=${session.room_id}&sessionId=${session.id}`);
-            }
+            toast.success(data.message || "Joined successfully!");
+            router.push(`${fanPageRoute}?roomId=${session.room_id}&sessionId=${session.id}`);
         } catch (err: any) {
             toast.error(err.message || "Failed to join session.");
         } finally {
@@ -463,16 +455,6 @@ export default function RoomSessionsBrowse({
                                                     <CheckCircle2 style={{ width: 8, height: 8 }} /> Joined
                                                 </span>
                                             )}
-                                            {session.user_request_status === "pending" && (
-                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 7px", borderRadius: "6px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", fontSize: "8px", fontWeight: 700, color: "#fcd34d", textTransform: "uppercase" as const }}>
-                                                    <Clock style={{ width: 8, height: 8 }} /> Pending
-                                                </span>
-                                            )}
-                                            {session.user_request_status === "rejected" && (
-                                                <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 7px", borderRadius: "6px", background: "rgba(225,29,72,0.15)", border: "1px solid rgba(225,29,72,0.3)", fontSize: "8px", fontWeight: 700, color: "#fb7185", textTransform: "uppercase" as const }}>
-                                                    <XCircle style={{ width: 8, height: 8 }} /> Denied
-                                                </span>
-                                            )}
                                         </div>
                                         <h3 style={{ fontSize: "14px", fontWeight: 700, color: isHovered ? accentColor : "#fff", margin: "0 0 4px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                                             {session.title}
@@ -520,14 +502,7 @@ export default function RoomSessionsBrowse({
                                             >
                                                 <Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room
                                             </button>
-                                        ) : session.user_request_status === "pending" ? (
-                                            <button disabled style={{ width: "100%", padding: "9px", borderRadius: "10px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fcd34d", fontSize: "11px", fontWeight: 600, cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", textTransform: "uppercase" }}>
-                                                <Clock style={{ width: 12, height: 12 }} /> Pending Approval
-                                            </button>
-                                        ) : session.user_request_status === "rejected" ? (
-                                            <button disabled style={{ width: "100%", padding: "9px", borderRadius: "10px", background: "rgba(225,29,72,0.1)", border: "1px solid rgba(225,29,72,0.3)", color: "#fb7185", fontSize: "11px", fontWeight: 600, cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", textTransform: "uppercase" }}>
-                                                <XCircle style={{ width: 12, height: 12 }} /> Access Denied
-                                            </button>
+
                                         ) : (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
@@ -593,6 +568,8 @@ export default function RoomSessionsBrowse({
                 sessionTitle={pendingSession?.title}
                 sessionDescription={pendingSession?.description || undefined}
                 sessionType={pendingSession?.is_private ? "private" : "public"}
+                entryFee={pendingSession ? Number(pendingSession.entry_fee) || 0 : undefined}
+                costPerMin={pendingSession ? Number(pendingSession.cost_per_min) || 0 : undefined}
             />
 
             <style jsx global>{`

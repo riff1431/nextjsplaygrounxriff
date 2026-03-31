@@ -49,23 +49,7 @@ export async function POST(
             return NextResponse.json({ success: true, message: "Already joined", already_joined: true });
         }
 
-        // 3. For private sessions, verify approval
-        if (session.session_type === "private") {
-            const { data: joinReq } = await supabase
-                .from("room_join_requests")
-                .select("status")
-                .eq("session_id", sessionId)
-                .eq("user_id", user.id)
-                .single();
-
-            if (!joinReq || joinReq.status !== "approved") {
-                return NextResponse.json({
-                    error: "You need creator approval to join this private session",
-                }, { status: 403 });
-            }
-        }
-
-        // 4. Payment — deduct entry fee from fan wallet, credit creator
+        // 3. Payment — deduct entry fee from fan wallet, credit creator
         const entryFee = Number(session.entry_fee) || 0;
         if (entryFee > 0) {
             const { data: payResult, error: payError } = await supabase.rpc("transfer_funds", {

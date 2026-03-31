@@ -192,7 +192,7 @@ export default function ActiveSessionsList({
                         </button>
                     ) : (
                         <button
-                            onClick={(e) => { e.stopPropagation(); interceptAction(session, "request"); }}
+                            onClick={(e) => { e.stopPropagation(); interceptAction(session, "join"); }}
                             style={{
                                 width: "100%",
                                 padding: "10px",
@@ -234,6 +234,8 @@ export default function ActiveSessionsList({
             sessionTitle={pendingSession?.title}
             sessionDescription={pendingSession?.description || undefined}
             sessionType={pendingSession?.session_type === "private" ? "private" : "public"}
+            entryFee={pendingSession ? Number(pendingSession.entry_fee) || 0 : undefined}
+            costPerMin={pendingSession ? Number(pendingSession.cost_per_min) || 0 : undefined}
         />
         </>
     );

@@ -867,6 +867,8 @@ export default function TruthOrDareSessionsBrowse() {
                 sessionTitle={pendingSession?.title}
                 sessionDescription={pendingSession?.description || undefined}
                 sessionType={pendingSession?.is_private ? "private" : "public"}
+                entryFee={pendingSession ? Number(pendingSession.price) || 0 : undefined}
+                costPerMin={pendingSession ? Number((pendingSession as any).cost_per_min) || 0 : undefined}
             />
         </div>
     );

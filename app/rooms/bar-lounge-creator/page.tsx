@@ -22,6 +22,25 @@ const CreatorBarLounge = () => {
 
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
 
+    // When we have a sessionId, find/create the room and go straight to live view
+    useEffect(() => {
+        if (!user) return;
+        async function findRoom() {
+            const { data: rooms } = await supabase
+                .from("rooms")
+                .select("id")
+                .eq("host_id", user!.id)
+                .eq("type", "bar-lounge")
+                .order("created_at", { ascending: true })
+                .limit(1);
+
+            if (rooms && rooms.length > 0) {
+                setRoomId(rooms[0].id);
+            }
+        }
+        findRoom();
+    }, [user]);
+
     // If no sessionId in URL, show session dashboard
     if (!sessionId) {
         return (
@@ -37,32 +56,6 @@ const CreatorBarLounge = () => {
         );
     }
 
-    // When we have a sessionId, find/create the room and go straight to live view
-    useEffect(() => {
-        if (!user) return;
-        async function findRoom() {
-            const { data: room } = await supabase
-                .from("rooms")
-                .select("id")
-                .eq("host_id", user!.id)
-                .eq("type", "bar-lounge")
-                .eq("status", "live")
-                .limit(1)
-                .maybeSingle();
-
-            if (room) {
-                setRoomId(room.id);
-            } else {
-                const { data: newRoom } = await supabase
-                    .from("rooms")
-                    .insert({ host_id: user!.id, title: "Bar Lounge Session", status: "live", type: "bar-lounge" })
-                    .select()
-                    .single();
-                if (newRoom) setRoomId(newRoom.id);
-            }
-        }
-        findRoom();
-    }, [user]);
 
     const handleEndSession = async () => {
         if (!roomId || !confirm("End this session?")) return;

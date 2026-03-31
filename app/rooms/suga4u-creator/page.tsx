@@ -28,25 +28,16 @@ const Suga4UCreatorPage = () => {
         if (!user || !sessionId) return;
         const supabase = createClient();
         async function findRoom() {
-            const { data: room } = await supabase
+            const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")
                 .eq("host_id", user!.id)
                 .eq("type", "suga-4-u")
-                .eq("status", "live")
-                .limit(1)
-                .maybeSingle();
+                .order("created_at", { ascending: true })
+                .limit(1);
 
-            if (room) {
-                setRoomId(room.id);
-            } else {
-                // Auto-create a live room for the creator
-                const { data: newRoom } = await supabase
-                    .from("rooms")
-                    .insert({ host_id: user!.id, title: "Sugar 4 U Session", status: "live", type: "suga-4-u" })
-                    .select()
-                    .single();
-                if (newRoom) setRoomId(newRoom.id);
+            if (rooms && rooms.length > 0) {
+                setRoomId(rooms[0].id);
             }
         }
         findRoom();

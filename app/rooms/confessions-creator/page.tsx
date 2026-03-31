@@ -21,6 +21,24 @@ const ConfessionsCreatorPage = () => {
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (!user) return;
+        const supabase = createClient();
+        async function findRoom() {
+            const { data: rooms } = await supabase
+                .from("rooms")
+                .select("id")
+                .eq("host_id", user!.id)
+                .eq("type", "confessions")
+                .order("created_at", { ascending: true })
+                .limit(1);
+            if (rooms && rooms.length > 0) {
+                setRoomId(rooms[0].id);
+            }
+        }
+        findRoom();
+    }, [user]);
+
     if (!sessionId) {
         return (
             <RoomSessionDashboard
@@ -34,32 +52,6 @@ const ConfessionsCreatorPage = () => {
             />
         );
     }
-
-    useEffect(() => {
-        if (!user) return;
-        const supabase = createClient();
-        async function findRoom() {
-            const { data: room } = await supabase
-                .from("rooms")
-                .select("id")
-                .eq("host_id", user!.id)
-                .eq("type", "confessions")
-                .eq("status", "live")
-                .limit(1)
-                .maybeSingle();
-            if (room) {
-                setRoomId(room.id);
-            } else {
-                const { data: newRoom } = await supabase
-                    .from("rooms")
-                    .insert({ host_id: user!.id, title: "Confessions Session", status: "live", type: "confessions" })
-                    .select()
-                    .single();
-                if (newRoom) setRoomId(newRoom.id);
-            }
-        }
-        findRoom();
-    }, [user]);
 
     return (
         <div

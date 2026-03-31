@@ -118,16 +118,16 @@ export async function POST(request: NextRequest) {
 
         // 4. Get or create room for this creator + room_type
         let roomId: string;
-        const { data: existingRoom } = await supabase
+        const { data: existingRooms } = await supabase
             .from("rooms")
             .select("id")
             .eq("host_id", user.id)
             .eq("type", room_type)
-            .in("status", ["live", "offline"])
-            .single();
+            .order("created_at", { ascending: true })
+            .limit(1);
 
-        if (existingRoom) {
-            roomId = existingRoom.id;
+        if (existingRooms && existingRooms.length > 0) {
+            roomId = existingRooms[0].id;
         } else {
             const { data: newRoom, error: roomError } = await supabase
                 .from("rooms")
