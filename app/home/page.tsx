@@ -554,6 +554,9 @@ function HomeScreen({
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/collections")}>
                                     <Star className="w-4 h-4" /> Collections
                                 </button>
+                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
+                                    <MessageSquare className="w-4 h-4" /> Suggestions
+                                </button>
                                 <NeonButton variant="ghost" className="w-full justify-start flex items-center gap-2" title="Log Out" onClick={() => router.push("/")}>
                                     <LogOut className="w-4 h-4" /> Log Out
                                 </NeonButton>

@@ -502,6 +502,9 @@ export default function NewsFeedPage() {
                                             <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start font-semibold ring-1 ring-sky-400/30" onClick={() => router.push("/newsfeed")}>
                                                 <Bell className="w-4 h-4" /> NewsFeed
                                             </button>
+                                            <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
+                                                <MessageSquare className="w-4 h-4" /> Suggestions
+                                            </button>
                                             <button className="w-full rounded-xl border border-pink-500/25 bg-black/40 hover:bg-white/5 px-3 py-2 text-sm text-pink-200 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/home")}>
                                                 <ArrowLeft className="w-4 h-4" /> Back to Home
                                             </button>

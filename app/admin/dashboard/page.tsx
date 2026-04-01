@@ -39,6 +39,7 @@ import MessagingCenter from "../../../components/admin/users/MessagingCenter";
 import SystemMonitoring from "../../../components/admin/safety/SystemMonitoring";
 import CreatorPayouts from "../../../components/admin/finance/CreatorPayouts";
 import ModerationQueue from "../../../components/admin/safety/ModerationQueue";
+import SuggestionsManager from "../../../components/admin/users/SuggestionsManager";
 import AdminThemeEditor from "../../../components/admin/settings/AdminThemeEditor";
 import PaymentGatewayManager from "../../../components/admin/settings/PaymentGatewayManager";
 import PaymentApprovals from "../../../components/admin/finance/PaymentApprovals";
@@ -73,6 +74,7 @@ type AdminModule =
     | "refunds"
     | "payouts"
     | "audit"
+    | "suggestions"
     | "trust" // Placeholder for now
     | "scheduling" // Placeholder
     | "moderation"
@@ -111,12 +113,9 @@ export default function AdminDashboardPage() {
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
-        { id: "audit", label: "Audit Logs", icon: <Lock className="w-4 h-4" />, tone: "cyan" },
-        { id: "moderation", label: "Moderation", icon: <Bell className="w-4 h-4" />, tone: "red" },
+        { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
         // Placeholders below
-        { id: "scheduling", label: "Scheduling", icon: <Timer className="w-4 h-4" />, tone: "cyan" },
         { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
-        { id: "monitoring", label: "Monitoring", icon: <Flame className="w-4 h-4" />, tone: "amber" },
     ];
 
     function HeaderRight() {
@@ -250,8 +249,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
-                                <Tile id="audit" label="Audit Logs" icon={<Lock className="w-4 h-4" />} tone="cyan" desc="System history" />
-                                <Tile id="moderation" label="Moderation" icon={<Bell className="w-4 h-4" />} tone="red" desc="Safety queue" />
+                                <Tile id="suggestions" label="Suggestions" icon={<MessageCircle className="w-4 h-4" />} tone="cyan" desc="User feedback" />
                             </div>
                         </NeonCard>
                     )}
@@ -278,6 +276,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "refunds" && <RefundManager />}
                     {bizModule === "payouts" && <CreatorPayouts />}
                     {bizModule === "moderation" && <ModerationQueue />}
+                    {bizModule === "suggestions" && <SuggestionsManager />}
 
                     {/* Extended Modules */}
                     {bizModule === "scheduling" && <SchedulingManager />}
