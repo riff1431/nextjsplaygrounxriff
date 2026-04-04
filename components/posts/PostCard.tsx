@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import CommentsModal from "./CommentsModal";
 import UnlockPostModal from "./UnlockPostModal";
+import ReportModal from "@/components/common/ReportModal";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -42,6 +43,7 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
     const [isUnlocked, setIsUnlocked] = useState(isSubscribed || false); // Initialize with prop
     const [unlocking, setUnlocking] = useState(false);
     const [showUnlockModal, setShowUnlockModal] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     const supabase = createClient();
 
@@ -262,7 +264,7 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                         ) : (
                             <DropdownMenuItem
                                 className="focus:bg-zinc-800 cursor-pointer"
-                                onClick={() => toast.success("Post reported")}
+                                onClick={() => setIsReportModalOpen(true)}
                             >
                                 <Flag className="w-4 h-4 mr-2" />
                                 Report
@@ -362,6 +364,13 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                     <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-current" : ""}`} />
                 </button>
             </div>
+
+            <ReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetId={post.id}
+                targetType="post"
+            />
         </div>
     );
 }

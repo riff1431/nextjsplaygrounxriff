@@ -1,0 +1,150 @@
+🍪 PLAYGROUNDX – COOKIES POLICY
+
+Last Updated: April 1st 2026
+Operator:
+PlayGroundX Digital Ltd, operating as PlayGroundX, a company registered in the Republic of Cyprus with its registered address at:
+
+75 Prodromou,
+ONEWORLD PARKVIEW HOUSE, Floor 4,
+2063, Nicosia, Cyprus.
+
+1. INTRODUCTION
+
+This Cookies Policy explains how PlayGroundX (“we”, “us”, “our”) uses cookies and similar technologies when you use our Platform.
+
+This Policy should be read alongside our Privacy Policy.
+
+2. OPERATOR
+
+PlayGroundX Digital Ltd
+Operating as: PlayGroundX
+
+Registered Address:
+75 Prodromou
+ONEWORLD PARKVIEW HOUSE, Floor 4
+2063, Nicosia
+Cyprus
+
+3. WHAT ARE COOKIES
+
+Cookies are small text files placed on your device when you visit a website. They help us:
+
+operate the Platform
+improve performance
+remember preferences
+ensure security
+4. TYPES OF COOKIES WE USE
+🔹 4.1 Strictly Necessary Cookies (Required)
+
+These cookies are essential for the Platform to function and cannot be disabled.
+
+Used for:
+
+login authentication
+account security
+fraud prevention
+session management
+payment processing
+
+Legal basis: Legitimate interest (GDPR Art. 6(1)(f))
+
+🔹 4.2 Performance & Analytics Cookies
+
+Used for:
+
+tracking usage behavior
+improving features
+diagnosing errors
+
+Examples:
+
+Google Analytics (or equivalent)
+
+Legal basis: Consent
+
+🔹 4.3 Functional Cookies
+
+Used for:
+
+language settings
+UI preferences
+session continuity
+
+Legal basis: Consent
+
+🔹 4.4 Marketing & Tracking Cookies
+
+Used for:
+
+ad targeting
+campaign performance
+retargeting
+
+Examples:
+
+Meta Pixel
+TikTok Pixel
+
+Legal basis: Consent
+
+5. COOKIE TABLE (EXAMPLES)
+
+Below are examples of cookies that may be used on the Platform:
+
+Cookie Name	Type	Purpose	Provider	Duration
+session_id	Necessary	Maintains user session	PlayGroundX	Session
+auth_token	Necessary	Authentication & security	PlayGroundX	Session
+_ga	Analytics	Tracks user behavior	Google Analytics	2 years
+_gid	Analytics	Session analytics tracking	Google	24 hours
+_fbp	Marketing	Facebook tracking	Meta	90 days
+_ttp	Marketing	TikTok tracking	TikTok	90 days
+
+👉 Actual cookies may vary depending on integrations used.
+
+6. THIRD-PARTY COOKIES
+
+We may allow third parties to place cookies, including:
+
+payment processors
+analytics providers
+advertising networks
+
+These providers operate under their own privacy policies.
+
+7. COOKIE DURATION
+
+Cookies may be:
+
+Session cookies (deleted when browser is closed)
+Persistent cookies (stored for a defined period)
+8. COOKIE CONSENT & CONTROL
+
+When you first visit PlayGroundX, you will be presented with a cookie consent banner.
+
+You can:
+
+accept all cookies
+reject non-essential cookies
+customize your preferences
+
+You may change your cookie preferences at any time by accessing the “Cookie Settings” link on the Platform.
+
+9. MANAGING COOKIES
+
+You can also control cookies through your browser settings.
+
+Note: Disabling certain cookies may affect platform functionality.
+
+10. YOUR RIGHTS (EU USERS)
+
+Under GDPR, you have the right to:
+
+withdraw consent at any time
+request access to your data
+request deletion (where applicable)
+
+📧 Contact: privacy@playgroundx.vip
+
+11. CHANGES
+
+We may update this Cookies Policy at any time. Continued use of the Platform constitutes acceptance.

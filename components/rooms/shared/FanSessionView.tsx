@@ -7,7 +7,8 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SessionChatPanel from "./SessionChatPanel";
 import FanStream from "@/components/rooms/FanStream";
-import { DollarSign, Heart, Send, Wallet, Loader2 } from "lucide-react";
+import { DollarSign, Heart, Send, Wallet, Loader2, Flag } from "lucide-react";
+import ReportModal from "@/components/common/ReportModal";
 
 interface FanSessionViewProps {
     sessionId: string;
@@ -35,6 +36,7 @@ export default function FanSessionView({
     const [requestText, setRequestText] = useState("");
     const [requestAmount, setRequestAmount] = useState("10");
     const [feedback, setFeedback] = useState<string | null>(null);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     if (!session) {
         return (
@@ -197,6 +199,27 @@ export default function FanSessionView({
                                     <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>${rx.price}</span>
                                 </button>
                             ))}
+                            
+                            {/* Report */}
+                            <button
+                                onClick={() => setIsReportModalOpen(true)}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    padding: "8px 12px",
+                                    borderRadius: "10px",
+                                    border: "1px solid rgba(239,68,68,0.2)",
+                                    background: "rgba(239,68,68,0.05)",
+                                    color: "#ef4444",
+                                    fontSize: "13px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    marginLeft: "auto"
+                                }}
+                            >
+                                <Flag size={14} /> Report
+                            </button>
                         </div>
 
                         {/* Room-specific content */}
@@ -311,6 +334,17 @@ export default function FanSessionView({
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Report Modal */}
+            {session && (
+                 <ReportModal
+                    isOpen={isReportModalOpen}
+                    onClose={() => setIsReportModalOpen(false)}
+                    targetId={session.id}
+                    targetType="room"
+                    targetName={session.title}
+                 />
             )}
         </div>
     );

@@ -107,9 +107,13 @@ export default function PaymentConfirmModal({
                         marginBottom: "16px",
                     }}
                 >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Entry Fee</span>
                         <span style={{ color: "#fff", fontSize: "18px", fontWeight: 700 }}>${entryFee}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Pricing Model</span>
+                        <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", fontWeight: 600 }}>(per minute + entry)</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "10px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -119,6 +123,11 @@ export default function PaymentConfirmModal({
                             ${(balance || 0).toFixed(2)}
                         </span>
                     </div>
+                </div>
+                
+                <div style={{ textAlign: "center", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)", lineHeight: "1.4" }}>
+                    Billing starts immediately. Full minute billing applies. <br/>
+                    <span style={{ color: "rgba(255,255,255,0.8)" }}>By entering, you agree to be charged per minute as described.</span>
                 </div>
 
                 {/* Warning */}

@@ -14,6 +14,7 @@ import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard, { Post } from "@/components/posts/PostCard";
 import SubscriptionModal from "@/components/subscriptions/SubscriptionModal";
 import CreatorScheduleModal from "@/components/schedules/CreatorScheduleModal";
+import ReportModal from "@/components/common/ReportModal";
 
 export interface Profile {
     id: string;
@@ -70,6 +71,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const supabase = createClient();
     const router = useRouter();
@@ -342,9 +344,21 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                 onClick={handleShare}
                                 className="bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 shadow-[0_0_15px_rgba(37,99,235,0.3)] border border-blue-400/20"
                             >
-                                <Share2 className="w-4 h-4 mr-2" />
+                                <Share2 className="w-4 h-4 md:mr-2" />
                                 <span className="hidden md:inline">Share</span>
                             </Button>
+
+                            {/* Report Button */}
+                            {!isOwner && (
+                                <Button
+                                    onClick={() => setIsReportModalOpen(true)}
+                                    className="bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-full px-4 border border-red-500/20"
+                                    title="Report Profile"
+                                >
+                                    <AlertTriangle className="w-4 h-4 md:mr-2" />
+                                    <span className="hidden md:inline">Report</span>
+                                </Button>
+                            )}
 
                             {/* Get Confession Button — hidden for fan owners */}
                             {!(isOwner && profile.role !== 'creator') && (
@@ -573,6 +587,15 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                     creatorName={profile.full_name || profile.username || 'Creator'}
                 />
             )}
+
+            {/* Report Modal */}
+            <ReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetId={profile.id}
+                targetType="profile"
+                targetName={profile.full_name || profile.username || 'User'}
+            />
         </div >
     );
 }

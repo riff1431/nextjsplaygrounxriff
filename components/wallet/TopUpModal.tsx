@@ -236,6 +236,10 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         </div>
                                     )}
                                 </div>
+                                
+                                <div className="text-xs text-gray-500/80 leading-relaxed text-center px-4 py-2 border border-white/5 rounded-xl bg-white/5">
+                                    All purchases are final. No refunds once access is granted. Please review our <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">Refund Policy</a>.
+                                </div>
 
                                 {method === 'bank' && config.bank.enabled && (
                                     <div className="space-y-4">

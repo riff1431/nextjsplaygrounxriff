@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 import BrandLogo from "@/components/common/BrandLogo";
+import SiteFooter from "@/components/navigation/SiteFooter";
 
 // ... (keep imports)
 
@@ -101,8 +102,14 @@ export default function AuthLanding() {
     // UI States
     const [showPw, setShowPw] = useState(false);
     const [remember, setRemember] = useState(true);
-    const [agree, setAgree] = useState(false);
-    const [isAgeVerified, setIsAgeVerified] = useState(false);
+    const [agreeTerms, setAgreeTerms] = useState(false);
+    const [agreePrivacy, setAgreePrivacy] = useState(false);
+    const [agreeAgeVerified, setAgreeAgeVerified] = useState(false);
+    
+    // Creator Checkboxes
+    const [agreeCreatorOnboarding, setAgreeCreatorOnboarding] = useState(false);
+    const [agreeCreatorGuidelines, setAgreeCreatorGuidelines] = useState(false);
+    const [agreePayoutTerms, setAgreePayoutTerms] = useState(false);
 
     // Sign In Handler
     const handleLogin = async (e?: React.FormEvent) => {
@@ -520,27 +527,58 @@ export default function AuthLanding() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-start gap-2">
-                                                <Checkbox id="agree" checked={agree} onCheckedChange={(v) => setAgree(!!v)} />
-                                                <Label htmlFor="agree" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                    <span>
-                                                        I agree to the <span className="underline underline-offset-4">Terms</span> and acknowledge the{" "}
-                                                        <span className="underline underline-offset-4">Privacy Policy</span>.
-                                                    </span>
-                                                </Label>
-                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="flex items-start gap-3">
+                                                    <Checkbox id="agree-terms" checked={agreeTerms} onCheckedChange={(v) => setAgreeTerms(!!v)} />
+                                                    <Label htmlFor="agree-terms" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                        <span>I agree to the <Link href="/terms" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Terms of Service</Link></span>
+                                                    </Label>
+                                                </div>
 
-                                            <div className="flex items-start gap-2">
-                                                <Checkbox id="age-verify" checked={isAgeVerified} onCheckedChange={(v) => setIsAgeVerified(!!v)} />
-                                                <Label htmlFor="age-verify" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                    <span>I confirm that I am at least 18 years old.</span>
-                                                </Label>
+                                                <div className="flex items-start gap-3">
+                                                    <Checkbox id="agree-privacy" checked={agreePrivacy} onCheckedChange={(v) => setAgreePrivacy(!!v)} />
+                                                    <Label htmlFor="agree-privacy" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                        <span>I acknowledge the <Link href="/privacy" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Privacy Policy</Link></span>
+                                                    </Label>
+                                                </div>
+
+                                                <div className="flex items-start gap-3">
+                                                    <Checkbox id="agree-age" checked={agreeAgeVerified} onCheckedChange={(v) => setAgreeAgeVerified(!!v)} />
+                                                    <Label htmlFor="agree-age" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                        <span>I confirm that I am 18+ and agree to the <Link href="/age-verification" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Age Verification Policy</Link></span>
+                                                    </Label>
+                                                </div>
+
+                                                {/* Creator Extra Checkboxes */}
+                                                {createRole === "creator" && (
+                                                    <div className="pt-2 mt-2 border-t border-white/10 space-y-4">
+                                                        <div className="text-xs font-bold text-pink-400 uppercase tracking-widest pl-1">Creator Agreements</div>
+                                                        <div className="flex items-start gap-3">
+                                                            <Checkbox id="agree-creator-onboarding" checked={agreeCreatorOnboarding} onCheckedChange={(v) => setAgreeCreatorOnboarding(!!v)} />
+                                                            <Label htmlFor="agree-creator-onboarding" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                                <span>I have read and agree to the <Link href="/creator-onboarding" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Creator Onboarding Agreement</Link></span>
+                                                            </Label>
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
+                                                            <Checkbox id="agree-creator-guidelines" checked={agreeCreatorGuidelines} onCheckedChange={(v) => setAgreeCreatorGuidelines(!!v)} />
+                                                            <Label htmlFor="agree-creator-guidelines" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                                <span>I commit to follow the <Link href="/creator-guidelines" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Creator Guidelines</Link></span>
+                                                            </Label>
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
+                                                            <Checkbox id="agree-payout-terms" checked={agreePayoutTerms} onCheckedChange={(v) => setAgreePayoutTerms(!!v)} />
+                                                            <Label htmlFor="agree-payout-terms" className="text-sm font-normal leading-relaxed text-gray-200/80">
+                                                                <span>I accept the <Link href="/payout-terms" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Payout Terms</Link></span>
+                                                            </Label>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <Button
-                                                disabled={!agree || !isAgeVerified || loading}
+                                                disabled={!agreeTerms || !agreePrivacy || !agreeAgeVerified || (createRole === 'creator' && (!agreeCreatorOnboarding || !agreeCreatorGuidelines || !agreePayoutTerms)) || loading}
                                                 onClick={handleSignUp}
-                                                className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700"
+                                                className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700 mt-2"
                                             >
                                                 {loading ? "Creating Account..." : "Create Account"}
                                             </Button>
@@ -552,6 +590,8 @@ export default function AuthLanding() {
                     </motion.div>
                 </div>
             </div>
+            
+            <SiteFooter />
         </div>
     );
 }

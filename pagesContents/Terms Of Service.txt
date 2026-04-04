@@ -1,0 +1,198 @@
+🔷 PLAYGROUNDX – TERMS OF SERVICE
+
+Last Updated: April 1st 2026
+
+This terms and conditions is issued by PlayGroundX Digital Ltd (operating as PlayGroundX), a company registered in the Republic of Cyprus.
+
+Operator:
+PlayGroundX Digital Ltd, operating as PlayGroundX, a company registered in the Republic of Cyprus with its registered address at:
+
+75 Prodromou,
+ONEWORLD PARKVIEW HOUSE, Floor 4,
+2063, Nicosia, Cyprus.
+
+1. INTRODUCTION
+
+By accessing or using PlayGroundX Digital Ltd (“PlayGroundX”, "Platform", “we”, “us”, “our”), you agree to these Terms of Service (“Terms”). If you do not agree, do not use the Platform.
+
+PlayGroundX is an interactive entertainment platform where Users pay for access to live digital experiences, including Rooms, content, and interactions.
+
+We may update these Terms at any time. Continued use constitutes acceptance.
+
+2. DEFINITIONS
+User: Any person using PlayGroundX
+Creator: A User who hosts Rooms or uploads content
+Fan: A User who purchases access or interacts
+Room: Live or interactive experience hosted by a Creator
+Fan Payment: Any payment made by a Fan
+Wallet: Prepaid balance used for transactions
+Creator Earnings: Amount payable to Creator after fees
+3. ELIGIBILITY
+
+You must:
+
+Be 18+
+Be legally able to enter contracts
+Comply with applicable laws
+
+Creators must:
+
+Complete identity verification (KYC)
+Provide valid payout details
+Provide consent documentation for all participants
+4. PLATFORM NATURE
+
+PlayGroundX:
+
+Provides infrastructure for interactive experiences
+Is not a party to Fan–Creator transactions
+Does not guarantee content, outcomes, or earnings
+💰 5. MONETIZATION & FEES
+5.1 Currency
+
+All transactions are processed in Euros (€).
+
+5.2 Wallet System
+Users must pre-fund a Wallet before making purchases
+Minimum Wallet funding amount: €25
+All spending occurs via Wallet balance
+Wallet funds are non-refundable, except where required by law
+5.3 Room Types & Revenue Splits
+Public Rooms
+Entry Fee: 100% Platform
+Per-Minute Billing: 100% Platform
+Tips: 85% Creator / 15% Platform (default)
+Gifts: Up to 100% Creator
+Private Rooms
+Entry Fee: 60% Platform / 40% Creator
+Per-Minute Billing: 60% Platform / 40% Creator
+Tips: 85% Creator / 15% Platform (default)
+Gifts: Up to 100% Creator
+5.4 Dynamic Revenue Control
+
+PlayGroundX reserves the right to modify at any time:
+
+pricing
+revenue splits
+monetization mechanics
+feature availability
+
+Continued use constitutes acceptance.
+
+5.5 Per-Minute Billing Rules
+Billing begins immediately upon Room entry
+Billing is charged per full minute
+Once a minute starts, it is considered a full billable minute
+No per-second billing
+Disconnections
+Users may rejoin the Room within the same session/day
+Billing resumes upon re-entry
+Session Validity
+Entry remains valid for:
+the active session, OR
+until the end of the same day (if session continues)
+Creator Early Exit
+Billing stops at the last completed minute
+Creators are not required to stay for any minimum duration
+5.6 Creator Earnings
+
+Earnings are calculated based on:
+
+Room type
+interaction type
+current revenue split at time of transaction
+5.7 Payout Terms
+Payout delay: 7–21 days minimum
+Minimum payout threshold applies
+We may:
+hold funds for fraud review
+delay payouts for risk or compliance reasons
+🔁 REFUND & CHARGEBACK POLICY
+6.1 No Refunds
+
+All sales are final once access is granted, including:
+
+Room entry
+per-minute usage
+tips
+gifts
+
+Except where required by law, no refunds are provided.
+
+6.2 Chargebacks
+
+Users agree not to initiate unjustified chargebacks.
+
+If a chargeback occurs:
+
+Account may be suspended or terminated
+Wallet access may be revoked
+Platform may recover funds from Creator Earnings
+6.3 Fraud & Abuse
+
+We reserve the right to:
+
+reverse transactions
+withhold Creator Earnings
+block accounts
+🎭 7. CREATOR OBLIGATIONS
+
+Creators must:
+
+Deliver experiences as described
+Not mislead Users
+Comply with all laws and policies
+
+Failure may result in:
+
+refunds (at platform discretion)
+penalties
+account suspension
+🚫 8. ACCEPTABLE USE
+
+Users may NOT:
+
+Use or feature minors (under 18)
+Upload illegal or non-consensual content
+Promote violence, abuse, or exploitation
+Harass, doxx, or defame others
+Share prohibited content (extreme acts, bodily waste, etc.)
+Attempt to bypass payments or platform systems
+Arrange in-person meetings
+
+Violation may result in immediate termination.
+
+🤖 9. AI CONTENT
+
+AI-generated or synthetic content:
+
+Must be clearly labeled
+Must comply with all platform policies
+⚙️ 10. PLATFORM RIGHTS
+
+We may:
+
+modify or remove content
+suspend or terminate accounts
+restrict earnings or features
+cooperate with law enforcement
+⚖️ 11. LIABILITY
+
+PlayGroundX is not responsible for:
+
+Creator behavior
+content accuracy
+earnings outcomes
+technical interruptions
+
+To the maximum extent permitted by law, liability is limited.
+
+🌍 12. GOVERNING LAW
+
+These Terms are governed by the laws of the Republic of Cyprus.
+
+Disputes may be resolved in Cyprus courts or as required by EU law.
+
+In the event of conflict, the Terms of Service prevail over supplemental policies.
+
+In the event of any conflict between these Terms of Service and any other policy, these Terms of Service shall prevail.

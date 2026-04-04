@@ -6,6 +6,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { PaymentProvider } from "./context/PaymentContext";
 import ToasterProvider from "@/components/providers/ToasterProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
+import CookieBanner from "@/components/common/CookieBanner";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
             <PaymentProvider>
               <NotificationProvider>
                 {children}
+                <CookieBanner />
                 <ToasterProvider />
               </NotificationProvider>
             </PaymentProvider>

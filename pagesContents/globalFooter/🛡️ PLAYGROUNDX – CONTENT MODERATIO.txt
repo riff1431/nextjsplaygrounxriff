@@ -1,0 +1,192 @@
+🛡️ PLAYGROUNDX – CONTENT MODERATION & DSA COMPLIANCE POLICY
+
+Last Updated: April 1st 2026
+Operator:
+PlayGroundX Digital Ltd, operating as PlayGroundX, a company registered in the Republic of Cyprus with its registered address at:
+
+75 Prodromou,
+ONEWORLD PARKVIEW HOUSE, Floor 4,
+2063, Nicosia, Cyprus.
+
+1. INTRODUCTION
+
+PlayGroundX is committed to maintaining a safe, lawful, and compliant platform.
+
+This Policy explains:
+
+how we moderate content
+how users can report content
+how we comply with the EU Digital Services Act (DSA)
+
+This Policy forms part of our Terms of Service.
+
+2. ROLE OF PLAYGROUNDX
+
+PlayGroundX is an intermediary platform that:
+
+hosts user-generated content
+facilitates interactions between Fans and Creators
+does not pre-approve all content before publication
+
+However, we actively monitor and enforce compliance using:
+
+automated systems (AI / classifiers)
+manual review
+user reports
+3. PROHIBITED CONTENT
+
+Content is strictly prohibited if it includes:
+
+🔴 Illegal Content
+minors (under 18)
+exploitation or abuse
+non-consensual acts
+human trafficking
+terrorism-related material
+🔴 Non-Compliant Adult Content
+lack of consent
+extreme violence or harm
+prohibited acts (incest, bestiality, etc.)
+🔴 Harmful Conduct
+harassment, doxxing, threats
+hate speech or discrimination
+🔴 Platform Abuse
+fraud or scams
+payment circumvention
+scraping or content theft
+4. CONTENT MODERATION METHODS
+
+We use a combination of:
+
+🔹 Automated Tools
+AI detection systems
+pattern recognition (fraud, abuse, illegal content)
+🔹 Human Moderation
+trained moderation team
+escalation procedures for sensitive cases
+🔹 User Reporting
+real-time reporting tools
+complaint submissions
+5. NOTICE & ACTION (DSA REQUIREMENT)
+
+Users may report content they believe is illegal or violates our policies.
+
+📩 How to Report
+
+Users can:
+
+click “Report” on content
+email: support@playgroundx.vip
+
+Reports should include:
+
+URL or username
+description of issue
+supporting evidence (if available)
+6. REVIEW PROCESS
+
+Upon receiving a report, we will:
+
+review the content
+assess legality and policy compliance
+request additional information if needed
+take appropriate action
+⏱️ Timeframe
+Typically reviewed within 24–72 hours
+Faster for high-risk content
+7. POSSIBLE ACTIONS
+
+We may:
+
+remove content
+restrict visibility
+suspend or terminate accounts
+report to law enforcement
+8. STATEMENT OF REASONS (DSA REQUIREMENT)
+
+If we take action (e.g. remove content or suspend account), we will:
+
+notify the affected user
+provide a statement of reasons, including:
+what rule was violated
+what action was taken
+9. APPEALS PROCESS
+
+Users may appeal moderation decisions.
+
+📌 How to Appeal
+
+Submit:
+
+account details
+content URL
+explanation
+
+via: support@playgroundx.vip
+
+⏱️ Timeline
+Appeals reviewed within reasonable time
+Decisions may be:
+upheld
+partially reversed
+fully reversed
+10. TRUSTED FLAGGERS (DSA)
+
+PlayGroundX may prioritize reports from:
+
+verified authorities
+trusted flaggers (as defined under DSA)
+11. REPEAT INFRINGEMENT POLICY
+
+We enforce strict action against repeat offenders:
+
+warnings
+feature restrictions
+permanent bans
+12. MISUSE OF REPORTING SYSTEM
+
+We do not tolerate abuse of reporting tools.
+
+If a user:
+
+submits false reports
+acts in bad faith
+
+We may:
+
+suspend their account
+restrict reporting access
+13. TRANSPARENCY & REPORTING
+
+We may publish periodic transparency reports including:
+
+number of reports received
+actions taken
+categories of violations
+14. COOPERATION WITH AUTHORITIES
+
+We may:
+
+cooperate with law enforcement
+disclose data where legally required
+15. AI & AUTOMATED DECISIONS
+
+We may use AI tools to:
+
+detect violations
+flag suspicious activity
+
+Final enforcement decisions may involve human review.
+
+16. EU USER RIGHTS
+
+Users in the EU have the right to:
+
+contest moderation decisions
+seek out-of-court dispute resolution
+file complaints with national Digital Services Coordinators
+17. CONTACT
+
+For moderation or DSA-related inquiries:
+
+📧 support@playgroundx.vip
