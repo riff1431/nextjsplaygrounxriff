@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/truth-or-dare/tip
@@ -22,14 +23,21 @@ export async function POST(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: amount,
-        p_description: `Truth or Dare tip: $${amount}`, p_room_id: roomId,
-        p_related_type: "td_tip", p_related_id: null,
+    // Payment with revenue split (85% creator / 15% platform)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: user.id,
+        creatorUserId: room.host_id,
+        grossAmount: amount,
+        splitType: 'GLOBAL',
+        description: `Truth or Dare tip: $${amount}`,
+        roomId,
+        relatedType: 'td_tip',
+        relatedId: null,
+        earningsCategory: 'tips',
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+    if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
 
     const { data: tip, error: tipError } = await supabase
         .from("truth_dare_tips")
@@ -46,5 +54,5 @@ export async function POST(
         reference_id: tip.id,
     });
 
-    return NextResponse.json({ success: true, tip, new_balance: result.new_balance });
+    return NextResponse.json({ success: true, tip, new_balance: splitResult.newBalance });
 }

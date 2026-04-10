@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/custom-request
@@ -56,21 +57,22 @@ export async function POST(
             return NextResponse.json({ error: "Cannot send request to yourself" }, { status: 400 });
         }
 
-        // Payment
-        const { data: payResult, error: payError } = await supabase.rpc("transfer_funds", {
-            p_from_user_id: user.id,
-            p_to_user_id: session.creator_id,
-            p_amount: amount,
-            p_description: `Custom request in "${session.title}"`,
-            p_room_id: session.room_id,
-            p_related_type: "session_custom_request",
-            p_related_id: sessionId,
+        // Payment with revenue split (85% creator / 15% platform)
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: session.creator_id,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: `Custom request in "${session.title}"`,
+            roomId: session.room_id,
+            relatedType: 'session_custom_request',
+            relatedId: sessionId,
+            earningsCategory: 'custom_requests',
         });
 
-        if (payError) throw payError;
-        const result = payResult as any;
-        if (!result?.success) {
-            return NextResponse.json({ error: result?.error || "Insufficient balance" }, { status: 402 });
+        if (!splitResult.success) {
+            return NextResponse.json({ error: splitResult.error || "Insufficient balance" }, { status: 402 });
         }
 
         // Get fan profile
@@ -108,7 +110,7 @@ export async function POST(
         return NextResponse.json({
             success: true,
             request: req,
-            new_balance: result.new_balance,
+            new_balance: splitResult.newBalance,
         });
     } catch (err: any) {
         console.error("Custom request error:", err);

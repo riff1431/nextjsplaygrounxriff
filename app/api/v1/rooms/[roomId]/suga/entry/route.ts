@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/suga/entry
@@ -28,21 +29,28 @@ export async function POST(
 
     const amount = body.amount || 10;
 
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: amount,
-        p_description: "Suga 4 U: Entry Fee", p_room_id: roomId,
-        p_related_type: "suga_entry", p_related_id: null,
+    // Payment with revenue split (50% creator / 50% platform for private entry)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: user.id,
+        creatorUserId: room.host_id,
+        grossAmount: amount,
+        splitType: 'PRIVATE_ENTRY',
+        description: "Suga 4 U: Entry Fee",
+        roomId,
+        relatedType: 'suga_entry',
+        relatedId: null,
+        earningsCategory: 'entry_fees',
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    if (!result?.success) return NextResponse.json({ error: result?.error }, { status: 400 });
+    if (!splitResult.success) return NextResponse.json({ error: splitResult.error }, { status: 400 });
 
     const { data: entry } = await supabase
         .from("suga_entry_fees")
         .insert({ room_id: roomId, fan_id: user.id, amount })
         .select().single();
 
-    return NextResponse.json({ success: true, entry, new_balance: result.new_balance });
+    return NextResponse.json({ success: true, entry, new_balance: splitResult.newBalance });
 }
 
 export async function GET(

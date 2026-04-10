@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/truth-or-dare/entry
@@ -32,14 +33,21 @@ export async function POST(
     const { data: game } = await supabase.from("truth_dare_games").select("unlock_price").eq("room_id", roomId).single();
     const amount = body.amount || game?.unlock_price || 10;
 
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: amount,
-        p_description: "Truth or Dare: Entry Fee", p_room_id: roomId,
-        p_related_type: "td_entry", p_related_id: null,
+    // Payment with revenue split (50% creator / 50% platform for entry)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: user.id,
+        creatorUserId: room.host_id,
+        grossAmount: amount,
+        splitType: 'PRIVATE_ENTRY',
+        description: "Truth or Dare: Entry Fee",
+        roomId,
+        relatedType: 'td_entry',
+        relatedId: null,
+        earningsCategory: 'entry_fees',
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+    if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
 
     const { data: entry, error: insertError } = await supabase
         .from("truth_dare_entries")
@@ -54,7 +62,7 @@ export async function POST(
         .upsert({ room_id: roomId, fan_id: user.id, amount }, { onConflict: "room_id,fan_id" })
         .select();
 
-    return NextResponse.json({ success: true, entry, new_balance: result.new_balance });
+    return NextResponse.json({ success: true, entry, new_balance: splitResult.newBalance });
 }
 
 /**

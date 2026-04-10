@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/x-chat/session
@@ -65,16 +66,23 @@ export async function POST(
         const minutes = Math.ceil((now.getTime() - startTime.getTime()) / 60000);
         const totalCharged = minutes * (session.rate_per_min || 2);
 
-        // Transfer total charge
+        // Payment with revenue split for metered session
         if (totalCharged > 0) {
-            const { data: result } = await supabase.rpc("transfer_funds", {
-                p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: totalCharged,
-                p_description: `X Chat session (${minutes} min)`, p_room_id: roomId,
-                p_related_type: "xchat_session", p_related_id: session.id,
+            const splitResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: user.id,
+                creatorUserId: room.host_id,
+                grossAmount: totalCharged,
+                splitType: 'GLOBAL',
+                description: `X Chat session (${minutes} min)`,
+                roomId,
+                relatedType: 'xchat_session',
+                relatedId: session.id,
+                earningsCategory: 'entry_fees',
             });
 
-            if (!result?.success) {
-                return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+            if (!splitResult.success) {
+                return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
             }
         }
 

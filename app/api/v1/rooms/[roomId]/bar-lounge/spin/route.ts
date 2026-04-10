@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/bar-lounge/spin
@@ -22,19 +23,21 @@ export async function POST(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
-    // Transfer funds
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id,
-        p_to_user_id: room.host_id,
-        p_amount: amount || 10,
-        p_description: "Bar Lounge: Spin the Wheel",
-        p_room_id: roomId,
-        p_related_type: "bar_spin",
-        p_related_id: null,
+    // Payment with revenue split (85% creator / 15% platform)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: user.id,
+        creatorUserId: room.host_id,
+        grossAmount: amount || 10,
+        splitType: 'GLOBAL',
+        description: "Bar Lounge: Spin the Wheel",
+        roomId,
+        relatedType: 'bar_spin',
+        relatedId: null,
+        earningsCategory: 'reactions',
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+    if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
 
     // Get spin odds from bar_settings or admin_bar_config
     let spinOdds: any[] = [];
@@ -84,6 +87,6 @@ export async function POST(
         spin,
         result: selectedResult,
         reward: selectedReward,
-        new_balance: result.new_balance,
+        new_balance: splitResult.newBalance,
     });
 }

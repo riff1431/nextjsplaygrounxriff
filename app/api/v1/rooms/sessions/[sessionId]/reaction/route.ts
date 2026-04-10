@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/reaction
@@ -55,22 +56,23 @@ export async function POST(
             return NextResponse.json({ error: "Cannot react to your own session" }, { status: 400 });
         }
 
-        // Payment
+        // Payment with revenue split (85% creator / 15% platform)
         if (amount > 0) {
-            const { data: payResult, error: payError } = await supabase.rpc("transfer_funds", {
-                p_from_user_id: user.id,
-                p_to_user_id: session.creator_id,
-                p_amount: amount,
-                p_description: `Reaction ${reaction.emoji} in "${session.title}"`,
-                p_room_id: session.room_id,
-                p_related_type: "session_reaction",
-                p_related_id: sessionId,
+            const splitResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: user.id,
+                creatorUserId: session.creator_id,
+                grossAmount: amount,
+                splitType: 'GLOBAL',
+                description: `Reaction ${reaction.emoji} in "${session.title}"`,
+                roomId: session.room_id,
+                relatedType: 'session_reaction',
+                relatedId: sessionId,
+                earningsCategory: 'reactions',
             });
 
-            if (payError) throw payError;
-            const result = payResult as any;
-            if (!result?.success) {
-                return NextResponse.json({ error: result?.error || "Insufficient balance" }, { status: 402 });
+            if (!splitResult.success) {
+                return NextResponse.json({ error: splitResult.error || "Insufficient balance" }, { status: 402 });
             }
         }
 

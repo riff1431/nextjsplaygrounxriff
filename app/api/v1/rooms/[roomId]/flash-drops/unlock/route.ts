@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/flash-drops/unlock
@@ -38,16 +39,22 @@ export async function POST(
     const creatorId = (drop as any).rooms?.host_id;
     const price = drop.price || 0;
 
-    // Transfer funds
+    // Payment with revenue split (85% creator / 15% platform)
     if (price > 0 && creatorId) {
-        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-            p_from_user_id: user.id, p_to_user_id: creatorId, p_amount: price,
-            p_description: `Flash Drop: ${drop.title}`, p_room_id: roomId,
-            p_related_type: "flash_drop_unlock", p_related_id: dropId,
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: creatorId,
+            grossAmount: price,
+            splitType: 'GLOBAL',
+            description: `Flash Drop: ${drop.title}`,
+            roomId,
+            relatedType: 'flash_drop_unlock',
+            relatedId: dropId,
+            earningsCategory: 'drops',
         });
 
-        if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-        if (!result?.success) return NextResponse.json({ error: result?.error }, { status: 400 });
+        if (!splitResult.success) return NextResponse.json({ error: splitResult.error }, { status: 400 });
     }
 
     // Record unlock

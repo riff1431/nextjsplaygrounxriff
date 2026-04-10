@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/confessions/tip
@@ -41,25 +42,24 @@ export async function POST(
 
     const creatorId = (confession as any).rooms?.host_id;
 
-    // Transfer funds
+    // Payment with revenue split (85% creator / 15% platform)
     if (creatorId) {
-        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-            p_from_user_id: user.id,
-            p_to_user_id: creatorId,
-            p_amount: amount,
-            p_description: `${reactionType} tip on confession`,
-            p_room_id: roomId,
-            p_related_type: "confession_tip",
-            p_related_id: confessionId,
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: creatorId,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: `${reactionType} tip on confession`,
+            roomId,
+            relatedType: 'confession_tip',
+            relatedId: confessionId,
+            earningsCategory: 'tips',
         });
 
-        if (rpcError) {
-            return NextResponse.json({ error: rpcError.message }, { status: 500 });
-        }
-
-        if (!result?.success) {
+        if (!splitResult.success) {
             return NextResponse.json(
-                { error: result?.error || "Payment failed" },
+                { error: splitResult.error || "Payment failed" },
                 { status: 400 }
             );
         }

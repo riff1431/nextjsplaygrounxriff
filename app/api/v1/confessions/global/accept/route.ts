@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/confessions/global/accept
@@ -8,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
  *
  * Steps:
  * 1. Verify the request is global + pending_approval
- * 2. Transfer funds from fan → accepting creator
+ * 2. Transfer funds from fan → accepting creator (with split)
  * 3. Update creator_id, room_id, and status on the request
  */
 export async function POST(request: NextRequest) {
@@ -54,24 +55,23 @@ export async function POST(request: NextRequest) {
 
     const creatorRoomId = room?.id || confReq.room_id;
 
-    // Transfer funds from fan to this creator
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: confReq.fan_id,
-        p_to_user_id: user.id,
-        p_amount: confReq.amount,
-        p_description: `Global confession accepted: ${confReq.type} - ${confReq.topic}`,
-        p_room_id: creatorRoomId,
-        p_related_type: "confession_request",
-        p_related_id: confReq.id,
+    // Payment with revenue split (85% creator / 15% platform)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: confReq.fan_id,
+        creatorUserId: user.id,
+        grossAmount: confReq.amount,
+        splitType: 'GLOBAL',
+        description: `Global confession accepted: ${confReq.type} - ${confReq.topic}`,
+        roomId: creatorRoomId,
+        relatedType: 'confession_request',
+        relatedId: confReq.id,
+        earningsCategory: 'custom_requests',
     });
 
-    if (rpcError) {
-        return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    }
-
-    if (!result?.success) {
+    if (!splitResult.success) {
         return NextResponse.json(
-            { error: result?.error || "Payment failed" },
+            { error: splitResult.error || "Payment failed" },
             { status: 400 }
         );
     }

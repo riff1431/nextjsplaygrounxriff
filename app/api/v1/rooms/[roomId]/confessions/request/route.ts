@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * GET /api/v1/rooms/[roomId]/confessions/request
@@ -83,26 +84,25 @@ export async function POST(
 
     const creatorId = room.host_id;
 
-    // For 1on1: transfer funds immediately to the creator
+    // For 1on1: transfer funds immediately to the creator with split
     // For global: hold funds (no transfer yet — funds move when a creator accepts)
     if (mode === '1on1') {
-        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-            p_from_user_id: user.id,
-            p_to_user_id: creatorId,
-            p_amount: amount,
-            p_description: `Confession request: ${type} - ${topic}`,
-            p_room_id: roomId,
-            p_related_type: "confession_request",
-            p_related_id: null,
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: creatorId,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: `Confession request: ${type} - ${topic}`,
+            roomId,
+            relatedType: 'confession_request',
+            relatedId: null,
+            earningsCategory: 'custom_requests',
         });
 
-        if (rpcError) {
-            return NextResponse.json({ error: rpcError.message }, { status: 500 });
-        }
-
-        if (!result?.success) {
+        if (!splitResult.success) {
             return NextResponse.json(
-                { error: result?.error || "Payment failed" },
+                { error: splitResult.error || "Payment failed" },
                 { status: 400 }
             );
         }

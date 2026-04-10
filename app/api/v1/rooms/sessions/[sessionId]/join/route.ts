@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/join
@@ -37,7 +38,27 @@ export async function POST(
             return NextResponse.json({ error: "You are the creator of this session" }, { status: 400 });
         }
 
-        // 2. Check if already joined
+        // 2. Check for existing valid ticket (re-entry without charge)
+        const { data: existingTicket } = await supabase
+            .from("session_entry_tickets")
+            .select("id, valid_until")
+            .eq("session_id", sessionId)
+            .eq("fan_id", user.id)
+            .single();
+
+        if (existingTicket && new Date(existingTicket.valid_until) > new Date()) {
+            // Valid ticket exists — allow re-entry
+            return NextResponse.json({
+                success: true,
+                message: "Re-entry with valid ticket",
+                already_joined: true,
+                session_id: sessionId,
+                agora_channel: session.agora_channel,
+                entry_fee_paid: 0,
+            });
+        }
+
+        // 3. Check if already joined (legacy check)
         const { data: existing } = await supabase
             .from("room_session_participants")
             .select("id")
@@ -49,27 +70,42 @@ export async function POST(
             return NextResponse.json({ success: true, message: "Already joined", already_joined: true });
         }
 
-        // 3. Payment — deduct entry fee from fan wallet, credit creator
+        // 4. Payment — apply revenue split based on session type
         const entryFee = Number(session.entry_fee) || 0;
         if (entryFee > 0) {
-            const { data: payResult, error: payError } = await supabase.rpc("transfer_funds", {
-                p_from_user_id: user.id,
-                p_to_user_id: session.creator_id,
-                p_amount: entryFee,
-                p_description: `Entry fee: ${session.title}`,
-                p_room_id: session.room_id,
-                p_related_type: "session_entry",
-                p_related_id: sessionId,
+            // Determine split type: private sessions = 50/50, public = 0/100
+            const isPrivate = session.session_type === 'private' || session.is_private;
+            const splitType = isPrivate ? 'PRIVATE_ENTRY' : 'PUBLIC_ENTRY';
+
+            const splitResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: user.id,
+                creatorUserId: session.creator_id,
+                grossAmount: entryFee,
+                splitType,
+                description: `Entry fee: ${session.title}`,
+                roomId: session.room_id,
+                relatedType: 'session_entry',
+                relatedId: sessionId,
+                earningsCategory: 'entry_fees',
             });
 
-            if (payError) throw payError;
-
-            const result = payResult as any;
-            if (!result?.success) {
+            if (!splitResult.success) {
                 return NextResponse.json({
-                    error: result?.error || "Payment failed — insufficient balance",
+                    error: splitResult.error || "Payment failed — insufficient balance",
                 }, { status: 402 });
             }
+
+            // Create entry ticket for re-entry support
+            const ticketValidUntil = new Date();
+            ticketValidUntil.setHours(ticketValidUntil.getHours() + 24); // 24h max validity
+
+            await supabase.from("session_entry_tickets").upsert({
+                session_id: sessionId,
+                fan_id: user.id,
+                entry_fee_paid: entryFee,
+                valid_until: ticketValidUntil.toISOString(),
+            }, { onConflict: 'session_id,fan_id' });
         }
 
         // 5. Add fan as participant

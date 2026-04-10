@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 /**
  * POST /api/v1/rooms/[roomId]/x-chat/reaction
@@ -23,15 +24,21 @@ export async function POST(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
-    // Transfer funds
-    const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-        p_from_user_id: user.id, p_to_user_id: room.host_id, p_amount: amount,
-        p_description: `X Chat reaction: ${reactionType}`, p_room_id: roomId,
-        p_related_type: "xchat_reaction", p_related_id: null,
+    // Payment with revenue split (85% creator / 15% platform)
+    const splitResult = await applyRevenueSplit({
+        supabase,
+        fanUserId: user.id,
+        creatorUserId: room.host_id,
+        grossAmount: amount,
+        splitType: 'GLOBAL',
+        description: `X Chat reaction: ${reactionType}`,
+        roomId,
+        relatedType: 'xchat_reaction',
+        relatedId: null,
+        earningsCategory: 'reactions',
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 });
-    if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+    if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
 
     const { data: reaction, error: insertError } = await supabase
         .from("x_chat_reactions")
@@ -45,5 +52,5 @@ export async function POST(
         message: `Fan sent ${reactionType} reaction ($${amount})`, reference_id: reaction.id,
     });
 
-    return NextResponse.json({ success: true, reaction, new_balance: result.new_balance });
+    return NextResponse.json({ success: true, reaction, new_balance: splitResult.newBalance });
 }
