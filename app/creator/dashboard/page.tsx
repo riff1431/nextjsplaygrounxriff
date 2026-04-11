@@ -235,6 +235,16 @@ export default function CreatorDashboard() {
                             <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Access the new Creator Studio Dashboard UI.</p>
                         </button>
 
+                        {/* Earnings Dashboard */}
+                        <button onClick={() => router.push('/creator/earnings')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-50"><DollarSign className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
+                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">New</span>
+                            <div className="p-3 w-fit rounded-xl bg-green-500/20 text-green-400 mb-4 group-hover:bg-green-500 group-hover:text-white transition">
+                                <DollarSign className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Earnings</h3>
+                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Track revenue, room earnings & download statements.</p>
+                        </button>
                         {/* 0. Upload Content (New) */}
                         <CreatePostModal
                             currentUserId={user?.id || null}

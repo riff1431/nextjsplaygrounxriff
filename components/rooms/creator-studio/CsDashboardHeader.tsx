@@ -90,10 +90,10 @@ export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProp
             </div>
             <div className="flex items-center gap-3">
                 <button
-                    onClick={() => router.push('/home')}
+                    onClick={() => router.push('/creator/dashboard')}
                     className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-medium flex items-center gap-2 transition"
                 >
-                    <ArrowLeft className="w-4 h-4" /> Back
+                    <ArrowLeft className="w-4 h-4" /> Creator Dashboard
                 </button>
 
                 <NotificationIcon role="creator" />

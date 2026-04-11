@@ -22,6 +22,7 @@ import {
     Martini,
     DoorOpen,
     Banknote,
+    DollarSign,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -50,6 +51,7 @@ import CreatorLevelManager from "../../../components/admin/settings/CreatorLevel
 import AccountTypeManager from "../../../components/admin/settings/AccountTypeManager";
 import BarLoungeManager from "../../../components/admin/settings/BarLoungeManager";
 import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymentReviewPanel";
+import AdminCreatorEarnings from "../../../components/admin/finance/AdminCreatorEarnings";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -81,7 +83,8 @@ type AdminModule =
     | "messaging" // Placeholder
     | "monitoring" // Placeholder
     | "room-settings" // Links to /admin/rooms
-    | "finance-payouts"; // Links to /admin/finance/payouts
+    | "finance-payouts" // Links to /admin/finance/payouts
+    | "creator-earnings"; // Creator Earnings panel
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -113,6 +116,7 @@ export default function AdminDashboardPage() {
         { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
         { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+        { id: "creator-earnings", label: "Creator Earnings", icon: <DollarSign className="w-4 h-4" />, tone: "green" },
         { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
         // Placeholders below
         { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
@@ -249,6 +253,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
+                                <Tile id="creator-earnings" label="Creator Earnings" icon={<DollarSign className="w-4 h-4" />} tone="green" desc="All creator activity" />
                                 <Tile id="suggestions" label="Suggestions" icon={<MessageCircle className="w-4 h-4" />} tone="cyan" desc="User feedback" />
                             </div>
                         </NeonCard>
@@ -275,6 +280,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "audit" && <AuditLogViewer />}
                     {bizModule === "refunds" && <RefundManager />}
                     {bizModule === "payouts" && <CreatorPayouts />}
+                    {bizModule === "creator-earnings" && <AdminCreatorEarnings />}
                     {bizModule === "moderation" && <ModerationQueue />}
                     {bizModule === "suggestions" && <SuggestionsManager />}
 
