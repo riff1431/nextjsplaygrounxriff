@@ -87,6 +87,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
             }, 300);
         } catch (error) {
             console.error(error);
+            setLoading(false);
         } finally {
             setLoading(false);
         }

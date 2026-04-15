@@ -578,7 +578,7 @@ function HomeScreen({
                                     onChange={(e) => setLevelFilter(e.target.value as any)}
                                     className="w-full bg-black/40 border border-pink-500/25 rounded-xl px-3 py-2 text-sm"
                                 >
-                                    <option value="All">All</option>
+                                    <option value="All">All Tiers</option>
                                     <option value="Rookie">Rookie</option>
                                     <option value="Rising">Rising</option>
                                     <option value="Star">Star</option>
@@ -593,7 +593,7 @@ function HomeScreen({
                                     onChange={(e) => setTagFilter(e.target.value)}
                                     className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm"
                                 >
-                                    <option value="All">All</option>
+                                    <option value="All">All Types</option>
                                     <option value="Flash Drops">Flash Drops</option>
                                     <option value="Confessions">Confessions</option>
                                     <option value="Bar Lounge">Bar Lounge</option>

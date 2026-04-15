@@ -13,6 +13,7 @@ const ROOM_TYPES = [
     { value: "x-chat", label: "X-Chat", color: "#ef4444", icon: "🔥" },
     { value: "truth-or-dare", label: "Truth or Dare", color: "#06b6d4", icon: "🎯" },
     { value: "bar-lounge", label: "Bar Lounge", color: "#84cc16", icon: "🍸" },
+    { value: "competitions", label: "Competitions", color: "#eab308", icon: "🏆" },
 ];
 
 interface Schedule {
@@ -71,8 +72,14 @@ export default function SchedulePage() {
         e.preventDefault();
         if (!userId) return;
 
-        const start = new Date(`${startDate}T${startTime}`);
-        const end = new Date(`${endDate}T${endTime}`);
+        if (!startDate || !startTime || !endDate || !endTime) {
+            toast.error("Please fill in all date and time fields");
+            return;
+        }
+
+        const timeWithSeconds = (t: string) => t.length === 5 ? `${t}:00` : t;
+        const start = new Date(`${startDate}T${timeWithSeconds(startTime)}`);
+        const end = new Date(`${endDate}T${timeWithSeconds(endTime)}`);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             toast.error("Please select valid dates and times");

@@ -29,7 +29,7 @@ export default function StartSessionModal({
     const [description, setDescription] = useState("");
     const [sessionType, setSessionType] = useState<"public" | "private">("public");
     const [price, setPrice] = useState<string>("20");
-    const [costPerMin, setCostPerMin] = useState<string>("4");
+    const [costPerMin, setCostPerMin] = useState<string>("2");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -288,8 +288,8 @@ export default function StartSessionModal({
                                 <input
                                     type="number"
                                     value={costPerMin}
-                                    onChange={(e) => setCostPerMin(String(Math.max(4, Number(e.target.value))))}
-                                    min={4}
+                                    onChange={(e) => setCostPerMin(String(Math.max(2, Number(e.target.value))))}
+                                    min={2}
                                     step={1}
                                     style={{
                                         width: "100%",
@@ -305,7 +305,7 @@ export default function StartSessionModal({
                                 />
                             </div>
                             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", marginTop: "4px", paddingLeft: "4px" }}>
-                                Minimum $4. Fans are charged per minute in your private session.
+                                Minimum $2. Fans are charged per minute in your private session.
                             </p>
                         </div>
                     )}

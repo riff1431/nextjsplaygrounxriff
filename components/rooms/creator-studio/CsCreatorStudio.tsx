@@ -41,7 +41,7 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
 
 export const CsCreatorStudio = () => {
     const cards: StudioCardProps[] = [
-        { icon: <Upload size={20} />, title: "Upload Content", description: "Post new photos, videos, status updates to your feed.", borderColor: "hsl(150, 80%, 45%)", link: "/home" },
+
         { icon: <MessageSquare size={20} />, title: "Confessions Studio", description: "Manage backlog, publish text/voice/video confessions.", borderColor: "hsl(45, 100%, 55%)", veryNew: true, link: "/rooms/confessions-creator" },
         { icon: <Monitor size={20} />, title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", veryNew: true, link: "/rooms/x-chat-creator" },
         { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", veryNew: true, link: "/rooms/flash-drop-creator" },

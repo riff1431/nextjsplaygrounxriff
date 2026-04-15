@@ -1,7 +1,8 @@
 "use client";
 
-import { Crown, Lock, Loader2, Check, AlertCircle } from "lucide-react";
+import { Crown, Lock, Loader2, Check, AlertCircle, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface CsSubscriptionSettingsProps {
     weeklyPrice: number | null;
@@ -10,6 +11,7 @@ interface CsSubscriptionSettingsProps {
 }
 
 export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscriptionSettingsProps) => {
+    const router = useRouter();
     const [weekly, setWeekly] = useState("");
     const [monthly, setMonthly] = useState("");
     const [saving, setSaving] = useState(false);
@@ -67,6 +69,12 @@ export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: Cs
                         />
                     </div>
                 </div>
+                <button
+                    onClick={() => router.push("/home")}
+                    className="cs-neon-glow-pink bg-[hsl(330,90%,55%)] text-white font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                    <Upload size={16} /> Upload Content
+                </button>
                 <button
                     onClick={handleSave}
                     disabled={saving}
