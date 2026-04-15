@@ -24,7 +24,7 @@
  */
 import { createAdminClient } from '../supabase/admin';
 import {
-    SPLIT_CONFIG,
+    getSplitConfig,
     PLATFORM_USER_ID,
     EARNINGS_COLUMN_MAP,
     type SplitType,
@@ -96,7 +96,8 @@ export async function applyRevenueSplit(
         earningsCategory,
     } = params;
 
-    const config = SPLIT_CONFIG[splitType];
+    // Fetch live config from DB (falls back to static constants if DB unavailable)
+    const config = await getSplitConfig(splitType);
     if (!config) {
         return { success: false, error: `Unknown split type: ${splitType}`, grossAmount, creatorShare: 0, platformShare: 0 };
     }

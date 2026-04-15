@@ -84,6 +84,7 @@ type AdminModule =
     | "monitoring" // Placeholder
     | "room-settings" // Links to /admin/rooms
     | "finance-payouts" // Links to /admin/finance/payouts
+    | "revenue-splits" // Links to /admin/finance/splits
     | "creator-earnings"; // Creator Earnings panel
 
 export default function AdminDashboardPage() {
@@ -95,6 +96,7 @@ export default function AdminDashboardPage() {
     const ROUTE_MAP: Record<string, string> = {
         "room-settings": "/admin/rooms",
         "finance-payouts": "/admin/finance/payouts",
+        "revenue-splits": "/admin/finance/splits",
     };
 
     const NAV: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink" }> = [
@@ -117,6 +119,7 @@ export default function AdminDashboardPage() {
         { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "creator-earnings", label: "Creator Earnings", icon: <DollarSign className="w-4 h-4" />, tone: "green" },
+        { id: "revenue-splits", label: "Revenue Splits", icon: <DollarSign className="w-4 h-4" />, tone: "amber" },
         { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
         // Placeholders below
         { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
@@ -254,6 +257,19 @@ export default function AdminDashboardPage() {
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="creator-earnings" label="Creator Earnings" icon={<DollarSign className="w-4 h-4" />} tone="green" desc="All creator activity" />
+                                <button
+                                    onClick={() => router.push('/admin/finance/splits')}
+                                    className="rounded-2xl border border-white/10 bg-black/30 p-4 text-left hover:bg-white/5 transition"
+                                >
+                                    <div className="inline-flex items-center gap-2 text-amber-200 text-sm">
+                                        <DollarSign className="w-4 h-4" /> Revenue Splits
+                                    </div>
+                                    <div className="mt-2 text-[11px] text-gray-400">Manage split rules &amp; pricing</div>
+                                    <div className="mt-3 text-[11px] text-gray-500 inline-flex items-center gap-2">
+                                        <AdminPill tone="amber">Open ↗</AdminPill>
+                                        <span className="text-gray-500">→</span>
+                                    </div>
+                                </button>
                                 <Tile id="suggestions" label="Suggestions" icon={<MessageCircle className="w-4 h-4" />} tone="cyan" desc="User feedback" />
                             </div>
                         </NeonCard>

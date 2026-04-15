@@ -21,6 +21,9 @@ interface RoomSetting {
     is_active: boolean;
     public_entry_fee: number;
     min_private_entry_fee: number;
+    public_cost_per_min: number;
+    min_private_cost_per_min: number;
+    billing_enabled: boolean;
     public_sessions_enabled: boolean;
     private_sessions_enabled: boolean;
     tips_enabled: boolean;
@@ -113,12 +116,15 @@ export default function AdminRoomSettingsPage() {
             </div>
 
             {/* Nav links */}
-            <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "24px", flexWrap: "wrap" }}>
                 <Link href="/admin/rooms/reactions" style={{ color: "hsl(280,100%,70%)", fontSize: "13px", textDecoration: "none", background: "rgba(159,90,253,0.12)", padding: "6px 14px", borderRadius: "8px" }}>
                     Manage Reactions
                 </Link>
                 <Link href="/admin/rooms/sessions" style={{ color: "hsl(45,100%,60%)", fontSize: "13px", textDecoration: "none", background: "rgba(255,200,0,0.08)", padding: "6px 14px", borderRadius: "8px" }}>
                     Active Sessions
+                </Link>
+                <Link href="/admin/finance/splits" style={{ color: "hsl(150,80%,55%)", fontSize: "13px", textDecoration: "none", background: "rgba(72,187,120,0.08)", padding: "6px 14px", borderRadius: "8px" }}>
+                    Revenue Splits ↗
                 </Link>
             </div>
 
@@ -178,6 +184,34 @@ export default function AdminRoomSettingsPage() {
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
                                 </div>
+                                <div>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public $/min</label>
+                                    <input
+                                        type="number"
+                                        defaultValue={s.public_cost_per_min ?? 2}
+                                        min={0}
+                                        step={0.01}
+                                        onBlur={(e) => {
+                                            const v = Number(e.target.value);
+                                            if (v !== s.public_cost_per_min) updateSetting(s.room_type, { public_cost_per_min: v } as any);
+                                        }}
+                                        style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private $/min (min)</label>
+                                    <input
+                                        type="number"
+                                        defaultValue={s.min_private_cost_per_min ?? 5}
+                                        min={0}
+                                        step={0.01}
+                                        onBlur={(e) => {
+                                            const v = Number(e.target.value);
+                                            if (v !== s.min_private_cost_per_min) updateSetting(s.room_type, { min_private_cost_per_min: v } as any);
+                                        }}
+                                        style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                </div>
 
                                 {/* Toggles */}
                                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -196,6 +230,10 @@ export default function AdminRoomSettingsPage() {
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Custom Requests</span>
                                         <Toggle value={s.custom_requests_enabled} onChange={(v) => updateSetting(s.room_type, { custom_requests_enabled: v } as any)} />
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Per-Min Billing</span>
+                                        <Toggle value={s.billing_enabled ?? true} onChange={(v) => updateSetting(s.room_type, { billing_enabled: v } as any)} />
                                     </div>
                                 </div>
                             </div>

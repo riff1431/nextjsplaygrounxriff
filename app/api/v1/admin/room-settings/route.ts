@@ -72,6 +72,7 @@ export async function PUT(request: NextRequest) {
         const allowedFields = [
             "display_name", "icon_url", "is_active",
             "public_entry_fee", "min_private_entry_fee",
+            "public_cost_per_min", "min_private_cost_per_min", "billing_enabled",
             "public_sessions_enabled", "private_sessions_enabled",
             "tips_enabled", "custom_requests_enabled", "sort_order",
             "entry_info_section1", "entry_info_section2",
