@@ -137,13 +137,6 @@ export default function SubscriptionSettings({ user }: { user: any }) {
 
             <div className="mt-8 flex justify-end gap-3">
                 <button
-                    onClick={() => router.push("/home")}
-                    className="px-6 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl font-medium transition flex items-center gap-2"
-                >
-                    <Upload className="w-4 h-4" />
-                    Upload Content
-                </button>
-                <button
                     onClick={handleSave}
                     disabled={loading}
                     className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl font-medium transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

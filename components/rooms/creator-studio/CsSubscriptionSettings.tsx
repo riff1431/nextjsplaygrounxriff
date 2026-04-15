@@ -70,12 +70,6 @@ export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: Cs
                     </div>
                 </div>
                 <button
-                    onClick={() => router.push("/home")}
-                    className="cs-neon-glow-pink bg-[hsl(330,90%,55%)] text-white font-semibold px-4 py-2.5 rounded-lg flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                    <Upload size={16} /> Upload Content
-                </button>
-                <button
                     onClick={handleSave}
                     disabled={saving}
                     className="cs-neon-glow-green bg-[hsl(150,80%,45%)] text-white font-semibold px-6 py-2.5 rounded-lg flex items-center gap-2 hover:brightness-110 transition-all whitespace-nowrap disabled:opacity-60"
