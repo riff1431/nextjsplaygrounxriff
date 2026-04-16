@@ -92,7 +92,7 @@ const DrinkMenu: React.FC<DrinkMenuProps> = ({
                             <span className="text-[10px] text-white/40 uppercase tracking-widest">Private (5 mins)</span>
                         </div>
                     </div>
-                    <span className="text-gold font-bold">$300</span>
+                    <span className="text-gold font-bold">€300</span>
                 </button>
             </div>
         </div>

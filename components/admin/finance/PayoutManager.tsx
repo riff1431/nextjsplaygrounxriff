@@ -179,11 +179,11 @@ export default function PayoutManager() {
                                                                     <div className="w-4 h-4 rounded-full bg-purple-500/20 flex items-center justify-center text-[8px] text-purple-300 font-bold">J</div>
                                                                     julnvfaank
                                                                 </div>
-                                                                <div className="col-span-2 text-right text-white">$30.00</div>
+                                                                <div className="col-span-2 text-right text-white">€30.00</div>
                                                                 <div className="col-span-2 text-center">85% / 10%</div>
                                                                 <div className="col-span-2 text-right flex justify-end gap-4">
-                                                                    <span className="text-pink-300">$52.50</span>
-                                                                    <span className="text-purple-300">$52.50</span>
+                                                                    <span className="text-pink-300">€52.50</span>
+                                                                    <span className="text-purple-300">€52.50</span>
                                                                     <span className="text-green-400 font-bold ml-2">Ready</span>
                                                                 </div>
                                                             </div>

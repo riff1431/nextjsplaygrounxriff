@@ -59,7 +59,7 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
 
                 // Creator toast notification
                 const emoji = req.type === "drink" ? "🍸" : req.type === "tip" ? "💰" : req.type === "vip" ? "👑" : req.type === "booth" ? "🛋️" : req.type === "pin" ? "📌" : "⚡";
-                showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +$${req.amount}`);
+                showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +€${req.amount}`);
             })
             .subscribe();
 

@@ -86,7 +86,7 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
     const statItems = [
         { label: "Fans", value: stats.fans.toLocaleString() },
         { label: "Drinks", value: stats.drinks.toLocaleString() },
-        { label: "Tips", value: `$${stats.tips.toLocaleString()}` },
+        { label: "Tips", value: `€${stats.tips.toLocaleString()}` },
         { label: "Requests", value: stats.requests.toLocaleString() },
     ];
 

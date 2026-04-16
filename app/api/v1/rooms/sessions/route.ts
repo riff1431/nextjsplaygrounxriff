@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
             entryFee = Number(price) || 0;
             if (entryFee < Number(settings.min_private_entry_fee)) {
                 return NextResponse.json({
-                    error: `Private session fee must be at least $${settings.min_private_entry_fee}`,
+                    error: `Private session fee must be at least €${settings.min_private_entry_fee}`,
                 }, { status: 400 });
             }
         }
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
             costPerMin = Number(cost_per_min) || 0;
             if (costPerMin < 4) {
                 return NextResponse.json({
-                    error: "Cost per minute must be at least $4 for private sessions",
+                    error: "Cost per minute must be at least €4 for private sessions",
                 }, { status: 400 });
             }
         }

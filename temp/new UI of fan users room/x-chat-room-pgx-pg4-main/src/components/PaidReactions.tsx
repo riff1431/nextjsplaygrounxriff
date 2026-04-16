@@ -1,15 +1,15 @@
 const reactions = [
-  { emoji: "🔥", label: "Boost", price: "$2" },
-  { emoji: "💎", label: "Shine", price: "$5" },
-  { emoji: "🤟", label: "Crown", price: "$10" },
-  { emoji: "⚡", label: "Pulse", price: "$15" },
+  { emoji: "🔥", label: "Boost", price: "€2" },
+  { emoji: "💎", label: "Shine", price: "€5" },
+  { emoji: "🤟", label: "Crown", price: "€10" },
+  { emoji: "⚡", label: "Pulse", price: "€15" },
 ];
 
 const stickers = [
-  { emoji: "💋", label: "Kiss", price: "$5" },
-  { emoji: "😈", label: "Tease", price: "$10" },
-  { emoji: "🌹", label: "Rose", price: "$25" },
-  { emoji: "🎁", label: "Gift", price: "$50" },
+  { emoji: "💋", label: "Kiss", price: "€5" },
+  { emoji: "😈", label: "Tease", price: "€10" },
+  { emoji: "🌹", label: "Rose", price: "€25" },
+  { emoji: "🎁", label: "Gift", price: "€50" },
 ];
 
 const PaidReactions = () => {
@@ -54,13 +54,13 @@ const PaidReactions = () => {
         <h3 className="font-display text-gold text-sm mb-3">Visibility Boosts</h3>
         <div className="space-y-2 mb-2">
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>Pin my message (1 min)</span><span className="text-gold">$25</span>
+            <span>Pin my message (1 min)</span><span className="text-gold">€25</span>
           </button>
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>Highlight badge (2 min)</span><span className="text-gold">$40</span>
+            <span>Highlight badge (2 min)</span><span className="text-gold">€40</span>
           </button>
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>Priority queue (5 min)</span><span className="text-gold">$75</span>
+            <span>Priority queue (5 min)</span><span className="text-gold">€75</span>
           </button>
         </div>
         <p className="text-xs text-muted-foreground italic">Boosts can be time-bound and non-refundable.</p>
@@ -71,13 +71,13 @@ const PaidReactions = () => {
         <h3 className="font-display text-gold text-sm mb-3">Direct Access</h3>
         <div className="space-y-2 mb-2">
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>Private question</span><span className="text-gold">$20</span>
+            <span>Private question</span><span className="text-gold">€20</span>
           </button>
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>Voice note reply</span><span className="text-gold">$35</span>
+            <span>Voice note reply</span><span className="text-gold">€35</span>
           </button>
           <button className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 transition-colors">
-            <span>1:1 mini chat (2 min)</span><span className="text-gold">$60</span>
+            <span>1:1 mini chat (2 min)</span><span className="text-gold">€60</span>
           </button>
         </div>
         <p className="text-xs text-muted-foreground italic">Creates a paid lane that does not depend on chat velocity.</p>

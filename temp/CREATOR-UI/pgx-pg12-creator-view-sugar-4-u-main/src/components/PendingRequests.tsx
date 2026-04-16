@@ -1,8 +1,8 @@
 import { Diamond } from "lucide-react";
 
 const requests = [
-  { user: "SuGaFan17", amount: "$200", text: "Sexy lingerie shoot ❤️ ✨" },
-  { user: "RichieBoy", amount: "$75", text: "Late night chat ✨" },
+  { user: "SuGaFan17", amount: "€200", text: "Sexy lingerie shoot ❤️ ✨" },
+  { user: "RichieBoy", amount: "€75", text: "Late night chat ✨" },
 ];
 
 const PendingRequests = () => {
@@ -36,7 +36,7 @@ const PendingRequests = () => {
           <h4 className="text-sm font-bold text-foreground">Private 1 on 1</h4>
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-gold flex items-center gap-1">
-              $300 <Diamond className="w-3 h-3" />
+              €300 <Diamond className="w-3 h-3" />
             </span>
             <span className="text-xs bg-muted/50 text-muted-foreground px-2 py-1 rounded">11:00 PM</span>
           </div>

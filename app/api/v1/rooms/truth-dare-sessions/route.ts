@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
         if (isPrivate && cost_per_min !== undefined) {
             costPerMin = Number(cost_per_min) || 0;
             if (costPerMin < 4) {
-                return NextResponse.json({ error: "Cost per minute must be at least $4 for private sessions" }, { status: 400 });
+                return NextResponse.json({ error: "Cost per minute must be at least €4 for private sessions" }, { status: 400 });
             }
         }
 
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             transaction_type: "creator_start_fee",
             amount: creatorFee,
-            currency: "USD",
+            currency: "EUR",
             status: "completed",
             payment_reference: null,
         });

@@ -16,7 +16,7 @@ export default function PayPalPaymentModal({ amount, roomId, onClose, onSuccess 
 
     const initialOptions = {
         clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", // Fallback to "test" but needs real key
-        currency: "USD",
+        currency: "EUR",
         intent: "capture",
     };
 

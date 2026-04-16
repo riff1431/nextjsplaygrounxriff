@@ -19,7 +19,7 @@ const TopBar = () => {
         </div>
         <div className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-gold" />
-          <span className="text-gold font-bold text-xl">$1,290</span>
+          <span className="text-gold font-bold text-xl">€1,290</span>
         </div>
       </div>
     </div>

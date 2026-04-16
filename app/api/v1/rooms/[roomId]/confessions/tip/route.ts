@@ -87,7 +87,7 @@ export async function POST(
             user_id: creatorId,
             actor_id: user.id,
             type: "confession_tip",
-            message: `Someone sent ${reactionType} ($${amount}) on "${confession.title}"`,
+            message: `Someone sent ${reactionType} (€${amount}) on "${confession.title}"`,
             reference_id: confessionId,
         });
     }

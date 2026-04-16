@@ -115,7 +115,7 @@ function tierChip(tier: BadgeTier) {
 }
 
 function money(n: number) {
-    return `$${n.toFixed(0)}`;
+    return `€${n.toFixed(0)}`;
 }
 
 function nowId(prefix: string) {
@@ -185,7 +185,7 @@ export default function BarLoungeCreatorStudioPage() {
                     setSpinOutcomes([
                         { id: "o1", label: "Pinned Message (1 min)", odds: 30, note: "Fan’s next message pins above chat." },
                         { id: "o2", label: "Priority Cam (2 min)", odds: 20, note: "Fan badge glows; creator sees first." },
-                        { id: "o3", label: "VIP Booth Discount $50", odds: 12, note: "Applies to VIP Booth unlock." },
+                        { id: "o3", label: "VIP Booth Discount €50", odds: 12, note: "Applies to VIP Booth unlock." },
                         { id: "o4", label: "Free +2 Minutes", odds: 18, note: "Adds 2 minutes of free time." },
                         { id: "o5", label: "Creator Dares You", odds: 10, note: "Creator can send a dare prompt." },
                         { id: "o6", label: "Try Again", odds: 10, note: "No perk, but creator shoutout." },

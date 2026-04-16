@@ -455,7 +455,7 @@ export default function TruthOrDareCreatorPage() {
                     const existing = prev[fanKey] || { name: fanName, total: 0 };
                     const newTotal = existing.total + amount;
 
-                    console.log(`💰 Fan spending updated: ${fanName} spent $${amount} (Total: $${newTotal})`);
+                    console.log(`💰 Fan spending updated: ${fanName} spent €${amount} (Total: €${newTotal})`);
 
                     return {
                         ...prev,
@@ -591,7 +591,7 @@ export default function TruthOrDareCreatorPage() {
     useEffect(() => {
         if (topSpender !== "—") {
             const topSpenderData = Object.values(fanSpending).sort((a, b) => b.total - a.total)[0];
-            console.log(`👑 Top Spender (Dare King): ${topSpender} with $${topSpenderData?.total.toFixed(2)}`);
+            console.log(`👑 Top Spender (Dare King): ${topSpender} with €${topSpenderData?.total.toFixed(2)}`);
         }
     }, [topSpender, fanSpending]);
 
@@ -1048,7 +1048,7 @@ export default function TruthOrDareCreatorPage() {
                                         onChange={(e) => setSessionForm({ ...sessionForm, price: Math.max(20, Number(e.target.value)) })}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum $20. Fans pay this to join your private session.
+                                        Minimum €20. Fans pay this to join your private session.
                                     </p>
                                 </div>
                             )}
@@ -1065,7 +1065,7 @@ export default function TruthOrDareCreatorPage() {
                                         onChange={(e) => setSessionForm({ ...sessionForm, costPerMin: Math.max(4, Number(e.target.value)) })}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum $4. Fans are charged per minute in your private session.
+                                        Minimum €4. Fans are charged per minute in your private session.
                                     </p>
                                 </div>
                             )}
@@ -1266,7 +1266,7 @@ export default function TruthOrDareCreatorPage() {
                 <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
                     <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
                         <div className="text-3xl font-black text-white mb-1 uppercase drop-shadow-lg">New Tip!</div>
-                        <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400">$${activeTip.amount}</div>
+                        <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400">€${activeTip.amount}</div>
                         <p className="text-green-200 mt-2">{activeTip.fanName}</p>
                         <button onClick={() => setActiveTip(null)} className="mt-4 px-4 py-2 bg-white/10 rounded pointer-events-auto">Dismiss</button>
                     </div>

@@ -49,7 +49,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "xchat_reaction",
-        message: `Fan sent ${reactionType} reaction ($${amount})`, reference_id: reaction.id,
+        message: `Fan sent ${reactionType} reaction (€${amount})`, reference_id: reaction.id,
     });
 
     return NextResponse.json({ success: true, reaction, new_balance: splitResult.newBalance });

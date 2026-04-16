@@ -25,9 +25,9 @@ import BrandLogo from "@/components/common/BrandLogo";
  * - Live Arena (4 creators, 20-second rotations, voting + tips + buy votes)
  *
  * Notes:
- * - Fan entry: $50
+ * - Fan entry: €50
  * - Free votes: 2 per round
- * - Paid votes: packages ($5=5, $15=20, $50=100)
+ * - Paid votes: packages (€5=5, €15=20, €50=100)
  * - Tips: shown as UI action (payout logic is backend)
  */
 
@@ -56,7 +56,7 @@ export function cx(...parts: Array<string | false | null | undefined>) {
 }
 
 export function money(n: number) {
-    return `$${n.toFixed(0)}`;
+    return `€${n.toFixed(0)}`;
 }
 
 export function formatHMS(seconds: number) {
@@ -174,7 +174,7 @@ function CreatorTile({
                         Vote
                     </Btn>
                     <Btn variant="gold" onClick={onTip}>
-                        Tip $10
+                        Tip €10
                     </Btn>
                 </div>
             </div>
@@ -227,7 +227,7 @@ export default function CompetitionsFanPreview() {
         if (fanCountPaid < 500) {
             return "Low attendance: Top 3 split entry fees 40% / 30% / 20%, 10% house. Tips are 90/10.";
         }
-        return "Fixed prizes: Top 25 (1st $7,500; 2nd $5,000; 3rd $2,500; 4th $500; 5th $300; 6–25 $100). Tips are 90/10.";
+        return "Fixed prizes: Top 25 (1st €7,500; 2nd €5,000; 3rd €2,500; 4th €500; 5th €300; 6–25 €100). Tips are 90/10.";
     }, [fanCountPaid]);
 
     const leaderboard = useMemo(() => {
@@ -415,7 +415,7 @@ export default function CompetitionsFanPreview() {
                                                 </div>
                                                 <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                                                     <div className="text-[10px] text-gray-400">Entry fee</div>
-                                                    <div className="text-sm text-gray-100 mt-1">$50</div>
+                                                    <div className="text-sm text-gray-100 mt-1">€50</div>
                                                 </div>
                                                 <div className="rounded-xl border border-white/10 bg-black/30 p-3">
                                                     <div className="text-[10px] text-gray-400">Round format</div>
@@ -430,7 +430,7 @@ export default function CompetitionsFanPreview() {
                                             <div className="mt-4 flex items-center gap-2">
                                                 {!wallet.hasPaidEntry ? (
                                                     <Btn variant="gold" onClick={enterCompetition}>
-                                                        <DollarSign className="w-4 h-4" /> Enter Competition $50
+                                                        <DollarSign className="w-4 h-4" /> Enter Competition €50
                                                     </Btn>
                                                 ) : (
                                                     <Btn onClick={() => setScreen("arena")} disabled={!canEnterArena}>
@@ -570,13 +570,13 @@ export default function CompetitionsFanPreview() {
                                             </div>
                                             <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <Btn variant="blue" onClick={() => buyVotes(5)}>
-                                                    $5 · 5 votes
+                                                    €5 · 5 votes
                                                 </Btn>
                                                 <Btn variant="blue" onClick={() => buyVotes(20)}>
-                                                    $15 · 20 votes
+                                                    €15 · 20 votes
                                                 </Btn>
                                                 <Btn variant="blue" onClick={() => buyVotes(100)}>
-                                                    $50 · 100 votes
+                                                    €50 · 100 votes
                                                 </Btn>
                                             </div>
                                             <div className="mt-3 text-[11px] text-gray-500 inline-flex items-center gap-2">
@@ -645,8 +645,8 @@ function DevTests() {
         assert("formatHMS(60)", formatHMS(60) === "00:01:00");
         assert("formatHMS(3661)", formatHMS(3661) === "01:01:01");
 
-        assert("money(10)", money(10) === "$10");
-        assert("money(10.2)", money(10.2) === "$10");
+        assert("money(10)", money(10) === "€10");
+        assert("money(10.2)", money(10.2) === "€10");
 
         assert("cx filters falsy", cx("a", false, null, undefined, "b") === "a b");
     }, []);

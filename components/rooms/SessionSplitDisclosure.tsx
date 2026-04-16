@@ -32,12 +32,12 @@ export default function SessionSplitDisclosure({
 
     const rows = [
         {
-            label: `Entry Fee ${entryFee > 0 ? `($${entryFee})` : ''}`,
+            label: `Entry Fee ${entryFee > 0 ? `(€${entryFee})` : ''}`,
             you: entry.creator,
             platform: entry.platform,
         },
         {
-            label: `Per-Minute ${costPerMin > 0 ? `($${costPerMin}/min)` : `($${isPrivate ? '5+' : '2'}/min)`}`,
+            label: `Per-Minute ${costPerMin > 0 ? `(€${costPerMin}/min)` : `(€${isPrivate ? '5+' : '2'}/min)`}`,
             you: perMin.creator,
             platform: perMin.platform,
         },

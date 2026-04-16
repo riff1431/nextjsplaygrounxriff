@@ -19,7 +19,7 @@ const PaidRequestMenu = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await createRequest(r.type, r.name, "Custom request from fan view", r.price, fanName);
-            toast.success(`📸 Request sent: ${r.name}`, { description: `$${r.price} request submitted` });
+            toast.success(`📸 Request sent: ${r.name}`, { description: `€${r.price} request submitted` });
         } catch (err) {
             console.error("Failed to send request:", err);
         }

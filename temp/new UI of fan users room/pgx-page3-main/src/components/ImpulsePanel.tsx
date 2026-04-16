@@ -77,7 +77,7 @@ export default function ImpulsePanel() {
         <h2 className="font-tech text-xs font-bold neon-text-sm mb-1.5">Request A Drop</h2>
         <div className="mb-1.5 flex items-center justify-between">
           <span className="font-body font-semibold text-xs text-foreground/70">Request A Drop</span>
-          <span className="font-tech text-xs font-bold neon-text">$250</span>
+          <span className="font-tech text-xs font-bold neon-text">€250</span>
         </div>
         <form onSubmit={handleSubmit} className="space-y-1.5">
           <textarea

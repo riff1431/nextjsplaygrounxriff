@@ -12,7 +12,7 @@ const LockedConfessionCard = ({ text }: { text: string }) => {
         Unlock to reveal <span className="text-sm">👀</span>
       </span> */}
       <button className="w-full py-1.5 rounded-md gradient-pink text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
-        <Heart className="w-3 h-3 fill-current" /> Unlock for $25
+        <Heart className="w-3 h-3 fill-current" /> Unlock for €25
       </button>
     </div>
   );
@@ -44,8 +44,8 @@ const ConfessionWall = () => {
       </div>
 
       {/* <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap shrink-0">
-        <span>Current Pot <span className="gold-text font-display font-bold text-base">$265</span></span>
-        <span>/ Receive Goal $400</span>
+        <span>Current Pot <span className="gold-text font-display font-bold text-base">€265</span></span>
+        <span>/ Receive Goal €400</span>
       </div> */}
 
       {/* <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
@@ -59,7 +59,7 @@ const ConfessionWall = () => {
         {["❤️", "💜", "😜", "🔥", "⭐", "👑", "😎", "🐱"].map((e, i) => (
           <span key={i} className="cursor-pointer hover:scale-125 transition-transform text-sm">{e}</span>
         ))}
-        <span className="text-primary text-xs ml-auto">Tell More $510</span>
+        <span className="text-primary text-xs ml-auto">Tell More €510</span>
       </div>
 
       <ScrollArea className="flex-1 min-h-0">

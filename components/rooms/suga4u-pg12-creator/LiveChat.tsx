@@ -8,15 +8,15 @@ const messages = [
     { user: "SugaFan17", avatar: "🌸", text: "Hello beautiful! 💕✨", tip: null },
     { user: "LoveStruck23", avatar: "💜", text: "You look amazing!", tip: null },
     { user: "HottieHunter", avatar: "🔥", text: "Hey Suga! Hope you're having a great day! 🌹", tip: null },
-    { user: "Candy4U", avatar: "🍬", text: "Hey Suga! 🥰 🎁", tip: "$50" },
+    { user: "Candy4U", avatar: "🍬", text: "Hey Suga! 🥰 🎁", tip: "€50" },
     { user: "DreamyNight", avatar: "🌙", text: "Just dropped by to say hi! 💫", tip: null },
-    { user: "RoseQueen", avatar: "🌹", text: "Love the vibe tonight!", tip: "$25" },
+    { user: "RoseQueen", avatar: "🌹", text: "Love the vibe tonight!", tip: "€25" },
     { user: "SweetTalker", avatar: "🍯", text: "You're absolutely glowing 🔥", tip: null },
-    { user: "GoldenBoy", avatar: "⭐", text: "Can't stop watching! 💛", tip: "$100" },
+    { user: "GoldenBoy", avatar: "⭐", text: "Can't stop watching! 💛", tip: "€100" },
     { user: "MidnightRider", avatar: "🌃", text: "What's the song playing?", tip: null },
-    { user: "CherryPop", avatar: "🍒", text: "Sending love your way! 💋", tip: "$30" },
+    { user: "CherryPop", avatar: "🍒", text: "Sending love your way! 💋", tip: "€30" },
     { user: "BlueVelvet", avatar: "💎", text: "You deserve the world 🌍", tip: null },
-    { user: "StarlightX", avatar: "✨", text: "First time here, already a fan!", tip: "$15" },
+    { user: "StarlightX", avatar: "✨", text: "First time here, already a fan!", tip: "€15" },
 ];
 
 const LiveChat = () => {

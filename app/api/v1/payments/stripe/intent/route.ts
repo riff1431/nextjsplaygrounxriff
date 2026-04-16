@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { amount, currency = 'usd', roomId } = body;
+        const { amount, currency = 'eur', roomId } = body;
 
         // Fetch Stripe Secret Key from DB settings
         // Ideally we check `payment_settings` first.

@@ -100,7 +100,7 @@ export async function POST(
             user_id: creatorId,
             actor_id: user.id,
             type: "confession_unlock",
-            message: `Someone unlocked your confession "${confession.title}" for $${price}`,
+            message: `Someone unlocked your confession "${confession.title}" for €${price}`,
             reference_id: confessionId,
         });
     }

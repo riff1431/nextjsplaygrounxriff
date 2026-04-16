@@ -54,7 +54,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "suga_gift",
-        message: `${profile?.username || "Fan"} sent a ${giftType} gift ($${amount})!`,
+        message: `${profile?.username || "Fan"} sent a ${giftType} gift (€${amount})!`,
         reference_id: gift?.id,
     });
 

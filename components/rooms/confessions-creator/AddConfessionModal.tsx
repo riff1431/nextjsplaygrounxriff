@@ -9,14 +9,14 @@ interface AddConfessionModalProps {
     onClose: () => void;
     roomId: string;
     onCreated: () => void;
+    editConfession?: any;
 }
 
 const tiers = [
-    { id: "Soft", label: "💋 Soft", defaultPrice: 10 },
-    { id: "Spicy", label: "🔥 Spicy", defaultPrice: 20 },
-    { id: "Dirty", label: "🖤 Dirty", defaultPrice: 30 },
-    { id: "Diamonds", label: "💎 Diamonds", defaultPrice: 40 },
-    { id: "Forbidden", label: "😈 Forbidden", defaultPrice: 50 },
+    { id: "Spicy", label: "🔥 Spicy", defaultPrice: 10 },
+    { id: "Dirty", label: "🖤 Dirty", defaultPrice: 20 },
+    { id: "Bedroom", label: "🛏️ Bedroom", defaultPrice: 30 },
+    { id: "Forbidden", label: "😈 Forbidden", defaultPrice: 40 },
 ];
 
 const types = [
@@ -25,14 +25,14 @@ const types = [
     { id: "Video", icon: Video, label: "Video" },
 ];
 
-export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated }: AddConfessionModalProps) {
-    const [title, setTitle] = useState("");
-    const [teaser, setTeaser] = useState("");
-    const [content, setContent] = useState("");
-    const [mediaUrl, setMediaUrl] = useState("");
-    const [type, setType] = useState("Text");
-    const [tier, setTier] = useState("Soft");
-    const [price, setPrice] = useState("10");
+export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated, editConfession }: AddConfessionModalProps) {
+    const [title, setTitle] = useState(editConfession?.title || "");
+    const [teaser, setTeaser] = useState(editConfession?.teaser || "");
+    const [content, setContent] = useState(editConfession?.content || "");
+    const [mediaUrl, setMediaUrl] = useState(editConfession?.media_url || "");
+    const [type, setType] = useState(editConfession?.type || "Text");
+    const [tier, setTier] = useState(editConfession?.tier || "Spicy");
+    const [price, setPrice] = useState(String(editConfession?.price || "10"));
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -49,8 +49,13 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
 
         setLoading(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/confessions`, {
-                method: "POST",
+            const url = editConfession 
+                ? `/api/v1/rooms/${roomId}/confessions/${editConfession.id}` 
+                : `/api/v1/rooms/${roomId}/confessions`;
+            const method = editConfession ? "PATCH" : "POST";
+
+            const res = await fetch(url, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     title: title.trim(),
@@ -65,7 +70,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
             });
             const data = await res.json();
             if (data.success) {
-                toast.success("Confession published! 🎉");
+                toast.success(editConfession ? "Confession updated! 🎉" : "Confession published! 🎉");
                 setTitle("");
                 setTeaser("");
                 setContent("");
@@ -90,7 +95,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
             <div className="relative w-full max-w-md mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10">
-                    <h3 className="text-base font-bold text-white">Add to Confession Wall</h3>
+                    <h3 className="text-base font-bold text-white">{editConfession ? "Edit Confession" : "Add to Confession Wall"}</h3>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
                         <X size={18} />
                     </button>
@@ -212,7 +217,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated 
                         className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-pink-900/30 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                        Publish
+                        {editConfession ? "Save Changes" : "Publish"}
                     </button>
                 </div>
             </div>

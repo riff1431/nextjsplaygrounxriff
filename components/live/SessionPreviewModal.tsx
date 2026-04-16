@@ -247,7 +247,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                                     <div className="text-left">
                                         <div className="font-semibold text-white">My Wallet</div>
                                         <div className="text-xs text-gray-500">
-                                            Balance: {walletBalance !== null ? `$${walletBalance.toFixed(2)}` : 'Checking...'}
+                                            Balance: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Checking...'}
                                         </div>
                                     </div>
                                 </div>
@@ -412,7 +412,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                         <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
                         <div className="text-2xl font-bold text-white">${price}</div>
                         <div className={`mt-1 text-xs font-medium ${walletBalance !== null && walletBalance < price ? 'text-red-300' : 'text-green-300'}`}>
-                            Your Balance: {walletBalance !== null ? `$${walletBalance.toFixed(2)}` : 'Checking...'}
+                            Your Balance: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Checking...'}
                         </div>
                     </div>
 

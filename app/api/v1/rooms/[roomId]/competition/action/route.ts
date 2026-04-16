@@ -134,7 +134,7 @@ export async function POST(
             }).eq('id', participantId);
 
             // 3. Log Activity
-            const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+            const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' });
             await supabase.from("competition_activity").insert([{
                 competition_id: competitionId,
                 type: 'tip',

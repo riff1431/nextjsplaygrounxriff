@@ -130,10 +130,10 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
   };
 
   const tierTips = [
-    { icon: "💋", label: "KISS", price: "$10" },
-    { icon: "❤️", label: "LOVE", price: "$20" },
-    { icon: "🔥", label: "SPICY", price: "$30" },
-    { icon: "💎", label: "DIAMONDS", price: "$40" },
+    { icon: "💋", label: "KISS", price: "€10" },
+    { icon: "❤️", label: "LOVE", price: "€20" },
+    { icon: "🔥", label: "SPICY", price: "€30" },
+    { icon: "💎", label: "DIAMONDS", price: "€40" },
   ];
 
   return (
@@ -201,7 +201,7 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
           amount={unlockTarget.price}
           walletBalance={balance}
           description={`${unlockTarget.tier} • ${unlockTarget.type}`}
-          confirmLabel={`Unlock for $${unlockTarget.price}`}
+          confirmLabel={`Unlock for €${unlockTarget.price}`}
         />
       )}
 

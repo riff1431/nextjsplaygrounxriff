@@ -77,7 +77,7 @@ export async function POST(
         const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         await supabase.from("notifications").insert({
             user_id: creatorId, actor_id: user.id, type: "flash_drop",
-            message: `${profile?.username || "Fan"} unlocked "${drop.title}" ($${price})!`,
+            message: `${profile?.username || "Fan"} unlocked "${drop.title}" (€${price})!`,
             reference_id: dropId,
         });
     }

@@ -2,15 +2,15 @@ import { Heart, Plus, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const items = [
-  { emoji: "👙", name: "Pink Lingerie", detail: "I Love You set ✨", price: "$200" },
-  { emoji: "🌸", name: "Chanel #5", detail: "250ml", price: "$75" },
-  { emoji: "💎", name: "Crystal Toy", detail: "$100 💜", price: "$100" },
-  { emoji: "👠", name: "Red Heels", detail: "Size 7, Louboutin", price: "$650" },
-  { emoji: "🎀", name: "Silk Robe", detail: "Rose gold satin", price: "$120" },
-  { emoji: "💄", name: "MAC Lipstick Set", detail: "Ruby Woo collection", price: "$85" },
-  { emoji: "🧴", name: "Body Oil", detail: "Shimmer gold 200ml", price: "$45" },
-  { emoji: "🌹", name: "Rose Bouquet", detail: "50 red roses 🌹", price: "$150" },
-  { emoji: "📱", name: "Ring Light Pro", detail: "18 inch RGB", price: "$90" },
+  { emoji: "👙", name: "Pink Lingerie", detail: "I Love You set ✨", price: "€200" },
+  { emoji: "🌸", name: "Chanel #5", detail: "250ml", price: "€75" },
+  { emoji: "💎", name: "Crystal Toy", detail: "€100 💜", price: "€100" },
+  { emoji: "👠", name: "Red Heels", detail: "Size 7, Louboutin", price: "€650" },
+  { emoji: "🎀", name: "Silk Robe", detail: "Rose gold satin", price: "€120" },
+  { emoji: "💄", name: "MAC Lipstick Set", detail: "Ruby Woo collection", price: "€85" },
+  { emoji: "🧴", name: "Body Oil", detail: "Shimmer gold 200ml", price: "€45" },
+  { emoji: "🌹", name: "Rose Bouquet", detail: "50 red roses 🌹", price: "€150" },
+  { emoji: "📱", name: "Ring Light Pro", detail: "18 inch RGB", price: "€90" },
 ];
 
 const CreatorsFavorites = () => {
@@ -19,7 +19,7 @@ const CreatorsFavorites = () => {
       <h3 className="font-display text-lg font-bold text-foreground mb-3">Creators Favorites</h3>
       {/* <div className="flex items-center gap-2 mb-4">
         <span className="flex items-center gap-1 bg-primary/20 text-primary px-3 py-1.5 rounded-full text-sm font-semibold">
-          <Heart className="w-3.5 h-3.5 fill-primary" /> $200
+          <Heart className="w-3.5 h-3.5 fill-primary" /> €200
         </span>
         <span className="flex items-center gap-1 bg-muted/50 text-muted-foreground px-3 py-1.5 rounded-full text-sm">
           <Settings className="w-3.5 h-3.5" />

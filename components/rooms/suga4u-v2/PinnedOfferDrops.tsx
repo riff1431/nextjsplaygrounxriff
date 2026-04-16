@@ -20,7 +20,7 @@ const PinnedOfferDrops = () => (
                 ))}
             </div>
             <p className="text-xs text-muted-foreground text-center mb-2">✓ Slots Left: 7/10</p>
-            <button className="w-full btn-gold py-2 text-sm font-bold tracking-wider">UNLOCK $99</button>
+            <button className="w-full btn-gold py-2 text-sm font-bold tracking-wider">UNLOCK €99</button>
         </div>
     </div>
 );

@@ -9,7 +9,7 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
 
     const logoSrc = theme?.logoUrl || "/logo.png";
 
-    const logoHeight = theme?.logoSize || 36;
+    const logoHeight = theme?.logoSize ? theme.logoSize * 2 : 72; // Force 200% size
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>

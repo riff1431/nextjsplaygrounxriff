@@ -39,7 +39,7 @@ const LiveChat = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Tips:</span>
-            <span className="text-gold font-semibold">$1,290</span>
+            <span className="text-gold font-semibold">€1,290</span>
           </div>
         </div> */}
       </div>

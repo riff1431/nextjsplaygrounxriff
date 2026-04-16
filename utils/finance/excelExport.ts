@@ -111,7 +111,7 @@ export async function generateEarningsExcel(
 
     summaryData.forEach((row, i) => {
         const r = summarySheet.getRow(summaryStartRow + 1 + i);
-        r.values = [row[0], typeof row[1] === 'number' ? `$${(row[1] as number).toFixed(2)}` : row[1]];
+        r.values = [row[0], typeof row[1] === 'number' ? `€${(row[1] as number).toFixed(2)}` : row[1]];
         r.font = { color: { argb: WHITE } };
     });
 
@@ -149,10 +149,10 @@ export async function generateEarningsExcel(
             (line.revenue_type || '').replace(/_/g, ' ').toUpperCase(),
             line.room_key || '-',
             line.fan_username || 'Unknown',
-            `$${line.gross_amount.toFixed(2)}`,
-            `$${line.creator_share.toFixed(2)}`,
+            `€${line.gross_amount.toFixed(2)}`,
+            `€${line.creator_share.toFixed(2)}`,
         ];
-        if (options.includeplatformShare) vals.push(`$${line.platform_share.toFixed(2)}`);
+        if (options.includeplatformShare) vals.push(`€${line.platform_share.toFixed(2)}`);
         vals.push(line.split_name || '-');
 
         const row = itemsSheet.getRow(i + 2);

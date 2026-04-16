@@ -4,7 +4,7 @@ const STATS = [
   { icon: "🎉", label: "", value: "120", icon2: "🎉", value2: "120" },
   { icon: "💕", label: "REACTIONS", value: "", icon2: "😍", value2: "324" },
   { icon: "🎁", label: "STICKERS", value: "", icon2: "", value2: "53" },
-  { icon: "💰", label: "TIPS (USD)", value: "", icon2: "", value2: "$1,065" },
+  { icon: "💰", label: "TIPS (EUR)", value: "", icon2: "", value2: "€1,065" },
   { icon: "👥", label: "FANS", value: "", icon2: "", value2: "2,490" },
   { icon: "⭐", label: "REQUESTS", value: "", icon2: "", value2: "8" },
 ];
@@ -39,7 +39,7 @@ const SummaryPanel = () => {
         {[
           { icon: "💕", label: "REACTIONS", icon2: "😍", value: "324" },
           { icon: "🎁", label: "STICKERS", value: "53" },
-          { icon: "💰", label: "TIPS (USD)", value: "$1,065" },
+          { icon: "💰", label: "TIPS (EUR)", value: "€1,065" },
           { icon: "👥", label: "FANS", value: "2,490" },
           { icon: "⭐", label: "REQUESTS", value: "8" },
         ].map((stat, i) => (

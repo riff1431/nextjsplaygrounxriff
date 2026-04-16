@@ -262,9 +262,9 @@ export default function NewsFeedPage() {
 
     // Fetch posts
     const fetchPosts = useCallback(
-        async (reset = true) => {
+        async (reset = true, background = false) => {
             if (reset) {
-                setLoading(true);
+                if (!background) setLoading(true);
                 setPage(0);
             } else {
                 setLoadingMore(true);
@@ -332,7 +332,7 @@ export default function NewsFeedPage() {
         const channel = supabase
             .channel("newsfeed-realtime")
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, () => {
-                fetchPosts(true);
+                fetchPosts(true, true); // Use background refresh
             })
             .subscribe();
         return () => {

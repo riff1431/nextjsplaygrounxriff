@@ -82,7 +82,7 @@ export async function POST(
             session_id: sessionId,
             user_id: user.id,
             username: "System",
-            message: `💰 ${profile?.username || "A fan"} tipped $${amount}!`,
+            message: `💰 ${profile?.username || "A fan"} tipped €${amount}!`,
             is_system: true,
         });
 

@@ -44,12 +44,12 @@ export const CsStatsBar = ({
 }: CsStatsBarProps) => {
     const router = useRouter();
     const stats: StatCardProps[] = [
-        { icon: <DollarSign size={20} />, label: "Tips Earned", value: isLoading ? "..." : `$${tipsEarned}`, color: "text-[hsl(150,80%,45%)]" },
+        { icon: <DollarSign size={20} />, label: "Tips Earned", value: isLoading ? "..." : `€${tipsEarned}`, color: "text-[hsl(150,80%,45%)]" },
         { icon: <Gift size={20} />, label: "Gifts", value: isLoading ? "..." : `${giftsCount}`, color: "text-[hsl(320,100%,60%)]" },
         { icon: <Users size={20} />, label: "Total Followers", value: isLoading ? "..." : `${totalFollowers}`, color: "text-[hsl(180,100%,50%)]" },
         { icon: <Play size={20} />, label: "Active Rooms", value: isLoading ? "..." : `${activeRooms}`, color: "text-[hsl(280,100%,65%)]" },
         { icon: <Star size={20} />, label: "Subscribers", value: isLoading ? "..." : `${subscribers}`, color: "text-[hsl(45,100%,55%)]" },
-        { icon: <Lock size={20} />, label: "Subscription Earnings", value: isLoading ? "..." : `$${subscriptionEarnings}`, color: "text-[hsl(25,100%,55%)]" },
+        { icon: <Lock size={20} />, label: "Subscription Earnings", value: isLoading ? "..." : `€${subscriptionEarnings}`, color: "text-[hsl(25,100%,55%)]" },
     ];
 
     return (

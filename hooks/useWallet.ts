@@ -54,7 +54,7 @@ export function useWallet() {
                 // No wallet yet — create one
                 const { data: newWallet, error: createError } = await supabase
                     .from("wallets")
-                    .insert({ user_id: user.id, balance: 0, currency: "USD" })
+                    .insert({ user_id: user.id, balance: 0, currency: "EUR" })
                     .select()
                     .single();
 
@@ -161,7 +161,7 @@ export function useWallet() {
     return {
         wallet,
         balance: wallet?.balance ?? 0,
-        currency: wallet?.currency ?? "USD",
+        currency: wallet?.currency ?? "EUR",
         isLoading,
         error,
         pay,

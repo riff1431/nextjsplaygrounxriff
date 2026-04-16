@@ -203,7 +203,7 @@ export async function applyRevenueSplit(
                     creator_user_id: creatorUserId,
                     revenue_type_id: revenueTypeId,
                     room_key: roomId || null,
-                    currency: 'USD',
+                    currency: 'EUR',
                     gross_amount: grossAmount,
                     net_amount: creatorShare,
                     payment_provider: 'wallet',

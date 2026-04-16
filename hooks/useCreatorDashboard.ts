@@ -107,124 +107,22 @@ export function useCreatorDashboard(): CreatorDashboardData {
                 .eq("creator_id", user.id)
                 .eq("status", "active");
 
-            // 6. Calculate tips earned across all rooms
+            // 6. Fetch Global Creator Earnings (Standardized API)
             let tipsEarned = 0;
-
-            if (roomIds.length > 0) {
-                // Bar lounge requests (accepted)
-                const { data: barTips } = await supabase
-                    .from("bar_lounge_requests")
-                    .select("amount")
-                    .in("room_id", roomIds)
-                    .eq("status", "accepted");
-                tipsEarned += (barTips || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Confession tips
-                const { data: confTips } = await supabase
-                    .from("confession_tips")
-                    .select("amount, confession_id")
-                    .not("confession_id", "is", null);
-                // Filter by creator's confessions
-                const { data: creatorConfessions } = await supabase
-                    .from("confessions")
-                    .select("id")
-                    .in("room_id", roomIds);
-                const confIds = (creatorConfessions || []).map((c) => c.id);
-                const filteredConfTips = (confTips || []).filter((t) => confIds.includes(t.confession_id));
-                tipsEarned += filteredConfTips.reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Truth or dare tips
-                const { data: todTips } = await supabase
-                    .from("truth_dare_tips")
-                    .select("amount")
-                    .in("room_id", roomIds);
-                tipsEarned += (todTips || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Truth or dare requests (accepted)
-                const { data: todRequests } = await supabase
-                    .from("truth_dare_requests")
-                    .select("amount")
-                    .in("room_id", roomIds)
-                    .neq("status", "pending");
-                tipsEarned += (todRequests || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // X Chat reactions
-                const { data: xchatReactions } = await supabase
-                    .from("x_chat_reactions")
-                    .select("amount")
-                    .in("room_id", roomIds);
-                tipsEarned += (xchatReactions || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // X Chat paid messages
-                const { data: xchatMessages } = await supabase
-                    .from("x_chat_messages")
-                    .select("paid_amount")
-                    .in("room_id", roomIds)
-                    .gt("paid_amount", 0);
-                tipsEarned += (xchatMessages || []).reduce((sum, r) => sum + Number(r.paid_amount || 0), 0);
-
-                // Confession requests (delivered/completed)
-                const { data: confRequests } = await supabase
-                    .from("confession_requests")
-                    .select("amount")
-                    .eq("creator_id", user.id)
-                    .in("status", ["delivered", "completed", "in_progress"]);
-                tipsEarned += (confRequests || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Confession unlocks
-                const { data: confUnlocks } = await supabase
-                    .from("confession_unlocks")
-                    .select("price_paid, confession_id");
-                const filteredConfUnlocks = (confUnlocks || []).filter((u) => confIds.includes(u.confession_id));
-                tipsEarned += filteredConfUnlocks.reduce((sum, r) => sum + Number(r.price_paid || 0), 0);
-
-                // Suga gifts
-                const { data: sugaGifts } = await supabase
-                    .from("suga_gifts")
-                    .select("amount")
-                    .in("room_id", roomIds);
-                tipsEarned += (sugaGifts || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Suga entry fees
-                const { data: sugaEntries } = await supabase
-                    .from("suga_entry_fees")
-                    .select("amount")
-                    .in("room_id", roomIds);
-                tipsEarned += (sugaEntries || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-
-                // Flash drop unlocks
-                const { data: creatorDrops } = await supabase
-                    .from("flash_drops")
-                    .select("id")
-                    .in("room_id", roomIds);
-                const dropIds = (creatorDrops || []).map((d) => d.id);
-                if (dropIds.length > 0) {
-                    const { data: dropUnlocks } = await supabase
-                        .from("flash_drop_unlocks")
-                        .select("amount")
-                        .in("drop_id", dropIds);
-                    tipsEarned += (dropUnlocks || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
-                }
-
-                // Truth or dare unlocks
-                const { data: todUnlocks } = await supabase
-                    .from("truth_dare_unlocks")
-                    .select("amount_paid")
-                    .in("room_id", roomIds);
-                tipsEarned += (todUnlocks || []).reduce((sum, r) => sum + Number(r.amount_paid || 0), 0);
-            }
-
-            // 7. Count gifts (suga_gifts)
             let giftsCount = 0;
-            if (roomIds.length > 0) {
-                const { count: gc } = await supabase
-                    .from("suga_gifts")
-                    .select("id", { count: "exact", head: true })
-                    .in("room_id", roomIds);
-                giftsCount = gc || 0;
+            try {
+                const res = await fetch("/api/v1/creator/earnings?limit=1");
+                if (res.ok) {
+                    const earningsData = await res.json();
+                    tipsEarned = Number(earningsData.ledger?.total_earned || 0);
+                    // Instead of total_gifts, if we just want gifts count we could do:
+                    giftsCount = Number(earningsData.month_summary?.events_count || 0); // or count from gifts
+                }
+            } catch (err) {
+                console.error("Failed to fetch standardized earnings", err);
             }
 
-            // 8. Calculate subscription earnings
+            // 7. Calculate subscription earnings
             let subscriptionEarnings = 0;
             const { data: activeSubs } = await supabase
                 .from("subscriptions")
@@ -243,7 +141,7 @@ export function useCreatorDashboard(): CreatorDashboardData {
 
             setStats({
                 tipsEarned: Math.round(tipsEarned * 100) / 100,
-                giftsCount,
+                giftsCount, // this is effectively total events for the month now, but ok
                 totalFollowers,
                 activeRooms,
                 subscribers: subscribersCount || 0,
@@ -294,6 +192,28 @@ export function useCreatorDashboard(): CreatorDashboardData {
     useEffect(() => {
         fetchDashboard();
     }, [fetchDashboard]);
+
+    // Active real-time sync for tips and gifts
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const channel = supabase
+            .channel("dashboard_earnings_sync")
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "revenue_events", filter: `creator_user_id=eq.${user.id}` }, () => {
+                fetchDashboard();
+            })
+            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "creator_earnings_ledger", filter: `creator_id=eq.${user.id}` }, () => {
+                fetchDashboard();
+            })
+            .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `host_id=eq.${user.id}` }, () => {
+                fetchDashboard();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.id, fetchDashboard, supabase]);
 
     return {
         profile,

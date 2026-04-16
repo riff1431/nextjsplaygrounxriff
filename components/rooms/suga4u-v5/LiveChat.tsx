@@ -1,29 +1,29 @@
 import { Heart, Send } from "lucide-react";
 
 const messages = [
-    { user: "Jessica", emoji: "💖", text: "tipped $50!", highlight: true },
+    { user: "Jessica", emoji: "💖", text: "tipped €50!", highlight: true },
     { user: "Mike_Daddy", emoji: "😎", text: "She's stunning!" },
-    { user: "QueenB", emoji: "👑", text: "Can you say my name? $20", highlight: true },
+    { user: "QueenB", emoji: "👑", text: "Can you say my name? €20", highlight: true },
     { user: "Steven", emoji: "", text: "sent Luxury Bag 👜", highlight: true },
     { user: "EmilyR", emoji: "🔥", text: "That body! 💕" },
     { user: "Alex King", emoji: "", text: "Sponsor Room 💎", highlight: true },
     { user: "Rose✨", emoji: "😂", text: "Take my money!" },
-    { user: "Diamond_Jay", emoji: "💰", text: "Just sent $200! Keep going queen 👑", highlight: true },
+    { user: "Diamond_Jay", emoji: "💰", text: "Just sent €200! Keep going queen 👑", highlight: true },
     { user: "LuxLife", emoji: "🥂", text: "Best stream tonight!" },
     { user: "Kingpin", emoji: "🔥", text: "VIP access when? 💎", highlight: false },
-    { user: "SugarRush", emoji: "🍬", text: "tipped $75!", highlight: true },
+    { user: "SugarRush", emoji: "🍬", text: "tipped €75!", highlight: true },
     { user: "Bella_V", emoji: "💋", text: "Love the vibes tonight ✨" },
     { user: "ChampagnePapi", emoji: "🍾", text: "sent Diamond Ring 💍", highlight: true },
     { user: "MrGenerous", emoji: "💸", text: "Sponsor Room unlocked! 🎉", highlight: true },
     { user: "NightOwl", emoji: "🦉", text: "Can't stop watching 😍" },
-    { user: "GoldMember", emoji: "🏆", text: "tipped $100!", highlight: true },
+    { user: "GoldMember", emoji: "🏆", text: "tipped €100!", highlight: true },
     { user: "StarGazer", emoji: "⭐", text: "You're glowing tonight!" },
-    { user: "BigSpender", emoji: "💎", text: "Private show request! $500", highlight: true },
+    { user: "BigSpender", emoji: "💎", text: "Private show request! €500", highlight: true },
 ];
 
 const LiveChat = () => (
-    <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20">
-        <div className="flex items-center justify-center p-3 border-b border-gold/20">
+    <div className="glass-panel flex flex-col h-[400px] md:h-[500px] bg-transparent border-gold/20 overflow-hidden">
+        <div className="flex items-center justify-center p-3 border-b border-gold/20 shrink-0">
             <div className="h-px flex-1 bg-gold/30" />
             <span className="section-title px-3">Live Chat</span>
             <div className="h-px flex-1 bg-gold/30" />
@@ -44,7 +44,7 @@ const LiveChat = () => (
             ))}
         </div>
 
-        <div className="p-3 border-t border-gold/20 flex gap-2">
+        <div className="p-3 border-t border-gold/20 flex gap-2 shrink-0">
             <input
                 type="text"
                 placeholder="Type a message..."

@@ -47,7 +47,7 @@ const Index = () => {
                             <h2 className="font-display text-gold text-base mb-4">Live X Chat</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <CreatorCard username="BlueMuse" tier="Rising" />
-                                <CreatorCard username="EllaRose_XXX" tier="Popular" price="$2/min metered" />
+                                <CreatorCard username="EllaRose_XXX" tier="Popular" price="€2/min metered" />
                             </div>
                         </div>
 

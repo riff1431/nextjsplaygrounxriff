@@ -68,7 +68,7 @@ function formatHMS(seconds: number) {
 
 function moneyFromCents(cents: number) {
     const dollars = Math.floor((cents ?? 0) / 100);
-    return `$${dollars.toFixed(0)}`;
+    return `€${dollars.toFixed(0)}`;
 }
 
 function Badge({
@@ -382,7 +382,7 @@ export default function CompetitionsCreatorStudio() {
                     phase: c.status,
                     remainingSeconds: c.phase_end_time ? Math.max(0, Math.floor((new Date(c.phase_end_time).getTime() - Date.now()) / 1000)) : 0,
                     fanCountPaid: c.fan_count_paid || 0,
-                    prizeSummary: `Entry Fee: $${c.entry_fee}. Tips split 90/10.`,
+                    prizeSummary: `Entry Fee: €${c.entry_fee}. Tips split 90/10.`,
                 });
             }
             if (data.me) {

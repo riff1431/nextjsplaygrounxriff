@@ -234,9 +234,9 @@ export default function CreatorSessionView({
                                         </span>
                                         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", flex: 1 }}>
                                             <b style={{ color: "#fff" }}>{event.fan_name}</b>
-                                            {event.type === "tip" && ` tipped $${event.amount}`}
+                                            {event.type === "tip" && ` tipped €${event.amount}`}
                                             {event.type === "reaction" && ` sent ${(event as any).emoji}`}
-                                            {event.type === "request" && ` requested ($${event.amount})`}
+                                            {event.type === "request" && ` requested (€${event.amount})`}
                                         </span>
                                     </div>
                                 ))

@@ -30,6 +30,7 @@ interface ConfessionWallProps {
     handleTierFilter: (tier: string) => void;
     setViewConfession: (c: Confession) => void;
     setPurchaseConfession: (c: Confession) => void;
+    handleReaction?: (label: string, amount: number, confessionId?: string) => void;
 }
 
 /* ─── Locked Confession Card ─── */
@@ -95,7 +96,8 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
     tierFilter,
     handleTierFilter,
     setViewConfession,
-    setPurchaseConfession
+    setPurchaseConfession,
+    handleReaction
 }) => {
     return (
         <div className="neon-glass-card p-4 sm:p-5 space-y-4">
@@ -108,13 +110,14 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                 {/* Reaction buttons */}
                 <div className="flex gap-1.5">
                     {[
-                        { icon: "💋", label: "KISS", price: "$10" },
-                        { icon: "❤️", label: "LOVE", price: "$20" },
-                        { icon: "🔥", label: "SPICY", price: "$30" },
-                        { icon: "💎", label: "DARK", price: "$40" },
+                        { icon: "💋", label: "KISS", price: "€10", val: 10 },
+                        { icon: "❤️", label: "LOVE", price: "€20", val: 20 },
+                        { icon: "🔥", label: "SPICY", price: "€30", val: 30 },
+                        { icon: "💎", label: "DARK", price: "€40", val: 40 },
                     ].map((tip, i) => (
                         <button
                             key={i}
+                            onClick={() => handleReaction?.(tip.label, tip.val, confessions[0]?.id)}
                             className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl border border-primary/15 hover:border-primary/40 transition-all duration-200 hover:scale-105 cursor-pointer"
                             style={{ background: 'rgba(45, 27, 56, 0.8)' }}
                         >
@@ -128,7 +131,7 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
 
             {/* Filter System */}
             <div className="flex flex-wrap items-center gap-2 pt-2 pb-4">
-                {['All', 'Soft', 'Juicy', 'Spicy', 'Dark'].map((tier) => {
+                {['All', 'Spicy', 'Dirty', 'Bedroom', 'Forbidden'].map((tier) => {
                     const isActive = tierFilter === tier;
                     return (
                         <button

@@ -56,7 +56,7 @@ export default function WalletPill({ className = "", compact = false }: WalletPi
             >
                 <Coins size={compact ? 12 : 14} className="text-amber-400" />
                 <span className="font-bold text-white">
-                    {isLoading ? "..." : `$${balance.toFixed(0)}`}
+                    {isLoading ? "..." : `€${balance.toFixed(0)}`}
                 </span>
                 <Plus
                     size={compact ? 10 : 12}

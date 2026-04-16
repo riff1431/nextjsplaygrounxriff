@@ -53,7 +53,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
             setRevealedIds(prev => new Set(prev).add(item.id));
             toast.success(`🔓 Revealed: ${item.name}`, { description: item.description || "Item details unlocked!" });
         } else {
-            toast.success(`🎁 Bought "${item.name}" for her!`, { description: `$${amount} sent to creator` });
+            toast.success(`🎁 Bought "${item.name}" for her!`, { description: `€${amount} sent to creator` });
         }
     };
 

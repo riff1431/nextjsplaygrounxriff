@@ -45,7 +45,7 @@ const CompetitionCard = () => {
                 <div className="space-y-2 pl-6 text-sm text-muted-foreground">
                     <div className="flex items-start gap-2">
                         <Target className="w-3.5 h-3.5 mt-0.5 text-primary/70" />
-                        <span>Fixed prizes. Top 25 (1st $7500, 2nd $5500, 3rd $2500, 5th $300, 6-25 $100), Tips are 90/10</span>
+                        <span>Fixed prizes. Top 25 (1st €7500, 2nd €5500, 3rd €2500, 5th €300, 6-25 €100), Tips are 90/10</span>
                     </div>
                     <div className="flex items-start gap-2">
                         <span className="text-primary/70">∧</span>
@@ -57,7 +57,7 @@ const CompetitionCard = () => {
             <div className="grid grid-cols-4 gap-4 py-3 border-t border-b border-border/30">
                 {[
                     { icon: Users, label: "Fans paid", value: "1200" },
-                    { icon: DollarSign, label: "Entry fee", value: "$50" },
+                    { icon: DollarSign, label: "Entry fee", value: "€50" },
                     { icon: Clock, label: "Round", value: "4-up · 20s" },
                     { icon: Palette, label: "Theme", value: "Wet T-Shirt" },
                 ].map((item) => (

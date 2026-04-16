@@ -18,7 +18,7 @@ const ConfessionCard = ({ text, author, amount, goal, fans, topFans }: Confessio
         <p className="text-sm leading-relaxed flex-1">"{text}"</p>
         <div className="flex items-center gap-1 shrink-0">
           <span className="text-xs text-muted-foreground">{author}</span>
-          <span className="gold-text text-xs font-bold">$8</span>
+          <span className="gold-text text-xs font-bold">€8</span>
           <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
         </div>
       </div>
@@ -73,7 +73,7 @@ const ConfessionWall = () => {
       amount: 325,
       goal: 400,
       fans: 51,
-      topFans: ["AngalBand", "Beclet +$40"],
+      topFans: ["AngalBand", "Beclet +€40"],
     },
     {
       text: "I'm hiding a shocking truth about my best friend.",
@@ -81,7 +81,7 @@ const ConfessionWall = () => {
       amount: 280,
       goal: 560,
       fans: 37,
-      topFans: ["Norved Go!", "Bocier $440"],
+      topFans: ["Norved Go!", "Bocier €440"],
     },
   ];
 
@@ -97,10 +97,10 @@ const ConfessionWall = () => {
       </div>
 
       <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-        <span>Current Pot <span className="gold-text font-display font-bold text-base">$265</span></span>
+        <span>Current Pot <span className="gold-text font-display font-bold text-base">€265</span></span>
         <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">Receive Goal</span>
         <span className="flex items-center gap-1"><Users className="w-3 h-3" /> 41 Fans Contributed</span>
-        <span>$ Audio / $400</span>
+        <span>$ Audio / €400</span>
       </div>
 
       <div className="flex items-center gap-2 text-xs flex-wrap">
@@ -108,7 +108,7 @@ const ConfessionWall = () => {
         {["🎁", "👏", "❤️", "🔥", "💎", "🌹", "👑", "💰"].map((e, i) => (
           <span key={i} className="cursor-pointer hover:scale-125 transition-transform text-sm">{e}</span>
         ))}
-        <span className="text-primary text-xs">Tell More $510</span>
+        <span className="text-primary text-xs">Tell More €510</span>
       </div>
 
       <div className="space-y-3">
@@ -121,23 +121,23 @@ const ConfessionWall = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-xs font-semibold tracking-wide">Follow-Up Question Bidding</h3>
-          <span className="gold-text text-xs font-bold">$1</span>
+          <span className="gold-text text-xs font-bold">€1</span>
         </div>
 
         <div className="glass-card p-3 space-y-2">
           <p className="text-sm">Who was it? Did/Do you miss them?</p>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>TopFand? · 56 Fans bids +$25</span>
+            <span>TopFand? · 56 Fans bids +€25</span>
             <button className="px-3 py-1.5 rounded-md gradient-pink text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity">
-              Bid Now $50
+              Bid Now €50
             </button>
           </div>
         </div>
 
         {[
-          { user: "TopFand?", bids: "56 Fans bids", amount: "+$25" },
-          { user: "NeonDreamer", bids: "42 Fans bids", amount: "+$15" },
-          { user: "BlurredFant1", bids: "38 Fans bids", amount: "+$25" },
+          { user: "TopFand?", bids: "56 Fans bids", amount: "+€25" },
+          { user: "NeonDreamer", bids: "42 Fans bids", amount: "+€15" },
+          { user: "BlurredFant1", bids: "38 Fans bids", amount: "+€25" },
         ].map((item, i) => (
           <div key={i} className="flex items-center justify-between text-sm p-2 rounded-lg bg-secondary/30">
             <div className="flex items-center gap-2">

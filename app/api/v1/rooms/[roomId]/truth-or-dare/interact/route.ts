@@ -115,7 +115,7 @@ export async function POST(
             // Validate minimums
             const minPrice = type === 'custom_truth' ? 25 : 35;
             if (price < minPrice) {
-                return NextResponse.json({ error: `Minimum price is $${minPrice}` }, { status: 400 });
+                return NextResponse.json({ error: `Minimum price is €${minPrice}` }, { status: 400 });
             }
         }
 

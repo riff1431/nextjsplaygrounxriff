@@ -382,7 +382,7 @@ export default function RoomSessionDashboard({
                                             }}
                                         />
                                         <p className="text-[10px] text-white/30 mt-1 px-1">
-                                            Minimum $20. Fans pay this to join your private session.
+                                            Minimum €20. Fans pay this to join your private session.
                                         </p>
                                     </div>
                                     <div>
@@ -406,7 +406,7 @@ export default function RoomSessionDashboard({
                                             }}
                                         />
                                         <p className="text-[10px] text-white/30 mt-1 px-1">
-                                            Minimum $4. Fans are charged per minute in your private session.
+                                            Minimum €4. Fans are charged per minute in your private session.
                                         </p>
                                     </div>
                                 </>

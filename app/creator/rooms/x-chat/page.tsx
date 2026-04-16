@@ -347,7 +347,7 @@ export default function XChatCreatorView() {
                                                             )}
                                                         >
                                                             {m.lane}
-                                                            {typeof m.paid === "number" ? ` • $${m.paid}` : ""}
+                                                            {typeof m.paid === "number" ? ` • €${m.paid}` : ""}
                                                         </span>
 
                                                         <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">

@@ -92,11 +92,11 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
         e.preventDefault();
         const reqAmount = parseFloat(amount.replace(/[^0-9.]/g, ""));
         if (isNaN(reqAmount) || reqAmount < 10) {
-            toast.error("Minimum offer is $10");
+            toast.error("Minimum offer is €10");
             return;
         }
         if (reqAmount > 1000) {
-            toast.error("Maximum offer is $1000");
+            toast.error("Maximum offer is €1000");
             return;
         }
         if (!description.trim()) {
@@ -140,7 +140,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                     {impulseButtons.map((btn) => (
                         <button
                             key={btn.label}
-                            onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: $${btn.price}`)}
+                            onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: €${btn.price}`)}
                             className="py-2 px-2.5 rounded-xl border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all fd-font-body font-bold text-xs text-foreground flex items-center justify-center gap-1.5 group"
                             style={{ boxShadow: "0 0 8px hsl(330 100% 55% / 0.12)" }}
                         >
@@ -162,7 +162,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                         {rollerPacks.map((pack) => (
                             <button
                                 key={pack.id}
-                                onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} ($${pack.price})`)}
+                                onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (€${pack.price})`)}
                                 className="w-full flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
                             >
                                 <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">

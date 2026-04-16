@@ -54,7 +54,7 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 /**
  * PlayGroundX — Truth or Dare Room (Fan View)
- * Entry: $10
+ * Entry: €10
  * 4 Creators, 10 Fans max on camera.
  */
 
@@ -397,7 +397,7 @@ function TruthOrDareContent() {
                 const tipData = payload.payload;
                 if (tipData && tipData.userId !== userId) {
                     // Show toast for other fans' tips
-                    toast(`🎉 ${tipData.userName} tipped $${tipData.amount}!`, {
+                    toast(`🎉 ${tipData.userName} tipped €${tipData.amount}!`, {
                         duration: 4000,
                         position: 'top-center',
                         style: { background: '#1a1a2e', border: '1px solid rgba(236,72,153,0.4)', color: '#f9a8d4' }
@@ -984,13 +984,13 @@ function TruthOrDareContent() {
                                             onClick={() => setCustomType("truth")}
                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "truth" ? "bg-blue-600/50 shadow-[0_0_20px_rgba(59,130,246,0.5)] text-white scale-105" : "bg-blue-900/10 text-blue-400/70 hover:bg-blue-500/10"}`}
                                         >
-                                            Custom Truth ($25)
+                                            Custom Truth (€25)
                                         </button>
                                         <button
                                             onClick={() => setCustomType("dare")}
                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "dare" ? "bg-red-600/50 shadow-[0_0_20px_rgba(239,68,68,0.5)] text-white scale-105" : "bg-red-900/10 text-red-400/70 hover:bg-red-500/10"}`}
                                         >
-                                            Custom Dare ($35)
+                                            Custom Dare (€35)
                                         </button>
                                     </div>
                                     <textarea
@@ -1067,7 +1067,7 @@ function TruthOrDareContent() {
                                     <button
                                         key={`tip-${amount}`}
                                         disabled={isSubmitting}
-                                        onClick={() => openConfirmation('tip', `$${amount}`, `Tip $${amount}`, amount)}
+                                        onClick={() => openConfirmation('tip', `€${amount}`, `Tip €${amount}`, amount)}
                                         className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-all group hover:scale-105 shadow-[0_0_8px_rgba(34,197,94,0.15)] hover:shadow-[0_0_16px_rgba(34,197,94,0.3)]"
                                     >
                                         <span className="text-lg group-hover:scale-110 transition-transform">💰</span>
@@ -1089,7 +1089,7 @@ function TruthOrDareContent() {
 
                     {/* Right: Dedicated Chat Column */}
                     <div className="flex flex-col gap-4 w-full lg:w-[380px]">
-                        <div className="glass-panel border-white/10 bg-white/5 flex flex-col h-[700px] lg:h-full overflow-hidden">
+                        <div className="glass-panel border-white/10 bg-white/5 flex flex-col h-[700px] lg:h-[800px] overflow-hidden">
                             {/* Chat Header */}
                             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2">

@@ -25,7 +25,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
         e.preventDefault();
         const val = parseFloat(amount);
         if (isNaN(val) || val < 10) {
-            toast.error("Minimum withdrawal is $10");
+            toast.error("Minimum withdrawal is €10");
             return;
         }
         if (val > balance) {
@@ -87,7 +87,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
                             placeholder="0.00"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">Minimum withdrawal amount is $10.00</p>
+                        <p className="text-xs text-gray-500 mt-1">Minimum withdrawal amount is €10.00</p>
                     </div>
 
                     <div>

@@ -3,13 +3,13 @@
 import { useState, useCallback } from "react";
 
 const SEGMENTS = [
-    { label: "Kiss", emoji: "💋", reward: "$10", color: "rgba(236,72,153,0.7)" },
+    { label: "Kiss", emoji: "💋", reward: "€10", color: "rgba(236,72,153,0.7)" },
     { label: "Truth!", emoji: "💎", reward: "", color: "rgba(59,130,246,0.7)" },
-    { label: "Love", emoji: "❤️", reward: "$20", color: "rgba(239,68,68,0.7)" },
+    { label: "Love", emoji: "❤️", reward: "€20", color: "rgba(239,68,68,0.7)" },
     { label: "Dare!", emoji: "⚡", reward: "", color: "rgba(245,158,11,0.7)" },
-    { label: "Spicy", emoji: "🔥", reward: "$30", color: "rgba(249,115,22,0.7)" },
+    { label: "Spicy", emoji: "🔥", reward: "€30", color: "rgba(249,115,22,0.7)" },
     { label: "Wild!", emoji: "🎲", reward: "", color: "rgba(168,85,247,0.7)" },
-    { label: "Dark", emoji: "🖤", reward: "$40", color: "rgba(107,114,128,0.7)" },
+    { label: "Dark", emoji: "🖤", reward: "€40", color: "rgba(107,114,128,0.7)" },
     { label: "Pass", emoji: "✨", reward: "", color: "rgba(16,185,129,0.7)" },
 ];
 

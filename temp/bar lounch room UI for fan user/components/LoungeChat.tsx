@@ -1,9 +1,9 @@
 import { Crown, Send } from "lucide-react";
 
 const chatMessages = [
-  { user: "Buzzed_Boi", avatar: "🧑", msg: "bought a Champagne 🍾", amount: "$25", isVip: false },
+  { user: "Buzzed_Boi", avatar: "🧑", msg: "bought a Champagne 🍾", amount: "€25", isVip: false },
   { user: "ShadowHeart", avatar: "👤", msg: "upgraded to VIP Lounge - 4", amount: "", isVip: true },
-  { user: "Buzzed_Boi", avatar: "🧑", msg: "Cheers!", amount: "$25", isVip: false },
+  { user: "Buzzed_Boi", avatar: "🧑", msg: "Cheers!", amount: "€25", isVip: false },
   { user: "BlurredFan1", avatar: "😎", msg: "VIP here we go 🎉🥂", amount: "", isVip: true },
   { user: "GlimmerBabe", avatar: "💃", msg: "Love this place!", amount: "", isVip: false },
   { user: "Buzzed_Boi", avatar: "🧑", msg: "Cheers! 🍾", amount: "", isVip: false },
@@ -54,7 +54,7 @@ const LoungeChat = () => {
           <span className="text-sm font-bold text-neon-pink animate-neon-flicker">
             PIN NAME TO TOP 10 mins
           </span>
-          <span className="text-gold font-bold ml-auto">+$25</span>
+          <span className="text-gold font-bold ml-auto">+€25</span>
         </div>
       <div className="flex gap-2">
         

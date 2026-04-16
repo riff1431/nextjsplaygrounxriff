@@ -76,9 +76,9 @@ export default function InvoiceDrawer({
             startY: 65,
             head: [['Description', 'Amount']],
             body: [
-                ['Gross Collected', `$${invoice.summary.gross_collected.toFixed(2)}`],
-                ['Platform Fee', `$${invoice.summary.platform_earned.toFixed(2)}`],
-                ['Net Payout', `$${invoice.summary.creator_earned.toFixed(2)}`],
+                ['Gross Collected', `€${invoice.summary.gross_collected.toFixed(2)}`],
+                ['Platform Fee', `€${invoice.summary.platform_earned.toFixed(2)}`],
+                ['Net Payout', `€${invoice.summary.creator_earned.toFixed(2)}`],
             ],
             theme: 'striped',
             headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
@@ -96,8 +96,8 @@ export default function InvoiceDrawer({
                 new Date(line.occurred_at).toLocaleDateString(),
                 line.revenue_type.toUpperCase(),
                 line.fan_username || 'Unknown',
-                `$${line.creator_share.toFixed(2)}`,
-                `$${line.gross_amount.toFixed(2)}` // Showing gross here provides context, or maybe show net? Invoice logic implies paying out net.
+                `€${line.creator_share.toFixed(2)}`,
+                `€${line.gross_amount.toFixed(2)}` // Showing gross here provides context, or maybe show net? Invoice logic implies paying out net.
                 // Actually, let's show net to creator in the amount column for clarity 
             ]),
             // Let's refine the columns: Date, Type, Fan, Split %, Net Amount
@@ -113,7 +113,7 @@ export default function InvoiceDrawer({
                 line.revenue_type,
                 line.fan_username || 'Unknown',
                 line.split_name || '-',
-                `$${line.creator_share.toFixed(2)}`
+                `€${line.creator_share.toFixed(2)}`
             ]),
             theme: 'grid',
             headStyles: { fillColor: [255, 79, 216], textColor: [255, 255, 255] },

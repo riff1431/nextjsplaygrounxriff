@@ -10,7 +10,7 @@ import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import { toast as sonnerToast } from "sonner";
-import StripePaymentModal from "@/components/live/StripePaymentModal";
+
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
@@ -207,13 +207,7 @@ export default function ConfessionsRoom() {
 
     // Confirmation Modal State
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet' | 'stripe' | 'paypal' | 'bank'>('stripe');
-    const [stripeConfig, setStripeConfig] = useState<{
-        amount: number;
-        confirmUrl: string;
-        metadata: any;
-        onSuccess: () => void;
-    } | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'wallet'>('wallet');
 
     // Invite Modal
     const [showInviteModal, setShowInviteModal] = useState(false);
@@ -439,17 +433,7 @@ export default function ConfessionsRoom() {
         if (!roomId) { showToast('Room not found. Please refresh.', 'error'); return; }
         setIsSending(true);
 
-        if (selectedPaymentMethod === 'stripe') {
-            setStripeConfig({
-                amount: reqAmount,
-                confirmUrl: "/api/v1/payments/stripe/confirm-confession-request",
-                metadata: { roomId, type: reqType, topic: reqTopic.slice(0, 400), creatorId: null },
-                onSuccess: () => {
-                    fetchRequests(); setReqTopic(""); setShowConfirmModal(false); showToast("Request Sent! Payment processed.", 'success'); setIsSending(false);
-                }
-            });
-            return;
-        }
+
 
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`, {
@@ -466,13 +450,7 @@ export default function ConfessionsRoom() {
 
     const handleUnlockPurchase = async () => {
         if (!purchaseConfession) return;
-        if (selectedPaymentMethod === 'stripe') {
-            setStripeConfig({
-                amount: purchaseConfession.price, confirmUrl: "/api/v1/payments/stripe/confirm-confession-unlock", metadata: { confessionId: purchaseConfession.id },
-                onSuccess: () => { setMyUnlocks(prev => new Set(prev).add(purchaseConfession.id)); setPurchaseConfession(null); setViewConfession(purchaseConfession); showToast("Confession Unlocked!", 'success'); }
-            });
-            return;
-        }
+
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/unlock`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confessionId: purchaseConfession.id }) });
             const data = await res.json();
@@ -480,6 +458,30 @@ export default function ConfessionsRoom() {
                 setMyUnlocks(prev => new Set(prev).add(purchaseConfession!.id)); setPurchaseConfession(null); setViewConfession(purchaseConfession); showToast("Confession Unlocked!", 'success'); fetchWallet();
             } else { showToast("Purchase failed: " + data.error, 'error'); }
         } catch (e) { showToast("Payment error", 'error'); }
+    };
+
+    const handleReaction = async (label: string, amount: number, confessionId?: string) => {
+        if (!roomId) return;
+        if (!confessionId) {
+            showToast("Cannot tip: No confession found to tip.", 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/tip`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ confessionId, reactionType: label, amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Sent ${label} reaction!`, 'success');
+                fetchWallet();
+            } else {
+                showToast("Payment failed: " + data.error, 'error');
+            }
+        } catch (e) {
+            showToast("Payment error", 'error');
+        }
     };
 
     const handleApproveDelivery = async (reqId: string) => {
@@ -516,7 +518,7 @@ export default function ConfessionsRoom() {
                     return next.sort((a, b) => b.amount - a.amount);
                 });
                 fetchWallet();
-                showToast(`Bid of $${amount} placed!`, 'success');
+                showToast(`Bid of €${amount} placed!`, 'success');
             } else { showToast(data.error || 'Bid failed', 'error'); }
         } catch (e) { showToast('Bid error', 'error'); }
     }
@@ -608,6 +610,7 @@ export default function ConfessionsRoom() {
                                     handleTierFilter={handleTierFilter}
                                     setViewConfession={setViewConfession}
                                     setPurchaseConfession={setPurchaseConfession}
+                                    handleReaction={handleReaction}
                                 />
                             </div>
 
@@ -639,16 +642,7 @@ export default function ConfessionsRoom() {
                 {/* ── MODALS (Stripe, Toast, Confirm, Unlock, View, Review) ── */}
                 {/* Same logic, just modernized styles */}
 
-                {/* Stripe Modal */}
-                {stripeConfig && (
-                    <StripePaymentModal
-                        amount={stripeConfig.amount}
-                        onClose={() => { setStripeConfig(null); setIsSending(false); }}
-                        onSuccess={() => { stripeConfig.onSuccess(); setStripeConfig(null); }}
-                        confirmUrl={stripeConfig.confirmUrl}
-                        metadata={stripeConfig.metadata}
-                    />
-                )}
+
 
                 {/* Toast */}
                 {toast && (

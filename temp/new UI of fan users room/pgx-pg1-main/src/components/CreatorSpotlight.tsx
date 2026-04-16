@@ -21,7 +21,7 @@ const CreatorSpotlight = () => {
         <div className="flex items-center justify-between text-sm">
           <span className="font-semibold">Countdown</span>
           <span className="text-muted-foreground">
-            <span className="gold-text font-bold">$180</span> / $250 Goal
+            <span className="gold-text font-bold">€180</span> / €250 Goal
           </span>
         </div>
         <div className="w-full h-2 rounded-full bg-secondary overflow-hidden">
@@ -48,7 +48,7 @@ const CreatorSpotlight = () => {
           🔒 Anonymous
         </span>
         <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-secondary">
-          🔒 <span className="text-primary">Anonymous</span> <span className="gold-text">+$2</span>
+          🔒 <span className="text-primary">Anonymous</span> <span className="gold-text">+€2</span>
         </span>
       </div>
     </div>

@@ -23,7 +23,7 @@ function cx(...parts: Array<string | false | null | undefined>) {
 }
 
 const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(n);
 
 // ── UI Primitives ─────────────────────────────────────────────────────────────
 
@@ -98,7 +98,7 @@ export default function WalletPage() {
                 setBalance(Number(wallet.balance));
             } else {
                 // Auto-create wallet
-                await supabase.from("wallets").insert({ user_id: user.id, balance: 0, currency: "USD" });
+                await supabase.from("wallets").insert({ user_id: user.id, balance: 0, currency: "EUR" });
             }
 
             // 2. Transactions — join via wallet_id OR user_id
@@ -166,6 +166,18 @@ export default function WalletPage() {
     }, [supabase, router, role]);
 
     useEffect(() => { fetchWalletData(); }, [fetchWalletData]);
+
+    // Active real-time sync for wallet and earnings
+    useEffect(() => {
+        const channel = supabase
+            .channel("wallet_sync")
+            .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => fetchWalletData(true))
+            .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => fetchWalletData(true))
+            .on("postgres_changes", { event: "*", schema: "public", table: "creator_earnings_ledger" }, () => fetchWalletData(true))
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [supabase, fetchWalletData]);
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -298,7 +310,7 @@ export default function WalletPage() {
                                     disabled={balance < 10}
                                     className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
                                 >
-                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? " (min $10)" : ""}
+                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? " (min €10)" : ""}
                                 </button>
                             ) : (
                                 <button

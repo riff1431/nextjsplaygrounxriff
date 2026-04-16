@@ -29,7 +29,7 @@ export default function StatementDownloader({
     const [expanded, setExpanded] = useState(false);
 
     const fmt = (n: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
 

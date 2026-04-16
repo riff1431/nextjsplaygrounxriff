@@ -30,7 +30,7 @@ export async function POST(
         creatorUserId: room.host_id,
         grossAmount: amount,
         splitType: 'GLOBAL',
-        description: `Truth or Dare tip: $${amount}`,
+        description: `Truth or Dare tip: €${amount}`,
         roomId,
         relatedType: 'td_tip',
         relatedId: null,
@@ -50,7 +50,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "td_tip",
-        message: `${profile?.username || "Fan"} tipped $${amount} in Truth or Dare!`,
+        message: `${profile?.username || "Fan"} tipped €${amount} in Truth or Dare!`,
         reference_id: tip.id,
     });
 

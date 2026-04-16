@@ -68,10 +68,10 @@ const MyRequests: React.FC<MyRequestsProps> = ({ requests = [], setReviewRequest
             <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/50 border border-border/50 mt-2">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold">TopFan?</span>
-                    <span className="text-[10px] text-muted-foreground">56 Bids · <span className="gold-text">$560</span></span>
+                    <span className="text-[10px] text-muted-foreground">56 Bids · <span className="gold-text">€560</span></span>
                 </div>
                 <button className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold border border-border hover:border-primary/50 transition-colors">
-                    <span className="gold-text">+$50</span>
+                    <span className="gold-text">+€50</span>
                 </button>
             </div>
         </div>

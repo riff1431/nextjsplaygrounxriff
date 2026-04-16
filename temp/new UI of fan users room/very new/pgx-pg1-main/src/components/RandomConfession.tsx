@@ -2,13 +2,13 @@ import { useState, useRef, useCallback } from "react";
 
 const SEGMENTS = [
   { label: "Secret 1", color: "hsl(330, 90%, 45%)" },
-  { label: "$5", color: "hsl(40, 95%, 50%)" },
+  { label: "€5", color: "hsl(40, 95%, 50%)" },
   { label: "Secret 2", color: "hsl(310, 80%, 40%)" },
-  { label: "$10", color: "hsl(35, 90%, 45%)" },
+  { label: "€10", color: "hsl(35, 90%, 45%)" },
   { label: "Secret 3", color: "hsl(330, 85%, 50%)" },
-  { label: "$25", color: "hsl(45, 95%, 55%)" },
+  { label: "€25", color: "hsl(45, 95%, 55%)" },
   { label: "Secret 4", color: "hsl(300, 70%, 35%)" },
-  { label: "$50", color: "hsl(40, 90%, 40%)" },
+  { label: "€50", color: "hsl(40, 90%, 40%)" },
 ];
 
 const RandomConfession = () => {
@@ -34,7 +34,7 @@ const RandomConfession = () => {
     <div className="glass-card p-4 space-y-4 overflow-hidden relative">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm font-semibold tracking-wide">Random Confession</h2>
-        <span className="gold-text font-display font-bold text-sm">$8</span>
+        <span className="gold-text font-display font-bold text-sm">€8</span>
       </div>
 
       <div className="relative flex items-center justify-center">
@@ -106,7 +106,7 @@ const RandomConfession = () => {
           <circle cx={cx} cy={cy} r="16" fill="hsl(260, 20%, 8%)" stroke="hsl(330, 90%, 55%)" strokeWidth="2" />
           <circle cx={cx} cy={cy} r="12" fill="url(#centerGrad)" />
           <text x={cx} y={cy} fill="white" fontSize="8" fontWeight="bold" textAnchor="middle" dominantBaseline="middle" fontFamily="Orbitron, sans-serif">
-            $8
+            €8
           </text>
           <defs>
             <radialGradient id="centerGrad">

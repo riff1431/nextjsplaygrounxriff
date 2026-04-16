@@ -121,7 +121,7 @@ export async function POST(
     // Notification
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "bar_request",
-        message: `${profile?.username || "Fan"} ordered ${label || type} ($${amount})`,
+        message: `${profile?.username || "Fan"} ordered ${label || type} (€${amount})`,
         reference_id: req.id,
     });
 
@@ -141,7 +141,7 @@ export async function POST(
         room_id: roomId,
         user_id: user.id,
         handle: profile?.username || "Fan",
-        content: `${emoji} ${profile?.username || "Fan"} ${safeType === "tip" ? "sent a" : "bought"} ${label || type} ($${amount})`,
+        content: `${emoji} ${profile?.username || "Fan"} ${safeType === "tip" ? "sent a" : "bought"} ${label || type} (€${amount})`,
         is_system: true,
     });
 

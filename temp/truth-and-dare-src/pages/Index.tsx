@@ -188,21 +188,21 @@ const PromptSection = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="border-r border-border/30 pr-4">
         <h4 className="text-xs font-semibold text-neon-blue neon-glow-blue mb-2">System Truths</h4>
-        <TierRow tier="Bronze" price="$3" desc="Light & playful" color="truth" />
-        <TierRow tier="Silver" price="$5" desc="Very explicit" color="truth" />
-        <TierRow tier="Gold" price="$7" desc="Very explicit" color="truth" />
+        <TierRow tier="Bronze" price="€3" desc="Light & playful" color="truth" />
+        <TierRow tier="Silver" price="€5" desc="Very explicit" color="truth" />
+        <TierRow tier="Gold" price="€7" desc="Very explicit" color="truth" />
       </div>
       <div className="border-r border-border/30 pr-4">
         <h4 className="text-xs font-semibold text-neon-red neon-glow-red mb-2">System Dares</h4>
-        <TierRow tier="Silver" price="$5" desc="Spicy" color="dare" />
-        <TierRow tier="Gold" price="$5" desc="Very explicit" color="dare" />
-        <TierRow tier="Diamond" price="$7" desc="Very explicit" color="dare" />
+        <TierRow tier="Silver" price="€5" desc="Spicy" color="dare" />
+        <TierRow tier="Gold" price="€5" desc="Very explicit" color="dare" />
+        <TierRow tier="Diamond" price="€7" desc="Very explicit" color="dare" />
       </div>
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground mb-2">Custom Requests (Fan-Written)</h4>
         <div className="flex gap-2 mb-2">
-          <button className="glass-panel px-3 py-1.5 text-xs text-neon-blue neon-glow-blue hover:bg-neon-blue/10 transition-colors">Custom Truth ($25)</button>
-          <button className="glass-panel px-3 py-1.5 text-xs text-neon-red neon-glow-red hover:bg-neon-red/10 transition-colors">Custom Dare ($35)</button>
+          <button className="glass-panel px-3 py-1.5 text-xs text-neon-blue neon-glow-blue hover:bg-neon-blue/10 transition-colors">Custom Truth (€25)</button>
+          <button className="glass-panel px-3 py-1.5 text-xs text-neon-red neon-glow-red hover:bg-neon-red/10 transition-colors">Custom Dare (€35)</button>
         </div>
         <textarea
           placeholder="Write your custom Truth/Dare here..."
@@ -277,8 +277,8 @@ const Index = () => {
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground mb-2">Group Voting</h4>
         <div className="flex gap-2 mb-2">
-          <button className="glass-panel px-3 py-1.5 text-xs text-neon-blue neon-glow-blue hover:bg-neon-blue/10 transition-colors">Custom Truth ($25)</button>
-          <button className="glass-panel px-3 py-1.5 text-xs text-neon-red neon-glow-red hover:bg-neon-red/10 transition-colors">Custom Dare ($35)</button>
+          <button className="glass-panel px-3 py-1.5 text-xs text-neon-blue neon-glow-blue hover:bg-neon-blue/10 transition-colors">Custom Truth (€25)</button>
+          <button className="glass-panel px-3 py-1.5 text-xs text-neon-red neon-glow-red hover:bg-neon-red/10 transition-colors">Custom Dare (€35)</button>
         </div>
         <textarea
           placeholder="Write your custom Truth/Dare here..."

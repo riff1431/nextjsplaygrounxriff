@@ -49,7 +49,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function RoomEarningsDrawer({ room, onClose }: RoomEarningsDrawerProps) {
     const fmt = (n: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
     // Sort categories by value
     const sortedCategories = Object.entries(room.categories)

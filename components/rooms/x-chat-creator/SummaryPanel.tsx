@@ -79,7 +79,7 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
         { icon: "🎭", label: "STICKERS", value: stats.totalReactions.toLocaleString() },
-        { icon: "💰", label: "TIPS (USD)", value: `$${stats.totalTips.toLocaleString()}` },
+        { icon: "💰", label: "TIPS (EUR)", value: `€${stats.totalTips.toLocaleString()}` },
         { icon: "👥", label: "FANS", value: stats.totalMessages.toLocaleString() },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];

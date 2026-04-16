@@ -78,7 +78,7 @@ function formatHMS(seconds: number) {
 
 function moneyFromCents(cents: number) {
     const dollars = Math.floor((cents ?? 0) / 100);
-    return `$${dollars.toFixed(0)}`;
+    return `€${dollars.toFixed(0)}`;
 }
 
 function Badge({
@@ -316,7 +316,7 @@ export default function CompetitionsCreatorStudio() {
         remainingSeconds: 2 * 3600,
         fanCountPaid: 1200,
         prizeSummary:
-            "Fixed prizes: Top 25 (1st $7,500; 2nd $5,000; 3rd $2,500; 4th $500; 5th $300; 6–25 $100). Tips are 90/10.",
+            "Fixed prizes: Top 25 (1st €7,500; 2nd €5,000; 3rd €2,500; 4th €500; 5th €300; 6–25 €100). Tips are 90/10.",
     });
 
     // Mocked creator status (replace with API)
@@ -358,7 +358,7 @@ export default function CompetitionsCreatorStudio() {
             } else if (r < 0.45) {
                 setMe((m) => ({ ...m, tipsCents: m.tipsCents + 1000 }));
                 setActivity((a) => [
-                    { id: `t_${Date.now()}`, ts: Date.now(), type: "tip" as const, text: "A fan tipped you $10." },
+                    { id: `t_${Date.now()}`, ts: Date.now(), type: "tip" as const, text: "A fan tipped you €10." },
                     ...a,
                 ].slice(0, 12));
             }

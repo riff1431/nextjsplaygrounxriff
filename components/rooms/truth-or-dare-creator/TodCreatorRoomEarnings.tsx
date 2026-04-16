@@ -12,10 +12,10 @@ const TodCreatorRoomEarnings = ({ earnings }: { earnings?: SessionEarnings }) =>
     const data = earnings || { total: 0, tips: 0, truths: 0, dares: 0, custom: 0 };
 
     const items = [
-        { label: "Tips", amount: `$${data.tips.toFixed(2)}` },
-        { label: "Truths", amount: `$${data.truths.toFixed(2)}` },
-        { label: "Dares", amount: `$${data.dares.toFixed(2)}` },
-        { label: "Custom", amount: `$${data.custom.toFixed(2)}` },
+        { label: "Tips", amount: `€${data.tips.toFixed(2)}` },
+        { label: "Truths", amount: `€${data.truths.toFixed(2)}` },
+        { label: "Dares", amount: `€${data.dares.toFixed(2)}` },
+        { label: "Custom", amount: `€${data.custom.toFixed(2)}` },
     ];
 
     return (

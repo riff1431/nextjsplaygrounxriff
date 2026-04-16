@@ -75,7 +75,7 @@ export async function POST(
 
     const systemMsg = finalContent.includes('Pack') || finalContent.includes('Bundle')
         ? `🎁 ${profile?.username || "Anonymous"} ${finalContent.replace('🎁 ', '')}`
-        : `💰 ${profile?.username || "Anonymous"} submitted a $${amount} custom drop request!`;
+        : `💰 ${profile?.username || "Anonymous"} submitted a €${amount} custom drop request!`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
     const { data: existingMsg } = await supabase
@@ -100,7 +100,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
-        message: `New drop request ($${amount}): "${finalContent}"`,
+        message: `New drop request (€${amount}): "${finalContent}"`,
         reference_id: req.id,
     });
 

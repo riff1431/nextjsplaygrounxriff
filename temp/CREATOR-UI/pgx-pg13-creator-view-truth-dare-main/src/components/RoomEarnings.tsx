@@ -1,9 +1,9 @@
 const RoomEarnings = () => {
   const items = [
-    { label: "Tips", amount: "$0.00" },
-    { label: "Truths", amount: "$0.00" },
-    { label: "Dares", amount: "$0.00" },
-    { label: "Custom", amount: "$0.00" },
+    { label: "Tips", amount: "€0.00" },
+    { label: "Truths", amount: "€0.00" },
+    { label: "Dares", amount: "€0.00" },
+    { label: "Custom", amount: "€0.00" },
   ];
 
   return (

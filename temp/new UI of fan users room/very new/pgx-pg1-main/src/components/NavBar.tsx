@@ -18,7 +18,7 @@ const NavBar = () => {
       <div className="flex items-center gap-3">
         <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card text-sm font-medium">
           <Coins className="w-4 h-4 text-gold" />
-          <span className="gold-text font-semibold">$100</span>
+          <span className="gold-text font-semibold">€100</span>
           <Plus className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
         <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card text-sm">

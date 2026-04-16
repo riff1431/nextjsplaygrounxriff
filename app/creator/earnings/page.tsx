@@ -38,7 +38,7 @@ function CategoryBreakdown({ ledger }: { ledger: any }) {
     const maxVal = categories[0].value;
     const totalEarned = categories.reduce((s, c) => s + c.value, 0);
     const fmt = (n: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
     return (
         <div>
@@ -112,7 +112,7 @@ export default function CreatorEarningsPage() {
     const [selectedEventType, setSelectedEventType] = useState('');
 
     const fmt = (n: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
     const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
 

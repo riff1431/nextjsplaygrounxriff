@@ -148,7 +148,7 @@ export default function FlashDropsRoomPreview() {
                 event: 'INSERT', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}`
             }, (payload) => {
                 const drop = payload.new as any;
-                addTickerItem(`⚡ NEW DROP: ${drop.title} — $${drop.price} · ${drop.rarity}`);
+                addTickerItem(`⚡ NEW DROP: ${drop.title} — €${drop.price} · ${drop.rarity}`);
                 sonnerToast.info(`⚡ New drop: ${drop.title} just went live!`);
                 fetchDrops();
             })
@@ -166,7 +166,7 @@ export default function FlashDropsRoomPreview() {
             }, (payload) => {
                 const req = payload.new as any;
                 if (req.fan_name) {
-                    addTickerItem(`💰 ${req.fan_name} submitted a $${req.amount} drop request!`);
+                    addTickerItem(`💰 ${req.fan_name} submitted a €${req.amount} drop request!`);
                 }
             })
             .subscribe((status) => {

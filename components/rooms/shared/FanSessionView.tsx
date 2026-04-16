@@ -66,7 +66,7 @@ export default function FanSessionView({
     const handleTip = async () => {
         const result = await sendTip(Number(tipAmount));
         if (result?.success) {
-            showFeedback(`💰 Tipped $${tipAmount}!`);
+            showFeedback(`💰 Tipped €${tipAmount}!`);
             setShowTipModal(false);
         } else {
             showFeedback(result?.error || "Tip failed");
@@ -86,7 +86,7 @@ export default function FanSessionView({
         if (!requestText.trim()) return;
         const result = await sendCustomRequest(requestText.trim(), Number(requestAmount));
         if (result?.success) {
-            showFeedback(`📩 Request sent for $${requestAmount}!`);
+            showFeedback(`📩 Request sent for €${requestAmount}!`);
             setShowRequestModal(false);
             setRequestText("");
         } else {
@@ -180,7 +180,7 @@ export default function FanSessionView({
                                     key={rx.id}
                                     onClick={() => handleReaction(rx.id, rx.emoji)}
                                     disabled={interactionLoading}
-                                    title={`${rx.name} — $${rx.price}`}
+                                    title={`${rx.name} — €${rx.price}`}
                                     style={{
                                         display: "flex",
                                         alignItems: "center",
@@ -289,7 +289,7 @@ export default function FanSessionView({
                             style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 14px", color: "#fff", fontSize: "14px", outline: "none", marginBottom: "16px", boxSizing: "border-box" }}
                         />
                         <button onClick={handleTip} disabled={interactionLoading} style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, hsl(45,100%,50%), hsl(25,100%,50%))", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
-                            {interactionLoading ? "Sending..." : `Send $${tipAmount} Tip`}
+                            {interactionLoading ? "Sending..." : `Send €${tipAmount} Tip`}
                         </button>
                     </div>
                 </div>
@@ -330,7 +330,7 @@ export default function FanSessionView({
                             ))}
                         </div>
                         <button onClick={handleCustomRequest} disabled={interactionLoading || !requestText.trim()} style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, hsl(280,100%,55%), hsl(330,90%,50%))", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer", opacity: requestText.trim() ? 1 : 0.5 }}>
-                            {interactionLoading ? "Sending..." : `Send Request — $${requestAmount}`}
+                            {interactionLoading ? "Sending..." : `Send Request — €${requestAmount}`}
                         </button>
                     </div>
                 </div>

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
                         reference_id: roomId, // Store roomId as reference
                         custom_id: user.id,   // Store userId as custom_id
                         amount: {
-                            currency_code: "USD",
+                            currency_code: "EUR",
                             value: amount.toString(),
                         },
                     },

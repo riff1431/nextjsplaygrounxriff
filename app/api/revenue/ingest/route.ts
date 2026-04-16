@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
             room_key: roomKey,
             competition_id: competitionId,
             subscription_id: subscriptionId,
-            currency: currency || 'USD',
+            currency: currency || 'EUR',
             gross_amount: grossAmount,
             net_amount: netAmount, // optional
             payment_provider: paymentProvider,

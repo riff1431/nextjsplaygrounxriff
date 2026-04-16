@@ -197,8 +197,8 @@ export default function PricingControls() {
                             { key: "mode", label: "Mode", w: "140px" },
                         ]}
                         rows={[
-                            { room: "Suga4U Global", entry: `$${pricing.entry_fee}`, free: `${pricing.free_minutes}m`, rate: `$${pricing.rate_per_minute}/m`, mode: <AdminPill tone="pink">Global</AdminPill> },
-                            { room: "Bar Lounge (Override)", entry: `$${Math.max(0, pricing.entry_fee - 5)}`, free: `${Math.max(0, pricing.free_minutes - 5)}m`, rate: `$${pricing.rate_per_minute}/m`, mode: <AdminPill tone="amber">Override</AdminPill> },
+                            { room: "Suga4U Global", entry: `€${pricing.entry_fee}`, free: `${pricing.free_minutes}m`, rate: `€${pricing.rate_per_minute}/m`, mode: <AdminPill tone="pink">Global</AdminPill> },
+                            { room: "Bar Lounge (Override)", entry: `€${Math.max(0, pricing.entry_fee - 5)}`, free: `${Math.max(0, pricing.free_minutes - 5)}m`, rate: `€${pricing.rate_per_minute}/m`, mode: <AdminPill tone="amber">Override</AdminPill> },
                         ]}
                     />
                 </div>

@@ -39,11 +39,11 @@ const LeftSidebar = () => {
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <DollarSign className="h-4 w-4 text-gold" />
-            <span>Tips: <span className="text-gold font-semibold">$1,290</span></span>
+            <span>Tips: <span className="text-gold font-semibold">€1,290</span></span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <DollarSign className="h-4 w-4 text-gold" />
-            <span>Earned: <span className="text-gold font-semibold">$1,290</span></span>
+            <span>Earned: <span className="text-gold font-semibold">€1,290</span></span>
           </div>
         </div>
       </div>

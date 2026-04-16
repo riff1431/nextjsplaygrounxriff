@@ -18,7 +18,7 @@ const SummaryPanel = () => {
         ))}
       </div>
       {/* <div className="mt-4 pt-3 border-t border-border">
-        <p className="text-2xl font-bold text-center earnings-glow font-serif">$26,050.00</p>
+        <p className="text-2xl font-bold text-center earnings-glow font-serif">€26,050.00</p>
       </div> */}
     </div>
   );

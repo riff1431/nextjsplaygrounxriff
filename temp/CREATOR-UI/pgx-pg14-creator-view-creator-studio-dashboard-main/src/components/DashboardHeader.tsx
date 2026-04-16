@@ -19,12 +19,12 @@ const StatCard = ({ icon, label, value, color }: StatCardProps) => (
 
 export const StatsBar = () => {
   const stats: StatCardProps[] = [
-    { icon: <DollarSign size={20} />, label: "Tips Earned", value: "$184", color: "text-neon-green" },
+    { icon: <DollarSign size={20} />, label: "Tips Earned", value: "€184", color: "text-neon-green" },
     { icon: <Gift size={20} />, label: "Gifts", value: "0", color: "text-neon-pink" },
     { icon: <Users size={20} />, label: "Total Followers", value: "0", color: "text-neon-cyan" },
     { icon: <Play size={20} />, label: "Active Rooms", value: "2", color: "text-neon-purple" },
     { icon: <Star size={20} />, label: "Subscribers", value: "0", color: "text-neon-yellow" },
-    { icon: <Lock size={20} />, label: "Subscription Earnings", value: "$0", color: "text-neon-orange" },
+    { icon: <Lock size={20} />, label: "Subscription Earnings", value: "€0", color: "text-neon-orange" },
   ];
 
   return (

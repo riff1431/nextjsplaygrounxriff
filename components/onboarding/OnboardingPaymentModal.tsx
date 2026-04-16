@@ -468,7 +468,7 @@ export default function OnboardingPaymentModal({
                                 Processing...
                             </span>
                         ) : (
-                            selectedMethod === "bank" ? "Continue to Bank Transfer" : `Pay $${amount.toFixed(2)}`
+                            selectedMethod === "bank" ? "Continue to Bank Transfer" : `Pay €${amount.toFixed(2)}`
                         )}
                     </button>
 

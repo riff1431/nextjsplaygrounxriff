@@ -153,7 +153,7 @@ export default function SpendConfirmModal({
                             ) : loading ? (
                                 <Loader2 size={16} className="animate-spin" />
                             ) : (
-                                confirmLabel || `Pay $${amount.toFixed(2)}`
+                                confirmLabel || `Pay €${amount.toFixed(2)}`
                             )}
                         </button>
                     </div>

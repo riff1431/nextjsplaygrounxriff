@@ -20,7 +20,7 @@ const QuickPaidActions = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await sendGift(a.price, fanName, `Unlocked: ${a.name}`);
-            toast.success(`${a.emoji} ${a.name} activated!`, { description: `$${a.price} sent to creator` });
+            toast.success(`${a.emoji} ${a.name} activated!`, { description: `€${a.price} sent to creator` });
         } catch (err) {
             console.error("Failed to trigger action:", err);
         }

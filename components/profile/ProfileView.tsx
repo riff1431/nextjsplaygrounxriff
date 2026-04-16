@@ -171,7 +171,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     return (
         <div className="min-h-screen bg-black text-white pb-20 font-sans">
             {/* 1. Cover Area with Hex Grid */}
-            <div className="relative h-64 md:h-80 w-full overflow-hidden">
+            <div className="relative h-80 md:h-[450px] w-full overflow-hidden">
                 {profile.cover_url ? (
                     <div className="absolute inset-0 z-0">
                         <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />
@@ -429,14 +429,16 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                 </div>
 
                 {/* 5. Tabs Navigation */}
-                <Tabs defaultValue="posts" className="mt-8 w-full">
+                <Tabs defaultValue={profile.role === 'creator' ? "posts" : "about"} className="mt-8 w-full">
                     <TabsList className="w-full justify-start bg-transparent border-b border-white/10 p-0 h-auto gap-8 rounded-none">
-                        <TabsTrigger
-                            value="posts"
-                            className="bg-transparent border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent data-[state=active]:text-white text-zinc-500 rounded-none pb-3 px-1 font-medium text-sm transition-all"
-                        >
-                            Posts
-                        </TabsTrigger>
+                        {profile.role === 'creator' && (
+                            <TabsTrigger
+                                value="posts"
+                                className="bg-transparent border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent data-[state=active]:text-white text-zinc-500 rounded-none pb-3 px-1 font-medium text-sm transition-all"
+                            >
+                                Posts
+                            </TabsTrigger>
+                        )}
                         <TabsTrigger
                             value="collection"
                             className="bg-transparent border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:bg-transparent data-[state=active]:text-white text-zinc-500 rounded-none pb-3 px-1 font-medium text-sm transition-all"
@@ -457,34 +459,36 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="posts" className="mt-8 max-w-2xl mx-auto">
-                        {/* Create Post Widget (Owner & Creator Only) */}
-                        {isOwner && profile.role === 'creator' && (
-                            <div className="mb-8 flex items-center gap-4 bg-zinc-900/30 p-4 rounded-xl border border-white/5">
-                                <Avatar className="w-10 h-10 border border-white/10">
-                                    <AvatarImage src={profile.avatar_url || ""} />
-                                    <AvatarFallback>{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                    <CreatePostModal currentUserId={currentUserId} onPostCreated={onPostCreated} />
+                    {profile.role === 'creator' && (
+                        <TabsContent value="posts" className="mt-8 max-w-2xl mx-auto">
+                            {/* Create Post Widget (Owner & Creator Only) */}
+                            {isOwner && (
+                                <div className="mb-8 flex items-center gap-4 bg-zinc-900/30 p-4 rounded-xl border border-white/5">
+                                    <Avatar className="w-10 h-10 border border-white/10">
+                                        <AvatarImage src={profile.avatar_url || ""} />
+                                        <AvatarFallback>{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <CreatePostModal currentUserId={currentUserId} onPostCreated={onPostCreated} />
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {posts.length > 0 ? (
-                            posts.map(post => (
-                                <PostCard key={post.id} post={post} user={profile} currentUserId={currentUserId} onPostDeleted={onPostCreated} isSubscribed={isSubscribed} />
-                            ))
-                        ) : (
-                            <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
-                                <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
-                                    <Edit className="w-8 h-8 opacity-50" />
+                            {posts.length > 0 ? (
+                                posts.map(post => (
+                                    <PostCard key={post.id} post={post} user={profile} currentUserId={currentUserId} onPostDeleted={onPostCreated} isSubscribed={isSubscribed} />
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-zinc-600">
+                                    <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
+                                        <Edit className="w-8 h-8 opacity-50" />
+                                    </div>
+                                    <h3 className="text-zinc-400 font-medium mb-1">No posts yet</h3>
+                                    {isOwner && <p className="text-sm">Share your first update with your fans!</p>}
                                 </div>
-                                <h3 className="text-zinc-400 font-medium mb-1">No posts yet</h3>
-                                {isOwner && <p className="text-sm">Share your first update with your fans!</p>}
-                            </div>
-                        )}
-                    </TabsContent>
+                            )}
+                        </TabsContent>
+                    )}
 
                     <TabsContent value="collection" className="mt-8 min-h-[300px]">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

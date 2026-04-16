@@ -86,7 +86,7 @@ export default function EarningsActivityList({
     onEventTypeChange,
 }: EarningsActivityListProps) {
     const fmt = (n: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
     return (
         <div className="space-y-4">

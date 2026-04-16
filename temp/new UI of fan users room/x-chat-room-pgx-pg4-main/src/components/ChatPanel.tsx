@@ -2,7 +2,7 @@ import { Send } from "lucide-react";
 import { useState } from "react";
 
 const messages = [
-  { user: "fan1", text: "Entry is free. Time is metered at $2/min", isCreator: false },
+  { user: "fan1", text: "Entry is free. Time is metered at €2/min", isCreator: false },
   { user: "fan2", text: "Boost your visibility with paid reactions.", isCreator: false },
   { user: "fan3", text: "Priority queue is the fastest path to a reply.", isCreator: false },
   { user: "BlueMuse", text: "I'll answer priority questions first.", isCreator: true },

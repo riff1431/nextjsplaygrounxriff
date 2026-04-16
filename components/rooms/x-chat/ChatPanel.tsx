@@ -113,7 +113,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
             await sendMessage(message, senderName, lane, price);
             setMessage("");
             refresh?.();
-            toast.success(`${lane} message sent! ($${price})`);
+            toast.success(`${lane} message sent! (€${price})`);
         } catch (err) {
             console.error("Failed to send paid message:", err);
             toast.error("Failed to send message");
@@ -224,7 +224,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                                 ? "Waiting for room..."
                                 : selectedLane === "Free"
                                     ? "Type message..."
-                                    : `${selectedLane} message ($${LANE_CONFIG[selectedLane].price})...`
+                                    : `${selectedLane} message (€${LANE_CONFIG[selectedLane].price})...`
                         }
                         disabled={!roomId}
                         className="flex-1 bg-input border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
@@ -240,7 +240,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                             }`}
                     >
                         {LANE_CONFIG[selectedLane].icon}
-                        {LANE_CONFIG[selectedLane].price > 0 ? `$${LANE_CONFIG[selectedLane].price}` : "Send"}
+                        {LANE_CONFIG[selectedLane].price > 0 ? `€${LANE_CONFIG[selectedLane].price}` : "Send"}
                     </button>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Plus, DollarSign, User, Eye } from "lucide-react";
+import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -25,6 +25,18 @@ const ConfessionsLeftSidebar = () => {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [confessions, setConfessions] = useState<Confession[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [editConfessionTarget, setEditConfessionTarget] = useState<Confession | null>(null);
+
+    const handleDelete = async (id: string) => {
+        if (!roomId) return;
+        if (!confirm("Are you sure you want to delete this confession?")) return;
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/${id}`, { method: 'DELETE' });
+            if (res.ok) refreshConfessions();
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     useEffect(() => {
         if (!user) return;
@@ -165,7 +177,7 @@ const ConfessionsLeftSidebar = () => {
                 <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
                 <div className="flex flex-col gap-3 flex-1">
                     <button
-                        onClick={() => setShowAddModal(true)}
+                        onClick={() => { setEditConfessionTarget(null); setShowAddModal(true); }}
                         className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
                     >
                         <Plus className="h-5 w-5" />
@@ -181,8 +193,10 @@ const ConfessionsLeftSidebar = () => {
                                 <p className="text-xs text-white font-medium truncate">{c.title}</p>
                                 <p className="text-[10px] text-white/40">{c.tier} • ${c.price}</p>
                             </div>
-                            <div className="flex items-center gap-1 text-white/40">
-                                <Eye size={12} />
+                            <div className="flex items-center gap-2 text-white/40">
+                                <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
+                                <button onClick={() => handleDelete(c.id)} className="hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                                <Eye size={14} className="hover:text-white transition-colors cursor-pointer" />
                             </div>
                         </div>
                     ))}
@@ -193,9 +207,10 @@ const ConfessionsLeftSidebar = () => {
             {showAddModal && roomId && (
                 <AddConfessionModal
                     isOpen={showAddModal}
-                    onClose={() => setShowAddModal(false)}
+                    onClose={() => { setShowAddModal(false); setEditConfessionTarget(null); }}
                     roomId={roomId}
                     onCreated={refreshConfessions}
+                    editConfession={editConfessionTarget}
                 />
             )}
         </div>

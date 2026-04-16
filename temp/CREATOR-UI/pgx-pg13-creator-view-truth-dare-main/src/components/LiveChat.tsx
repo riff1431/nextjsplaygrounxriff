@@ -4,7 +4,7 @@ import { useState } from "react";
 const messages = [
   { user: "KittyKat 💕", text: "Hey cuties! 😘😘", color: "text-neon-pink" },
   { user: "Alex99", text: "Truth or dare?! Spin the bottle!", color: "text-neon-blue" },
-  { user: "GamerBro Tips5", text: "$5 xcool! Deaks!", color: "text-neon-yellow" },
+  { user: "GamerBro Tips5", text: "€5 xcool! Deaks!", color: "text-neon-yellow" },
   { user: "MaxPower", text: "Dare King is unbeatable tonight!🤴", color: "text-neon-green" },
   { user: "CoolDude 🎭", text: "Spin the bottle! 🎉🍾", color: "text-foreground" },
   { user: "Emma45 🦋", text: "I dare you to do something crazy!", color: "text-neon-pink" },

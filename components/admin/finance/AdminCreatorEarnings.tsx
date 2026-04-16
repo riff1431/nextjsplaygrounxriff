@@ -66,7 +66,7 @@ const ROOM_ICONS: Record<string, { icon: React.ReactNode; gradient: string }> = 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
 const fmt = (n: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(n);
 
 function Avatar({ url, name, size = 10 }: { url?: string | null; name: string; size?: number }) {
     const letters = name?.slice(0, 2).toUpperCase() || '??';

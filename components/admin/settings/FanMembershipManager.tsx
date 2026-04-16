@@ -252,7 +252,7 @@ export default function FanMembershipManager() {
                             {/* Price */}
                             <div>
                                 <label className="text-xs text-gray-400 block mb-1">
-                                    Price (USD) - Set to 0 for free tier
+                                    Price (EUR) - Set to 0 for free tier
                                 </label>
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />

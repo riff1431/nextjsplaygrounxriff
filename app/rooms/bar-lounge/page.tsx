@@ -141,8 +141,27 @@ export default function BarLoungeRoom() {
         return () => { isMounted = false; if (roomChannel) supabase.removeChannel(roomChannel); };
     }, [user, role, authLoading]);
 
-    const joinSession = (room: Room) => {
-        router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}`);
+    const joinSession = async (room: Room) => {
+        if (!user) return router.push("/login");
+
+        try {
+            const res = await fetch(`/api/v1/rooms/${room.id}/join-bar-lounge`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ price: ENTRY_FEE })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                // Use a simple fallback if sonner is not imported, though it usually is as part of standard layouts
+                alert(data.error || "Insufficient funds to join session");
+                return;
+            }
+            
+            router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}`);
+        } catch (e) {
+            alert("Network error when trying to join");
+        }
     };
     const interceptJoin = (session: Room) => {
         if (isRoomEntryDismissed("bar-lounge")) {
@@ -205,8 +224,8 @@ export default function BarLoungeRoom() {
         try { const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/spin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: SPIN_PRICE }) }); const data = await res.json(); if (data.success) { setSpinResult(data.result || data.spin?.result); setTimeout(() => setSpinning(false), 1100); } else { setSpinning(false); pushFx([], `Spin failed: ${data.error || "Insufficient funds"}`); } } catch { setSpinning(false); pushFx([], 'Network error'); }
     };
 
-    const handleTip = (amount: number) => { confirmPurchase("tip", `$${amount} Tip`, amount); };
-    const handleCustomTip = () => { const amt = Number(tipAmount); if (amt > 0) confirmPurchase("tip", `$${amt} Tip`, amt); };
+    const handleTip = (amount: number) => { confirmPurchase("tip", `€${amount} Tip`, amount); };
+    const handleCustomTip = () => { const amt = Number(tipAmount); if (amt > 0) confirmPurchase("tip", `€${amt} Tip`, amt); };
 
     const handleSendChat = () => {
         if (!chatInput.trim()) return;
@@ -269,39 +288,186 @@ export default function BarLoungeRoom() {
                                 <span style={{ fontSize: "14px", fontWeight: 700, color: `${C.gold}b3`, textTransform: "uppercase", letterSpacing: "0.1em" }}>{activeSessions.length} Live {activeSessions.length === 1 ? 'Session' : 'Sessions'}</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {activeSessions.map((session: any) => (
-                                    <div key={session.id} className="group relative rounded-2xl overflow-hidden cursor-pointer" onClick={() => interceptJoin(session)} style={{ background: `${C.bg}99`, border: `1px solid hsla(42,90%,55%,0.15)`, transition: "all 0.2s" }}>
-                                        <div className="h-44 relative overflow-hidden">
-                                            {session.profiles?.avatar_url ? <img src={session.profiles.avatar_url} className="w-full h-full object-cover" style={{ filter: "brightness(0.5) saturate(1.3)" }} /> : <div className="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-black/40 to-transparent" />}
-                                            <div className="absolute inset-0 bl-shimmer" />
-                                            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3), transparent)" }} />
-                                            <div className="absolute top-3 left-3 px-3 py-1 rounded-full flex items-center gap-1.5" style={{ background: "rgba(239,68,68,0.9)", color: "white", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", boxShadow: "0 0 15px rgba(239,68,68,0.5)" }}>
-                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Live
+                                {activeSessions.map((session: any, i: number) => {
+                                    const creatorName = session.profiles?.full_name || session.profiles?.handle || "Creator";
+                                    return (
+                                        <div
+                                            key={session.id}
+                                            onClick={() => interceptJoin(session)}
+                                            style={{
+                                                position: "relative",
+                                                borderRadius: "14px",
+                                                background: "linear-gradient(145deg, hsla(270,40%,20%,0.7), hsla(270,50%,10%,0.8))",
+                                                border: "1px solid hsla(42,90%,55%,0.15)",
+                                                overflow: "hidden",
+                                                transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                                                boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                                                cursor: "pointer",
+                                                animation: `blCardEntry 0.5s ease-out ${i * 0.08}s both`,
+                                            }}
+                                            onMouseEnter={e => {
+                                                e.currentTarget.style.transform = "translateY(-3px)";
+                                                e.currentTarget.style.background = "linear-gradient(145deg, hsla(270,40%,25%,0.9), hsla(270,50%,15%,0.95))";
+                                                e.currentTarget.style.border = "1px solid hsla(42,90%,55%,0.4)";
+                                                e.currentTarget.style.boxShadow = "0 20px 60px hsla(280,100%,70%,0.15), 0 0 0 1px hsla(42,90%,55%,0.2)";
+                                            }}
+                                            onMouseLeave={e => {
+                                                e.currentTarget.style.transform = "translateY(0)";
+                                                e.currentTarget.style.background = "linear-gradient(145deg, hsla(270,40%,20%,0.7), hsla(270,50%,10%,0.8))";
+                                                e.currentTarget.style.border = "1px solid hsla(42,90%,55%,0.15)";
+                                                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)";
+                                            }}
+                                        >
+                                            <style>{`@keyframes blCardEntry { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }`}</style>
+
+                                            {/* Card top section */}
+                                            <div style={{ padding: "12px 14px 0" }}>
+                                                {/* Status row */}
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                                        {/* Live badge */}
+                                                        <span style={{
+                                                            display: "inline-flex", alignItems: "center", gap: "4px",
+                                                            padding: "2px 7px", borderRadius: "6px",
+                                                            background: "hsla(42,90%,55%,0.15)",
+                                                            border: "1px solid hsla(42,90%,55%,0.3)",
+                                                            fontSize: "8px", fontWeight: 800,
+                                                            color: C.gold, letterSpacing: "1px",
+                                                            textTransform: "uppercase" as const,
+                                                            boxShadow: "0 0 10px hsla(42,90%,55%,0.15)",
+                                                        }}>
+                                                            <span style={{
+                                                                width: 4, height: 4, borderRadius: "50%",
+                                                                background: C.gold,
+                                                                boxShadow: `0 0 8px ${C.gold}`,
+                                                                animation: "bl-glow-pulse 1.5s ease-in-out infinite",
+                                                            }} />
+                                                            Active
+                                                        </span>
+                                                        {/* Access badge */}
+                                                        <span style={{
+                                                            display: "inline-flex", alignItems: "center", gap: "3px",
+                                                            padding: "2px 6px", borderRadius: "6px",
+                                                            background: "hsla(280,100%,70%,0.1)",
+                                                            border: "1px solid hsla(280,100%,70%,0.2)",
+                                                            fontSize: "8px", fontWeight: 700,
+                                                            color: C.neonPurple,
+                                                            textTransform: "uppercase" as const,
+                                                            letterSpacing: "0.5px",
+                                                        }}>
+                                                            <Globe style={{ width: 8, height: 8 }} /> Open
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Title */}
+                                                <h3 style={{
+                                                    fontSize: "14px", fontWeight: 700,
+                                                    color: "#fff",
+                                                    margin: "0 0 4px", lineHeight: 1.3,
+                                                    transition: "color 0.3s ease",
+                                                    overflow: "hidden", textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap" as const,
+                                                }}>
+                                                    {session.title || "Premium Nightclub Experience"}
+                                                </h3>
                                             </div>
-                                            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: "hsla(0,0%,0%,0.5)", backdropFilter: "blur(8px)", fontSize: "10px", fontWeight: 700, color: "hsla(0,0%,100%,0.8)" }}>
-                                                <Eye className="w-3 h-3" /> {session.viewer_count || 0}
+
+                                            {/* Creator row */}
+                                            <div style={{
+                                                padding: "8px 14px",
+                                                display: "flex", alignItems: "center", gap: "8px",
+                                                borderTop: `1px solid ${C.borderLight}`,
+                                                borderBottom: `1px solid ${C.borderLight}`,
+                                                background: "hsla(42,90%,55%,0.05)",
+                                                marginTop: "8px"
+                                            }}>
+                                                <div style={{
+                                                    width: 28, height: 28, borderRadius: "8px",
+                                                    background: "linear-gradient(135deg, hsla(42,90%,55%,1), hsla(280,100%,70%,1))",
+                                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                                    overflow: "hidden", flexShrink: 0,
+                                                    border: `2px solid hsla(42,90%,55%,0.3)`,
+                                                    boxShadow: `0 0 15px hsla(42,90%,55%,0.3)`,
+                                                }}>
+                                                    {session.profiles?.avatar_url ? (
+                                                        <img src={session.profiles.avatar_url} alt=""
+                                                            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                    ) : (
+                                                        <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>
+                                                            {creatorName[0]?.toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{
+                                                        fontSize: "12px", fontWeight: 600, color: "#fff",
+                                                        overflow: "hidden", textOverflow: "ellipsis",
+                                                        whiteSpace: "nowrap" as const,
+                                                        textShadow: `0 0 5px hsla(42,90%,55%,0.3)`,
+                                                    }}>
+                                                        {creatorName}
+                                                    </div>
+                                                    <div style={{
+                                                        fontSize: "10px", color: "hsla(45,100%,95%,0.6)",
+                                                        marginTop: "1px",
+                                                    }}>
+                                                        Uplink {formatTime(session.created_at)}
+                                                    </div>
+                                                </div>
+                                                <Crown style={{
+                                                    width: 13, height: 13,
+                                                    color: C.gold,
+                                                    filter: `drop-shadow(0 0 5px ${C.gold})`,
+                                                }} />
                                             </div>
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: `${C.gold}33`, backdropFilter: "blur(4px)", border: `1px solid ${C.gold}4d`, boxShadow: `0 0 30px ${C.gold}4d` }}>
-                                                    <Play className="w-7 h-7 ml-1" style={{ color: C.gold }} fill="currentColor" />
+
+                                            {/* Stats row */}
+                                            <div style={{
+                                                padding: "8px 14px",
+                                                display: "flex", alignItems: "center", justifyContent: "space-between",
+                                            }}>
+                                                <div style={{
+                                                    display: "flex", alignItems: "center", gap: "4px",
+                                                    fontSize: "10px", color: "hsla(45,100%,95%,0.7)", fontWeight: 500,
+                                                }}>
+                                                    <Eye style={{ width: 11, height: 11 }} />
+                                                    <span>{session.viewer_count || 0} viewers</span>
+                                                </div>
+                                                <div style={{
+                                                    display: "flex", alignItems: "center", gap: "4px",
+                                                    fontSize: "10px", fontWeight: 800,
+                                                    color: C.gold,
+                                                    textShadow: `0 0 10px hsla(42,90%,55%,0.3)`,
+                                                }}>
+                                                    <DollarSign style={{ width: 11, height: 11 }} />
+                                                    <span>${ENTRY_FEE}</span>
                                                 </div>
                                             </div>
-                                            <div className="absolute bottom-3 right-3 flex items-center gap-1" style={{ fontSize: "10px", color: "hsla(0,0%,100%,0.5)", fontWeight: 500 }}>
-                                                <Clock className="w-3 h-3" /> {formatTime(session.created_at)}
+
+                                            {/* Action Button */}
+                                            <div style={{ padding: "0 12px 12px" }}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); interceptJoin(session); }}
+                                                    style={{
+                                                        width: "100%", padding: "9px",
+                                                        borderRadius: "10px", border: `1px solid hsla(42,90%,55%,0.5)`,
+                                                        background: "linear-gradient(135deg, hsla(42,90%,55%,0.8), hsla(42,80%,45%,0.9))",
+                                                        color: C.bg, fontSize: "11px", fontWeight: 800,
+                                                        cursor: "pointer", transition: "all 0.3s ease",
+                                                        display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                                                        boxShadow: `0 0 20px hsla(42,90%,55%,0.3), inset 0 1px 0 rgba(255,255,255,0.2)`,
+                                                        letterSpacing: "0.5px", textTransform: "uppercase",
+                                                    }}
+                                                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 0 30px hsla(42,90%,55%,0.5), inset 0 1px 0 rgba(255,255,255,0.2)`; e.currentTarget.style.background = "linear-gradient(135deg, hsla(42,90%,55%,0.9), hsla(42,80%,45%,1))"; }}
+                                                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 0 20px hsla(42,90%,55%,0.3), inset 0 1px 0 rgba(255,255,255,0.2)`; e.currentTarget.style.background = "linear-gradient(135deg, hsla(42,90%,55%,0.8), hsla(42,80%,45%,0.9))"; }}
+                                                >
+                                                    <Play style={{ width: 12, height: 12, fill: C.bg, stroke: C.bg }} /> Enter Lounge
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="p-4 flex items-center gap-3">
-                                            <div className="w-11 h-11 rounded-full overflow-hidden shrink-0" style={{ border: `2px solid ${C.gold}4d`, boxShadow: `0 0 12px ${C.gold}33` }}>
-                                                {session.profiles?.avatar_url ? <img src={session.profiles.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(to br, hsl(280,60%,30%), hsl(280,60%,15%))" }}><UserIcon className="w-5 h-5" style={{ color: `${C.gold}66` }} /></div>}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="truncate" style={{ fontSize: "1rem", fontWeight: 700, color: "white" }}>{session.title || "Untitled Session"}</h3>
-                                                <p className="truncate" style={{ fontSize: "12px", color: `${C.gold}80`, marginTop: "2px" }}>Hosted by <span style={{ color: `${C.gold}b3`, fontWeight: 500 }}>{session.profiles?.full_name || session.profiles?.handle || "Creator"}</span></p>
-                                            </div>
-                                            <div className="shrink-0 px-3 py-1.5 rounded-lg" style={{ fontSize: "10px", fontWeight: 900, color: C.gold, textTransform: "uppercase", letterSpacing: "0.05em", background: `${C.gold}14`, border: `1px solid ${C.gold}33` }}>Join</div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </>
                     )}
@@ -444,7 +610,7 @@ export default function BarLoungeRoom() {
                                     <span style={{ fontSize: "18px" }}>🛋️</span>
                                     <div>
                                         <span style={{ fontWeight: 700, color: C.fg, fontSize: "14px" }}>Reserve a Booth</span>
-                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px" }}>$300</span>
+                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px" }}>€300</span>
                                         <p style={{ fontSize: "12px", color: C.muted }}>🎉 Private (5 mins)</p>
                                     </div>
                                 </div>
@@ -541,7 +707,7 @@ export default function BarLoungeRoom() {
                         <div style={{ ...chatMsgStyle, ...glowPink, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", cursor: "pointer" }} onClick={() => confirmPurchase("pin", "Pin Name to Top", 25)}>
                             <span style={{ fontSize: "18px" }}>🔥</span>
                             <span className="bl-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: C.neonPink }}>PIN NAME TO TOP 10 mins</span>
-                            <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+$25</span>
+                            <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+€25</span>
                         </div>
 
                         <div className="flex gap-2">

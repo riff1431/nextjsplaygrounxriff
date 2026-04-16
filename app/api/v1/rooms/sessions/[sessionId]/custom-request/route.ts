@@ -103,7 +103,7 @@ export async function POST(
             session_id: sessionId,
             user_id: user.id,
             username: "System",
-            message: `📩 ${profile?.username || "A fan"} sent a $${amount} request!`,
+            message: `📩 ${profile?.username || "A fan"} sent a €${amount} request!`,
             is_system: true,
         });
 

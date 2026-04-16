@@ -19,7 +19,7 @@ const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             await sendGift(g.amount, fanName, `Sent ${g.name}`);
-            toast.success(`💎 Gift sent: ${g.name}`, { description: `$${g.amount} sent to creator` });
+            toast.success(`💎 Gift sent: ${g.name}`, { description: `€${g.amount} sent to creator` });
         } catch (err) {
             console.error("Failed to send gift:", err);
         }

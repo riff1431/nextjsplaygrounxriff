@@ -107,7 +107,7 @@ export async function PATCH(
                 user_id: updated.creator_id,
                 actor_id: user.id,
                 type: "confession_completed",
-                message: `Fan accepted your confession delivery! You earned $${updated.amount}.`,
+                message: `Fan accepted your confession delivery! You earned €${updated.amount}.`,
                 reference_id: requestId,
             });
         }

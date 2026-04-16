@@ -30,8 +30,8 @@ export default function UserBadge({
         const name = badgeData.display_name.toLowerCase();
 
         if (type === "account_type") {
-            if (name.includes("daddy")) return "🤴";
-            if (name.includes("mommy")) return "👸";
+            if (name.includes("daddy")) return "💎";
+            if (name.includes("mommy") || name.includes("momma")) return "👸";
         }
 
         if (type === "membership") {
@@ -44,8 +44,11 @@ export default function UserBadge({
             if (name.includes("rookie")) return "🌱";
             if (name.includes("rising")) return "⭐";
             if (name.includes("star")) return "🌟";
-            if (name.includes("elite")) return "👑";
+            if (name.includes("elite") || name.includes("vip")) return "👑";
         }
+        
+        // Fallback for gold tier or just general fallback crown
+        if (name.includes("gold") || name.includes("diamond")) return "👑";
 
         return "✨";
     };

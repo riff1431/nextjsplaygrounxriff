@@ -153,7 +153,7 @@ async function addParticipantWithPayment(
             user_id: user.id,
             transaction_type: "fan_join_fee",
             amount: price,
-            currency: "USD",
+            currency: "EUR",
             status: "completed",
             payment_reference: result.debit_tx_id,
         });
@@ -181,7 +181,7 @@ async function addParticipantWithPayment(
     return NextResponse.json({
         success: true,
         status: "joined",
-        message: price > 0 ? `Joined! $${price} charged.` : "Joined successfully!",
+        message: price > 0 ? `Joined! €${price} charged.` : "Joined successfully!",
         room_id: session.room_id,
     });
 }

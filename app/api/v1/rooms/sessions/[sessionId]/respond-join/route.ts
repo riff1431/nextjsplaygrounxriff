@@ -64,7 +64,7 @@ export async function POST(
 
         // 4. Notify the fan
         const notifMessage = action === "approve"
-            ? `Your request to join "${session.title}" was approved! Entry fee: $${session.entry_fee}`
+            ? `Your request to join "${session.title}" was approved! Entry fee: €${session.entry_fee}`
             : `Your request to join "${session.title}" was rejected.`;
 
         await supabase.from("notifications").insert({

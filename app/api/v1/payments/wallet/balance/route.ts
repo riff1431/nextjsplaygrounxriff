@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
         // No wallet yet — create one
         const { data: newWallet, error: createError } = await supabase
             .from("wallets")
-            .insert({ user_id: user.id, balance: 0, currency: "USD" })
+            .insert({ user_id: user.id, balance: 0, currency: "EUR" })
             .select("id, balance, currency, updated_at")
             .single();
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
         balance: wallet?.balance ?? 0,
-        currency: wallet?.currency ?? "USD",
+        currency: wallet?.currency ?? "EUR",
         wallet_id: wallet?.id,
         updated_at: wallet?.updated_at,
     });

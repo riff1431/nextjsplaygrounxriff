@@ -115,7 +115,7 @@ export default function LiveDropBoard() {
             <div className="font-body font-bold text-foreground text-l">VIP Backstage - Full Reel</div>
             <div className="text-[10px] text-foreground/50 font-body">Rarity: <span className="text-orange-400">Epic</span></div>
           </div>
-          <div className="font-tech text-lg font-black neon-text">$250</div>
+          <div className="font-tech text-lg font-black neon-text">€250</div>
         </div>
         <button className="mt-1.5 w-full py-1 rounded border border-yellow-400/80 bg-yellow-400/15 text-yellow-300 font-tech text-l font-bold hover:bg-yellow-400/25 transition-all"
           style={{ boxShadow: "0 0 10px rgba(250,204,21,0.3), 0 0 25px rgba(250,204,21,0.15)" }}>

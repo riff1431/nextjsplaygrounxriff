@@ -76,7 +76,7 @@ export async function POST(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — $${price || 0} · ${rarity || 'Common'}`;
+    const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — €${price || 0} · ${rarity || 'Common'}`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
     const { data: existingMsg } = await supabase

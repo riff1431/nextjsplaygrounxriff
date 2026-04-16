@@ -66,7 +66,7 @@ export default function FanEntryDisclosure({
                             fontSize: 16, fontWeight: 700,
                             color: entryFee > 0 ? "#ffd700" : "#4ade80",
                         }}>
-                            {entryFee > 0 ? `$${entryFee}` : "FREE"}
+                            {entryFee > 0 ? `€${entryFee}` : "FREE"}
                         </span>
                     </div>
 
@@ -143,7 +143,7 @@ export default function FanEntryDisclosure({
                             cursor: "pointer", fontSize: 13,
                         }}
                     >
-                        {entryFee > 0 ? `Pay $${entryFee} & Join` : "Join Now"}
+                        {entryFee > 0 ? `Pay €${entryFee} & Join` : "Join Now"}
                     </button>
                 </div>
             </div>

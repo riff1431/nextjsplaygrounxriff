@@ -92,7 +92,7 @@ const RequestConfession = () => {
       </div>
 
       <div className="text-xs text-muted-foreground text-right">
-        $5 Anonymous +$25
+        €5 Anonymous +€25
       </div>
 
       {/* Submit */}

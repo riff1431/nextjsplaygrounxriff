@@ -187,7 +187,7 @@ function PgxPage2Inner() {
             const data = await res.json();
             if (data.success) {
                 const emoji = type === "drink" ? "🍸" : type === "tip" ? "💰" : type === "vip" ? "👑" : type === "booth" ? "🛋️" : type === "pin" ? "📌" : "⚡";
-                showToast(`${emoji} ${label} sent! -$${price} from your wallet`, "success");
+                showToast(`${emoji} ${label} sent! -€${price} from your wallet`, "success");
                 await refreshWallet();
             } else {
                 showToast(data.error === "Insufficient balance" ? "💸 Not enough balance. Top up your wallet!" : `Purchase failed: ${data.error || "Unknown error"}`, "error");
@@ -199,10 +199,10 @@ function PgxPage2Inner() {
         }
     }, [roomId, buying, showToast, refreshWallet]);
 
-    const handleTip = (amount: number) => doPurchase("tip", `$${amount} Tip`, amount, `tip-${amount}`);
+    const handleTip = (amount: number) => doPurchase("tip", `€${amount} Tip`, amount, `tip-${amount}`);
     const handleCustomTip = () => {
         const a = Number(tipAmount);
-        if (a > 0) { doPurchase("tip", `$${a} Tip`, a, `tip-custom`); setTipAmount(""); }
+        if (a > 0) { doPurchase("tip", `€${a} Tip`, a, `tip-custom`); setTipAmount(""); }
         else showToast("Enter a valid tip amount", "info");
     };
     const handleSendChat = () => {
@@ -351,7 +351,7 @@ function PgxPage2Inner() {
                                         <span style={{ fontSize: "18px" }}>🛋️</span>
                                         <div>
                                             <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Reserve a Booth</span>
-                                            <span style={{ color: GOLD, fontWeight: 700, marginLeft: "8px" }}>$300</span>
+                                            <span style={{ color: GOLD, fontWeight: 700, marginLeft: "8px" }}>€300</span>
                                             <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>🎉 Private (5 mins)</p>
                                         </div>
                                         {buying === "booth" && <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "8px" }} />}
@@ -420,7 +420,7 @@ function PgxPage2Inner() {
                                     <button key={amount} className="pg2-tip-btn" disabled={!!buying}
                                         style={{ ...tipBtn, flex: 1, fontSize: "14px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}
                                         onClick={() => handleTip(amount)}>
-                                        {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `$${amount}`}
+                                        {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
                                     </button>
                                 ))}
                             </div>
@@ -485,7 +485,7 @@ function PgxPage2Inner() {
                             <span className="pg2-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: PINK }}>PIN NAME TO TOP 10 mins</span>
                             {buying === "pin"
                                 ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "auto" }} />
-                                : <span style={{ color: GOLD, fontWeight: 700, marginLeft: "auto" }}>+$25</span>}
+                                : <span style={{ color: GOLD, fontWeight: 700, marginLeft: "auto" }}>+€25</span>}
                         </div>
 
                         {/* Chat input */}

@@ -211,7 +211,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
         amount={parsedAmount}
         walletBalance={balance}
         description={topic || "Confession request"}
-        confirmLabel={`Pay $${parsedAmount.toFixed(2)}`}
+        confirmLabel={`Pay €${parsedAmount.toFixed(2)}`}
       />
     </>
   );

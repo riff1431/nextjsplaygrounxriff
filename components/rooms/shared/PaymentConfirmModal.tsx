@@ -184,7 +184,7 @@ export default function PaymentConfirmModal({
                     ) : insufficient ? (
                         "Insufficient Balance"
                     ) : (
-                        `Pay $${entryFee} & Join`
+                        `Pay €${entryFee} & Join`
                     )}
                 </button>
             </div>

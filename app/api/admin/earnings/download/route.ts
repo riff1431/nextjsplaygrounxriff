@@ -92,9 +92,9 @@ export async function GET(req: NextRequest) {
                 startY: 45,
                 head: [['Description', 'Amount']],
                 body: [
-                    ['Gross Collected', `$${invoice.summary.gross_collected.toFixed(2)}`],
-                    ['Creator Earned', `$${invoice.summary.creator_earned.toFixed(2)}`],
-                    ['Platform Revenue', `$${invoice.summary.platform_earned.toFixed(2)}`],
+                    ['Gross Collected', `€${invoice.summary.gross_collected.toFixed(2)}`],
+                    ['Creator Earned', `€${invoice.summary.creator_earned.toFixed(2)}`],
+                    ['Platform Revenue', `€${invoice.summary.platform_earned.toFixed(2)}`],
                     ['Total Events', `${invoice.summary.events_count}`],
                 ],
                 theme: 'striped',
@@ -109,9 +109,9 @@ export async function GET(req: NextRequest) {
                     new Date(l.occurred_at).toLocaleDateString(),
                     l.revenue_type,
                     l.fan_username || 'Unknown',
-                    `$${l.gross_amount.toFixed(2)}`,
-                    `$${l.creator_share.toFixed(2)}`,
-                    `$${l.platform_share.toFixed(2)}`,
+                    `€${l.gross_amount.toFixed(2)}`,
+                    `€${l.creator_share.toFixed(2)}`,
+                    `€${l.platform_share.toFixed(2)}`,
                     l.split_name || '-',
                 ]),
                 theme: 'grid',
@@ -174,7 +174,7 @@ export async function GET(req: NextRequest) {
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text(`Period: ${monthName} | Generated: ${new Date().toLocaleDateString()}`, 14, 28);
-        doc.text(`Total Platform Revenue: $${Number(payoutsData.totals.total_platform_earned).toFixed(2)} | Total Creator Payouts: $${Number(payoutsData.totals.total_creators_earned).toFixed(2)}`, 14, 33);
+        doc.text(`Total Platform Revenue: €${Number(payoutsData.totals.total_platform_earned).toFixed(2)} | Total Creator Payouts: €${Number(payoutsData.totals.total_creators_earned).toFixed(2)}`, 14, 33);
 
         autoTable(doc, {
             startY: 40,
@@ -182,9 +182,9 @@ export async function GET(req: NextRequest) {
             body: payoutsData.rows.map(r => [
                 r.display_name,
                 `@${r.username}`,
-                `$${r.gross_collected.toFixed(2)}`,
-                `$${r.creator_earned.toFixed(2)}`,
-                `$${r.platform_earned.toFixed(2)}`,
+                `€${r.gross_collected.toFixed(2)}`,
+                `€${r.creator_earned.toFixed(2)}`,
+                `€${r.platform_earned.toFixed(2)}`,
                 `${r.events_count}`,
                 new Date(r.last_activity).toLocaleDateString(),
                 r.status,

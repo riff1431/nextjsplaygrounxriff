@@ -91,7 +91,7 @@ export default function AdminStats() {
                 />
                 <StatCard
                     label="Total Revenue"
-                    value={`$${stats.totalRevenue.toLocaleString()}`}
+                    value={`€${stats.totalRevenue.toLocaleString()}`}
                     icon={<CreditCard className="w-5 h-5" />}
                     tone="green"
                 />

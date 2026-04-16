@@ -53,7 +53,7 @@ const DrinkMenu = () => {
         <div className="glass-panel p-3 glow-gold space-y-2">
           <div className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-gold animate-glow-pulse" />
-            <span className="font-bold text-gold glow-text-gold">Upgrade to VIP - $150</span>
+            <span className="font-bold text-gold glow-text-gold">Upgrade to VIP - €150</span>
           </div>
           <ul className="text-sm text-muted-foreground space-y-1 ml-7">
             <li className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-neon-pink" /> Exclusive Content</li>
@@ -65,7 +65,7 @@ const DrinkMenu = () => {
             <span className="text-lg">🛋️</span>
             <div>
               <span className="font-bold text-foreground text-sm">Reserve a Booth</span>
-              <span className="text-gold font-bold ml-2">$300</span>
+              <span className="text-gold font-bold ml-2">€300</span>
               <p className="text-xs text-muted-foreground">🎉 Private (5 mins)</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ const DrinkMenu = () => {
             <span className="text-lg">📌</span>
             <div>
               <span className="font-bold text-foreground text-sm">Pin My Name</span>
-              <span className="text-gold font-bold ml-2">$25</span>
+              <span className="text-gold font-bold ml-2">€25</span>
               <p className="text-xs text-muted-foreground">📍 Pinned (10 mins)</p>
             </div>
           </div>

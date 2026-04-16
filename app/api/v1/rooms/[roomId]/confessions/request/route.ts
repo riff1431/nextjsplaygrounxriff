@@ -149,7 +149,7 @@ export async function POST(
         user_id: creatorId,
         actor_id: user.id,
         type: "confession_request",
-        message: `New ${type} confession request ($${amount}): "${topic}"`,
+        message: `New ${type} confession request (€${amount}): "${topic}"`,
         reference_id: req.id,
     });
 
