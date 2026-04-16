@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowUp, Settings, Send } from "lucide-react";
+import { ArrowUp, Settings, Send, Smile } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 interface ChatMsg {
@@ -21,7 +21,10 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [message, setMessage] = useState("");
     const [activeFilter, setActiveFilter] = useState<"All" | "Paid" | "Priority">("All");
+    const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const EMOJIS = ["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"];
 
     useEffect(() => {
         if (!roomId) return;
@@ -106,10 +109,6 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
                             <span className="text-[10px] text-muted-foreground font-normal">({messages.length})</span>
                         )}
                     </h2>
-                    <div className="flex gap-2 text-muted-foreground">
-                        <ArrowUp className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
-                        <Settings className="w-4 h-4 cursor-pointer hover:text-primary transition-colors" />
-                    </div>
                 </div>
                 
                 {/* Lane Filters */}
@@ -171,8 +170,28 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
             </div>
 
             {/* Input */}
-            <div className="px-3 py-2 border-t border-border">
+            <div className="px-3 py-2 border-t border-border relative">
+                {/* Quick Emoji Picker */}
+                {showEmojis && (
+                    <div className="absolute bottom-[3.5rem] left-2 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg">
+                        {EMOJIS.map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
+                                className="hover:scale-125 transition-transform text-lg"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+                )}
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowEmojis(!showEmojis)}
+                        className="bg-secondary/50 px-3 rounded hover:bg-secondary transition-colors text-muted-foreground flex items-center justify-center"
+                    >
+                        <Smile className="w-4 h-4" />
+                    </button>
                     <input
                         type="text"
                         placeholder="Broadcast a message..."

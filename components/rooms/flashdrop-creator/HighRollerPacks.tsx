@@ -108,7 +108,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
                     <input
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        placeholder="Price ($)"
+                        placeholder="Price (€)"
                         type="number"
                         min="1"
                         className="w-full bg-black/40 border border-primary/40 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
@@ -155,7 +155,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
                                 <div className="flex items-center gap-1.5 mb-1">
                                     <DollarSign size={12} className="text-primary/70" />
                                     <span className="text-sm font-black neon-text">
-                                        ${pack.price.toLocaleString()}
+                                        €{pack.price.toLocaleString()}
                                     </span>
                                 </div>
                                 <span className="text-[10px] font-semibold text-white/70 leading-tight line-clamp-2">

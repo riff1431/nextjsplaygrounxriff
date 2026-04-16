@@ -10,11 +10,14 @@ interface XChatRequest {
     message: string;
     avatar_url?: string;
     status: "pending" | "accepted" | "declined";
+    creator_reply?: string;
 }
 
 const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<XChatRequest[]>([]);
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState("");
 
     useEffect(() => {
         if (!roomId) return;
@@ -45,17 +48,23 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
         return () => { supabase.removeChannel(channel); };
     }, [roomId]);
 
-    const handleAction = async (id: string, action: "accepted" | "declined") => {
+    const handleAction = async (id: string, action: "accepted" | "declined", replyStr?: string) => {
         setRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: action } : r))
+            prev.map((r) => (r.id === id ? { ...r, status: action, creator_reply: replyStr } : r))
         );
         if (roomId) {
             await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: id, status: action }),
+                body: JSON.stringify({ requestId: id, status: action, creator_reply: replyStr }),
             });
         }
+    };
+
+    const handleAcceptWithReply = async (id: string) => {
+        await handleAction(id, "accepted", replyText);
+        setReplyingTo(null);
+        setReplyText("");
     };
 
     return (
@@ -88,24 +97,54 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                             <p className="font-semibold text-sm text-foreground">{r.fan_name}</p>
                             <p className="text-xs text-muted-foreground">⭐ {r.message}</p>
                             {r.status === "pending" ? (
-                                <div className="flex gap-2 mt-2">
-                                    <button
-                                        onClick={() => handleAction(r.id, "accepted")}
-                                        className="bg-success text-success-foreground text-xs font-bold px-4 py-1 rounded hover:opacity-90 transition-opacity"
-                                    >
-                                        ACCEPT
-                                    </button>
-                                    <button
-                                        onClick={() => handleAction(r.id, "declined")}
-                                        className="bg-secondary text-foreground text-xs font-bold px-4 py-1 rounded border border-border hover:bg-muted transition-colors"
-                                    >
-                                        DECLINE
-                                    </button>
+                                <div className="flex flex-col gap-2 mt-2">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (r.message.startsWith("Voice Note Reply:")) {
+                                                    setReplyingTo(r.id);
+                                                } else {
+                                                    handleAction(r.id, "accepted");
+                                                }
+                                            }}
+                                            className="bg-success text-success-foreground text-xs font-bold px-4 py-1 rounded hover:opacity-90 transition-opacity"
+                                        >
+                                            ACCEPT
+                                        </button>
+                                        <button
+                                            onClick={() => handleAction(r.id, "declined")}
+                                            className="bg-secondary text-foreground text-xs font-bold px-4 py-1 rounded border border-border hover:bg-muted transition-colors"
+                                        >
+                                            DECLINE
+                                        </button>
+                                    </div>
+                                    {replyingTo === r.id && (
+                                        <div className="flex flex-col gap-2 mt-1 bg-black/20 p-2 rounded border border-border">
+                                            <input
+                                                type="text"
+                                                value={replyText}
+                                                onChange={e => setReplyText(e.target.value)}
+                                                placeholder="Enter link to voice note or reply..."
+                                                className="w-full bg-input rounded px-2 py-1.5 text-xs focus:outline-emerald-500"
+                                            />
+                                            <div className="flex gap-2 justify-end">
+                                                <button onClick={() => setReplyingTo(null)} className="text-[10px] text-muted-foreground hover:text-white">Cancel</button>
+                                                <button onClick={() => handleAcceptWithReply(r.id)} className="text-[10px] bg-primary text-white px-2 py-1 rounded font-bold">Send Reply</button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
-                                <span className={`text-xs font-bold mt-1 inline-block ${r.status === "accepted" ? "text-green-400" : "text-muted-foreground"}`}>
-                                    {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
-                                </span>
+                                <div className="mt-1 flex flex-col gap-1">
+                                    <span className={`text-xs font-bold inline-block ${r.status === "accepted" ? "text-green-400" : "text-muted-foreground"}`}>
+                                        {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
+                                    </span>
+                                    {r.creator_reply && (
+                                        <div className="text-xs bg-primary/10 border border-primary/20 text-primary px-2 py-1.5 rounded break-words">
+                                            ↳ {r.creator_reply}
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </motion.div>

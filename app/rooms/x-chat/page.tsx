@@ -200,10 +200,10 @@ const XChatRoom = () => {
                 <button
                     onClick={sendRequest}
                     disabled={!roomId || requestLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gold/20 border border-gold/40 text-gold hover:bg-gold/30 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1DA1F2]/20 border border-[#1DA1F2]/40 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-all disabled:opacity-50"
                 >
-                    {requestLoading ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />}
-                    Request to Chat
+                    {requestLoading ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
+                    Invite Creator
                 </button>
             );
         }
@@ -303,21 +303,40 @@ const XChatRoom = () => {
 
                         {/* Left: Stream + Reactions */}
                         <div className="lg:col-span-2 space-y-2">
-                            {/* Live Stream */}
-                            <div className="glass-card overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                                {roomId && user && hostId ? (
-                                    <LiveStreamWrapper
-                                        role="fan"
-                                        appId={APP_ID}
-                                        roomId={roomId}
-                                        uid={user.id}
-                                        hostId={hostId}
-                                        hostAvatarUrl={hostAvatar || ""}
-                                        hostName={hostName}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
-                                        {roomId ? "Connecting to stream..." : "No active session"}
+                            {/* Split Video Container */}
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                {/* Creator Stream (Main) */}
+                                <div className="glass-card overflow-hidden flex-1 relative" style={{ aspectRatio: "16/9" }}>
+                                    {roomId && user && hostId ? (
+                                        <LiveStreamWrapper
+                                            role="fan"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id}
+                                            hostId={hostId}
+                                            hostAvatarUrl={hostAvatar || ""}
+                                            hostName={hostName}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
+                                            {roomId ? "Connecting to stream..." : "No active session"}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Fan Stream (Self) - only visible during active session */}
+                                {sessionActive && (
+                                    <div className="glass-card overflow-hidden w-full sm:w-1/3 shrink-0 relative" style={{ aspectRatio: "16/9", border: '2px solid rgba(29, 161, 242, 0.4)' }}>
+                                        <LiveStreamWrapper
+                                            role="host" // act as local broadcaster for fan's turn
+                                            appId={APP_ID}
+                                            roomId={`${roomId}_fan`}
+                                            uid={user.id}
+                                            hostId={user.id}
+                                            hostAvatarUrl={user?.user_metadata?.avatar_url || ""}
+                                            hostName="You"
+                                        />
+                                        <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-xs text-white z-50">Local</div>
                                     </div>
                                 )}
                             </div>

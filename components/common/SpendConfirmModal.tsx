@@ -14,6 +14,10 @@ interface SpendConfirmModalProps {
     description?: string;
     /** optional override for the confirm button label */
     confirmLabel?: string;
+    requireInput?: boolean;
+    inputPlaceholder?: string;
+    inputValue?: string;
+    onInputChange?: (val: string) => void;
 }
 
 export default function SpendConfirmModal({
@@ -26,6 +30,10 @@ export default function SpendConfirmModal({
     walletBalance,
     description,
     confirmLabel,
+    requireInput,
+    inputPlaceholder = "Enter your prompt...",
+    inputValue = "",
+    onInputChange,
 }: SpendConfirmModalProps) {
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
@@ -102,12 +110,25 @@ export default function SpendConfirmModal({
                     </div>
 
                     {/* Remaining */}
-                    {!insufficient && (
+                    {!insufficient && !requireInput && (
                         <div className="text-xs text-white/40 text-center">
                             Remaining after purchase:{" "}
                             <span className="text-white/70 font-medium">
                                 ${(walletBalance - amount).toFixed(2)}
                             </span>
+                        </div>
+                    )}
+
+                    {/* Optional Input */}
+                    {requireInput && (
+                        <div className="mb-2">
+                            <input
+                                type="text"
+                                value={inputValue}
+                                onChange={(e) => onInputChange?.(e.target.value)}
+                                placeholder={inputPlaceholder}
+                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400"
+                            />
                         </div>
                     )}
 
@@ -138,7 +159,7 @@ export default function SpendConfirmModal({
                         </button>
                         <button
                             onClick={handleConfirm}
-                            disabled={insufficient || loading}
+                            disabled={insufficient || loading || (requireInput && !inputValue.trim())}
                             className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${done
                                     ? "bg-emerald-600 text-white"
                                     : insufficient

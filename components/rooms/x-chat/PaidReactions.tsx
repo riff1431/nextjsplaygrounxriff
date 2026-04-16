@@ -37,10 +37,31 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
     const { balance, refresh } = useWallet();
     const [pending, setPending] = useState<{ label: string; price: number; reactionType: string; emoji?: string } | null>(null);
     const [animatingEmoji, setAnimatingEmoji] = useState<string | null>(null);
+    const [voicePrompt, setVoicePrompt] = useState("");
 
     const handleSend = async () => {
         if (!pending || !roomId) return;
         try {
+            // Voice notes map to incoming requests, NOT reactions!
+            if (pending.reactionType === "voice_note_boost") {
+                const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        message: `Voice Note Reply: ${voicePrompt}` 
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    toast.success("Voice note request sent!");
+                    setPending(null);
+                    setVoicePrompt("");
+                } else {
+                    toast.error(data.error || "Failed to send request");
+                }
+                return;
+            }
+
             const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/reaction`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -53,6 +74,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             if (data.success) {
                 toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
                 refresh?.();
+                setPending(null); // Clear pending state so modal closes
                 // Show floating animation
                 if (pending.emoji) {
                     setAnimatingEmoji(pending.emoji);
@@ -148,12 +170,16 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             {/* Spend Confirm Modal */}
             <SpendConfirmModal
                 isOpen={!!pending}
-                onClose={() => setPending(null)}
-                title="Confirm Purchase"
+                onClose={() => { setPending(null); setVoicePrompt(""); }}
+                title={pending?.reactionType === "voice_note_boost" ? "Request Voice Note" : "Confirm Purchase"}
                 itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
                 amount={pending?.price || 0}
                 walletBalance={balance}
                 onConfirm={handleSend}
+                requireInput={pending?.reactionType === "voice_note_boost"}
+                inputPlaceholder="What should the voice note be about?"
+                inputValue={voicePrompt}
+                onInputChange={setVoicePrompt}
             />
         </div>
     );

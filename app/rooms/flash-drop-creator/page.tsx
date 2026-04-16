@@ -56,9 +56,10 @@ function FlashdropCreatorStudio() {
                 <div className="flex items-center shrink-0 relative">
                     <Link
                         href="/rooms/creator-studio"
-                        className="glass-card rounded-lg p-2 hover:bg-primary/20 transition-colors absolute left-0 flex items-center justify-center cursor-pointer"
+                        className="glass-card rounded-lg px-3 py-2 hover:bg-primary/20 transition-colors absolute left-0 flex items-center gap-2 cursor-pointer z-50"
                     >
-                        <ArrowLeft className="text-primary" size={20} />
+                        <ArrowLeft className="text-primary" size={18} />
+                        <span className="text-xs font-bold text-primary hidden sm:block">Back</span>
                     </Link>
                     <h1 className="font-display text-2xl md:text-4xl font-black neon-text tracking-widest text-center w-full">
                         Flash Drop — Creator Room

@@ -47,9 +47,11 @@ export async function POST(
 
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
+    const fanName = user.user_metadata?.full_name || user.email?.split("@")[0] || "A fan";
+
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "xchat_reaction",
-        message: `Fan sent ${reactionType} reaction (€${amount})`, reference_id: reaction.id,
+        message: `${fanName} sent ${reactionType} reaction (€${amount})`, reference_id: reaction.id,
     });
 
     return NextResponse.json({ success: true, reaction, new_balance: splitResult.newBalance });

@@ -14,6 +14,8 @@ interface DropRequest {
 const DropRequests = ({ className = "", roomId }: { className?: string; roomId?: string }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<DropRequest[]>([]);
+    const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+    const [delivering, setDelivering] = useState(false);
 
     useEffect(() => {
         if (!roomId) return;
@@ -44,7 +46,7 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
         return () => { supabase.removeChannel(channel); };
     }, [roomId]);
 
-    const handleAction = async (id: string, action: "accepted" | "declined") => {
+    const handleAction = async (id: string, action: "accepted" | "declined", mediaUrl?: string) => {
         setRequests((prev) =>
             prev.map((r) => (r.id === id ? { ...r, status: action } : r))
         );
@@ -52,9 +54,31 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
             await fetch(`/api/v1/rooms/${roomId}/flash-drops/request`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: id, status: action }),
+                body: JSON.stringify({ requestId: id, status: action, mediaUrl }),
             });
         }
+    };
+
+    const handleDeliveryUpload = async (id: string, file: File) => {
+        setDelivering(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("folder", `flash-drops-delivery/${roomId}`);
+
+            const res = await fetch("/api/v1/storage/upload", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.success) {
+                await handleAction(id, "accepted", data.publicUrl);
+                setUploadingFor(null);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        setDelivering(false);
     };
 
     return (
@@ -84,23 +108,42 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
                                     {req.fan_name}
                                 </td>
                                 <td className="py-2.5 px-2 text-muted-foreground">
-                                    {req.content} · ${req.amount}
+                                    {req.content} · €{req.amount}
                                 </td>
                                 <td className="py-2.5 px-2">
                                     {req.status === "pending" ? (
                                         <div className="flex gap-4 justify-center items-center">
-                                            <button
-                                                onClick={() => handleAction(req.id, "accepted")}
-                                                className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider text-primary border border-primary hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.5)] transition-all"
-                                            >
-                                                Accept
-                                            </button>
-                                            <button
-                                                onClick={() => handleAction(req.id, "declined")}
-                                                className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider bg-secondary text-secondary-foreground border border-border hover:border-primary transition-all"
-                                            >
-                                                Decline
-                                            </button>
+                                            {uploadingFor === req.id ? (
+                                                <div className="flex items-center gap-2">
+                                                    <label className={`px-3 py-1 rounded text-xs font-bold font-display tracking-wider bg-primary text-white cursor-pointer transition-all ${delivering ? 'opacity-50' : 'hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.5)]'}`}>
+                                                        {delivering ? "Uploading..." : "Attach File"}
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            disabled={delivering}
+                                                            onChange={(e) => {
+                                                                if(e.target.files?.[0]) handleDeliveryUpload(req.id, e.target.files[0]);
+                                                            }} 
+                                                        />
+                                                    </label>
+                                                    <button onClick={() => setUploadingFor(null)} disabled={delivering} className="text-xs text-muted-foreground hover:text-white">Cancel</button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => setUploadingFor(req.id)}
+                                                        className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider text-primary border border-primary hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.5)] transition-all"
+                                                    >
+                                                        Accept & Deliver
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAction(req.id, "declined")}
+                                                        className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider bg-secondary text-secondary-foreground border border-border hover:border-primary transition-all"
+                                                    >
+                                                        Decline
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     ) : (
                                         <span

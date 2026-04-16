@@ -173,11 +173,23 @@ const XChatCreatorPage = () => {
                                     border: '2px solid rgba(255, 215, 0, 0.5)',
                                 }}
                             >
-                                <img
-                                    src="/x-chat/streamer-female.png"
-                                    alt="Fan stream"
-                                    className="w-full h-full object-cover object-top"
-                                />
+                                {roomId && user ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={`${roomId}_fan`}
+                                        uid={user.id}
+                                        hostId="pending"
+                                        hostAvatarUrl=""
+                                        hostName="Fan stream"
+                                    />
+                                ) : (
+                                    <img
+                                        src="/x-chat/streamer-female.png"
+                                        alt="Fan stream"
+                                        className="w-full h-full object-cover object-top"
+                                    />
+                                )}
                                 {/* Stat badge */}
                                 <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
                                     <span className="text-primary text-sm">💎</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Zap, DollarSign, Crown } from "lucide-react";
+import { Send, Zap, DollarSign, Crown, Smile } from "lucide-react";
 import { useXChat, XChatMessage } from "@/hooks/useXChat";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
@@ -32,7 +32,10 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const [selectedLane, setSelectedLane] = useState<Lane>("Free");
     const [activeFilter, setActiveFilter] = useState<"All" | "Paid" | "Priority">("All");
     const [pendingSend, setPendingSend] = useState(false);
+    const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const EMOJIS = ["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"];
 
     useEffect(() => {
         if (user?.user_metadata?.full_name) {
@@ -190,8 +193,8 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
             </div>
 
             {/* Input Section */}
-            <div className="px-4 pb-4 mt-auto">
-                {/* Send Lane Selector - Moved above input */}
+            <div className="px-4 pb-4 mt-auto relative">
+                {/* Send Lane Selector */}
                 <div className="flex gap-1.5 mb-3">
                     {(Object.keys(LANE_CONFIG) as Lane[]).map((lane) => {
                         const config = LANE_CONFIG[lane];
@@ -213,7 +216,28 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                     })}
                 </div>
 
+                {/* Quick Emoji Picker */}
+                {showEmojis && (
+                    <div className="absolute bottom-[4.5rem] left-4 glass-card p-2 grid grid-cols-7 gap-2 z-50">
+                        {EMOJIS.map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
+                                className="hover:scale-125 transition-transform text-lg"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowEmojis(!showEmojis)}
+                        className="glass-card-inner px-3 py-2 transition-colors text-muted-foreground hover:text-foreground"
+                    >
+                        <Smile size={18} />
+                    </button>
                     <input
                         type="text"
                         value={message}
