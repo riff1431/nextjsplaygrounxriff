@@ -12,7 +12,7 @@ export async function PATCH(
     const body = await request.json();
 
     // Allow updating any field
-    const { title, teaser, content, mediaUrl, type, tier, status } = body;
+    const { title, teaser, content, mediaUrl, type, tier, price, status } = body;
 
     const updates: any = { updated_at: new Date().toISOString() };
     if (title !== undefined) updates.title = title;
@@ -21,6 +21,7 @@ export async function PATCH(
     if (mediaUrl !== undefined) updates.media_url = mediaUrl;
     if (type !== undefined) updates.type = type;
     if (tier !== undefined) updates.tier = tier;
+    if (price !== undefined) updates.price = price;
     if (status !== undefined) updates.status = status;
 
     const { data: updated, error } = await supabase
