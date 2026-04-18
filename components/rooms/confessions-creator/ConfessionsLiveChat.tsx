@@ -110,14 +110,14 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
     };
 
     return (
-        <div className="conf-glass-card-strong flex flex-col w-[400px] shrink-0 h-full pb-2">
+        <div className="conf-glass-card-strong flex flex-col w-[400px] shrink-0 h-full pb-2 pgx-chat-wrapper">
             {/* Header */}
             <div className="p-4 border-b border-white/20">
                 <h2 className="conf-font-cinzel text-white text-lg font-semibold">Live Chat</h2>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 pgx-chat-messages hide-scrollbar">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-white/40" />

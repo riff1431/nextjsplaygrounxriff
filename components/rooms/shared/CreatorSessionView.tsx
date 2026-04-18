@@ -46,7 +46,7 @@ export default function CreatorSessionView({
                 <div style={{ fontSize: "48px" }}>🎬</div>
                 <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: 700 }}>Session Ended</h2>
                 <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>
-                    Total Earnings: <span style={{ color: "hsl(150,80%,60%)", fontWeight: 700 }}>${totalEarnings.toFixed(2)}</span>
+                    Total Earnings: <span style={{ color: "hsl(150,80%,60%)", fontWeight: 700 }}>€{totalEarnings.toFixed(2)}</span>
                 </p>
             </div>
         );

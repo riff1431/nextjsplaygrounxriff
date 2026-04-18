@@ -29,7 +29,7 @@ const LiveChat = () => (
             <div className="h-px flex-1 bg-gold/30" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 pgx-chat-messages hide-scrollbar">
             {messages.map((m, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
                     <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center">

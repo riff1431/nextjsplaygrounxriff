@@ -71,7 +71,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
 
                 <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
                     <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Available Balance</div>
-                    <div className="text-2xl font-bold text-white">${balance.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-white">€{balance.toFixed(2)}</div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">

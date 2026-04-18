@@ -21,11 +21,12 @@ const CreatorBarLounge = () => {
     const supabase = createClient();
 
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
+    const [sessionTitle, setSessionTitle] = useState<string | undefined>(undefined);
 
     // When we have a sessionId, find/create the room and go straight to live view
     useEffect(() => {
         if (!user) return;
-        async function findRoom() {
+        async function findRoomAndSession() {
             const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")
@@ -37,9 +38,18 @@ const CreatorBarLounge = () => {
             if (rooms && rooms.length > 0) {
                 setRoomId(rooms[0].id);
             }
+
+            if (sessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("title")
+                    .eq("id", sessionId)
+                    .single();
+                if (session) setSessionTitle(session.title);
+            }
         }
-        findRoom();
-    }, [user]);
+        findRoomAndSession();
+    }, [user, sessionId]);
 
     // If no sessionId in URL, show session dashboard
     if (!sessionId) {
@@ -76,19 +86,20 @@ const CreatorBarLounge = () => {
             style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-creator.jpeg')" }}
         >
             {/* Top Bar */}
-            <div className="relative z-20 flex items-center justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0">
+            <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">
                 <button
                     onClick={handleEndSession}
-                    className="absolute left-4 glass-panel px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-900/20 transition-colors"
+                    className="sm:absolute sm:left-4 glass-panel px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-900/20 transition-colors"
                     style={{ borderColor: "hsla(320, 80%, 60%, 0.4)", color: "hsl(320, 80%, 60%)" }}
                 >
-                    <StopCircle className="w-[18px] h-[18px]" />
-                    <span className="text-sm font-medium">End Session</span>
+                    <StopCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium hidden sm:inline">End Session</span>
                 </button>
                 <div className="text-center">
                     <h1 className="text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
-                    <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "hsl(280, 15%, 55%)" }}>
-                        Live Session
+                    <p className="text-[10px] font-medium uppercase tracking-widest flex items-center justify-center gap-2" style={{ color: "hsl(280, 15%, 55%)" }}>
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        {sessionTitle || "Live Session"}
                     </p>
                 </div>
                 <div className="absolute right-4">

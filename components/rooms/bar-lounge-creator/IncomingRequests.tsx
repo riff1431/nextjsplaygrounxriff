@@ -35,14 +35,20 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     useEffect(() => {
         if (!roomId) return;
 
+        const TIP_TYPES = ["drink", "tip", "champagne", "vip_bottle", "vip", "pin"];
+
         const fetchRequests = async () => {
             const { data } = await supabase
                 .from("bar_lounge_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
-                .limit(20);
-            if (data) setRequests(data as Request[]);
+                .limit(40);
+            
+            if (data) {
+                const filtered = (data as Request[]).filter(r => !TIP_TYPES.includes(r.type));
+                setRequests(filtered);
+            }
         };
         fetchRequests();
 
@@ -55,9 +61,12 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const req = payload.new as Request;
-                setRequests((prev) => [req, ...prev]);
 
-                // Creator toast notification
+                if (!TIP_TYPES.includes(req.type)) {
+                    setRequests((prev) => [req, ...prev]);
+                }
+
+                // Creator toast notification works for ALL types (including tips!)
                 const emoji = req.type === "drink" ? "🍸" : req.type === "tip" ? "💰" : req.type === "vip" ? "👑" : req.type === "booth" ? "🛋️" : req.type === "pin" ? "📌" : "⚡";
                 showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +€${req.amount}`);
             })

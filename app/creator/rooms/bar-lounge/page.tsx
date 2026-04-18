@@ -664,7 +664,7 @@ export default function BarLoungeCreatorStudioPage() {
                                             {king.avatar_url ? <img src={king.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{king.handle[0]}</div>}
                                         </div>
                                         <span className="text-xs text-red-200 truncate max-w-[80px]">{king.handle}</span>
-                                        {king.spentTotal > 0 && <span className="text-[10px] text-yellow-400">${king.spentTotal}</span>}
+                                        {king.spentTotal > 0 && <span className="text-[10px] text-yellow-400">€{king.spentTotal}</span>}
                                     </div>
                                 );
                             })()}
@@ -686,7 +686,7 @@ export default function BarLoungeCreatorStudioPage() {
                                             {queen.avatar_url ? <img src={queen.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{queen.handle[0]}</div>}
                                         </div>
                                         <span className="text-xs text-red-200 truncate max-w-[80px]">{queen.handle}</span>
-                                        {queen.spentTotal > 0 && <span className="text-[10px] text-yellow-400">${queen.spentTotal}</span>}
+                                        {queen.spentTotal > 0 && <span className="text-[10px] text-yellow-400">€{queen.spentTotal}</span>}
                                     </div>
                                 );
                             })()}

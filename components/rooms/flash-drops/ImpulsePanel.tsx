@@ -147,7 +147,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                             <span className="text-xs opacity-80">{btn.icon}</span>
                             <span>
                                 <span className="fd-neon-text-sm italic tracking-tight">{btn.label}:</span>{" "}
-                                <span className="fd-font-tech font-black fd-neon-text text-base italic">${btn.price}</span>
+                                <span className="fd-font-tech font-black fd-neon-text text-base italic">€{btn.price}</span>
                             </span>
                         </button>
                     ))}

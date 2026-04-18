@@ -676,7 +676,7 @@ export default function ConfessionsRoom() {
 
                                 <div className="flex items-center justify-between mb-6 px-1">
                                     <span className="text-sm font-medium text-rose-200/60">Total to pay</span>
-                                    <span className="text-2xl font-black text-white tracking-tight">${reqAmount}</span>
+                                    <span className="text-2xl font-black text-white tracking-tight">€{reqAmount}</span>
                                 </div>
 
                                 <Btn variant="rose" onClick={handleConfirmAndPay} disabled={isSending} className="w-full py-4 text-sm rounded-2xl shadow-lg">

@@ -41,7 +41,7 @@ const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
                         className="neon-border-pink glass-panel py-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-lg">{g.emoji}</span>
-                        <p className="text-foreground font-bold text-sm">${g.amount}</p>
+                        <p className="text-foreground font-bold text-sm">€{g.amount}</p>
                     </button>
                 ))}
             </div>

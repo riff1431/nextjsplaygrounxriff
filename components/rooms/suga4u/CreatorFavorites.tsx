@@ -18,6 +18,20 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
     const { balance, pay } = useWallet();
     const [activeTab, setActiveTab] = React.useState("CUTE");
     const [revealedIds, setRevealedIds] = React.useState<Set<string>>(new Set());
+
+    // Load persisted revealed items
+    React.useEffect(() => {
+        if (user?.id) {
+            try {
+                const stored = localStorage.getItem(`suga_unlocked_favs_${user.id}`);
+                if (stored) {
+                    setRevealedIds(new Set(JSON.parse(stored)));
+                }
+            } catch (e) {
+                console.error("Failed to parse stored favorites", e);
+            }
+        }
+    }, [user?.id]);
     const [confirmItem, setConfirmItem] = React.useState<{ item: CreatorFavorite; type: 'BUY' | 'REVEAL' } | null>(null);
     const [selectedItem, setSelectedItem] = React.useState<CreatorFavorite | null>(null);
 
@@ -35,7 +49,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
         const { item, type } = confirmItem;
         const amount = type === 'BUY' ? item.buy_price : (item.reveal_price || 0);
         const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
-        const description = type === 'BUY' ? `Bought ${item.name}` : `Revealed ${item.name}`;
+        const description = type === 'BUY' ? `Gifted "${item.name}" for her!` : `Revealed ${item.name}`;
 
         // Deduct from fan wallet and transfer to creator
         const result = await pay(hostId, amount, description, roomId, 'suga_favorite', item.id);
@@ -48,9 +62,16 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
         // Log activity event
         await sendGift(amount, fanName, description);
 
-        // If REVEAL, mark as revealed
+        // If REVEAL or BUY, mark as revealed locally for this user
+        setRevealedIds(prev => {
+            const next = new Set(prev).add(item.id);
+            if (user?.id) {
+                localStorage.setItem(`suga_unlocked_favs_${user.id}`, JSON.stringify(Array.from(next)));
+            }
+            return next;
+        });
+
         if (type === 'REVEAL') {
-            setRevealedIds(prev => new Set(prev).add(item.id));
             toast.success(`🔓 Revealed: ${item.name}`, { description: item.description || "Item details unlocked!" });
         } else {
             toast.success(`🎁 Bought "${item.name}" for her!`, { description: `€${amount} sent to creator` });
@@ -127,7 +148,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                                             <p className="font-bold text-sm tracking-tight truncate text-white/50 flex items-center gap-1">
                                                 <EyeOff className="w-3.5 h-3.5 inline" /> Hidden Favorite
                                             </p>
-                                            <p className="text-gold font-bold text-xs">${item.buy_price.toLocaleString()}</p>
+                                            <p className="text-gold font-bold text-xs">€{item.buy_price.toLocaleString()}</p>
                                         </>
                                     )}
                                 </div>

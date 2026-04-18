@@ -109,7 +109,7 @@ export default function PaymentConfirmModal({
                 >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Entry Fee</span>
-                        <span style={{ color: "#fff", fontSize: "18px", fontWeight: 700 }}>${entryFee}</span>
+                        <span style={{ color: "#fff", fontSize: "18px", fontWeight: 700 }}>€{entryFee}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Pricing Model</span>

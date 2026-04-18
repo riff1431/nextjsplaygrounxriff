@@ -36,7 +36,7 @@ export default function PayPalPaymentModal({ amount, roomId, onClose, onSuccess 
                     <div className="text-center mb-8">
                         <h3 className="text-xl font-bold text-white mb-2">PayPal Checkout</h3>
                         <p className="text-gray-400 text-sm">
-                            Complete your payment of <span className="text-white font-bold">${amount.toFixed(2)}</span>
+                            Complete your payment of <span className="text-white font-bold">€{amount.toFixed(2)}</span>
                         </p>
                     </div>
 

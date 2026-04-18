@@ -67,11 +67,12 @@ export function useRoomSession(options: UseRoomSessionOptions = {}) {
                 if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
                 setSession(data || null);
             } else if (roomType) {
-                // Fetch active sessions for a room type
+                // Fetch active sessions for a room type. Use browse endpoint for active to filter ghost streams.
                 const params = new URLSearchParams({ room_type: roomType });
                 if (status) params.set("status", status);
 
-                const res = await fetch(`/api/v1/rooms/sessions?${params}`);
+                const endpoint = status === "active" ? "/api/v1/rooms/sessions/browse" : "/api/v1/rooms/sessions";
+                const res = await fetch(`${endpoint}?${params}`);
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
                 setSessions(data.sessions || []);

@@ -60,7 +60,7 @@ export async function POST(
         return NextResponse.json({
             success: true,
             status: "joined",
-            message: price > 0 ? `Joined! €${price} charged.` : "Joined successfully!",
+            message: price > 0 ? `Joined the room and charged €${price}` : "Joined successfully!",
         });
     } catch (err: any) {
         console.error("Join bar-lounge error:", err);

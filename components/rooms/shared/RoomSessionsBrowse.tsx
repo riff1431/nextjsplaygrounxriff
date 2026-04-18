@@ -489,7 +489,7 @@ export default function RoomSessionsBrowse({
                                             <span>{session.participant_count} viewers</span>
                                         </div>
                                         <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 800, color: price > 0 ? "#fcd34d" : accentColor }}>
-                                            {price > 0 ? <><DollarSign style={{ width: 11, height: 11 }} /><span>${price}</span></> : <><Zap style={{ width: 11, height: 11 }} /><span>Free Access</span></>}
+                                            {price > 0 ? <><DollarSign style={{ width: 11, height: 11 }} /><span>€{price}</span></> : <><Zap style={{ width: 11, height: 11 }} /><span>Free Access</span></>}
                                         </div>
                                     </div>
 

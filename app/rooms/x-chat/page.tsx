@@ -227,7 +227,7 @@ const XChatRoom = () => {
                         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                         Live — {formatTime(elapsed)}
                     </div>
-                    <span className="text-gold font-semibold text-sm">${runningCharge}</span>
+                    <span className="text-gold font-semibold text-sm">€{runningCharge}</span>
                     <span className="text-foreground/50 text-xs">(${RATE_PER_MIN}/min)</span>
                     <button
                         onClick={endSession}

@@ -277,6 +277,7 @@ export async function POST(
         if (type === 'custom_truth') queueType = 'CUSTOM_TRUTH';
         else if (type === 'custom_dare') queueType = 'CUSTOM_DARE';
         else if (type === 'tip') queueType = 'TIP';
+        else if (type === 'reaction') queueType = 'TIP'; // Reactions (Kiss, etc) are tips
         else if (type === 'system_truth' || type === 'system_dare') queueType = 'TIER_PURCHASE';
 
         const { error: queueError } = await supabase

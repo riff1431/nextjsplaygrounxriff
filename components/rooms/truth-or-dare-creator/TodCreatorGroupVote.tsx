@@ -173,7 +173,7 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
                             <p className="text-xs text-white font-medium mb-1 line-clamp-1">"{campaign.label}"</p>
                             <div className="flex items-center justify-between text-[10px] text-white/60 mb-1">
                                 <span>{campaign.current}/{campaign.target} votes</span>
-                                <span className="font-bold text-green-400">${campaign.price}/vote</span>
+                                <span className="font-bold text-green-400">€{campaign.price}/vote</span>
                             </div>
                             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
@@ -217,7 +217,7 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
                                     type="number"
                                     min={1}
                                 />
-                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-white/30">$/vote</span>
+                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-white/30">€/vote</span>
                             </div>
                         </div>
                         <button

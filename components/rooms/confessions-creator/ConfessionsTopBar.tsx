@@ -94,7 +94,7 @@ const ConfessionsTopBar = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5 conf-text-gold" />
-                    <span className="conf-text-gold font-bold text-xl">${stats.earned.toLocaleString()}</span>
+                    <span className="conf-text-gold font-bold text-xl">€{stats.earned.toLocaleString()}</span>
                 </div>
             </div>
         </div>

@@ -34,14 +34,13 @@ interface ActiveConfession {
 }
 
 /* ─── Constants ─────────────────────────────────────────────── */
-const TIERS = ["All", "Soft", "Spicy", "Dirty", "Dark", "Forbidden"];
+const TIERS = ["All", "Spicy", "Dirty", "Bedroom", "Forbidden"];
 
 const TIER_COLORS: Record<string, { bg: string; text: string; border: string; glow: string }> = {
     All:       { bg: "bg-white/10", text: "text-white", border: "border-white/20", glow: "" },
-    Soft:      { bg: "bg-pink-500/15", text: "text-pink-300", border: "border-pink-500/30", glow: "shadow-[0_0_12px_rgba(236,72,153,0.3)]" },
     Spicy:     { bg: "bg-orange-500/15", text: "text-orange-300", border: "border-orange-500/30", glow: "shadow-[0_0_12px_rgba(249,115,22,0.3)]" },
     Dirty:     { bg: "bg-red-500/15", text: "text-red-300", border: "border-red-500/30", glow: "shadow-[0_0_12px_rgba(239,68,68,0.3)]" },
-    Dark:      { bg: "bg-purple-500/15", text: "text-purple-300", border: "border-purple-500/30", glow: "shadow-[0_0_12px_rgba(168,85,247,0.3)]" },
+    Bedroom:   { bg: "bg-purple-500/15", text: "text-purple-300", border: "border-purple-500/30", glow: "shadow-[0_0_12px_rgba(168,85,247,0.3)]" },
     Forbidden: { bg: "bg-rose-900/30", text: "text-rose-300", border: "border-rose-500/40", glow: "shadow-[0_0_16px_rgba(244,63,94,0.4)]" },
 };
 

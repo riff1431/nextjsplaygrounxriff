@@ -104,12 +104,12 @@ export default function CreatorPayouts() {
                 <div className="pgx-summary glass neon-pink">
                     <div className="flex flex-col">
                         <span className="text-sm text-[var(--muted)]">Total Creators Payout</span>
-                        <span className="text-3xl font-bold text-white mt-1">${Number(totals.total_creators_earned).toLocaleString()}</span>
+                        <span className="text-3xl font-bold text-white mt-1">€{Number(totals.total_creators_earned).toLocaleString()}</span>
                     </div>
                     <div className="h-8 w-[1px] bg-[var(--line)]"></div>
                     <div className="flex flex-col">
                         <span className="text-sm text-[var(--muted)]">Platform Revenue</span>
-                        <span className="text-xl font-bold text-[var(--cyan)] mt-1">${Number(totals.total_platform_earned).toLocaleString()}</span>
+                        <span className="text-xl font-bold text-[var(--cyan)] mt-1">€{Number(totals.total_platform_earned).toLocaleString()}</span>
                     </div>
                     <div className="flex gap-2">
                         <button className="p-2 rounded-full bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white">
@@ -180,9 +180,9 @@ export default function CreatorPayouts() {
                                         <span className="text-[var(--muted2)] text-xs">@{row.username}</span>
                                     </div>
                                 </div>
-                                <div className="td justify-end text-[var(--muted)]">${row.gross_collected.toFixed(2)}</div>
-                                <div className="td justify-end font-bold text-[var(--pink)]">${row.creator_earned.toFixed(2)}</div>
-                                <div className="td justify-end font-medium text-[var(--cyan)]">${row.platform_earned.toFixed(2)}</div>
+                                <div className="td justify-end text-[var(--muted)]">€{row.gross_collected.toFixed(2)}</div>
+                                <div className="td justify-end font-bold text-[var(--pink)]">€{row.creator_earned.toFixed(2)}</div>
+                                <div className="td justify-end font-medium text-[var(--cyan)]">€{row.platform_earned.toFixed(2)}</div>
                                 <div className="td justify-center text-[var(--muted)]">{row.events_count}</div>
                                 <div className="td justify-end text-xs text-[var(--muted2)]">{new Date(row.last_activity).toLocaleDateString()}</div>
                                 <div className="td justify-center">

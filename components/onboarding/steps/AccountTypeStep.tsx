@@ -256,7 +256,7 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
                             {type.price > 0 && (
                                 <div className="mt-4 pt-4 border-t border-white/10">
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-2xl font-bold text-white">${type.price}</span>
+                                        <span className="text-2xl font-bold text-white">€{type.price}</span>
                                         <span className="text-xs text-gray-400">
                                             {type.billing_type === "recurring" ? "/month" : " one-time"}
                                         </span>

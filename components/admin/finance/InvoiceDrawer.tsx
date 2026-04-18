@@ -142,15 +142,15 @@ export default function InvoiceDrawer({
                         {/* ... existing summary ... */}
                         <div className="flex w-full justify-between">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Gross</span>
-                            <span className="text-white font-mono">${invoice.summary.gross_collected.toFixed(2)}</span>
+                            <span className="text-white font-mono">€{invoice.summary.gross_collected.toFixed(2)}</span>
                         </div>
                         <div className="flex w-full justify-between">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Net Payout</span>
-                            <span className="text-[var(--cyan)] font-mono text-lg">${invoice.summary.creator_earned.toFixed(2)}</span>
+                            <span className="text-[var(--cyan)] font-mono text-lg">€{invoice.summary.creator_earned.toFixed(2)}</span>
                         </div>
                         <div className="flex w-full justify-between border-t border-[var(--line)] pt-2 mt-2">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Platform</span>
-                            <span className="text-[var(--pink)] font-mono">${invoice.summary.platform_earned.toFixed(2)}</span>
+                            <span className="text-[var(--pink)] font-mono">€{invoice.summary.platform_earned.toFixed(2)}</span>
                         </div>
                     </div>
 

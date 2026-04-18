@@ -170,7 +170,7 @@ export default function LiveSessionsPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-lg font-bold text-green-400">${room.meta?.price || 10}</div>
+                                        <div className="text-lg font-bold text-green-400">€{room.meta?.price || 10}</div>
                                         <div className="text-[10px] text-gray-500">Entry</div>
                                     </div>
                                 </div>

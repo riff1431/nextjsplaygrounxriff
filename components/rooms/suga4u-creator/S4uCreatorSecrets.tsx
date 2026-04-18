@@ -76,7 +76,7 @@ const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 hover:text-red-400 transition-colors">
-                                    <span className="text-sm font-bold s4u-creator-text-gold">${s.unlock_price}</span>
+                                    <span className="text-sm font-bold s4u-creator-text-gold">€{s.unlock_price}</span>
                                     <button 
                                         onClick={() => deleteSecret(s.id)}
                                         className="text-white/40 hover:text-red-400 transition-colors p-1"

@@ -171,7 +171,7 @@ const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
                                 <span className={isCompleted ? "text-green-400 font-bold" : "text-white/80"}>
                                     {state.current} / {state.target} votes
                                 </span>
-                                <span className="font-bold text-gold">${state.price}/vote</span>
+                                <span className="font-bold text-gold">€{state.price}/vote</span>
                             </div>
                             
                             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden relative">
@@ -228,7 +228,7 @@ const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
                             <div className="w-1/2 space-y-0.5 relative">
                                 <label className="text-[10px] uppercase text-white/50 font-bold ml-1 tracking-tight">Price Per Vote</label>
                                 <div className="relative">
-                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gold font-bold text-xs">$</span>
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gold font-bold text-xs">€</span>
                                     <input
                                         className="w-full bg-black/50 rounded-lg pl-6 pr-2 py-1.5 text-xs text-gold font-bold outline-none border border-white/10 focus:border-gold/50 transition"
                                         value={form.price}

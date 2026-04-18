@@ -48,16 +48,18 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        message: `Voice Note Reply: ${voicePrompt}` 
+                        message: `Voice Note Reply: ${voicePrompt}`,
+                        amount: pending.price 
                     }),
                 });
                 const data = await res.json();
                 if (data.success) {
                     toast.success("Voice note request sent!");
-                    setPending(null);
                     setVoicePrompt("");
+                    refresh?.();
                 } else {
                     toast.error(data.error || "Failed to send request");
+                    throw new Error(data.error);
                 }
                 return;
             }
@@ -74,7 +76,6 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             if (data.success) {
                 toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
                 refresh?.();
-                setPending(null); // Clear pending state so modal closes
                 // Show floating animation
                 if (pending.emoji) {
                     setAnimatingEmoji(pending.emoji);
@@ -82,9 +83,11 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                 }
             } else {
                 toast.error(data.error || "Failed to send");
+                throw new Error(data.error);
             }
-        } catch {
-            toast.error("Network error");
+        } catch (err: any) {
+            // Let the modal know it failed so it stays open or handles state
+            throw err;
         }
     };
 
@@ -100,15 +103,15 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             {/* Paid Reactions */}
             <div className="glass-card p-4">
                 <h3 className="font-display text-gold text-sm mb-3">Paid Reactions</h3>
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-3 mb-2">
                     {reactions.map((r) => (
                         <button
                             key={r.label}
                             onClick={() => setPending({ label: r.label, price: r.price, reactionType: `reaction_${r.label.toLowerCase()}`, emoji: r.emoji })}
-                            className="glass-card-inner px-3 py-2 text-sm text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center gap-2 active:scale-95"
+                            className="glass-card-inner px-4 py-3 font-semibold text-base text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center justify-center gap-2 active:scale-95 border border-white/5"
                         >
-                            <span>{r.emoji}</span>
-                            <span>{r.label} ${r.price}</span>
+                            <span className="text-xl">{r.emoji}</span>
+                            <span>{r.label} <span className="text-gold ml-1">€{r.price}</span></span>
                         </button>
                     ))}
                 </div>
@@ -118,15 +121,15 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             {/* Paid Stickers */}
             <div className="glass-card p-4">
                 <h3 className="font-display text-gold text-sm mb-3">Paid Stickers</h3>
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-3 mb-2">
                     {stickers.map((s) => (
                         <button
                             key={s.label}
                             onClick={() => setPending({ label: s.label, price: s.price, reactionType: `sticker_${s.label.toLowerCase()}`, emoji: s.emoji })}
-                            className="glass-card-inner px-3 py-2 text-sm text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center gap-2 active:scale-95"
+                            className="glass-card-inner px-4 py-3 font-semibold text-base text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center justify-center gap-2 active:scale-95 border border-white/5"
                         >
-                            <span>{s.emoji}</span>
-                            <span>{s.label} ${s.price}</span>
+                            <span className="text-xl">{s.emoji}</span>
+                            <span>{s.label} <span className="text-gold ml-1">€{s.price}</span></span>
                         </button>
                     ))}
                 </div>
@@ -134,16 +137,16 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             </div>
 
             {/* Visibility Boosts */}
-            <div className="glass-card p-2">
+            <div className="glass-card p-4">
                 <h3 className="font-display text-gold text-sm mb-3">Visibility Boosts</h3>
-                <div className="space-y-2 mb-2">
+                <div className="space-y-3 mb-2">
                     {boosts.map((b) => (
                         <button
                             key={b.type}
                             onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })}
-                            className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98]"
+                            className="glass-card-inner w-full flex items-center justify-between px-4 py-3 font-semibold text-base text-foreground/90 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98] border border-white/5"
                         >
-                            <span>{b.label}</span><span className="text-gold">${b.price}</span>
+                            <span>{b.label}</span><span className="text-gold font-bold">€{b.price}</span>
                         </button>
                     ))}
                 </div>
@@ -160,7 +163,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                             onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })}
                             className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98]"
                         >
-                            <span>{d.label}</span><span className="text-gold">${d.price}</span>
+                            <span>{d.label}</span><span className="text-gold">€{d.price}</span>
                         </button>
                     ))}
                 </div>

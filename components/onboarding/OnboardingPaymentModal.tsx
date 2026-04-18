@@ -378,7 +378,7 @@ export default function OnboardingPaymentModal({
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-2xl font-bold text-white">${amount.toFixed(2)}</p>
+                                <p className="text-2xl font-bold text-white">€{amount.toFixed(2)}</p>
                                 <p className="text-gray-500 text-xs">one-time</p>
                             </div>
                         </div>

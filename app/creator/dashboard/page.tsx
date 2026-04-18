@@ -195,7 +195,7 @@ export default function CreatorDashboard() {
                         </div>
                         <div>
                             <div className="text-gray-400 text-xs uppercase tracking-wider">Tips Earned</div>
-                            <div className="text-2xl font-bold text-gray-100">${stats.earnings.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gray-100">€{stats.earnings.toLocaleString()}</div>
                         </div>
                     </div>
                     <div className="p-5 rounded-2xl bg-gray-900/50 border border-white/10 flex items-center gap-4">

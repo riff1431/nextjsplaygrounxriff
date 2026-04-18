@@ -161,7 +161,7 @@ export default function GroupVoteManager({ roomId }: Props) {
                                 onChange={(e) => setTruthForm({ ...truthForm, target: Number(e.target.value) })}
                             />
                             <div className="relative w-1/2">
-                                <span className="absolute left-3 top-2 text-gray-500 text-sm">$</span>
+                                <span className="absolute left-3 top-2 text-gray-500 text-sm">€</span>
                                 <input
                                     type="number"
                                     placeholder="Price"
@@ -229,7 +229,7 @@ export default function GroupVoteManager({ roomId }: Props) {
                                 onChange={(e) => setDareForm({ ...dareForm, target: Number(e.target.value) })}
                             />
                             <div className="relative w-1/2">
-                                <span className="absolute left-3 top-2 text-gray-500 text-sm">$</span>
+                                <span className="absolute left-3 top-2 text-gray-500 text-sm">€</span>
                                 <input
                                     type="number"
                                     placeholder="Price"

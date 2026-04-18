@@ -359,7 +359,7 @@ export default function FlashDropsCreatorPreview() {
                                             </div>
 
                                             <div className="shrink-0 text-right">
-                                                <div className="text-sm text-yellow-200 font-semibold">${d.price.toLocaleString()}</div>
+                                                <div className="text-sm text-yellow-200 font-semibold">€{d.price.toLocaleString()}</div>
                                                 <div className="mt-1 text-[11px] text-gray-300">Unlocks: {d.unlocksPreview.toLocaleString()}</div>
                                                 <div className="mt-1 text-[11px] text-gray-300">Gross: ${d.grossPreview.toLocaleString()}</div>
                                             </div>

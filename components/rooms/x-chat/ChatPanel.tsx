@@ -8,6 +8,8 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import EmojiPicker from 'emoji-picker-react';
 
 type Lane = "Free" | "Paid" | "Priority";
 
@@ -34,8 +36,6 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const [pendingSend, setPendingSend] = useState(false);
     const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    const EMOJIS = ["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"];
 
     useEffect(() => {
         if (user?.user_metadata?.full_name) {
@@ -89,7 +89,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
 
             if (!room) {
                 toast.error("Room not found");
-                return;
+                throw new Error("Room not found");
             }
 
             // Transfer funds
@@ -105,11 +105,11 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
 
             if (rpcError) {
                 toast.error(rpcError.message);
-                return;
+                throw new Error(rpcError.message);
             }
             if (!result?.success) {
                 toast.error(result?.error || "Payment failed");
-                return;
+                throw new Error(result?.error || "Payment failed");
             }
 
             // Send the message via the hook
@@ -117,9 +117,10 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
             setMessage("");
             refresh?.();
             toast.success(`${lane} message sent! (€${price})`);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to send paid message:", err);
-            toast.error("Failed to send message");
+            toast.error("Failed to send message: " + (err.message || "Unknown error"));
+            throw err;
         }
     };
 
@@ -142,7 +143,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     return (
-        <div className="glass-card flex flex-col h-full min-h-[400px]">
+        <div className="glass-card flex flex-col h-full min-h-[400px] pgx-chat-wrapper">
             {/* Display Filters */}
             <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3">
                 {(["All", "Paid", "Priority"] as const).map(tab => (
@@ -163,7 +164,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll space-y-3 px-4 mb-2">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll space-y-3 px-4 mb-2 pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {filteredMessages.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-8 italic">
                         No messages yet. Start the conversation!
@@ -172,10 +173,10 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                 {filteredMessages.map((msg) => (
                     <div key={msg.id} className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span>
+                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span><UserBadgeDisplay userId={msg.user_id} />
                             {getLaneBadge(msg)}
                             {msg.paid_amount > 0 && (
-                                <span className="text-[10px] text-gold font-semibold">${msg.paid_amount}</span>
+                                <span className="text-[10px] text-gold font-semibold">€{msg.paid_amount}</span>
                             )}
                             {getStatusBadge(msg.status)}
                         </div>
@@ -210,7 +211,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                             >
                                 {config.icon}
                                 {lane}
-                                {config.price > 0 && <span className="text-gold text-[10px]">${config.price}</span>}
+                                {config.price > 0 && <span className="text-gold text-[10px]">€{config.price}</span>}
                             </button>
                         );
                     })}
@@ -218,16 +219,15 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
 
                 {/* Quick Emoji Picker */}
                 {showEmojis && (
-                    <div className="absolute bottom-[4.5rem] left-4 glass-card p-2 grid grid-cols-7 gap-2 z-50">
-                        {EMOJIS.map(emoji => (
-                            <button
-                                key={emoji}
-                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
-                                className="hover:scale-125 transition-transform text-lg"
-                            >
-                                {emoji}
-                            </button>
-                        ))}
+                    <div className="absolute bottom-[4.5rem] left-4 z-50 shadow-2xl rounded-2xl overflow-hidden border border-border">
+                        <EmojiPicker
+                            theme={"dark" as any}
+                            onEmojiClick={(emojiData) => {
+                                setMessage(prev => prev + emojiData.emoji);
+                            }}
+                            width={300}
+                            height={400}
+                        />
                     </div>
                 )}
 
@@ -279,7 +279,6 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                 walletBalance={balance}
                 onConfirm={async () => {
                     await handlePaidSend();
-                    setPendingSend(false);
                 }}
             />
         </div>

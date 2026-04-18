@@ -22,7 +22,7 @@ const LiveStream = () => {
             <span className="section-title text-[11px]">Suga Goal</span>
           </div>
           <span className="text-sm font-bold">
-            <span className="text-pink">${goalCurrent.toLocaleString()}</span>
+            <span className="text-pink">€{goalCurrent.toLocaleString()}</span>
             <span className="text-muted-foreground"> / ${goalTotal.toLocaleString()}</span>
           </span>
         </div>

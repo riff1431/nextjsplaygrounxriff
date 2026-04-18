@@ -51,7 +51,24 @@ export async function POST(
 
     const price = Number(campaign.price);
 
-    // 4. Host Info for Payment
+    // 4. Verify multiple votes constraint
+    if (campaign.startedAt) {
+        const campaignStartTime = new Date(campaign.startedAt).toISOString();
+        const { data: existingVote } = await supabase
+            .from('truth_dare_requests')
+            .select('id')
+            .eq('fan_id', user.id)
+            .eq('room_id', roomId)
+            .eq('type', `group_vote_${type}`)
+            .gte('created_at', campaignStartTime)
+            .single();
+
+        if (existingVote) {
+            return NextResponse.json({ error: "You have already voted in this campaign" }, { status: 400 });
+        }
+    }
+
+    // 5. Host Info for Payment
     const { data: room } = await supabase
         .from('rooms')
         .select('host_id')

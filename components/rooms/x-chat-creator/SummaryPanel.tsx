@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 interface SummaryPanelProps {
     roomId?: string;
@@ -62,10 +63,18 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
         // Subscribe to changes for live updates
         const channel = supabase
             .channel(`summary-${roomId}`)
-            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, () => {
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const msg = payload.new;
+                if (msg.paid_amount > 0) {
+                    toast.success(`🎉 New Tip: €${msg.paid_amount} from ${msg.sender_name}!`);
+                }
                 fetchStats();
             })
-            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, () => {
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const numAmount = Number(payload.new.amount) || 0;
+                if (numAmount > 0) {
+                    toast.success(`🎁 Action received! (€${numAmount})`);
+                }
                 fetchStats();
             })
             .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, () => {

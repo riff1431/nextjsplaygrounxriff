@@ -114,7 +114,7 @@ export default function FanSessionView({
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "10px", padding: "6px 14px" }}>
                         <Wallet size={14} color="hsl(150,80%,60%)" />
-                        <span style={{ color: "hsl(150,80%,60%)", fontSize: "14px", fontWeight: 600 }}>${(balance || 0).toFixed(2)}</span>
+                        <span style={{ color: "hsl(150,80%,60%)", fontSize: "14px", fontWeight: 600 }}>€{(balance || 0).toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -196,7 +196,7 @@ export default function FanSessionView({
                                     }}
                                 >
                                     <span style={{ fontSize: "16px" }}>{rx.emoji}</span>
-                                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>${rx.price}</span>
+                                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>€{rx.price}</span>
                                 </button>
                             ))}
                             

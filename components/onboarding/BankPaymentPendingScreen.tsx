@@ -215,7 +215,7 @@ export default function BankPaymentPendingScreen() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Amount</span>
-                                    <span className="text-white font-medium">${submission.amount}</span>
+                                    <span className="text-white font-medium">€{submission.amount}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Submitted</span>

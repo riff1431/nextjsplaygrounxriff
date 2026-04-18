@@ -1,8 +1,9 @@
 "use strict";
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import {
     Home,
     Star,
@@ -23,6 +24,7 @@ import {
     DoorOpen,
     Banknote,
     DollarSign,
+    FileText,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -52,6 +54,7 @@ import AccountTypeManager from "../../../components/admin/settings/AccountTypeMa
 import BarLoungeManager from "../../../components/admin/settings/BarLoungeManager";
 import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymentReviewPanel";
 import AdminCreatorEarnings from "../../../components/admin/finance/AdminCreatorEarnings";
+import PolicyEditor from "../../../components/admin/settings/PolicyEditor";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -64,6 +67,7 @@ type AdminModule =
     | "prompts"
     | "pricing"
     | "theme"
+    | "policy"
     | "payments"
     | "approvals"
     | "users"
@@ -91,6 +95,21 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const [bizModule, setBizModule] = useState<AdminModule>("home");
     const [showMobileNav, setShowMobileNav] = useState(false);
+    const [pendingSuggestions, setPendingSuggestions] = useState(0);
+
+    useEffect(() => {
+        const fetchPendingSuggestions = async () => {
+            const supabase = createClient();
+            const { count } = await supabase
+                .from("platform_suggestions")
+                .select("*", { count: "exact", head: true })
+                .eq("status", "pending");
+            if (count) {
+                setPendingSuggestions(count);
+            }
+        };
+        fetchPendingSuggestions();
+    }, []);
 
     // These modules navigate to separate pages instead of switching state
     const ROUTE_MAP: Record<string, string> = {
@@ -106,6 +125,7 @@ export default function AdminDashboardPage() {
         { id: "prompts", label: "System Truth & Dare", icon: <MessageCircle className="w-4 h-4" />, tone: "pink" },
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
+        { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
         { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
@@ -120,7 +140,7 @@ export default function AdminDashboardPage() {
         { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "creator-earnings", label: "Creator Earnings", icon: <DollarSign className="w-4 h-4" />, tone: "green" },
         { id: "revenue-splits", label: "Revenue Splits", icon: <DollarSign className="w-4 h-4" />, tone: "amber" },
-        { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
+        { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: pendingSuggestions },
         // Placeholders below
         { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
     ];
@@ -128,6 +148,11 @@ export default function AdminDashboardPage() {
     function HeaderRight() {
         return (
             <div className="flex items-center gap-2">
+                {pendingSuggestions > 0 && (
+                    <AdminPill tone="red" className="animate-pulse">
+                        {pendingSuggestions} Pending Suggestion{pendingSuggestions !== 1 ? 's' : ''}
+                    </AdminPill>
+                )}
                 <AdminPill tone="cyan">Admin v2.0</AdminPill>
                 <NeonButton variant="ghost" onClick={() => router.push('/home')} title="Exit Admin Console">
                     Exit
@@ -142,18 +167,26 @@ export default function AdminDashboardPage() {
         desc,
         icon,
         tone,
+        badge,
     }: {
         id: AdminModule;
         label: string;
         desc: string;
         icon: React.ReactNode;
         tone: "cyan" | "amber" | "red" | "green" | "pink";
+        badge?: number;
     }) {
         return (
             <button
                 onClick={() => setBizModule(id)}
-                className="rounded-2xl border border-white/10 bg-black/30 p-4 text-left hover:bg-white/5 transition"
+                className="rounded-2xl border border-white/10 bg-black/30 p-4 text-left hover:bg-white/5 transition relative"
             >
+                {badge && badge > 0 ? (
+                    <span className="absolute top-3 right-3 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                ) : null}
                 <div className="inline-flex items-center gap-2 text-cyan-200 text-sm">
                     {icon} {label}
                 </div>
@@ -209,11 +242,16 @@ export default function AdminDashboardPage() {
                                         bizModule === n.id ? "border-cyan-300/55 text-cyan-200" : "border-white/10 text-gray-200 hover:bg-white/5"
                                     )}
                                 >
-                                    <span className="inline-flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-2 flex-1">
                                         {n.icon}
                                         {n.label}
                                         {ROUTE_MAP[n.id] && <span className="text-[9px] text-gray-500 ml-1">↗</span>}
                                     </span>
+                                    {(n as any).badge > 0 && (
+                                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">
+                                            {(n as any).badge}
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -249,6 +287,7 @@ export default function AdminDashboardPage() {
                                 </button>
                                 <Tile id="prompts" label="System Truth & Dare" icon={<MessageCircle className="w-4 h-4" />} tone="pink" desc="Manage prompts" />
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
+                                <Tile id="policy" label="Legal & Policies" icon={<FileText className="w-4 h-4" />} tone="cyan" desc="T&Cs and Privacy" />
                                 <Tile id="users" label="Users" icon={<Users className="w-4 h-4" />} tone="cyan" desc="Manage access" />
                                 <Tile id="kyc" label="KYC Review" icon={<Lock className="w-4 h-4" />} tone="red" desc="Verify creators" />
                                 <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
@@ -270,7 +309,7 @@ export default function AdminDashboardPage() {
                                         <span className="text-gray-500">→</span>
                                     </div>
                                 </button>
-                                <Tile id="suggestions" label="Suggestions" icon={<MessageCircle className="w-4 h-4" />} tone="cyan" desc="User feedback" />
+                                <Tile id="suggestions" label="Suggestions" icon={<MessageCircle className="w-4 h-4" />} tone="cyan" desc="User feedback" badge={pendingSuggestions} />
                             </div>
                         </NeonCard>
                     )}
@@ -284,6 +323,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "prompts" && <SystemPromptManager />}
                     {bizModule === "pricing" && <PricingControls />}
                     {bizModule === "theme" && <AdminThemeEditor />}
+                    {bizModule === "policy" && <PolicyEditor />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

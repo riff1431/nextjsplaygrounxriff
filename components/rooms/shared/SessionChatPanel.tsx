@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSessionChat } from "@/hooks/useSessionChat";
 import { Send, MessageCircle } from "lucide-react";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface SessionChatPanelProps {
     sessionId: string | null;
@@ -47,6 +48,7 @@ export default function SessionChatPanel({
                 border: "1px solid rgba(255,255,255,0.08)",
                 overflow: "hidden",
             }}
+            className="pgx-chat-wrapper"
         >
             {/* Header */}
             <div
@@ -67,9 +69,12 @@ export default function SessionChatPanel({
 
             {/* Messages */}
             <div
+                className="pgx-chat-messages hide-scrollbar"
                 style={{
                     flex: 1,
                     overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
                     padding: "10px 14px",
                     maxHeight,
                     display: "flex",
@@ -132,6 +137,7 @@ export default function SessionChatPanel({
                                     >
                                         {msg.username}
                                     </span>
+                                    <UserBadgeDisplay userId={msg.user_id} />
                                     <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px", wordBreak: "break-word" }}>
                                         {msg.message}
                                     </span>

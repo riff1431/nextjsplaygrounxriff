@@ -271,23 +271,25 @@ export default function CreatorConfessionsStudio() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Find room - Prefer default-room if available (to match fan view)
+            // Find room - preferring the confessions room
             let { data: room } = await supabase
                 .from('rooms')
                 .select('id')
                 .eq('host_id', user.id)
-                .eq('slug', 'default-room')
+                .eq('type', 'confessions')
+                .order('created_at', { ascending: true })
+                .limit(1)
                 .maybeSingle();
 
             if (!room) {
-                // Fallback to any room
-                const { data: anyRoom } = await supabase
+                // Try fallback to slug default-room just in case of old data
+                const { data: defaultRoom } = await supabase
                     .from('rooms')
                     .select('id')
                     .eq('host_id', user.id)
-                    .limit(1)
-                    .single();
-                room = anyRoom;
+                    .eq('slug', 'default-room')
+                    .maybeSingle();
+                room = defaultRoom;
             }
 
             let targetRoomId = room?.id;
@@ -295,7 +297,13 @@ export default function CreatorConfessionsStudio() {
                 // Auto-create room for demo
                 const { data: newRoom } = await supabase
                     .from('rooms')
-                    .insert([{ host_id: user.id, title: "Confessions Room", status: "live" }])
+                    .insert([{ 
+                        host_id: user.id, 
+                        title: "Confessions Room", 
+                        type: "confessions",
+                        slug: `confessions-${user.id.substring(0, 8)}`,
+                        status: "offline" 
+                    }])
                     .select()
                     .single();
                 targetRoomId = newRoom?.id;
@@ -828,7 +836,7 @@ export default function CreatorConfessionsStudio() {
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="font-bold text-rose-200">{req.topic}</span>
                                                         <span className="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{req.type}</span>
-                                                        <span className="text-xs font-bold text-green-400">${req.amount}</span>
+                                                        <span className="text-xs font-bold text-green-400">€{req.amount}</span>
                                                     </div>
                                                     <div className="text-xs text-gray-400">
                                                         From Fan (ID: ...{req.fan_id.slice(-4)}) • {new Date(req.created_at).toLocaleDateString()}

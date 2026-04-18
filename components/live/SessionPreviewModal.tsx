@@ -231,7 +231,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                                 </div>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Unlock Session</h3>
-                            <p className="text-gray-400 text-sm">Select payment method to pay <span className="text-white font-bold">${price}</span></p>
+                            <p className="text-gray-400 text-sm">Select payment method to pay <span className="text-white font-bold">€{price}</span></p>
                         </div>
 
                         <div className="space-y-3">
@@ -410,7 +410,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                     {/* Pricing */}
                     <div className="mb-5 p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
                         <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
-                        <div className="text-2xl font-bold text-white">${price}</div>
+                        <div className="text-2xl font-bold text-white">€{price}</div>
                         <div className={`mt-1 text-xs font-medium ${walletBalance !== null && walletBalance < price ? 'text-red-300' : 'text-green-300'}`}>
                             Your Balance: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Checking...'}
                         </div>

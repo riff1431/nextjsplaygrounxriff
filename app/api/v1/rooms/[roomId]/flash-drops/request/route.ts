@@ -115,7 +115,7 @@ export async function PATCH(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { requestId, status } = body;
+    const { requestId, status, mediaUrl } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -123,9 +123,14 @@ export async function PATCH(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room || room.host_id !== user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
+    const updatePayload: any = { status };
+    if (mediaUrl !== undefined) {
+        updatePayload.media_url = mediaUrl;
+    }
+
     const { data: updated, error } = await supabase
         .from("flash_drop_requests")
-        .update({ status })
+        .update(updatePayload)
         .eq("id", requestId).eq("room_id", roomId)
         .select().single();
 

@@ -27,7 +27,7 @@ const LiveChat = () => {
             }}
         >
             <div
-                className="flex flex-col h-full bg-card/40  rounded-xl border border-border neon-border overflow-hidden"
+                className="flex flex-col h-full bg-card/40  rounded-xl border border-border neon-border overflow-hidden pgx-chat-wrapper"
                 style={{
                     transform: "rotateY(12deg) scale(0.97)",
                     transformOrigin: "right center",
@@ -41,7 +41,7 @@ const LiveChat = () => {
                     </h2>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0 pgx-chat-messages hide-scrollbar">
                     {chatMessages.map((chat, i) => (
                         <div key={i} className="flex items-start gap-1.5">
                             <span className="text-sm flex-shrink-0">{chat.avatar}</span>

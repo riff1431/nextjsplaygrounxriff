@@ -123,7 +123,7 @@ const MyRequests = ({ roomId }: MyRequestsProps) => {
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold border border-border">
-                    <span className="gold-text">${req.amount}</span>
+                    <span className="gold-text">€{req.amount}</span>
                   </span>
                 </div>
               );

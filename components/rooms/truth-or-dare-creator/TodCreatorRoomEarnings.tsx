@@ -23,7 +23,7 @@ const TodCreatorRoomEarnings = ({ earnings }: { earnings?: SessionEarnings }) =>
             <h3 className="font-bold text-white text-xs mb-1.5">Room Earnings</h3>
             <div className="text-center py-1.5 rounded-lg tod-creator-neon-border-green tod-creator-glow-green mb-1.5">
                 <p className="text-[9px] tod-creator-text-neon-green font-semibold tracking-wider uppercase leading-none">Total Earned</p>
-                <p className="text-2xl font-black tod-creator-text-neon-green leading-tight">$ {data.total.toFixed(2)}</p>
+                <p className="text-2xl font-black tod-creator-text-neon-green leading-tight">€ {data.total.toFixed(2)}</p>
             </div>
             <div className="space-y-0.5">
                 {items.map((item) => (

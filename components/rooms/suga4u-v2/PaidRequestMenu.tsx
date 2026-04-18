@@ -21,7 +21,7 @@ const PaidRequestMenu = () => (
             {quickRequests.map((r) => (
                 <button key={r.name} className="neon-border-pink glass-panel py-2 px-3 text-center hover:bg-muted/50 transition-colors">
                     <span className="text-xs">{r.emoji} {r.name}</span>
-                    <p className="text-pink font-bold text-sm">${r.price}</p>
+                    <p className="text-pink font-bold text-sm">€{r.price}</p>
                 </button>
             ))}
         </div>

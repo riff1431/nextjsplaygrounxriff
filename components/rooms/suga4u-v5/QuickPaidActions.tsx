@@ -17,13 +17,13 @@ const QuickPaidActions = () => (
             {actions.filter(a => !a.full).map((a, i) => (
                 <button key={i} className="neon-border-pink glass-panel py-2 px-2 text-center hover:bg-muted/50 transition-colors">
                     <span className="text-[11px]">{a.emoji} {a.name}</span>
-                    <p className="text-pink font-bold text-sm">${a.price}</p>
+                    <p className="text-pink font-bold text-sm">€{a.price}</p>
                 </button>
             ))}
         </div>
         {actions.filter(a => a.full).map((a, i) => (
             <button key={i} className="w-full mt-2 btn-pink py-2 text-sm glow-pink">
-                {a.emoji} {a.name} <span className="font-bold">${a.price}</span>
+                {a.emoji} {a.name} <span className="font-bold">€{a.price}</span>
             </button>
         ))}
     </div>

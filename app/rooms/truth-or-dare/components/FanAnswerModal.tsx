@@ -26,14 +26,6 @@ export default function FanAnswerModal({ notification, onClose }: FanAnswerModal
             console.log("FanAnswerModal received notification:", notification);
             setVisible(true);
             playSuccessSound();
-
-            // Auto-close after 8 seconds
-            const timer = setTimeout(() => {
-                setVisible(false);
-                setTimeout(onClose, 400);
-            }, 8000);
-
-            return () => clearTimeout(timer);
         }
     }, [notification, onClose]);
 

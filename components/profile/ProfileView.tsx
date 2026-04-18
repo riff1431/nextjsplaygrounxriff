@@ -171,7 +171,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     return (
         <div className="min-h-screen bg-black text-white pb-20 font-sans">
             {/* 1. Cover Area with Hex Grid */}
-            <div className="relative h-80 md:h-[450px] w-full overflow-hidden">
+            <div className="relative h-96 md:h-[550px] w-full overflow-hidden border-b-2 border-pink-500/20">
                 {profile.cover_url ? (
                     <div className="absolute inset-0 z-0">
                         <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />
@@ -205,8 +205,8 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
             <div className="container mx-auto px-4 max-w-4xl relative z-10">
                 <div className="flex flex-col md:flex-row items-start gap-6 -mt-16 mb-6">
                     {/* 2. Avatar */}
-                    <div className="relative group">
-                        <Avatar className="w-32 h-32 md:w-36 md:h-36 border-4 border-black shadow-2xl ring-2 ring-purple-500/30">
+                    <div className="relative group -mt-10 md:-mt-12">
+                        <Avatar className="w-40 h-40 md:w-48 md:h-48 border-[6px] border-black shadow-2xl ring-4 ring-pink-500/20">
                             <AvatarImage src={profile.avatar_url || ""} alt={profile.username || "User"} className="object-cover" />
                             <AvatarFallback className="bg-zinc-900 text-3xl font-bold text-zinc-500">
                                 {(profile.username?.[0] || profile.full_name?.[0] || "?").toUpperCase()}

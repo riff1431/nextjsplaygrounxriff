@@ -58,7 +58,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
                     <span>My Offer Amount</span>
                 </div>
                 <div className="relative group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 gold-text font-bold text-lg group-focus-within:scale-110 transition-transform">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 gold-text font-bold text-lg group-focus-within:scale-110 transition-transform">€</span>
                     <input
                         type="number"
                         value={reqAmount || ''}

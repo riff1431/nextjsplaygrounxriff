@@ -44,7 +44,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 (payload) => {
                     const newTheme = payload.payload as ThemeSettings;
                     if (newTheme) {
-                        setTheme(current => ({ ...current, ...newTheme }));
+                        setTheme(current => ({ 
+                            ...current, 
+                            ...newTheme,
+                            logoUrl: newTheme.logoUrl || (newTheme as any).logo_url || current.logoUrl,
+                            faviconUrl: newTheme.faviconUrl || (newTheme as any).favicon_url || current.faviconUrl,
+                            logoSize: newTheme.logoSize || (newTheme as any).logo_size || current.logoSize,
+                            siteName: newTheme.siteName || (newTheme as any).site_name || current.siteName,
+                            primaryColor: newTheme.primaryColor || (newTheme as any).primary_color || current.primaryColor
+                        }));
                     }
                 }
             )

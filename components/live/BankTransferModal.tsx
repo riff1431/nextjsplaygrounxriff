@@ -85,7 +85,7 @@ export default function BankTransferModal({ amount, roomId, bankDetails, onClose
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">Bank Transfer</h3>
                         <p className="text-gray-400 text-sm">
-                            Please transfer <span className="text-white font-bold">${amount.toFixed(2)}</span> to the details below.
+                            Please transfer <span className="text-white font-bold">€{amount.toFixed(2)}</span> to the details below.
                         </p>
                     </div>
 

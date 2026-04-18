@@ -48,7 +48,7 @@ const MyRequests: React.FC<MyRequestsProps> = ({ requests = [], setReviewRequest
                             </button>
                         ) : (
                             <button className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold border border-border transition-colors cursor-default">
-                                <span className="gold-text">${req.amount}</span>
+                                <span className="gold-text">€{req.amount}</span>
                             </button>
                         )}
                     </div>

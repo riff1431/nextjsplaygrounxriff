@@ -1282,7 +1282,7 @@ export default function TruthOrDareCreatorRoom() {
                                                     {session.is_private ? "Private" : "Public"}
                                                 </span>
                                                 <span className="text-gray-600">•</span>
-                                                <span className="text-gray-300 font-medium">${Number(session.price || 0).toFixed(0)} entry</span>
+                                                <span className="text-gray-300 font-medium">€{Number(session.price || 0).toFixed(0)} entry</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 ml-4">

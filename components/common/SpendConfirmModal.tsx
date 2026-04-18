@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Wallet, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface SpendConfirmModalProps {
     isOpen: boolean;
@@ -35,6 +36,7 @@ export default function SpendConfirmModal({
     inputValue = "",
     onInputChange,
 }: SpendConfirmModalProps) {
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
     const insufficient = walletBalance < amount;
@@ -157,26 +159,33 @@ export default function SpendConfirmModal({
                         >
                             Cancel
                         </button>
-                        <button
-                            onClick={handleConfirm}
-                            disabled={insufficient || loading || (requireInput && !inputValue.trim())}
-                            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${done
-                                    ? "bg-emerald-600 text-white"
-                                    : insufficient
-                                        ? "bg-white/5 text-white/30 cursor-not-allowed border border-white/5"
+                        {insufficient ? (
+                            <button
+                                onClick={() => router.push("/account/wallet")}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                Top Up Wallet
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleConfirm}
+                                disabled={loading || (requireInput && !inputValue.trim())}
+                                className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${done
+                                        ? "bg-emerald-600 text-white"
                                         : "bg-gradient-to-r from-pink-600 to-rose-600 text-white hover:brightness-110 shadow-lg shadow-pink-900/30"
-                                }`}
-                        >
-                            {done ? (
-                                <>
-                                    <CheckCircle2 size={16} /> Done!
-                                </>
-                            ) : loading ? (
-                                <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                                confirmLabel || `Pay €${amount.toFixed(2)}`
-                            )}
-                        </button>
+                                    }`}
+                            >
+                                {done ? (
+                                    <>
+                                        <CheckCircle2 size={16} /> Done!
+                                    </>
+                                ) : loading ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    confirmLabel || `Pay €${amount.toFixed(2)}`
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

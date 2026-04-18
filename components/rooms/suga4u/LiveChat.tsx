@@ -28,7 +28,7 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
     };
 
     const formatActivity = (a: ActivityEvent) => {
-        if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">${a.amount}</span>!</span>;
+        if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">€{a.amount}</span>!</span>;
         if (a.type === 'PAID_REQUEST') return <span>requested: {a.label} (${a.amount})</span>;
         if (a.type === 'OFFER_CLAIM') return <span>claimed offer: {a.label}</span>;
         return <span>{a.label}</span>;
@@ -39,14 +39,14 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
     };
 
     return (
-        <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20">
+        <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20 pgx-chat-wrapper">
             <div className="flex items-center justify-center p-3 border-b border-gold/20">
                 <div className="h-px flex-1 bg-gold/30" />
                 <span className="section-title px-3">Live Chat</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll flex flex-col">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll flex flex-col pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {[...activity].reverse().map((m) => (
                     <div key={m.id} className="flex items-start gap-2 text-sm">
                         <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center">

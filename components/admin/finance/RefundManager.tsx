@@ -77,7 +77,7 @@ export default function RefundManager() {
                         rows={refunds.map((r) => ({
                             id: <span className="font-mono text-[10px] text-gray-400">{r.id.slice(0, 8)}</span>,
                             reason: <span className="text-white">{r.reason || "No reason provided"}</span>,
-                            amount: <span className="text-cyan-200">${r.transaction?.amount ?? "0.00"}</span>,
+                            amount: <span className="text-cyan-200">€{r.transaction?.amount ?? "0.00"}</span>,
                             status: r.status === 'approved' ? <AdminPill tone="green">Approved</AdminPill> :
                                 r.status === 'declined' ? <AdminPill tone="red">Declined</AdminPill> :
                                     <AdminPill tone="amber">{r.status}</AdminPill>,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -11,6 +11,8 @@ interface Confession {
     id: string;
     title: string;
     teaser: string;
+    content?: string;
+    media_url?: string;
     type: string;
     tier: string;
     price: number;
@@ -26,6 +28,7 @@ const ConfessionsLeftSidebar = () => {
     const [confessions, setConfessions] = useState<Confession[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editConfessionTarget, setEditConfessionTarget] = useState<Confession | null>(null);
+    const [viewConfessionTarget, setViewConfessionTarget] = useState<Confession | null>(null);
 
     const handleDelete = async (id: string) => {
         if (!roomId) return;
@@ -48,6 +51,7 @@ const ConfessionsLeftSidebar = () => {
                 .from("rooms")
                 .select("id")
                 .eq("host_id", user!.id)
+                .eq("type", "confessions")
                 .limit(1)
                 .maybeSingle();
 
@@ -57,7 +61,7 @@ const ConfessionsLeftSidebar = () => {
             // Fetch confessions list
             const { data: confList } = await supabase
                 .from("confessions")
-                .select("id, title, teaser, type, tier, price, status, created_at")
+                .select("id, title, teaser, content, media_url, type, tier, price, status, created_at")
                 .eq("room_id", room.id)
                 .order("created_at", { ascending: false });
             if (confList) setConfessions(confList);
@@ -113,7 +117,7 @@ const ConfessionsLeftSidebar = () => {
         const supabase = createClient();
         const { data } = await supabase
             .from("confessions")
-            .select("id, title, teaser, type, tier, price, status, created_at")
+            .select("id, title, teaser, content, media_url, type, tier, price, status, created_at")
             .eq("room_id", roomId)
             .order("created_at", { ascending: false });
         if (data) setConfessions(data);
@@ -155,11 +159,11 @@ const ConfessionsLeftSidebar = () => {
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
                         <DollarSign className="h-4 w-4 conf-text-gold" />
-                        <span>Tips: <span className="conf-text-gold font-semibold">${stats.tips.toLocaleString()}</span></span>
+                        <span>Tips: <span className="conf-text-gold font-semibold">€{stats.tips.toLocaleString()}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
                         <DollarSign className="h-4 w-4 conf-text-gold" />
-                        <span>Earned: <span className="conf-text-gold font-semibold">${stats.earned.toLocaleString()}</span></span>
+                        <span>Earned: <span className="conf-text-gold font-semibold">€{stats.earned.toLocaleString()}</span></span>
                     </div>
                 </div>
             </div>
@@ -196,7 +200,7 @@ const ConfessionsLeftSidebar = () => {
                             <div className="flex items-center gap-2 text-white/40">
                                 <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
                                 <button onClick={() => handleDelete(c.id)} className="hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
-                                <Eye size={14} className="hover:text-white transition-colors cursor-pointer" />
+                                <button onClick={() => setViewConfessionTarget(c)} className="hover:text-white transition-colors cursor-pointer"><Eye size={14} /></button>
                             </div>
                         </div>
                     ))}
@@ -212,6 +216,29 @@ const ConfessionsLeftSidebar = () => {
                     onCreated={refreshConfessions}
                     editConfession={editConfessionTarget}
                 />
+            )}
+
+            {/* View Modal */}
+            {viewConfessionTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-[24px] border border-white/10 bg-[#120205] p-6 shadow-2xl relative">
+                        <button onClick={() => setViewConfessionTarget(null)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10 transition-colors">
+                            <X className="w-4 h-4" />
+                        </button>
+                        <h3 className="text-xl font-bold text-white mb-1.5 pr-8">{viewConfessionTarget.title}</h3>
+                        <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-[10px] uppercase font-bold text-white mb-4 shadow-sm">
+                            {viewConfessionTarget.tier} • €{viewConfessionTarget.price}
+                        </div>
+                        <div className="text-sm font-medium italic text-white/80 leading-relaxed border-l-2 border-white/20 pl-4 py-1 mb-2 bg-white/5 rounded-r-lg">
+                            {viewConfessionTarget.content || viewConfessionTarget.teaser || "No content available."}
+                        </div>
+                        {viewConfessionTarget.type !== "Text" && viewConfessionTarget.media_url && (
+                            <div className="mt-4 text-xs font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-2 rounded-lg flex items-center gap-2">
+                                ✓ Media attached ({viewConfessionTarget.type})
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );

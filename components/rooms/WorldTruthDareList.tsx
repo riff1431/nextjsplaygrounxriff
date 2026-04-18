@@ -121,7 +121,7 @@ export default function WorldTruthDareList() {
                                 </div>
                                 {session.is_private ? (
                                     <span className="text-[10px] flex items-center gap-1 bg-purple-900/40 border border-purple-500/30 px-1.5 py-0.5 rounded text-purple-200">
-                                        <Lock className="w-3 h-3" /> ${session.unlock_price}
+                                        <Lock className="w-3 h-3" /> €{session.unlock_price}
                                     </span>
                                 ) : (
                                     <span className="text-[10px] flex items-center gap-1 bg-green-900/40 border border-green-500/30 px-1.5 py-0.5 rounded text-green-200">

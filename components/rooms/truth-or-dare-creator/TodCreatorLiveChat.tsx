@@ -128,7 +128,7 @@ const TodCreatorLiveChat = ({ roomId, viewerCount = 0 }: TodCreatorLiveChatProps
     };
 
     return (
-        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-hidden">
+        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             <div className="flex items-center justify-between mb-3 shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="tod-creator-text-neon-yellow text-sm font-bold">●</span>

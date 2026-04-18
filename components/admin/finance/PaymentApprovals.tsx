@@ -171,7 +171,7 @@ export default function PaymentApprovals() {
                                         <div className="text-xs text-gray-500">{tx.wallet?.user?.email}</div>
                                     </td>
                                     <td className="p-4">
-                                        <div className="font-bold text-green-400">${tx.amount}</div>
+                                        <div className="font-bold text-green-400">€{tx.amount}</div>
                                         <div className="text-xs text-gray-500">{tx.payment_method}</div>
                                     </td>
                                     <td className="p-4 text-center">

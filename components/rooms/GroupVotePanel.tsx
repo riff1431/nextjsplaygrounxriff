@@ -76,6 +76,16 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
         };
     }, [roomId, supabase]);
 
+    // Clear user votes when campaign starts playing/restarts
+    useEffect(() => {
+        ['truth', 'dare'].forEach((type) => {
+            if (state[type as keyof GroupVoteState]?.isActive === false) {
+                // Clear the local vote when it resets or completes
+                setUserVotes(prev => ({ ...prev, [type]: false }));
+            }
+        });
+    }, [state]);
+
     // Handle Auto-Hide Logic
     useEffect(() => {
         ['truth', 'dare'].forEach((type) => {
@@ -93,7 +103,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
     }, [state, completedCampaigns]);
 
     const handleVote = async (type: 'truth' | 'dare') => {
-        if (loadingVote) return;
+        if (loadingVote || userVotes[type]) return;
         setLoadingVote(type);
 
         // Optimistic Update
@@ -249,24 +259,26 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                         </div>
                     </div>
 
-                    {/* Vote Button */}
-                    {!isDone && (
-                        <button
-                            onClick={() => handleVote(type)}
-                            disabled={!!loadingVote}
-                            className={`w-full h-10 rounded-xl ${isTruth ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-cyan-900/30' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 shadow-pink-900/30'} 
-                            text-white text-xs font-bold shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 group-hover:brightness-110`}
-                        >
-                            {loadingVote === type ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                                <>
-                                    <Vote className="w-3.5 h-3.5" />
-                                    VOTE NOW — ${cam.price}
-                                </>
-                            )}
-                        </button>
-                    )}
+                    {/* Action Button */}
+                    <button
+                        onClick={() => handleVote(type)}
+                        disabled={isDone || loadingVote === type || userVotes[type]}
+                        className={`
+                            mt-2 w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all shadow-lg
+                            disabled:opacity-50 flex items-center justify-center gap-2
+                            ${isDone ? 'bg-green-500 text-white shadow-green-500/20' : `bg-gradient-to-r from-${accentColor}-600 to-${accentColor}-500 hover:from-${accentColor}-500 hover:to-${accentColor}-400 text-white shadow-${accentColor}-900/30 hover:scale-[1.02] active:scale-95`}
+                        `}
+                    >
+                        {isDone ? (
+                            <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Target Reached</span>
+                        ) : loadingVote === type ? (
+                            <span className="flex items-center gap-2 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Voting...</span>
+                        ) : userVotes[type] ? (
+                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Voted!</span>
+                        ) : (
+                            <span className="flex items-center gap-2"><Vote className="w-4 h-4" /> Vote {type.toUpperCase()} (€{cam.price})</span>
+                        )}
+                    </button>
                 </div>
             </motion.div>
         );

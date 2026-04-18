@@ -1,6 +1,8 @@
 import React from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 
 const quickRequests = [
@@ -10,18 +12,38 @@ const quickRequests = [
     { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧" },
 ];
 
-const PaidRequestMenu = ({ roomId }: { roomId: string | null }) => {
+const PaidRequestMenu = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
     const { createRequest } = useSuga4U(roomId);
     const { user } = useAuth();
+    const { balance, pay } = useWallet();
+    const [confirmReq, setConfirmReq] = React.useState<typeof quickRequests[0] | null>(null);
 
-    const handleRequest = async (r: typeof quickRequests[0]) => {
-        if (!roomId) return;
+    const handleRequestClick = (r: typeof quickRequests[0]) => {
+        if (!roomId || !hostId) return;
+        setConfirmReq(r);
+    };
+
+    const handleConfirmRequest = async () => {
+        if (!roomId || !hostId || !confirmReq) return;
+        const r = confirmReq;
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+            
+            // Deduct from wallet
+            const payment = await pay(hostId, r.price, `Paid Request: ${r.name}`, roomId, 'suga_request');
+            if (!payment.success) {
+                toast.error(payment.error || "Payment failed");
+                return;
+            }
+
+            // Create Request
             await createRequest(r.type, r.name, "Custom request from fan view", r.price, fanName);
             toast.success(`📸 Request sent: ${r.name}`, { description: `€${r.price} request submitted` });
         } catch (err) {
             console.error("Failed to send request:", err);
+            toast.error("Failed to send request");
+        } finally {
+            setConfirmReq(null);
         }
     };
 
@@ -36,15 +58,30 @@ const PaidRequestMenu = ({ roomId }: { roomId: string | null }) => {
                 {quickRequests.map((r) => (
                     <button
                         key={r.name}
-                        onClick={() => handleRequest(r)}
-                        disabled={!roomId}
+                        onClick={() => handleRequestClick(r)}
+                        disabled={!roomId || !hostId}
                         className="neon-border-pink glass-panel py-2 px-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-xs block">{r.emoji} {r.name}</span>
-                        <p className="text-pink font-bold text-sm">${r.price}</p>
+                        <p className="text-pink font-bold text-sm">€{r.price}</p>
                     </button>
                 ))}
             </div>
+
+            {/* Spend Confirmation Modal */}
+            {confirmReq && (
+                <SpendConfirmModal
+                    isOpen={true}
+                    onClose={() => setConfirmReq(null)}
+                    onConfirm={handleConfirmRequest}
+                    title={"Confirm Request: " + confirmReq.name}
+                    itemLabel={confirmReq.name}
+                    amount={confirmReq.price}
+                    walletBalance={balance}
+                    description={`Pay €${confirmReq.price} to request ${confirmReq.name}?`}
+                    confirmLabel="Pay & Request"
+                />
+            )}
         </div>
     );
 };

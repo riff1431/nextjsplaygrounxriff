@@ -1099,7 +1099,7 @@ export default function TruthOrDareCreatorPage() {
                                             <div className="text-[10px] text-white/40 mt-0.5">{formatCanadaDate(s.started_at || s.created_at)}</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-xs font-bold text-green-400">${(s.total_earnings || 0).toFixed(2)}</div>
+                                            <div className="text-xs font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
                                             <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
                                         </div>
                                     </div>
@@ -1171,50 +1171,23 @@ export default function TruthOrDareCreatorPage() {
                         </div>
                     </div>
 
-                    {/* ═══ COL: Dares Requests (full height) ═══ */}
-                    <div className="flex-1 min-w-[180px] min-h-0">
+                    {/* ═══ COL: Incoming Requests (full height) ═══ */}
+                    <div className="flex-[2] min-w-[300px] min-h-0">
                         <TodCreatorRequestPanel
-                            title="Dare Requests"
+                            title="Incoming Requests"
                             accentColor="pink"
                             queue={[
-                                ...queue.filter(q => q.type.includes("DARE")),
+                                ...queue.filter(q => q.type.includes("DARE") || q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
                                 ...activityFeed
-                                    .filter(a => a.type === 'dare' || a.type === 'custom_dare')
+                                    .filter(a => a.type === 'dare' || a.type === 'custom_dare' || a.type === 'truth' || a.type === 'custom_truth')
                                     .filter(a => !queue.some(q => q.id === a.id))
                                     .map(a => ({
                                         id: a.id,
-                                        type: a.type === 'custom_dare' ? 'CUSTOM_DARE' : 'TIER_PURCHASE',
+                                        type: a.type.includes('custom') ? a.type.toUpperCase() : 'TIER_PURCHASE',
                                         createdAt: a.timestamp,
                                         fanName: a.fanName,
                                         amount: a.amount,
-                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Dare` }
-                                    }))
-                            ] as any}
-                            onServe={serveQueueItem as any}
-                            onDismiss={(q: any) => {
-                                setQueue(qq => qq.filter(x => x.id !== q.id));
-                                setActivityFeed(af => af.filter(x => x.id !== q.id));
-                            }}
-                        />
-                    </div>
-
-                    {/* ═══ COL: Truth Requests (full height) ═══ */}
-                    <div className="flex-1 min-w-[180px] min-h-0">
-                        <TodCreatorRequestPanel
-                            title="Truth Requests"
-                            accentColor="blue"
-                            queue={[
-                                ...queue.filter(q => q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
-                                ...activityFeed
-                                    .filter(a => a.type === 'truth' || a.type === 'custom_truth')
-                                    .filter(a => !queue.some(q => q.id === a.id))
-                                    .map(a => ({
-                                        id: a.id,
-                                        type: a.type === 'custom_truth' ? 'CUSTOM_TRUTH' : 'TIER_PURCHASE',
-                                        createdAt: a.timestamp,
-                                        fanName: a.fanName,
-                                        amount: a.amount,
-                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Truth` }
+                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request` }
                                     }))
                             ] as any}
                             onServe={serveQueueItem as any}

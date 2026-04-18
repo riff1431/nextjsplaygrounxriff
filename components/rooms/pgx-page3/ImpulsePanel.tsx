@@ -45,7 +45,7 @@ export default function ImpulsePanel() {
               <span className="text-l opacity-70">{btn.icon}</span>
               <span>
                 <span className="neon-text-m italic text-l">{btn.label}:</span>{" "}
-                <span className="font-tech font-bold neon-text text-l">${btn.price}</span>
+                <span className="font-tech font-bold neon-text text-l">€{btn.price}</span>
               </span>
             </button>
           ))}

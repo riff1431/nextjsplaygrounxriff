@@ -31,7 +31,7 @@ const TipsSection: React.FC<TipsSectionProps> = ({ onSendTip }) => {
 
                 <div className="flex-1 w-full md:w-auto">
                     <div className="custom-tip-container focus-within:border-gold/40 transition-all">
-                        <span className="text-white/40 font-bold mr-2">$</span>
+                        <span className="text-white/40 font-bold mr-2">€</span>
                         <input
                             type="text"
                             value={customAmount}

@@ -320,7 +320,7 @@ function PgxPage2Inner() {
                                                 </div>
                                                 {isThisBuying
                                                     ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                                    : <span style={{ color: GOLD, fontWeight: 600 }}>${drink.price}</span>
+                                                    : <span style={{ color: GOLD, fontWeight: 600 }}>€{drink.price}</span>
                                                 }
                                             </div>
                                         );
@@ -428,7 +428,7 @@ function PgxPage2Inner() {
                             <div style={{ display: "flex", gap: "10px" }}>
                                 <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "6px", padding: "10px 14px", cursor: "text" }}>
                                     <span style={{ color: MUTED, fontSize: "14px", whiteSpace: "nowrap" }}>Custom</span>
-                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700 }}>$</span>
+                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700 }}>€</span>
                                     <input
                                         type="number"
                                         min="1"

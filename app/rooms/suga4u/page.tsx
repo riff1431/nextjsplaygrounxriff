@@ -153,9 +153,9 @@ const Suga4URoom = () => {
 
                         {/* RIGHT: Paid Requests + Gifts + Actions + Offers - full height scrollable */}
                         <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
-                            <PaidRequestMenu roomId={roomId} />
+                            <PaidRequestMenu roomId={roomId} hostId={hostId} />
                             <SendSugarGifts roomId={roomId} />
-                            <QuickPaidActions roomId={roomId} />
+                            <QuickPaidActions roomId={roomId} hostId={hostId} />
                             <S4uGroupVotePanel roomId={roomId} />
                         </div>
                     </div>

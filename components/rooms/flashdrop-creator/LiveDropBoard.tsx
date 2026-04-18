@@ -301,7 +301,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-sm font-black neon-text font-display">${drop.price}</span>
+                            <span className="text-sm font-black neon-text font-display">€{drop.price}</span>
                             <button
                                 onClick={() => handleEndDrop(drop.id, drop.title)}
                                 className="p-1 rounded hover:bg-red-500/20 text-red-400/60 hover:text-red-400 transition-colors"
@@ -319,7 +319,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                         {endedDrops.slice(0, 5).map(drop => (
                             <div key={drop.id} className="glass-card rounded-lg border border-border/30 px-3 py-1.5 flex items-center justify-between gap-2 mt-1 opacity-40">
                                 <span className="font-display font-bold text-xs text-foreground/50 truncate">{drop.title}</span>
-                                <span className="text-xs text-muted-foreground">${drop.price}</span>
+                                <span className="text-xs text-muted-foreground">€{drop.price}</span>
                             </div>
                         ))}
                     </div>
@@ -423,7 +423,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Price $</label>
+                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Price €</label>
                                     <input
                                         type="number"
                                         min="0"

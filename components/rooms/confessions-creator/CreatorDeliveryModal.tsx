@@ -105,7 +105,7 @@ export default function CreatorDeliveryModal({ isOpen, onClose, request, onDeliv
                                     {request.is_anonymous ? "Anonymous" : request.fan_name}
                                 </span>
                             </div>
-                            <span className="text-emerald-400 font-bold text-sm">${request.amount}</span>
+                            <span className="text-emerald-400 font-bold text-sm">€{request.amount}</span>
                         </div>
                         <p className="text-xs text-white/50">Topic</p>
                         <p className="text-sm text-white">{request.topic}</p>

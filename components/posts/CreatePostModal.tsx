@@ -160,7 +160,7 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
 
                             {isPaid && (
                                 <div className="flex items-center gap-2 flex-1">
-                                    <span className="text-sm text-zinc-500">$</span>
+                                    <span className="text-sm text-zinc-500">€</span>
                                     <input
                                         type="number"
                                         placeholder="Price"

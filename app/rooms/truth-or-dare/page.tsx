@@ -840,7 +840,7 @@ function TruthOrDareContent() {
 
                             <div className="p-4 rounded-xl bg-black/40 border border-white/10 mb-8">
                                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Entry Fee</div>
-                                <div className="text-3xl font-bold text-purple-300">${sessionInfo.price}</div>
+                                <div className="text-3xl font-bold text-purple-300">€{sessionInfo.price}</div>
                             </div>
 
                             <button
@@ -947,7 +947,7 @@ function TruthOrDareContent() {
                                                         <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-base font-bold text-white">${t.price}</span>
+                                                <span className="text-base font-bold text-white">€{t.price}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -970,7 +970,7 @@ function TruthOrDareContent() {
                                                         <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-base font-bold text-white">${t.price}</span>
+                                                <span className="text-base font-bold text-white">€{t.price}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -1050,7 +1050,7 @@ function TruthOrDareContent() {
                                     <span className="text-xl group-hover:scale-125 transition-transform">{r.emoji}</span>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold tracking-tighter text-purple-200">{r.name}</span>
-                                        <span className="text-[8px] font-bold text-white/50">${r.price}</span>
+                                        <span className="text-[8px] font-bold text-white/50">€{r.price}</span>
                                     </div>
                                 </button>
                             ))}
@@ -1071,7 +1071,7 @@ function TruthOrDareContent() {
                                         className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-all group hover:scale-105 shadow-[0_0_8px_rgba(34,197,94,0.15)] hover:shadow-[0_0_16px_rgba(34,197,94,0.3)]"
                                     >
                                         <span className="text-lg group-hover:scale-110 transition-transform">💰</span>
-                                        <span className="text-[10px] font-bold text-green-300">${amount}</span>
+                                        <span className="text-[10px] font-bold text-green-300">€{amount}</span>
                                     </button>
                                 ))}
                             </div>
@@ -1223,7 +1223,7 @@ function TruthOrDareContent() {
                                 <div className={`p-4 rounded-2xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
                                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Cost</div>
                                     <div className={`text-3xl font-bold flex items-center justify-center gap-1 ${confirmModal.type === 'tip' ? 'text-green-400' : 'text-white'}`}>
-                                        <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>$</span>{confirmModal.price}
+                                        <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>€</span>{confirmModal.price}
                                     </div>
                                 </div>
 

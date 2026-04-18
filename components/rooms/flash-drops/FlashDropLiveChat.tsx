@@ -177,7 +177,7 @@ export default function FlashDropLiveChat({
 
     return (
         <div
-            className="flex flex-col h-full rounded-2xl overflow-hidden"
+            className="flex flex-col h-full rounded-2xl overflow-hidden pgx-chat-wrapper"
             style={{
                 background: isCreator ? "rgba(10,5,20,0.7)" : "rgba(0,0,0,0.55)",
                 backdropFilter: "blur(16px)",
@@ -208,10 +208,10 @@ export default function FlashDropLiveChat({
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 min-h-0 scrollbar-thin scrollbar-thumb-pink-900/40">
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 min-h-0 scrollbar-thin scrollbar-thumb-pink-900/40 pgx-chat-messages hide-scrollbar">
                 {/* State: no room */}
                 {!roomId && (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-center pgx-chat-wrapper">
                         <MessageSquare className="w-8 h-8 text-white/10" />
                         <p className="text-white/25 text-[11px] font-mono">Session not live yet</p>
                     </div>
@@ -226,7 +226,7 @@ export default function FlashDropLiveChat({
 
                 {/* State: room found, no messages */}
                 {roomId && !loadingHistory && messages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-center pgx-chat-wrapper">
                         <Zap className="w-8 h-8 text-white/10" />
                         <p className="text-white/25 text-[11px] font-mono">Be the first to say something! 👋</p>
                     </div>

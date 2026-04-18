@@ -441,7 +441,7 @@ export default function BarLoungeRoom() {
                                                     textShadow: `0 0 10px hsla(42,90%,55%,0.3)`,
                                                 }}>
                                                     <DollarSign style={{ width: 11, height: 11 }} />
-                                                    <span>${ENTRY_FEE}</span>
+                                                    <span>€{ENTRY_FEE}</span>
                                                 </div>
                                             </div>
 
@@ -587,7 +587,7 @@ export default function BarLoungeRoom() {
                                             <span style={{ fontSize: "18px" }}>{drink.icon}</span>
                                             <span style={{ color: C.fg, fontWeight: 500, fontSize: "14px" }}>{drink.name}</span>
                                         </div>
-                                        <span style={{ color: C.gold, fontWeight: 600 }}>${drink.price}</span>
+                                        <span style={{ color: C.gold, fontWeight: 600 }}>€{drink.price}</span>
                                     </div>
                                 ))}
                             </div>
@@ -596,8 +596,8 @@ export default function BarLoungeRoom() {
                         {/* VIP Section */}
                         <div style={{ borderTop: `1px solid ${C.borderStrong}`, paddingTop: "12px", marginTop: "12px" }}>
                             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: C.fg, textAlign: "center", marginBottom: "8px" }}>VIP Lounge</h3>
-                            <div style={{ ...glassPanel, ...glowGold, padding: "12px" }}>
-                                <div className="flex items-center gap-2" style={{ cursor: "pointer" }} onClick={() => confirmPurchase("vip", `VIP Upgrade`, vipPrice)}>
+                            <div style={{ ...glassPanel, ...glowGold, padding: "16px", cursor: "pointer", transition: "all 0.2s" }} onClick={() => confirmPurchase("vip", `VIP Upgrade`, vipPrice)} className="hover:scale-[1.02] hover:bg-white/5 active:scale-95">
+                                <div className="flex items-center gap-2">
                                     <Crown className="w-5 h-5 bl-glow-pulse" style={{ color: C.gold }} />
                                     <span style={{ fontWeight: 700, color: C.gold, ...glowTextGold }}>Upgrade to VIP - ${vipPrice}</span>
                                 </div>
@@ -605,13 +605,13 @@ export default function BarLoungeRoom() {
                                     <li className="flex items-center gap-1"><Sparkles className="w-3 h-3" style={{ color: C.neonPink }} /> Exclusive Content</li>
                                 </ul>
                             </div>
-                            <div className="mt-2" style={{ ...glassPanel, padding: "12px", cursor: "pointer" }} onClick={() => confirmPurchase("booth", "Booth Reservation", 300)}>
+                            <div className="mt-3 hover:scale-[1.02] hover:bg-white/5 active:scale-95 transition-all" style={{ ...glassPanel, padding: "16px", cursor: "pointer" }} onClick={() => confirmPurchase("booth", "Booth Reservation", 300)}>
                                 <div className="flex items-center gap-2">
-                                    <span style={{ fontSize: "18px" }}>🛋️</span>
+                                    <span style={{ fontSize: "20px" }}>🛋️</span>
                                     <div>
-                                        <span style={{ fontWeight: 700, color: C.fg, fontSize: "14px" }}>Reserve a Booth</span>
-                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px" }}>€300</span>
-                                        <p style={{ fontSize: "12px", color: C.muted }}>🎉 Private (5 mins)</p>
+                                        <span style={{ fontWeight: 700, color: C.fg, fontSize: "15px" }}>Reserve a Booth</span>
+                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px", fontSize: "15px" }}>€300</span>
+                                        <p style={{ fontSize: "13px", color: C.muted, marginTop: "2px" }}>🎉 Private (5 mins)</p>
                                     </div>
                                 </div>
                             </div>
@@ -651,7 +651,7 @@ export default function BarLoungeRoom() {
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-1 flex items-center gap-1" style={{ ...tipBtnStyle, padding: "8px 12px" }}>
-                                    <span style={{ color: C.gold }}>$</span>
+                                    <span style={{ color: C.gold }}>€</span>
                                     <input type="number" placeholder="Custom Amount" value={tipAmount} onChange={(e) => setTipAmount(e.target.value)} className="bg-transparent outline-none flex-1 text-sm" style={{ color: C.fg, fontFamily: "'Montserrat', sans-serif" }} />
                                 </div>
                                 <button style={{ ...btnGoldStyle, padding: "8px 16px", flex: 1, fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }} onClick={handleCustomTip}>
@@ -667,7 +667,7 @@ export default function BarLoungeRoom() {
                                     <Sparkles className="w-5 h-5" style={{ color: C.gold }} />
                                     <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", fontWeight: 700, color: C.gold, ...glowTextGold }}>Spin the Bottle</h2>
                                 </div>
-                                <div style={{ padding: "4px 12px", borderRadius: "9999px", background: `${C.gold}1a`, border: `1px solid ${C.gold}33`, color: C.gold, fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em" }}>${SPIN_PRICE} PER SPIN</div>
+                                <div style={{ padding: "4px 12px", borderRadius: "9999px", background: `${C.gold}1a`, border: `1px solid ${C.gold}33`, color: C.gold, fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em" }}>€{SPIN_PRICE} PER SPIN</div>
                             </div>
                             <div className="rounded-2xl p-8 flex items-center justify-center relative overflow-hidden group" style={{ background: `${C.bg}66`, border: `1px solid hsla(0,0%,100%,0.05)` }}>
                                 <div className={`bl-bottle relative z-10 transition-transform ${spinning ? "bl-bottle-spin" : ""}`}>🥂</div>

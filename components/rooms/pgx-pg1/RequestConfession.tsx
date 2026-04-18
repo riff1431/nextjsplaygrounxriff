@@ -115,7 +115,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
             </span>
           </div>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 gold-text font-bold text-sm">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 gold-text font-bold text-sm">€</span>
             <input
               type="number"
               value={amount}

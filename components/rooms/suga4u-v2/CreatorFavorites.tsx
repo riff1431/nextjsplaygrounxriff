@@ -37,7 +37,7 @@ const CreatorFavorites = () => (
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{item.name} {item.emoji}</p>
-                        <p className="text-gold font-bold text-xs">${item.price.toLocaleString()}</p>
+                        <p className="text-gold font-bold text-xs">€{item.price.toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col gap-1 flex-shrink-0">
                         {item.reveal && (

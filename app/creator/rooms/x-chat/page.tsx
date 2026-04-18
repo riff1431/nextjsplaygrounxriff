@@ -281,7 +281,16 @@ export default function XChatCreatorView() {
                                     Answered gross (preview)
                                 </div>
                                 <div className="text-sm text-yellow-100 font-semibold">
-                                    ${stats.gross.toLocaleString()}
+                                    €{stats.gross.toLocaleString()}
+                                </div>
+                            </div>
+                            
+                            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 vip-glow shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                                <div className="text-[10px] text-emerald-200">
+                                    Total Tips (EUR)
+                                </div>
+                                <div className="text-sm text-emerald-100 font-semibold flex items-center gap-1">
+                                    <span className="text-lg leading-none">💰</span> €{(stats.gross + stats.pendingGross).toLocaleString()}
                                 </div>
                             </div>
 

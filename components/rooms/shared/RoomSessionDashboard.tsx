@@ -36,6 +36,9 @@ interface RoomSessionDashboardProps {
     accentHslSecondary?: string;   // optional second gradient stop
     backRoute?: string;
     backgroundImage?: string;
+    offlinePageRoute?: string;     // e.g. "/creator/rooms/confessions"
+    offlineLabel?: string;         // e.g. "Manage Wall Offline"
+    offlineDescription?: string;   // e.g. "Add to your permanent collection without broadcasting"
     onSessionStarted?: (session: RoomSession) => void;
 }
 
@@ -62,6 +65,9 @@ export default function RoomSessionDashboard({
     accentHslSecondary,
     backRoute = "/rooms/creator-studio",
     backgroundImage,
+    offlinePageRoute,
+    offlineLabel = "Manage Offline",
+    offlineDescription = "Add permanent content without going live",
     onSessionStarted,
 }: RoomSessionDashboardProps) {
     const router = useRouter();
@@ -241,6 +247,7 @@ export default function RoomSessionDashboard({
 
                 {/* ── Start New Session ── */}
                 {!showForm ? (
+                    <>
                     <button
                         onClick={() => setShowForm(true)}
                         className="w-full group relative overflow-hidden rounded-2xl p-8 flex items-center gap-6 transition-all mb-8 hover:scale-[1.01]"
@@ -264,6 +271,32 @@ export default function RoomSessionDashboard({
                             </div>
                         </div>
                     </button>
+                    {offlinePageRoute && (
+                        <button
+                            onClick={() => router.push(offlinePageRoute)}
+                            className="w-full group relative overflow-hidden rounded-2xl p-8 flex items-center gap-6 transition-all mb-8 hover:scale-[1.01]"
+                            style={{
+                                background: "hsla(270, 40%, 12%, 0.6)",
+                                border: `2px dashed ${accentBorder}`,
+                            }}
+                        >
+                            <div
+                                className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                                style={{ background: accentBg, border: `1px solid ${accentBorder}` }}
+                            >
+                                <Sparkles className="w-8 h-8" style={{ color: accentColor }} />
+                            </div>
+                            <div className="text-left">
+                                <div className="text-xl font-bold text-white">
+                                    {offlineLabel}
+                                </div>
+                                <div className="text-sm mt-1" style={{ color: "hsl(280, 15%, 60%)" }}>
+                                    {offlineDescription}
+                                </div>
+                            </div>
+                        </button>
+                    )}
+                    </>
                 ) : (
                     <div
                         className="w-full rounded-2xl p-6 mb-8"

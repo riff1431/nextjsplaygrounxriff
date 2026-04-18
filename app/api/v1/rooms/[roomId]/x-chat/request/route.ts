@@ -13,10 +13,37 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { message } = body;
+    const { message, amount } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Get room details
+    const { data: room, error: roomError } = await supabase
+        .from("rooms")
+        .select("host_id")
+        .eq("id", roomId)
+        .single();
+        
+    if (roomError || !room) {
+        return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    if (amount > 0) {
+        // Transfer funds
+        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
+            p_from_user_id: user.id,
+            p_to_user_id: room.host_id,
+            p_amount: amount,
+            p_description: `X-Chat request`,
+            p_room_id: roomId,
+            p_related_type: "xchat_request",
+            p_related_id: null,
+        });
+
+        if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 400 });
+        if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+    }
 
     // Get fan profile name
     const { data: profile } = await supabase

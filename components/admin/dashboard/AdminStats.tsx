@@ -22,14 +22,13 @@ export default function AdminStats() {
                 .from('profiles')
                 .select('*', { count: 'exact', head: true });
 
-            // 2. Total Revenue (sum of all 'charge' transactions)
-            const { data: transactions } = await supabase
-                .from('transactions')
-                .select('amount')
-                .eq('type', 'charge')
+            // 2. Total Revenue (sum of all system transactions via revenue_events)
+            const { data: revEvents } = await supabase
+                .from('revenue_events')
+                .select('gross_amount')
                 .eq('status', 'succeeded');
 
-            const revenue = transactions?.reduce((acc, curr) => acc + (curr.amount || 0), 0) || 0;
+            const revenue = revEvents?.reduce((acc, curr) => acc + (Number(curr.gross_amount) || 0), 0) || 0;
 
             // 3. Pending Reports
             const { count: reportsCount } = await supabase

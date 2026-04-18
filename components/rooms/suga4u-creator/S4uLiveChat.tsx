@@ -41,12 +41,12 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
     };
 
     return (
-        <div className="s4u-creator-glass-panel p-4 flex flex-col h-full">
+        <div className="s4u-creator-glass-panel p-4 flex flex-col h-full pgx-chat-wrapper">
             <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3 flex items-center gap-2">
                 <Heart className="w-4 h-4 s4u-creator-text-primary fill-current" />
                 Live Chat
             </h3>
-            <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {[...activity].reverse().map((msg, i) => (
                     <div key={msg.id || i} className="flex items-start gap-2">
                         <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>

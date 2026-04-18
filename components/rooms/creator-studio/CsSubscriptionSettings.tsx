@@ -46,7 +46,7 @@ export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: Cs
                 <div className="flex-1 w-full">
                     <label className="text-sm font-medium mb-1.5 block text-white">Weekly Price ($)</label>
                     <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
-                        <span className="text-white/40 mr-2">$</span>
+                        <span className="text-white/40 mr-2">€</span>
                         <input
                             type="text"
                             placeholder="e.g. 4.99"
@@ -59,7 +59,7 @@ export const CsSubscriptionSettings = ({ weeklyPrice, monthlyPrice, onSave }: Cs
                 <div className="flex-1 w-full">
                     <label className="text-sm font-medium mb-1.5 block text-white">Monthly Price ($)</label>
                     <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
-                        <span className="text-white/40 mr-2">$</span>
+                        <span className="text-white/40 mr-2">€</span>
                         <input
                             type="text"
                             placeholder="e.g. 14.99"

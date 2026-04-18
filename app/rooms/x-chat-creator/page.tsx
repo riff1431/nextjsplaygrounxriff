@@ -11,6 +11,7 @@ import LiveChat from "@/components/rooms/x-chat-creator/LiveChat";
 import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests";
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
+import InviteModal from "@/components/rooms/InviteModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -23,6 +24,7 @@ const XChatCreatorPage = () => {
     const urlRoomId = searchParams.get("roomId");
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | undefined>(urlRoomId || undefined);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     // Must be called before any conditional return to satisfy Rules of Hooks
     useEffect(() => {
@@ -184,11 +186,24 @@ const XChatCreatorPage = () => {
                                         hostName="Fan stream"
                                     />
                                 ) : (
-                                    <img
-                                        src="/x-chat/streamer-female.png"
-                                        alt="Fan stream"
-                                        className="w-full h-full object-cover object-top"
-                                    />
+                                    <div className="relative w-full h-full group">
+                                        <img
+                                            src="/x-chat/streamer-female.png"
+                                            alt="Fan stream"
+                                            className="w-full h-full object-cover object-top filter brightness-50 group-hover:brightness-75 transition-all"
+                                        />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => setIsInviteModalOpen(true)}
+                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.5)] transform hover:scale-105 transition-all flex items-center gap-2"
+                                            >
+                                                <span>+ Invite Guest Creator</span>
+                                            </button>
+                                            <span className="text-xs text-white/70 mt-2 font-medium bg-black/40 px-2 py-0.5 rounded">
+                                                Revenue Split: 50%
+                                            </span>
+                                        </div>
+                                    </div>
                                 )}
                                 {/* Stat badge */}
                                 <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
@@ -205,6 +220,12 @@ const XChatCreatorPage = () => {
                         </div>
                     </div>
                 </div>
+
+                <InviteModal 
+                    isOpen={isInviteModalOpen} 
+                    onClose={() => setIsInviteModalOpen(false)} 
+                    roomId={roomId || null} 
+                />
             </div>
         </ProtectRoute>
     );

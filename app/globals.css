@@ -144,6 +144,28 @@
     border-radius: 0.5rem;
   }
 
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pgx-chat-wrapper {
+    min-height: 0 !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .pgx-chat-messages {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
   .neon-border {
     box-shadow: 0 0 10px hsl(var(--neon-pink-hsl) / 0.5), 0 0 30px hsl(var(--neon-pink-hsl) / 0.25), 0 0 60px hsl(var(--neon-pink-hsl) / 0.1);
   }

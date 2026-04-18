@@ -40,12 +40,12 @@ const LoungeChat = ({ roomId }: LoungeChatProps) => {
     };
 
     return (
-        <div className="glass-panel flex flex-col h-full w-full">
+        <div className="glass-panel flex flex-col h-full w-full pgx-chat-wrapper">
             <h2 className="text-lg font-semibold px-4 pt-4 pb-2 text-gold font-title">
                 Lounge Chat
             </h2>
 
-            <div className="flex-1 overflow-y-auto px-4 space-y-3 lounge-creator-scrollbar">
+            <div className="flex-1 overflow-y-auto px-4 space-y-3 lounge-creator-scrollbar pgx-chat-messages hide-scrollbar">
                 {messages.length === 0 && (
                     <p className="text-sm text-white/40 text-center py-8">No messages yet. Chat will appear here live.</p>
                 )}

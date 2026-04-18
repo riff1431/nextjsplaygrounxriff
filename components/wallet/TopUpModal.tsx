@@ -156,7 +156,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                 <div>
                                     <label className="text-xs text-gray-500 mb-2 block uppercase tracking-wider font-semibold">Custom Amount</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">€</span>
                                         <input
                                             type="number"
                                             value={customAmount}
@@ -180,7 +180,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-gray-400">Total to pay</span>
-                                    <span className="text-2xl font-bold text-white">${amount.toFixed(2)}</span>
+                                    <span className="text-2xl font-bold text-white">€{amount.toFixed(2)}</span>
                                 </div>
 
                                 <div className="space-y-3">

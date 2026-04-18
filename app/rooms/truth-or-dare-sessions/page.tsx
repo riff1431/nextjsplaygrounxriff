@@ -686,7 +686,7 @@ export default function TruthOrDareSessionsBrowse() {
                                             {price > 0 ? (
                                                 <>
                                                     <DollarSign style={{ width: 11, height: 11 }} />
-                                                    <span>${price}</span>
+                                                    <span>€{price}</span>
                                                 </>
                                             ) : (
                                                 <>

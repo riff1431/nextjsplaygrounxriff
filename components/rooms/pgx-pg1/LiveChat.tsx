@@ -122,7 +122,7 @@ const LiveChat = ({ roomId }: LiveChatProps) => {
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0 pgx-chat-messages hide-scrollbar">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />

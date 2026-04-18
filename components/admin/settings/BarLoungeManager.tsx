@@ -247,7 +247,7 @@ export default function BarLoungeManager() {
                             <div className="mt-3">
                                 <h3 className="font-medium text-white">{drink.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-green-400 font-mono text-sm">${drink.price}</span>
+                                    <span className="text-green-400 font-mono text-sm">€{drink.price}</span>
                                     {drink.special && (
                                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
                                             Special

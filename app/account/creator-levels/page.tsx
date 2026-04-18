@@ -456,7 +456,7 @@ export default function CreatorLevelsPage() {
                                                 <span className="text-xl font-bold text-green-400">Free</span>
                                             ) : (
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="text-xl font-bold text-white">${type.price}</span>
+                                                    <span className="text-xl font-bold text-white">€{type.price}</span>
                                                     <span className="text-gray-400 text-sm">/month</span>
                                                 </div>
                                             )}

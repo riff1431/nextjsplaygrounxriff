@@ -129,7 +129,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                     <p className="text-zinc-400 text-sm">You are about to unlock exclusive content from</p>
                                     <p className="text-lg font-bold text-white mt-1">@{authorName}</p>
                                     <div className="mt-4 inline-block px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/30">
-                                        <span className="text-2xl font-bold text-pink-400">${price.toFixed(2)}</span>
+                                        <span className="text-2xl font-bold text-pink-400">€{price.toFixed(2)}</span>
                                     </div>
                                 </div>
 

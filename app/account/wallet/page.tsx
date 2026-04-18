@@ -294,7 +294,7 @@ export default function WalletPage() {
                         <div className="text-5xl md:text-6xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                             {fmt(balance)}
                         </div>
-                        <div className="text-xs text-gray-400">USD · Available for spending</div>
+                        <div className="text-xs text-gray-400">EUR · Available for spending</div>
 
                         <div className="flex flex-wrap gap-3 pt-2 justify-center">
                             <button

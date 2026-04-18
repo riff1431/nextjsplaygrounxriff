@@ -55,7 +55,7 @@ const TodCreatorRequestPanel = ({ title, accentColor, queue, onServe, onDismiss 
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                                 <span className={`font-bold text-sm ${iconColor}`}>{q.fanName ?? "Anonymous"}</span>
-                                <span className="font-bold text-green-400 text-sm">${q.amount}</span>
+                                <span className="font-bold text-green-400 text-sm">€{q.amount}</span>
                             </div>
                             <p className="text-xs text-white/80 mt-1 line-clamp-2 leading-relaxed">
                                 {renderContent(q)}

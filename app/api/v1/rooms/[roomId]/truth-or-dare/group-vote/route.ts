@@ -71,7 +71,8 @@ export async function POST(
             label,
             target: Number(target),
             price: Number(price),
-            current: 0 // Reset progress
+            current: 0, // Reset progress
+            startedAt: Date.now()
         };
     } else if (action === 'STOP') {
         currentState[type] = {

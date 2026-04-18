@@ -451,7 +451,7 @@ export default function MembershipPage() {
                                                 <span className="text-4xl font-black text-green-400 drop-shadow-md">Free</span>
                                             ) : (
                                                 <div className="flex items-baseline gap-1 justify-center">
-                                                    <span className="text-5xl font-black text-white drop-shadow-md">${type.price}</span>
+                                                    <span className="text-5xl font-black text-white drop-shadow-md">€{type.price}</span>
                                                     <span className="text-gray-400 text-base font-bold uppercase tracking-wider">/mo</span>
                                                 </div>
                                             )}

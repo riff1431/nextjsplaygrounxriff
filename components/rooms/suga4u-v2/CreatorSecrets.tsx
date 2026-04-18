@@ -21,7 +21,7 @@ const CreatorSecrets = () => (
                 <div key={i} className="glass-panel neon-border-pink p-3 text-center">
                     <Lock className="w-5 h-5 mx-auto mb-1 text-gold" />
                     <p className="text-[11px] font-semibold mb-2 leading-tight">{s.name}</p>
-                    <button className="btn-gold w-full py-1 text-[10px]">${s.price} UNLOCK</button>
+                    <button className="btn-gold w-full py-1 text-[10px]">€{s.price} UNLOCK</button>
                 </div>
             ))}
         </div>

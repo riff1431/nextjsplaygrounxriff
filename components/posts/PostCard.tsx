@@ -301,7 +301,7 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                                     <>Unlocking...</>
                                 ) : (
                                     <>
-                                        Unlock for <span className="text-yellow-300">${post.price}</span> <Unlock className="w-4 h-4 ml-1" />
+                                        Unlock for <span className="text-yellow-300">€{post.price}</span> <Unlock className="w-4 h-4 ml-1" />
                                     </>
                                 )}
                             </span>

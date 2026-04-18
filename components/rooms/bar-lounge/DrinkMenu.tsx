@@ -73,7 +73,7 @@ const DrinkMenu: React.FC<DrinkMenuProps> = ({
                             <Crown className="w-5 h-5 text-gold animate-pulse" />
                             <span className="font-bold text-gold uppercase tracking-tighter">Upgrade to VIP</span>
                         </div>
-                        <span className="text-gold font-black">${vipPrice}</span>
+                        <span className="text-gold font-black">€{vipPrice}</span>
                     </div>
                     <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-gold/60" />
