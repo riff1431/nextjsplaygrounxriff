@@ -171,7 +171,10 @@ const ConfessionsLeftSidebar = () => {
             {/* Random Request */}
             <div className="conf-glass-card p-4">
                 <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
-                <button className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors">
+                <button 
+                    onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
+                    className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
+                >
                     <Plus className="h-5 w-5" />
                 </button>
             </div>

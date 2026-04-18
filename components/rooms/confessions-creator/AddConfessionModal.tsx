@@ -49,10 +49,11 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
 
         setLoading(true);
         try {
-            const url = editConfession 
+            const isEdit = editConfession && editConfession.id;
+            const url = isEdit 
                 ? `/api/v1/rooms/${roomId}/confessions/${editConfession.id}` 
                 : `/api/v1/rooms/${roomId}/confessions`;
-            const method = editConfession ? "PATCH" : "POST";
+            const method = isEdit ? "PATCH" : "POST";
 
             const res = await fetch(url, {
                 method,
@@ -70,7 +71,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
             });
             const data = await res.json();
             if (data.success) {
-                toast.success(editConfession ? "Confession updated! 🎉" : "Confession published! 🎉");
+                toast.success((editConfession && editConfession.id) ? "Confession updated! 🎉" : "Confession published! 🎉");
                 setTitle("");
                 setTeaser("");
                 setContent("");
@@ -95,7 +96,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
             <div className="relative w-full max-w-md mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10">
-                    <h3 className="text-base font-bold text-white">{editConfession ? "Edit Confession" : "Add to Confession Wall"}</h3>
+                    <h3 className="text-base font-bold text-white">{editConfession && editConfession.id ? "Edit Confession" : "Add to Confession Wall"}</h3>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors">
                         <X size={18} />
                     </button>

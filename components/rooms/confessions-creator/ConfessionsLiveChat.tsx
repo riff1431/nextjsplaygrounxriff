@@ -49,7 +49,7 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
         fetchMessages();
 
         const channel = supabase
-            .channel(`chat-creator-${roomId}`)
+            .channel(`room_chat_messages_${roomId}`)
             .on(
                 "postgres_changes",
                 {
@@ -60,7 +60,13 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
                 },
                 (payload) => {
                     const newMsg = payload.new as ChatMsg;
-                    setMessages((prev) => [...prev, newMsg]);
+                    setMessages((prev) => {
+                        // Prevent duplicates from optimistic updates
+                        if (prev.some(m => m.id === newMsg.id || (m.user_id === newMsg.user_id && m.message === newMsg.message && m.id.startsWith("temp-")))) {
+                            return prev;
+                        }
+                        return [...prev, newMsg];
+                    });
                     setTimeout(scrollToBottom, 100);
                 }
             )
@@ -84,15 +90,34 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
 
         const displayName = profile?.display_name || profile?.username || user.email?.split("@")[0] || "Creator";
 
-        const { error } = await supabase.from("chat_messages").insert({
+        // Optimistically update UI
+        const tempId = `temp-${Date.now()}`;
+        const newLocalMsg: ChatMsg = {
+            id: tempId,
             room_id: roomId,
             user_id: user.id,
             username: displayName,
             message: newMessage.trim(),
-        });
+            created_at: new Date().toISOString(),
+        };
 
-        if (!error) {
-            setNewMessage("");
+        setMessages((prev) => [...prev, newLocalMsg]);
+        setNewMessage("");
+        setTimeout(scrollToBottom, 50);
+
+        const { error, data } = await supabase.from("chat_messages").insert({
+            room_id: roomId,
+            user_id: user.id,
+            username: displayName,
+            message: newLocalMsg.message,
+        }).select().single();
+
+        if (error) {
+            // Revert on error
+            setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        } else if (data) {
+            // Replace temp id with real id
+            setMessages((prev) => prev.map((m) => (m.id === tempId ? data : m)));
         }
         setSending(false);
     };

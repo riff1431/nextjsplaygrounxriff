@@ -29,14 +29,15 @@ export async function POST(
     // Get drop details
     const { data: drop } = await supabase
         .from("flash_drops")
-        .select("*, rooms!inner(host_id)")
+        .select("*")
         .eq("id", dropId).eq("room_id", roomId).single();
 
     if (!drop) return NextResponse.json({ error: "Drop not found" }, { status: 404 });
     if (drop.status !== "Live") return NextResponse.json({ error: "Drop not live" }, { status: 400 });
     if (drop.inventory_remaining <= 0) return NextResponse.json({ error: "Sold out" }, { status: 400 });
 
-    const creatorId = (drop as any).rooms?.host_id;
+    const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
+    const creatorId = roomObj?.host_id;
     const price = drop.price || 0;
 
     // Payment with revenue split (85% creator / 15% platform)

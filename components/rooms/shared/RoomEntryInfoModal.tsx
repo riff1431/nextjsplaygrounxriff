@@ -428,7 +428,7 @@ export default function RoomEntryInfoModal({
                         )}
 
                         {/* ── Dynamic Pricing Bar ── */}
-                        {(entryFee !== undefined && entryFee > 0) || (costPerMin !== undefined && costPerMin > 0) ? (
+                        {(entryFee !== undefined && entryFee > 0) || (costPerMin !== undefined && costPerMin > 0) || sessionType === "public" ? (
                             <div style={{
                                 marginTop: "8px",
                                 display: "flex",
@@ -457,7 +457,7 @@ export default function RoomEntryInfoModal({
                                         </span>
                                     </div>
                                 )}
-                                {costPerMin !== undefined && costPerMin > 0 && (
+                                {(costPerMin !== undefined && costPerMin > 0) || sessionType === "public" ? (
                                     <div style={{
                                         display: "inline-flex",
                                         alignItems: "center",
@@ -474,10 +474,10 @@ export default function RoomEntryInfoModal({
                                             color: accentColor,
                                             letterSpacing: "0.3px",
                                         }}>
-                                            ${costPerMin}/min
+                                            ${(costPerMin !== undefined && costPerMin > 0) ? costPerMin : 1}/min
                                         </span>
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         ) : null}
                     </div>

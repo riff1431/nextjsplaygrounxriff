@@ -29,18 +29,24 @@ export async function POST(
     }
 
     // Get confession to find creator
-    const { data: confession } = await supabase
+    const { data: confession, error: dbError } = await supabase
         .from("confessions")
-        .select("title, rooms!inner(host_id)")
+        .select("title")
         .eq("id", confessionId)
         .eq("room_id", roomId)
         .single();
+
+    if (dbError) {
+        return NextResponse.json({ error: "Confession not found", dbError: dbError.message, details: dbError }, { status: 404 });
+    }
 
     if (!confession) {
         return NextResponse.json({ error: "Confession not found" }, { status: 404 });
     }
 
-    const creatorId = (confession as any).rooms?.host_id;
+    // Since we verified the room, let's fetch the host_id separately to prevent join issues
+    const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
+    const creatorId = roomObj?.host_id;
 
     // Payment with revenue split (85% creator / 15% platform)
     if (creatorId) {

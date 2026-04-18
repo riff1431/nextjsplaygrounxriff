@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import {
     ArrowLeft, Video, Send, Zap, Star, Sparkles, MessageCircle, Crown,
     Search, Bell, LogOut, User as UserIcon, CreditCard, Users, Settings, Heart,
-    Link as LinkIcon, Loader2, Play, DollarSign, Wine, Home, Eye, Clock, UserPlus
+    Link as LinkIcon, Loader2, Play, DollarSign, Wine, Home, Eye, Clock, UserPlus, Globe
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

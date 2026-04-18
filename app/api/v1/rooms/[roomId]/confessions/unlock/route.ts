@@ -46,7 +46,7 @@ export async function POST(
     // Get confession details (price, room host)
     const { data: confession, error: confError } = await supabase
         .from("confessions")
-        .select("*, rooms!inner(host_id)")
+        .select("*")
         .eq("id", confessionId)
         .eq("room_id", roomId)
         .single();
@@ -55,8 +55,9 @@ export async function POST(
         return NextResponse.json({ error: "Confession not found" }, { status: 404 });
     }
 
+    const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     const price = confession.price || 0;
-    const creatorId = (confession as any).rooms?.host_id;
+    const creatorId = roomObj?.host_id;
 
     if (price > 0 && creatorId) {
         // Payment with revenue split (85% creator / 15% platform)
