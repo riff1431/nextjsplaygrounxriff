@@ -24,29 +24,30 @@ export async function POST(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!confessionId || !reactionType || !amount || amount <= 0) {
+    if (!reactionType || !amount || amount <= 0) {
         return NextResponse.json({ error: "Missing or invalid fields" }, { status: 400 });
     }
 
-    // Get confession to find creator
-    const { data: confession, error: dbError } = await supabase
-        .from("confessions")
-        .select("title")
-        .eq("id", confessionId)
-        .eq("room_id", roomId)
-        .single();
-
-    if (dbError) {
-        return NextResponse.json({ error: "Confession not found", dbError: dbError.message, details: dbError }, { status: 404 });
-    }
-
-    if (!confession) {
-        return NextResponse.json({ error: "Confession not found" }, { status: 404 });
-    }
-
-    // Since we verified the room, let's fetch the host_id separately to prevent join issues
+    // Always fetch host from the room in the URL — confession reactions are room-level tips.
+    // The confession wall may show confessions from other rooms (global browse), so we must
+    // NOT filter by room_id when looking up a specific confessionId.
     const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     const creatorId = roomObj?.host_id;
+
+    if (!creatorId) {
+        return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    // If a specific confessionId was provided, look it up (without room constraint) to get title for notification
+    let confession: { title: string } | null = null;
+    if (confessionId) {
+        const { data: confData } = await supabase
+            .from("confessions")
+            .select("title")
+            .eq("id", confessionId)
+            .single();
+        confession = confData;
+    }
 
     // Payment with revenue split (85% creator / 15% platform)
     if (creatorId) {
@@ -71,32 +72,33 @@ export async function POST(
         }
     }
 
-    // Record the tip
-    const { data: tip, error: tipError } = await supabase
-        .from("confession_tips")
-        .insert({
-            confession_id: confessionId,
-            fan_id: user.id,
-            reaction_type: reactionType,
-            amount,
-        })
-        .select()
-        .single();
+    // Record the tip (only if we have a specific confession to attach it to)
+    if (confessionId) {
+        const { error: tipError } = await supabase
+            .from("confession_tips")
+            .insert({
+                confession_id: confessionId,
+                fan_id: user.id,
+                reaction_type: reactionType,
+                amount,
+            });
 
-    if (tipError) {
-        return NextResponse.json({ error: tipError.message }, { status: 500 });
+        if (tipError) {
+            console.error("confession_tips insert error:", tipError.message);
+            // Non-fatal — payment was successful, just couldn't record tip row
+        }
     }
 
     // Notification
-    if (creatorId) {
-        await supabase.from("notifications").insert({
-            user_id: creatorId,
-            actor_id: user.id,
-            type: "confession_tip",
-            message: `Someone sent ${reactionType} (€${amount}) on "${confession.title}"`,
-            reference_id: confessionId,
-        });
-    }
+    await supabase.from("notifications").insert({
+        user_id: creatorId,
+        actor_id: user.id,
+        type: "confession_tip",
+        message: confession
+            ? `Someone sent ${reactionType} (€${amount}) on "${confession.title}"`
+            : `Someone sent a ${reactionType} reaction (€${amount}) in the room`,
+        reference_id: confessionId ?? roomId,
+    });
 
-    return NextResponse.json({ success: true, tip });
+    return NextResponse.json({ success: true });
 }
