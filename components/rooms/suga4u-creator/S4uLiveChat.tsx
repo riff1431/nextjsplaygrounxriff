@@ -41,7 +41,7 @@ const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
     };
 
     return (
-        <div className="s4u-creator-glass-panel p-4 flex flex-col h-full pgx-chat-wrapper">
+        <div className="s4u-creator-glass-panel p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3 flex items-center gap-2">
                 <Heart className="w-4 h-4 s4u-creator-text-primary fill-current" />
                 Live Chat

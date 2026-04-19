@@ -40,7 +40,7 @@ const LoungeChat = ({ roomId }: LoungeChatProps) => {
     };
 
     return (
-        <div className="glass-panel flex flex-col h-full w-full pgx-chat-wrapper">
+        <div className="glass-panel flex flex-col h-full overflow-hidden w-full pgx-chat-wrapper">
             <h2 className="text-lg font-semibold px-4 pt-4 pb-2 text-gold font-title">
                 Lounge Chat
             </h2>

@@ -99,7 +99,7 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     return (
-        <div className="panel-glass rounded-lg flex flex-col h-full w-full pgx-chat-wrapper">
+        <div className="panel-glass rounded-lg flex flex-col h-full overflow-hidden w-full pgx-chat-wrapper">
             {/* Header */}
             <div className="flex flex-col border-b border-border">
                 <div className="flex items-center justify-between px-4 py-3 pb-2">

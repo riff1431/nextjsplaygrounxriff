@@ -135,7 +135,7 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
     };
 
     return (
-        <div className="conf-glass-card-strong flex flex-col w-[400px] shrink-0 h-full pb-2 pgx-chat-wrapper">
+        <div className="conf-glass-card-strong flex flex-col overflow-hidden w-[400px] shrink-0 h-full pb-2 pgx-chat-wrapper">
             {/* Header */}
             <div className="p-4 border-b border-white/20">
                 <h2 className="conf-font-cinzel text-white text-lg font-semibold">Live Chat</h2>

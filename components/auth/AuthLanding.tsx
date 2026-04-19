@@ -549,34 +549,11 @@ export default function AuthLanding() {
                                                     </Label>
                                                 </div>
 
-                                                {/* Creator Extra Checkboxes */}
-                                                {createRole === "creator" && (
-                                                    <div className="pt-2 mt-2 border-t border-white/10 space-y-4">
-                                                        <div className="text-xs font-bold text-pink-400 uppercase tracking-widest pl-1">Creator Agreements</div>
-                                                        <div className="flex items-start gap-3">
-                                                            <Checkbox id="agree-creator-onboarding" checked={agreeCreatorOnboarding} onCheckedChange={(v) => setAgreeCreatorOnboarding(!!v)} />
-                                                            <Label htmlFor="agree-creator-onboarding" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                                <span>I have read and agree to the <Link href="/creator-onboarding" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Creator Onboarding Agreement</Link></span>
-                                                            </Label>
-                                                        </div>
-                                                        <div className="flex items-start gap-3">
-                                                            <Checkbox id="agree-creator-guidelines" checked={agreeCreatorGuidelines} onCheckedChange={(v) => setAgreeCreatorGuidelines(!!v)} />
-                                                            <Label htmlFor="agree-creator-guidelines" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                                <span>I commit to follow the <Link href="/creator-guidelines" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Creator Guidelines</Link></span>
-                                                            </Label>
-                                                        </div>
-                                                        <div className="flex items-start gap-3">
-                                                            <Checkbox id="agree-payout-terms" checked={agreePayoutTerms} onCheckedChange={(v) => setAgreePayoutTerms(!!v)} />
-                                                            <Label htmlFor="agree-payout-terms" className="text-sm font-normal leading-relaxed text-gray-200/80">
-                                                                <span>I accept the <Link href="/payout-terms" className="underline underline-offset-4 hover:text-pink-400 transition-colors">Payout Terms</Link></span>
-                                                            </Label>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                {/* Creator Agreements moved to post-signup verification flow */}
                                             </div>
 
                                             <Button
-                                                disabled={!agreeTerms || !agreePrivacy || !agreeAgeVerified || (createRole === 'creator' && (!agreeCreatorOnboarding || !agreeCreatorGuidelines || !agreePayoutTerms)) || loading}
+                                                disabled={!agreeTerms || !agreePrivacy || !agreeAgeVerified || loading}
                                                 onClick={handleSignUp}
                                                 className="h-11 w-full rounded-xl bg-pink-600 hover:bg-pink-700 mt-2"
                                             >

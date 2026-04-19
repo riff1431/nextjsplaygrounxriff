@@ -198,7 +198,7 @@ const ConfessionsLeftSidebar = () => {
                         >
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs text-white font-medium truncate">{c.title}</p>
-                                <p className="text-[10px] text-white/40">{c.tier} • ${c.price}</p>
+                                <p className="text-[10px] text-white/40">{c.tier} • €{c.price}</p>
                             </div>
                             <div className="flex items-center gap-2 text-white/40">
                                 <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>

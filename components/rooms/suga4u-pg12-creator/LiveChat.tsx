@@ -23,7 +23,7 @@ const LiveChat = () => {
     const [input, setInput] = useState("");
 
     return (
-        <div className="glass-panel p-4 flex flex-col h-full pgx-chat-wrapper">
+        <div className="glass-panel p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             <h3 className="font-display text-lg font-bold text-foreground mb-3 flex items-center gap-2">
                 <Heart className="w-4 h-4 text-primary fill-primary" />
                 Live Chat

@@ -39,7 +39,7 @@ const LiveChat = ({ roomId }: { roomId: string | null }) => {
     };
 
     return (
-        <div className="glass-panel flex flex-col h-full bg-transparent border-gold/20 pgx-chat-wrapper">
+        <div className="glass-panel flex flex-col h-full overflow-hidden bg-transparent border-gold/20 pgx-chat-wrapper">
             <div className="flex items-center justify-center p-3 border-b border-gold/20">
                 <div className="h-px flex-1 bg-gold/30" />
                 <span className="section-title px-3">Live Chat</span>
