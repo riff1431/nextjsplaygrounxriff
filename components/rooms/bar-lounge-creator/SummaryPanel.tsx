@@ -33,9 +33,11 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
                 .select("type, amount")
                 .eq("room_id", roomId!);
 
+            const TIP_TYPES = ["drink", "tip", "champagne", "vip_bottle", "vip", "pin"];
+
             const drinkCount = requests?.filter((r) => r.type === "drink").length || 0;
             const tipTotal = requests?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
-            const requestCount = requests?.length || 0;
+            const requestCount = requests?.filter((r) => !TIP_TYPES.includes(r.type)).length || 0;
 
             setStats({
                 fans: fanCount || 0,
@@ -57,11 +59,12 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const newReq = payload.new as any;
+                const TIP_TYPES = ["drink", "tip", "champagne", "vip_bottle", "vip", "pin"];
                 setStats((prev) => ({
                     ...prev,
-                    requests: prev.requests + 1,
-                    tips: prev.tips + (newReq.amount || 0),
                     drinks: newReq.type === "drink" ? prev.drinks + 1 : prev.drinks,
+                    tips: prev.tips + (newReq.amount || 0),
+                    requests: !TIP_TYPES.includes(newReq.type) ? prev.requests + 1 : prev.requests,
                 }));
             })
             .on("postgres_changes", {

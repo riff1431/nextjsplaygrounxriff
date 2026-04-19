@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, StopCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import LiveChat from "@/components/rooms/x-chat-creator/LiveChat";
 import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests";
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
+import RecentReactions from "@/components/rooms/x-chat-creator/RecentReactions";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import InviteModal from "@/components/rooms/InviteModal";
 
@@ -82,6 +83,16 @@ const XChatCreatorPage = () => {
         );
     }
 
+    const handleEndSession = async () => {
+        if (!roomId || !confirm("End this session?")) return;
+        
+        await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId);
+        if (sessionId) {
+            await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" }).catch(() => { });
+        }
+        router.push("/rooms/x-chat-creator");
+    };
+
     return (
         <ProtectRoute allowedRoles={["creator"]}>
             <div
@@ -100,11 +111,11 @@ const XChatCreatorPage = () => {
                         className="panel-glass flex items-center px-4 py-3 relative"
                     >
                         <button
-                            onClick={() => router.push("/home")}
-                            className="flex items-center gap-1 text-foreground hover:text-primary transition-colors absolute left-4"
+                            onClick={handleEndSession}
+                            className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors absolute left-4 glass-panel px-3 py-1.5 rounded-lg border border-red-500/30"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="text-sm hidden sm:inline">Back</span>
+                            <StopCircle className="w-5 h-5" />
+                            <span className="text-sm font-medium hidden sm:inline">End Session</span>
                         </button>
                         <h1
                             className="mx-auto text-2xl md:text-3xl gold-text"
@@ -216,6 +227,7 @@ const XChatCreatorPage = () => {
                         {/* Right - Requests + Summary */}
                         <div className="hidden lg:flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
                             <IncomingRequests roomId={roomId} />
+                            <RecentReactions roomId={roomId} />
                             <SummaryPanel roomId={roomId} />
                         </div>
                     </div>

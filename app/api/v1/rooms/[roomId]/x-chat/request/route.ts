@@ -1,6 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+
 /**
  * POST /api/v1/rooms/[roomId]/x-chat/request
  * Fan creates a chat request
@@ -30,19 +32,21 @@ export async function POST(
     }
 
     if (amount > 0) {
-        // Transfer funds
-        const { data: result, error: rpcError } = await supabase.rpc("transfer_funds", {
-            p_from_user_id: user.id,
-            p_to_user_id: room.host_id,
-            p_amount: amount,
-            p_description: `X-Chat request`,
-            p_room_id: roomId,
-            p_related_type: "xchat_request",
-            p_related_id: null,
+        // Payment with revenue split (85% creator / 15% platform)
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: room.host_id,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: `X-Chat request`,
+            roomId,
+            relatedType: 'xchat_request',
+            relatedId: null,
+            earningsCategory: 'requests',
         });
 
-        if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 400 });
-        if (!result?.success) return NextResponse.json({ error: result?.error || "Payment failed" }, { status: 400 });
+        if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
     }
 
     // Get fan profile name
@@ -68,6 +72,16 @@ export async function POST(
         .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Send notification to creator
+    await supabase.from("notifications").insert({
+        user_id: room.host_id,
+        actor_id: user.id,
+        type: "xchat_request",
+        message: `${fanName} requested: ${message || "Wants to chat"} for €${amount}`,
+        reference_id: req.id,
+    });
+
     return NextResponse.json({ success: true, request: req });
 }
 

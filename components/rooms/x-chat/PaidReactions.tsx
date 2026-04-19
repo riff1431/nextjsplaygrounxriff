@@ -42,19 +42,24 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
     const handleSend = async () => {
         if (!pending || !roomId) return;
         try {
-            // Voice notes map to incoming requests, NOT reactions!
-            if (pending.reactionType === "voice_note_boost") {
+            // Voice notes, private questions, and mini chats map to incoming requests, NOT reactions!
+            if (["voice_note_boost", "private_question", "mini_chat"].includes(pending.reactionType)) {
+                let msgPrefix = pending.label;
+                if (pending.reactionType === "voice_note_boost" && voicePrompt) {
+                    msgPrefix = `${pending.label}: ${voicePrompt}`;
+                }
                 const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        message: `Voice Note Reply: ${voicePrompt}`,
-                        amount: pending.price 
+                        message: msgPrefix,
+                        amount: pending.price,
+                        type: pending.reactionType
                     }),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    toast.success("Voice note request sent!");
+                    toast.success(`${pending.label} request sent!`);
                     setVoicePrompt("");
                     refresh?.();
                 } else {

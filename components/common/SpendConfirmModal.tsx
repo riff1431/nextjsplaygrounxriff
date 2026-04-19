@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Wallet, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -41,6 +41,13 @@ export default function SpendConfirmModal({
     const [done, setDone] = useState(false);
     const insufficient = walletBalance < amount;
 
+    useEffect(() => {
+        if (isOpen) {
+            setLoading(false);
+            setDone(false);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleConfirm = async () => {
@@ -51,6 +58,7 @@ export default function SpendConfirmModal({
             setDone(true);
             setTimeout(() => {
                 setDone(false);
+                setLoading(false);
                 onClose();
             }, 1200);
         } catch {

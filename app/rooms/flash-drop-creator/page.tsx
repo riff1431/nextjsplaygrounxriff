@@ -150,6 +150,7 @@ const FlashdropCreatorRoom = () => {
                 roomEmoji="⚡"
                 roomLabel="Flash Drops"
                 creatorPageRoute="/rooms/flash-drop-creator"
+                backRoute="/rooms/creator-studio"
                 accentHsl="170, 80%, 50%"
                 accentHslSecondary="150, 70%, 45%"
                 backgroundImage="/images/bg-flashdrop.jpeg"

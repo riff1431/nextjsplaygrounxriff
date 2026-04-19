@@ -9,7 +9,7 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
-import EmojiPicker from 'emoji-picker-react';
+
 
 type Lane = "Free" | "Paid" | "Priority";
 
@@ -219,15 +219,16 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
 
                 {/* Quick Emoji Picker */}
                 {showEmojis && (
-                    <div className="absolute bottom-[4.5rem] left-4 z-50 shadow-2xl rounded-2xl overflow-hidden border border-border">
-                        <EmojiPicker
-                            theme={"dark" as any}
-                            onEmojiClick={(emojiData) => {
-                                setMessage(prev => prev + emojiData.emoji);
-                            }}
-                            width={300}
-                            height={400}
-                        />
+                    <div className="absolute bottom-[4.5rem] left-4 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg border border-border shadow-2xl bg-[#0f0505]">
+                        {["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"].map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-gold/20 rounded transition-colors text-lg"
+                            >
+                                {emoji}
+                            </button>
+                        ))}
                     </div>
                 )}
 
