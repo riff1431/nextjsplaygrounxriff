@@ -143,7 +143,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     return (
-        <div className="glass-card flex flex-col h-full overflow-hidden min-h-[400px] pgx-chat-wrapper">
+        <div className="glass-card flex flex-col h-full max-h-[600px] overflow-hidden min-h-[400px] pgx-chat-wrapper">
             {/* Display Filters */}
             <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3">
                 {(["All", "Paid", "Priority"] as const).map(tab => (
