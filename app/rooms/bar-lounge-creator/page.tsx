@@ -61,7 +61,7 @@ const CreatorBarLounge = () => {
                 creatorPageRoute="/rooms/bar-lounge-creator"
                 accentHsl="45, 90%, 55%"
                 accentHslSecondary="280, 40%, 50%"
-                backgroundImage="/rooms/bar-lounge/lounge-bg-creator.jpeg"
+                backgroundImage="/images/rooms/bar-lounge/bar-lounge-session-bg.png"
             />
         );
     }
@@ -83,7 +83,7 @@ const CreatorBarLounge = () => {
     return (
         <div
             className="min-h-screen w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme"
-            style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-creator.jpeg')" }}
+            style={{ backgroundImage: "url('/images/rooms/bar-lounge/bar-lounge-session-bg.png')" }}
         >
             {/* Top Bar */}
             <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">

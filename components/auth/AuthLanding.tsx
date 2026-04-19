@@ -459,8 +459,8 @@ export default function AuthLanding() {
                     <CollageTile label={tiles[5].label} tone={tiles[5].tone} className="col-span-8 row-span-4 hidden h-[20vh] md:block md:h-[28vh]" />
                 </div>
 
-                {/* ── Dark overlay with blur (keeps forms readable) ── */}
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-2xl" />
+                {/* ── Dark overlay (keeps forms readable without heavy blur) ── */}
+                <div className="absolute inset-0 bg-black/50" />
 
                 {/* ── Top vignette for depth ── */}
                 <div className="absolute inset-0" style={{

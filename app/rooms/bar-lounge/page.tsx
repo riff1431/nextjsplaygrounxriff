@@ -263,7 +263,7 @@ export default function BarLoungeRoom() {
                     @keyframes bl-sparkle { 0%, 100% { opacity: 0; transform: scale(0); } 50% { opacity: 1; transform: scale(1); } }
                     .bl-animate-sparkle { animation: bl-sparkle 2s ease-in-out infinite; }
                 `}</style>
-                <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
+                <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/images/rooms/bar-lounge/bar-lounge-session-bg.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
                 <div className="fixed inset-0 z-0" style={{ background: `${C.bg}99` }} />
                 {/* Sparkle particles */}
                 {Array.from({ length: 20 }).map((_, i) => (
@@ -540,7 +540,7 @@ export default function BarLoungeRoom() {
             `}</style>
 
             {/* Background */}
-            <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
+            <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/images/rooms/bar-lounge/bar-lounge-session-bg.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
             <div className="fixed inset-0 z-0" style={{ background: `${C.bg}99` }} />
 
             {/* Sparkle particles */}
