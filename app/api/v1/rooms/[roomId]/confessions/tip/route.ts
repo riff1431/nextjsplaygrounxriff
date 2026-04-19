@@ -89,18 +89,14 @@ export async function POST(
         }
     }
 
-    // Get fan name for notification
-    const { data: fanProfile } = await supabase.from("profiles").select("display_name, username").eq("id", user.id).single();
-    const fanName = fanProfile?.display_name || fanProfile?.username || user.email?.split("@")[0] || "A fan";
-
     // Notification
     await supabase.from("notifications").insert({
         user_id: creatorId,
         actor_id: user.id,
         type: "confession_tip",
         message: confession
-            ? `${fanName} sent ${reactionType} (€${amount}) on "${confession.title}"`
-            : `${fanName} sent a ${reactionType} reaction (€${amount}) in the room`,
+            ? `Someone sent ${reactionType} (€${amount}) on "${confession.title}"`
+            : `Someone sent a ${reactionType} reaction (€${amount}) in the room`,
         reference_id: confessionId ?? roomId,
     });
 

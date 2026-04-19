@@ -355,7 +355,7 @@ export default function TruthOrDareCreatorPage() {
                 // Determine type and tier
                 const isSystemPrompt = request.type?.startsWith('system_');
                 const isCustom = request.type?.startsWith('custom_');
-                const isTip = request.type === 'tip' || request.type === 'reaction';
+                const isTip = request.type === 'tip';
 
                 const interactionType = isTip
                     ? 'tip'

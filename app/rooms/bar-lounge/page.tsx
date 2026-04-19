@@ -110,22 +110,7 @@ export default function BarLoungeRoom() {
                             sessions = rawRooms.map((r: any) => ({ ...r, profiles: profiles?.find((p: any) => p.id === r.host_id) || null }));
                         }
                     }
-                    if (sessions) {
-                        const roomIds = sessions.map((s: any) => s.id);
-                        if (roomIds.length > 0) {
-                            const { data: rs } = await supabase.from("room_sessions").select("room_id, title").in("room_id", roomIds).eq("status", "active");
-                            if (rs) {
-                                sessions = sessions.map((s: any) => {
-                                    const sessionMatch = rs.find((r: any) => r.room_id === s.id);
-                                    if (sessionMatch?.title) {
-                                        s.title = sessionMatch.title;
-                                    }
-                                    return s;
-                                });
-                            }
-                        }
-                        if (isMounted) setActiveSessions(sessions as any);
-                    }
+                    if (isMounted && sessions) setActiveSessions(sessions as any);
                 };
                 await fetchSessions();
                 if (isMounted) { roomChannel = supabase.channel('public:rooms').on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: 'type=eq.bar-lounge' }, fetchSessions).subscribe(); }
@@ -263,7 +248,7 @@ export default function BarLoungeRoom() {
                     @keyframes bl-sparkle { 0%, 100% { opacity: 0; transform: scale(0); } 50% { opacity: 1; transform: scale(1); } }
                     .bl-animate-sparkle { animation: bl-sparkle 2s ease-in-out infinite; }
                 `}</style>
-                <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/images/rooms/bar-lounge/bar-lounge-session-bg.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
+                <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
                 <div className="fixed inset-0 z-0" style={{ background: `${C.bg}99` }} />
                 {/* Sparkle particles */}
                 {Array.from({ length: 20 }).map((_, i) => (
@@ -540,7 +525,7 @@ export default function BarLoungeRoom() {
             `}</style>
 
             {/* Background */}
-            <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/images/rooms/bar-lounge/bar-lounge-session-bg.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
+            <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
             <div className="fixed inset-0 z-0" style={{ background: `${C.bg}99` }} />
 
             {/* Sparkle particles */}

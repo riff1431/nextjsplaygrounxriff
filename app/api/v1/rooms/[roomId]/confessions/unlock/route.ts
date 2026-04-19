@@ -97,13 +97,11 @@ export async function POST(
 
     // Create notification for creator
     if (creatorId) {
-        const { data: fanProfile } = await supabase.from("profiles").select("display_name, username").eq("id", user.id).single();
-        const fanName = fanProfile?.display_name || fanProfile?.username || user.email?.split("@")[0] || "A fan";
         await supabase.from("notifications").insert({
             user_id: creatorId,
             actor_id: user.id,
             type: "confession_unlock",
-            message: `${fanName} unlocked your confession "${confession.title}" for €${price}`,
+            message: `Someone unlocked your confession "${confession.title}" for €${price}`,
             reference_id: confessionId,
         });
     }

@@ -41,7 +41,7 @@ const LockedConfessionCard = ({
         onClick={() => onUnlock(confession)}
         className="w-full py-1.5 rounded-md gradient-pink text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1"
       >
-        <Heart className="w-3 h-3 fill-current" /> Unlock for €{confession.price}
+        <Heart className="w-3 h-3 fill-current" /> Unlock for ${confession.price}
       </button>
     </div>
   );

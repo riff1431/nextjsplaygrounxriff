@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { X, Wallet, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -41,13 +41,6 @@ export default function SpendConfirmModal({
     const [done, setDone] = useState(false);
     const insufficient = walletBalance < amount;
 
-    useEffect(() => {
-        if (isOpen) {
-            setLoading(false);
-            setDone(false);
-        }
-    }, [isOpen]);
-
     if (!isOpen) return null;
 
     const handleConfirm = async () => {
@@ -58,7 +51,6 @@ export default function SpendConfirmModal({
             setDone(true);
             setTimeout(() => {
                 setDone(false);
-                setLoading(false);
                 onClose();
             }, 1200);
         } catch {
@@ -137,7 +129,7 @@ export default function SpendConfirmModal({
                                 value={inputValue}
                                 onChange={(e) => onInputChange?.(e.target.value)}
                                 placeholder={inputPlaceholder}
-                                className="w-full bg-white/10 border border-white/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-emerald-400 font-medium"
+                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400"
                             />
                         </div>
                     )}

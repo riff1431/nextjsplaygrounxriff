@@ -83,13 +83,11 @@ export async function POST(
 
     // Notification
     if (creatorId) {
-        const { data: fanProfile } = await supabase.from("profiles").select("display_name, username").eq("id", user.id).single();
-        const fanName = fanProfile?.display_name || fanProfile?.username || user.email?.split("@")[0] || "A fan";
         await supabase.from("notifications").insert({
             user_id: creatorId,
             actor_id: user.id,
             type: "confession_bid",
-            message: `${fanName} bid €${amount} on "${confession.title}"`,
+            message: `Someone bid €${amount} on "${confession.title}"`,
             reference_id: confessionId,
         });
     }

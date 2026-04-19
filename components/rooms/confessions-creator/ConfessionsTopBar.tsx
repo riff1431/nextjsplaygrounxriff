@@ -1,19 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, DollarSign, ArrowLeft, StopCircle } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Heart, DollarSign, ArrowLeft, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 
 const ConfessionsTopBar = () => {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const sessionId = searchParams.get("sessionId");
     const { user } = useAuth();
     const supabase = createClient();
     const [stats, setStats] = useState({ fans: 0, confessions: 0, earned: 0 });
-    const [roomId, setRoomId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!user) return;
@@ -28,7 +25,6 @@ const ConfessionsTopBar = () => {
                 .maybeSingle();
 
             if (!room) return;
-            setRoomId(room.id);
 
             // Get confession request count
             const { count: reqCount } = await supabase
@@ -77,24 +73,14 @@ const ConfessionsTopBar = () => {
         return () => { supabase.removeChannel(channel); };
     }, [user]);
 
-    const handleEndSession = async () => {
-        if (!roomId || !confirm("End this session?")) return;
-        
-        await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId);
-        if (sessionId) {
-            await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" }).catch(() => { });
-        }
-        router.push("/rooms/confessions-creator");
-    };
-
     return (
         <div className="flex items-center justify-between px-6 py-3">
             <button
-                onClick={handleEndSession}
-                className="glass-panel px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-white/10 transition-colors border border-white/20"
+                onClick={() => router.push("/home")}
+                className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
             >
-                <StopCircle className="h-5 w-5 text-red-500" />
-                <span className="font-medium text-white/80">End Session</span>
+                <ArrowLeft className="h-5 w-5" />
+                <span className="font-medium">Back</span>
             </button>
             <h1 className="conf-font-pacifico pl-40 text-4xl text-white tracking-wide">Confession Room</h1>
             <div className="flex items-center gap-6">

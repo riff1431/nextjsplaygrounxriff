@@ -136,7 +136,7 @@ const LiveChatBox = ({ roomId, className }: LiveChatBoxProps) => {
     };
 
     return (
-        <div className={`neon-glass-card flex flex-col overflow-hidden ${className || ""}`}>
+        <div className={`neon-glass-card flex flex-col ${className || ""}`}>
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
                 <MessageSquare className="w-4 h-4 text-rose-400" />

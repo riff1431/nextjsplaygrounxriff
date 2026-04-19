@@ -42,26 +42,20 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
     const handleSend = async () => {
         if (!pending || !roomId) return;
         try {
-            // Voice notes, private questions, and mini chats map to incoming requests, NOT reactions!
-            if (["voice_note_boost", "private_question", "mini_chat"].includes(pending.reactionType)) {
-                let msgPrefix = pending.label;
-                if (pending.reactionType === "voice_note_boost" && voicePrompt) {
-                    msgPrefix = `${pending.label}: ${voicePrompt}`;
-                }
+            // Voice notes map to incoming requests, NOT reactions!
+            if (pending.reactionType === "voice_note_boost") {
                 const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        message: msgPrefix,
-                        amount: pending.price,
-                        type: pending.reactionType
+                        message: `Voice Note Reply: ${voicePrompt}`,
+                        amount: pending.price 
                     }),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    toast.success(`${pending.label} request sent!`);
+                    toast.success("Voice note request sent!");
                     setVoicePrompt("");
-                    setPending(null);
                     refresh?.();
                 } else {
                     toast.error(data.error || "Failed to send request");
@@ -81,7 +75,6 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             const data = await res.json();
             if (data.success) {
                 toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
-                setPending(null);
                 refresh?.();
                 // Show floating animation
                 if (pending.emoji) {

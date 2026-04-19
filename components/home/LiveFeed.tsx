@@ -173,7 +173,7 @@ export default function LiveFeed() {
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center shadow-lg shadow-pink-500/30 mb-2">
                                             <Lock className="w-7 h-7 text-white" />
                                         </div>
-                                        <span className="text-white font-bold text-lg drop-shadow-md">Unlock for €{stream.unlock_price}</span>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">Unlock for ${stream.unlock_price}</span>
                                     </div>
                                 )}
 

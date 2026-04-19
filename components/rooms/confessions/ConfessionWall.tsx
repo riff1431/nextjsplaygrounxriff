@@ -59,7 +59,7 @@ const LockedConfessionCard = ({
                 className="w-full py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 mt-auto gradient-pink hover:opacity-90"
             >
                 <Heart className="w-3 h-3 fill-current text-white" />
-                <span className="text-white font-bold drop-shadow-sm">Unlock for €{confession.price}</span>
+                <span className="text-white font-bold drop-shadow-sm">Unlock for ${confession.price}</span>
             </button>
         </div>
     );
