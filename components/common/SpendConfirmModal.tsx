@@ -137,7 +137,7 @@ export default function SpendConfirmModal({
                                 value={inputValue}
                                 onChange={(e) => onInputChange?.(e.target.value)}
                                 placeholder={inputPlaceholder}
-                                className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400"
+                                className="w-full bg-white/10 border border-white/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-emerald-400 font-medium"
                             />
                         </div>
                     )}

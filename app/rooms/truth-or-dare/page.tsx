@@ -38,6 +38,7 @@ import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVo
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -162,6 +163,7 @@ function TruthOrDareContent() {
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
     const [showCountdown, setShowCountdown] = useState(false);
+    const [showEntryInfo, setShowEntryInfo] = useState(false);
     const [answerNotification, setAnswerNotification] = useState<{
         fanName: string;
         type: string;
@@ -668,6 +670,14 @@ function TruthOrDareContent() {
         }
     }
 
+    const handleUnlockClick = () => {
+        if (isRoomEntryDismissed("truth-or-dare")) {
+            unlockSession();
+        } else {
+            setShowEntryInfo(true);
+        }
+    };
+
     async function unlockSession() {
         if (!roomId || !sessionInfo) return;
         setUnlocking(true);
@@ -847,7 +857,7 @@ function TruthOrDareContent() {
                                 onClick={
                                     sessionInfo.isPrivate && requestStatus !== 'approved'
                                         ? sendJoinRequest
-                                        : unlockSession
+                                        : handleUnlockClick
                                 }
                                 disabled={unlocking || (sessionInfo.isPrivate && requestStatus === 'pending') || (sessionInfo.isPrivate && requestStatus === 'rejected')}
                                 className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${sessionInfo.isPrivate && requestStatus !== 'approved'
@@ -886,6 +896,24 @@ function TruthOrDareContent() {
                 )
             }
 
+            <RoomEntryInfoModal
+                isOpen={showEntryInfo}
+                onClose={() => setShowEntryInfo(false)}
+                onEnter={() => {
+                    setShowEntryInfo(false);
+                    unlockSession();
+                }}
+                roomType="truth-or-dare"
+                roomLabel="Truth or Dare"
+                roomEmoji="🎭"
+                accentHsl="330, 85%, 55%"
+                accentHslSecondary="280, 80%, 55%"
+                sessionTitle={sessionInfo?.title}
+                sessionDescription="Play Truth or Dare with the creator and other fans!"
+                sessionType={sessionInfo?.isPrivate ? "private" : "public"}
+                entryFee={sessionInfo?.price}
+                costPerMin={sessionInfo?.costPerMin}
+            />
 
             <div
                 className="absolute inset-0 bg-[#0a0a0c] bg-cover bg-center bg-fixed transition-opacity duration-1000"

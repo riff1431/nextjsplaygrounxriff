@@ -176,8 +176,9 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
                     <div className="absolute bottom-[3.5rem] left-2 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg">
                         {EMOJIS.map(emoji => (
                             <button
+                                type="button"
                                 key={emoji}
-                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMessage(prev => prev + emoji); setShowEmojis(false); }}
                                 className="hover:scale-125 transition-transform text-lg"
                             >
                                 {emoji}
@@ -187,7 +188,8 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
                 )}
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setShowEmojis(!showEmojis)}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowEmojis(!showEmojis); }}
                         className="bg-secondary/50 px-3 rounded hover:bg-secondary transition-colors text-muted-foreground flex items-center justify-center"
                     >
                         <Smile className="w-4 h-4" />

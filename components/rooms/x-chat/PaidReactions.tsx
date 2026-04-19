@@ -61,6 +61,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                 if (data.success) {
                     toast.success(`${pending.label} request sent!`);
                     setVoicePrompt("");
+                    setPending(null);
                     refresh?.();
                 } else {
                     toast.error(data.error || "Failed to send request");
@@ -80,6 +81,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             const data = await res.json();
             if (data.success) {
                 toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
+                setPending(null);
                 refresh?.();
                 // Show floating animation
                 if (pending.emoji) {

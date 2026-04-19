@@ -222,8 +222,9 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                     <div className="absolute bottom-[4.5rem] left-4 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg border border-border shadow-2xl bg-[#0f0505]">
                         {["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"].map(emoji => (
                             <button
+                                type="button"
                                 key={emoji}
-                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMessage(prev => prev + emoji); setShowEmojis(false); }}
                                 className="w-8 h-8 flex items-center justify-center hover:bg-gold/20 rounded transition-colors text-lg"
                             >
                                 {emoji}
@@ -234,7 +235,8 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
 
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setShowEmojis(!showEmojis)}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowEmojis(!showEmojis); }}
                         className="glass-card-inner px-3 py-2 transition-colors text-muted-foreground hover:text-foreground"
                     >
                         <Smile size={18} />
