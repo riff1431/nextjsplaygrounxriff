@@ -82,14 +82,14 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
     };
 
     return (
-        <div className="glass-panel rounded-xl p-4 flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-3 shrink-0">
-                <h2 className="font-display text-lg font-bold neon-text tracking-wider">
+        <div className="glass-panel rounded-xl px-3 py-3 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex items-center justify-between mb-2 shrink-0 gap-2 min-w-0">
+                <h2 className="font-display text-sm font-bold neon-text tracking-wider truncate">
                     High Roller Packs
                 </h2>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary transition-all"
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold border border-primary/50 bg-primary/10 hover:bg-primary/20 text-primary transition-all"
                 >
                     <Plus size={12} />
                     Add
@@ -98,12 +98,12 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
 
             {/* Add Pack Form */}
             {showForm && (
-                <form onSubmit={handleAdd} className="mb-3 p-2.5 rounded-lg border border-primary/30 bg-primary/5 flex flex-col gap-2">
+                <form onSubmit={handleAdd} className="mb-2 p-2.5 rounded-lg border border-primary/30 bg-primary/5 flex flex-col gap-2">
                     <input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Pack name (e.g. Diamond Patron)"
-                        className="w-full bg-black/40 border border-primary/40 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-primary/80 transition-all"
                     />
                     <input
                         value={price}
@@ -111,7 +111,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
                         placeholder="Price (€)"
                         type="number"
                         min="1"
-                        className="w-full bg-black/40 border border-primary/40 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-primary/80 transition-all"
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-primary/80 transition-all"
                     />
                     <div className="flex gap-2">
                         <button
@@ -135,32 +135,32 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
             {/* Pack List */}
             <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0">
                 {packs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-white/30 gap-2 py-6">
-                        <Package size={28} className="text-primary/30" />
-                        <span className="text-xs">No packs yet — add one above</span>
+                    <div className="flex flex-col items-center justify-center h-full text-white/30 gap-1.5 py-4">
+                        <Package size={24} className="text-primary/25" />
+                        <span className="text-[11px]">No packs yet — add one above</span>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-2">
                         {packs.map((pack) => (
-                            <div
-                                key={pack.id}
-                                className="relative p-2.5 rounded-lg border border-primary/25 bg-primary/5 group hover:border-primary/50 transition-all"
-                            >
-                                <button
-                                    onClick={() => handleRemove(pack)}
-                                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
-                                >
-                                    <X size={10} className="text-white" />
-                                </button>
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <DollarSign size={12} className="text-primary/70" />
-                                    <span className="text-sm font-black neon-text">
-                                        €{pack.price.toLocaleString()}
-                                    </span>
+                            <div key={pack.id} className="group relative rounded-lg overflow-hidden border border-primary/20 hover:border-primary/50 transition-all"
+                                style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.4) 0%, hsl(var(--primary)/0.04) 100%)" }}
+                                onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 14px hsl(var(--primary)/0.2)")}
+                                onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+                                {/* Left neon accent */}
+                                <div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ background: "linear-gradient(180deg, hsl(var(--primary)/0.8), transparent)" }} />
+                                <div className="pl-3 pr-2 py-2">
+                                    <div className="flex items-baseline gap-0.5 mb-0.5">
+                                        <span className="text-[10px] font-bold text-primary/70">€</span>
+                                        <span className="font-display text-lg font-black" style={{ color: "#fff", textShadow: "0 0 10px hsl(var(--primary)/0.6)" }}>
+                                            {pack.price.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-white/65 leading-tight truncate">{pack.name}</p>
                                 </div>
-                                <span className="text-[10px] font-semibold text-white/70 leading-tight line-clamp-2">
-                                    {pack.name}
-                                </span>
+                                <button onClick={() => handleRemove(pack)}
+                                    className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-red-500/15 text-red-400/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white">
+                                    <X size={9} />
+                                </button>
                             </div>
                         ))}
                     </div>

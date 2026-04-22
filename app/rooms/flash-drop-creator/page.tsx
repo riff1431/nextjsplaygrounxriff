@@ -67,13 +67,13 @@ function FlashdropCreatorStudio() {
                 </div>
 
                 {/* Main Grid */}
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0 overflow-hidden">
                     {/* Left two columns */}
-                    <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-0">
-                            <div className="flex flex-col gap-4 min-h-0">
+                    <div className="lg:col-span-2 flex flex-col gap-3 min-h-0 overflow-hidden">
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0 overflow-hidden">
+                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
                                 {/* Live Stream */}
-                                <div className="rounded-xl overflow-hidden" style={{ height: "200px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "180px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                     {roomId && user ? (
                                         <LiveStreamWrapper
                                             role="host"
@@ -92,7 +92,7 @@ function FlashdropCreatorStudio() {
                                 </div>
                                 <LiveDropBoard roomId={roomId ?? undefined} />
                             </div>
-                            <div className="flex flex-col gap-4 min-h-0">
+                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
                                 <SummaryBox roomId={roomId} />
                                 <HighRollerPacks roomId={roomId} />
                             </div>

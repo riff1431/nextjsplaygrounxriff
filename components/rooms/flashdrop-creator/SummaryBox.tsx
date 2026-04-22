@@ -9,55 +9,109 @@ interface SummaryStats {
     packs: number;
     bundles: number;
     pendingRequests: number;
+    tips: number;
 }
 
 interface SummaryBoxProps {
     roomId: string | null;
 }
 
+/** A compact neon-bordered stat tile */
+function StatTile({ label, value, roomId }: { label: string; value: number; roomId: string | null }) {
+    return (
+        <div className="flex flex-col gap-0.5 min-w-0">
+            <span
+                className="text-[9px] font-bold tracking-widest uppercase truncate"
+                style={{ color: "hsl(var(--primary))", textShadow: "0 0 6px hsl(var(--primary)/0.6)" }}
+            >
+                {label}
+            </span>
+            <div
+                className="rounded-lg flex items-center justify-center w-full"
+                style={{
+                    height: "46px",
+                    background: "rgba(0,0,0,0.35)",
+                    border: "2px solid hsl(var(--primary)/0.85)",
+                    boxShadow: "0 0 10px hsl(var(--primary)/0.4), inset 0 0 8px hsl(var(--primary)/0.07)",
+                }}
+            >
+                <span
+                    className="font-display text-xl font-black"
+                    style={{
+                        color: "#ffffff",
+                        textShadow: "0 0 12px hsl(var(--primary)/0.7)",
+                        letterSpacing: "-0.02em",
+                    }}
+                >
+                    {roomId ? value : "—"}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+/** Spacer column between stat pairs */
+function StatSpacer() {
+    return <div className="w-2 shrink-0" />
+}
+
 const SummaryBox = ({ roomId }: SummaryBoxProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState<SummaryStats>({
-        fans: 0, drops: 0, packs: 0, bundles: 0, pendingRequests: 0
+        fans: 0, drops: 0, packs: 0, bundles: 0, pendingRequests: 0, tips: 0
     });
 
     const fetchStats = useCallback(async () => {
         if (!roomId) return;
 
         try {
-            // Drops count
             const { count: dropsCount } = await supabase
                 .from("flash_drops")
-                .select("*", { count: 'exact', head: true })
+                .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId)
                 .eq("status", "Live");
 
-            // Packs count
             const { count: packsCount } = await supabase
                 .from("flash_drop_roller_packs")
-                .select("*", { count: 'exact', head: true })
+                .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId);
 
-            // Bundles count
             const { count: bundlesCount } = await supabase
                 .from("flash_drop_bundles")
-                .select("*", { count: 'exact', head: true })
+                .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId);
 
-            // Pending requests count
             const { count: pendingCount } = await supabase
                 .from("flash_drop_requests")
-                .select("*", { count: 'exact', head: true })
+                .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId)
                 .eq("status", "pending");
 
-            // Unique fans from requests
             const { data: fanData } = await supabase
                 .from("flash_drop_requests")
                 .select("fan_id")
                 .eq("room_id", roomId);
 
-            const uniqueFans = new Set(fanData?.map(r => r.fan_id) ?? []).size;
+            const uniqueFans = new Set(fanData?.map((r) => r.fan_id) ?? []).size;
+
+            // Tips: sum from active session for this room
+            let totalTips = 0;
+            const { data: activeSession } = await supabase
+                .from("room_sessions")
+                .select("id")
+                .eq("room_id", roomId)
+                .eq("status", "active")
+                .order("started_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (activeSession) {
+                const { data: tipRows } = await supabase
+                    .from("room_session_tips")
+                    .select("amount")
+                    .eq("session_id", activeSession.id);
+                totalTips = (tipRows ?? []).reduce((sum, t) => sum + Number(t.amount), 0);
+            }
 
             setStats({
                 fans: uniqueFans,
@@ -65,6 +119,7 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
                 packs: packsCount || 0,
                 bundles: bundlesCount || 0,
                 pendingRequests: pendingCount || 0,
+                tips: totalTips,
             });
         } catch (err) {
             console.error("[SummaryBox] Error fetching stats:", err);
@@ -74,53 +129,57 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
     useEffect(() => {
         if (!roomId) return;
         fetchStats();
-
         const channel = supabase
             .channel(`summary-${roomId}`)
-            .on("postgres_changes", {
-                event: "*", schema: "public", table: "flash_drops", filter: `room_id=eq.${roomId}`,
-            }, fetchStats)
-            .on("postgres_changes", {
-                event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}`,
-            }, fetchStats)
-            .on("postgres_changes", {
-                event: "*", schema: "public", table: "flash_drop_roller_packs", filter: `room_id=eq.${roomId}`,
-            }, fetchStats)
-            .on("postgres_changes", {
-                event: "*", schema: "public", table: "flash_drop_bundles", filter: `room_id=eq.${roomId}`,
-            }, fetchStats)
+            .on("postgres_changes", { event: "*", schema: "public", table: "flash_drops", filter: `room_id=eq.${roomId}` }, fetchStats)
+            .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` }, fetchStats)
+            .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_roller_packs", filter: `room_id=eq.${roomId}` }, fetchStats)
+            .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_bundles", filter: `room_id=eq.${roomId}` }, fetchStats)
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "room_session_tips" }, fetchStats)
             .subscribe();
-
         return () => { supabase.removeChannel(channel); };
     }, [roomId, fetchStats]);
 
-    const items = [
-        { label: "Fans", value: stats.fans },
-        { label: "Drops", value: stats.drops },
-        { label: "Packs", value: stats.packs },
-        { label: "Bundles", value: stats.bundles },
-        { label: "Requests", value: stats.pendingRequests },
-    ];
-
     return (
-        <div className="glass-panel rounded-xl p-4 flex-1 flex flex-col min-h-0">
-            <h2 className="font-display text-lg font-bold neon-text mb-3 tracking-wider shrink-0">
+        <div className="glass-panel rounded-xl px-3 py-3 flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Title */}
+            <h2 className="font-display text-sm font-bold neon-text mb-2 tracking-wider shrink-0">
                 Summary Box
             </h2>
-            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0">
-                <div className="grid grid-cols-2 gap-2">
-                    {items.map((item) => (
-                        <div key={item.label} className="flex flex-col gap-1">
-                            <span className="text-xs font-semibold neon-text tracking-wide uppercase">
-                                {item.label}
-                            </span>
-                            <div className="glass-card rounded-lg flex items-center justify-center h-16 w-full border border-primary/20">
-                                <span className="font-display text-2xl font-black text-primary">
-                                    {roomId ? item.value : "—"}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+
+            {/* Stats grid — 3 rows of 2 */}
+            <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+                {/* Row 1: FANS · DROPS */}
+                <div className="flex items-end gap-1.5">
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Fans" value={stats.fans} roomId={roomId} />
+                    </div>
+                    <StatSpacer />
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Drops" value={stats.drops} roomId={roomId} />
+                    </div>
+                </div>
+
+                {/* Row 2: PACKS · BUNDLES */}
+                <div className="flex items-end gap-1.5">
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Packs" value={stats.packs} roomId={roomId} />
+                    </div>
+                    <StatSpacer />
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Bundles" value={stats.bundles} roomId={roomId} />
+                    </div>
+                </div>
+
+                {/* Row 3: REQUESTS · TIPS */}
+                <div className="flex items-end gap-1.5">
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Requests" value={stats.pendingRequests} roomId={roomId} />
+                    </div>
+                    <StatSpacer />
+                    <div className="flex-1 min-w-0">
+                        <StatTile label="Tips (€)" value={stats.tips} roomId={roomId} />
+                    </div>
                 </div>
             </div>
         </div>

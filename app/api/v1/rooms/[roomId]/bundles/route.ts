@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET  - List all bundles for a room
- * POST - Creator adds a bundle { name, subtitle, price }
+ * POST - Creator adds a bundle { name, subtitle, price, media_url?, media_type? }
  * DELETE - Creator removes a bundle { bundleId }
  */
 
@@ -34,7 +34,7 @@ export async function POST(
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { name, subtitle, price } = body;
+    const { name, subtitle, price, media_url, media_type } = body;
 
     if (!name || !price || price <= 0) {
         return NextResponse.json({ error: "Name and valid price required" }, { status: 400 });
@@ -59,6 +59,8 @@ export async function POST(
             name,
             subtitle: subtitle || null,
             price,
+            media_url: media_url || null,
+            media_type: media_type || null,
         })
         .select()
         .single();

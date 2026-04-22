@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { CheckCircle2, XCircle, Clock, Paperclip, User } from "lucide-react";
 
 interface DropRequest {
     id: string;
@@ -11,6 +12,12 @@ interface DropRequest {
     status: "pending" | "accepted" | "declined";
 }
 
+const statusConfig = {
+    pending: { label: "Pending", icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/30" },
+    accepted: { label: "Accepted", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
+    declined: { label: "Declined", icon: XCircle, color: "text-red-400", bg: "bg-red-400/10 border-red-400/30" },
+};
+
 const DropRequests = ({ className = "", roomId }: { className?: string; roomId?: string }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<DropRequest[]>([]);
@@ -19,7 +26,6 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
 
     useEffect(() => {
         if (!roomId) return;
-
         async function fetchRequests() {
             const { data } = await supabase
                 .from("flash_drop_requests")
@@ -33,23 +39,14 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
 
         const channel = supabase
             .channel(`flash-drop-requests-${roomId}`)
-            .on("postgres_changes", {
-                event: "INSERT",
-                schema: "public",
-                table: "flash_drop_requests",
-                filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
-                setRequests((prev) => [payload.new as DropRequest, ...prev]);
-            })
+            .on("postgres_changes", { event: "INSERT", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` },
+                (payload) => setRequests(prev => [payload.new as DropRequest, ...prev]))
             .subscribe();
-
         return () => { supabase.removeChannel(channel); };
     }, [roomId]);
 
     const handleAction = async (id: string, action: "accepted" | "declined", mediaUrl?: string) => {
-        setRequests((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, status: action } : r))
-        );
+        setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));
         if (roomId) {
             await fetch(`/api/v1/rooms/${roomId}/flash-drops/request`, {
                 method: "PATCH",
@@ -65,101 +62,88 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
             const formData = new FormData();
             formData.append("file", file);
             formData.append("folder", `flash-drops-delivery/${roomId}`);
-
-            const res = await fetch("/api/v1/storage/upload", {
-                method: "POST",
-                body: formData,
-            });
+            const res = await fetch("/api/v1/storage/upload", { method: "POST", body: formData });
             const data = await res.json();
-            if (data.success) {
-                await handleAction(id, "accepted", data.publicUrl);
-                setUploadingFor(null);
-            }
-        } catch (e) {
-            console.error(e);
-        }
+            if (data.success) { await handleAction(id, "accepted", data.publicUrl); setUploadingFor(null); }
+        } catch (e) { console.error(e); }
         setDelivering(false);
     };
 
     return (
-        <div className={`glass-panel rounded-xl p-0 flex flex-col min-h-0 ${className}`}>
-            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 rounded-lg">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-border">
-                            <th className="text-left py-2 px-2 font-display text-xs text-muted-foreground tracking-wider">
-                                Fan Name
-                            </th>
-                            <th className="text-left py-2 px-2 font-display text-xs text-muted-foreground tracking-wider">
-                                Request
-                            </th>
-                            <th className="text-center py-2 px-2 font-display text-xs text-muted-foreground tracking-wider">
-                                Accept or Decline
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {requests.length === 0 && (
-                            <tr><td colSpan={3} className="py-4 text-center text-muted-foreground text-xs">No requests yet</td></tr>
-                        )}
-                        {requests.map((req) => (
-                            <tr key={req.id} className="border-b border-border/50">
-                                <td className="py-2.5 px-2 font-semibold text-foreground">
-                                    {req.fan_name}
-                                </td>
-                                <td className="py-2.5 px-2 text-muted-foreground">
-                                    {req.content} · €{req.amount}
-                                </td>
-                                <td className="py-2.5 px-2">
-                                    {req.status === "pending" ? (
-                                        <div className="flex gap-4 justify-center items-center">
-                                            {uploadingFor === req.id ? (
-                                                <div className="flex items-center gap-2">
-                                                    <label className={`px-3 py-1 rounded text-xs font-bold font-display tracking-wider bg-primary text-white cursor-pointer transition-all ${delivering ? 'opacity-50' : 'hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.5)]'}`}>
-                                                        {delivering ? "Uploading..." : "Attach File"}
-                                                        <input 
-                                                            type="file" 
-                                                            className="hidden" 
-                                                            disabled={delivering}
-                                                            onChange={(e) => {
-                                                                if(e.target.files?.[0]) handleDeliveryUpload(req.id, e.target.files[0]);
-                                                            }} 
-                                                        />
+        <div className={`flex flex-col min-h-0 ${className}`}>
+            {/* Column headers */}
+            <div className="grid grid-cols-[1fr_1.4fr_auto] gap-2 px-3 py-1.5 border-b border-white/8">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Fan</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Request</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30 text-center w-28">Action</span>
+            </div>
+
+            {/* Request rows */}
+            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0">
+                {requests.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 text-white/20">
+                        <Clock size={22} className="opacity-30" />
+                        <span className="text-[11px]">No requests yet</span>
+                    </div>
+                ) : (
+                    <div className="flex flex-col divide-y divide-white/5">
+                        {requests.map((req) => {
+                            const cfg = statusConfig[req.status];
+                            const StatusIcon = cfg.icon;
+                            return (
+                                <div key={req.id}
+                                    className="grid grid-cols-[1fr_1.4fr_auto] gap-2 items-center px-3 py-2 hover:bg-white/3 transition-colors">
+                                    {/* Fan name */}
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <User size={10} className="text-primary/70" />
+                                        </div>
+                                        <span className="text-[11px] font-semibold text-white/85 truncate">{req.fan_name}</span>
+                                    </div>
+
+                                    {/* Content + amount */}
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] text-white/70 truncate leading-tight">{req.content}</p>
+                                        <p className="text-[10px] font-bold neon-text">€{req.amount}</p>
+                                    </div>
+
+                                    {/* Action area */}
+                                    <div className="w-28 flex justify-center">
+                                        {req.status === "pending" ? (
+                                            uploadingFor === req.id ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <label className={`px-2 py-1 rounded-lg text-[10px] font-bold text-white cursor-pointer transition-all ${delivering ? "opacity-50" : "bg-primary/70 hover:bg-primary/90"}`}>
+                                                        {delivering ? "…" : "Attach"}
+                                                        <input type="file" className="hidden" disabled={delivering}
+                                                            onChange={e => { if (e.target.files?.[0]) handleDeliveryUpload(req.id, e.target.files[0]); }} />
                                                     </label>
-                                                    <button onClick={() => setUploadingFor(null)} disabled={delivering} className="text-xs text-muted-foreground hover:text-white">Cancel</button>
+                                                    <button onClick={() => setUploadingFor(null)} disabled={delivering}
+                                                        className="text-[10px] text-white/40 hover:text-white">✕</button>
                                                 </div>
                                             ) : (
-                                                <>
-                                                    <button
-                                                        onClick={() => setUploadingFor(req.id)}
-                                                        className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider text-primary border border-primary hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.5)] transition-all"
-                                                    >
-                                                        Accept & Deliver
+                                                <div className="flex gap-1.5">
+                                                    <button onClick={() => setUploadingFor(req.id)}
+                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary border border-primary/60 hover:bg-primary/20 hover:shadow-[0_0_10px_hsl(var(--primary)/0.3)] transition-all">
+                                                        <Paperclip size={9} /> Accept
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleAction(req.id, "declined")}
-                                                        className="px-3 py-1 rounded text-xs font-bold font-display tracking-wider bg-secondary text-secondary-foreground border border-border hover:border-primary transition-all"
-                                                    >
+                                                    <button onClick={() => handleAction(req.id, "declined")}
+                                                        className="px-2 py-1 rounded-lg text-[10px] font-bold text-white/40 border border-white/10 hover:border-red-400/40 hover:text-red-400 transition-all">
                                                         Decline
                                                     </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <span
-                                            className={`text-xs font-display font-bold tracking-wider ${req.status === "accepted"
-                                                ? "text-primary neon-text"
-                                                : "text-muted-foreground"
-                                                }`}
-                                        >
-                                            {req.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
-                                        </span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                                </div>
+                                            )
+                                        ) : (
+                                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.color}`}>
+                                                <StatusIcon size={9} />
+                                                {cfg.label}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );
