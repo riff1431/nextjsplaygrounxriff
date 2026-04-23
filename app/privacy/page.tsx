@@ -2,15 +2,12 @@
 
 import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
+import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { ShieldCheck, Lock, Eye, UserCheck, Database, Globe, Scale } from "lucide-react";
 
-export default function PrivacyPage() {
+function StaticPrivacyContent() {
   return (
-    <InfoPageLayout 
-      title="Privacy Policy" 
-      subtitle="Last Updated: April 1st 2026"
-    >
-      <div className="space-y-12">
+    <div className="space-y-12">
         <section className="bg-white/5 p-6 rounded-2xl border border-white/10">
           <h2 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-cyan-400" />
@@ -37,7 +34,7 @@ export default function PrivacyPage() {
           </h2>
           <div className="mt-4 space-y-4 text-gray-300 leading-relaxed">
             <p>
-              This Privacy Policy explains how PlayGroundX Digital Ltd (“PlayGroundX”, “we”, “us”, “our”) collects, uses, and protects personal data in accordance with the **EU General Data Protection Regulation (GDPR) (EU) 2016/679** and Cyprus data protection laws.
+              This Privacy Policy explains how PlayGroundX Digital Ltd ("PlayGroundX", "we", "us", "our") collects, uses, and protects personal data in accordance with the **EU General Data Protection Regulation (GDPR) (EU) 2016/679** and Cyprus data protection laws.
             </p>
             <p>
               By using PlayGroundX, you acknowledge this Policy.
@@ -174,6 +171,19 @@ export default function PrivacyPage() {
           </div>
         </section>
       </div>
+  );
+}
+
+export default function PrivacyPage() {
+  return (
+    <InfoPageLayout 
+      title="Privacy Policy" 
+      subtitle="Last Updated: April 1st 2026"
+    >
+      <DynamicPageContent 
+        pageKey="page_privacy_policy"
+        fallback={<StaticPrivacyContent />}
+      />
     </InfoPageLayout>
   );
 }

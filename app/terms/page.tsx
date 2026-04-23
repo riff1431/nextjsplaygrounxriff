@@ -2,6 +2,7 @@
 
 import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
+import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { ShieldCheck, Gavel, Scale, AlertCircle, Coins, HeartHandshake } from "lucide-react";
 
 export default function TermsPage() {
@@ -10,6 +11,7 @@ export default function TermsPage() {
       title="Terms of Service" 
       subtitle="Last Updated: April 1st 2026"
     >
+      <DynamicPageContent pageKey="page_terms_of_service" fallback={
       <div className="space-y-12">
         <section className="bg-white/5 p-6 rounded-2xl border border-white/10">
           <h2 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
@@ -211,6 +213,7 @@ export default function TermsPage() {
           </p>
         </section>
       </div>
+      } />
     </InfoPageLayout>
   );
 }

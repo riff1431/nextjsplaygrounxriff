@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { Search, User } from "lucide-react";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 type Conversation = {
     id: string;
@@ -98,6 +99,7 @@ export default function ConversationList({ conversations, activeId, onSelect, cu
                                     <span className={`text-sm truncate ${isUnread ? "font-bold text-white" : "font-medium text-gray-200"}`}>
                                         {other?.username || "Unknown"}
                                     </span>
+                                    <UserBadgeDisplay userId={other?.user_id || ""} />
                                     {conv.last_message && (
                                         <span className="text-[10px] text-gray-500 flex-shrink-0">
                                             {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false }).replace('about ', '')}

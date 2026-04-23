@@ -34,6 +34,19 @@ export interface Profile {
         display_name: string;
         badge_color: string | null;
         badge_icon: string | null;
+        badge_icon_url?: string | null;
+    } | null;
+    fan_membership_plans?: {
+        display_name: string;
+        badge_color: string | null;
+        name: string | null;
+        badge_icon_url?: string | null;
+    } | null;
+    creator_levels?: {
+        display_name: string;
+        badge_color: string | null;
+        name: string | null;
+        badge_icon_url?: string | null;
     } | null;
 }
 
@@ -227,7 +240,7 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                     {profile.full_name || profile.username || "Anonymous"}
                                 </h1>
 
-                                {/* Account Type Badge (e.g. Sugar Daddy/Mommy) */}
+                                {/* Account Type Badge (e.g. Suga Daddy/Mama) */}
                                 {profile.account_types && (
                                     <span
                                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-lg"
@@ -238,13 +251,73 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                                             boxShadow: `0 0 15px ${profile.account_types.badge_color || '#ec4899'}30`
                                         }}
                                     >
-                                        <span>{profile.account_types.badge_icon || '✨'}</span>
+                                        {profile.account_types.badge_icon_url ? (
+                                            <img src={profile.account_types.badge_icon_url} alt="" className="w-4 h-4 object-contain" />
+                                        ) : (
+                                            <span>{(() => {
+                                                const n = profile.account_types!.display_name.toLowerCase();
+                                                if (n.includes('daddy')) return '💎';
+                                                if (n.includes('mama') || n.includes('mommy') || n.includes('momma')) return '👸';
+                                                if (n.includes('baby')) return '🍼';
+                                                return profile.account_types!.badge_icon || '✨';
+                                            })()}</span>
+                                        )}
                                         {profile.account_types.display_name}
                                     </span>
                                 )}
 
-                                {/* Creator Level Badge */}
-                                {profile.role === 'creator' && (
+                                {/* Fan Membership Tier Badge (e.g. Gold/Silver/Bronze) */}
+                                {profile.fan_membership_plans && (
+                                    <span
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-lg"
+                                        style={{
+                                            backgroundColor: `${profile.fan_membership_plans.badge_color || '#eab308'}20`,
+                                            color: profile.fan_membership_plans.badge_color || '#eab308',
+                                            borderColor: `${profile.fan_membership_plans.badge_color || '#eab308'}40`,
+                                            boxShadow: `0 0 15px ${profile.fan_membership_plans.badge_color || '#eab308'}30`
+                                        }}
+                                    >
+                                        {profile.fan_membership_plans.badge_icon_url ? (
+                                            <img src={profile.fan_membership_plans.badge_icon_url} alt="" className="w-4 h-4 object-contain" />
+                                        ) : (
+                                            <span>{(() => {
+                                                const n = (profile.fan_membership_plans!.name || '').toLowerCase();
+                                                if (n.includes('gold')) return '👑';
+                                                if (n.includes('silver')) return '🥈';
+                                                if (n.includes('bronze')) return '🥉';
+                                                return '⭐';
+                                            })()}</span>
+                                        )}
+                                        {profile.fan_membership_plans.display_name}
+                                    </span>
+                                )}
+
+                                {/* Creator Level Badge (from DB or computed) */}
+                                {profile.creator_levels ? (
+                                    <span
+                                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-lg"
+                                        style={{
+                                            backgroundColor: `${profile.creator_levels.badge_color || '#eab308'}20`,
+                                            color: profile.creator_levels.badge_color || '#eab308',
+                                            borderColor: `${profile.creator_levels.badge_color || '#eab308'}40`,
+                                            boxShadow: `0 0 10px ${profile.creator_levels.badge_color || '#eab308'}20`
+                                        }}
+                                    >
+                                        {profile.creator_levels.badge_icon_url ? (
+                                            <img src={profile.creator_levels.badge_icon_url} alt="" className="w-4 h-4 object-contain" />
+                                        ) : (
+                                            <span>{(() => {
+                                                const n = (profile.creator_levels!.name || '').toLowerCase();
+                                                if (n.includes('rookie')) return '🌱';
+                                                if (n.includes('rising')) return '⭐';
+                                                if (n.includes('star')) return '🌟';
+                                                if (n.includes('elite') || n.includes('vip')) return '👑';
+                                                return '✨';
+                                            })()}</span>
+                                        )}
+                                        {profile.creator_levels.display_name}
+                                    </span>
+                                ) : profile.role === 'creator' && (
                                     <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-[0_0_10px_rgba(234,179,8,0.2)]">
                                         {levelName}
                                     </Badge>

@@ -17,13 +17,20 @@ export async function GET(request: NextRequest) {
     }
 
     const searchTerm = `%${q.trim()}%`;
+    const roleFilter = request.nextUrl.searchParams.get("role");
 
-    const { data: users, error } = await supabase
+    let query = supabase
         .from("profiles")
-        .select("id, username, full_name, avatar_url")
+        .select("id, username, full_name, avatar_url, role")
         .neq("id", user.id)
-        .or(`full_name.ilike.${searchTerm},username.ilike.${searchTerm}`)
+        .or(`full_name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`)
         .limit(10);
+
+    if (roleFilter) {
+        query = query.eq("role", roleFilter);
+    }
+
+    const { data: users, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

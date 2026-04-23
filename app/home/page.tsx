@@ -39,6 +39,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { activeCreators, CreatorCard } from "@/components/data/activeCreators";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -347,8 +348,11 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                                 <User className="w-8 h-8 text-pink-300" />
                             </div>
                         )}
-                        <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
-                            {creator.name}
+                        <div className="flex items-center gap-1 overflow-hidden">
+                            <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
+                                {creator.name}
+                            </div>
+                            {creator.userId && <UserBadgeDisplay userId={creator.userId} />}
                         </div>
                     </div>
 

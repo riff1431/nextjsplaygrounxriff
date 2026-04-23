@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface Comment {
     id: string;
@@ -127,10 +128,11 @@ export default function CommentsModal({
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 space-y-1">
-                                    <div className="flex items-baseline justify-between">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="font-semibold text-sm text-zinc-200">
                                             {comment.user.username}
                                         </span>
+                                        <UserBadgeDisplay userId={comment.user.id} />
                                         <span className="text-[10px] text-zinc-500">
                                             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                                         </span>

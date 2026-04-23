@@ -31,7 +31,7 @@ export default function UserBadge({
 
         if (type === "account_type") {
             if (name.includes("daddy")) return "💎";
-            if (name.includes("mommy") || name.includes("momma")) return "👸";
+            if (name.includes("mommy") || name.includes("momma") || name.includes("mama")) return "👸";
         }
 
         if (type === "membership") {

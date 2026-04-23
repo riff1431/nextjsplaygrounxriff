@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import CommentsModal from "./CommentsModal";
 import UnlockPostModal from "./UnlockPostModal";
 import ReportModal from "@/components/common/ReportModal";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -235,8 +236,9 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                         <AvatarFallback>{user.username?.[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <div className="font-semibold text-white text-sm flex items-center gap-2">
+                        <div className="font-semibold text-white text-sm flex items-center gap-2 flex-wrap">
                             {user.full_name || user.username}
+                            <UserBadgeDisplay userId={user.id || post.user_id} />
                             {post.is_paid && (
                                 <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-pink-500/20">
                                     Premium

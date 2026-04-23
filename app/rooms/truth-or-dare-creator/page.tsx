@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles } from "lucide-react";
+import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { playNotificationSound, playMoneySound } from "@/utils/sounds";
@@ -18,6 +18,7 @@ import EarningsModal from "@/app/creator/rooms/truth-or-dare/components/Earnings
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 import BrandLogo from "@/components/common/BrandLogo";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
+import TodInviteCreatorModal from "@/components/rooms/truth-or-dare-creator/TodInviteCreatorModal";
 
 // ---------- Pricing / constants ----------
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -116,6 +117,11 @@ export default function TruthOrDareCreatorPage() {
     const [showStartModal, setShowStartModal] = useState(false);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false); // Moved here
     const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+    // Collab invite state
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
 
     const startCountdown = () => {
@@ -230,10 +236,22 @@ export default function TruthOrDareCreatorPage() {
                     // Do NOT auto-enter studio. Allow user to "Resume".
                     // setIsInStudio(false); 
                     setShowStartModal(false);
+
+                    // Find active session ID from truth_dare_sessions for invite API
+                    const { data: activeSession } = await supabase
+                        .from('truth_dare_sessions')
+                        .select('id')
+                        .eq('room_id', rid)
+                        .eq('status', 'active')
+                        .order('started_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    if (activeSession) setActiveSessionId(activeSession.id);
                 } else {
                     setSessionActive(false);
                     setIsInStudio(false);
                     setShowStartModal(false); // Show Dashboard first
+                    setActiveSessionId(null);
                 }
             }
 
@@ -871,6 +889,11 @@ export default function TruthOrDareCreatorPage() {
 
             toast.success(`Session "${sessionForm.title}" is now live! 🎭`);
 
+            // Track active session ID for invite API
+            if (data.session?.id) {
+                setActiveSessionId(data.session.id);
+            }
+
             // Optimistic update
             setSessionActive(true);
             setSessionInfo({
@@ -906,11 +929,34 @@ export default function TruthOrDareCreatorPage() {
                 setSessionInfo(null);
                 setShowStartModal(false); // Return to Dashboard
                 setShowExitConfirmation(false); // Close Modal
+                setActiveSessionId(null);
+                setSlotInvites([]);
             }
         } catch (e) {
             console.error(e);
         }
     }
+
+    // Fetch invites for active session + realtime subscription
+    useEffect(() => {
+        if (!activeSessionId) { setSlotInvites([]); return; }
+        async function fetchInvites() {
+            try {
+                const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${activeSessionId}/invite-creator`);
+                const data = await res.json();
+                if (data.invites) setSlotInvites(data.invites);
+            } catch (e) { console.error('Failed to fetch invites:', e); }
+        }
+        fetchInvites();
+
+        const inviteChannel = supabase.channel(`invites_${activeSessionId}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_invite_splits', filter: `session_id=eq.${activeSessionId}` }, () => {
+                fetchInvites();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(inviteChannel); };
+    }, [activeSessionId]);
 
     // Navigation Intercept is handled by state above
 
@@ -1138,33 +1184,73 @@ export default function TruthOrDareCreatorPage() {
                                     />
                                 </div>
                             </div>
-                            {/* Vid 2 — Empty slot */}
-                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div className="text-center">
-                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
-                                        <Video className="w-4 h-4 text-white/20" />
-                                    </div>
-                                    <span className="text-[10px] text-white/20 font-medium">Vid 2</span>
-                                </div>
-                            </div>
-                            {/* Vid 3 — Empty slot */}
-                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div className="text-center">
-                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
-                                        <Video className="w-4 h-4 text-white/20" />
-                                    </div>
-                                    <span className="text-[10px] text-white/20 font-medium">Vid 3</span>
-                                </div>
-                            </div>
-                            {/* Vid 4 — Empty slot */}
-                            <div className="relative flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div className="text-center">
-                                    <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)' }}>
-                                        <Video className="w-4 h-4 text-white/20" />
-                                    </div>
-                                    <span className="text-[10px] text-white/20 font-medium">Vid 4</span>
-                                </div>
-                            </div>
+                            {/* Vid Slots 2-4 — Clickable Invite Slots */}
+                            {[0, 1, 2].map((slotIdx) => {
+                                const invite = slotInvites[slotIdx];
+                                const borderStyle = slotIdx === 0
+                                    ? { borderLeft: '1px solid rgba(255,255,255,0.06)' }
+                                    : slotIdx === 1
+                                    ? { borderTop: '1px solid rgba(255,255,255,0.06)' }
+                                    : { borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' };
+                                return (
+                                    <button
+                                        key={`slot-${slotIdx}`}
+                                        onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
+                                        className="relative flex items-center justify-center transition-all group"
+                                        style={{
+                                            background: invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
+                                            ...borderStyle,
+                                            cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
+                                        }}
+                                    >
+                                        {invite && invite.status !== 'declined' ? (
+                                            /* Invited creator display */
+                                            <div className="text-center">
+                                                <div className={`w-12 h-12 rounded-full mx-auto mb-1.5 overflow-hidden border-2 ${
+                                                    invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
+                                                }`}>
+                                                    {invite.invited?.avatar_url ? (
+                                                        <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-sm font-bold">
+                                                            {(invite.invited?.full_name || invite.invited?.username || '?')[0].toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className="text-[10px] text-white/60 font-medium block truncate max-w-[80px] mx-auto">
+                                                    {invite.invited?.full_name || invite.invited?.username || 'Creator'}
+                                                </span>
+                                                <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase mt-0.5 px-1.5 py-0.5 rounded-full ${
+                                                    invite.status === 'accepted'
+                                                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                                        : 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/25'
+                                                }`}>
+                                                    {invite.status === 'accepted' ? (
+                                                        <><CheckCircle2 className="w-2.5 h-2.5" /> Joined</>
+                                                    ) : (
+                                                        <><Clock className="w-2.5 h-2.5" /> Pending</>
+                                                    )}
+                                                </span>
+                                                <span className="text-[9px] text-pink-400/60 block mt-0.5">{invite.invited_split_pct}% split</span>
+                                            </div>
+                                        ) : (
+                                            /* Empty invite slot */
+                                            <div className="text-center">
+                                                <div
+                                                    className="w-12 h-12 rounded-full mx-auto mb-1.5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+                                                    style={{
+                                                        background: 'rgba(236,72,153,0.08)',
+                                                        border: '2px dashed rgba(236,72,153,0.25)',
+                                                    }}
+                                                >
+                                                    <Plus className="w-5 h-5 text-pink-400/50 group-hover:text-pink-400 transition" />
+                                                </div>
+                                                <span className="text-[10px] text-white/25 font-medium group-hover:text-pink-300/60 transition">Invite Creator</span>
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
@@ -1296,6 +1382,22 @@ export default function TruthOrDareCreatorPage() {
             {!isInStudio && false && (
                 <div>{/* Hidden intentionally. Kept to avoid unused var warnings */}</div>
             )}
+
+            {/* Invite Creator Modal */}
+            <TodInviteCreatorModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                sessionId={activeSessionId}
+                roomId={roomId}
+                onInviteSent={() => {
+                    // Refetch invites
+                    if (activeSessionId) {
+                        fetch(`/api/v1/rooms/truth-dare-sessions/${activeSessionId}/invite-creator`)
+                            .then(r => r.json())
+                            .then(d => { if (d.invites) setSlotInvites(d.invites); });
+                    }
+                }}
+            />
         </div>
     );
 

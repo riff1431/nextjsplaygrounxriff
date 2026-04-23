@@ -43,7 +43,20 @@ export default function ProfilePage() {
                         account_types:account_type_id (
                             display_name,
                             badge_color,
-                            badge_icon
+                            badge_icon,
+                            badge_icon_url
+                        ),
+                        fan_membership_plans:fan_membership_id (
+                            display_name,
+                            badge_color,
+                            name,
+                            badge_icon_url
+                        ),
+                        creator_levels:creator_level_id (
+                            display_name,
+                            badge_color,
+                            name,
+                            badge_icon_url
                         )
                     `)
                     .eq("id", id)

@@ -2,6 +2,7 @@
 
 import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
+import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { Sparkles, Crown, MessageCircle, Lock, Trophy, Zap } from "lucide-react";
 
 export default function AboutPage() {
@@ -33,6 +34,7 @@ export default function AboutPage() {
       title="About PlayGroundX" 
       subtitle="The Midnight Playground of the Digital Age"
     >
+      <DynamicPageContent pageKey="page_about" fallback={
       <div className="space-y-16">
         <section>
           <h2 className="text-3xl font-bold text-gray-50 mb-6 flex items-center gap-3">
@@ -92,6 +94,7 @@ export default function AboutPage() {
           </p>
         </section>
       </div>
+      } />
     </InfoPageLayout>
   );
 }

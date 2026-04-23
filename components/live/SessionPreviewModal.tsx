@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Crown, Users, Video, Lock, CheckCircle, Play, Mic, AlertCircle, User, Wallet, CreditCard, ChevronRight, Landmark, Clock } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-const StripePaymentModal = dynamic(() => import('./StripePaymentModal'), { ssr: false });
-const PayPalPaymentModal = dynamic(() => import('./PayPalPaymentModal'), { ssr: false });
-const BankTransferModal = dynamic(() => import('./BankTransferModal'), { ssr: false });
+import { X, Crown, Users, Video, Lock, CheckCircle, Play, Mic, AlertCircle, User, Wallet, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -22,45 +17,17 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
     const [unlocking, setUnlocking] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [accessStatus, setAccessStatus] = useState<'locked' | 'unlocked' | 'pending' | 'rejected' | 'none' | 'pending_payment'>('locked');
-    const [showPaymentOptions, setShowPaymentOptions] = useState(false);
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
-    const [paymentSettings, setPaymentSettings] = useState<import('@/types/payment').PaymentSetting[]>([]);
-    const [showStripeModal, setShowStripeModal] = useState(false);
-    const [showPayPalModal, setShowPayPalModal] = useState(false);
-    const [showBankModal, setShowBankModal] = useState(false);
 
     useEffect(() => {
         checkAccess();
         fetchWalletBalance();
     }, [session.id]);
 
-    useEffect(() => {
-        if (showPaymentOptions) {
-            fetchWalletBalance();
-            fetchPaymentSettings();
-        }
-    }, [showPaymentOptions]);
-
-    const fetchPaymentSettings = async () => {
-        try {
-            const res = await fetch('/api/v1/payments/settings');
-            const data = await res.json();
-            if (Array.isArray(data)) {
-                setPaymentSettings(data);
-            }
-        } catch (err) {
-            console.error('Error fetching settings:', err);
-        }
-    };
-
     const fetchWalletBalance = async () => {
         try {
-            console.log("Fetching wallet balance...");
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                console.log("No user found");
-                return;
-            }
+            if (!user) return;
 
             const { data: wallet, error } = await supabase
                 .from('wallets')
@@ -69,16 +36,13 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                 .maybeSingle();
 
             if (error) {
-                console.error("Error fetching wallet:", error);
                 setWalletBalance(0);
                 return;
             }
 
             if (wallet) {
-                console.log("Wallet found:", wallet);
                 setWalletBalance(wallet.balance);
             } else {
-                console.log("No wallet found, defaulting to 0");
                 setWalletBalance(0);
             }
         } catch (err) {
@@ -135,9 +99,6 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                 .maybeSingle();
 
             if (req) {
-                // If approved -> 'locked' (ready to pay)
-                // If pending -> 'pending'
-                // If rejected -> 'rejected'
                 setAccessStatus(req.status === 'approved' ? 'locked' : req.status as any);
             } else {
                 setAccessStatus('none'); // Needs request
@@ -154,7 +115,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
         setUnlocking(true);
         setError(null);
         try {
-            // For public rooms or approved private requests, we try to pay/unlock
+            // For public rooms or approved private requests, we try to pay/unlock via wallet
             const response = await fetch(`/api/v1/rooms/${session.id}/truth-or-dare/unlock`, {
                 method: 'POST'
             });
@@ -164,6 +125,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
 
             // Success
             setAccessStatus('unlocked');
+            await fetchWalletBalance(); // Refresh balance
             // Auto redirect after short delay or let user click "Enter"
             setTimeout(() => {
                 router.push(`/rooms/truth-or-dare?roomId=${session.id}`);
@@ -207,150 +169,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
     // Derived State Logic
     const isPrivate = session.meta.is_private;
     const price = session.meta.price || 0;
-
-    // Helper to get bank config
-    const getBankDetails = () => {
-        const setting = paymentSettings.find(s => s.provider === 'bank');
-        return setting?.config || {};
-    };
-
-    // Payment Options Modal Content
-    if (showPaymentOptions) {
-        return (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
-                <div className="w-full max-w-sm bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
-                    <button onClick={() => setShowPaymentOptions(false)} className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 transition">
-                        <X className="w-5 h-5" />
-                    </button>
-
-                    <div className="p-8">
-                        <div className="text-center mb-8">
-                            <div className="flex justify-center mb-4">
-                                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <Lock className="w-8 h-8 text-green-500" />
-                                </div>
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Unlock Session</h3>
-                            <p className="text-gray-400 text-sm">Select payment method to pay <span className="text-white font-bold">€{price}</span></p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <button
-                                onClick={handleUnlock}
-                                disabled={unlocking}
-                                className="w-full p-4 rounded-xl bg-gradient-to-r from-gray-800 to-gray-800 hover:from-gray-700 hover:to-gray-700 border border-white/10 flex items-center justify-between group transition"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                        <Wallet className="w-5 h-5 text-purple-400" />
-                                    </div>
-                                    <div className="text-left">
-                                        <div className="font-semibold text-white">My Wallet</div>
-                                        <div className="text-xs text-gray-500">
-                                            Balance: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Checking...'}
-                                        </div>
-                                    </div>
-                                </div>
-                                {unlocking ? (
-                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-white transition" />
-                                )}
-                            </button>
-
-                            {/* Dynamic Payment Gateways */}
-                            {paymentSettings.map((setting) => (
-                                <button
-                                    key={setting.id}
-                                    disabled={!setting.is_enabled}
-                                    onClick={() => {
-                                        if (setting.provider === 'stripe') {
-                                            setShowStripeModal(true);
-                                            setShowPaymentOptions(false);
-                                        } else if (setting.provider === 'paypal') {
-                                            setShowPayPalModal(true);
-                                            setShowPaymentOptions(false);
-                                        } else if (setting.provider === 'bank') {
-                                            setShowBankModal(true);
-                                            setShowPaymentOptions(false);
-                                        }
-                                    }}
-                                    className={`w-full p-4 rounded-xl border flex items-center justify-between transition group ${setting.is_enabled
-                                        ? 'bg-gray-800 border-white/10 hover:bg-gray-700 hover:border-white/20'
-                                        : 'bg-gray-800/50 border-white/5 opacity-50 cursor-not-allowed'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${setting.is_enabled ? 'bg-white/10' : 'bg-white/5'}`}>
-                                            {setting.provider === 'paypal' ? <CreditCard className={`w-5 h-5 ${setting.is_enabled ? 'text-blue-400' : 'text-gray-500'}`} /> :
-                                                setting.provider === 'bank' ? <Landmark className={`w-5 h-5 ${setting.is_enabled ? 'text-green-400' : 'text-gray-500'}`} /> :
-                                                    <CreditCard className={`w-5 h-5 ${setting.is_enabled ? 'text-indigo-400' : 'text-gray-500'}`} />}
-                                        </div>
-                                        <div className="text-left">
-                                            <div className={`font-semibold ${setting.is_enabled ? 'text-white' : 'text-gray-400'}`}>
-                                                {setting.provider === 'bank' ? 'Bank Transfer' :
-                                                    setting.provider === 'stripe' ? 'Stripe / Card' :
-                                                        'PayPal'}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {setting.is_enabled ? 'Available' : 'Unavailable'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {setting.is_enabled && (
-                                        <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-white transition" />
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (showStripeModal) {
-        return (
-            <StripePaymentModal
-                amount={price}
-                roomId={session.id}
-                onClose={() => setShowStripeModal(false)}
-                onSuccess={() => {
-                    setShowStripeModal(false);
-                    checkAccess(); // Refresh access status
-                }}
-            />
-        );
-    }
-
-    if (showPayPalModal) {
-        return (
-            <PayPalPaymentModal
-                amount={price}
-                roomId={session.id}
-                onClose={() => setShowPayPalModal(false)}
-                onSuccess={() => {
-                    setShowPayPalModal(false);
-                    checkAccess(); // Refresh access status
-                }}
-            />
-        );
-    }
-
-    if (showBankModal) {
-        return (
-            <BankTransferModal
-                amount={price}
-                roomId={session.id}
-                bankDetails={getBankDetails()}
-                onClose={() => setShowBankModal(false)}
-                onSuccess={() => {
-                    setShowBankModal(false);
-                    checkAccess(); // Refresh access status
-                }}
-            />
-        )
-    }
+    const insufficient = walletBalance !== null && walletBalance < price;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
@@ -407,14 +226,30 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                         </div>
                     </div>
 
-                    {/* Pricing */}
+                    {/* Pricing + Wallet Balance */}
                     <div className="mb-5 p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
                         <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
                         <div className="text-2xl font-bold text-white">€{price}</div>
-                        <div className={`mt-1 text-xs font-medium ${walletBalance !== null && walletBalance < price ? 'text-red-300' : 'text-green-300'}`}>
-                            Your Balance: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Checking...'}
+                        <div className="mt-2 flex items-center justify-center gap-2">
+                            <Wallet className="w-3.5 h-3.5 text-gray-400" />
+                            <span className={`text-xs font-medium ${insufficient ? 'text-red-300' : 'text-emerald-300'}`}>
+                                Wallet: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Loading...'}
+                            </span>
                         </div>
                     </div>
+
+                    {/* Insufficient balance warning */}
+                    {insufficient && accessStatus === 'locked' && (
+                        <div className="flex items-start gap-2 rounded-lg bg-red-500/10 border border-red-500/20 p-2.5 mb-4 text-left">
+                            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-xs font-semibold text-red-300">Insufficient funds</p>
+                                <p className="text-[10px] text-red-300/70">
+                                    You need €{(price - (walletBalance || 0)).toFixed(2)} more.
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (
@@ -457,13 +292,27 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                                 {unlocking ? "Sending Request..." : "Request to Join"}
                             </button>
                         )
-                    ) : (
-                        // Public OR Private Approved -> Pay to Unlock
+                    ) : insufficient ? (
+                        // Insufficient balance -> Top Up button
                         <button
-                            onClick={() => setShowPaymentOptions(true)}
+                            onClick={() => router.push("/account/wallet")}
+                            className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold text-base shadow-lg shadow-pink-900/20 transition flex items-center justify-center gap-2 hover:brightness-110"
+                        >
+                            <Wallet className="w-4 h-4" />
+                            Top Up Wallet
+                        </button>
+                    ) : (
+                        // Public OR Private Approved -> Pay from Wallet to Unlock
+                        <button
+                            onClick={handleUnlock}
+                            disabled={unlocking}
                             className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-base shadow-lg shadow-green-900/20 transition flex items-center justify-center gap-2"
                         >
-                            Enter Room <Play className="w-4 h-4 fill-current" />
+                            {unlocking ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" /> Paying...</>
+                            ) : (
+                                <>Pay €{price} & Enter <Play className="w-4 h-4 fill-current" /></>
+                            )}
                         </button>
                     )}
 

@@ -2,6 +2,7 @@
 
 import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
+import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { Cookie, ShieldCheck, Lock, Settings, Info, Globe } from "lucide-react";
 
 export default function CookiesPolicyPage() {
@@ -10,6 +11,7 @@ export default function CookiesPolicyPage() {
       title="Cookies Policy" 
       subtitle="Last Updated: April 1st 2026"
     >
+      <DynamicPageContent pageKey="page_cookies_policy" fallback={
       <div className="space-y-12">
         <section className="bg-white/5 p-6 rounded-2xl border border-white/10 text-sm text-gray-300">
           <h2 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
@@ -127,6 +129,7 @@ export default function CookiesPolicyPage() {
           </p>
         </section>
       </div>
+      } />
     </InfoPageLayout>
   );
 }

@@ -18,14 +18,18 @@ export default function UserBadgeDisplay({ userId }: { userId: string }) {
 
         const supabase = createClient();
         supabase.from("profiles")
-            .select("account_types(*), memberships(*), creator_levels(*)")
+            .select(`
+                account_types:account_type_id(display_name, badge_color, badge_icon, badge_icon_url),
+                fan_membership_plans:fan_membership_id(display_name, badge_color, name, badge_icon_url),
+                creator_levels:creator_level_id(display_name, badge_color, name, badge_icon_url)
+            `)
             .eq("id", userId)
             .single()
             .then(({ data }) => {
                 if (data) {
                     const mapped = {
                         accountType: data.account_types,
-                        membership: data.memberships,
+                        membership: data.fan_membership_plans,
                         level: data.creator_levels
                     };
                     userBadgeCache[userId] = mapped;

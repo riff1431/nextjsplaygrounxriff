@@ -2,6 +2,7 @@
 
 import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
+import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { Coins, MonitorPlay, Lock, Clock, ShieldCheck, Scale, Info, Gift } from "lucide-react";
 
 export default function CreatorPayoutTermsPage() {
@@ -10,6 +11,7 @@ export default function CreatorPayoutTermsPage() {
       title="Creator Payout Terms" 
       subtitle="Last Updated: April 1st 2026"
     >
+      <DynamicPageContent pageKey="page_payout_terms" fallback={
       <div className="space-y-12">
         <section className="bg-white/5 p-6 rounded-2xl border border-white/10 text-sm text-gray-300">
           <h2 className="text-xl font-bold text-gray-100 mb-4 flex items-center gap-2">
@@ -122,6 +124,7 @@ export default function CreatorPayoutTermsPage() {
           </p>
         </section>
       </div>
+      } />
     </InfoPageLayout>
   );
 }

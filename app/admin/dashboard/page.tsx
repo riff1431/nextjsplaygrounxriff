@@ -55,6 +55,7 @@ import BarLoungeManager from "../../../components/admin/settings/BarLoungeManage
 import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymentReviewPanel";
 import AdminCreatorEarnings from "../../../components/admin/finance/AdminCreatorEarnings";
 import PolicyEditor from "../../../components/admin/settings/PolicyEditor";
+import ImportantPagesManager from "../../../components/admin/settings/ImportantPagesManager";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -68,6 +69,7 @@ type AdminModule =
     | "pricing"
     | "theme"
     | "policy"
+    | "important-pages"
     | "payments"
     | "approvals"
     | "users"
@@ -139,6 +141,7 @@ export default function AdminDashboardPage() {
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
         { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
+        { id: "important-pages", label: "Important Pages", icon: <FileText className="w-4 h-4" />, tone: "amber" },
         { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
@@ -301,6 +304,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="prompts" label="System Truth & Dare" icon={<MessageCircle className="w-4 h-4" />} tone="pink" desc="Manage prompts" />
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
                                 <Tile id="policy" label="Legal & Policies" icon={<FileText className="w-4 h-4" />} tone="cyan" desc="T&Cs and Privacy" />
+                                <Tile id="important-pages" label="Important Pages" icon={<FileText className="w-4 h-4" />} tone="amber" desc="Edit public pages" />
                                 <Tile id="users" label="Users" icon={<Users className="w-4 h-4" />} tone="cyan" desc="Manage access" />
                                 <Tile id="kyc" label="KYC Review" icon={<Lock className="w-4 h-4" />} tone="red" desc="Verify creators" />
                                 <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
@@ -337,6 +341,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "pricing" && <PricingControls />}
                     {bizModule === "theme" && <AdminThemeEditor />}
                     {bizModule === "policy" && <PolicyEditor />}
+                    {bizModule === "important-pages" && <ImportantPagesManager />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

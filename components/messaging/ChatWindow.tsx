@@ -6,6 +6,7 @@ import { MoreVertical, Phone, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { uploadToLocalServer } from "@/utils/uploadHelper";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 type Props = {
     conversationId: string;
@@ -147,7 +148,7 @@ export default function ChatWindow({ conversationId, currentUser, otherUser }: P
                         />
                     </div>
                     <div>
-                        <h3 className="font-bold text-white">{otherUser.username}</h3>
+                        <h3 className="font-bold text-white flex items-center gap-1.5">{otherUser.username} <UserBadgeDisplay userId={otherUser.user_id || ""} /></h3>
                         <span className="text-xs text-green-400 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> Online
                         </span>
