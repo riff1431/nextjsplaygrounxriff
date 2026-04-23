@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export type ActivityEventType =
@@ -75,7 +75,8 @@ export function useSuga4U(roomId: string | null) {
     const [secrets, setSecrets] = useState<CreatorSecret[]>([]);
     const [favorites, setFavorites] = useState<CreatorFavorite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const supabase = createClient();
+    const supabaseRef = useRef(createClient());
+    const supabase = supabaseRef.current;
 
     const loadData = useCallback(async (rid: string) => {
         try {
@@ -158,6 +159,7 @@ export function useSuga4U(roomId: string | null) {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_activity_events', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const a = payload.new;
                 setActivity(prev => {
+                    if (prev.some(e => e.id === a.id)) return prev;
                     const newEvents = [{
                         id: a.id,
                         ts: new Date(a.created_at).getTime(),
@@ -171,16 +173,19 @@ export function useSuga4U(roomId: string | null) {
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const r = payload.new;
-                setRequests(prev => [{
-                    id: r.id,
-                    fanName: r.fan_name,
-                    type: r.type,
-                    label: r.label,
-                    note: r.note,
-                    price: Number(r.price),
-                    status: r.status,
-                    createdAt: new Date(r.created_at).getTime()
-                }, ...prev]);
+                setRequests(prev => {
+                    if (prev.some(e => e.id === r.id)) return prev;
+                    return [{
+                        id: r.id,
+                        fanName: r.fan_name,
+                        type: r.type,
+                        label: r.label,
+                        note: r.note,
+                        price: Number(r.price),
+                        status: r.status,
+                        createdAt: new Date(r.created_at).getTime()
+                    }, ...prev];
+                });
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const u = payload.new;
@@ -195,16 +200,86 @@ export function useSuga4U(roomId: string | null) {
                     revenue: Number(u.revenue)
                 } : o));
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'suga_creator_secrets' }, () => {
-                if (roomId) loadData(roomId);
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_offer_drops', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const o = payload.new;
+                setOffers(prev => {
+                    if (prev.some(e => e.id === o.id)) return prev;
+                    return [{
+                        id: o.id,
+                        title: o.title,
+                        description: o.description,
+                        price: Number(o.price),
+                        totalSlots: o.total_slots,
+                        slotsRemaining: o.slots_remaining,
+                        endsAt: new Date(o.ends_at).getTime(),
+                        claims: o.claims,
+                        revenue: Number(o.revenue)
+                    }, ...prev];
+                });
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'suga_creator_favorites' }, () => {
-                if (roomId) loadData(roomId);
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_creator_secrets', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const s = payload.new;
+                setSecrets(prev => {
+                    if (prev.some(e => e.id === s.id)) return prev;
+                    return [{
+                        ...s,
+                        unlock_price: Number(s.unlock_price),
+                        media_url: s.media_url || null,
+                        media_type: s.media_type || null,
+                        created_at: new Date(s.created_at).getTime()
+                    }, ...prev];
+                });
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_creator_secrets', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const s = payload.new;
+                setSecrets(prev => prev.map(existing => existing.id === s.id ? {
+                    ...existing,
+                    name: s.name,
+                    description: s.description,
+                    category: s.category,
+                    unlock_price: Number(s.unlock_price),
+                    media_url: s.media_url || null,
+                    media_type: s.media_type || null,
+                } : existing));
+            })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'suga_creator_secrets', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const id = payload.old?.id;
+                if (id) setSecrets(prev => prev.filter(s => s.id !== id));
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_creator_favorites', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const f = payload.new;
+                setFavorites(prev => {
+                    if (prev.some(e => e.id === f.id)) return prev;
+                    return [{
+                        ...f,
+                        buy_price: Number(f.buy_price),
+                        reveal_price: f.reveal_price ? Number(f.reveal_price) : null,
+                        link: f.link || null,
+                        created_at: new Date(f.created_at).getTime()
+                    }, ...prev];
+                });
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_creator_favorites', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const f = payload.new;
+                setFavorites(prev => prev.map(existing => existing.id === f.id ? {
+                    ...existing,
+                    name: f.name,
+                    description: f.description,
+                    category: f.category,
+                    emoji: f.emoji,
+                    buy_price: Number(f.buy_price),
+                    reveal_price: f.reveal_price ? Number(f.reveal_price) : null,
+                    link: f.link || null,
+                } : existing));
+            })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'suga_creator_favorites', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const id = payload.old?.id;
+                if (id) setFavorites(prev => prev.filter(f => f.id !== id));
             })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, loadData, supabase]);
+    }, [roomId, loadData]);
 
     const sendMessage = useCallback(async (text: string, fanName: string) => {
         if (!roomId || !text.trim()) return;
