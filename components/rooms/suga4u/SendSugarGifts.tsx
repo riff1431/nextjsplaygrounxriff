@@ -1,6 +1,8 @@
 import React from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { useWallet } from "@/hooks/useWallet";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 
 const gifts = [
@@ -10,18 +12,38 @@ const gifts = [
     { name: "Big Money", amount: 100, emoji: "💰" },
 ];
 
-const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
+const SendSugarGifts = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
     const { sendGift } = useSuga4U(roomId);
     const { user } = useAuth();
+    const { balance, pay } = useWallet();
+    const [confirmGift, setConfirmGift] = React.useState<typeof gifts[0] | null>(null);
 
-    const handleGift = async (g: typeof gifts[0]) => {
-        if (!roomId) return;
+    const handleGiftClick = (g: typeof gifts[0]) => {
+        if (!roomId || !hostId) return;
+        setConfirmGift(g);
+    };
+
+    const handleConfirmGift = async () => {
+        if (!roomId || !hostId || !confirmGift) return;
+        const g = confirmGift;
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+
+            // Deduct from wallet
+            const payment = await pay(hostId, g.amount, `Sugar Gift: ${g.name}`, roomId, 'suga_gift');
+            if (!payment.success) {
+                toast.error(payment.error || "Payment failed");
+                return;
+            }
+
+            // Record the gift in activity
             await sendGift(g.amount, fanName, `Sent ${g.name}`);
-            toast.success(`💎 Gift sent: ${g.name}`, { description: `€${g.amount} sent to creator` });
+            toast.success(`${g.emoji} Gift sent: ${g.name}`, { description: `€${g.amount} sent to creator` });
         } catch (err) {
             console.error("Failed to send gift:", err);
+            toast.error("Failed to send gift");
+        } finally {
+            setConfirmGift(null);
         }
     };
 
@@ -36,8 +58,8 @@ const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
                 {gifts.map((g) => (
                     <button
                         key={g.amount}
-                        onClick={() => handleGift(g)}
-                        disabled={!roomId}
+                        onClick={() => handleGiftClick(g)}
+                        disabled={!roomId || !hostId}
                         className="neon-border-pink glass-panel py-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-lg">{g.emoji}</span>
@@ -45,6 +67,21 @@ const SendSugarGifts = ({ roomId }: { roomId: string | null }) => {
                     </button>
                 ))}
             </div>
+
+            {/* Spend Confirmation Modal */}
+            {confirmGift && (
+                <SpendConfirmModal
+                    isOpen={true}
+                    onClose={() => setConfirmGift(null)}
+                    onConfirm={handleConfirmGift}
+                    title={"Send Gift: " + confirmGift.name}
+                    itemLabel={confirmGift.name}
+                    amount={confirmGift.amount}
+                    walletBalance={balance}
+                    description={`Send €${confirmGift.amount} ${confirmGift.name} to the creator?`}
+                    confirmLabel="Send Gift"
+                />
+            )}
         </div>
     );
 };
