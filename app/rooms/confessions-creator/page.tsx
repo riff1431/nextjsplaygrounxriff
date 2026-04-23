@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import ConfessionsTopBar from "@/components/rooms/confessions-creator/ConfessionsTopBar";
 import ConfessionsLeftSidebar from "@/components/rooms/confessions-creator/ConfessionsLeftSidebar";
 import ConfessionsCenterContent from "@/components/rooms/confessions-creator/ConfessionsCenterContent";
@@ -11,6 +11,7 @@ import ConfessionsFloatingHearts from "@/components/rooms/confessions-creator/Co
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -20,6 +21,7 @@ const ConfessionsCreatorPage = () => {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (!user) return;
@@ -72,7 +74,18 @@ const ConfessionsCreatorPage = () => {
 
             {/* Content */}
             <div className="relative z-10 flex flex-col h-screen">
-                <ConfessionsTopBar />
+                <div className="relative flex items-center">
+                    <div className="flex-1">
+                        <ConfessionsTopBar />
+                    </div>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20">
+                        <SessionLiveControls
+                            sessionId={sessionId!}
+                            onEnd={() => router.push("/rooms/confessions-creator")}
+                            accentHsl="280, 70%, 60%"
+                        />
+                    </div>
+                </div>
                 <div className="flex-1 flex items-stretch gap-16 px-4 pb-4 overflow-hidden xl:mx-40">
                     <ConfessionsLeftSidebar />
                     <div className="flex-1 flex flex-col gap-4 min-h-0">

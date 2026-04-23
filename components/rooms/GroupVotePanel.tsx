@@ -35,8 +35,6 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
     const [loadingVote, setLoadingVote] = useState<string | null>(null);
     const [completedCampaigns, setCompletedCampaigns] = useState<string[]>([]);
     const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
-    const [userVotes, setUserVotes] = useState<Record<string, boolean>>({});
-
     useEffect(() => {
         if (!roomId) return;
 
@@ -76,16 +74,6 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
         };
     }, [roomId, supabase]);
 
-    // Clear user votes when campaign starts playing/restarts
-    useEffect(() => {
-        ['truth', 'dare'].forEach((type) => {
-            if (state[type as keyof GroupVoteState]?.isActive === false) {
-                // Clear the local vote when it resets or completes
-                setUserVotes(prev => ({ ...prev, [type]: false }));
-            }
-        });
-    }, [state]);
-
     // Handle Auto-Hide Logic
     useEffect(() => {
         ['truth', 'dare'].forEach((type) => {
@@ -103,7 +91,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
     }, [state, completedCampaigns]);
 
     const handleVote = async (type: 'truth' | 'dare') => {
-        if (loadingVote || userVotes[type]) return;
+        if (loadingVote === type) return;
         setLoadingVote(type);
 
         // Optimistic Update
@@ -126,7 +114,6 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
             const data = await res.json();
             if (res.ok) {
                 toast.success(`Vote counted! 🔥`);
-                setUserVotes(prev => ({ ...prev, [type]: true }));
                 // Update with server state if successful to be sure
                 if (data.newCount !== undefined) {
                     setState(prev => {
@@ -262,7 +249,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                     {/* Action Button */}
                     <button
                         onClick={() => handleVote(type)}
-                        disabled={isDone || loadingVote === type || userVotes[type]}
+                        disabled={isDone || loadingVote === type}
                         className={`
                             mt-2 w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all shadow-lg
                             disabled:opacity-50 flex items-center justify-center gap-2
@@ -273,8 +260,6 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                             <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5" /> Target Reached</span>
                         ) : loadingVote === type ? (
                             <span className="flex items-center gap-2 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Voting...</span>
-                        ) : userVotes[type] ? (
-                            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Voted!</span>
                         ) : (
                             <span className="flex items-center gap-2"><Vote className="w-4 h-4" /> Vote {type.toUpperCase()} (€{cam.price})</span>
                         )}

@@ -51,22 +51,7 @@ export async function POST(
 
     const price = Number(campaign.price);
 
-    // 4. Verify multiple votes constraint
-    if (campaign.startedAt) {
-        const campaignStartTime = new Date(campaign.startedAt).toISOString();
-        const { data: existingVote } = await supabase
-            .from('truth_dare_requests')
-            .select('id')
-            .eq('fan_id', user.id)
-            .eq('room_id', roomId)
-            .eq('type', `group_vote_${type}`)
-            .gte('created_at', campaignStartTime)
-            .single();
-
-        if (existingVote) {
-            return NextResponse.json({ error: "You have already voted in this campaign" }, { status: 400 });
-        }
-    }
+    // 4. (Multiple votes allowed) – fans can boost as many times as they like.
 
     // 5. Host Info for Payment
     const { data: room } = await supabase
@@ -119,50 +104,36 @@ export async function POST(
 
     await adminSupabase.from('wallets').upsert({ user_id: hostId, balance: newBalance }); // Simple upsert
 
-    // 6. Update Game State (Increment Vote Count)
-    // Re-fetch to minimize race conditions, or just use atomic increment?
-    // JSONB atomic update is hard. We will do read-modify-write with optimistic locking if needed, 
-    // but for now simple update.
+    // 6. Atomically increment the vote counter (prevents race conditions where
+    //    two concurrent votes both read the same value and both write N+1).
+    const { data: newCount, error: rpcError } = await supabase
+        .rpc('increment_tod_group_vote', { p_room_id: roomId, p_type: type });
 
-    // We need to fetch the LATEST state again to avoid overwriting other parallel updates
-    const { data: freshGame } = await supabase
-        .from('truth_dare_games')
-        .select('group_vote_state')
-        .eq('room_id', roomId)
-        .single();
-
-    const freshState = (freshGame?.group_vote_state as any) || {};
-    if (freshState[type]) {
-        freshState[type].current = (Number(freshState[type].current) || 0) + 1;
+    if (rpcError) {
+        console.error('Atomic increment error:', rpcError);
+        return NextResponse.json({ error: 'Vote count update failed' }, { status: 500 });
     }
 
-    await supabase
-        .from('truth_dare_games')
-        .update({ group_vote_state: freshState })
-        .eq('room_id', roomId);
+    const currentCount = newCount as number;
 
-    // 7. Record the Transaction (Optional: Add to requests for history?)
-    // Yes, let's add to requests so it shows in earnings/top spender
-    // Format: type='group_vote_truth' or 'group_vote_dare'
+    // 7. Record the Transaction
     await supabase.from('truth_dare_requests').insert({
         room_id: roomId,
         fan_id: user.id,
         type: `group_vote_${type}`,
-        tier: 'custom', // or null
+        tier: 'custom',
         content: `Voted for Group ${type === 'truth' ? 'Truth' : 'Dare'}`,
         amount: price,
         status: 'completed',
         fan_name: user.user_metadata?.full_name || 'Fan'
     });
 
-    // 8. Broadcast?
-    // The Game State update will trigger the `postgres_changes` listener on the client.
-    // So we don't strictly *need* a separate broadcast, but we can send one for "Vote Added" animation effects.
+    // 8. Broadcast the authoritative count from the DB
     await supabase.channel(`room:${roomId}`).send({
         type: 'broadcast',
         event: 'group_vote_update',
-        payload: { type, current: freshState[type].current, target: freshState[type].target }
+        payload: { type, current: currentCount, target: campaign.target }
     });
 
-    return NextResponse.json({ success: true, newCount: freshState[type].current });
+    return NextResponse.json({ success: true, newCount: currentCount });
 }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { StopCircle } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import LoungeChat from "@/components/rooms/bar-lounge-creator/LoungeChat";
@@ -11,6 +12,7 @@ import IncomingRequests from "@/components/rooms/bar-lounge-creator/IncomingRequ
 import SummaryPanel from "@/components/rooms/bar-lounge-creator/SummaryPanel";
 import WalletPill from "@/components/common/WalletPill";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 
 
 const CreatorBarLounge = () => {
@@ -61,21 +63,13 @@ const CreatorBarLounge = () => {
                 creatorPageRoute="/rooms/bar-lounge-creator"
                 accentHsl="45, 90%, 55%"
                 accentHslSecondary="280, 40%, 50%"
-                backgroundImage="/images/rooms/bar-lounge/bar-lounge-session-bg.png"
+                backgroundImage="/rooms/bar-lounge/lounge-bg-v2.png"
             />
         );
     }
 
 
-    const handleEndSession = async () => {
-        if (!roomId || !confirm("End this session?")) return;
 
-        await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId);
-        if (sessionId) {
-            await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" }).catch(() => { });
-        }
-        router.push("/rooms/bar-lounge-creator");
-    };
 
 
 
@@ -83,18 +77,21 @@ const CreatorBarLounge = () => {
     return (
         <div
             className="min-h-screen w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme"
-            style={{ backgroundImage: "url('/images/rooms/bar-lounge/bar-lounge-session-bg.png')" }}
+            style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-v2.png')" }}
         >
             {/* Top Bar */}
             <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">
-                <button
-                    onClick={handleEndSession}
-                    className="sm:absolute sm:left-4 glass-panel px-3 py-2 rounded-lg flex items-center gap-2 hover:bg-red-900/20 transition-colors"
-                    style={{ borderColor: "hsla(320, 80%, 60%, 0.4)", color: "hsl(320, 80%, 60%)" }}
-                >
-                    <StopCircle className="w-5 h-5" />
-                    <span className="text-sm font-medium hidden sm:inline">End Session</span>
-                </button>
+                <div className="sm:absolute sm:left-4 flex items-center gap-3">
+                    <button
+                        onClick={() => router.push("/rooms/bar-lounge-creator")}
+                        className="glass-panel px-3 py-2 rounded-lg flex items-center gap-1.5 hover:bg-white/10 transition-colors"
+                        style={{ borderColor: "hsla(45, 90%, 55%, 0.3)", color: "hsl(45, 90%, 55%)" }}
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="text-sm font-medium hidden sm:inline">Back</span>
+                    </button>
+                    <WalletPill />
+                </div>
                 <div className="text-center">
                     <h1 className="text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
                     <p className="text-[10px] font-medium uppercase tracking-widest flex items-center justify-center gap-2" style={{ color: "hsl(280, 15%, 55%)" }}>
@@ -103,7 +100,11 @@ const CreatorBarLounge = () => {
                     </p>
                 </div>
                 <div className="absolute right-4">
-                    <WalletPill />
+                    <SessionLiveControls
+                        sessionId={sessionId!}
+                        onEnd={() => router.push("/rooms/bar-lounge-creator")}
+                        accentHsl="45, 90%, 55%"
+                    />
                 </div>
             </div>
 

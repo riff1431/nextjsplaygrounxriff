@@ -17,6 +17,7 @@ import CreatorCountdown from "@/app/creator/rooms/truth-or-dare/components/Creat
 import EarningsModal from "@/app/creator/rooms/truth-or-dare/components/EarningsModal";
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 import BrandLogo from "@/components/common/BrandLogo";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 
 // ---------- Pricing / constants ----------
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -960,15 +961,23 @@ export default function TruthOrDareCreatorPage() {
                                     'CONNECTING...'}
                     </span>
                 </div>
-                <div className="w-24 flex justify-end">
-                    {sessionActive && isHost && (
-                        <button
-                            onClick={() => setShowExitConfirmation(true)}
-                            className="text-xs bg-red-900/40 border border-red-500/30 px-3 py-1.5 rounded-lg hover:bg-red-900/60 transition text-red-200"
-                        >
-                            End Session
-                        </button>
-                    )}
+                <div className="flex items-center gap-3">
+                    <SessionLiveControls
+                        sessionId={roomId || ""}
+                        accentHsl="330, 80%, 55%"
+                        initialLiveStartedAt={sessionActive ? new Date().toISOString() : null}
+                        customGoLive={async () => {
+                            if (!sessionActive) {
+                                setShowStartModal(true);
+                                return null;
+                            }
+                            return new Date().toISOString();
+                        }}
+                        customEnd={async () => {
+                            setShowExitConfirmation(true);
+                        }}
+                        onEnd={() => {}}
+                    />
                 </div>
             </div>
 

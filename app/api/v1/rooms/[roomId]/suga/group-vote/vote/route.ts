@@ -89,22 +89,17 @@ export async function POST(
 
     await adminSupabase.from('wallets').upsert({ user_id: hostId, balance: newBalance });
 
-    // 4. Update Game State (Increment Vote Count)
-    const { data: freshRoom } = await supabase
-        .from('rooms')
-        .select('group_vote_state')
-        .eq('id', roomId)
-        .single();
+    // 4. Atomically increment the vote counter (prevents race conditions where
+    //    two concurrent votes both read the same value and both write N+1).
+    const { data: newCount, error: rpcError } = await supabase
+        .rpc('increment_suga_group_vote', { p_room_id: roomId });
 
-    const freshState = (freshRoom?.group_vote_state as any) || {};
-    if (freshState && freshState.isActive) {
-        freshState.current = (Number(freshState.current) || 0) + 1;
+    if (rpcError) {
+        console.error('Atomic increment error:', rpcError);
+        return NextResponse.json({ error: 'Vote count update failed' }, { status: 500 });
     }
 
-    await supabase
-        .from('rooms')
-        .update({ group_vote_state: freshState })
-        .eq('id', roomId);
+    const currentCount = newCount as number;
 
     // 5. Record the Transaction in suga4u_requests
     await supabase.from('suga4u_requests').insert({
@@ -121,8 +116,8 @@ export async function POST(
     await supabase.channel(`room:${roomId}`).send({
         type: 'broadcast',
         event: 'group_vote_update',
-        payload: { current: freshState.current, target: freshState.target, isActive: freshState.isActive }
+        payload: { current: currentCount, target: state.target, isActive: state.isActive }
     });
 
-    return NextResponse.json({ success: true, newCount: freshState.current });
+    return NextResponse.json({ success: true, newCount: currentCount });
 }

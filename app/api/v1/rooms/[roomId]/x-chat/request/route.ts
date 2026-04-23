@@ -83,7 +83,7 @@ export async function PATCH(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { requestId, status } = body;
+    const { requestId, status, creator_reply } = body;
 
     if (!["accepted", "declined"].includes(status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -91,7 +91,11 @@ export async function PATCH(
 
     const { data: updated, error } = await supabase
         .from("x_chat_requests")
-        .update({ status })
+        .update({ 
+            status,
+            creator_reply,
+            updated_at: new Date().toISOString()
+        })
         .eq("id", requestId)
         .eq("room_id", roomId)
         .select()

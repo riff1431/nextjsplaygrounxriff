@@ -1,334 +1,318 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, MessageCircle, Clock, CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, Clock, XCircle, Loader2, UserPlus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
-import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import IncomingReplies from "@/components/rooms/x-chat/IncomingReplies";
+import { useWallet } from "@/hooks/useWallet";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { toast } from "sonner";
 
-const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const LiveStreamWrapper = dynamic(
+    () => import("@/components/rooms/LiveStreamWrapper"),
+    { ssr: false }
+);
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 type RequestStatus = "none" | "pending" | "accepted" | "declined";
 
+/* ─── monetisation data ──────────────────────────────────── */
+const reactionsRow1 = [
+    { emoji: "🔥", label: "Boost", price: 2,  type: "reaction_boost" },
+    { emoji: "💎", label: "Shine", price: 5,  type: "reaction_shine" },
+];
+const stickersRow1 = [
+    { emoji: "💋", label: "Kiss",  price: 5,  type: "sticker_kiss" },
+    { emoji: "😈", label: "Tease", price: 10, type: "sticker_tease" },
+];
+const reactionsRow2 = [
+    { emoji: "👑", label: "Crown", price: 10, type: "reaction_crown" },
+    { emoji: "⚡", label: "Pulse", price: 15, type: "reaction_pulse" },
+];
+const stickersRow2 = [
+    { emoji: "🌹", label: "Rose",  price: 25, type: "sticker_rose" },
+    { emoji: "🎁", label: "Gift",  price: 50, type: "sticker_gift" },
+];
+const visibilityBoosts = [
+    { label: "Pin my name to top (1 min)", price: 25, type: "pin" },
+    { label: "Voice note reply",           price: 35, type: "voice_note_boost" },
+];
+const directAccess = [
+    { label: "Private question",       price: 20, type: "private_question" },
+    { label: "1:1 mini chat (2 min)",  price: 60, type: "mini_chat" },
+];
+
+/* ─── inline reaction chip ───────────────────────────────── */
+const ReactionChip = ({
+    emoji, label, price, onClick,
+}: { emoji: string; label: string; price: number; onClick: () => void }) => (
+    <button
+        onClick={onClick}
+        className="xchat-chip"
+    >
+        <span className="xchat-chip-emoji">{emoji}</span>
+        <span className="xchat-chip-label">{label}</span>
+        <span className="xchat-chip-price">€{price}</span>
+    </button>
+);
+
+/* ─── boost row chip ─────────────────────────────────────── */
+const BoostRow = ({
+    label, price, onClick,
+}: { label: string; price: number; onClick: () => void }) => (
+    <button onClick={onClick} className="xchat-boost-row">
+        <span className="xchat-boost-label">{label}</span>
+        <span className="xchat-boost-price">€{price}</span>
+    </button>
+);
+
+/* ═══════════════════════════════════════════════════════════ */
 const XChatRoom = () => {
     const router = useRouter();
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const urlRoomId = searchParams?.get("roomId");
     const supabase = createClient();
-    const [roomId, setRoomId] = useState<string | null>(urlRoomId || null);
-    const [hostId, setHostId] = useState<string | null>(null);
-    const [hostAvatar, setHostAvatar] = useState<string | null>(null);
-    const [hostName, setHostName] = useState("Loading...");
-    const [creatorName, setCreatorName] = useState("Loading...");
+    const { balance, refresh } = useWallet();
 
-    // Request state
+    const [roomId, setRoomId]       = useState<string | null>(urlRoomId || null);
+    const [hostId, setHostId]       = useState<string | null>(null);
+    const [hostAvatar, setHostAvatar] = useState<string | null>(null);
+    const [hostName, setHostName]   = useState("Loading...");
+
     const [requestStatus, setRequestStatus] = useState<RequestStatus>("none");
     const [requestLoading, setRequestLoading] = useState(false);
 
-    // Session metering state (only active after request accepted + session started)
     const [sessionActive, setSessionActive] = useState(false);
-    const [sessionStart, setSessionStart] = useState<Date | null>(null);
-    const [elapsed, setElapsed] = useState(0);
+    const [sessionStart, setSessionStart]   = useState<Date | null>(null);
+    const [elapsed, setElapsed]             = useState(0);
     const RATE_PER_MIN = 2;
+
     const [showInviteModal, setShowInviteModal] = useState(false);
 
-    // 1. Discover the live x-chat room
+    const [pending, setPending]     = useState<{ label: string; price: number; reactionType: string; emoji?: string } | null>(null);
+    const [voicePrompt, setVoicePrompt] = useState("");
+    const [animatingEmoji, setAnimatingEmoji] = useState<string | null>(null);
+
+    /* ── fetch room ─────────────────────────────────────── */
     useEffect(() => {
         async function fetchRoom() {
-            let query = supabase
-                .from('rooms')
-                .select('id, host_id, title')
-                .eq('status', 'live')
-                .eq('type', 'x-chat');
+            let q = supabase.from("rooms").select("id, host_id, title")
+                .eq("status", "live").eq("type", "x-chat");
+            if (urlRoomId) q = q.eq("id", urlRoomId);
+            else q = q.order("created_at", { ascending: false }).limit(1);
 
-            if (urlRoomId) {
-                query = query.eq('id', urlRoomId);
-            } else {
-                query = query.order('created_at', { ascending: false }).limit(1);
-            }
-            
-            const { data: rooms, error } = await query;
+            const { data: rooms } = await q;
             const room = rooms?.[0];
-
             if (room) {
                 setRoomId(room.id);
                 setHostId(room.host_id);
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('username, full_name, avatar_url')
-                    .eq('id', room.host_id)
-                    .single();
-
-                if (profile) {
-                    const name = profile.full_name || profile.username || "Host";
+                const { data: p } = await supabase.from("profiles")
+                    .select("username, full_name, avatar_url")
+                    .eq("id", room.host_id).single();
+                if (p) {
+                    const name = p.full_name || p.username || "Host";
                     setHostName(name);
-                    setCreatorName(name);
-                    setHostAvatar(profile.avatar_url || null);
+                    setHostAvatar(p.avatar_url || null);
                 }
             } else {
                 setHostName("No Active Room");
-                setCreatorName("None");
             }
         }
         fetchRoom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 2. Check for existing request when room is found
+    /* ── request subscription ───────────────────────────── */
     useEffect(() => {
         if (!roomId || !user) return;
-
-        async function checkExistingRequest() {
-            const { data: existing } = await supabase
-                .from('x_chat_requests')
-                .select('id, status')
-                .eq('room_id', roomId)
-                .eq('fan_id', user!.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-
-            if (existing) {
-                setRequestStatus(existing.status as RequestStatus);
-            }
-        }
-        checkExistingRequest();
-
-        // Subscribe to request status changes
-        const channel = supabase
-            .channel(`x-chat-request-status-${roomId}-${user.id}`)
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'x_chat_requests',
-                filter: `room_id=eq.${roomId}`,
+        (async () => {
+            const { data: ex } = await supabase.from("x_chat_requests")
+                .select("id, status").eq("room_id", roomId).eq("fan_id", user.id)
+                .order("created_at", { ascending: false }).limit(1).single();
+            if (ex) setRequestStatus(ex.status as RequestStatus);
+        })();
+        const ch = supabase.channel(`xchat-req-${roomId}-${user.id}`)
+            .on("postgres_changes", {
+                event: "UPDATE", schema: "public",
+                table: "x_chat_requests", filter: `room_id=eq.${roomId}`,
             }, (payload) => {
-                const updated = payload.new as any;
-                if (updated.fan_id === user!.id) {
-                    setRequestStatus(updated.status as RequestStatus);
-                }
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
+                const u = payload.new as any;
+                if (u.fan_id === user.id) setRequestStatus(u.status);
+            }).subscribe();
+        return () => { supabase.removeChannel(ch); };
     }, [roomId, user]);
 
-    // 3. Session timer
+    /* ── session timer ──────────────────────────────────── */
     useEffect(() => {
         if (!sessionActive || !sessionStart) return;
-        const interval = setInterval(() => {
-            setElapsed(Math.floor((Date.now() - sessionStart.getTime()) / 1000));
-        }, 1000);
-        return () => clearInterval(interval);
+        const t = setInterval(() =>
+            setElapsed(Math.floor((Date.now() - sessionStart.getTime()) / 1000)), 1000);
+        return () => clearInterval(t);
     }, [sessionActive, sessionStart]);
 
+    const formatTime = (s: number) =>
+        `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+
+    const runningCharge = Math.ceil(elapsed / 60) * RATE_PER_MIN;
+
+    /* ── actions ────────────────────────────────────────── */
     const sendRequest = async () => {
         if (!roomId || requestLoading) return;
         setRequestLoading(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: "Wants to chat" }),
             });
-            const data = await res.json();
-            if (data.success) {
-                setRequestStatus("pending");
-            }
-        } catch (e) {
-            console.error("Failed to send request:", e);
-        } finally {
-            setRequestLoading(false);
-        }
-    };
-
-    const startSession = async () => {
-        if (!roomId) return;
-        try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/session`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "start" }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                setSessionActive(true);
-                setSessionStart(new Date());
-                setElapsed(0);
-            }
-        } catch (e) {
-            console.error("Failed to start session:", e);
-        }
+            if ((await r.json()).success) setRequestStatus("pending");
+        } finally { setRequestLoading(false); }
     };
 
     const endSession = async () => {
         if (!roomId) return;
+        const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/session`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "end" }),
+        });
+        if ((await r.json()).success) { setSessionActive(false); setSessionStart(null); }
+    };
+
+    const handleReactionSend = async () => {
+        if (!pending || !roomId) return;
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/session`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "end" }),
+            if (pending.reactionType === "voice_note_boost") {
+                const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: `Voice Note Reply: ${voicePrompt}`, amount: pending.price }),
+                });
+                const d = await r.json();
+                if (d.success) { toast.success("Voice note request sent!"); setVoicePrompt(""); refresh?.(); }
+                else { toast.error(d.error || "Failed"); throw new Error(d.error); }
+                return;
+            }
+            const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/reaction`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reactionType: pending.reactionType, amount: pending.price }),
             });
-            const data = await res.json();
-            if (data.success) {
-                setSessionActive(false);
-                setSessionStart(null);
-            }
-        } catch (e) {
-            console.error("Failed to end session:", e);
-        }
+            const d = await r.json();
+            if (d.success) {
+                toast.success(`${pending.emoji || "✨"} ${pending.label} sent!`);
+                refresh?.();
+                if (pending.emoji) { setAnimatingEmoji(pending.emoji); setTimeout(() => setAnimatingEmoji(null), 1500); }
+            } else { toast.error(d.error || "Failed"); throw new Error(d.error); }
+        } catch (err) { throw err; }
     };
 
-    const formatTime = (secs: number) => {
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
-
-    const runningCharge = Math.ceil(elapsed / 60) * RATE_PER_MIN;
-
-    const renderRequestBanner = () => {
-        if (requestStatus === "none") {
-            return (
-                <button
-                    onClick={sendRequest}
-                    disabled={!roomId || requestLoading}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1DA1F2]/20 border border-[#1DA1F2]/40 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-all disabled:opacity-50"
-                >
-                    {requestLoading ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
-                    Invite Creator
-                </button>
-            );
-        }
-
-        if (requestStatus === "pending") {
-            return (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-yellow-500/15 border border-yellow-400/30 text-yellow-300">
-                    <Clock size={14} className="animate-pulse" />
-                    Request Pending…
+    /* ── header status badge ────────────────────────────── */
+    const renderStatus = () => {
+        if (requestStatus === "none") return (
+            <button onClick={sendRequest} disabled={!roomId || requestLoading}
+                className="xchat-header-btn xchat-header-btn--blue">
+                {requestLoading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                Invite Creator
+            </button>
+        );
+        if (requestStatus === "pending") return (
+            <div className="xchat-header-btn xchat-header-btn--yellow">
+                <Clock size={13} className="animate-pulse" /> Request Pending…
+            </div>
+        );
+        if (requestStatus === "accepted" && sessionActive) return (
+            <div className="flex items-center gap-2">
+                <div className="xchat-header-btn xchat-header-btn--green">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    Live — {formatTime(elapsed)}
                 </div>
-            );
-        }
-
-        if (requestStatus === "accepted") {
-            if (!sessionActive) {
-                return null;
-            }
-            return (
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-green-500/15 border border-green-400/30 text-green-300">
-                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        Live — {formatTime(elapsed)}
-                    </div>
-                    <span className="text-gold font-semibold text-sm">€{runningCharge}</span>
-                    <span className="text-foreground/50 text-xs">(${RATE_PER_MIN}/min)</span>
-                    <button
-                        onClick={endSession}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-red-500/20 border border-red-400/40 text-red-300 hover:bg-red-500/30 transition-all"
-                    >
-                        End Session
-                    </button>
-                </div>
-            );
-        }
-
-        if (requestStatus === "declined") {
-            return (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-red-500/15 border border-red-400/30 text-red-300">
-                    <XCircle size={14} />
-                    Request Declined
-                </div>
-            );
-        }
-
+                <span className="text-gold font-bold text-sm">€{runningCharge}</span>
+                <button onClick={endSession} className="xchat-header-btn xchat-header-btn--red">End Session</button>
+            </div>
+        );
+        if (requestStatus === "declined") return (
+            <div className="xchat-header-btn xchat-header-btn--red">
+                <XCircle size={13} /> Request Declined
+            </div>
+        );
         return null;
     };
 
+    /* ═══════════════════════════════════ RENDER ══════════ */
     return (
         <ProtectRoute allowedRoles={["fan"]}>
-            <div className="min-h-screen bg-background bg-cover bg-center bg-fixed relative fd-x-chat-theme"
-                style={{ backgroundImage: `url(/x-chat/casino-bg.jpeg)` }}>
+            {/* page wrapper */}
+            <div className="xchat-page" style={{ backgroundImage: "url(/x-chat/casino-bg.jpeg)" }}>
+                <div className="xchat-overlay" />
 
-                <div className="absolute inset-0 bg-background/10 z-0" />
+                <div className="xchat-shell">
 
-                <div className="relative z-10 max-w-8xl mx-auto p-4 px-4 md:px-40 py-8">
-
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-4 sm:gap-8">
-                            <button
-                                onClick={() => router.push("/home")}
-                                className="glass-card px-4 py-2 text-foreground hover:text-gold transition-colors flex items-center gap-2 text-sm"
-                            >
-                                <ArrowLeft size={16} />
+                    {/* ── HEADER ──────────────────────────────────── */}
+                    <header className="xchat-header">
+                        <div className="xchat-header-left">
+                            <button onClick={() => router.push("/home")} className="xchat-back-btn">
+                                <ArrowLeft size={15} />
                                 <span className="hidden sm:inline">Back</span>
                             </button>
-
-                            {/* Invite Button - Moved to top left */}
                             {roomId && (
-                                <button
-                                    onClick={() => setShowInviteModal(true)}
-                                    className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-gold/15 border border-gold/30 text-gold hover:bg-gold/25 transition-all hover:scale-105"
-                                    title="Invite Friends"
-                                >
-                                    <UserPlus size={14} />
+                                <button onClick={() => setShowInviteModal(true)} className="xchat-invite-btn">
+                                    <UserPlus size={13} />
                                     <span className="hidden sm:inline">Invite</span>
                                 </button>
                             )}
-
-                            <h1 className="text-gold-gradient text-2xl md:text-3xl font-display hidden lg:block">
-                                X Chat Room
+                            <h1 className="xchat-title">
+                                <span className="hidden xs:inline">X Chat Room</span>
+                                <span className="xs:hidden">X Chat</span>
                             </h1>
                         </div>
-
-                        <div className="flex items-center gap-4">
-                            {/* Request / Session Status */}
-                            {renderRequestBanner()}
-
-                            <div className="hidden md:block">
-                                <WalletPill />
-                            </div>
+                        <div className="xchat-header-right">
+                            {renderStatus()}
+                            {roomId && <IncomingReplies roomId={roomId} />}
+                            <WalletPill />
                         </div>
-                    </div>
+                    </header>
 
-                    {/* Main layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* ── BODY: centered container holding both columns ── */}
+                    <div className="xchat-body">
+                      <div className="xchat-container">
 
-                        {/* Left: Stream + Reactions */}
-                        <div className="lg:col-span-2 space-y-2">
-                            {/* Split Video Container */}
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                {/* Creator Stream (Main) */}
-                                <div className="glass-card overflow-hidden flex-1 relative" style={{ aspectRatio: "16/9" }}>
-                                    {roomId && user && hostId ? (
-                                        <LiveStreamWrapper
-                                            role="fan"
-                                            appId={APP_ID}
-                                            roomId={roomId}
-                                            uid={user.id}
-                                            hostId={hostId}
-                                            hostAvatarUrl={hostAvatar || ""}
-                                            hostName={hostName}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-black/50 text-gray-400 text-sm">
-                                            {roomId ? "Connecting to stream..." : "No active session"}
+                        {/* ── LEFT PANEL ────────────────────────────── */}
+                        <div className="xchat-left">
+
+                            {/* CANVAS */}
+                            <div className="xchat-canvas">
+                                {roomId && user && hostId ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={hostId}
+                                        hostAvatarUrl={hostAvatar || ""}
+                                        hostName={hostName}
+                                    />
+                                ) : (
+                                    <div className="xchat-canvas-placeholder">
+                                        <div className="xchat-avatar-ring">
+                                            {hostAvatar
+                                                ? <img src={hostAvatar} alt={hostName} className="w-full h-full object-cover" />
+                                                : <span className="text-3xl">✨</span>}
                                         </div>
-                                    )}
-                                </div>
+                                        <p className="xchat-host-name">{hostName}</p>
+                                        <p className="xchat-host-status">• • • SETTING UP • • •</p>
+                                    </div>
+                                )}
 
-                                {/* Fan Stream (Self) - only visible during active session */}
-                                {sessionActive && (
-                                    <div className="glass-card overflow-hidden w-full sm:w-1/3 shrink-0 relative" style={{ aspectRatio: "16/9", border: '2px solid rgba(29, 161, 242, 0.4)' }}>
+                                {/* PIP self-view */}
+                                {sessionActive && user && (
+                                    <div className="xchat-pip">
                                         <LiveStreamWrapper
-                                            role="host" // act as local broadcaster for fan's turn
+                                            role="host"
                                             appId={APP_ID}
                                             roomId={`${roomId}_fan`}
                                             uid={user.id}
@@ -336,30 +320,116 @@ const XChatRoom = () => {
                                             hostAvatarUrl={user?.user_metadata?.avatar_url || ""}
                                             hostName="You"
                                         />
-                                        <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-xs text-white z-50">Local</div>
+                                        <span className="xchat-pip-label">You</span>
                                     </div>
                                 )}
+
+                                {/* floating emoji burst */}
+                                {animatingEmoji && (
+                                    <div className="xchat-emoji-burst">
+                                        <span>{animatingEmoji}</span>
+                                    </div>
+                                )}
+
+                                {/* canvas label */}
+                                <div className="xchat-canvas-label">canvas area</div>
                             </div>
 
-                            <PaidReactions roomId={roomId} />
+                            {/* PAID REACTIONS – ROW 1 */}
+                            <div className="xchat-reaction-card">
+                                <div className="xchat-reaction-half xchat-reaction-half--left">
+                                    <span className="xchat-section-label">Paid Reactions</span>
+                                    <div className="xchat-chip-row">
+                                        {reactionsRow1.map(r => (
+                                            <ReactionChip key={r.type} {...r}
+                                                onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="xchat-reaction-divider" />
+                                <div className="xchat-reaction-half xchat-reaction-half--right">
+                                    <span className="xchat-section-label">Paid Stickers</span>
+                                    <div className="xchat-chip-row">
+                                        {stickersRow1.map(s => (
+                                            <ReactionChip key={s.type} {...s}
+                                                onClick={() => setPending({ label: s.label, price: s.price, reactionType: s.type, emoji: s.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PAID REACTIONS – ROW 2 (paid reaction section) */}
+                            <div className="xchat-reaction-card">
+                                <div className="xchat-reaction-half xchat-reaction-half--left">
+                                    <div className="xchat-chip-row">
+                                        {reactionsRow2.map(r => (
+                                            <ReactionChip key={r.type} {...r}
+                                                onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="xchat-reaction-divider" />
+                                <div className="xchat-reaction-half xchat-reaction-half--right">
+                                    <div className="xchat-chip-row">
+                                        {stickersRow2.map(s => (
+                                            <ReactionChip key={s.type} {...s}
+                                                onClick={() => setPending({ label: s.label, price: s.price, reactionType: s.type, emoji: s.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* VISIBILITY BOOSTS + DIRECT ACCESS */}
+                            <div className="xchat-bottom-row">
+                                {/* Visibility Boosts */}
+                                <div className="xchat-boost-card">
+                                    <span className="xchat-section-label">Visibility Boosts</span>
+                                    <div className="xchat-boost-list">
+                                        {visibilityBoosts.map(b => (
+                                            <BoostRow key={b.type} {...b}
+                                                onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Direct Access */}
+                                <div className="xchat-boost-card">
+                                    <span className="xchat-section-label">Direct Access</span>
+                                    <div className="xchat-boost-list">
+                                        {directAccess.map(d => (
+                                            <BoostRow key={d.type} {...d}
+                                                onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Right: Message Terminal */}
-                        <div className="lg:col-span-1">
+                        {/* ── RIGHT PANEL: Chat ──────────────────────── */}
+                        <div className="xchat-right">
                             <ChatPanel roomId={roomId} hostName={hostName} />
                         </div>
 
-                    </div>
+                      </div>{/* /xchat-container */}
+                    </div>{/* /xchat-body */}
                 </div>
 
-                {/* Invite Modal */}
-                <InviteModal
-                    isOpen={showInviteModal}
-                    onClose={() => setShowInviteModal(false)}
-                    roomId={roomId}
+                {/* Spend Confirm Modal */}
+                <SpendConfirmModal
+                    isOpen={!!pending}
+                    onClose={() => { setPending(null); setVoicePrompt(""); }}
+                    title={pending?.reactionType === "voice_note_boost" ? "Request Voice Note" : "Confirm Purchase"}
+                    itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
+                    amount={pending?.price || 0}
+                    walletBalance={balance}
+                    onConfirm={handleReactionSend}
+                    requireInput={pending?.reactionType === "voice_note_boost"}
+                    inputPlaceholder="What should the voice note be about?"
+                    inputValue={voicePrompt}
+                    onInputChange={setVoicePrompt}
                 />
 
-                {/* Invitation Popup (receiver side) */}
+                <InviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} roomId={roomId} />
                 <InvitationPopup />
             </div>
         </ProtectRoute>

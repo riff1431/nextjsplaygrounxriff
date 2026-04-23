@@ -152,9 +152,9 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                     {/* Close Button */}
                     <button
                         onClick={onDismiss}
-                        className="absolute -top-12 -right-12 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all backdrop-blur-sm"
+                        className="absolute -top-8 -right-8 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all backdrop-blur-sm"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="w-4 h-4" />
                     </button>
 
                     <motion.div
@@ -162,14 +162,14 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                         transition={{ duration: 0.5, repeat: 3 }}
                         className="relative"
                     >
-                        <div className="absolute inset-0 bg-green-400/30 blur-3xl rounded-full" />
-                        <CheckCircle className="relative w-32 h-32 text-green-400 mx-auto" />
+                        <div className="absolute inset-0 bg-green-400/30 blur-2xl rounded-full" />
+                        <CheckCircle className="relative w-20 h-20 text-green-400 mx-auto" />
                     </motion.div>
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="mt-6 text-4xl font-bold text-white"
+                        className="mt-4 text-2xl font-bold text-white"
                     >
                         Answered! 🎉
                     </motion.div>
@@ -177,7 +177,7 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.6, type: "spring" }}
-                        className="mt-4 text-6xl font-black text-green-400"
+                        className="mt-2 text-4xl font-black text-green-400"
                     >
                         +${request.amount || 0}
                     </motion.div>
@@ -199,11 +199,11 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                     className="fixed top-24 right-6 z-50"
                 >
                     <div className={`
-                        relative overflow-hidden w-80
+                        relative overflow-hidden w-64
                         bg-gradient-to-br ${styles.glass}
                         backdrop-blur-2xl backdrop-saturate-150
                         border ${styles.border}
-                        rounded-3xl p-5
+                        rounded-2xl p-3.5
                         ${styles.glow}
                     `}>
                         {/* Glass highlight effect */}
@@ -211,47 +211,47 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
 
                         {/* Header */}
-                        <div className="relative flex items-center gap-3 mb-4">
+                        <div className="relative flex items-center gap-2 mb-3">
                             <motion.div
                                 animate={{ scale: [1, 1.15, 1] }}
                                 transition={{ duration: 1.5, repeat: Infinity }}
-                                className={`p-3 rounded-2xl backdrop-blur-sm ${isTruth ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border border-white/10`}
+                                className={`p-2 rounded-xl backdrop-blur-sm ${isTruth ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border border-white/10`}
                             >
-                                {isTruth ? <MessageCircle className="w-6 h-6 text-cyan-300" /> : <Flame className="w-6 h-6 text-pink-400" />}
+                                {isTruth ? <MessageCircle className="w-4 h-4 text-cyan-300" /> : <Flame className="w-4 h-4 text-pink-400" />}
                             </motion.div>
                             <div className="flex-1">
-                                <div className="text-xs text-white/50 uppercase tracking-[0.2em] font-medium">Incoming</div>
-                                <div className="font-bold text-white text-lg flex items-center gap-2">
+                                <div className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-medium">Incoming</div>
+                                <div className="font-bold text-white text-sm flex items-center gap-1.5">
                                     {request.tier?.toUpperCase()} {isTruth ? 'TRUTH' : 'DARE'}
                                     {request.tier === 'gold' && <Crown className="w-4 h-4 text-yellow-400" />}
                                 </div>
                             </div>
 
                             {/* Countdown circle */}
-                            <div className="relative w-14 h-14">
+                            <div className="relative w-10 h-10">
                                 <svg className="w-full h-full -rotate-90">
-                                    <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                                    <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" />
                                     <motion.circle
-                                        cx="28" cy="28" r="24"
+                                        cx="20" cy="20" r="17"
                                         fill="none"
                                         stroke={isTruth ? "#22d3ee" : "#f472b6"}
-                                        strokeWidth="3"
+                                        strokeWidth="2.5"
                                         strokeLinecap="round"
-                                        strokeDasharray={150.8}
-                                        animate={{ strokeDashoffset: 150.8 - (countdown / 10) * 150.8 }}
+                                        strokeDasharray={106.8}
+                                        animate={{ strokeDashoffset: 106.8 - (countdown / 10) * 106.8 }}
                                         transition={{ duration: 1, ease: "linear" }}
                                         style={{ filter: 'drop-shadow(0 0 6px currentColor)' }}
                                     />
                                 </svg>
-                                <span className={`absolute inset-0 flex items-center justify-center text-2xl font-black ${styles.accent}`}>
+                                <span className={`absolute inset-0 flex items-center justify-center text-lg font-black ${styles.accent}`}>
                                     {countdown}
                                 </span>
                             </div>
                         </div>
 
                         {/* Fan info */}
-                        <div className="relative bg-black/20 backdrop-blur-sm rounded-xl p-3 mb-3 border border-white/5">
-                            <div className="text-sm text-white/70">from <span className="font-bold text-white">{request.fanName}</span></div>
+                        <div className="relative bg-black/20 backdrop-blur-sm rounded-lg p-2 mb-2 border border-white/5">
+                            <div className="text-xs text-white/70">from <span className="font-bold text-white">{request.fanName}</span></div>
                         </div>
 
                         {/* Amount */}
@@ -259,9 +259,9 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                             <motion.div
                                 animate={{ scale: [1, 1.03, 1] }}
                                 transition={{ duration: 2, repeat: Infinity }}
-                                className="flex items-center gap-1 font-bold text-lg text-green-300 bg-green-500/15 px-4 py-2 rounded-xl border border-green-500/20"
+                                className="flex items-center gap-1 font-bold text-sm text-green-300 bg-green-500/15 px-3 py-1.5 rounded-lg border border-green-500/20"
                             >
-                                <DollarSign className="w-5 h-5" />+{request.amount || 0}
+                                <DollarSign className="w-4 h-4" />+{request.amount || 0}
                             </motion.div>
                             <div className="flex items-center gap-1 text-sm text-white/50">
                                 <Timer className="w-4 h-4 animate-pulse" />Revealing...
@@ -287,48 +287,48 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                         exit={{ scale: 0.95, opacity: 0 }}
                         transition={{ type: "spring", damping: 20, stiffness: 200 }}
                         className={`
-                            relative w-full max-w-xl overflow-hidden
+                            relative w-full max-w-sm overflow-hidden
                             bg-gradient-to-br ${styles.glass}
                             backdrop-blur-3xl backdrop-saturate-200
                             border ${styles.border}
-                            rounded-[2.5rem]
+                            rounded-2xl
                             ${styles.glow}
                         `}
                     >
                         {/* Glass highlights */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none rounded-[2.5rem]" />
-                        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none rounded-2xl" />
+                        <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
 
                         {/* Ambient glow orbs */}
                         <motion.div
                             animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
                             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -top-20 -left-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"
+                            className="absolute -top-12 -left-12 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl"
                         />
                         <motion.div
                             animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
                             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -bottom-20 -right-20 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl"
+                            className="absolute -bottom-12 -right-12 w-28 h-28 bg-pink-500/20 rounded-full blur-2xl"
                         />
 
-                        <div className="relative p-8">
+                        <div className="relative p-5">
                             {/* Type badge */}
-                            <div className="text-center mb-6">
+                            <div className="text-center mb-4">
                                 <motion.div
                                     initial={{ y: -20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     className={`
-                                        inline-flex items-center gap-2 px-5 py-2.5 rounded-full
+                                        inline-flex items-center gap-1.5 px-4 py-2 rounded-full
                                         bg-gradient-to-r ${styles.badge}
                                         backdrop-blur-sm border border-white/20
                                         shadow-lg
                                     `}
                                 >
-                                    {isTruth ? <MessageCircle className="w-5 h-5 text-white" /> : <Flame className="w-5 h-5 text-white" />}
-                                    <span className="font-bold text-white uppercase tracking-wide">
+                                    {isTruth ? <MessageCircle className="w-4 h-4 text-white" /> : <Flame className="w-4 h-4 text-white" />}
+                                    <span className="font-bold text-white text-sm uppercase tracking-wide">
                                         {request.tier} {isTruth ? 'Truth' : 'Dare'}
                                     </span>
-                                    <Sparkles className="w-4 h-4 text-yellow-300" />
+                                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
                                 </motion.div>
                             </div>
 
@@ -337,10 +337,10 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                 initial={{ scale: 0.95, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ delay: 0.15 }}
-                                className="relative bg-black/30 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-white/10"
+                                className="relative bg-black/30 backdrop-blur-xl rounded-xl p-4 mb-4 border border-white/10"
                             >
                                 <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                                <p className="text-2xl sm:text-3xl font-semibold text-white text-center leading-relaxed">
+                                <p className="text-lg sm:text-xl font-semibold text-white text-center leading-snug">
                                     "{request.content}"
                                 </p>
                             </motion.div>
@@ -350,7 +350,7 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.25 }}
-                                className="flex items-center justify-between mb-6"
+                                className="flex items-center justify-between mb-4"
                             >
                                 <div className="text-white/70">
                                     From: <span className="font-bold text-white">{request.fanName}</span>
@@ -358,9 +358,9 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                 <motion.div
                                     animate={{ scale: [1, 1.05, 1] }}
                                     transition={{ duration: 2, repeat: Infinity }}
-                                    className="text-xl font-bold text-green-300 bg-green-500/15 px-5 py-2 rounded-xl border border-green-400/20 flex items-center gap-1 backdrop-blur-sm"
+                                    className="text-base font-bold text-green-300 bg-green-500/15 px-3 py-1.5 rounded-lg border border-green-400/20 flex items-center gap-1 backdrop-blur-sm"
                                 >
-                                    <DollarSign className="w-5 h-5" />+{request.amount || 0}
+                                    <DollarSign className="w-4 h-4" />+{request.amount || 0}
                                 </motion.div>
                             </motion.div>
 
@@ -369,13 +369,13 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3 }}
-                                className="mb-6"
+                                className="mb-4"
                             >
                                 <textarea
                                     value={response}
                                     onChange={(e) => setResponse(e.target.value)}
                                     placeholder="Type your response or completion note..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white placeholder-white/40 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all resize-none min-h-[100px]"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all resize-none min-h-[70px]"
                                 />
                             </motion.div>
 
@@ -392,10 +392,10 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                     onClick={handleAnswerNow}
                                     disabled={answering}
                                     className={`
-                                        flex-1 py-4 rounded-2xl
+                                        flex-1 py-2.5 rounded-xl
                                         bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500
                                         bg-[length:200%_100%] hover:bg-right transition-all duration-500
-                                        text-white font-bold text-lg
+                                        text-white font-bold text-sm
                                         shadow-lg shadow-purple-500/30
                                         border border-white/20
                                         flex items-center justify-center gap-2
@@ -420,7 +420,7 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
                                     whileTap={{ scale: 0.98 }}
                                     onClick={onDismiss}
                                     disabled={answering}
-                                    className="px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-medium transition-all border border-white/20 flex items-center gap-2 backdrop-blur-sm"
+                                    className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-medium transition-all border border-white/20 flex items-center gap-1.5 backdrop-blur-sm"
                                 >
                                     <XCircle className="w-5 h-5" />
                                     Later

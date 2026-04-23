@@ -1126,25 +1126,25 @@ export default function TruthOrDareCreatorRoom() {
 
             {/* Exit/End Confirmation Modal */}
             {showExitConfirmation && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-                    <div className="max-w-md w-full bg-gray-900 border border-red-500/30 rounded-3xl p-8 shadow-[0_0_50px_rgba(239,68,68,0.2)] text-center">
-                        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                            <Video className="w-8 h-8 text-red-400" />
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+                    <div className="max-w-xs w-full bg-gray-900 border border-red-500/30 rounded-2xl p-5 shadow-[0_0_50px_rgba(239,68,68,0.2)] text-center">
+                        <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                            <Video className="w-6 h-6 text-red-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">End Live Session?</h2>
-                        <p className="text-gray-400 mb-8">
-                            This will stop the stream for all viewers and close the session. Are you sure you want to exit?
+                        <h2 className="text-lg font-bold text-white mb-1.5">End Live Session?</h2>
+                        <p className="text-sm text-gray-400 mb-5">
+                            This will stop the stream for all viewers and close the session.
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setShowExitConfirmation(false)}
-                                className="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-medium transition"
+                                className="w-full py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-white text-sm font-medium transition"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={endSession}
-                                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-900/20 transition"
+                                className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-bold shadow-lg shadow-red-900/20 transition"
                             >
                                 End Session
                             </button>

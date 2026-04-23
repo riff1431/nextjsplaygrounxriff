@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, MessageSquare, ClipboardList } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -14,6 +14,7 @@ import DropRequests from "@/components/rooms/flashdrop-creator/DropRequests";
 import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import "./flashdrop-creator.css";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -22,6 +23,9 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 /** Inner component that renders the live studio (only when sessionId is present) */
 function FlashdropCreatorStudio() {
     const { user } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -64,6 +68,13 @@ function FlashdropCreatorStudio() {
                     <h1 className="font-display text-2xl md:text-4xl font-black neon-text tracking-widest text-center w-full">
                         Flash Drop — Creator Room
                     </h1>
+                    <div className="absolute right-0 z-50">
+                        <SessionLiveControls
+                            sessionId={sessionId!}
+                            onEnd={() => router.push("/rooms/flash-drop-creator")}
+                            accentHsl="170, 80%, 50%"
+                        />
+                    </div>
                 </div>
 
                 {/* Main Grid */}

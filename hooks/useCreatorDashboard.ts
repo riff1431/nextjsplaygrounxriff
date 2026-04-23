@@ -107,16 +107,18 @@ export function useCreatorDashboard(): CreatorDashboardData {
                 .eq("creator_id", user.id)
                 .eq("status", "active");
 
-            // 6. Fetch Global Creator Earnings (Standardized API)
+            // 6. Fetch Creator Earnings from standardized API (scoped to authenticated user)
             let tipsEarned = 0;
             let giftsCount = 0;
             try {
                 const res = await fetch("/api/v1/creator/earnings?limit=1");
                 if (res.ok) {
                     const earningsData = await res.json();
-                    tipsEarned = Number(earningsData.ledger?.total_earned || 0);
-                    // Instead of total_gifts, if we just want gifts count we could do:
-                    giftsCount = Number(earningsData.month_summary?.events_count || 0); // or count from gifts
+                    const ledger = earningsData.ledger || {};
+                    // Total earned across all categories
+                    tipsEarned = Number(ledger.total_earned || 0);
+                    // Gifts count — use total_gifts (monetary value); approximate count from events
+                    giftsCount = Number(ledger.total_gifts || 0);
                 }
             } catch (err) {
                 console.error("Failed to fetch standardized earnings", err);
@@ -141,7 +143,7 @@ export function useCreatorDashboard(): CreatorDashboardData {
 
             setStats({
                 tipsEarned: Math.round(tipsEarned * 100) / 100,
-                giftsCount, // this is effectively total events for the month now, but ok
+                giftsCount: Math.round(giftsCount * 100) / 100,
                 totalFollowers,
                 activeRooms,
                 subscribers: subscribersCount || 0,

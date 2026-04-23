@@ -830,17 +830,17 @@ function TruthOrDareContent() {
             {/* Paywall Overlay */}
             {
                 access === 'locked' && sessionInfo && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-                        <div className="max-w-md w-full bg-gray-900 border border-purple-500/30 rounded-3xl p-8 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]">
-                            <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-6">
-                                <Lock className="w-8 h-8 text-purple-400" />
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+                        <div className="max-w-xs w-full bg-gray-900 border border-purple-500/30 rounded-2xl p-5 text-center shadow-[0_0_100px_rgba(168,85,247,0.2)]">
+                            <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                                <Lock className="w-6 h-6 text-purple-400" />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">{sessionInfo.title}</h2>
-                            <p className="text-gray-400 mb-8">{sessionInfo.desc || "This is a private VIP session. Unlock to enter and participate."}</p>
+                            <h2 className="text-lg font-bold text-white mb-1.5">{sessionInfo.title}</h2>
+                            <p className="text-sm text-gray-400 mb-5">{sessionInfo.desc || "This is a private VIP session. Unlock to enter and participate."}</p>
 
-                            <div className="p-4 rounded-xl bg-black/40 border border-white/10 mb-8">
-                                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Entry Fee</div>
-                                <div className="text-3xl font-bold text-purple-300">€{sessionInfo.price}</div>
+                            <div className="p-3 rounded-xl bg-black/40 border border-white/10 mb-5">
+                                <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Entry Fee</div>
+                                <div className="text-2xl font-bold text-purple-300">€{sessionInfo.price}</div>
                             </div>
 
                             <button
@@ -850,7 +850,7 @@ function TruthOrDareContent() {
                                         : unlockSession
                                 }
                                 disabled={unlocking || (sessionInfo.isPrivate && requestStatus === 'pending') || (sessionInfo.isPrivate && requestStatus === 'rejected')}
-                                className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${sessionInfo.isPrivate && requestStatus !== 'approved'
+                                className={`w-full py-3 rounded-xl font-bold text-base shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${sessionInfo.isPrivate && requestStatus !== 'approved'
                                     ? "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40 text-white"
                                     : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-purple-900/40"
                                     }`}
@@ -870,7 +870,7 @@ function TruthOrDareContent() {
 
                             <button
                                 onClick={() => router.push('/account/wallet')}
-                                className="w-full mt-3 py-4 rounded-xl font-bold text-lg border-2 border-purple-500/40 bg-background/50 backdrop-blur shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-purple-500/10 hover:border-purple-500/60 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2 text-purple-300"
+                                className="w-full mt-2 py-3 rounded-xl font-bold text-base border-2 border-purple-500/40 bg-background/50 backdrop-blur shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:bg-purple-500/10 hover:border-purple-500/60 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all flex items-center justify-center gap-2 text-purple-300"
                             >
                                 <Wallet className="w-5 h-5" /> Wallet
                             </button>
@@ -1182,7 +1182,7 @@ function TruthOrDareContent() {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
-                            className="w-full max-w-sm bg-gray-900 border border-pink-500/50 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+                            className="w-full max-w-xs bg-gray-900 border border-pink-500/50 rounded-2xl p-4 shadow-2xl relative overflow-hidden"
                         >
                             <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${confirmModal.type === 'tip' ? 'from-green-500 to-emerald-400' : 'from-pink-500 to-purple-600'}`}></div>
                             <button
@@ -1192,24 +1192,23 @@ function TruthOrDareContent() {
                                 <X className="w-5 h-5" />
                             </button>
 
-                            <div className="text-center space-y-4">
-                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${confirmModal.type === 'tip' ? 'bg-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : confirmModal.type === 'reaction' ? 'bg-purple-500/20' : 'bg-pink-500/20'}`}>
+                            <div className="text-center space-y-3">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-1 ${confirmModal.type === 'tip' ? 'bg-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.3)]' : confirmModal.type === 'reaction' ? 'bg-purple-500/20' : 'bg-pink-500/20'}`}>
                                     {confirmModal.type === 'tip' ? (
-                                        <TrendingUp className="w-8 h-8 text-green-400" />
+                                        <TrendingUp className="w-6 h-6 text-green-400" />
                                     ) : confirmModal.type === 'reaction' ? (
-                                        <div className="text-3xl">
+                                        <div className="text-2xl">
                                             {confirmModal.tier === 'Kiss' ? '💋' : confirmModal.tier === 'Love' ? '❤️' : confirmModal.tier === 'Spicy' ? '🔥' : '🖤'}
                                         </div>
                                     ) : (
-                                        <Crown className="w-8 h-8 text-pink-400" />
+                                        <Crown className="w-6 h-6 text-pink-400" />
                                     )}
                                 </div>
 
-                                <div>
-                                    <h3 className="text-xl font-bold text-white">
+                                    <h3 className="text-base font-bold text-white">
                                         {confirmModal.type === 'tip' ? 'Send a Tip' : confirmModal.type === 'reaction' ? 'Send Reaction' : 'Confirm Interaction'}
                                     </h3>
-                                    <p className="text-sm text-gray-400 mt-1">
+                                    <p className="text-xs text-gray-400 mt-0.5">
                                         {confirmModal.type === 'tip' ? (
                                             <>Show some love to the creators!</>
                                         ) : confirmModal.type === 'reaction' ? (
@@ -1220,9 +1219,9 @@ function TruthOrDareContent() {
                                     </p>
                                 </div>
 
-                                <div className={`p-4 rounded-2xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
-                                    <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Cost</div>
-                                    <div className={`text-3xl font-bold flex items-center justify-center gap-1 ${confirmModal.type === 'tip' ? 'text-green-400' : 'text-white'}`}>
+                                <div className={`p-3 rounded-xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Total Cost</div>
+                                    <div className={`text-2xl font-bold flex items-center justify-center gap-1 ${confirmModal.type === 'tip' ? 'text-green-400' : 'text-white'}`}>
                                         <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>€</span>{confirmModal.price}
                                     </div>
                                 </div>
@@ -1230,7 +1229,7 @@ function TruthOrDareContent() {
                                 <button
                                     onClick={processPayment}
                                     disabled={isSubmitting}
-                                    className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 ${confirmModal.type === 'tip'
+                                    className={`w-full py-2.5 rounded-xl font-bold text-sm shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2 ${confirmModal.type === 'tip'
                                         ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-green-900/40'
                                         : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-pink-900/40'
                                         }`}
@@ -1263,12 +1262,12 @@ function TruthOrDareContent() {
                             exit={{ scale: 0.9, opacity: 0, y: 10 }}
                             transition={{ type: "spring", damping: 25, stiffness: 300 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="relative w-full max-w-xs overflow-hidden"
+                            className="relative w-full max-w-[280px] overflow-hidden"
                         >
                             {/* Liquid Glass Container */}
                             <div
                                 className={`
-                                    relative rounded-3xl p-6 
+                                    relative rounded-2xl p-4 
                                     bg-gradient-to-br 
                                     ${resultModal.success
                                         ? 'from-white/20 via-white/10 to-white/5'
@@ -1296,7 +1295,7 @@ function TruthOrDareContent() {
                                         animate={{ scale: 1 }}
                                         transition={{ delay: 0.1, type: "spring", stiffness: 400 }}
                                         className={`
-                                            w-14 h-14 rounded-full flex items-center justify-center mb-4
+                                            w-11 h-11 rounded-full flex items-center justify-center mb-3
                                             ${resultModal.success
                                                 ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-[0_4px_20px_rgba(52,211,153,0.5)]'
                                                 : 'bg-gradient-to-br from-red-400 to-red-500 shadow-[0_4px_20px_rgba(239,68,68,0.5)]'
@@ -1305,14 +1304,14 @@ function TruthOrDareContent() {
                                     >
                                         {resultModal.success ? (
                                             resultModal.type === 'tip' ? (
-                                                <TrendingUp className="w-7 h-7 text-white" />
+                                                <TrendingUp className="w-5 h-5 text-white" />
                                             ) : (
-                                                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             )
                                         ) : (
-                                            <X className="w-7 h-7 text-white" />
+                                            <X className="w-5 h-5 text-white" />
                                         )}
                                     </motion.div>
 
@@ -1322,7 +1321,7 @@ function TruthOrDareContent() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.15 }}
                                         className={`
-                                            text-xs font-semibold tracking-widest uppercase mb-2
+                                            text-[10px] font-semibold tracking-widest uppercase mb-1.5
                                             ${resultModal.success ? 'text-emerald-400' : 'text-red-400'}
                                         `}
                                     >
@@ -1337,7 +1336,7 @@ function TruthOrDareContent() {
                                         initial={{ opacity: 0, y: 5 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.2 }}
-                                        className="text-lg font-semibold text-white/90 leading-snug mb-5"
+                                        className="text-sm font-semibold text-white/90 leading-snug mb-3"
                                     >
                                         {resultModal.type === 'tip' && resultModal.success
                                             ? "Thanks for your support!"

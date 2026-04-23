@@ -13,6 +13,7 @@ import S4uCreatorSecrets from "@/components/rooms/suga4u-creator/S4uCreatorSecre
 import S4uSessionSummary from "@/components/rooms/suga4u-creator/S4uSessionSummary";
 import S4uCreatorGroupVote from "@/components/rooms/suga4u-creator/S4uCreatorGroupVote";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -86,14 +87,19 @@ const Suga4UCreatorPage = () => {
             {/* Content */}
             <div className="relative z-10 p-2 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
                 
-                {/* Back Button */}
-                <div className="mb-0 shrink-0">
+                {/* Top Header Row */}
+                <div className="mb-0 shrink-0 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
                         className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
+                    <SessionLiveControls
+                        sessionId={sessionId!}
+                        onEnd={() => router.push("/rooms/suga4u-creator")}
+                        accentHsl="340, 75%, 55%"
+                    />
                 </div>
 
                 {/* Main 4-col grid */}

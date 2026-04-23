@@ -351,71 +351,10 @@ export default function FlashDropsRoomPreview() {
                             </div>
 
                             {/* Right: Impulse Panel */}
-                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col gap-2 overflow-hidden">
-                                <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
-                                    <ImpulsePanel roomId={roomId} onSpend={requestSpend} />
-                                </div>
-                                
-                                {/* Featured Drop — Moved here from LiveDropBoard */}
-                                {(() => {
-                                    const featuredDrop = drops.length > 0
-                                        ? [...drops].sort((a, b) => b.price - a.price)[0]
-                                        : null;
-                                    
-                                    if (!featuredDrop || featuredDrop.price <= 0) return null;
-
-                                    const formatCountdown = (endsAt: string) => {
-                                        const diff = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
-                                        if (diff === 0) return "ENDED";
-                                        const h = Math.floor(diff / 3600);
-                                        const m = Math.floor((diff % 3600) / 60);
-                                        const s = diff % 60;
-                                        if (h > 0) return `${h}h ${m}m`;
-                                        if (m > 0) return `${m}m ${s}s`;
-                                        return `${s}s`;
-                                    };
-
-                                    return (
-                                        <div className="shrink-0 rounded-xl border-2 border-yellow-400/60 bg-black/80 p-4 relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 left-0 bottom-0 pointer-events-none rounded-xl shadow-[0_0_40px_rgba(250,204,21,0.3)] ring-1 ring-yellow-400/40" />
-                                            <div className="flex items-center justify-between mb-2 relative z-10">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-1 h-1 rounded-full bg-yellow-400 animate-pulse" />
-                                                    <span className="fd-font-tech text-xs font-black uppercase tracking-[0.2em] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]">
-                                                        Featured Drop
-                                                    </span>
-                                                </div>
-                                                <span className="text-[10px] text-yellow-400/60 fd-font-tech uppercase font-bold">
-                                                    {formatCountdown(featuredDrop.ends_at)}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between relative z-10 mb-3">
-                                                <div>
-                                                    <div className="fd-font-body font-black text-white text-sm leading-tight">{featuredDrop.title}</div>
-                                                    <div className="text-[10px] text-yellow-400/50 fd-font-tech uppercase font-bold tracking-tighter mt-0.5">
-                                                        Type: <span className="text-yellow-400/80">{featuredDrop.kind}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="fd-font-tech text-2xl font-black text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.5)]">
-                                                        ${featuredDrop.price}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => requestSpend(featuredDrop.price * 2, `🎁 Unlocked + Gifted ${featuredDrop.title} (2x)`)}
-                                                className="relative z-10 w-full py-2.5 rounded-xl border-2 border-yellow-400/80 bg-yellow-400/20 text-yellow-400 fd-font-tech text-xs font-black hover:bg-yellow-400/30 transition-all uppercase tracking-[0.2em]"
-                                                style={{
-                                                    boxShadow: "0 0 15px rgba(250,204,21,0.3), 0 0 40px rgba(250,204,21,0.15), inset 0 0 10px rgba(250,204,21,0.1)",
-                                                    textShadow: "0 0 6px rgba(250,204,21,0.5)"
-                                                }}
-                                            >
-                                                Unlock + Gift: (2x)
-                                            </button>
-                                        </div>
-                                    );
-                                })()}
+                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden">
+                                <ImpulsePanel roomId={roomId} onSpend={requestSpend} />
                             </div>
+
                         </div>
 
                         {/* Bundle strip — compact bottom bar */}

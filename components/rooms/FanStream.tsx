@@ -80,62 +80,66 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
         );
     }
 
-    const CameraOffFallback = () => (
-        <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden">
+    const StreamPlaceholder = ({ label }: { label: string }) => (
+        <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden bg-black">
             <div className="absolute inset-0">
                 {hostAvatarUrl ? (
-                    <img src={hostAvatarUrl} alt="" className="w-full h-full object-cover scale-110 blur-2xl opacity-60" />
+                    <img src={hostAvatarUrl} alt="" className="w-full h-full object-cover scale-110 blur-2xl opacity-40" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-pink-900/80 via-purple-900/80 to-indigo-900/80" />
+                    <div className="w-full h-full bg-gradient-to-br from-gray-900 via-purple-950 to-black" />
                 )}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50" />
-            <div className="relative z-10 flex flex-col items-center gap-4">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+            
+            <div className="relative z-10 flex flex-col items-center gap-6">
                 <div className="relative">
-                    <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 opacity-75 blur-md animate-pulse" />
+                    <div className="absolute -inset-4 rounded-full bg-gold/20 opacity-50 blur-xl animate-pulse" />
+                    <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-gold/50 via-gold to-gold/50 opacity-75 blur-sm" />
                     {hostAvatarUrl ? (
-                        <img src={hostAvatarUrl} alt={hostName || 'Creator'} className="relative w-24 h-24 rounded-full object-cover border-4 border-white/20 shadow-2xl" />
+                        <img 
+                            src={hostAvatarUrl} 
+                            alt={hostName || 'Creator'} 
+                            className="relative w-28 h-28 rounded-full object-cover border-2 border-gold shadow-[0_0_30px_rgba(212,175,55,0.3)]" 
+                        />
                     ) : (
-                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center border-4 border-white/20 shadow-2xl">
-                            <span className="text-3xl font-bold text-white">{hostName?.charAt(0).toUpperCase() || 'C'}</span>
+                        <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-gold/20 to-gold/10 flex items-center justify-center border-2 border-gold shadow-[0_0_30px_rgba(212,175,55,0.3)]">
+                            <span className="text-4xl font-bold text-gold">{hostName?.charAt(0).toUpperCase() || 'C'}</span>
                         </div>
                     )}
                 </div>
-                <div className="text-center">
-                    {hostName && <div className="text-white font-bold text-lg drop-shadow-lg">{hostName}</div>}
-                    <div className="flex items-center gap-2 text-sm text-pink-200/90 mt-1">
-                        <VideoOff className="w-4 h-4" />
-                        <span>Camera Off</span>
+                
+                <div className="text-center space-y-2">
+                    {hostName && (
+                        <h3 className="text-white font-bold text-xl tracking-tight drop-shadow-lg">
+                            {hostName}
+                        </h3>
+                    )}
+                    <div className="flex items-center justify-center gap-3 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-xl">
+                        <div className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.3s]" />
+                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.15s]" />
+                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce" />
+                        </div>
+                        <span className="text-xs font-medium text-gold/90 uppercase tracking-widest">{label}</span>
                     </div>
                 </div>
             </div>
-            <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700" />
+
+            {/* Decorative Orbs */}
+            <div className="absolute -top-10 -left-10 w-64 h-64 bg-gold/5 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
         </div>
     );
 
     return (
-        <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border border-white/5 shadow-2xl">
             {broadcaster ? (
                 <>
                     <RemoteUser user={broadcaster} cover="cover" className="w-full h-full" />
-                    {!hostHasVideo && <CameraOffFallback />}
+                    {!hostHasVideo && <StreamPlaceholder label="Camera Off" />}
                 </>
             ) : (
-                <div className="flex flex-col items-center gap-3">
-                    {/* Waiting for host — show avatar if available */}
-                    {hostAvatarUrl ? (
-                        <>
-                            <img src={hostAvatarUrl} alt={hostName || 'Host'} className="w-20 h-20 rounded-full object-cover border-2 border-purple-500/50 animate-pulse" />
-                            <span className="text-xs text-gray-400">{hostName ? `${hostName} is setting up...` : 'Waiting for host...'}</span>
-                        </>
-                    ) : (
-                        <>
-                            <div className="w-12 h-12 rounded-full border-2 border-dashed border-purple-700 animate-spin" style={{ animationDuration: '3s' }} />
-                            <span className="text-xs text-gray-500">Waiting for host...</span>
-                        </>
-                    )}
-                </div>
+                <StreamPlaceholder label={hostName ? `${hostName} is setting up...` : "Waiting for Host..."} />
             )}
         </div>
     );

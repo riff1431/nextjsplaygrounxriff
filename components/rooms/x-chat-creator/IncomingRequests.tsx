@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
+import { Mic, Square, Upload, X, Loader2 } from "lucide-react";
+
+import { VoiceNotePlayer } from "@/components/common/VoiceNotePlayer";
 
 interface XChatRequest {
     id: string;
@@ -18,6 +22,13 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     const [requests, setRequests] = useState<XChatRequest[]>([]);
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState("");
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaFile, setMediaFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<BlobPart[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!roomId) return;
@@ -61,10 +72,67 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
         }
     };
 
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setMediaFile(e.target.files[0]);
+        }
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const audioFile = new File([audioBlob], `voice_note_${Date.now()}.webm`, { type: 'audio/webm' });
+                setMediaFile(audioFile);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Failed to start recording", err);
+            alert("Microphone access denied or error occurred.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
     const handleAcceptWithReply = async (id: string) => {
-        await handleAction(id, "accepted", replyText);
-        setReplyingTo(null);
-        setReplyText("");
+        setUploading(true);
+        try {
+            let mediaUrl = "";
+            if (mediaFile) {
+                mediaUrl = await uploadToLocalServer(mediaFile);
+            }
+            
+            const finalReply = [replyText, mediaUrl].filter(Boolean).join("\n");
+            await handleAction(id, "accepted", finalReply);
+            
+            setReplyingTo(null);
+            setReplyText("");
+            setMediaFile(null);
+        } catch (error) {
+            console.error("Error sending reply:", error);
+            alert("Failed to send reply");
+        } finally {
+            setUploading(false);
+        }
     };
 
     return (
@@ -120,16 +188,56 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                                     </div>
                                     {replyingTo === r.id && (
                                         <div className="flex flex-col gap-2 mt-1 bg-black/20 p-2 rounded border border-border">
-                                            <input
-                                                type="text"
+                                            <textarea
                                                 value={replyText}
                                                 onChange={e => setReplyText(e.target.value)}
-                                                placeholder="Enter link to voice note or reply..."
-                                                className="w-full bg-input rounded px-2 py-1.5 text-xs focus:outline-emerald-500"
+                                                placeholder="Enter text reply..."
+                                                className="w-full bg-input rounded px-2 py-1.5 text-xs focus:outline-emerald-500 resize-none"
+                                                rows={2}
                                             />
-                                            <div className="flex gap-2 justify-end">
-                                                <button onClick={() => setReplyingTo(null)} className="text-[10px] text-muted-foreground hover:text-white">Cancel</button>
-                                                <button onClick={() => handleAcceptWithReply(r.id)} className="text-[10px] bg-primary text-white px-2 py-1 rounded font-bold">Send Reply</button>
+                                            
+                                            {/* Media File Display */}
+                                            {mediaFile && (
+                                                <div className="flex items-center justify-between bg-primary/10 border border-primary/20 text-primary px-2 py-1 rounded text-xs">
+                                                    <span className="truncate max-w-[150px]">{mediaFile.name}</span>
+                                                    <button onClick={() => setMediaFile(null)} className="text-primary hover:text-white"><X size={12} /></button>
+                                                </div>
+                                            )}
+
+                                            <div className="flex gap-2 justify-between items-center">
+                                                <div className="flex gap-2">
+                                                    {isRecording ? (
+                                                        <button onClick={stopRecording} className="p-1.5 bg-red-500/20 text-red-500 rounded hover:bg-red-500/40" title="Stop Recording">
+                                                            <Square size={14} fill="currentColor" />
+                                                        </button>
+                                                    ) : (
+                                                        <button onClick={startRecording} className="p-1.5 bg-secondary text-muted-foreground rounded hover:text-white" title="Record Voice Note">
+                                                            <Mic size={14} />
+                                                        </button>
+                                                    )}
+                                                    
+                                                    <button onClick={() => fileInputRef.current?.click()} className="p-1.5 bg-secondary text-muted-foreground rounded hover:text-white" title="Upload Media">
+                                                        <Upload size={14} />
+                                                    </button>
+                                                    <input 
+                                                        type="file" 
+                                                        ref={fileInputRef} 
+                                                        className="hidden" 
+                                                        onChange={handleFileSelect}
+                                                    />
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => { setReplyingTo(null); setMediaFile(null); setReplyText(""); }} className="text-[10px] text-muted-foreground hover:text-white">Cancel</button>
+                                                    <button 
+                                                        onClick={() => handleAcceptWithReply(r.id)} 
+                                                        disabled={uploading || (!replyText && !mediaFile)}
+                                                        className="text-[10px] bg-primary text-white px-2 py-1 rounded font-bold flex items-center gap-1 disabled:opacity-50"
+                                                    >
+                                                        {uploading && <Loader2 size={10} className="animate-spin" />}
+                                                        Send Reply
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -140,8 +248,22 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                                         {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
                                     </span>
                                     {r.creator_reply && (
-                                        <div className="text-xs bg-primary/10 border border-primary/20 text-primary px-2 py-1.5 rounded break-words">
-                                            ↳ {r.creator_reply}
+                                        <div className="text-xs bg-primary/10 border border-primary/20 text-primary px-2 py-1.5 rounded break-words flex flex-col gap-1">
+                                            <span className="font-semibold">↳ Reply:</span>
+                                            {r.creator_reply.split('\n').map((line, idx) => {
+                                                const isLink = line.startsWith('http') || line.startsWith('/api/');
+                                                if (isLink) {
+                                                    if (line.match(/\.(webm|mp3|wav|m4a)$/i)) {
+                                                        return <VoiceNotePlayer key={idx} src={line} />;
+                                                    } else if (line.match(/\.(jpeg|jpg|gif|png)$/i)) {
+                                                        return <img key={idx} src={line} alt="reply media" className="max-h-24 rounded mt-1" />;
+                                                    } else if (line.match(/\.(mp4|ogg)$/i)) {
+                                                        return <video key={idx} src={line} controls className="max-h-24 rounded mt-1" />;
+                                                    }
+                                                    return <a key={idx} href={line} target="_blank" rel="noopener noreferrer" className="underline text-blue-400 mt-1 block truncate">{line}</a>;
+                                                }
+                                                return <span key={idx}>{line}</span>;
+                                            })}
                                         </div>
                                     )}
                                 </div>

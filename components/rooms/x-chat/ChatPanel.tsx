@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 import EmojiPicker from 'emoji-picker-react';
+import { VoiceNotePlayer } from "@/components/common/VoiceNotePlayer";
 
 type Lane = "Free" | "Paid" | "Priority";
 
@@ -143,7 +144,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     return (
-        <div className="glass-card flex flex-col h-full max-h-[600px] overflow-hidden min-h-[400px] pgx-chat-wrapper">
+        <div className="glass-card flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             {/* Display Filters */}
             <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3">
                 {(["All", "Paid", "Priority"] as const).map(tab => (
@@ -182,11 +183,26 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                         </div>
                         <p className="text-sm text-foreground/80 leading-relaxed">{msg.body}</p>
                         {msg.creator_reply && (
-                            <div className="ml-4 pl-3 border-l-2 border-gold-light/30 py-1 text-sm leading-relaxed">
+                            <div className="ml-4 pl-3 border-l-2 border-gold-light/30 py-1 text-sm leading-relaxed flex flex-col gap-1">
                                 <p>
-                                    <span className="text-gold-light font-semibold">@{hostName}</span>{" "}
-                                    <span className="text-foreground/90">{msg.creator_reply}</span>
+                                    <span className="text-gold-light font-semibold">@{hostName}</span>
                                 </p>
+                                <div className="text-foreground/90">
+                                    {msg.creator_reply.split('\n').map((line, idx) => {
+                                        const isLink = line.startsWith('http') || line.startsWith('/api/');
+                                        if (isLink) {
+                                            if (line.match(/\.(webm|mp3|wav|m4a)$/i)) {
+                                                return <VoiceNotePlayer key={idx} src={line} />;
+                                            } else if (line.match(/\.(jpeg|jpg|gif|png)$/i)) {
+                                                return <img key={idx} src={line} alt="reply media" className="max-h-24 rounded mt-1" />;
+                                            } else if (line.match(/\.(mp4|ogg)$/i)) {
+                                                return <video key={idx} src={line} controls className="max-h-24 rounded mt-1" />;
+                                            }
+                                            return <a key={idx} href={line} target="_blank" rel="noopener noreferrer" className="underline text-blue-400 mt-1 block truncate">{line}</a>;
+                                        }
+                                        return <span key={idx} className="block">{line}</span>;
+                                    })}
+                                </div>
                             </div>
                         )}
                     </div>

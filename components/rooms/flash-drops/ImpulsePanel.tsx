@@ -132,7 +132,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
     };
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 h-full">
             {/* Impulse Spend */}
             <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
                 <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Impulse Spend</h2>
@@ -177,7 +177,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
             </div>
 
             {/* Request A Drop */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
+            <div className="fd-glass-panel fd-neon-border rounded-xl p-3 flex-1 flex flex-col min-h-0">
                 <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-1.5 uppercase tracking-widest">Request A Drop</h2>
                 <div className="mb-1.5 flex items-center justify-between">
                     <span className="fd-font-body font-bold text-[10px] text-foreground/70">Custom Request</span>
@@ -199,21 +199,20 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmitRequest} className="space-y-2">
+                <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2 mt-1 flex-1 min-h-0">
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Describe what you'd like to see..."
-                        rows={2}
                         disabled={submitting || requestStatus === "submitted"}
-                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all resize-none disabled:opacity-50"
+                        className="flex-1 min-h-0 w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all resize-none disabled:opacity-50"
                     />
                     <input
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="Offer Amount $..."
                         disabled={submitting || requestStatus === "submitted"}
-                        className="w-full bg-black/40 border border-primary/40 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all disabled:opacity-50"
+                        className="shrink-0 w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-3 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all disabled:opacity-50"
                     />
                     <button
                         type="submit"

@@ -101,19 +101,42 @@ export default function BarLoungeRoom() {
                     if (isMounted && myRooms && myRooms.length > 0) setMySession(myRooms[0]);
                 }
                 const fetchSessions = async () => {
-                    let { data: sessions, error } = await supabase.from("rooms").select("id, title, status, host_id, created_at, viewer_count, profiles:host_id(handle, avatar_url, full_name, id)").eq("status", "live").eq("type", "bar-lounge").order("created_at", { ascending: false });
-                    if (error || !sessions) {
-                        const { data: rawRooms } = await supabase.from("rooms").select("*").eq("status", "live").eq("type", "bar-lounge");
-                        if (rawRooms) {
-                            const hostIds = Array.from(new Set(rawRooms.map((r: any) => r.host_id)));
-                            const { data: profiles } = await supabase.from("profiles").select("*").in("id", hostIds);
-                            sessions = rawRooms.map((r: any) => ({ ...r, profiles: profiles?.find((p: any) => p.id === r.host_id) || null }));
+                    try {
+                        const res = await fetch('/api/v1/rooms/sessions/browse?room_type=bar-lounge');
+                        const data = await res.json();
+                        if (res.ok && data.sessions) {
+                            // Map browse API response to the Room type the UI expects
+                            const mapped = data.sessions.map((s: any) => ({
+                                id: s.room_id,
+                                title: s.title,
+                                status: 'live',
+                                host_id: s.creator_id,
+                                created_at: s.started_at,
+                                viewer_count: s.viewer_count || s.participant_count || 0,
+                                profiles: s.creator ? {
+                                    handle: s.creator.username,
+                                    avatar_url: s.creator.avatar_url,
+                                    full_name: s.creator.full_name,
+                                } : undefined,
+                                // Store session-level data for entry fee
+                                session_id: s.id,
+                                entry_fee: s.entry_fee,
+                                session_type: s.session_type,
+                            }));
+                            if (isMounted) setActiveSessions(mapped);
                         }
+                    } catch (err) {
+                        console.error('Failed to fetch bar lounge sessions:', err);
                     }
-                    if (isMounted && sessions) setActiveSessions(sessions as any);
                 };
                 await fetchSessions();
-                if (isMounted) { roomChannel = supabase.channel('public:rooms').on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: 'type=eq.bar-lounge' }, fetchSessions).subscribe(); }
+                if (isMounted) {
+                    // Listen to both rooms and room_sessions changes for live updates
+                    roomChannel = supabase.channel('bar-lounge-fan-lobby')
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: 'type=eq.bar-lounge' }, fetchSessions)
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'room_sessions', filter: 'room_type=eq.bar-lounge' }, fetchSessions)
+                        .subscribe();
+                }
                 const { data: config } = await supabase.from("admin_bar_config").select("*").eq("id", 1).single();
                 if (isMounted && config) {
                     if (config.menu_items) setDrinks(config.menu_items);

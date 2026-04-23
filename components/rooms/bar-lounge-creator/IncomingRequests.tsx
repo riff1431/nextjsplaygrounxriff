@@ -12,6 +12,7 @@ interface Request {
     status: "pending" | "accepted" | "declined";
     amount: number;
     type: string;
+    created_at?: string;
 }
 
 /* ── Minimal toast for creator side ─── */
@@ -27,6 +28,24 @@ function useCreatorToasts() {
     return { toasts, push, dismiss };
 }
 
+/* ── Emoji for request type ─── */
+function typeEmoji(type: string): string {
+    switch (type) {
+        case "drink": return "🍸";
+        case "tip": return "💰";
+        case "vip": return "👑";
+        case "booth": return "🛋️";
+        case "pin": return "📌";
+        case "champagne": return "🥂";
+        case "vip_bottle": return "🍾";
+        case "song": return "🎵";
+        default: return "⚡";
+    }
+}
+
+/* ── Types that are auto-completed (no accept/decline needed) ─── */
+const AUTO_COMPLETED_TYPES = new Set(["drink", "tip", "champagne", "vip_bottle", "vip", "pin"]);
+
 const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<Request[]>([]);
@@ -35,19 +54,16 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     useEffect(() => {
         if (!roomId) return;
 
-        const TIP_TYPES = ["drink", "tip", "champagne", "vip_bottle", "vip", "pin"];
-
         const fetchRequests = async () => {
             const { data } = await supabase
                 .from("bar_lounge_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
-                .limit(40);
+                .limit(50);
             
             if (data) {
-                const filtered = (data as Request[]).filter(r => !TIP_TYPES.includes(r.type));
-                setRequests(filtered);
+                setRequests(data as Request[]);
             }
         };
         fetchRequests();
@@ -62,12 +78,11 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
             }, (payload) => {
                 const req = payload.new as Request;
 
-                if (!TIP_TYPES.includes(req.type)) {
-                    setRequests((prev) => [req, ...prev]);
-                }
+                // Add to list
+                setRequests((prev) => [req, ...prev]);
 
-                // Creator toast notification works for ALL types (including tips!)
-                const emoji = req.type === "drink" ? "🍸" : req.type === "tip" ? "💰" : req.type === "vip" ? "👑" : req.type === "booth" ? "🛋️" : req.type === "pin" ? "📌" : "⚡";
+                // Creator toast notification
+                const emoji = typeEmoji(req.type);
                 showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +€${req.amount}`);
             })
             .subscribe();
@@ -86,6 +101,14 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                 body: JSON.stringify({ requestId: id, status: action }),
             });
         }
+    };
+
+    const formatTimeAgo = (dateStr?: string) => {
+        if (!dateStr) return "";
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        return `${Math.floor(diff / 3600)}h ago`;
     };
 
     return (
@@ -123,48 +146,85 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
 
             <style>{`@keyframes slideInLeft { from { opacity:0; transform: translateX(-24px); } to { opacity:1; transform: translateX(0); } }`}</style>
 
-            <div className="glass-panel p-4 h-full flex flex-col w-full">
-                <h2 className="text-lg font-semibold text-gold font-title mb-3">Incoming Requests</h2>
-                <div className="space-y-3">
+            <div className="glass-panel p-4 h-full flex flex-col w-full overflow-hidden">
+                <h2 className="text-lg font-semibold text-gold font-title mb-3">Incoming</h2>
+                <div className="space-y-2 overflow-y-auto flex-1 pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "hsla(42,90%,55%,0.3) transparent" }}>
                     {requests.length === 0 && (
                         <p className="text-sm text-white/40">No requests yet</p>
                     )}
-                    {requests.map((req) => (
-                        <div key={req.id} className="flex items-center justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-white/50">{req.fan_name} · ${req.amount}</p>
-                                <p className="text-sm" style={{ color: "hsla(300, 20%, 95%, 0.9)" }}>{req.label || req.message}</p>
-                            </div>
-                            {req.status === "pending" ? (
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={() => handleAction(req.id, "accepted")}
-                                        className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
-                                        style={{ borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }}
-                                    >
-                                        Accept
-                                    </button>
-                                    <button
-                                        onClick={() => handleAction(req.id, "declined")}
-                                        className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
-                                        style={{ borderColor: "hsla(320, 80%, 60%, 0.5)", color: "hsl(320, 80%, 60%)", background: "hsla(320, 80%, 60%, 0.1)" }}
-                                    >
-                                        Decline
-                                    </button>
+                    {requests.map((req) => {
+                        const isAutoCompleted = AUTO_COMPLETED_TYPES.has(req.type);
+                        const emoji = typeEmoji(req.type);
+
+                        return (
+                            <div key={req.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all" style={{
+                                background: isAutoCompleted
+                                    ? "hsla(42,60%,20%,0.15)"
+                                    : "hsla(280,40%,20%,0.2)",
+                                border: `1px solid ${isAutoCompleted ? "hsla(42,90%,55%,0.15)" : "hsla(280,60%,45%,0.2)"}`,
+                            }}>
+                                {/* Emoji icon */}
+                                <span style={{ fontSize: "20px", flexShrink: 0 }}>{emoji}</span>
+
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold truncate" style={{ color: "hsla(45,100%,95%,0.9)" }}>
+                                            {req.fan_name || "A fan"}
+                                        </span>
+                                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
+                                            background: isAutoCompleted ? "hsla(42,90%,55%,0.15)" : "hsla(280,80%,60%,0.15)",
+                                            color: isAutoCompleted ? "hsl(42,90%,55%)" : "hsl(280,80%,70%)",
+                                            border: `1px solid ${isAutoCompleted ? "hsla(42,90%,55%,0.25)" : "hsla(280,80%,60%,0.25)"}`,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.5px",
+                                        }}>
+                                            {req.type}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs mt-0.5 truncate" style={{ color: "hsla(45,100%,95%,0.5)" }}>
+                                        {req.label || req.message || req.type}
+                                        <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€{req.amount}</span>
+                                        {req.created_at && (
+                                            <span style={{ marginLeft: "6px", color: "hsla(45,100%,95%,0.3)" }}>· {formatTimeAgo(req.created_at)}</span>
+                                        )}
+                                    </p>
                                 </div>
-                            ) : (
-                                <button
-                                    className="px-3 py-1 rounded text-xs font-medium border"
-                                    style={req.status === "accepted"
-                                        ? { borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }
-                                        : { borderColor: "hsla(320, 80%, 60%, 0.5)", color: "hsl(320, 80%, 60%)", background: "hsla(320, 80%, 60%, 0.1)" }
-                                    }
-                                >
-                                    {req.status === "accepted" ? "Accepted" : "Declined"}
-                                </button>
-                            )}
-                        </div>
-                    ))}
+
+                                {/* Action / Status */}
+                                {isAutoCompleted ? (
+                                    <CheckCircle style={{ width: "16px", height: "16px", color: "hsl(140,70%,55%)", flexShrink: 0 }} />
+                                ) : req.status === "pending" ? (
+                                    <div className="flex gap-1 shrink-0">
+                                        <button
+                                            onClick={() => handleAction(req.id, "accepted")}
+                                            className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
+                                            style={{ borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }}
+                                        >
+                                            Accept
+                                        </button>
+                                        <button
+                                            onClick={() => handleAction(req.id, "declined")}
+                                            className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
+                                            style={{ borderColor: "hsla(320, 80%, 60%, 0.5)", color: "hsl(320, 80%, 60%)", background: "hsla(320, 80%, 60%, 0.1)" }}
+                                        >
+                                            Decline
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <span
+                                        className="px-3 py-1 rounded text-xs font-medium border shrink-0"
+                                        style={req.status === "accepted"
+                                            ? { borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }
+                                            : { borderColor: "hsla(320, 80%, 60%, 0.5)", color: "hsl(320, 80%, 60%)", background: "hsla(320, 80%, 60%, 0.1)" }
+                                        }
+                                    >
+                                        {req.status === "accepted" ? "Accepted" : "Declined"}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </>

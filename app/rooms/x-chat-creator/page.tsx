@@ -12,6 +12,7 @@ import IncomingRequests from "@/components/rooms/x-chat-creator/IncomingRequests
 import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import InviteModal from "@/components/rooms/InviteModal";
+import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -112,6 +113,13 @@ const XChatCreatorPage = () => {
                         >
                             Creators View for X Chat
                         </h1>
+                        <div className="absolute right-4">
+                            <SessionLiveControls
+                                sessionId={sessionId!}
+                                onEnd={() => router.push("/rooms/x-chat-creator")}
+                                accentHsl="45, 90%, 55%"
+                            />
+                        </div>
                     </motion.header>
 
                     {/* Main 3-column layout */}

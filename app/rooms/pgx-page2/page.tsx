@@ -263,7 +263,7 @@ function PgxPage2Inner() {
             <ToastStack toasts={toasts} />
 
             {/* Background */}
-            <div style={{ position: "fixed", inset: 0, zIndex: 0, backgroundImage: "url(/images/rooms/bar-lounge/bar-lounge-session-bg.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
+            <div style={{ position: "fixed", inset: 0, zIndex: 0, backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }} />
             <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "hsla(270,50%,8%,0.6)" }} />
 
             {/* Sparkles */}

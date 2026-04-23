@@ -5,8 +5,10 @@ import { CsCreatorStudio } from "@/components/rooms/creator-studio/CsCreatorStud
 import { CsSubscriptionSettings } from "@/components/rooms/creator-studio/CsSubscriptionSettings";
 import { CsRecentRoomHistory } from "@/components/rooms/creator-studio/CsRecentRoomHistory";
 import { useCreatorDashboard } from "@/hooks/useCreatorDashboard";
+import { useAuth } from "@/app/context/AuthContext";
 
 const CreatorStudioDashboardPage = () => {
+    const { user } = useAuth();
     const { profile, stats, recentRooms, isLoading, saveSubscriptionPrices } = useCreatorDashboard();
 
     return (
@@ -37,6 +39,7 @@ const CreatorStudioDashboardPage = () => {
                 <CsSubscriptionSettings
                     weeklyPrice={profile?.subscription_price_weekly ?? null}
                     monthlyPrice={profile?.subscription_price_monthly ?? null}
+                    userId={user?.id ?? null}
                     onSave={saveSubscriptionPrices}
                 />
                 <CsRecentRoomHistory
