@@ -174,7 +174,7 @@ const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
                 {filteredMessages.map((msg) => (
                     <div key={msg.id} className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span><UserBadgeDisplay userId={msg.user_id} />
+                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span><UserBadgeDisplay userId={msg.sender_id || ""} />
                             {getLaneBadge(msg)}
                             {msg.paid_amount > 0 && (
                                 <span className="text-[10px] text-gold font-semibold">€{msg.paid_amount}</span>

@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Star, Save, Edit2, Plus, Trash2, GripVertical, DollarSign, FileText } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Star, Save, Edit2, Plus, Trash2, GripVertical, DollarSign, FileText, Upload } from "lucide-react";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 
 interface CreatorLevel {
     id: string;
@@ -35,6 +36,8 @@ export default function CreatorLevelManager() {
     const [saving, setSaving] = useState(false);
     const [editingLevel, setEditingLevel] = useState<CreatorLevel | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     // Form state for editing
     const [formData, setFormData] = useState<Partial<CreatorLevel>>({});
@@ -66,6 +69,7 @@ export default function CreatorLevelManager() {
             price: level.price,
             required_posts: level.required_posts,
             badge_color: level.badge_color,
+            badge_icon_url: level.badge_icon_url,
             features: level.features,
             description: level.description,
             is_active: level.is_active,
@@ -79,6 +83,30 @@ export default function CreatorLevelManager() {
         setFormData({});
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        try {
+            const url = await uploadToLocalServer(file);
+            setFormData(prev => ({ ...prev, badge_icon_url: url }));
+            toast.success("Plan icon uploaded successfully");
+        } catch (error) {
+            console.error("Upload failed:", error);
+            toast.error("Failed to upload image");
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const removeImage = () => {
+        setFormData(prev => ({ ...prev, badge_icon_url: null }));
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     const handleSave = async () => {
         if (!editingLevel) return;
         setSaving(true);
@@ -90,6 +118,7 @@ export default function CreatorLevelManager() {
                 price: formData.price,
                 required_posts: formData.required_posts || null,
                 badge_color: formData.badge_color,
+                badge_icon_url: formData.badge_icon_url,
                 features: formData.features,
                 description: formData.description,
                 is_active: formData.is_active,
@@ -154,8 +183,18 @@ export default function CreatorLevelManager() {
                                 }`}
                         >
                             {/* Level Icon */}
-                            <div className="text-2xl mb-2">
-                                {LEVEL_ICONS[level.name] || "📊"}
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-2xl overflow-hidden mb-2"
+                                style={{ backgroundColor: `${level.badge_color}20` }}
+                            >
+                                {level.badge_icon_url ? (
+                                    <img
+                                        src={level.badge_icon_url}
+                                        alt={level.display_name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    LEVEL_ICONS[level.name] || "📊"
+                                )}
                             </div>
 
                             {/* Badge Color Indicator */}
@@ -313,6 +352,69 @@ export default function CreatorLevelManager() {
                                 <p className="text-[10px] text-gray-500 mt-1">
                                     If set, creators can unlock this level by reaching the post count instead of paying
                                 </p>
+                            </div>
+
+                            {/* Plan Icon / Image Upload */}
+                            <div>
+                                <label className="text-xs text-gray-400 block mb-1">Plan Icon (Emoji or Image)</label>
+                                <div className="space-y-3">
+                                    {/* Image Preview Area */}
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className="w-16 h-16 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden relative group"
+                                            style={{ backgroundColor: `${formData.badge_color || '#00bfff'}20` }}
+                                        >
+                                            {formData.badge_icon_url ? (
+                                                <>
+                                                    <img
+                                                        src={formData.badge_icon_url}
+                                                        alt="Plan Icon"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <button
+                                                        onClick={removeImage}
+                                                        className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 text-red-400" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className="text-2xl">{LEVEL_ICONS[editingLevel?.name || ''] || '📊'}</span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 space-y-2">
+                                            {/* File Upload Button */}
+                                            <div>
+                                                <input
+                                                    type="file"
+                                                    ref={fileInputRef}
+                                                    onChange={handleImageUpload}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+                                                <NeonButton
+                                                    variant="ghost"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="w-full flex items-center justify-center gap-2 text-xs py-2"
+                                                    disabled={uploadingImage}
+                                                >
+                                                    {uploadingImage ? (
+                                                        "Uploading..."
+                                                    ) : (
+                                                        <>
+                                                            <Upload className="w-3 h-3" />
+                                                            Upload Plan Icon
+                                                        </>
+                                                    )}
+                                                </NeonButton>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">
+                                        Upload an image (PNG/JPG) to use as a plan icon. If no image is uploaded, the default emoji will be used.
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Badge Color */}

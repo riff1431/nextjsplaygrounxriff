@@ -77,8 +77,6 @@ export default function SessionChatPanel({
                     flexDirection: "column",
                     padding: "10px 14px",
                     maxHeight,
-                    display: "flex",
-                    flexDirection: "column",
                     gap: "6px",
                 }}
             >
