@@ -94,7 +94,6 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
         const tempId = `temp-${Date.now()}`;
         const newLocalMsg: ChatMsg = {
             id: tempId,
-            room_id: roomId,
             user_id: user.id,
             username: displayName,
             message: newMessage.trim(),

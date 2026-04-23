@@ -9,7 +9,7 @@ import LiveDropBoard from "@/components/rooms/flashdrop-creator/LiveDropBoard";
 
 // Re-using the same CSS to maintain the thematic feel
 import "../flashdrop-creator.css";
-import ProtectRoute from "@/components/common/ProtectRoute";
+import { ProtectRoute } from "@/app/context/AuthContext";
 
 export default function FlashDropSetupPage() {
     const { user } = useAuth();

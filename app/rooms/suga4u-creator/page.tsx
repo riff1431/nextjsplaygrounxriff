@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Bell, Phone } from "lucide-react";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
@@ -104,11 +104,25 @@ const Suga4UCreatorPage = () => {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex items-center gap-3">
+                        {/* Invite button (small) */}
                         <button
                             onClick={() => setShowInviteModal(true)}
-                            className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                            className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                            title="Invite fans"
                         >
                             <UserPlus className="w-4 h-4" />
+                        </button>
+                        {/* Incoming 1-on-1 notifications */}
+                        <button
+                            onClick={() => {
+                                if (!privateCall.callState) {
+                                    // No pending calls — just show info
+                                } 
+                                // If there's a pending call, the modal is already showing
+                            }}
+                            className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                        >
+                            <Phone className="w-4 h-4" />
                             Incoming
                             {/* Notification badge for pending private calls */}
                             {privateCall.callState && privateCall.callState.status === "pending" && (

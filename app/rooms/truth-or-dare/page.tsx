@@ -1217,7 +1217,6 @@ function TruthOrDareContent() {
                                             <>You are about to send a <span className="text-pink-300 font-bold uppercase">{confirmModal.tier || "Custom"} {confirmModal.type.split('_')[1]}</span>.</>
                                         )}
                                     </p>
-                                </div>
 
                                 <div className={`p-3 rounded-xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
                                     <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Total Cost</div>

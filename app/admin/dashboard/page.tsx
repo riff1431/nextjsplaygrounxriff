@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
         "revenue-splits": "/admin/finance/splits",
     };
 
-    const NAV: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink" }> = [
+    const NAV: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink"; badge?: number }> = [
         { id: "home", label: "Admin Home", icon: <Home className="w-4 h-4" />, tone: "cyan" },
         { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
         { id: "room-settings", label: "Room Settings", icon: <DoorOpen className="w-4 h-4" />, tone: "pink" },
@@ -260,9 +260,9 @@ export default function AdminDashboardPage() {
                                         {n.label}
                                         {ROUTE_MAP[n.id] && <span className="text-[9px] text-gray-500 ml-1">↗</span>}
                                     </span>
-                                    {(n as any).badge > 0 && (
+                                    {n.badge && n.badge > 0 && (
                                         <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">
-                                            {(n as any).badge}
+                                            {n.badge}
                                         </span>
                                     )}
                                 </button>

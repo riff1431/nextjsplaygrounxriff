@@ -3,9 +3,11 @@ import React from "react";
 export function AdminPill({
     children,
     tone = "cyan",
+    className = "",
 }: {
     children: React.ReactNode;
     tone?: "cyan" | "pink" | "amber" | "red" | "green";
+    className?: string;
 }) {
     const cls =
         tone === "pink"
@@ -17,5 +19,5 @@ export function AdminPill({
                     : tone === "green"
                         ? "border-emerald-400/25 text-emerald-200 bg-emerald-500/10"
                         : "border-cyan-300/25 text-cyan-200 bg-cyan-500/10";
-    return <span className={`text-[10px] px-2 py-[2px] rounded-full border ${cls}`}>{children}</span>;
+    return <span className={`text-[10px] px-2 py-[2px] rounded-full border ${cls} ${className}`}>{children}</span>;
 }
