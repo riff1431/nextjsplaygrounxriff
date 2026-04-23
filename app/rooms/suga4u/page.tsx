@@ -84,6 +84,13 @@ const Suga4URoom = () => {
                     {/* Header */}
                     <header className="flex items-center justify-between mb-3 flex-shrink-0">
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => router.back()}
+                                className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                                title="Go back"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </button>
                             <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
                                 <SugaLogo />
                             </div>

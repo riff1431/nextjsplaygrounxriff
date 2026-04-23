@@ -283,14 +283,28 @@ export function useSuga4U(roomId: string | null) {
 
     const sendMessage = useCallback(async (text: string, fanName: string) => {
         if (!roomId || !text.trim()) return;
-        const { error } = await supabase.from("suga_activity_events").insert({
+        const { data, error } = await supabase.from("suga_activity_events").insert({
             room_id: roomId,
             type: "CHAT",
             fan_name: fanName,
             label: text.trim(),
             amount: 0
-        });
+        }).select().single();
         if (error) throw error;
+        // Optimistically add to activity so it shows immediately
+        if (data) {
+            setActivity(prev => {
+                if (prev.some(e => e.id === data.id)) return prev;
+                return [{
+                    id: data.id,
+                    ts: new Date(data.created_at).getTime(),
+                    type: data.type,
+                    fanName: data.fan_name,
+                    label: data.label,
+                    amount: Number(data.amount)
+                }, ...prev];
+            });
+        }
     }, [roomId, supabase]);
 
     const createRequest = useCallback(async (type: string, label: string, note: string, price: number, fanName: string) => {
