@@ -5,7 +5,9 @@ import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
+import InviteModal from "@/components/rooms/InviteModal";
+import InvitationPopup from "@/components/rooms/InvitationPopup";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
 import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsFavorites";
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
@@ -24,6 +26,7 @@ const Suga4UCreatorPage = () => {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [showInviteModal, setShowInviteModal] = useState(false);
 
     useEffect(() => {
         if (!user || !sessionId) return;
@@ -95,11 +98,20 @@ const Suga4UCreatorPage = () => {
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <SessionLiveControls
-                        sessionId={sessionId!}
-                        onEnd={() => router.push("/rooms/suga4u-creator")}
-                        accentHsl="340, 75%, 55%"
-                    />
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowInviteModal(true)}
+                            className="h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            Incoming
+                        </button>
+                        <SessionLiveControls
+                            sessionId={sessionId!}
+                            onEnd={() => router.push("/rooms/suga4u-creator")}
+                            accentHsl="340, 75%, 55%"
+                        />
+                    </div>
                 </div>
 
                 {/* Main 4-col grid */}
@@ -161,6 +173,16 @@ const Suga4UCreatorPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Invite Modal */}
+            <InviteModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                roomId={roomId}
+            />
+
+            {/* Incoming Invitation Popup */}
+            <InvitationPopup />
         </div>
     );
 };
