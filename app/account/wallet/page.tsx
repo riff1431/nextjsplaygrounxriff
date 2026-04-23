@@ -87,34 +87,38 @@ export default function WalletPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { router.push("/auth"); return; }
 
-            // 1. Wallet balance
-            const { data: wallet } = await supabase
+            // 1. Wallet record
+            let { data: wallet } = await supabase
                 .from("wallets")
                 .select("id, balance, currency")
                 .eq("user_id", user.id)
                 .maybeSingle();
 
-            if (wallet) {
-                setBalance(Number(wallet.balance));
-            } else {
+            if (!wallet) {
                 // Auto-create wallet
-                await supabase.from("wallets").insert({ user_id: user.id, balance: 0, currency: "EUR" });
+                const { data: newW } = await supabase
+                    .from("wallets")
+                    .insert({ user_id: user.id, balance: 0, currency: "EUR" })
+                    .select("id, balance, currency")
+                    .single();
+                wallet = newW;
             }
 
-            // 2. Transactions — join via wallet_id OR user_id
+            // 2. Transactions
             const { data: txs } = await supabase
                 .from("transactions")
                 .select("*")
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false })
-                .limit(100);
+                .limit(200);
 
             if (txs) {
                 setTransactions(txs);
 
-                // Compute stats from completed transactions
+                // Compute stats + available balance from the transaction ledger
                 let spent = 0;
                 let deposited = 0;
+                let credited = 0;
                 let pending = 0;
 
                 txs.forEach((tx: any) => {
@@ -123,6 +127,8 @@ export default function WalletPage() {
                             spent += Number(tx.amount);
                         } else if (tx.type === "deposit") {
                             deposited += Number(tx.amount);
+                        } else if (tx.type === "credit") {
+                            credited += Number(tx.amount);
                         }
                     }
                     if (tx.status === "pending") {
@@ -130,9 +136,24 @@ export default function WalletPage() {
                     }
                 });
 
+                // True available balance = all money in − all money out
+                const computedBalance = Math.max(0, deposited + credited - spent);
+
                 setTotalSpent(spent);
                 setTotalDeposited(deposited);
                 setPendingAmount(pending);
+                setBalance(computedBalance);
+
+                // Sync wallets.balance if it drifted from reality
+                if (wallet && Math.abs(Number(wallet.balance) - computedBalance) > 0.005) {
+                    await supabase
+                        .from("wallets")
+                        .update({ balance: computedBalance })
+                        .eq("id", wallet.id);
+                }
+            } else {
+                // No transactions — trust wallets.balance
+                setBalance(Number(wallet?.balance ?? 0));
             }
 
             // 3. Withdrawal requests (creator only)

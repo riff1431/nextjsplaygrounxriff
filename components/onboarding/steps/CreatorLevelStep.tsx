@@ -13,6 +13,7 @@ interface CreatorLevel {
     display_name: string;
     price: number;
     required_posts: number | null;
+    badge_icon_url: string | null;
     badge_color: string;
     features: string[];
     description: string | null;
@@ -189,8 +190,18 @@ export default function CreatorLevelStep({ onComplete }: Props) {
                                 )}
 
                                 {/* Icon */}
-                                <div className="text-3xl mb-3">
-                                    {LEVEL_ICONS[level.name] || "📊"}
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-3xl overflow-hidden mb-3"
+                                    style={{ backgroundColor: `${level.badge_color}20` }}
+                                >
+                                    {level.badge_icon_url ? (
+                                        <img
+                                            src={level.badge_icon_url}
+                                            alt={level.display_name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        LEVEL_ICONS[level.name] || "📊"
+                                    )}
                                 </div>
 
                                 {/* Badge Preview */}

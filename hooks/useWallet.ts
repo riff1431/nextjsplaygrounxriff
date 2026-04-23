@@ -35,7 +35,7 @@ export function useWallet() {
 
     const supabase = createClient();
 
-    // Fetch wallet
+    // Fetch wallet + compute true balance from transaction ledger
     const fetchWallet = useCallback(async () => {
         if (!user) {
             setWallet(null);
@@ -44,6 +44,8 @@ export function useWallet() {
         }
 
         try {
+            let walletData: WalletData | null = null;
+
             const { data, error: fetchError } = await supabase
                 .from("wallets")
                 .select("*")
@@ -59,12 +61,42 @@ export function useWallet() {
                     .single();
 
                 if (createError) throw createError;
-                setWallet(newWallet);
+                walletData = newWallet;
             } else if (fetchError) {
                 throw fetchError;
             } else {
-                setWallet(data);
+                walletData = data;
             }
+
+            // Compute true balance from completed transactions
+            const { data: txs } = await supabase
+                .from("transactions")
+                .select("type, amount, status")
+                .eq("user_id", user.id)
+                .eq("status", "completed")
+                .limit(500);
+
+            if (txs && txs.length > 0 && walletData) {
+                let incoming = 0;
+                let outgoing = 0;
+                txs.forEach((tx: any) => {
+                    const amt = Number(tx.amount);
+                    if (tx.type === "deposit" || tx.type === "credit") {
+                        incoming += amt;
+                    } else if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer") {
+                        outgoing += amt;
+                    }
+                });
+                const computed = Math.max(0, incoming - outgoing);
+                walletData = { ...walletData, balance: computed };
+
+                // Sync DB if drifted
+                if (Math.abs(Number(data?.balance ?? 0) - computed) > 0.005) {
+                    supabase.from("wallets").update({ balance: computed }).eq("user_id", user.id).then(() => {});
+                }
+            }
+
+            setWallet(walletData);
         } catch (err: any) {
             console.error("Wallet fetch error:", err);
             setError(err.message);

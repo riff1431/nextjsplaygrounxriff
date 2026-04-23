@@ -26,6 +26,7 @@ interface AccountType {
     display_name: string;
     description: string | null;
     badge_icon: string;
+    badge_icon_url: string | null;
     badge_color: string;
     price: number;
     is_active: boolean;
@@ -442,10 +443,18 @@ export default function CreatorLevelsPage() {
 
                                         {/* Badge Icon */}
                                         <div
-                                            className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-4"
+                                            className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-4 overflow-hidden"
                                             style={{ backgroundColor: `${type.badge_color}20` }}
                                         >
-                                            {type.badge_icon || "✨"}
+                                            {type.badge_icon_url ? (
+                                                <img
+                                                    src={type.badge_icon_url}
+                                                    alt={type.display_name}
+                                                    className="w-full h-full object-contain p-2"
+                                                />
+                                            ) : (
+                                                type.badge_icon || "✨"
+                                            )}
                                         </div>
 
                                         {/* Display Name */}
@@ -457,7 +466,7 @@ export default function CreatorLevelsPage() {
                                                 border: `1px solid ${type.badge_color}40`,
                                             }}
                                         >
-                                            <span>{type.badge_icon}</span>
+                                            {!type.badge_icon_url && <span>{type.badge_icon}</span>}
                                             {type.display_name}
                                         </div>
 

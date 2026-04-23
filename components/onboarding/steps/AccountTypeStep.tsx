@@ -211,10 +211,18 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
 
                             {/* Icon/Badge */}
                             <div
-                                className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-3xl"
+                                className="w-16 h-16 rounded-2xl mb-4 flex items-center justify-center text-3xl overflow-hidden"
                                 style={{ backgroundColor: `${type.badge_color}20` }}
                             >
-                                {type.badge_icon || (type.name === "sugar_daddy" ? "🤴" : "👸")}
+                                {type.badge_icon_url ? (
+                                    <img
+                                        src={type.badge_icon_url}
+                                        alt={type.display_name}
+                                        className="w-full h-full object-contain p-2"
+                                    />
+                                ) : (
+                                    type.badge_icon || (type.name === "sugar_daddy" ? "🤴" : "👸")
+                                )}
                             </div>
 
                             {/* Badge Preview */}

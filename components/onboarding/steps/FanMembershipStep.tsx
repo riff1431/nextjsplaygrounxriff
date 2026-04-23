@@ -12,6 +12,7 @@ interface MembershipPlan {
     name: string;
     display_name: string;
     price: number;
+    badge_icon_url: string | null;
     badge_color: string;
     features: string[];
     description: string | null;
@@ -155,8 +156,18 @@ export default function FanMembershipStep({ onComplete }: Props) {
                             )}
 
                             {/* Icon */}
-                            <div className="text-4xl mb-4">
-                                {PLAN_ICONS[plan.name] || "⭐"}
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-4xl overflow-hidden mb-4"
+                                style={{ backgroundColor: `${plan.badge_color}20` }}
+                            >
+                                {plan.badge_icon_url ? (
+                                    <img
+                                        src={plan.badge_icon_url}
+                                        alt={plan.display_name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    PLAN_ICONS[plan.name] || "⭐"
+                                )}
                             </div>
 
                             {/* Badge Preview */}

@@ -42,18 +42,35 @@ export default function OnboardingPaymentModal({
         setProcessing(true);
 
         try {
-            // Use RPC to deduct from wallet and activate plan
-            const { data, error: rpcError } = await supabase.rpc("transfer_funds", {
-                p_from_user_id: user.id,
-                p_to_user_id: user.id, // Platform fee — self-transfer for plan activation
-                p_amount: amount,
-                p_description: `${planType}: ${planName}`,
-                p_room_id: null,
-                p_related_type: planType,
-                p_related_id: planId || null,
-            });
+            // 1. Get wallet record for transaction logging
+            const { data: walletData } = await supabase
+                .from("wallets")
+                .select("id, balance")
+                .eq("user_id", user.id)
+                .single();
 
-            if (rpcError) throw rpcError;
+            if (!walletData || walletData.balance < amount) {
+                throw new Error("Insufficient funds");
+            }
+
+            // 2. Deduct from wallet (atomic balance update)
+            const { error: deductError } = await supabase.rpc("deduct_balance", {
+                p_user_id: user.id,
+                p_amount: amount,
+            });
+            if (deductError) throw deductError;
+
+            // 3. Record the debit transaction
+            await supabase.from("transactions").insert({
+                wallet_id: walletData.id,
+                user_id: user.id,
+                amount,
+                type: "debit",
+                description: `${planType}: ${planName}`,
+                status: "completed",
+                payment_method: "wallet",
+                metadata: { plan_type: planType, plan_id: planId },
+            });
 
             // Activate the plan based on type
             if (planType === "account_type" && planId) {
