@@ -96,6 +96,7 @@ export default function AdminDashboardPage() {
     const [bizModule, setBizModule] = useState<AdminModule>("home");
     const [showMobileNav, setShowMobileNav] = useState(false);
     const [pendingSuggestions, setPendingSuggestions] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
 
     useEffect(() => {
         const fetchPendingSuggestions = async () => {
@@ -109,6 +110,18 @@ export default function AdminDashboardPage() {
             }
         };
         fetchPendingSuggestions();
+
+        // Fetch unread admin messages count
+        const fetchUnreadMessages = async () => {
+            try {
+                const res = await fetch("/api/admin/messages");
+                if (res.ok) {
+                    const data = await res.json();
+                    setUnreadMessages(data.unreadTotal || 0);
+                }
+            } catch { }
+        };
+        fetchUnreadMessages();
     }, []);
 
     // These modules navigate to separate pages instead of switching state
@@ -142,7 +155,7 @@ export default function AdminDashboardPage() {
         { id: "revenue-splits", label: "Revenue Splits", icon: <DollarSign className="w-4 h-4" />, tone: "amber" },
         { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: pendingSuggestions },
         // Placeholders below
-        { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan" },
+        { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: unreadMessages },
     ];
 
     function HeaderRight() {

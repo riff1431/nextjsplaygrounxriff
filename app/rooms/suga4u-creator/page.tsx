@@ -106,10 +106,16 @@ const Suga4UCreatorPage = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setShowInviteModal(true)}
-                            className="h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                            className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
                         >
                             <UserPlus className="w-4 h-4" />
                             Incoming
+                            {/* Notification badge for pending private calls */}
+                            {privateCall.callState && privateCall.callState.status === "pending" && (
+                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                    1
+                                </span>
+                            )}
                         </button>
                         <SessionLiveControls
                             sessionId={sessionId!}

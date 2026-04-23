@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Wallet, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -67,16 +68,16 @@ export default function SpendConfirmModal({
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                className="absolute inset-0 z-10 bg-black/70 backdrop-blur-sm"
                 onClick={() => !loading && onClose()}
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative z-20 w-full max-w-sm mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
                     <h3 className="text-base font-bold text-white">{title}</h3>
@@ -198,6 +199,7 @@ export default function SpendConfirmModal({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

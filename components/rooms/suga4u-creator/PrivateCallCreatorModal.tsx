@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { Phone, PhoneOff, Clock, Loader2, X } from "lucide-react";
 import { PrivateCallState } from "@/hooks/usePrivateCall";
@@ -41,10 +42,10 @@ export default function PrivateCallCreatorModal({
 
     // Pending — incoming call notification
     if (status === "pending") {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
-                <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-emerald-500/30 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-xl" />
+                <div className="relative z-20 w-full max-w-sm mx-4 rounded-2xl border border-emerald-500/30 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden">
                     {/* Accent bar */}
                     <div className="h-1 bg-gradient-to-r from-pink-500 via-gold to-emerald-500 animate-pulse" />
 
@@ -82,16 +83,17 @@ export default function PrivateCallCreatorModal({
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
     // Ringing — waiting for fan to accept
     if (status === "ringing") {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
-                <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-pink-500/30 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl p-6 text-center">
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-xl" />
+                <div className="relative z-20 w-full max-w-sm mx-4 rounded-2xl border border-pink-500/30 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl p-6 text-center">
                     <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center mb-4">
                         <Phone className="w-7 h-7 text-white animate-pulse" />
                     </div>
@@ -99,17 +101,18 @@ export default function PrivateCallCreatorModal({
                     <p className="text-xs text-white/50 mb-3">Waiting for them to accept the video call</p>
                     <Loader2 className="w-5 h-5 text-pink-400 animate-spin mx-auto" />
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
     // Active call — 2-way video
     if (status === "active") {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/85 backdrop-blur-xl" />
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div className="absolute inset-0 z-10 bg-black/85 backdrop-blur-xl" />
 
-                <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-pink-500/30 bg-[#0d0d1a]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: "90vh" }}>
+                <div className="relative z-20 w-full max-w-2xl mx-4 rounded-2xl border border-pink-500/30 bg-[#0d0d1a]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: "90vh" }}>
                     {/* Timer bar */}
                     <div className="relative h-1.5 bg-black/50 shrink-0">
                         <div
@@ -134,7 +137,6 @@ export default function PrivateCallCreatorModal({
 
                     {/* Video area */}
                     <div className="relative flex-1 min-h-[300px] bg-black">
-                        {/* Fan's video (main) — creator views fan */}
                         <div className="w-full h-full">
                             <LiveStreamWrapper
                                 role="host"
@@ -146,8 +148,6 @@ export default function PrivateCallCreatorModal({
                                 hostName="You"
                             />
                         </div>
-
-                        {/* Self-view PiP */}
                         <div className="absolute bottom-3 right-3 w-28 h-20 rounded-lg overflow-hidden border-2 border-white/20 shadow-xl bg-black/50">
                             <div className="w-full h-full flex items-center justify-center text-white/40 text-[10px]">
                                 You
@@ -166,35 +166,38 @@ export default function PrivateCallCreatorModal({
                         </button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
     // Rejected by fan
     if (status === "rejected_by_fan") {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onDismiss} />
-                <div className="relative w-full max-w-xs mx-4 rounded-2xl border border-red-500/30 bg-[#1a1a2e]/95 p-6 text-center">
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-sm" onClick={onDismiss} />
+                <div className="relative z-20 w-full max-w-xs mx-4 rounded-2xl border border-red-500/30 bg-[#1a1a2e]/95 p-6 text-center">
                     <PhoneOff className="w-10 h-10 text-red-400 mx-auto mb-3" />
                     <h3 className="text-base font-bold text-white mb-1">Call Rejected</h3>
                     <p className="text-xs text-white/50">{fanName} rejected the video call.</p>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
     // Ended
     if (status === "ended") {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onDismiss} />
-                <div className="relative w-full max-w-xs mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 p-6 text-center">
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+                <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-sm" onClick={onDismiss} />
+                <div className="relative z-20 w-full max-w-xs mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 p-6 text-center">
                     <Clock className="w-10 h-10 text-pink-400 mx-auto mb-3" />
                     <h3 className="text-base font-bold text-white mb-1">Session Ended</h3>
                     <p className="text-xs text-white/50">Private 1-on-1 with {fanName} has ended.</p>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 

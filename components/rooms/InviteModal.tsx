@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, Search, Copy, Check, UserPlus, ExternalLink, User } from "lucide-react";
 import { toast } from "sonner";
 
@@ -143,8 +144,8 @@ export default function InviteModal({ isOpen, onClose, roomId }: InviteModalProp
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
             <div
                 className="w-full max-w-lg glass-panel border border-gold/30 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
@@ -287,6 +288,7 @@ export default function InviteModal({ isOpen, onClose, roomId }: InviteModalProp
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
