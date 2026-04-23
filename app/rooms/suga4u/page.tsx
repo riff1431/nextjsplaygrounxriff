@@ -16,6 +16,8 @@ import SendSugarGifts from "@/components/rooms/suga4u/SendSugarGifts";
 import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
+import { usePrivateCall } from "@/hooks/usePrivateCall";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -33,6 +35,9 @@ const Suga4URoom = () => {
     const [hostAvatar, setHostAvatar] = React.useState<string | null>(null);
     const [hostName, setHostName] = React.useState("Alexis Rose");
     const [showInviteModal, setShowInviteModal] = useState(false);
+
+    // Private 1-on-1 call
+    const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
 
     React.useEffect(() => {
         async function fetchRoom() {
@@ -162,7 +167,11 @@ const Suga4URoom = () => {
                         <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
                             <PaidRequestMenu roomId={roomId} hostId={hostId} />
                             <SendSugarGifts roomId={roomId} hostId={hostId} />
-                            <QuickPaidActions roomId={roomId} hostId={hostId} />
+                            <QuickPaidActions
+                                roomId={roomId}
+                                hostId={hostId}
+                                initiatePrivateCall={privateCall.initiateCall}
+                            />
                             <S4uGroupVotePanel roomId={roomId} />
                         </div>
                     </div>
@@ -177,6 +186,22 @@ const Suga4URoom = () => {
 
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
+
+                {/* Private 1-on-1 Call Modal */}
+                {privateCall.callState && user && (
+                    <PrivateCallFanModal
+                        callState={privateCall.callState}
+                        timeRemaining={privateCall.timeRemaining}
+                        userId={user.id}
+                        isLoading={privateCall.isLoading}
+                        onAcceptRinging={privateCall.acceptRinging}
+                        onRejectRinging={privateCall.rejectRinging}
+                        onEndCall={privateCall.endCall}
+                        onDismiss={privateCall.dismiss}
+                        hostAvatarUrl={hostAvatar || undefined}
+                        hostName={hostName}
+                    />
+                )}
             </div>
         </ProtectRoute>
     );

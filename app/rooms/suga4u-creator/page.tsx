@@ -16,6 +16,8 @@ import S4uSessionSummary from "@/components/rooms/suga4u-creator/S4uSessionSumma
 import S4uCreatorGroupVote from "@/components/rooms/suga4u-creator/S4uCreatorGroupVote";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
+import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCallCreatorModal";
+import { usePrivateCall } from "@/hooks/usePrivateCall";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -27,6 +29,9 @@ const Suga4UCreatorPage = () => {
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
+
+    // Private 1-on-1 call
+    const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
 
     useEffect(() => {
         if (!user || !sessionId) return;
@@ -183,6 +188,20 @@ const Suga4UCreatorPage = () => {
 
             {/* Incoming Invitation Popup */}
             <InvitationPopup />
+
+            {/* Private 1-on-1 Call Modal */}
+            {privateCall.callState && user && (
+                <PrivateCallCreatorModal
+                    callState={privateCall.callState}
+                    timeRemaining={privateCall.timeRemaining}
+                    userId={user.id}
+                    isLoading={privateCall.isLoading}
+                    onAcceptCall={privateCall.acceptCall}
+                    onDeclineCall={privateCall.declineCall}
+                    onEndCall={privateCall.endCall}
+                    onDismiss={privateCall.dismiss}
+                />
+            )}
         </div>
     );
 };

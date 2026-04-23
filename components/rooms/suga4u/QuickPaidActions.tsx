@@ -10,10 +10,17 @@ const actions = [
     { name: "Sponsor Room", price: 100, emoji: "💎" },
     { name: "Voice Note", price: 35, emoji: "🎙️" },
     { name: "Photo Drop", price: 45, emoji: "📸" },
-    { name: "Private 1-on-1", price: 500, emoji: "👑", full: true },
+    { name: "Private 1-on-1", price: 500, emoji: "👑", full: true, isPrivateCall: true },
 ];
 
-const QuickPaidActions = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
+interface QuickPaidActionsProps {
+    roomId: string | null;
+    hostId: string | null;
+    onPrivateCallInitiated?: () => void;
+    initiatePrivateCall?: (fanName: string, requestId?: string) => Promise<any>;
+}
+
+const QuickPaidActions = ({ roomId, hostId, onPrivateCallInitiated, initiatePrivateCall }: QuickPaidActionsProps) => {
     const { createRequest } = useSuga4U(roomId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
@@ -37,9 +44,27 @@ const QuickPaidActions = ({ roomId, hostId }: { roomId: string | null; hostId: s
                 return;
             }
 
-            // Route to pending requests
-            await createRequest("ACTION", a.name, `Quick Action: ${a.name}`, a.price, fanName);
-            toast.success(`${a.emoji} ${a.name} activated!`, { description: `€${a.price} sent to creator` });
+            // Create the paid request
+            const result = await createRequest(
+                a.isPrivateCall ? "PRIVATE_1ON1" : "ACTION",
+                a.name,
+                a.isPrivateCall ? "Private 1-on-1 Video Call Request" : `Quick Action: ${a.name}`,
+                a.price,
+                fanName
+            );
+
+            // If this is a private call, also initiate the video call
+            if (a.isPrivateCall && initiatePrivateCall) {
+                const callResult = await initiatePrivateCall(fanName, result?.request?.id);
+                if (callResult) {
+                    toast.success("👑 Private 1-on-1 requested!", { description: "Waiting for creator to accept..." });
+                    onPrivateCallInitiated?.();
+                } else {
+                    toast.error("Failed to initiate video call");
+                }
+            } else {
+                toast.success(`${a.emoji} ${a.name} activated!`, { description: `€${a.price} sent to creator` });
+            }
         } catch (err) {
             console.error("Failed to trigger action:", err);
             toast.error("Failed to trigger action");
@@ -84,8 +109,12 @@ const QuickPaidActions = ({ roomId, hostId }: { roomId: string | null; hostId: s
                     itemLabel={confirmAction.name}
                     amount={confirmAction.price}
                     walletBalance={balance}
-                    description={`Pay €${confirmAction.price} to trigger ${confirmAction.name}?`}
-                    confirmLabel="Pay Now"
+                    description={
+                        confirmAction.isPrivateCall
+                            ? `Pay €${confirmAction.price} for a Private 1-on-1 video call with the creator?`
+                            : `Pay €${confirmAction.price} to trigger ${confirmAction.name}?`
+                    }
+                    confirmLabel={confirmAction.isPrivateCall ? "Pay & Request Call" : "Pay Now"}
                 />
             )}
         </div>

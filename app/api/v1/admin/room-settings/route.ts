@@ -75,6 +75,7 @@ export async function PUT(request: NextRequest) {
             "public_cost_per_min", "min_private_cost_per_min", "billing_enabled",
             "public_sessions_enabled", "private_sessions_enabled",
             "tips_enabled", "custom_requests_enabled", "sort_order",
+            "private_1on1_duration_seconds",
             "entry_info_section1", "entry_info_section2",
             "entry_info_section3", "entry_info_pro_tip",
         ];

@@ -29,6 +29,7 @@ interface RoomSetting {
     tips_enabled: boolean;
     custom_requests_enabled: boolean;
     sort_order: number;
+    private_1on1_duration_seconds?: number;
     entry_info_section1?: InfoSection;
     entry_info_section2?: InfoSection;
     entry_info_section3?: InfoSection;
@@ -237,6 +238,25 @@ export default function AdminRoomSettingsPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Private 1-on-1 Duration */}
+                            {s.room_type === "suga-4-u" && (
+                                <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private 1-on-1 Duration (seconds)</label>
+                                    <input
+                                        type="number"
+                                        defaultValue={s.private_1on1_duration_seconds ?? 60}
+                                        min={10}
+                                        max={600}
+                                        onBlur={(e) => {
+                                            const v = Number(e.target.value);
+                                            if (v !== (s.private_1on1_duration_seconds ?? 60)) updateSetting(s.room_type, { private_1on1_duration_seconds: v } as any);
+                                        }}
+                                        style={{ width: "120px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                    <span style={{ marginLeft: "8px", color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>Default: 60s (1 min)</span>
+                                </div>
+                            )}
 
                             {/* Entry Info Editor Toggle */}
                             <div style={{ marginTop: "16px", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px" }}>
