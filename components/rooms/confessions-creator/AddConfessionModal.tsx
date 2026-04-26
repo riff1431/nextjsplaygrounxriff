@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Send, Loader2, FileText, Mic, Video } from "lucide-react";
+import { X, Send, Loader2, FileText, Mic, Video, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddConfessionModalProps {
@@ -34,6 +34,8 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
     const [tier, setTier] = useState(editConfession?.tier || "Spicy");
     const [price, setPrice] = useState(String(editConfession?.price || "10"));
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [mediaFile, setMediaFile] = useState<File | null>(null);
 
     if (!isOpen) return null;
 
@@ -190,16 +192,76 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
                         />
                     </div>
 
-                    {/* Media URL */}
+                    {/* Media Upload / URL */}
                     <div className="space-y-1">
-                        <label className="text-xs text-white/60 font-medium">Media URL (optional)</label>
-                        <input
-                            type="text"
-                            value={mediaUrl}
-                            onChange={(e) => setMediaUrl(e.target.value)}
-                            placeholder="Link to image, audio, or video..."
-                            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all"
-                        />
+                        <label className="text-xs text-white/60 font-medium">
+                            {type === 'Text' ? 'Media URL (optional)' : `Upload ${type} File`}
+                        </label>
+                        {type !== 'Text' && !mediaUrl ? (
+                            <div className="space-y-2">
+                                <input
+                                    type="file"
+                                    accept={type === 'Audio' ? 'audio/*' : type === 'Video' ? 'video/*' : 'image/*,audio/*,video/*'}
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        setMediaFile(file);
+                                        setUploading(true);
+                                        try {
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            formData.append('folder', `confessions/${roomId}`);
+                                            const res = await fetch('/api/v1/storage/upload', { method: 'POST', body: formData });
+                                            const data = await res.json();
+                                            if (data.success && data.publicUrl) {
+                                                setMediaUrl(data.publicUrl);
+                                                toast.success('File uploaded!');
+                                            } else {
+                                                toast.error(data.error || 'Upload failed');
+                                            }
+                                        } catch {
+                                            toast.error('Upload failed');
+                                        } finally {
+                                            setUploading(false);
+                                        }
+                                    }}
+                                    className="hidden"
+                                    id="confession-media-upload"
+                                />
+                                <label
+                                    htmlFor="confession-media-upload"
+                                    className="flex flex-col items-center justify-center gap-2 py-5 rounded-xl border-2 border-dashed border-pink-500/30 bg-white/5 cursor-pointer hover:border-pink-500/60 hover:bg-pink-500/5 transition-all"
+                                >
+                                    {uploading ? (
+                                        <Loader2 size={24} className="text-pink-400 animate-spin" />
+                                    ) : (
+                                        <Upload size={24} className="text-pink-400/60" />
+                                    )}
+                                    <span className="text-xs text-white/40">
+                                        {uploading ? 'Uploading...' : `Click to upload ${type.toLowerCase()} file`}
+                                    </span>
+                                </label>
+                            </div>
+                        ) : mediaUrl ? (
+                            <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                <span className="text-xs text-emerald-400 flex-1 truncate">✓ {mediaFile?.name || 'Media attached'}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => { setMediaUrl(''); setMediaFile(null); }}
+                                    className="p-1 rounded-full hover:bg-white/10 text-white/50"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <input
+                                type="text"
+                                value={mediaUrl}
+                                onChange={(e) => setMediaUrl(e.target.value)}
+                                placeholder="Link to image, audio, or video..."
+                                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-pink-500/50 transition-all"
+                            />
+                        )}
                     </div>
                 </div>
 

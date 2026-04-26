@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         .from("profiles")
         .select("id, username, full_name, avatar_url, role")
         .neq("id", user.id)
-        .or(`full_name.ilike.${searchTerm},username.ilike.${searchTerm},email.ilike.${searchTerm}`)
+        .or(`full_name.ilike.${searchTerm},username.ilike.${searchTerm}`)
         .limit(10);
 
     if (roleFilter) {

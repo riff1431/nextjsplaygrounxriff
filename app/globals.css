@@ -154,15 +154,38 @@
 
   .pgx-chat-wrapper {
     min-height: 0 !important;
+    max-height: 100%;
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     overflow: hidden;
   }
 
   .pgx-chat-messages {
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     overflow-y: auto;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  /* Prevent video containers from shrinking when chat content grows */
+  .pgx-video-container,
+  [class*="video-container"],
+  [class*="stream-wrapper"],
+  [class*="LiveStream"] {
+    flex-shrink: 0 !important;
+  }
+
+  /* Ensure room page layouts constrain to viewport height */
+  .pgx-room-layout {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pgx-room-layout > * {
     min-height: 0;
   }
 

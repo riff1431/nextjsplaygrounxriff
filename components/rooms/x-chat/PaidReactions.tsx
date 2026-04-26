@@ -38,24 +38,28 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
     const [pending, setPending] = useState<{ label: string; price: number; reactionType: string; emoji?: string } | null>(null);
     const [animatingEmoji, setAnimatingEmoji] = useState<string | null>(null);
     const [voicePrompt, setVoicePrompt] = useState("");
+    const [privateQuestion, setPrivateQuestion] = useState("");
 
     const handleSend = async () => {
         if (!pending || !roomId) return;
         try {
-            // Voice notes map to incoming requests, NOT reactions!
-            if (pending.reactionType === "voice_note_boost") {
+            // Voice notes and private questions map to incoming requests, NOT reactions!
+            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "private_question") {
+                const isPrivateQ = pending.reactionType === "private_question";
+                const inputText = isPrivateQ ? privateQuestion : voicePrompt;
+                const prefix = isPrivateQ ? "Private Question" : "Voice Note Reply";
                 const res = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
-                        message: `Voice Note Reply: ${voicePrompt}`,
+                        message: `${prefix}: ${inputText}`,
                         amount: pending.price 
                     }),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    toast.success("Voice note request sent!");
-                    setVoicePrompt("");
+                    toast.success(isPrivateQ ? "Private question sent! 🔒" : "Voice note request sent!");
+                    if (isPrivateQ) setPrivateQuestion(""); else setVoicePrompt("");
                     refresh?.();
                 } else {
                     toast.error(data.error || "Failed to send request");
@@ -173,16 +177,24 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
             {/* Spend Confirm Modal */}
             <SpendConfirmModal
                 isOpen={!!pending}
-                onClose={() => { setPending(null); setVoicePrompt(""); }}
-                title={pending?.reactionType === "voice_note_boost" ? "Request Voice Note" : "Confirm Purchase"}
+                onClose={() => { setPending(null); setVoicePrompt(""); setPrivateQuestion(""); }}
+                title={
+                    pending?.reactionType === "voice_note_boost" ? "Request Voice Note"
+                    : pending?.reactionType === "private_question" ? "Ask Private Question"
+                    : "Confirm Purchase"
+                }
                 itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
                 amount={pending?.price || 0}
                 walletBalance={balance}
                 onConfirm={handleSend}
-                requireInput={pending?.reactionType === "voice_note_boost"}
-                inputPlaceholder="What should the voice note be about?"
-                inputValue={voicePrompt}
-                onInputChange={setVoicePrompt}
+                requireInput={pending?.reactionType === "voice_note_boost" || pending?.reactionType === "private_question"}
+                inputPlaceholder={
+                    pending?.reactionType === "private_question"
+                        ? "Type your private question here..."
+                        : "What should the voice note be about?"
+                }
+                inputValue={pending?.reactionType === "private_question" ? privateQuestion : voicePrompt}
+                onInputChange={pending?.reactionType === "private_question" ? setPrivateQuestion : setVoicePrompt}
             />
         </div>
     );

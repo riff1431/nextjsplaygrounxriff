@@ -705,7 +705,7 @@ export default function NewsFeedPage() {
                                     </div>
                                 </div>
 
-                                {/* Trending Creators - Auto-scroll bottom-to-top */}
+                                {/* Featured Creators - Auto-scroll bottom-to-top */}
                                 <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14)]">
                                     <style>{`
                                         @keyframes scrollUp {
@@ -745,7 +745,7 @@ export default function NewsFeedPage() {
                                     `}</style>
                                     <h3 className="text-sm font-bold text-pink-200 flex items-center gap-2 mb-4">
                                         <TrendingUp className="w-4 h-4 text-pink-500" />
-                                        Trending Creators
+                                        Featured Creators
                                     </h3>
                                     <div className="trending-scroll-container">
                                         <div className="trending-scroll-inner">

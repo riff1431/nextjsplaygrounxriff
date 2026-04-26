@@ -56,16 +56,19 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                 throw new Error(result.error || "Payment failed");
             }
 
-            // Record the unlock
+            // Record the unlock (upsert to handle re-attempts)
             const { error } = await supabase
                 .from('post_unlocks')
-                .insert({
+                .upsert({
                     user_id: currentUserId,
                     post_id: post.id,
                     amount: price
-                });
+                }, { onConflict: 'user_id,post_id' });
 
             if (error) throw error;
+
+            // Unlock content immediately
+            onUnlockSuccess();
 
             setStep("success");
             toast.success("Payment successful!");
@@ -73,7 +76,6 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
 
             // Close after brief delay
             setTimeout(() => {
-                onUnlockSuccess();
                 onClose();
                 // Reset state
                 setStep("select");

@@ -326,8 +326,22 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                     )}
 
                     {post.content_type === 'video' && post.media_url && (
-                        <div className="w-full bg-black aspect-square overflow-hidden">
-                            <video src={post.media_url} controls={canView} className="w-full h-full object-cover" />
+                        <div className="w-full bg-black aspect-video overflow-hidden">
+                            <video
+                                key={`video-${post.id}-${canView}`}
+                                src={post.media_url}
+                                controls={canView}
+                                preload={canView ? "auto" : "metadata"}
+                                playsInline
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    )}
+
+                    {/* Ensure paid text-only posts have a visible content area for the lock overlay */}
+                    {post.content_type === 'text' && post.is_paid && !canView && !post.media_url && (
+                        <div className="w-full min-h-[200px] bg-gradient-to-b from-zinc-900/50 to-black/30 flex items-center justify-center">
+                            <p className="text-zinc-600 text-sm italic">Premium text content</p>
                         </div>
                     )}
                 </div>

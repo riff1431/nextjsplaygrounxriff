@@ -262,7 +262,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 flex flex-col gap-2">
+            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 flex flex-col gap-3">
                 {!roomId && (
                     <p className="text-muted-foreground text-xs text-center py-6">Connecting to session...</p>
                 )}
@@ -276,52 +276,86 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                     </div>
                 )}
 
-                {activeDrops.map(drop => (
-                    <div
-                        key={drop.id}
-                        className={`glass-card rounded-lg border px-3 py-2 flex items-center justify-between gap-2 ${rarityColor[drop.rarity] || "border-border"}`}
-                    >
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${statusColor[drop.status] || "bg-gray-500"}`} />
-                                <span className="font-display font-bold text-xs text-foreground truncate">{drop.title}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <span className={`text-[10px] font-semibold ${rarityColor[drop.rarity]?.split(" ")[0]}`}>{drop.rarity}</span>
-                                <span className="text-[10px] text-muted-foreground">·</span>
-                                <span className="text-[10px] text-muted-foreground">{drop.kind}</span>
-                                <span className="text-[10px] text-muted-foreground">·</span>
-                                <span className="text-[10px] text-muted-foreground font-mono">
-                                    {formatCountdown(drop.ends_at)}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">·</span>
-                                <span className="text-[10px] text-muted-foreground">
-                                    {drop.inventory_remaining}/{drop.inventory_total} left
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-sm font-black neon-text font-display">€{drop.price}</span>
-                            <button
-                                onClick={() => handleEndDrop(drop.id, drop.title)}
-                                className="p-1 rounded hover:bg-red-500/20 text-red-400/60 hover:text-red-400 transition-colors"
-                                title="End this drop"
+                {/* 3 across × 2 rows grid layout */}
+                {activeDrops.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3">
+                        {activeDrops.slice(0, 6).map(drop => (
+                            <div
+                                key={drop.id}
+                                className={`glass-card rounded-xl border p-3 flex flex-col gap-2 relative group hover:scale-[1.02] transition-all ${rarityColor[drop.rarity] || "border-border"}`}
                             >
-                                <X size={14} />
-                            </button>
-                        </div>
+                                {/* Status dot + End button */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`w-2 h-2 rounded-full animate-pulse ${statusColor[drop.status] || "bg-gray-500"}`} />
+                                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${rarityColor[drop.rarity]?.split(" ")[0]}`}>
+                                            {drop.rarity}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleEndDrop(drop.id, drop.title)}
+                                        className="p-1 rounded hover:bg-red-500/20 text-red-400/40 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                        title="End this drop"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
+
+                                {/* Media thumbnail if available */}
+                                {drop.media_url && (
+                                    <div className="w-full h-16 rounded-lg overflow-hidden bg-black/40">
+                                        {drop.kind === "Photo" ? (
+                                            <img src={drop.media_url} alt={drop.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <video src={drop.media_url} className="w-full h-full object-cover" muted />
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Title */}
+                                <span className="font-display font-bold text-xs text-foreground truncate leading-tight">
+                                    {drop.title}
+                                </span>
+
+                                {/* Info row */}
+                                <div className="flex items-center gap-1 flex-wrap">
+                                    <span className="text-[10px] text-muted-foreground">{drop.kind}</span>
+                                    <span className="text-[10px] text-muted-foreground">·</span>
+                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                        {formatCountdown(drop.ends_at)}
+                                    </span>
+                                </div>
+
+                                {/* Price + Stock */}
+                                <div className="flex items-center justify-between mt-auto pt-1 border-t border-white/5">
+                                    <span className="text-sm font-black neon-text font-display">€{drop.price}</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                        {drop.inventory_remaining}/{drop.inventory_total}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                )}
+
+                {/* Show overflow count if more than 6 active */}
+                {activeDrops.length > 6 && (
+                    <p className="text-[10px] text-muted-foreground text-center">
+                        +{activeDrops.length - 6} more active drops
+                    </p>
+                )}
 
                 {endedDrops.length > 0 && (
                     <div className="mt-2">
                         <span className="text-[10px] font-semibold neon-text tracking-wide uppercase opacity-50">Ended ({endedDrops.length})</span>
-                        {endedDrops.slice(0, 5).map(drop => (
-                            <div key={drop.id} className="glass-card rounded-lg border border-border/30 px-3 py-1.5 flex items-center justify-between gap-2 mt-1 opacity-40">
-                                <span className="font-display font-bold text-xs text-foreground/50 truncate">{drop.title}</span>
-                                <span className="text-xs text-muted-foreground">€{drop.price}</span>
-                            </div>
-                        ))}
+                        <div className="grid grid-cols-3 gap-2 mt-1">
+                            {endedDrops.slice(0, 3).map(drop => (
+                                <div key={drop.id} className="glass-card rounded-lg border border-border/30 px-3 py-1.5 opacity-40">
+                                    <span className="font-display font-bold text-xs text-foreground/50 truncate block">{drop.title}</span>
+                                    <span className="text-xs text-muted-foreground">€{drop.price}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

@@ -129,12 +129,25 @@ export function useWallet() {
                     }
                 }
             )
+            .on(
+                "postgres_changes" as any,
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "transactions",
+                    filter: `user_id=eq.${user.id}`,
+                },
+                () => {
+                    // Re-compute balance from ledger when any new transaction is created
+                    fetchWallet();
+                }
+            )
             .subscribe();
 
         return () => {
             channel.unsubscribe();
         };
-    }, [user, supabase]);
+    }, [user, supabase, fetchWallet]);
 
     /**
      * Transfer funds from current user to another user.

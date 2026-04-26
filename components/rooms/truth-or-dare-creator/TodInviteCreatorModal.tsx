@@ -185,7 +185,7 @@ export default function TodInviteCreatorModal({
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search by name, username, or email..."
+                                    placeholder="Search by name or username..."
                                     autoFocus
                                     className="w-full bg-white/5 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/25 outline-none border border-white/10 focus:border-pink-500/50 transition"
                                 />

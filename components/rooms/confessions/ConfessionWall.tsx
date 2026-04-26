@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { useWallet } from "@/hooks/useWallet";
 
 export interface CreatorInfo {
     id: string;
@@ -78,12 +80,19 @@ const UnlockedConfessionCard = ({
             onClick={() => onClick(confession)}
             className="confession-wall-card cursor-pointer group hover:border-primary/40"
         >
+            {/* Type badge */}
+            {confession.type !== 'Text' && (
+                <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary/80 border border-primary/20 self-end">
+                    {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
+                </span>
+            )}
             <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3 text-center px-2 pt-1 flex-1">
                 {confession.content || confession.teaser}
             </p>
-            <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1 mt-2">
-                ✓ Unlocked
-            </span>
+            <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-semibold text-emerald-400">Unlocked</span>
+            </div>
         </div>
     );
 };
@@ -99,12 +108,28 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
     setPurchaseConfession,
     handleReaction
 }) => {
+    const { balance } = useWallet();
+    const [pendingReaction, setPendingReaction] = useState<{ label: string; icon: string; val: number; confessionId: string } | null>(null);
+
+    const handleReactionClick = (icon: string, label: string, val: number) => {
+        // Find the first visible confession to tip
+        const targetId = confessions[0]?.id;
+        if (!targetId) return;
+        setPendingReaction({ label, icon, val, confessionId: targetId });
+    };
+
+    const handleConfirmReaction = async () => {
+        if (!pendingReaction) return;
+        await handleReaction?.(pendingReaction.label, pendingReaction.val, pendingReaction.confessionId);
+        setPendingReaction(null);
+    };
+
     return (
         <div className="neon-glass-card p-4 sm:p-5 space-y-4">
             {/* Header row */}
             <div className="flex items-center justify-between">
                 <h2 className="font-display text-base sm:text-lg font-bold tracking-wide text-foreground">
-                    Confession Wall
+                    All Creator Confessions
                 </h2>
 
                 {/* Reaction buttons */}
@@ -113,11 +138,11 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                         { icon: "💋", label: "KISS", price: "€10", val: 10 },
                         { icon: "❤️", label: "LOVE", price: "€20", val: 20 },
                         { icon: "🔥", label: "SPICY", price: "€30", val: 30 },
-                        { icon: "💎", label: "DARK", price: "€40", val: 40 },
+                        { icon: "💎", label: "DIAMOND", price: "€40", val: 40 },
                     ].map((tip, i) => (
                         <button
                             key={i}
-                            onClick={() => handleReaction?.(tip.label, tip.val, confessions[0]?.id)}
+                            onClick={() => handleReactionClick(tip.icon, tip.label, tip.val)}
                             className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl border border-primary/15 hover:border-primary/40 transition-all duration-200 hover:scale-105 cursor-pointer"
                             style={{ background: 'rgba(45, 27, 56, 0.8)' }}
                         >
@@ -184,6 +209,17 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Reaction Confirmation Modal */}
+            <SpendConfirmModal
+                isOpen={!!pendingReaction}
+                onClose={() => setPendingReaction(null)}
+                title="Send Reaction"
+                itemLabel={pendingReaction ? `${pendingReaction.icon} ${pendingReaction.label} Reaction` : ""}
+                amount={pendingReaction?.val || 0}
+                walletBalance={balance}
+                onConfirm={handleConfirmReaction}
+            />
         </div>
     );
 };
