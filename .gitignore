@@ -1,48 +1,98 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
+# ─────────────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────────────
+node_modules/
 /.pnp
 .pnp.js
 .yarn/
 
-# testing
-/coverage
-
-# next.js
+# ─────────────────────────────────────────────────
+# Next.js Build Output
+# ─────────────────────────────────────────────────
 /.next/
 /out/
+/build/
+next-env.d.ts
+*.tsbuildinfo
 
-# production
-/build
-
-# misc
-.DS_Store
+# ─────────────────────────────────────────────────
+# Environment & Secrets
+# ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
 *.pem
+*.key
+*.cert
 
-# debug
+# ─────────────────────────────────────────────────
+# OS & Editor Files
+# ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ─────────────────────────────────────────────────
+# Logs & Debug
+# ─────────────────────────────────────────────────
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+build.log
 
-# env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# ─────────────────────────────────────────────────
+# Testing & Coverage
+# ─────────────────────────────────────────────────
+/coverage/
+.nyc_output/
+jest-results/
 
-# vercel
-.vercel
+# ─────────────────────────────────────────────────
+# Deployment
+# ─────────────────────────────────────────────────
+.vercel/
+.netlify/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# Large media files
-*.mp4
-
-# Local Uploads
+# ─────────────────────────────────────────────────
+# Local Uploads & User Content
+# ─────────────────────────────────────────────────
 /uploads/
+
+# ─────────────────────────────────────────────────
+# Design References, Temp & Archive Files
+# (These are not source code — keep out of repo)
+# ─────────────────────────────────────────────────
 temp/
+ChangesList/
+txt files/
+
+# ─────────────────────────────────────────────────
+# Large Binary / Media Files
+# ─────────────────────────────────────────────────
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.flac
+*.rar
+*.zip
+*.7z
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.iso
+*.dmg
+*.docx
+*.xlsx
+*.pptx
+*.pdf
