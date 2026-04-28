@@ -349,18 +349,18 @@ export default function AuthLanding() {
                 {/* ── Neon nightlife background image ── */}
                 <div className="absolute inset-0">
                     <img
-                        src="/images/auth-bg-neon.png"
+                        src="/images/auth-bg-neon.png?v=2"
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
-                        style={{ opacity: 0.45 }}
+                        style={{ opacity: 0.85 }}
                     />
-                    {/* Dark blend over image */}
-                    <div className="absolute inset-0 bg-black/40" />
+                    {/* Light blend over image for readability */}
+                    <div className="absolute inset-0 bg-black/20" />
                 </div>
 
-                {/* ── Deep space base gradient (over image) ── */}
+                {/* ── Subtle gradient for depth (over image) ── */}
                 <div className="absolute inset-0" style={{
-                    background: 'radial-gradient(ellipse 120% 100% at 20% 10%, rgba(26,10,46,0.85) 0%, rgba(13,0,21,0.70) 30%, rgba(0,0,0,0.50) 60%), radial-gradient(ellipse 100% 80% at 80% 90%, rgba(10,22,40,0.60) 0%, transparent 50%)'
+                    background: 'radial-gradient(ellipse 120% 100% at 20% 10%, rgba(26,10,46,0.30) 0%, rgba(13,0,21,0.20) 30%, transparent 60%), radial-gradient(ellipse 100% 80% at 80% 90%, rgba(10,22,40,0.20) 0%, transparent 50%)'
                 }} />
 
                 {/* ── Animated gradient orbs ── */}
@@ -449,22 +449,14 @@ export default function AuthLanding() {
                     ))}
                 </div>
 
-                {/* ── Collage grid (existing room tiles) ── */}
-                <div className="absolute inset-0 grid grid-cols-12 gap-4 p-6 md:p-10">
-                    <CollageTile label={tiles[0].label} tone={tiles[0].tone} className="col-span-7 row-span-6 h-[28vh] md:h-[42vh]" />
-                    <CollageTile label={tiles[1].label} tone={tiles[1].tone} className="col-span-5 row-span-4 h-[20vh] md:h-[28vh]" />
-                    <CollageTile label={tiles[2].label} tone={tiles[2].tone} className="col-span-5 row-span-6 h-[28vh] md:h-[42vh]" />
-                    <CollageTile label={tiles[3].label} tone={tiles[3].tone} className="col-span-7 row-span-4 h-[20vh] md:h-[28vh]" />
-                    <CollageTile label={tiles[4].label} tone={tiles[4].tone} className="col-span-4 row-span-4 hidden h-[20vh] md:block md:h-[28vh]" />
-                    <CollageTile label={tiles[5].label} tone={tiles[5].tone} className="col-span-8 row-span-4 hidden h-[20vh] md:block md:h-[28vh]" />
-                </div>
+                {/* ── Collage grid removed — background image is now the hero ── */}
 
-                {/* ── Dark overlay (keeps forms readable without heavy blur) ── */}
-                <div className="absolute inset-0 bg-black/50" />
+                {/* ── Light overlay (keeps forms readable) ── */}
+                <div className="absolute inset-0 bg-black/30" />
 
-                {/* ── Top vignette for depth ── */}
+                {/* ── Subtle vignette for depth ── */}
                 <div className="absolute inset-0" style={{
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)'
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.35) 100%)'
                 }} />
             </div>
 
