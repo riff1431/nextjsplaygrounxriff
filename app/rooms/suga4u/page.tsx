@@ -18,6 +18,7 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -28,6 +29,7 @@ const Suga4URoom = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const urlRoomId = searchParams.get("roomId");
+    const urlSessionId = searchParams.get("sessionId");
     const { user } = useAuth();
     const supabase = createClient();
     const [roomId, setRoomId] = React.useState<string | null>(null);
@@ -202,6 +204,14 @@ const Suga4URoom = () => {
                         hostName={hostName}
                     />
                 )}
+
+                {/* Per-Minute Billing */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="330, 80%, 55%"
+                    rateLabel="€2/min"
+                    exitRoute="/rooms/suga4u-sessions"
+                />
             </div>
         </ProtectRoute>
     );

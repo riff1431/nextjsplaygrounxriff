@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import WalletPill from "@/components/common/WalletPill";
+import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 
 /* ─────────── Types ─────────── */
 interface RoomSession {
@@ -49,6 +50,20 @@ function formatDate(dateStr: string) {
         d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
         " · " +
         d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    );
+}
+
+/** Mini component so each active session card can use its own presence hook */
+function LiveViewerBadge({ roomId }: { roomId: string }) {
+    const { count } = useRealtimePresence(roomId);
+    if (count === 0) return null;
+    return (
+        <span
+            className="text-xs flex items-center gap-1 ml-2"
+            style={{ color: "hsl(150, 80%, 60%)" }}
+        >
+            <Users className="w-3 h-3" /> {count}
+        </span>
     );
 }
 
@@ -544,6 +559,7 @@ export default function RoomSessionDashboard({
                                         >
                                             <Clock className="w-3 h-3" />
                                             Started {formatDate(session.started_at)}
+                                            <LiveViewerBadge roomId={session.room_id} />
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 ml-4 shrink-0">

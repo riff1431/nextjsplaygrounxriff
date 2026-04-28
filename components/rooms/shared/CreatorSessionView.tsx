@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRoomSession } from "@/hooks/useRoomSession";
 import { useSessionInteractions } from "@/hooks/useSessionInteractions";
 import { useJoinRequest } from "@/hooks/useJoinRequest";
+import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useAuth } from "@/app/context/AuthContext";
 import SessionChatPanel from "./SessionChatPanel";
 import CreatorStream from "@/components/rooms/CreatorStream";
@@ -30,6 +31,7 @@ export default function CreatorSessionView({
     const { session, endSession } = useRoomSession({ sessionId });
     const { tipEvents, reactionEvents, customRequests, totalEarnings } = useSessionInteractions(sessionId, roomType);
     const { pendingRequests, respondToRequest } = useJoinRequest(sessionId);
+    const { count: liveViewerCount } = useRealtimePresence(session?.room_id ?? null);
     const [showEndConfirm, setShowEndConfirm] = useState(false);
 
     if (!session) {
@@ -71,7 +73,7 @@ export default function CreatorSessionView({
                                 LIVE
                             </span>
                             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
-                                <Users size={12} /> {session.viewer_count} viewers
+                                <Users size={12} /> {liveViewerCount > 0 ? liveViewerCount : session.viewer_count} viewers
                             </span>
                         </div>
                     </div>

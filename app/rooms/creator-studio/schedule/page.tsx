@@ -41,6 +41,48 @@ export default function SchedulePage() {
     const [startTime, setStartTime] = useState("");
     const [endDate, setEndDate] = useState("");
     const [endTime, setEndTime] = useState("");
+    const [duration, setDuration] = useState<number | null>(null);
+
+    // ── Date/Time UX helpers ──
+    const toDateStr = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const todayStr = toDateStr(today);
+
+    const quickDates = [
+        { label: "Today", value: toDateStr(today) },
+        { label: "Tomorrow", value: toDateStr(new Date(today.getTime() + 86400000)) },
+        { label: "+2 Days", value: toDateStr(new Date(today.getTime() + 86400000 * 2)) },
+        { label: "+3 Days", value: toDateStr(new Date(today.getTime() + 86400000 * 3)) },
+    ];
+
+    const timePresets = [
+        { label: "12 PM", value: "12:00" },
+        { label: "3 PM", value: "15:00" },
+        { label: "6 PM", value: "18:00" },
+        { label: "8 PM", value: "20:00" },
+        { label: "9 PM", value: "21:00" },
+        { label: "10 PM", value: "22:00" },
+        { label: "11 PM", value: "23:00" },
+    ];
+
+    const durationOpts = [
+        { label: "1 hr", mins: 60 },
+        { label: "2 hrs", mins: 120 },
+        { label: "3 hrs", mins: 180 },
+        { label: "4 hrs", mins: 240 },
+    ];
+
+    const applyDuration = (mins: number, baseDate?: string, baseTime?: string) => {
+        const sd = baseDate || startDate;
+        const st = baseTime || startTime;
+        if (!sd || !st) return;
+        const start = new Date(`${sd}T${st.length === 5 ? st + ":00" : st}`);
+        if (isNaN(start.getTime())) return;
+        const end = new Date(start.getTime() + mins * 60000);
+        setEndDate(toDateStr(end));
+        setEndTime(end.toTimeString().slice(0, 5));
+        setDuration(mins);
+    };
 
     useEffect(() => {
         const init = async () => {
@@ -111,6 +153,7 @@ export default function SchedulePage() {
                 setStartTime("");
                 setEndDate("");
                 setEndTime("");
+                setDuration(null);
                 await fetchSchedules(userId);
             } else {
                 toast.error(data.error || "Failed to add schedule");
@@ -247,37 +290,107 @@ export default function SchedulePage() {
                             />
                         </div>
 
-                        {/* Dates */}
+                        {/* ── Start Date ── */}
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Start Date</label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {quickDates.map((qd) => (
+                                    <button
+                                        key={qd.value}
+                                        type="button"
+                                        onClick={() => {
+                                            setStartDate(qd.value);
+                                            if (!endDate) setEndDate(qd.value);
+                                            if (duration && startTime) applyDuration(duration, qd.value);
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                                            startDate === qd.value
+                                                ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                        }`}
+                                    >
+                                        {qd.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <input
+                                type="date"
+                                value={startDate}
+                                min={todayStr}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    if (!endDate) setEndDate(e.target.value);
+                                    if (duration) applyDuration(duration, e.target.value);
+                                }}
+                                required
+                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
+                            />
+                        </div>
+
+                        {/* ── Start Time ── */}
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Start Time</label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {timePresets.map((tp) => (
+                                    <button
+                                        key={tp.value}
+                                        type="button"
+                                        onClick={() => {
+                                            setStartTime(tp.value);
+                                            if (duration && startDate) applyDuration(duration, undefined, tp.value);
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                                            startTime === tp.value
+                                                ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]"
+                                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                        }`}
+                                    >
+                                        {tp.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <input
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => {
+                                    setStartTime(e.target.value);
+                                    if (duration && startDate) applyDuration(duration, undefined, e.target.value);
+                                }}
+                                required
+                                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
+                            />
+                        </div>
+
+                        {/* ── Duration Shortcuts ── */}
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Duration <span className="text-zinc-600">(auto-sets end)</span></label>
+                            <div className="flex flex-wrap gap-2">
+                                {durationOpts.map((d) => (
+                                    <button
+                                        key={d.mins}
+                                        type="button"
+                                        onClick={() => applyDuration(d.mins)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                            duration === d.mins
+                                                ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
+                                        }`}
+                                    >
+                                        {d.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ── End Date & Time (still editable) ── */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Start Date</label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => {
-                                        setStartDate(e.target.value);
-                                        if (!endDate) setEndDate(e.target.value);
-                                    }}
-                                    required
-                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Start Time</label>
-                                <input
-                                    type="time"
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
-                                />
-                            </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">End Date</label>
                                 <input
                                     type="date"
                                     value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
+                                    min={startDate || todayStr}
+                                    onChange={(e) => { setEndDate(e.target.value); setDuration(null); }}
                                     required
                                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
                                 />
@@ -287,7 +400,7 @@ export default function SchedulePage() {
                                 <input
                                     type="time"
                                     value={endTime}
-                                    onChange={(e) => setEndTime(e.target.value)}
+                                    onChange={(e) => { setEndTime(e.target.value); setDuration(null); }}
                                     required
                                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 transition [color-scheme:dark]"
                                 />

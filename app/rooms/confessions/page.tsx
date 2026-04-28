@@ -16,6 +16,7 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -739,6 +740,14 @@ export default function ConfessionsRoom() {
 
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
+
+                {/* Per-Minute Billing */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="350, 85%, 55%"
+                    rateLabel="€2/min"
+                    exitRoute="/rooms/confessions-sessions"
+                />
             </div>
         </ProtectRoute>
     );

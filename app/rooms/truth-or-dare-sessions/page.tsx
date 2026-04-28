@@ -121,7 +121,7 @@ export default function TruthOrDareSessionsBrowse() {
         }
 
         if (session.user_joined) {
-            router.push(`/rooms/truth-or-dare?roomId=${session.room_id}`);
+            router.push(`/rooms/truth-or-dare?roomId=${session.room_id}&sessionId=${session.id}`);
             return;
         }
 
@@ -135,7 +135,7 @@ export default function TruthOrDareSessionsBrowse() {
 
             if (!res.ok) {
                 if (data.already_joined) {
-                    router.push(`/rooms/truth-or-dare?roomId=${session.room_id}`);
+                    router.push(`/rooms/truth-or-dare?roomId=${session.room_id}&sessionId=${session.id}`);
                     return;
                 }
                 throw new Error(data.error);
@@ -148,7 +148,7 @@ export default function TruthOrDareSessionsBrowse() {
                 ));
             } else if (data.status === "joined") {
                 toast.success(data.message || "Joined successfully!");
-                router.push(`/rooms/truth-or-dare?roomId=${session.room_id}`);
+                router.push(`/rooms/truth-or-dare?roomId=${session.room_id}&sessionId=${session.id}`);
             }
         } catch (err: any) {
             toast.error(err.message || "Failed to join session.");

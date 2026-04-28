@@ -96,8 +96,14 @@ const ConfessionsLeftSidebar = () => {
 
         init();
 
-        // Presence for live viewer count
-        const channel = supabase.channel("confessions-presence", {
+        return () => {};
+    }, [user]);
+
+    // Presence for live viewer count — scoped to room
+    useEffect(() => {
+        if (!user || !roomId) return;
+        const supabase = createClient();
+        const channel = supabase.channel(`presence:${roomId}`, {
             config: { presence: { key: user.id } },
         });
         channel.on("presence", { event: "sync" }, () => {
@@ -110,7 +116,7 @@ const ConfessionsLeftSidebar = () => {
         });
 
         return () => { supabase.removeChannel(channel); };
-    }, [user]);
+    }, [user, roomId]);
 
     const refreshConfessions = async () => {
         if (!roomId) return;

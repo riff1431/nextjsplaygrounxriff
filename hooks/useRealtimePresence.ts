@@ -28,7 +28,7 @@ export function useRealtimePresence(roomId: string | null) {
         if (!roomId || !user) return;
 
         const supabase = createClient();
-        const channel = supabase.channel(`presence-room-${roomId}`, {
+        const channel = supabase.channel(`presence:${roomId}`, {
             config: { presence: { key: user.id } },
         });
 

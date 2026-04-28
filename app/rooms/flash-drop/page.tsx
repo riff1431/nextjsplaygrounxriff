@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Video, UserPlus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
@@ -15,6 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { toast as sonnerToast } from "sonner";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -27,6 +28,8 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 export default function FlashDropsRoomPreview() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const urlSessionId = searchParams.get("sessionId");
     const { user } = useAuth();
     const onBack = () => router.push("/home");
     const { balance: walletBalance, refresh: refreshWallet } = useWallet();
@@ -416,6 +419,14 @@ export default function FlashDropsRoomPreview() {
 
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
+
+                {/* Per-Minute Billing */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="330, 100%, 55%"
+                    rateLabel="€2/min"
+                    exitRoute="/rooms/flash-drop-sessions"
+                />
             </div>
         </ProtectRoute>
     );

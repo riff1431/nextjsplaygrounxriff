@@ -164,24 +164,33 @@ export default function BarLoungeRoom() {
         return () => { isMounted = false; if (roomChannel) supabase.removeChannel(roomChannel); };
     }, [user, role, authLoading]);
 
-    const joinSession = async (room: Room) => {
+    const joinSession = async (room: any) => {
         if (!user) return router.push("/login");
 
+        const sessionId = room.session_id;
+        if (!sessionId) {
+            alert("Session data missing — please refresh and try again.");
+            return;
+        }
+
         try {
-            const res = await fetch(`/api/v1/rooms/${room.id}/join-bar-lounge`, {
+            const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/join`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ price: ENTRY_FEE })
             });
             const data = await res.json();
-            
+
             if (!res.ok) {
-                // Use a simple fallback if sonner is not imported, though it usually is as part of standard layouts
+                if (data.already_joined) {
+                    // Re-entry allowed — navigate directly
+                    router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}&sessionId=${sessionId}`);
+                    return;
+                }
                 alert(data.error || "Insufficient funds to join session");
                 return;
             }
-            
-            router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}`);
+
+            router.push(`/rooms/pgx-page2?roomId=${room.id}&hostId=${room.host_id}&sessionId=${sessionId}`);
         } catch (e) {
             alert("Network error when trying to join");
         }
@@ -464,7 +473,7 @@ export default function BarLoungeRoom() {
                                                     textShadow: `0 0 10px hsla(42,90%,55%,0.3)`,
                                                 }}>
                                                     <DollarSign style={{ width: 11, height: 11 }} />
-                                                    <span>€{ENTRY_FEE}</span>
+                                                    <span>€{(session as any).entry_fee || ENTRY_FEE}</span>
                                                 </div>
                                             </div>
 
@@ -513,7 +522,7 @@ export default function BarLoungeRoom() {
                         accentHslSecondary="280, 40%, 50%"
                         sessionTitle={pendingEntrySession?.title || undefined}
                         sessionType="public"
-                        entryFee={ENTRY_FEE}
+                        entryFee={pendingEntrySession ? Number((pendingEntrySession as any).entry_fee) || ENTRY_FEE : ENTRY_FEE}
                     />
                 </div>
             </div>

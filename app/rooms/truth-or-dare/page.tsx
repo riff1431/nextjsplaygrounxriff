@@ -38,6 +38,7 @@ import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVo
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -84,6 +85,7 @@ function TruthOrDareContent() {
     const router = useRouter();
     const supabase = createClient();
     const roomId = searchParams.get("roomId");
+    const sessionId = searchParams.get("sessionId");
 
     // Dynamic Pricing State
     const [truthTiers, setTruthTiers] = useState<{ id: TierId; label: string; price: number; desc: string }[]>([...DEFAULT_TIERS]);
@@ -1402,6 +1404,16 @@ function TruthOrDareContent() {
 
             {/* Invitation Popup (receiver side) */}
             <InvitationPopup />
+
+            {/* Per-Minute Billing */}
+            {access === 'granted' && (
+                <BillingOverlay
+                    sessionId={sessionId}
+                    accentHsl="330, 80%, 55%"
+                    rateLabel="€2/min"
+                    exitRoute="/rooms/truth-or-dare-sessions"
+                />
+            )}
         </div >
     );
 }
