@@ -78,20 +78,44 @@ const UnlockedConfessionCard = ({
     return (
         <div
             onClick={() => onClick(confession)}
-            className="confession-wall-card cursor-pointer group hover:border-primary/40"
+            className="confession-wall-card cursor-pointer group hover:border-primary/40 flex flex-col p-0 overflow-hidden"
         >
-            {/* Type badge */}
-            {confession.type !== 'Text' && (
-                <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary/80 border border-primary/20 self-end">
-                    {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
-                </span>
+            {confession.media_url ? (
+                <div className="w-full h-28 bg-black/40 relative shrink-0">
+                    {confession.type === 'Video' || confession.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                        <video src={confession.media_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    ) : confession.type === 'Voice' || confession.media_url.match(/\.(mp3|wav|ogg)$/i) ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                            <span className="text-3xl mb-1">🎵</span>
+                            <span className="text-[10px] text-white/50">Voice Note</span>
+                        </div>
+                    ) : (
+                        <img src={confession.media_url} alt="Confession Media" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    )}
+                    {confession.type !== 'Text' && (
+                        <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-black/60 text-white border border-white/20 backdrop-blur-md">
+                            {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
+                        </span>
+                    )}
+                </div>
+            ) : (
+                <div className="flex justify-end p-2 pb-0">
+                    {confession.type !== 'Text' && (
+                        <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary/80 border border-primary/20">
+                            {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
+                        </span>
+                    )}
+                </div>
             )}
-            <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3 text-center px-2 pt-1 flex-1">
-                {confession.content || confession.teaser}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-semibold text-emerald-400">Unlocked</span>
+            
+            <div className="px-3 pb-3 pt-2 flex-1 flex flex-col justify-between">
+                <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3 text-center flex-1 flex items-center justify-center">
+                    {confession.content || confession.teaser}
+                </p>
+                <div className="flex items-center justify-center gap-1.5 mt-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 w-max mx-auto">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-semibold text-emerald-400">Unlocked</span>
+                </div>
             </div>
         </div>
     );

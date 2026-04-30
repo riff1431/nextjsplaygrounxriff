@@ -6,7 +6,15 @@ import dynamic from "next/dynamic";
 import { Phone, PhoneOff, Clock, Loader2, X } from "lucide-react";
 import { PrivateCallState } from "@/hooks/usePrivateCall";
 
-const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const PrivateCallStream = dynamic(() => import("@/components/rooms/PrivateCallStream"), { 
+    ssr: false,
+    loading: () => (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-50">
+            <Loader2 className="w-6 h-6 text-pink-500 animate-spin mb-2" />
+            <span className="text-xs text-white/50">Initializing Video Engine...</span>
+        </div>
+    )
+});
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 interface PrivateCallCreatorModalProps {
@@ -136,23 +144,14 @@ export default function PrivateCallCreatorModal({
                     </div>
 
                     {/* Video area */}
-                    <div className="relative flex-1 min-h-[300px] bg-black">
-                        <div className="w-full h-full">
-                            <LiveStreamWrapper
-                                role="host"
-                                appId={APP_ID}
-                                roomId={agoraChannel}
-                                uid={userId}
-                                hostId={userId}
-                                hostAvatarUrl=""
-                                hostName="You"
-                            />
-                        </div>
-                        <div className="absolute bottom-3 right-3 w-28 h-20 rounded-lg overflow-hidden border-2 border-white/20 shadow-xl bg-black/50">
-                            <div className="w-full h-full flex items-center justify-center text-white/40 text-[10px]">
-                                You
-                            </div>
-                        </div>
+                    <div className="relative flex-1 min-h-[300px] bg-black rounded-xl overflow-hidden m-2">
+                        <PrivateCallStream
+                            appId={APP_ID}
+                            channelName={agoraChannel}
+                            uid={userId}
+                            remoteAvatarUrl=""
+                            remoteName={fanName}
+                        />
                     </div>
 
                     {/* Controls */}

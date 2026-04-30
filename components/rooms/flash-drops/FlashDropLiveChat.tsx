@@ -19,6 +19,7 @@ interface ChatMessage {
 
 interface FlashDropLiveChatProps {
     roomId: string | null;
+    sessionId?: string | null;
     /** Pass the room's host_id so we can badge creator messages */
     hostId?: string | null;
     /** Style variant: 'fan' uses neon pink theme, 'creator' uses dark glass */
@@ -27,6 +28,7 @@ interface FlashDropLiveChatProps {
 
 export default function FlashDropLiveChat({
     roomId,
+    sessionId,
     hostId,
     variant = "fan",
 }: FlashDropLiveChatProps) {
@@ -44,15 +46,17 @@ export default function FlashDropLiveChat({
     // Fetch message history
     const fetchMessages = useCallback(async () => {
         if (!roomId) return;
-        const { data } = await supabase
+        let query = supabase
             .from("room_chat_messages")
             .select("*")
             .eq("room_id", roomId)
             .order("created_at", { ascending: true })
             .limit(100);
+        if (sessionId) query = query.eq("session_id", sessionId);
+        const { data } = await query;
         if (data) setMessages(data as ChatMessage[]);
         setLoadingHistory(false);
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     useEffect(() => {
         if (!roomId) { setLoadingHistory(false); return; }
@@ -63,7 +67,7 @@ export default function FlashDropLiveChat({
     useEffect(() => {
         if (!roomId) return;
         const channel = supabase
-            .channel(`fd-chat-${roomId}`) // Removed variant to consolidate
+            .channel(`fd-chat-${roomId}-${sessionId || 'default'}`) // Scoped to session to prevent cross-bleed if multiple exist
             .on(
                 "postgres_changes",
                 {
@@ -73,10 +77,16 @@ export default function FlashDropLiveChat({
                     filter: `room_id=eq.${roomId}`,
                 },
                 (payload: any) => {
-                    const newMsg = payload.new as ChatMessage;
+                    const newMsg = payload.new as ChatMessage & { session_id?: string };
+                    
+                    // Session isolation filter
+                    if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) {
+                        return;
+                    }
+
                     setMessages((prev) => {
                         // Avoid duplicates (optimistic inserts or multiple clients)
-                        if (prev.some((m) => m.id === newMsg.id)) return prev;
+                        if (prev.some((m) => m.id === newMsg.id || (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id.startsWith("opt-")))) return prev;
 
                         // Extra safety for system messages (ignore identical ones within 3 seconds)
                         if (newMsg.is_system) {
@@ -98,11 +108,14 @@ export default function FlashDropLiveChat({
                 }
             });
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     // Auto-scroll to bottom
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        const timeout = setTimeout(() => {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+        return () => clearTimeout(timeout);
     }, [messages]);
 
     const handleSend = async () => {
@@ -133,14 +146,17 @@ export default function FlashDropLiveChat({
         setInputText("");
 
         try {
+            const insertPayload: any = {
+                room_id: roomId,
+                sender_id: user.id,
+                sender_name: senderName,
+                message: text,
+            };
+            if (sessionId) insertPayload.session_id = sessionId;
+
             const { data } = await supabase
                 .from("room_chat_messages")
-                .insert({
-                    room_id: roomId,
-                    sender_id: user.id,
-                    sender_name: senderName,
-                    message: text,
-                })
+                .insert(insertPayload)
                 .select()
                 .single();
 
@@ -242,7 +258,7 @@ export default function FlashDropLiveChat({
                             <div key={m.id} className="flex items-center gap-2 py-0.5">
                                 <div className="flex-1 h-px bg-white/5" />
                                 <span
-                                    className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                                    className="text-[12px] font-bold px-2 py-0.5 rounded-full shrink-0"
                                     style={{
                                         background: "rgba(255,255,255,0.04)",
                                         border: "1px solid rgba(255,255,255,0.08)",
@@ -294,7 +310,7 @@ export default function FlashDropLiveChat({
                             <div className={`flex-1 min-w-0 ${isMe ? "items-end" : ""} flex flex-col`}>
                                 <div className={`flex items-baseline gap-1.5 flex-wrap ${isMe ? "flex-row-reverse" : ""}`}>
                                     <span
-                                        className="text-[11px] font-bold leading-none shrink-0"
+                                        className="text-[13px] font-bold leading-none shrink-0"
                                         style={{
                                             color: isHostMsg
                                                 ? "hsl(280 100% 75%)"
@@ -334,7 +350,7 @@ export default function FlashDropLiveChat({
                                     )}
                                 </div>
                                 <p
-                                    className={`text-[12px] leading-snug mt-0.5 break-words max-w-[90%] px-2.5 py-1.5 rounded-xl ${isMe ? "self-end" : "self-start"}`}
+                                    className={`text-[14px] leading-snug mt-0.5 break-words max-w-[90%] px-2.5 py-1.5 rounded-xl ${isMe ? "self-end" : "self-start"}`}
                                     style={{
                                         background: isMe
                                             ? "hsl(200 80% 40% / 0.25)"
@@ -376,7 +392,7 @@ export default function FlashDropLiveChat({
                             placeholder={roomId ? (isCreator ? "Reply to your fans..." : "Say something...") : "No active session..."}
                             disabled={!roomId || sending}
                             maxLength={300}
-                            className="flex-1 text-[13px] px-3 py-2 rounded-xl outline-none transition-all disabled:opacity-40"
+                            className="flex-1 text-[15px] px-3 py-2 rounded-xl outline-none transition-all disabled:opacity-40"
                             style={{
                                 background: "rgba(255,255,255,0.06)",
                                 border: "1px solid hsl(330 100% 55% / 0.25)",

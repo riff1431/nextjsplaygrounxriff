@@ -8,6 +8,7 @@ export async function GET(
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
+    const sessionId = request.nextUrl.searchParams.get("sessionId");
 
     // 1. Fetch Offers
     const { data: offers } = await supabase
@@ -16,13 +17,15 @@ export async function GET(
         .eq("room_id", roomId)
         .gt("ends_at", new Date().toISOString());
 
-    // 2. Fetch Activity Feed (Recent)
-    const { data: activity } = await supabase
+    // 2. Fetch Activity Feed (Recent) — scoped to session if provided
+    let activityQuery = supabase
         .from("suga_activity_events")
         .select("*")
         .eq("room_id", roomId)
         .order("created_at", { ascending: false })
         .limit(50);
+    if (sessionId) activityQuery = activityQuery.eq("session_id", sessionId);
+    const { data: activity } = await activityQuery;
 
     // Fetch room host
     const { data: room } = await supabase

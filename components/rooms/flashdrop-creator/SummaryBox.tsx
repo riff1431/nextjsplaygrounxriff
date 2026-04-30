@@ -147,36 +147,29 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
                 Summary Box
             </h2>
 
-            {/* Stats grid — 3 rows of 2 */}
+            {/* Stats grid — 2 rows of 3 */}
             <div className="flex-1 flex flex-col gap-1.5 min-h-0">
-                {/* Row 1: FANS · DROPS */}
+                {/* Row 1: FANS · DROPS · PACKS */}
                 <div className="flex items-end gap-1.5">
                     <div className="flex-1 min-w-0">
                         <StatTile label="Fans" value={stats.fans} roomId={roomId} />
                     </div>
-                    <StatSpacer />
                     <div className="flex-1 min-w-0">
                         <StatTile label="Drops" value={stats.drops} roomId={roomId} />
                     </div>
-                </div>
-
-                {/* Row 2: PACKS · BUNDLES */}
-                <div className="flex items-end gap-1.5">
                     <div className="flex-1 min-w-0">
                         <StatTile label="Packs" value={stats.packs} roomId={roomId} />
                     </div>
-                    <StatSpacer />
+                </div>
+
+                {/* Row 2: BUNDLES · REQUESTS · TIPS */}
+                <div className="flex items-end gap-1.5">
                     <div className="flex-1 min-w-0">
                         <StatTile label="Bundles" value={stats.bundles} roomId={roomId} />
                     </div>
-                </div>
-
-                {/* Row 3: REQUESTS · TIPS */}
-                <div className="flex items-end gap-1.5">
                     <div className="flex-1 min-w-0">
                         <StatTile label="Requests" value={stats.pendingRequests} roomId={roomId} />
                     </div>
-                    <StatSpacer />
                     <div className="flex-1 min-w-0">
                         <StatTile label="Tips (€)" value={stats.tips} roomId={roomId} />
                     </div>

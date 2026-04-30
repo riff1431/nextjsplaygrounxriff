@@ -17,6 +17,7 @@ export interface PrivateCallState {
 
 export function usePrivateCall(roomId: string | null, userId: string | null, role: "fan" | "creator") {
     const [callState, setCallState] = useState<PrivateCallState | null>(null);
+    const [pendingCalls, setPendingCalls] = useState<PrivateCallState[]>([]);
     const [timeRemaining, setTimeRemaining] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
     const supabaseRef = useRef(createClient());
@@ -52,15 +53,16 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
     }, [callState?.status, callState?.startedAt, callState?.durationSeconds]);
 
     // Listen for realtime broadcast events
+    // FIX: subscribe to `room:${roomId}` to match the API broadcast target
     useEffect(() => {
         if (!roomId || !userId) return;
 
-        const channel = supabase.channel(`room:${roomId}:private_call_${userId}`)
+        const channel = supabase.channel(`room:${roomId}`)
             .on("broadcast", { event: "private_call_request" }, (payload) => {
                 // Creator receives: a fan requested a call
                 if (role === "creator") {
                     const d = payload.payload;
-                    setCallState({
+                    const newCall: PrivateCallState = {
                         callId: d.callId,
                         roomId: roomId,
                         fanId: d.fanId,
@@ -70,7 +72,14 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
                         agoraChannel: d.agoraChannel,
                         durationSeconds: d.duration,
                         startedAt: null,
+                    };
+                    // Add to pending queue
+                    setPendingCalls(prev => {
+                        if (prev.some(c => c.callId === d.callId)) return prev;
+                        return [...prev, newCall];
                     });
+                    // Also set as current callState if nothing active
+                    setCallState(prev => prev ? prev : newCall);
                 }
             })
             .on("broadcast", { event: "private_call_ringing" }, (payload) => {
@@ -88,6 +97,11 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
                         durationSeconds: d.duration,
                         startedAt: null,
                     });
+                }
+                // Creator: update the accepted call state to ringing
+                if (role === "creator" && d.creatorId === userId) {
+                    setCallState(prev => prev && prev.callId === d.callId ? { ...prev, status: "ringing" } : prev);
+                    setPendingCalls(prev => prev.filter(c => c.callId !== d.callId));
                 }
             })
             .on("broadcast", { event: "private_call_active" }, (payload) => {
@@ -109,6 +123,10 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
                 if (d.fanId === userId) {
                     setCallState(prev => prev ? { ...prev, status: "declined" } : null);
                     setTimeout(() => setCallState(null), 3000);
+                }
+                // Creator: also remove from pending queue
+                if (role === "creator") {
+                    setPendingCalls(prev => prev.filter(c => c.callId !== d.callId));
                 }
             })
             .on("broadcast", { event: "private_call_rejected" }, (payload) => {
@@ -159,34 +177,49 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
         }
     }, [roomId, userId]);
 
-    // Creator: accept call
-    const acceptCall = useCallback(async () => {
-        if (!roomId || !callState) return;
+    // Creator: accept a specific call from the queue
+    const acceptCall = useCallback(async (callId?: string) => {
+        if (!roomId) return;
+        const targetId = callId || callState?.callId;
+        if (!targetId) return;
         setIsLoading(true);
         try {
             await fetch(`/api/v1/rooms/${roomId}/suga/private-call`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ callId: callState.callId, action: "accept" }),
+                body: JSON.stringify({ callId: targetId, action: "accept" }),
             });
+            // If accepting from queue, promote to active callState
+            const acceptedCall = pendingCalls.find(c => c.callId === targetId);
+            if (acceptedCall) {
+                setCallState({ ...acceptedCall, status: "ringing" });
+                setPendingCalls(prev => prev.filter(c => c.callId !== targetId));
+            }
         } catch (err) {
             console.error("Failed to accept call:", err);
         } finally {
             setIsLoading(false);
         }
-    }, [roomId, callState]);
+    }, [roomId, callState, pendingCalls]);
 
-    // Creator: decline call
-    const declineCall = useCallback(async () => {
-        if (!roomId || !callState) return;
+    // Creator: decline a specific call from the queue
+    const declineCall = useCallback(async (callId?: string) => {
+        if (!roomId) return;
+        const targetId = callId || callState?.callId;
+        if (!targetId) return;
         setIsLoading(true);
         try {
             await fetch(`/api/v1/rooms/${roomId}/suga/private-call`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ callId: callState.callId, action: "decline" }),
+                body: JSON.stringify({ callId: targetId, action: "decline" }),
             });
-            setCallState(null);
+            // Remove from pending queue
+            setPendingCalls(prev => prev.filter(c => c.callId !== targetId));
+            // Clear callState if it's the one being declined
+            if (callState?.callId === targetId) {
+                setCallState(null);
+            }
         } catch (err) {
             console.error("Failed to decline call:", err);
         } finally {
@@ -252,6 +285,7 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
 
     return {
         callState,
+        pendingCalls,
         timeRemaining,
         isLoading,
         initiateCall,

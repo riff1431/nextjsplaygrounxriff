@@ -144,7 +144,7 @@ function PgxPage2Inner() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
-    const { messages, sendMessage } = useBarChat(roomId);
+    const { messages, sendMessage } = useBarChat(roomId, sessionId);
 
     /* ── Fetch session data ─── */
     useEffect(() => {

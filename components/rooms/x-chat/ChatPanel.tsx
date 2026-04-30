@@ -23,11 +23,12 @@ const LANE_CONFIG: Record<Lane, { price: number; icon: React.ReactNode; color: s
 interface ChatPanelProps {
     roomId: string | null;
     hostName?: string;
+    sessionId?: string | null;
 }
 
-const ChatPanel = ({ roomId, hostName = "Host" }: ChatPanelProps) => {
+const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => {
     const { user } = useAuth();
-    const { messages, sendMessage } = useXChat(roomId);
+    const { messages, sendMessage } = useXChat(roomId, sessionId);
     const { balance, refresh } = useWallet();
     const supabase = createClient();
     const [message, setMessage] = useState("");

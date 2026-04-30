@@ -17,7 +17,9 @@ import S4uCreatorGroupVote from "@/components/rooms/suga4u-creator/S4uCreatorGro
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCallCreatorModal";
+import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -29,6 +31,8 @@ const Suga4UCreatorPage = () => {
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showIncomingPanel, setShowIncomingPanel] = useState(false);
+    const [showExitModal, setShowExitModal] = useState(false);
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
@@ -98,7 +102,7 @@ const Suga4UCreatorPage = () => {
                 {/* Top Header Row */}
                 <div className="mb-0 shrink-0 flex items-center justify-between">
                     <button
-                        onClick={() => router.back()}
+                        onClick={() => setShowExitModal(true)}
                         className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -113,24 +117,34 @@ const Suga4UCreatorPage = () => {
                             <UserPlus className="w-4 h-4" />
                         </button>
                         {/* Incoming 1-on-1 notifications */}
-                        <button
-                            onClick={() => {
-                                if (!privateCall.callState) {
-                                    // No pending calls — just show info
-                                } 
-                                // If there's a pending call, the modal is already showing
-                            }}
-                            className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
-                        >
-                            <Phone className="w-4 h-4" />
-                            Incoming
-                            {/* Notification badge for pending private calls */}
-                            {privateCall.callState && privateCall.callState.status === "pending" && (
-                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
-                                    1
-                                </span>
-                            )}
-                        </button>
+                        <div className="relative" data-incoming-btn>
+                            <button
+                                onClick={() => setShowIncomingPanel(prev => !prev)}
+                                className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                            >
+                                <Phone className="w-4 h-4" />
+                                Incoming
+                                {/* Notification badge for pending private calls */}
+                                {privateCall.pendingCalls.length > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                        {privateCall.pendingCalls.length}
+                                    </span>
+                                )}
+                            </button>
+                            <S4uIncomingCallsPanel
+                                isOpen={showIncomingPanel}
+                                onClose={() => setShowIncomingPanel(false)}
+                                pendingCalls={privateCall.pendingCalls}
+                                isLoading={privateCall.isLoading}
+                                onAccept={(callId) => {
+                                    privateCall.acceptCall(callId);
+                                    setShowIncomingPanel(false);
+                                }}
+                                onDecline={(callId) => {
+                                    privateCall.declineCall(callId);
+                                }}
+                            />
+                        </div>
                         <SessionLiveControls
                             sessionId={sessionId!}
                             onEnd={() => router.push("/rooms/suga4u-creator")}
@@ -145,14 +159,14 @@ const Suga4UCreatorPage = () => {
                     {/* Left column: Live Chat (Full Height) */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uLiveChat roomId={roomId || undefined} />
+                            <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
                         </div>
                     </div>
 
                     {/* Column 2: Pending Requests + Group Vote */}
                     <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uPendingRequests roomId={roomId || undefined} />
+                            <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
                         </div>
                         <div className="shrink-0 flex flex-col">
                             <S4uCreatorGroupVote roomId={roomId || undefined} />
@@ -209,19 +223,31 @@ const Suga4UCreatorPage = () => {
             {/* Incoming Invitation Popup */}
             <InvitationPopup />
 
-            {/* Private 1-on-1 Call Modal */}
-            {privateCall.callState && user && (
+            {/* Private 1-on-1 Call Modal — only for ringing/active/ended states (pending is handled by the Incoming panel) */}
+            {privateCall.callState && privateCall.callState.status !== "pending" && user && (
                 <PrivateCallCreatorModal
                     callState={privateCall.callState}
                     timeRemaining={privateCall.timeRemaining}
                     userId={user.id}
                     isLoading={privateCall.isLoading}
-                    onAcceptCall={privateCall.acceptCall}
-                    onDeclineCall={privateCall.declineCall}
+                    onAcceptCall={() => privateCall.acceptCall()}
+                    onDeclineCall={() => privateCall.declineCall()}
                     onEndCall={privateCall.endCall}
                     onDismiss={privateCall.dismiss}
                 />
             )}
+
+            <CreatorExitModal
+                isOpen={showExitModal}
+                onClose={() => setShowExitModal(false)}
+                onEndSession={async () => {
+                    const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" });
+                    if (res.ok) router.push("/rooms/suga4u-creator");
+                }}
+                onMinimizeSession={() => router.push("/rooms/suga4u-creator")}
+                roomName="Suga4U"
+                accentHsl="340, 75%, 55%"
+            />
         </div>
     );
 };

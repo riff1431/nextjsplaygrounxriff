@@ -103,6 +103,37 @@ const XChatRoom = () => {
     const [voicePrompt, setVoicePrompt] = useState("");
     const [animatingEmoji, setAnimatingEmoji] = useState<string | null>(null);
 
+    /* ── session status gating ──────────────────────────── */
+    const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!urlSessionId) {
+            setSessionStatus('active');
+            return;
+        }
+
+        const fetchSessionStatus = async () => {
+            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', urlSessionId).single();
+            if (data) {
+                if (data.status === 'ended') setSessionStatus('ended');
+                else if (!data.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            }
+        };
+        fetchSessionStatus();
+
+        const channel = supabase.channel(`session-status-${urlSessionId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${urlSessionId}` }, (payload) => {
+                const newData = payload.new;
+                if (newData.status === 'ended') setSessionStatus('ended');
+                else if (!newData.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [urlSessionId, supabase]);
+
     /* ── fetch room ─────────────────────────────────────── */
     useEffect(() => {
         async function fetchRoom() {
@@ -246,6 +277,53 @@ const XChatRoom = () => {
     };
 
     /* ═══════════════════════════════════ RENDER ══════════ */
+    if (sessionStatus === 'pending') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white relative xchat-page">
+                <div className="absolute inset-0" style={{ backgroundImage: "url(/x-chat/casino-bg.jpeg)", backgroundSize: "cover", opacity: 0.3 }} />
+                <div className="absolute inset-0 bg-black/60" />
+                
+                <button onClick={() => router.back()} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-all z-20">
+                    <ArrowLeft size={18} />
+                </button>
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 border-4 border-[#FFD700]/20 border-t-[#FFD700] rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(255,215,0,0.3)]" />
+                    <h1 className="text-3xl font-black text-[#FFD700] uppercase tracking-[0.2em] mb-3 text-center px-4" style={{ textShadow: "0 0 15px rgba(255,215,0,0.5)" }}>
+                        Waiting for Creator
+                    </h1>
+                    <p className="text-white/60 text-sm font-medium tracking-wide uppercase">
+                        The X-Chat session will begin shortly.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (sessionStatus === 'ended') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white relative xchat-page">
+                <div className="absolute inset-0" style={{ backgroundImage: "url(/x-chat/casino-bg.jpeg)", backgroundSize: "cover", opacity: 0.2, filter: "grayscale(100%)" }} />
+                <div className="absolute inset-0 bg-black/80" />
+                
+                <div className="relative z-10 flex flex-col items-center bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-md">
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6 border border-white/10">
+                        <span className="text-2xl opacity-50">❌</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-3" style={{ textShadow: "0 0 15px rgba(255,255,255,0.3)" }}>
+                        Session Ended
+                    </h1>
+                    <p className="text-white/50 text-sm font-medium mb-8 uppercase tracking-wider">
+                        This X-Chat session has concluded.
+                    </p>
+                    <button onClick={() => router.back()} className="px-8 py-3 rounded-full bg-[#FFD700] text-black font-bold tracking-widest uppercase hover:brightness-110 transition-all text-sm shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <ProtectRoute allowedRoles={["fan"]}>
             {/* page wrapper */}
@@ -409,7 +487,7 @@ const XChatRoom = () => {
 
                         {/* ── RIGHT PANEL: Chat ──────────────────────── */}
                         <div className="xchat-right">
-                            <ChatPanel roomId={roomId} hostName={hostName} />
+                            <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} />
                         </div>
 
                       </div>{/* /xchat-container */}

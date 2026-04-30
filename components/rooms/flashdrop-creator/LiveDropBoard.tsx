@@ -47,9 +47,10 @@ function formatCountdown(endsAt: string): string {
 
 interface LiveDropBoardProps {
     roomId?: string | null;
+    sessionId?: string | null;
 }
 
-export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
+export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps) {
     const supabase = createClient();
     const [drops, setDrops] = useState<FlashDrop[]>([]);
     const [loading, setLoading] = useState(true);
@@ -169,6 +170,7 @@ export default function LiveDropBoard({ roomId }: LiveDropBoardProps) {
                     inventoryTotal: parseInt(form.inventoryTotal) || 100,
                     status: "Live",
                     media_url,
+                    sessionId,
                 }),
             });
 

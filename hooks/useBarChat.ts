@@ -11,7 +11,7 @@ export type ChatMessage = {
     created_at: string;
 };
 
-export function useBarChat(roomId: string | null) {
+export function useBarChat(roomId: string | null, sessionId?: string | null) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const supabase = createClient();
 
@@ -23,12 +23,15 @@ export function useBarChat(roomId: string | null) {
 
         // Load initial messages
         const load = async () => {
-            const { data, error } = await supabase
+            let query = supabase
                 .from("bar_lounge_messages")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
                 .limit(100);
+            if (sessionId) query = query.eq("session_id", sessionId);
+
+            const { data, error } = await query;
 
             if (error) {
                 console.error("Error loading chat:", error);
@@ -64,23 +67,26 @@ export function useBarChat(roomId: string | null) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     const sendMessage = useCallback(async (content: string, userId?: string, handle?: string) => {
         if (!roomId || !content.trim()) return;
 
-        const { error } = await supabase.from("bar_lounge_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             user_id: userId ?? null,
             handle: handle ?? null,
             content: content.trim(),
-        });
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+
+        const { error } = await supabase.from("bar_lounge_messages").insert(insertPayload);
 
         if (error) {
             console.error("Failed to send message:", error);
             throw error;
         }
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     return { messages, sendMessage };
 }

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
+import { useAuth } from "@/app/context/AuthContext";
 import { playNotificationSound, playMoneySound } from "@/utils/sounds";
 
 import TodCreatorLiveChat from "@/components/rooms/truth-or-dare-creator/TodCreatorLiveChat";
@@ -1301,33 +1303,17 @@ export default function TruthOrDareCreatorPage() {
             )}
 
             {/* Exit/End Confirmation Modal */}
-            {showExitConfirmation && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-6">
-                    <div className="max-w-md w-full bg-gray-900 border border-red-500/30 rounded-3xl p-8 shadow-[0_0_50px_rgba(239,68,68,0.2)] text-center">
-                        <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                            <span className="text-3xl">🛑</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">End Live Session?</h2>
-                        <p className="text-gray-400 mb-8">
-                            This will stop the stream for all viewers and close the session. Are you sure you want to exit?
-                        </p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => setShowExitConfirmation(false)}
-                                className="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-medium transition"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={endSession}
-                                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-900/20 transition"
-                            >
-                                End Session
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CreatorExitModal
+                isOpen={showExitConfirmation}
+                onClose={() => setShowExitConfirmation(false)}
+                onEndSession={async () => { await endSession(); }}
+                onMinimizeSession={() => {
+                    setShowExitConfirmation(false);
+                    router.push('/rooms/creator-studio');
+                }}
+                roomName="Truth or Dare"
+                accentHsl="330, 80%, 55%"
+            />
 
             {/* Cute Real-time Tip Alert Dialog */}
             {activeTip && (

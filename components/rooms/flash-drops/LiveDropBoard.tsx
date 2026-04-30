@@ -278,15 +278,15 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
 
                                 {/* Card info footer */}
                                 <div className="p-2 flex flex-col gap-0.5">
-                                    <span className="fd-font-body font-bold text-xs leading-tight text-foreground truncate">
+                                    <span className="fd-font-body font-bold text-sm leading-tight text-foreground truncate">
                                         {drop.title}
                                     </span>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[9px] text-foreground/50 fd-font-body">
+                                        <span className="text-xs text-foreground/50 fd-font-body">
                                             Ends · {formatCountdown(drop.ends_at)}
                                         </span>
                                         {drop.inventory_remaining < drop.inventory_total && (
-                                            <span className="text-[9px] text-orange-400/70 fd-font-body">
+                                            <span className="text-xs text-orange-400/70 fd-font-body">
                                                 {drop.inventory_remaining} left
                                             </span>
                                         )}

@@ -13,6 +13,7 @@ import SummaryPanel from "@/components/rooms/x-chat-creator/SummaryPanel";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import InviteModal from "@/components/rooms/InviteModal";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -26,6 +27,7 @@ const XChatCreatorPage = () => {
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | undefined>(urlRoomId || undefined);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [showExitModal, setShowExitModal] = useState(false);
 
     // Must be called before any conditional return to satisfy Rules of Hooks
     useEffect(() => {
@@ -101,7 +103,7 @@ const XChatCreatorPage = () => {
                         className="panel-glass flex items-center px-4 py-3 relative"
                     >
                         <button
-                            onClick={() => router.push("/home")}
+                            onClick={() => setShowExitModal(true)}
                             className="flex items-center gap-1 text-foreground hover:text-primary transition-colors absolute left-4"
                         >
                             <ArrowLeft className="w-5 h-5" />
@@ -126,7 +128,7 @@ const XChatCreatorPage = () => {
                     <div className="flex-1 grid grid-cols-1 lg:grid-cols-[400px_1fr_400px] gap-3 px-3 pb-3 max-w-[1600px] mx-auto w-full overflow-hidden">
                         {/* Left - Live Chat */}
                         <div className="hidden lg:flex min-h-0">
-                            <LiveChat roomId={roomId} />
+                            <LiveChat roomId={roomId} sessionId={sessionId} />
                         </div>
 
                         {/* Center - Video Feeds */}
@@ -233,6 +235,18 @@ const XChatCreatorPage = () => {
                     isOpen={isInviteModalOpen} 
                     onClose={() => setIsInviteModalOpen(false)} 
                     roomId={roomId || null} 
+                />
+
+                <CreatorExitModal
+                    isOpen={showExitModal}
+                    onClose={() => setShowExitModal(false)}
+                    onEndSession={async () => {
+                        const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" });
+                        if (res.ok) router.push("/rooms/x-chat-creator");
+                    }}
+                    onMinimizeSession={() => router.push("/rooms/x-chat-creator")}
+                    roomName="X Chat"
+                    accentHsl="45, 90%, 55%"
                 />
             </div>
         </ProtectRoute>

@@ -598,7 +598,7 @@ export default function ConfessionsRoom() {
                                         )
                                     }
                                 />
-                                <LiveChatBox roomId={roomId} className="flex-1 min-h-0 w-full" />
+                                <LiveChatBox roomId={roomId} sessionId={urlSessionId} className="flex-1 min-h-0 w-full" />
                             </div>
 
                             {/* Center Column - wider */}
@@ -703,10 +703,24 @@ export default function ConfessionsRoom() {
                 {/* ── MODAL: View Confession ── */}
                 {viewConfession && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-in zoom-in-95 duration-200">
-                        <div className="w-full max-w-lg rounded-[32px] border border-rose-500/20 bg-[#120205] p-8 shadow-2xl relative">
-                            <button onClick={() => setViewConfession(null)} className="absolute top-6 right-6 h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10"><X className="w-4 h-4" /></button>
+                        <div className="w-full max-w-lg rounded-[32px] border border-rose-500/20 bg-[#120205] p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                            <button onClick={() => setViewConfession(null)} className="absolute top-6 right-6 h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10 z-10"><X className="w-4 h-4" /></button>
                             <h3 className="text-2xl font-black text-white mb-1.5">{viewConfession.title}</h3>
                             <Pill className="mb-6 bg-green-500/10 text-green-400 border-green-500/20 animate-pulse">Unlocked Secret</Pill>
+
+                            {viewConfession.media_url && (
+                                <div className="mb-6 rounded-2xl overflow-hidden border border-rose-500/20 bg-black/50">
+                                    {viewConfession.type === 'Video' || viewConfession.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                        <video src={viewConfession.media_url} controls autoPlay className="w-full max-h-[40vh] object-contain" />
+                                    ) : viewConfession.type === 'Voice' || viewConfession.media_url.match(/\.(mp3|wav|ogg)$/i) ? (
+                                        <div className="p-4 flex justify-center">
+                                            <audio src={viewConfession.media_url} controls autoPlay className="w-full" />
+                                        </div>
+                                    ) : (
+                                        <img src={viewConfession.media_url} alt="Media" className="w-full max-h-[40vh] object-contain" />
+                                    )}
+                                </div>
+                            )}
 
                             <div className="text-lg font-serif font-medium italic text-rose-50/90 leading-loose border-l-2 border-rose-500/30 pl-6 py-2">
                                 {viewConfession.content || viewConfession.teaser}

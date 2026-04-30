@@ -16,6 +16,7 @@ import { toast as sonnerToast } from "sonner";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifications";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -29,6 +30,7 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 export default function FlashDropsRoomPreview() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const urlRoomId = searchParams.get("roomId");
     const urlSessionId = searchParams.get("sessionId");
     const { user } = useAuth();
     const onBack = () => router.push("/home");
@@ -36,7 +38,7 @@ export default function FlashDropsRoomPreview() {
 
     const [toast, setToast] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
-    const [roomId, setRoomId] = useState<string | null>(null);
+    const [roomId, setRoomId] = useState<string | null>(urlRoomId || null);
     const [hostId, setHostId] = useState<string | null>(null);
     const [hostAvatar, setHostAvatar] = useState<string | null>(null);
     const [hostName, setHostName] = useState("Creator");
@@ -56,13 +58,72 @@ export default function FlashDropsRoomPreview() {
     // Pending purchase for SpendConfirmModal
     const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string } | null>(null);
 
-    // Discover room — prefer rooms that have active live drops
+    // Session Status Gating
+    const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!urlSessionId) {
+            // If no session ID is provided, assume active for legacy direct-room joining, or let the room discovery handle it.
+            setSessionStatus('active');
+            return;
+        }
+
+        const supabase = createClient();
+        
+        const fetchSessionStatus = async () => {
+            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', urlSessionId).single();
+            if (data) {
+                if (data.status === 'ended') setSessionStatus('ended');
+                else if (!data.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            }
+        };
+        fetchSessionStatus();
+
+        const channel = supabase.channel(`session-status-${urlSessionId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${urlSessionId}` }, (payload) => {
+                const newData = payload.new;
+                if (newData.status === 'ended') setSessionStatus('ended');
+                else if (!newData.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [urlSessionId]);
+
+    // Discover room — use URL params first (from sessions browse), fallback to auto-discovery
     useEffect(() => {
         if (!user) return;
         async function findRoom() {
             const supabase = createClient();
 
-            // First: find a live flash-drop room that has active drops
+            // Priority 1: Use roomId from URL (passed from sessions browse page)
+            if (urlRoomId) {
+                const { data: room } = await supabase
+                    .from('rooms')
+                    .select('id, host_id')
+                    .eq('id', urlRoomId)
+                    .single();
+
+                if (room) {
+                    setRoomId(room.id);
+                    setHostId(room.host_id);
+
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('full_name, username, avatar_url')
+                        .eq('id', room.host_id)
+                        .single();
+                    if (profile) {
+                        setHostName(profile.full_name || profile.username || 'Creator');
+                        setHostAvatar(profile.avatar_url || null);
+                    }
+                    return;
+                }
+            }
+
+            // Priority 2: find a live flash-drop room that has active drops
             const { data: roomWithDrops } = await supabase
                 .from('flash_drops')
                 .select('room_id, rooms!inner(id, host_id, status, type)')
@@ -89,7 +150,7 @@ export default function FlashDropsRoomPreview() {
                 return;
             }
 
-            // Fallback: any live flash-drop room
+            // Priority 3: any live flash-drop room
             const { data } = await supabase
                 .from('rooms')
                 .select('id, host_id')
@@ -116,7 +177,7 @@ export default function FlashDropsRoomPreview() {
             }
         }
         findRoom();
-    }, [user]);
+    }, [user, urlRoomId]);
 
     const [drops, setDrops] = useState<any[]>([]);
     const [loadingDrops, setLoadingDrops] = useState(true);
@@ -197,13 +258,13 @@ export default function FlashDropsRoomPreview() {
             return;
         }
         try {
-            const endpoint = msg.includes('Pack') || msg.includes('Bundle')
-                ? `/api/v1/rooms/${roomId}/flash-drops/request`
-                : `/api/v1/rooms/${roomId}/flash-drops/unlock`;
+            // All spends from the sidebar (Impulse, Packs, Bundles) are treated as generic requests/tips.
+            // (LiveDropBoard handles its own actual 'unlock' API calls).
+            const endpoint = `/api/v1/rooms/${roomId}/flash-drops/request`;
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, description: msg }),
+                body: JSON.stringify({ amount, description: msg, sessionId: urlSessionId }),
             });
             const data = await res.json();
             if (data.success) {
@@ -238,7 +299,6 @@ export default function FlashDropsRoomPreview() {
         fetchBundles();
     }, [fetchBundles]);
 
-    // Realtime bundle updates
     useEffect(() => {
         if (!roomId) return;
         const supabase = createClient();
@@ -250,6 +310,53 @@ export default function FlashDropsRoomPreview() {
             .subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [roomId, fetchBundles]);
+
+    if (sessionStatus === 'pending') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white relative fd-theme">
+                <div className="absolute inset-0 bg-[url('/flash-drops/nightclub-bg.png')] bg-cover bg-center opacity-20" />
+                <div className="absolute inset-0 bg-black/50" />
+                
+                <button onClick={onBack} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all z-20">
+                    <ArrowLeft size={18} />
+                </button>
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-8 shadow-[0_0_30px_hsl(330_100%_55%/0.4)]" />
+                    <h1 className="text-2xl md:text-4xl font-black neon-text uppercase tracking-[0.2em] mb-3 text-center px-4 fd-font-tech">
+                        Waiting for Creator
+                    </h1>
+                    <p className="text-white/60 text-sm font-medium tracking-wide">
+                        The flash drop session will begin shortly.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (sessionStatus === 'ended') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white relative fd-theme">
+                <div className="absolute inset-0 bg-[url('/flash-drops/nightclub-bg.png')] bg-cover bg-center opacity-20 filter grayscale" />
+                <div className="absolute inset-0 bg-black/80" />
+                
+                <div className="relative z-10 flex flex-col items-center bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-md">
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
+                        <span className="text-2xl">🏁</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-3 fd-font-tech">
+                        Session Ended
+                    </h1>
+                    <p className="text-white/50 text-sm font-medium mb-8">
+                        This flash drop session has concluded.
+                    </p>
+                    <button onClick={onBack} className="px-8 py-3 rounded-xl bg-primary text-white font-bold tracking-widest uppercase hover:brightness-110 transition-all text-sm">
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ProtectRoute allowedRoles={["fan"]}>
@@ -322,6 +429,9 @@ export default function FlashDropsRoomPreview() {
                                         <UserPlus size={16} />
                                     </button>
                                 )}
+                                {roomId && user && (
+                                    <IncomingNotifications roomId={roomId} />
+                                )}
                             </div>
                             {/* Left: Stream + Drop Board */}
                             <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
@@ -350,7 +460,7 @@ export default function FlashDropsRoomPreview() {
 
                             {/* Center: Live Chat */}
                             <div className="flex-[27] min-w-0 min-h-0">
-                                <FlashDropLiveChat roomId={roomId} hostId={hostId} />
+                                <FlashDropLiveChat roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                             </div>
 
                             {/* Right: Impulse Panel */}
@@ -361,7 +471,7 @@ export default function FlashDropsRoomPreview() {
                         </div>
 
                         {/* Bundle strip — compact bottom bar */}
-                        {bundles.length > 0 && (
+                        {false && bundles.length > 0 && (
                             <div className="shrink-0 px-6 py-4">
                                 <div className="flex items-center justify-center gap-0 rounded-2xl overflow-hidden bg-black/50 backdrop-blur-xl border border-primary/30 max-w-5xl mx-auto shadow-[0_10px_40px_rgba(0,0,0,0.4)]">
                                     {bundles.map((bundle, i) => (

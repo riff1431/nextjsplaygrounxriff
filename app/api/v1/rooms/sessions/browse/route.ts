@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
             .from("room_sessions")
             .select(`
                 id, title, description, session_type, entry_fee, cost_per_min,
-                status, started_at, creator_id, room_id, room_type, viewer_count
+                status, started_at, live_started_at, creator_id, room_id, room_type, viewer_count
             `)
             .eq("status", "active")
             .is("ended_at", null)

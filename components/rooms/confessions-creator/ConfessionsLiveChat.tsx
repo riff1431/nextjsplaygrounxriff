@@ -15,9 +15,10 @@ interface ChatMsg {
 
 interface ConfessionsLiveChatProps {
     roomId?: string | null;
+    sessionId?: string | null;
 }
 
-const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
+const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) => {
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -36,12 +37,14 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
         const supabase = createClient();
 
         async function fetchMessages() {
-            const { data } = await supabase
+            let query = supabase
                 .from("chat_messages")
                 .select("id, user_id, username, message, created_at")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(50);
+            if (sessionId) query = query.eq("session_id", sessionId);
+            const { data } = await query;
             if (data) setMessages(data);
             setLoading(false);
             setTimeout(scrollToBottom, 100);
@@ -104,12 +107,15 @@ const ConfessionsLiveChat = ({ roomId }: ConfessionsLiveChatProps) => {
         setNewMessage("");
         setTimeout(scrollToBottom, 50);
 
-        const { error, data } = await supabase.from("chat_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             user_id: user.id,
             username: displayName,
             message: newLocalMsg.message,
-        }).select().single();
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+
+        const { error, data } = await supabase.from("chat_messages").insert(insertPayload).select().single();
 
         if (error) {
             // Revert on error

@@ -68,7 +68,7 @@ export type CreatorFavorite = {
     created_at: number;
 };
 
-export function useSuga4U(roomId: string | null) {
+export function useSuga4U(roomId: string | null, sessionId?: string | null) {
     const [activity, setActivity] = useState<ActivityEvent[]>([]);
     const [offers, setOffers] = useState<OfferDrop[]>([]);
     const [requests, setRequests] = useState<PaidRequest[]>([]);
@@ -81,7 +81,8 @@ export function useSuga4U(roomId: string | null) {
     const loadData = useCallback(async (rid: string) => {
         try {
             setIsLoading(true);
-            const res = await fetch(`/api/v1/rooms/${rid}/suga/state`);
+            const url = sessionId ? `/api/v1/rooms/${rid}/suga/state?sessionId=${sessionId}` : `/api/v1/rooms/${rid}/suga/state`;
+            const res = await fetch(url);
             const data = await res.json();
 
             if (data.offers) {
@@ -130,7 +131,8 @@ export function useSuga4U(roomId: string | null) {
             }
 
             // Requests
-            const reqRes = await fetch(`/api/v1/rooms/${rid}/suga/requests`);
+            const reqUrl = sessionId ? `/api/v1/rooms/${rid}/suga/requests?sessionId=${sessionId}` : `/api/v1/rooms/${rid}/suga/requests`;
+            const reqRes = await fetch(reqUrl);
             const reqData = await reqRes.json();
             if (reqData.requests) {
                 setRequests(reqData.requests.map((r: any) => ({
@@ -149,7 +151,7 @@ export function useSuga4U(roomId: string | null) {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [sessionId]);
 
     useEffect(() => {
         if (!roomId) return;
@@ -283,13 +285,15 @@ export function useSuga4U(roomId: string | null) {
 
     const sendMessage = useCallback(async (text: string, fanName: string) => {
         if (!roomId || !text.trim()) return;
-        const { data, error } = await supabase.from("suga_activity_events").insert({
+        const insertPayload: any = {
             room_id: roomId,
             type: "CHAT",
             fan_name: fanName,
             label: text.trim(),
             amount: 0
-        }).select().single();
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+        const { data, error } = await supabase.from("suga_activity_events").insert(insertPayload).select().single();
         if (error) throw error;
         // Optimistically add to activity so it shows immediately
         if (data) {
@@ -305,16 +309,16 @@ export function useSuga4U(roomId: string | null) {
                 }, ...prev];
             });
         }
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     const createRequest = useCallback(async (type: string, label: string, note: string, price: number, fanName: string) => {
         if (!roomId) return;
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
             method: 'POST',
-            body: JSON.stringify({ type, label, note, price, fanName })
+            body: JSON.stringify({ type, label, note, price, fanName, sessionId: sessionId || undefined })
         });
         return await res.json();
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const claimOffer = useCallback(async (offerId: string) => {
         if (!roomId) return;
@@ -326,15 +330,18 @@ export function useSuga4U(roomId: string | null) {
 
     const sendGift = useCallback(async (amount: number, fanName: string, label: string = "Gift") => {
         if (!roomId) return;
-        const { error } = await supabase.from("suga_activity_events").insert({
+        const insertPayload: any = {
             room_id: roomId,
             type: "TIP",
             fan_name: fanName,
             label: label,
             amount: amount
-        });
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+        const { error } = await supabase.from("suga_activity_events").insert(insertPayload
+        );
         if (error) throw error;
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
     
     const createSecret = useCallback(async (name: string, description: string, unlock_price: number, category: string = 'CUTE', media_url: string | null = null, media_type: string | null = null) => {
         if (!roomId) return;

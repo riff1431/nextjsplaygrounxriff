@@ -22,6 +22,7 @@ interface Session {
     cost_per_min: number;
     status: string;
     started_at: string;
+    live_started_at: string | null;
     creator_id: string;
     room_id: string;
     room_type: string;
@@ -329,7 +330,7 @@ export default function RoomSessionsBrowse({
                                 boxShadow: sessions.length > 0 ? accentGlow : "none",
                             }}
                         >
-                            {sessions.length > 0 && (
+                            {sessions.filter(s => s.live_started_at).length > 0 && (
                                 <span
                                     style={{
                                         width: 7, height: 7, borderRadius: "50%",
@@ -346,7 +347,7 @@ export default function RoomSessionsBrowse({
                                     letterSpacing: "0.5px",
                                 }}
                             >
-                                {sessions.length} LIVE
+                                {sessions.filter(s => s.live_started_at).length} LIVE • {sessions.length} ACTIVE
                             </span>
                         </div>
                     </div>
@@ -443,8 +444,17 @@ export default function RoomSessionsBrowse({
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 7px", borderRadius: "6px", background: accentBg, border: `1px solid ${accentBorder}`, fontSize: "8px", fontWeight: 800, color: accentColor, letterSpacing: "1px", textTransform: "uppercase" as const }}>
-                                                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: accentColor, boxShadow: `0 0 8px ${accentColor}`, animation: "todPulsePink 1.5s ease-in-out infinite" }} />
-                                                    Active
+                                                    {session.live_started_at ? (
+                                                        <>
+                                                            <span style={{ width: 4, height: 4, borderRadius: "50%", background: accentColor, boxShadow: `0 0 8px ${accentColor}`, animation: "todPulsePink 1.5s ease-in-out infinite" }} />
+                                                            Live
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Clock style={{ width: 8, height: 8 }} />
+                                                            Waiting
+                                                        </>
+                                                    )}
                                                 </span>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 6px", borderRadius: "6px", background: session.is_private ? "rgba(168,85,247,0.15)" : `hsla(${accent2}, 0.1)`, border: `1px solid ${session.is_private ? "rgba(168,85,247,0.3)" : `hsla(${accent2}, 0.2)`}`, fontSize: "8px", fontWeight: 700, color: session.is_private ? "#c084fc" : accentColor, textTransform: "uppercase" as const }}>
                                                     {session.is_private ? <><Lock style={{ width: 8, height: 8 }} /> Locked</> : <><Globe style={{ width: 8, height: 8 }} /> Open</>}

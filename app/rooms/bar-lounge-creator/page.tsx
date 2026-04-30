@@ -13,6 +13,7 @@ import SummaryPanel from "@/components/rooms/bar-lounge-creator/SummaryPanel";
 import WalletPill from "@/components/common/WalletPill";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 
 
 const CreatorBarLounge = () => {
@@ -24,6 +25,7 @@ const CreatorBarLounge = () => {
 
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
     const [sessionTitle, setSessionTitle] = useState<string | undefined>(undefined);
+    const [showExitModal, setShowExitModal] = useState(false);
 
     // When we have a sessionId, find/create the room and go straight to live view
     useEffect(() => {
@@ -83,7 +85,7 @@ const CreatorBarLounge = () => {
             <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">
                 <div className="sm:absolute sm:left-4 flex items-center gap-3">
                     <button
-                        onClick={() => router.push("/rooms/bar-lounge-creator")}
+                        onClick={() => setShowExitModal(true)}
                         className="glass-panel px-3 py-2 rounded-lg flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                         style={{ borderColor: "hsla(45, 90%, 55%, 0.3)", color: "hsl(45, 90%, 55%)" }}
                     >
@@ -112,7 +114,7 @@ const CreatorBarLounge = () => {
             <div className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-[350px_650px_350px] p-4 max-w-[1600px] mx-auto">
                 {/* Left - Chat */}
                 <div className="h-full hidden lg:flex">
-                    <LoungeChat roomId={roomId} />
+                    <LoungeChat roomId={roomId} sessionId={sessionId} />
                 </div>
 
                 {/* Center - Video */}
@@ -130,6 +132,18 @@ const CreatorBarLounge = () => {
                     <SummaryPanel roomId={roomId} />
                 </div>
             </div>
+
+            <CreatorExitModal
+                isOpen={showExitModal}
+                onClose={() => setShowExitModal(false)}
+                onEndSession={async () => {
+                    const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" });
+                    if (res.ok) router.push("/rooms/bar-lounge-creator");
+                }}
+                onMinimizeSession={() => router.push("/rooms/bar-lounge-creator")}
+                roomName="Bar Lounge"
+                accentHsl="45, 90%, 55%"
+            />
         </div>
     );
 };

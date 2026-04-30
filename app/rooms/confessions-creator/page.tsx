@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import ConfessionsTopBar from "@/components/rooms/confessions-creator/ConfessionsTopBar";
 import ConfessionsLeftSidebar from "@/components/rooms/confessions-creator/ConfessionsLeftSidebar";
@@ -12,15 +11,14 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
-
-const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 
 const ConfessionsCreatorPage = () => {
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [showExitModal, setShowExitModal] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -76,7 +74,7 @@ const ConfessionsCreatorPage = () => {
             <div className="relative z-10 flex flex-col h-screen">
                 <div className="relative flex items-center">
                     <div className="flex-1">
-                        <ConfessionsTopBar />
+                        <ConfessionsTopBar onBack={() => setShowExitModal(true)} />
                     </div>
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20">
                         <SessionLiveControls
@@ -89,31 +87,25 @@ const ConfessionsCreatorPage = () => {
                 <div className="flex-1 flex items-stretch gap-16 px-4 pb-4 overflow-hidden xl:mx-40">
                     <ConfessionsLeftSidebar />
                     <div className="flex-1 flex flex-col gap-4 min-h-0">
-                        {/* Live Stream */}
-                        <div className="shrink-0 rounded-xl overflow-hidden" style={{ height: "240px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                            {roomId && user ? (
-                                <LiveStreamWrapper
-                                    role="host"
-                                    appId={APP_ID}
-                                    roomId={roomId}
-                                    uid={user.id}
-                                    hostId={user.id}
-                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                    hostName={user.user_metadata?.full_name || "Creator"}
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
-                                    Connecting to stream...
-                                </div>
-                            )}
-                        </div>
                         <div className="flex-1 min-h-0">
                             <ConfessionsCenterContent variant="confessions" />
                         </div>
                     </div>
-                    <ConfessionsLiveChat roomId={roomId} />
+                    <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
                 </div>
             </div>
+
+            <CreatorExitModal
+                isOpen={showExitModal}
+                onClose={() => setShowExitModal(false)}
+                onEndSession={async () => {
+                    const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" });
+                    if (res.ok) router.push("/rooms/confessions-creator");
+                }}
+                onMinimizeSession={() => router.push("/rooms/confessions-creator")}
+                roomName="Confessions"
+                accentHsl="280, 70%, 60%"
+            />
         </div>
     );
 };

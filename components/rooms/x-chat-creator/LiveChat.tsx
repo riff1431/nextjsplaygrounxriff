@@ -16,7 +16,7 @@ interface ChatMsg {
     created_at: string;
 }
 
-const LiveChat = ({ roomId }: { roomId?: string }) => {
+const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string | null }) => {
     const supabase = createClient();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [message, setMessage] = useState("");
@@ -31,12 +31,14 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
 
         // Fetch existing messages
         async function fetchMessages() {
-            const { data } = await supabase
+            let query = supabase
                 .from("x_chat_messages")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(100);
+            if (sessionId) query = query.eq("session_id", sessionId);
+            const { data } = await query;
             if (data) setMessages(data);
         }
         fetchMessages();
@@ -79,14 +81,16 @@ const LiveChat = ({ roomId }: { roomId?: string }) => {
     const handleSend = async () => {
         if (!message.trim() || !roomId) return;
         // Creator sends a broadcast/system message
-        await supabase.from("x_chat_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             sender_name: "🎤 Creator",
             body: message.trim(),
             lane: "Free",
             paid_amount: 0,
             status: "Answered",
-        });
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+        await supabase.from("x_chat_messages").insert(insertPayload);
         setMessage("");
     };
 

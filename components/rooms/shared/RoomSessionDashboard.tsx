@@ -21,6 +21,7 @@ interface RoomSession {
     cost_per_min: number;
     status: string;
     started_at: string;
+    live_started_at: string | null;
     ended_at: string | null;
     room_id: string;
     room_type: string;
@@ -511,7 +512,7 @@ export default function RoomSessionDashboard({
                             style={{ color: accentColor }}
                         >
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            Live Now
+                            Active Sessions
                         </h2>
                         <div className="space-y-3">
                             {activeSessions.map((session) => (
@@ -526,10 +527,21 @@ export default function RoomSessionDashboard({
                                 >
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                            <span className="text-green-400 text-xs font-medium uppercase tracking-wide">
-                                                Live
-                                            </span>
+                                            {session.live_started_at ? (
+                                                <>
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-green-400 text-xs font-medium uppercase tracking-wide">
+                                                        Live
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Clock className="w-3 h-3 text-yellow-500" />
+                                                    <span className="text-yellow-500 text-xs font-medium uppercase tracking-wide">
+                                                        Waiting
+                                                    </span>
+                                                </>
+                                            )}
                                             <span
                                                 className="text-[10px] px-2 py-0.5 rounded-full font-medium uppercase"
                                                 style={{

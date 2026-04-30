@@ -5,7 +5,11 @@ import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2, X } from "lu
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import dynamic from "next/dynamic";
 import AddConfessionModal from "./AddConfessionModal";
+
+const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 interface Confession {
     id: string;
@@ -130,20 +134,29 @@ const ConfessionsLeftSidebar = () => {
     };
 
     return (
-        <div className="flex flex-col gap-4 w-[260px] shrink-0 overflow-y-auto pb-4">
-            {/* Profile Card */}
-            <div className="conf-glass-card overflow-hidden relative">
-                <div className="relative aspect-[4/3] w-full">
-                    <Image
-                        src="/rooms/confessions-profile.jpg"
-                        alt="Profile"
-                        fill
-                        className="object-cover"
-                    />
-                    <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide">
+        <div className="flex flex-col gap-4 shrink-0 overflow-y-auto pb-4" style={{ width: '360px' }}>
+            {/* Profile Card / Live Stream */}
+            <div className="conf-glass-card overflow-hidden relative shrink-0" style={{ width: '100%', aspectRatio: '1 / 1' }}>
+                <div className="relative w-full h-full bg-black/40">
+                    {roomId && user ? (
+                        <LiveStreamWrapper
+                            role="host"
+                            appId={APP_ID}
+                            roomId={roomId}
+                            uid={user.id}
+                            hostId={user.id}
+                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                            hostName={user.user_metadata?.full_name || "Creator"}
+                        />
+                    ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+                            Connecting to stream...
+                        </div>
+                    )}
+                    <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide pointer-events-none z-10">
                         LIVE
                     </div>
-                    <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md">
+                    <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md pointer-events-none z-10">
                         Fan:{viewerCount}
                     </div>
                 </div>
@@ -174,19 +187,18 @@ const ConfessionsLeftSidebar = () => {
                 </div>
             </div>
 
-            {/* Random Request */}
-            <div className="conf-glass-card p-4">
-                <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
-                <button 
-                    onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
-                    className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
-                >
-                    <Plus className="h-5 w-5" />
-                </button>
-            </div>
-
-            {/* Confession Wall */}
+            {/* Confession Wall & Random Request Combined */}
             <div className="conf-glass-card p-4 flex-1 flex flex-col">
+                <div className="mb-6">
+                    <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
+                    <button 
+                        onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
+                        className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
+                    >
+                        <Plus className="h-5 w-5" />
+                    </button>
+                </div>
+
                 <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
                 <div className="flex flex-col gap-3 flex-1">
                     <button

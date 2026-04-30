@@ -187,7 +187,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     useEffect(() => {
         // Play local video whenever track is available (Preview Mode)
         if (localCameraTrack && vidRef.current) {
-            localCameraTrack.play(vidRef.current);
+            localCameraTrack.play(vidRef.current, { fit: 'cover' });
         }
         return () => {
             // Do NOT stop/close track here, just stop playback if needed, 

@@ -3,8 +3,8 @@ import { Heart, Send } from "lucide-react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 
-const LiveChat = ({ roomId }: { roomId: string | null }) => {
-    const { activity, sendMessage } = useSuga4U(roomId);
+const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: string | null }) => {
+    const { activity, sendMessage } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const [inputText, setInputText] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);

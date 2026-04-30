@@ -39,7 +39,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { content, amount, description } = body;
+    const { content, amount, description, sessionId } = body;
     const finalContent = description || content || "Custom Request";
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -75,10 +75,12 @@ export async function POST(
 
     const systemMsg = finalContent.includes('Pack') || finalContent.includes('Bundle')
         ? `🎁 ${profile?.username || "Anonymous"} ${finalContent.replace('🎁 ', '')}`
-        : `💰 ${profile?.username || "Anonymous"} submitted a €${amount} custom drop request!`;
+        : finalContent.includes('Impulse')
+            ? `⚡ ${profile?.username || "Anonymous"} sent €${amount} for ${finalContent.replace('⚡ Impulse ', '').split(':')[0]}!`
+            : `💰 ${profile?.username || "Anonymous"} submitted a €${amount} custom drop request!`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
-    const { data: existingMsg } = await supabase
+    let query = supabase
         .from("room_chat_messages")
         .select("id")
         .eq("room_id", roomId)
@@ -86,16 +88,20 @@ export async function POST(
         .eq("message", systemMsg)
         .gt("created_at", new Date(Date.now() - 2000).toISOString())
         .limit(1);
+    if (sessionId) query = query.eq("session_id", sessionId);
+    const { data: existingMsg } = await query;
 
     if (!existingMsg || existingMsg.length === 0) {
-        await supabase.from("room_chat_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             sender_id: null,
             sender_name: "System",
             message: systemMsg,
             is_system: true,
             system_type: "drop_request",
-        });
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+        await supabase.from("room_chat_messages").insert(insertPayload);
     }
 
     await supabase.from("notifications").insert({
@@ -123,9 +129,12 @@ export async function PATCH(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room || room.host_id !== user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
+    const { data: requestToUpdate } = await supabase.from("flash_drop_requests").select("content").eq("id", requestId).single();
+
     const updatePayload: any = { status };
-    if (mediaUrl !== undefined) {
-        updatePayload.media_url = mediaUrl;
+    if (mediaUrl !== undefined && requestToUpdate) {
+        // Encode the mediaUrl in the content column since we cannot alter the remote DB schema right now
+        updatePayload.content = `${requestToUpdate.content} |__MEDIA__|${mediaUrl}`;
     }
 
     const { data: updated, error } = await supabase

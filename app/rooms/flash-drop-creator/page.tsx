@@ -15,6 +15,7 @@ import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
+import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import "./flashdrop-creator.css";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -27,6 +28,7 @@ function FlashdropCreatorStudio() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [showExitModal, setShowExitModal] = useState(false);
 
     useEffect(() => {
         if (!user) return;
@@ -58,13 +60,13 @@ function FlashdropCreatorStudio() {
             <div className="relative z-10 px-3 py-2 flex flex-col gap-3 h-screen overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex items-center shrink-0 relative">
-                    <Link
-                        href="/rooms/creator-studio"
+                    <button
+                        onClick={() => setShowExitModal(true)}
                         className="glass-card rounded-lg px-3 py-2 hover:bg-primary/20 transition-colors absolute left-0 flex items-center gap-2 cursor-pointer z-50"
                     >
                         <ArrowLeft className="text-primary" size={18} />
                         <span className="text-xs font-bold text-primary hidden sm:block">Back</span>
-                    </Link>
+                    </button>
                     <h1 className="font-display text-2xl md:text-4xl font-black neon-text tracking-widest text-center w-full">
                         Flash Drop — Creator Room
                     </h1>
@@ -101,7 +103,7 @@ function FlashdropCreatorStudio() {
                                         </div>
                                     )}
                                 </div>
-                                <LiveDropBoard roomId={roomId ?? undefined} />
+                                <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                             </div>
                             <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
                                 <SummaryBox roomId={roomId} />
@@ -138,12 +140,25 @@ function FlashdropCreatorStudio() {
                                     roomId={roomId}
                                     hostId={user?.id}
                                     variant="creator"
+                                    sessionId={sessionId}
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <CreatorExitModal
+                isOpen={showExitModal}
+                onClose={() => setShowExitModal(false)}
+                onEndSession={async () => {
+                    const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/end`, { method: "POST" });
+                    if (res.ok) router.push("/rooms/flash-drop-creator");
+                }}
+                onMinimizeSession={() => router.push("/rooms/flash-drop-creator")}
+                roomName="Flash Drop"
+                accentHsl="330, 100%, 55%"
+            />
         </div>
     );
 }

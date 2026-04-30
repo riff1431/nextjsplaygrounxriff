@@ -101,9 +101,8 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
                                         <span className="text-[11px] font-semibold text-white/85 truncate">{req.fan_name}</span>
                                     </div>
 
-                                    {/* Content + amount */}
                                     <div className="min-w-0">
-                                        <p className="text-[11px] text-white/70 truncate leading-tight">{req.content}</p>
+                                        <p className="text-[11px] text-white/70 truncate leading-tight">{req.content.split(' |__MEDIA__|')[0]}</p>
                                         <p className="text-[10px] font-bold neon-text">€{req.amount}</p>
                                     </div>
 

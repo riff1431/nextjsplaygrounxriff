@@ -9,13 +9,18 @@ export async function GET(
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: requests, error } = await supabase
+    const sessionId = request.nextUrl.searchParams.get("sessionId");
+
+    let query = supabase
         .from("suga_paid_requests")
         .select("*")
         .eq("room_id", roomId)
         .in("status", ["pending", "accepted"])
         .order("created_at", { ascending: false });
+    if (sessionId) query = query.eq("session_id", sessionId);
+    const { data: requests, error } = await query;
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -35,19 +40,22 @@ export async function POST(
     const body = await request.json();
 
     // Validate body...
-    const { type, label, note, price, fanName } = body;
+    const { type, label, note, price, fanName, sessionId } = body;
+
+    const insertPayload: any = {
+        room_id: roomId,
+        type,
+        label,
+        note,
+        price,
+        fan_name: fanName || "Anonymous",
+        status: "pending"
+    };
+    if (sessionId) insertPayload.session_id = sessionId;
 
     const { data: newRequest, error } = await supabase
         .from("suga_paid_requests")
-        .insert([{
-            room_id: roomId,
-            type,
-            label,
-            note,
-            price,
-            fan_name: fanName || "Anonymous",
-            status: "pending"
-        }])
+        .insert([insertPayload])
         .select()
         .single();
 
@@ -55,16 +63,18 @@ export async function POST(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Also log activity?
+    // Also log activity
+    const actInsert: any = {
+        room_id: roomId,
+        type: "PAID_REQUEST",
+        fan_name: fanName || "Anonymous",
+        label,
+        amount: price
+    };
+    if (sessionId) actInsert.session_id = sessionId;
     await supabase
         .from("suga_activity_events")
-        .insert([{
-            room_id: roomId,
-            type: "PAID_REQUEST",
-            fan_name: fanName || "Anonymous",
-            label,
-            amount: price
-        }]);
+        .insert([actInsert]);
 
     return NextResponse.json({ success: true, request: newRequest });
 }

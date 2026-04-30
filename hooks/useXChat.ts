@@ -14,7 +14,7 @@ export type XChatMessage = {
     created_at: string;
 };
 
-export function useXChat(roomId: string | null) {
+export function useXChat(roomId: string | null, sessionId?: string | null) {
     const [messages, setMessages] = useState<XChatMessage[]>([]);
     const supabase = createClient();
 
@@ -26,11 +26,14 @@ export function useXChat(roomId: string | null) {
 
         // Load initial messages
         const load = async () => {
-            const { data, error } = await supabase
+            let query = supabase
                 .from("x_chat_messages")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true });
+            if (sessionId) query = query.eq("session_id", sessionId);
+
+            const { data, error } = await query;
 
             if (error) {
                 console.error("Error loading X-Chat messages:", error);
@@ -70,26 +73,29 @@ export function useXChat(roomId: string | null) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     const sendMessage = useCallback(async (body: string, senderName: string, lane: string = "Free", paidAmount: number = 0) => {
         if (!roomId || !body.trim()) return;
 
-        const { data, error } = await supabase.from("x_chat_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             sender_name: senderName,
             body: body.trim(),
             lane,
             paid_amount: paidAmount,
             status: "Queued"
-        }).select().single();
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+
+        const { data, error } = await supabase.from("x_chat_messages").insert(insertPayload).select().single();
 
         if (error) {
             console.error("Failed to send X-Chat message:", error);
             throw error;
         }
         return data;
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     return { messages, sendMessage };
 }

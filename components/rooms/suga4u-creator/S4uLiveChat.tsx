@@ -5,9 +5,9 @@ import { useState, useRef, useEffect } from "react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 
-const S4uLiveChat = ({ roomId }: { roomId?: string }) => {
+const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
     const [input, setInput] = useState("");
-    const { activity, sendMessage } = useSuga4U(roomId || null);
+    const { activity, sendMessage } = useSuga4U(roomId || null, sessionId || null);
     const { user } = useAuth();
     const scrollRef = useRef<HTMLDivElement>(null);
 

@@ -3,8 +3,8 @@
 import { Diamond } from "lucide-react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 
-const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
-    const { requests, updateRequestStatus } = useSuga4U(roomId || null);
+const S4uPendingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
+    const { requests, updateRequestStatus } = useSuga4U(roomId || null, sessionId || null);
 
     const handleAction = async (id: string, action: "accepted" | "declined") => {
         if (!roomId || !updateRequestStatus) return;
@@ -15,15 +15,17 @@ const S4uPendingRequests = ({ roomId }: { roomId?: string }) => {
         }
     };
 
+    const visibleRequests = requests.filter((req) => req.type !== "PRIVATE_1ON1");
+
     return (
         <div className="s4u-creator-glass-panel p-3 flex flex-col h-full min-h-0">
             <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-2 shrink-0">Pending Requests</h3>
             
-            {requests.length === 0 ? (
+            {visibleRequests.length === 0 ? (
                 <p className="text-xs text-white/40 text-center py-4">No requests yet</p>
             ) : (
                 <div className="space-y-2 flex-1 overflow-y-auto custom-scroll pr-1">
-                    {requests.map((req) => (
+                    {visibleRequests.map((req) => (
                         <div key={req.id} className="flex gap-2.5 bg-white/5 rounded-lg p-2.5 items-start">
                             {/* Icon */}
                             <span className="text-lg shrink-0 mt-0.5">🌸</span>

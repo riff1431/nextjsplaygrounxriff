@@ -48,7 +48,7 @@ export async function POST(
 
     const body = await request.json();
 
-    const { title, kind, rarity, price, endsInMin, inventoryTotal, status, media_url } = body;
+    const { title, kind, rarity, price, endsInMin, inventoryTotal, status, media_url, sessionId } = body;
 
     const endsAt = new Date();
     endsAt.setMinutes(endsAt.getMinutes() + (endsInMin || 15));
@@ -79,7 +79,7 @@ export async function POST(
     const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — €${price || 0} · ${rarity || 'Common'}`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
-    const { data: existingMsg } = await supabase
+    let query = supabase
         .from("room_chat_messages")
         .select("id")
         .eq("room_id", roomId)
@@ -87,16 +87,20 @@ export async function POST(
         .eq("message", systemMsg)
         .gt("created_at", new Date(Date.now() - 2000).toISOString())
         .limit(1);
+    if (sessionId) query = query.eq("session_id", sessionId);
+    const { data: existingMsg } = await query;
 
     if (!existingMsg || existingMsg.length === 0) {
-        await supabase.from("room_chat_messages").insert({
+        const insertPayload: any = {
             room_id: roomId,
             sender_id: null,
             sender_name: "System",
             message: systemMsg,
             is_system: true,
             system_type: "drop_new",
-        });
+        };
+        if (sessionId) insertPayload.session_id = sessionId;
+        await supabase.from("room_chat_messages").insert(insertPayload);
     }
 
     return NextResponse.json({ success: true, drop: newDrop });

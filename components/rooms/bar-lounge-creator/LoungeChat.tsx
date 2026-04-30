@@ -7,11 +7,12 @@ import { useAuth } from "@/app/context/AuthContext";
 
 interface LoungeChatProps {
     roomId?: string;
+    sessionId?: string | null;
 }
 
-const LoungeChat = ({ roomId }: LoungeChatProps) => {
+const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
     const { user } = useAuth();
-    const { messages, sendMessage } = useBarChat(roomId ?? null);
+    const { messages, sendMessage } = useBarChat(roomId ?? null, sessionId);
     const [message, setMessage] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
 
