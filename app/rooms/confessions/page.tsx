@@ -134,7 +134,7 @@ type RequestStatus = 'pending_approval' | 'in_progress' | 'delivered' | 'complet
 
 interface ConfessionRequest {
     id: string;
-    type: 'Text' | 'Audio' | 'Video';
+    type: 'Text' | 'Audio' | 'Video' | 'Image';
     amount: number;
     topic: string;
     status: RequestStatus;
@@ -156,7 +156,7 @@ interface Confession {
     teaser: string;
     content?: string;
     media_url?: string;
-    type: 'Text' | 'Voice' | 'Video';
+    type: 'Text' | 'Voice' | 'Video' | 'Image';
     price: number;
     unlocked?: boolean;
     creator?: CreatorInfo;
@@ -346,6 +346,16 @@ export default function ConfessionsRoom() {
             const t = tier ?? tierFilter;
             const supabase = createClient();
 
+            if (user) {
+                const { data: unlocks } = await supabase
+                    .from('confession_unlocks')
+                    .select('confession_id')
+                    .eq('user_id', user.id);
+                if (unlocks) {
+                    setMyUnlocks(new Set(unlocks.map((u: any) => u.confession_id)));
+                }
+            }
+
             let confessionRows: any[] = [];
 
             if (q) {
@@ -456,7 +466,20 @@ export default function ConfessionsRoom() {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/unlock`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confessionId: purchaseConfession.id }) });
             const data = await res.json();
             if (data.success || data.message === "Already unlocked") {
-                setMyUnlocks(prev => new Set(prev).add(purchaseConfession!.id)); setPurchaseConfession(null); setViewConfession(purchaseConfession); showToast("Confession Unlocked!", 'success'); fetchWallet();
+                setMyUnlocks(prev => new Set(prev).add(purchaseConfession!.id)); 
+                
+                // Update the confession in the state array to include the newly unlocked content and media
+                if (data.confession) {
+                    setConfessions(prev => prev.map(c => 
+                        c.id === purchaseConfession!.id 
+                            ? { ...c, content: data.confession.content, media_url: data.confession.media_url } 
+                            : c
+                    ));
+                }
+
+                setPurchaseConfession(null); 
+                showToast("Confession Unlocked!", 'success'); 
+                fetchWallet();
             } else { showToast("Purchase failed: " + data.error, 'error'); }
         } catch (e) { showToast("Payment error", 'error'); }
     };

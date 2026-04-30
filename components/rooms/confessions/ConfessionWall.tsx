@@ -18,7 +18,7 @@ export interface Confession {
     teaser: string;
     content?: string;
     media_url?: string;
-    type: 'Text' | 'Voice' | 'Video';
+    type: 'Text' | 'Voice' | 'Video' | 'Image';
     price: number;
     unlocked?: boolean;
     creator?: CreatorInfo;
@@ -81,7 +81,7 @@ const UnlockedConfessionCard = ({
             className="confession-wall-card cursor-pointer group hover:border-primary/40 flex flex-col p-0 overflow-hidden"
         >
             {confession.media_url ? (
-                <div className="w-full h-28 bg-black/40 relative shrink-0">
+                <div className="w-full h-28 bg-black/40 relative shrink-0 pointer-events-none">
                     {confession.type === 'Video' || confession.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
                         <video src={confession.media_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                     ) : confession.type === 'Voice' || confession.media_url.match(/\.(mp3|wav|ogg)$/i) ? (

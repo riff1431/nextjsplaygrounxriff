@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Send, Loader2, FileText, Mic, Video, Upload } from "lucide-react";
+import { X, Send, Loader2, FileText, Mic, Video, Upload, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddConfessionModalProps {
@@ -21,6 +21,7 @@ const tiers = [
 
 const types = [
     { id: "Text", icon: FileText, label: "Text" },
+    { id: "Image", icon: ImageIcon, label: "Image" },
     { id: "Audio", icon: Mic, label: "Audio" },
     { id: "Video", icon: Video, label: "Video" },
 ];
@@ -201,7 +202,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
                             <div className="space-y-2">
                                 <input
                                     type="file"
-                                    accept={type === 'Audio' ? 'audio/*' : type === 'Video' ? 'video/*' : 'image/*,audio/*,video/*'}
+                                    accept={type === 'Audio' ? 'audio/*' : type === 'Video' ? 'video/*' : type === 'Image' ? 'image/*' : 'image/*,audio/*,video/*'}
                                     onChange={async (e) => {
                                         const file = e.target.files?.[0];
                                         if (!file) return;

@@ -253,9 +253,17 @@ const ConfessionsLeftSidebar = () => {
                         <div className="text-sm font-medium italic text-white/80 leading-relaxed border-l-2 border-white/20 pl-4 py-1 mb-2 bg-white/5 rounded-r-lg">
                             {viewConfessionTarget.content || viewConfessionTarget.teaser || "No content available."}
                         </div>
-                        {viewConfessionTarget.type !== "Text" && viewConfessionTarget.media_url && (
-                            <div className="mt-4 text-xs font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-2 rounded-lg flex items-center gap-2">
-                                ✓ Media attached ({viewConfessionTarget.type})
+                        {viewConfessionTarget.media_url && (
+                            <div className="mt-4 rounded-xl overflow-hidden border border-white/20 bg-black/50 max-h-[40vh] overflow-y-auto">
+                                {viewConfessionTarget.type === 'Video' || viewConfessionTarget.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                    <video src={viewConfessionTarget.media_url} controls className="w-full object-contain" />
+                                ) : viewConfessionTarget.type === 'Voice' || viewConfessionTarget.type === 'Audio' || viewConfessionTarget.media_url.match(/\.(mp3|wav|ogg)$/i) ? (
+                                    <div className="p-4 flex justify-center">
+                                        <audio src={viewConfessionTarget.media_url} controls className="w-full" />
+                                    </div>
+                                ) : (
+                                    <img src={viewConfessionTarget.media_url} alt="Media" className="w-full object-contain" />
+                                )}
                             </div>
                         )}
                     </div>

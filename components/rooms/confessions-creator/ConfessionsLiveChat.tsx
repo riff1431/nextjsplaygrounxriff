@@ -7,8 +7,8 @@ import { useAuth } from "@/app/context/AuthContext";
 
 interface ChatMsg {
     id: string;
-    user_id: string;
-    username: string;
+    sender_id: string;
+    sender_name: string;
     message: string;
     created_at: string;
 }
@@ -38,14 +38,14 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
 
         async function fetchMessages() {
             let query = supabase
-                .from("chat_messages")
-                .select("id, user_id, username, message, created_at")
+                .from("room_chat_messages")
+                .select("id, sender_id, sender_name, message, created_at")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(50);
             if (sessionId) query = query.eq("session_id", sessionId);
             const { data } = await query;
-            if (data) setMessages(data);
+            if (data) setMessages(data as ChatMsg[]);
             setLoading(false);
             setTimeout(scrollToBottom, 100);
         }
@@ -58,14 +58,14 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                 {
                     event: "INSERT",
                     schema: "public",
-                    table: "chat_messages",
+                    table: "room_chat_messages",
                     filter: `room_id=eq.${roomId}`,
                 },
                 (payload) => {
                     const newMsg = payload.new as ChatMsg;
                     setMessages((prev) => {
                         // Prevent duplicates from optimistic updates
-                        if (prev.some(m => m.id === newMsg.id || (m.user_id === newMsg.user_id && m.message === newMsg.message && m.id.startsWith("temp-")))) {
+                        if (prev.some(m => m.id === newMsg.id || (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id.startsWith("temp-")))) {
                             return prev;
                         }
                         return [...prev, newMsg];
@@ -84,21 +84,14 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
         if (!newMessage.trim() || !roomId || !user || sending) return;
         setSending(true);
 
-        const supabase = createClient();
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name, username")
-            .eq("id", user.id)
-            .single();
-
-        const displayName = profile?.display_name || profile?.username || user.email?.split("@")[0] || "Creator";
+        const displayName = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split("@")[0] || "Creator";
 
         // Optimistically update UI
         const tempId = `temp-${Date.now()}`;
         const newLocalMsg: ChatMsg = {
             id: tempId,
-            user_id: user.id,
-            username: displayName,
+            sender_id: user.id,
+            sender_name: displayName,
             message: newMessage.trim(),
             created_at: new Date().toISOString(),
         };
@@ -109,13 +102,13 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
 
         const insertPayload: any = {
             room_id: roomId,
-            user_id: user.id,
-            username: displayName,
+            sender_id: user.id,
+            sender_name: displayName,
             message: newLocalMsg.message,
         };
         if (sessionId) insertPayload.session_id = sessionId;
 
-        const { error, data } = await supabase.from("chat_messages").insert(insertPayload).select().single();
+        const { error, data } = await supabase.from("room_chat_messages").insert(insertPayload).select().single();
 
         if (error) {
             // Revert on error
@@ -160,12 +153,12 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                     messages.map((msg) => (
                         <div key={msg.id} className="flex gap-2">
                             <div className="w-8 h-8 rounded-full bg-[hsl(320,50%,15%)] shrink-0 flex items-center justify-center text-xs text-white/60">
-                                {msg.username.charAt(0).toUpperCase()}
+                                {msg.sender_name?.charAt(0)?.toUpperCase() || "?"}
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
-                                    <span className={`text-sm font-medium truncate ${msg.user_id === user?.id ? "text-[hsl(330,90%,65%)]" : "text-white"}`}>
-                                        {msg.username}
+                                    <span className={`text-sm font-medium truncate ${msg.sender_id === user?.id ? "text-[hsl(330,90%,65%)]" : "text-white"}`}>
+                                        {msg.sender_name}
                                     </span>
                                     <span className="text-xs">💜</span>
                                     <span className="text-white/60 text-xs ml-auto shrink-0">
