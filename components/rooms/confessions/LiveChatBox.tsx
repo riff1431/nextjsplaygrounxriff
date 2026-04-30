@@ -85,6 +85,7 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
         if (!newMessage.trim() || !roomId || !user || sending) return;
         setSending(true);
 
+        const supabase = createClient();
         const displayName = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split("@")[0] || "Fan";
 
         // Optimistically update UI

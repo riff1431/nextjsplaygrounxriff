@@ -84,6 +84,7 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
         if (!newMessage.trim() || !roomId || !user || sending) return;
         setSending(true);
 
+        const supabase = createClient();
         const displayName = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split("@")[0] || "Creator";
 
         // Optimistically update UI
