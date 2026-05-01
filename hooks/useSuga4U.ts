@@ -157,7 +157,8 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         if (!roomId) return;
         loadData(roomId);
 
-        const channel = supabase.channel(`room_${roomId}_suga`)
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channel = supabase.channel(`room_${roomId}_suga_${uniqueId}`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_activity_events', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const a = payload.new;
                 setActivity(prev => {

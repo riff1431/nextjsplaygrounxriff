@@ -12,8 +12,8 @@ const quickRequests = [
     { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧" },
 ];
 
-const PaidRequestMenu = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
-    const { createRequest } = useSuga4U(roomId);
+const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
+    const { createRequest } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
     const [confirmReq, setConfirmReq] = React.useState<typeof quickRequests[0] | null>(null);

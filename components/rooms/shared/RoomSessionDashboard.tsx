@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import WalletPill from "@/components/common/WalletPill";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
+import { useAuth } from "@/app/context/AuthContext";
 
 /* ─────────── Types ─────────── */
 interface RoomSession {
@@ -88,6 +89,7 @@ export default function RoomSessionDashboard({
 }: RoomSessionDashboardProps) {
     const router = useRouter();
     const supabase = createClient();
+    const { user } = useAuth();
     const accent2 = accentHslSecondary || accentHsl;
 
     /* ── State ── */
@@ -105,8 +107,9 @@ export default function RoomSessionDashboard({
 
     /* ── Fetch sessions ── */
     const fetchSessions = useCallback(async () => {
+        if (!user) return;
         try {
-            const res = await fetch(`/api/v1/rooms/sessions?room_type=${roomType}`);
+            const res = await fetch(`/api/v1/rooms/sessions?room_type=${roomType}&status=all&creator_id=${user.id}`);
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             setSessions(data.sessions || []);
@@ -115,7 +118,7 @@ export default function RoomSessionDashboard({
         } finally {
             setLoading(false);
         }
-    }, [roomType]);
+    }, [roomType, user]);
 
     useEffect(() => {
         fetchSessions();

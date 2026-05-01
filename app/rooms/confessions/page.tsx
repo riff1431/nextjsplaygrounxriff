@@ -195,6 +195,7 @@ function ConfessionsRoom() {
     const [loadingRequests, setLoadingRequests] = useState(false);
     const [loadingWall, setLoadingWall] = useState(false);
     const [myWalletBalance, setMyWalletBalance] = useState(0);
+    const [isLive, setIsLive] = useState(false);
 
     // Filter & Search
     const [tierFilter, setTierFilter] = useState<string>('All');
@@ -311,6 +312,37 @@ function ConfessionsRoom() {
             }
 
             const supabase = createClient();
+            
+            // Fetch initial live status
+            const fetchLiveStatus = async () => {
+                const { data } = await supabase
+                    .from('room_sessions')
+                    .select('live_started_at')
+                    .eq('room_id', roomId)
+                    .eq('status', 'active')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                setIsLive(!!data?.live_started_at);
+            };
+            fetchLiveStatus();
+
+            // Realtime: session updates for live status
+            const sessionChannel = supabase
+                .channel(`room-sessions-${roomId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'room_sessions', filter: `room_id=eq.${roomId}` },
+                    (payload) => {
+                        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+                            if (payload.new.status === 'active') {
+                                setIsLive(!!payload.new.live_started_at);
+                            } else if (payload.new.status === 'ended') {
+                                setIsLive(false);
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+
             // Realtime: new confessions on wall
             const confessionChannel = supabase
                 .channel('fan-confessions-wall')
@@ -347,6 +379,7 @@ function ConfessionsRoom() {
                 .subscribe();
 
             return () => { 
+                supabase.removeChannel(sessionChannel);
                 supabase.removeChannel(confessionChannel); 
                 supabase.removeChannel(notifChannel); 
                 supabase.removeChannel(reqsChannel);
@@ -659,15 +692,29 @@ function ConfessionsRoom() {
                                 <CreatorSpotlight
                                     liveStreamNode={
                                         roomId && user && hostId ? (
-                                            <LiveStreamWrapper
-                                                role="fan"
-                                                appId={APP_ID}
-                                                roomId={roomId}
-                                                uid={user.id}
-                                                hostId={hostId}
-                                                hostAvatarUrl={hostAvatar || ""}
-                                                hostName={hostStreamName}
-                                            />
+                                            isLive ? (
+                                                <LiveStreamWrapper
+                                                    role="fan"
+                                                    appId={APP_ID}
+                                                    roomId={roomId}
+                                                    uid={user.id}
+                                                    hostId={hostId}
+                                                    hostAvatarUrl={hostAvatar || ""}
+                                                    hostName={hostStreamName}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center bg-black/80 rounded-2xl relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-[url('/assets/noise.png')] opacity-20 mix-blend-overlay"></div>
+                                                    <div className="relative z-10 flex flex-col items-center">
+                                                        <div className="w-20 h-20 rounded-full border-2 border-rose-500/30 p-1 mb-4 relative">
+                                                            <div className="absolute inset-0 border-2 border-rose-500 rounded-full animate-ping opacity-20"></div>
+                                                            <img src={hostAvatar || "/default-avatar.png"} alt="Creator" className="w-full h-full rounded-full object-cover grayscale hover:grayscale-0 transition-all duration-500" />
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-white tracking-tight mb-2">Waiting for {hostStreamName}</h3>
+                                                        <p className="text-rose-200/60 text-sm font-medium">Session will begin shortly...</p>
+                                                    </div>
+                                                </div>
+                                            )
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center bg-black/50 text-rose-200/40 text-sm">
                                                 {roomId ? "Connecting to stream..." : "No active session"}

@@ -19,6 +19,7 @@ import InvitationPopup from "@/components/rooms/InvitationPopup";
 import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import { toast } from "sonner";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -43,6 +44,24 @@ const Suga4URoom = () => {
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        if (!roomId || !user) return;
+        const fanName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Fan";
+        const channel = supabase.channel(`toaster_fan_${roomId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const r = payload.new;
+                if (r.fan_name === fanName) {
+                    if (r.status === 'accepted') {
+                        toast.success(`Creator accepted your request: ${r.label} 🎉`, { duration: 5000 });
+                    } else if (r.status === 'declined') {
+                        toast.error(`Creator declined your request: ${r.label}`, { duration: 5000 });
+                    }
+                }
+            })
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, user, supabase]);
 
     React.useEffect(() => {
         if (!urlSessionId) {
@@ -249,11 +268,12 @@ const Suga4URoom = () => {
 
                         {/* RIGHT: Paid Requests + Gifts + Actions + Offers - full height scrollable */}
                         <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
-                            <PaidRequestMenu roomId={roomId} hostId={hostId} />
-                            <SendSugarGifts roomId={roomId} hostId={hostId} />
+                            <PaidRequestMenu roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                            <SendSugarGifts roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                             <QuickPaidActions
                                 roomId={roomId}
                                 hostId={hostId}
+                                sessionId={urlSessionId}
                                 initiatePrivateCall={privateCall.initiateCall}
                             />
                             <S4uGroupVotePanel roomId={roomId} />

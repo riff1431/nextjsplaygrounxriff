@@ -8,6 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { ArrowLeft, UserPlus, Bell, Phone } from "lucide-react";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import { toast } from "sonner";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
 import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsFavorites";
 import S4uPendingRequests from "@/components/rooms/suga4u-creator/S4uPendingRequests";
@@ -36,6 +37,21 @@ const Suga4UCreatorPage = () => {
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
+
+    useEffect(() => {
+        if (!roomId) return;
+        const supabase = createClient();
+        const channel = supabase.channel(`toaster_creator_${roomId}`)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                const r = payload.new;
+                toast.success(`New Paid Request from ${r.fan_name}`, {
+                    description: `${r.label} (€${r.price})`,
+                    duration: 5000,
+                });
+            })
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId]);
 
     useEffect(() => {
         if (!user || !sessionId) return;

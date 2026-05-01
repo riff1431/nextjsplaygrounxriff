@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const roomType = searchParams.get("room_type");
     const status = searchParams.get("status") || "active";
+    const creatorId = searchParams.get("creator_id");
 
     try {
         let query = supabase
@@ -24,7 +25,10 @@ export async function GET(request: NextRequest) {
         if (roomType) {
             query = query.eq("room_type", roomType);
         }
-        if (status) {
+        if (creatorId) {
+            query = query.eq("creator_id", creatorId);
+        }
+        if (status && status !== "all") {
             query = query.eq("status", status);
         }
 

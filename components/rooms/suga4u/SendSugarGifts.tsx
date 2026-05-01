@@ -12,8 +12,8 @@ const gifts = [
     { name: "Big Money", amount: 100, emoji: "💰" },
 ];
 
-const SendSugarGifts = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
-    const { sendGift } = useSuga4U(roomId);
+const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
+    const { sendGift, createRequest } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
     const [confirmGift, setConfirmGift] = React.useState<typeof gifts[0] | null>(null);
@@ -36,8 +36,9 @@ const SendSugarGifts = ({ roomId, hostId }: { roomId: string | null; hostId: str
                 return;
             }
 
-            // Record the gift in activity
-            await sendGift(g.amount, fanName, `Sent ${g.name}`);
+            // Route to pending requests
+            await createRequest("GIFT", g.name, `Sent ${g.name}`, g.amount, fanName);
+            
             toast.success(`${g.emoji} Gift sent: ${g.name}`, { description: `€${g.amount} sent to creator` });
         } catch (err) {
             console.error("Failed to send gift:", err);

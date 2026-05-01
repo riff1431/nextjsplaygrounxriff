@@ -16,12 +16,13 @@ const actions = [
 interface QuickPaidActionsProps {
     roomId: string | null;
     hostId: string | null;
+    sessionId?: string | null;
     onPrivateCallInitiated?: () => void;
     initiatePrivateCall?: (fanName: string, requestId?: string) => Promise<any>;
 }
 
-const QuickPaidActions = ({ roomId, hostId, onPrivateCallInitiated, initiatePrivateCall }: QuickPaidActionsProps) => {
-    const { createRequest } = useSuga4U(roomId);
+const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, initiatePrivateCall }: QuickPaidActionsProps) => {
+    const { createRequest } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
     const [confirmAction, setConfirmAction] = React.useState<typeof actions[0] | null>(null);
