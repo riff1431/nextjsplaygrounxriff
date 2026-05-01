@@ -64,9 +64,16 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                 (payload) => {
                     const newMsg = payload.new as ChatMsg;
                     setMessages((prev) => {
-                        // Prevent duplicates from optimistic updates
-                        if (prev.some(m => m.id === newMsg.id || (m.sender_id === newMsg.sender_id && m.message === newMsg.message && m.id.startsWith("temp-")))) {
+                        // Prevent duplicates: check by real ID or by matching temp optimistic update
+                        if (prev.some(m => m.id === newMsg.id)) {
                             return prev;
+                        }
+                        // Replace temp message with real one from realtime
+                        const tempIdx = prev.findIndex(m => m.id.startsWith("temp-") && m.sender_id === newMsg.sender_id && m.message === newMsg.message);
+                        if (tempIdx >= 0) {
+                            const updated = [...prev];
+                            updated[tempIdx] = newMsg;
+                            return updated;
                         }
                         return [...prev, newMsg];
                     });
@@ -78,7 +85,7 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const handleSend = async () => {
         if (!newMessage.trim() || !roomId || !user || sending) return;
@@ -109,7 +116,16 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
         };
         if (sessionId) insertPayload.session_id = sessionId;
 
-        const { error, data } = await supabase.from("room_chat_messages").insert(insertPayload).select().single();
+        let { error, data } = await supabase.from("room_chat_messages").insert(insertPayload).select().single();
+
+        // If session_id FK constraint fails, retry without it
+        if (error && error.code === "23503" && sessionId) {
+            console.warn("⚠️ Session ID invalid, retrying without session_id");
+            delete insertPayload.session_id;
+            const retry = await supabase.from("room_chat_messages").insert(insertPayload).select().single();
+            error = retry.error;
+            data = retry.data;
+        }
 
         if (error) {
             console.error("❌ Chat insert error:", error);

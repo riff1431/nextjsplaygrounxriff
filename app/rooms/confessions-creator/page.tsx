@@ -25,6 +25,19 @@ const ConfessionsCreatorPage = () => {
         if (!user) return;
         const supabase = createClient();
         async function findRoom() {
+            // Try to get room_id from the active session first (most reliable)
+            if (sessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("room_id")
+                    .eq("id", sessionId)
+                    .maybeSingle();
+                if (session?.room_id) {
+                    setRoomId(session.room_id);
+                    return;
+                }
+            }
+            // Fallback: find the creator's confessions room
             const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")
@@ -37,7 +50,7 @@ const ConfessionsCreatorPage = () => {
             }
         }
         findRoom();
-    }, [user]);
+    }, [user, sessionId]);
 
     if (!sessionId) {
         return (
