@@ -78,8 +78,11 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
     const sendMessage = useCallback(async (body: string, senderName: string, lane: string = "Free", paidAmount: number = 0) => {
         if (!roomId || !body.trim()) return;
 
+        const { data: { user } } = await supabase.auth.getUser();
+
         const insertPayload: any = {
             room_id: roomId,
+            sender_id: user?.id,
             sender_name: senderName,
             body: body.trim(),
             lane,

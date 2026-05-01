@@ -80,9 +80,11 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
 
     const handleSend = async () => {
         if (!message.trim() || !roomId) return;
+        const { data: { user } } = await supabase.auth.getUser();
         // Creator sends a broadcast/system message
         const insertPayload: any = {
             room_id: roomId,
+            sender_id: user?.id,
             sender_name: "🎤 Creator",
             body: message.trim(),
             lane: "Free",
