@@ -113,6 +113,7 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
         const { error, data } = await supabase.from("room_chat_messages").insert(insertPayload).select().single();
 
         if (error) {
+            console.error("❌ Chat insert error:", error);
             // Revert on error
             setMessages((prev) => prev.filter((m) => m.id !== tempId));
         } else if (data) {

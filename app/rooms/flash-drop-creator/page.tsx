@@ -179,9 +179,7 @@ const FlashdropCreatorRoom = () => {
                 accentHsl="170, 80%, 50%"
                 accentHslSecondary="150, 70%, 45%"
                 backgroundImage="/images/bg-flashdrop.jpeg"
-                offlinePageRoute="/rooms/flash-drop-creator/setup"
-                offlineLabel="Set Up Drops Offline"
-                offlineDescription="Pre-load your Flash Drops before going live"
+
             />
         );
     }
