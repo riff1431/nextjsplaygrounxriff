@@ -139,6 +139,7 @@ interface ConfessionRequest {
     topic: string;
     status: RequestStatus;
     delivery_content?: string;
+    delivery_media_url?: string;
     created_at: string;
 }
 
@@ -361,6 +362,7 @@ function ConfessionsRoom() {
         if (!urlSessionId) return;
         setLoadingRequests(true);
         try {
+            const supabase = createClient();
             const { data, error } = await supabase
                 .from("confession_requests")
                 .select("*")
@@ -811,6 +813,19 @@ function ConfessionsRoom() {
                             <button onClick={() => setReviewRequest(null)} className="absolute top-6 right-6 text-white/50 hover:text-white"><X className="w-5 h-5" /></button>
                             <h3 className="text-xl font-black text-green-400 mb-6 flex items-center gap-2"><Check className="w-6 h-6" /> Review Delivery</h3>
                             <div className="bg-black/30 rounded-2xl p-6 border border-white/5 mb-6 text-center">
+                                {reviewRequest.delivery_media_url && (
+                                    <div className="mb-4 rounded-xl overflow-hidden border border-white/10 bg-black/50">
+                                        {reviewRequest.type === 'Video' || reviewRequest.delivery_media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                            <video src={reviewRequest.delivery_media_url} controls autoPlay className="w-full max-h-[30vh] object-contain" />
+                                        ) : reviewRequest.type === 'Audio' || reviewRequest.delivery_media_url.match(/\.(mp3|wav|ogg)$/i) ? (
+                                            <div className="p-4 flex justify-center">
+                                                <audio src={reviewRequest.delivery_media_url} controls autoPlay className="w-full" />
+                                            </div>
+                                        ) : (
+                                            <img src={reviewRequest.delivery_media_url} alt="Delivery Media" className="w-full max-h-[30vh] object-contain" />
+                                        )}
+                                    </div>
+                                )}
                                 <p className="text-rose-100 text-lg">{reviewRequest.delivery_content}</p>
                             </div>
                             <Btn variant="solid" onClick={() => handleApproveDelivery(reviewRequest.id)} className="w-full py-4 bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30 rounded-2xl font-black">
