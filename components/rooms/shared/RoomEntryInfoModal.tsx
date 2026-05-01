@@ -598,12 +598,12 @@ export default function RoomEntryInfoModal({
                 </div>
 
                 {/* ── Keyframe animations ── */}
-                <style jsx global>{`
+                <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes entryModalPulse {
                         0%, 100% { opacity: 1; }
                         50% { opacity: 0.6; }
                     }
-                `}</style>
+                ` }} />
             </div>
         </div>
     );

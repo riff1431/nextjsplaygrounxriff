@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
     MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus
@@ -164,7 +164,15 @@ interface Confession {
 
 // --------------------------------------------------------------------------
 
-export default function ConfessionsRoom() {
+export default function ConfessionsRoomPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-pink-500 font-bold">Loading Room...</div>}>
+            <ConfessionsRoom />
+        </Suspense>
+    );
+}
+
+function ConfessionsRoom() {
     const router = useRouter();
     const { user } = useAuth();
     const searchParams = useSearchParams();

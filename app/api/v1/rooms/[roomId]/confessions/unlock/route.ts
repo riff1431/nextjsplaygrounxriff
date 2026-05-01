@@ -48,14 +48,13 @@ export async function POST(
         .from("confessions")
         .select("*")
         .eq("id", confessionId)
-        .eq("room_id", roomId)
         .single();
 
     if (confError || !confession) {
         return NextResponse.json({ error: "Confession not found" }, { status: 404 });
     }
 
-    const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
+    const { data: roomObj } = await supabase.from("rooms").select("host_id").eq("id", confession.room_id).single();
     const price = confession.price || 0;
     const creatorId = roomObj?.host_id;
 
@@ -68,7 +67,7 @@ export async function POST(
             grossAmount: price,
             splitType: 'GLOBAL',
             description: `Unlocked confession: ${confession.title}`,
-            roomId,
+            roomId: confession.room_id,
             relatedType: 'confession_unlock',
             relatedId: confessionId,
             earningsCategory: 'drops',

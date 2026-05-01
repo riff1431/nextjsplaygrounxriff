@@ -550,14 +550,13 @@ export default function RoomSessionsBrowse({
                 )}
             </main>
 
-            {/* Keyframe animations */}
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes todBgFloat1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(30px, 20px); } }
                 @keyframes todBgFloat2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, -30px); } }
                 @keyframes todPulsePink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 @keyframes todCardEntry { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-            `}</style>
+            ` }} />
 
             {/* ── Room Entry Info Modal ── */}
             <RoomEntryInfoModal
@@ -581,9 +580,6 @@ export default function RoomSessionsBrowse({
                 entryFee={pendingSession ? Number(pendingSession.entry_fee) || 0 : undefined}
                 costPerMin={pendingSession ? Number(pendingSession.cost_per_min) || 0 : undefined}
             />
-
-            <style jsx global>{`
-            `}</style>
         </div>
     );
 }
