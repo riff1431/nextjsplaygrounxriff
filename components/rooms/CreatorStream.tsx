@@ -168,7 +168,8 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
         !!token && numericUid > 0
     );
 
-    usePublish([localMicrophoneTrack, localCameraTrack], isStreaming && !!token && !!localMicrophoneTrack && !!localCameraTrack);
+    const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);
+    usePublish(tracksToPublish as any, isStreaming && !!token && tracksToPublish.length > 0);
 
     // Mute toggles
     const [micOn, setMicOn] = useState(true);

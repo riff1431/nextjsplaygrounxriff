@@ -124,7 +124,8 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
     );
 
     // Publish local tracks
-    usePublish([localMicrophoneTrack, localCameraTrack], isReady && !!localMicrophoneTrack && !!localCameraTrack);
+    const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);
+    usePublish(tracksToPublish as any, isReady && tracksToPublish.length > 0);
 
     // Cleanup tracks on unmount
     useEffect(() => {

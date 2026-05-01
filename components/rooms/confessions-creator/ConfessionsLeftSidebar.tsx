@@ -25,11 +25,10 @@ interface Confession {
     created_at: string;
 }
 
-const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) => {
+const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | null, roomId?: string | null }) => {
     const { user } = useAuth();
     const [stats, setStats] = useState({ fans: 0, confessions: 0, tips: 0, earned: 0 });
     const [viewerCount, setViewerCount] = useState(0);
-    const [roomId, setRoomId] = useState<string | null>(null);
     const [confessions, setConfessions] = useState<Confession[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editConfessionTarget, setEditConfessionTarget] = useState<Confession | null>(null);
@@ -51,23 +50,13 @@ const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) =>
         const supabase = createClient();
 
         async function init() {
-            // Get room
-            const { data: room } = await supabase
-                .from("rooms")
-                .select("id")
-                .eq("host_id", user!.id)
-                .eq("type", "confessions")
-                .limit(1)
-                .maybeSingle();
-
-            if (!room) return;
-            setRoomId(room.id);
+            if (!roomId) return;
 
             // Fetch confessions list
             const { data: confList } = await supabase
                 .from("confessions")
                 .select("id, title, teaser, content, media_url, type, tier, price, status, created_at")
-                .eq("room_id", room.id)
+                .eq("room_id", roomId)
                 .order("created_at", { ascending: false });
             if (confList) setConfessions(confList);
 
@@ -85,7 +74,7 @@ const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) =>
             // Fetch session confessions count
             let confQuery = supabase.from("confession_requests").select("*", { count: "exact", head: true });
             if (sessionId) confQuery = confQuery.eq("session_id", sessionId);
-            else confQuery = confQuery.eq("room_id", room.id);
+            else confQuery = confQuery.eq("room_id", roomId);
             const { count: confCount } = await confQuery;
 
             // Fetch total tips for session
@@ -94,7 +83,7 @@ const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) =>
             // Fetch session earned (sum of confession_requests amounts + tips)
             let earnQuery = supabase.from("confession_requests").select("amount");
             if (sessionId) earnQuery = earnQuery.eq("session_id", sessionId);
-            else earnQuery = earnQuery.eq("room_id", room.id);
+            else earnQuery = earnQuery.eq("room_id", roomId);
             
             const { data: earnData } = await earnQuery;
             const requestTotal = earnData ? earnData.reduce((sum, r) => sum + (r.amount || 0), 0) : 0;
@@ -110,7 +99,7 @@ const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) =>
         init();
 
         return () => {};
-    }, [user, sessionId]);
+    }, [user, sessionId, roomId]);
 
     // Helper: fetch tip total from notifications table for this creator
     const fetchTipTotal = async (supabase: any, userId: string, sessionStart?: string | null) => {
