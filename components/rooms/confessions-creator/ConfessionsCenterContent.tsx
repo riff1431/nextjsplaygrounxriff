@@ -108,20 +108,25 @@ const RequestTable = ({
     );
 };
 
-const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "confessions" | "random" }) => {
+const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp, sessionId }: { variant?: "confessions" | "random"; roomId?: string | null; sessionId?: string | null }) => {
     const { user } = useAuth();
     const supabase = createClient();
     const [requests, setRequests] = useState<RequestRow[]>([]);
     const [globalRequests, setGlobalRequests] = useState<RequestRow[]>([]);
-    const [roomId, setRoomId] = useState<string | null>(null);
+    const [roomId, setRoomId] = useState<string | null>(roomIdProp ?? null);
     const [loading, setLoading] = useState(true);
     const [deliveryRequest, setDeliveryRequest] = useState<RequestRow | null>(null);
     const [showDeliveryModal, setShowDeliveryModal] = useState(false);
     const [activeView, setActiveView] = useState<"my" | "global">("my");
 
-    // Discover room on mount
+    // Sync roomId from prop when it changes
     useEffect(() => {
-        if (!user) return;
+        if (roomIdProp) setRoomId(roomIdProp);
+    }, [roomIdProp]);
+
+    // Fallback: discover room on mount if not passed as prop
+    useEffect(() => {
+        if (roomId || !user) return;
         async function findRoom() {
             const { data } = await supabase
                 .from("rooms")
@@ -132,16 +137,28 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
             if (data?.id) setRoomId(data.id);
         }
         findRoom();
-    }, [user]);
+    }, [user, roomId]);
 
     const fetchRequests = useCallback(async () => {
         if (!roomId) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`);
-            const data = await res.json();
-            if (data.requests) {
-                setRequests(data.requests.map((r: any) => ({
+            let query = supabase.from('confession_requests').select('*');
+            if (sessionId) {
+                query = query.eq('session_id', sessionId);
+            } else {
+                query = query.eq('room_id', roomId);
+            }
+            const { data, error } = await query.order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("[ConfessionsCenter] DB Error:", error);
+                toast.error(`Database Error: ${error.message}`);
+                return;
+            }
+
+            if (data) {
+                setRequests(data.map((r: any) => ({
                     id: r.id,
                     room_id: r.room_id || roomId,
                     fan: r.fan_name || r.fan_id?.substring(0, 8) || "Fan",
@@ -157,16 +174,17 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
                     created_at: r.created_at,
                 })));
             }
-        } catch (e) {
-            console.error("Failed to fetch requests", e);
+        } catch (e: any) {
+            console.error("[ConfessionsCenter] Unexpected error:", e);
+            toast.error(`Unexpected Error: ${e.message}`);
         } finally {
             setLoading(false);
         }
-    }, [roomId]);
+    }, [roomId, supabase]);
 
     const fetchGlobalRequests = useCallback(async () => {
         try {
-            const res = await fetch(`/api/v1/confessions/global`);
+            const res = await fetch(`/api/v1/confessions/global?_t=${Date.now()}`);
             const data = await res.json();
             if (data.requests) {
                 setGlobalRequests(data.requests.map((r: any) => ({
@@ -186,7 +204,7 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
                 })));
             }
         } catch (e) {
-            console.error("Failed to fetch global requests", e);
+            console.error("[ConfessionsCenter] Failed to fetch global requests", e);
         }
     }, []);
 
@@ -195,13 +213,24 @@ const ConfessionsCenterContent = ({ variant = "confessions" }: { variant?: "conf
             fetchRequests();
 
             // Realtime subscription for new requests
+            const filterQuery = sessionId ? `session_id=eq.${sessionId}` : `room_id=eq.${roomId}`;
             const channel = supabase
-                .channel("creator-confession-requests")
+                .channel(`creator-confession-requests-${sessionId || roomId}`)
                 .on("postgres_changes", {
-                    event: "*",
+                    event: "INSERT",
                     schema: "public",
                     table: "confession_requests",
-                    filter: `room_id=eq.${roomId}`,
+                    filter: filterQuery,
+                }, (payload: any) => {
+                    const newReq = payload.new;
+                    toast.info(`💜 New confession request: €${newReq.amount} — "${(newReq.topic || '').substring(0, 40)}"`);
+                    fetchRequests();
+                })
+                .on("postgres_changes", {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "confession_requests",
+                    filter: filterQuery,
                 }, () => { fetchRequests(); })
                 .subscribe();
 

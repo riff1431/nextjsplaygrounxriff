@@ -18,6 +18,7 @@ const ConfessionsCreatorPage = () => {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
     const [roomId, setRoomId] = useState<string | null>(null);
+    const [isWrongUser, setIsWrongUser] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const router = useRouter();
 
@@ -29,11 +30,14 @@ const ConfessionsCreatorPage = () => {
             if (sessionId) {
                 const { data: session } = await supabase
                     .from("room_sessions")
-                    .select("room_id")
+                    .select("room_id, creator_id")
                     .eq("id", sessionId)
                     .maybeSingle();
                 if (session?.room_id) {
                     setRoomId(session.room_id);
+                    if (session.creator_id !== user?.id) {
+                        setIsWrongUser(true);
+                    }
                     return;
                 }
             }
@@ -86,7 +90,15 @@ const ConfessionsCreatorPage = () => {
                     <div className="flex-1">
                         <ConfessionsTopBar onBack={() => setShowExitModal(true)} />
                     </div>
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20">
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20 flex items-center gap-4">
+                        {isWrongUser && (
+                            <div className="bg-red-500/20 text-red-500 border border-red-500 px-3 py-1 rounded-full text-xs font-bold animate-pulse flex items-center gap-2">
+                                <span>⚠️</span> WRONG ACCOUNT (RLS BLOCKED)
+                            </div>
+                        )}
+                        <div className="text-xs text-white/50 bg-black/50 px-2 py-1 rounded">
+                            Room: {roomId || "loading..."}
+                        </div>
                         <SessionLiveControls
                             sessionId={sessionId!}
                             onEnd={() => router.push("/rooms/confessions-creator")}
@@ -95,10 +107,10 @@ const ConfessionsCreatorPage = () => {
                     </div>
                 </div>
                 <div className="flex-1 flex items-stretch gap-16 px-4 pb-4 overflow-hidden xl:mx-40">
-                    <ConfessionsLeftSidebar />
+                    <ConfessionsLeftSidebar sessionId={sessionId} />
                     <div className="flex-1 flex flex-col gap-4 min-h-0">
                         <div className="flex-1 min-h-0">
-                            <ConfessionsCenterContent variant="confessions" />
+                            <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
                         </div>
                     </div>
                     <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />

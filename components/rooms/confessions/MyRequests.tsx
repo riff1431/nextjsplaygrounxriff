@@ -4,7 +4,7 @@ export type RequestStatus = 'pending_approval' | 'in_progress' | 'delivered' | '
 
 export interface ConfessionRequest {
     id: string;
-    type: 'Text' | 'Audio' | 'Video';
+    type: 'Text' | 'Image' | 'Video';
     amount: number;
     topic: string;
     status: RequestStatus;
@@ -53,26 +53,6 @@ const MyRequests: React.FC<MyRequestsProps> = ({ requests = [], setReviewRequest
                         )}
                     </div>
                 ))}
-            </div>
-
-            {/* Gifts & Reactions */}
-            <div className="space-y-2 mt-4 pt-3 border-t border-border/50">
-                <span className="text-xs font-semibold">Gifts & Reactions</span>
-                <div className="flex gap-1.5 flex-wrap">
-                    {["🎁", "❤️", "🔥", "💎", "🌹", "👑", "💰", "⭐"].map((e, i) => (
-                        <span key={i} className="cursor-pointer hover:scale-125 transition-transform text-sm grayscale opacity-70 hover:grayscale-0 hover:opacity-100">{e}</span>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/50 border border-border/50 mt-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold">TopFan?</span>
-                    <span className="text-[10px] text-muted-foreground">56 Bids · <span className="gold-text">€560</span></span>
-                </div>
-                <button className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold border border-border hover:border-primary/50 transition-colors">
-                    <span className="gold-text">+€50</span>
-                </button>
             </div>
         </div>
     );

@@ -202,7 +202,7 @@ function ConfessionsRoom() {
     const [isSearchMode, setIsSearchMode] = useState(false);
 
     // Request Form
-    const [reqType, setReqType] = useState<'Text' | 'Audio' | 'Video'>('Text');
+    const [reqType, setReqType] = useState<'Text' | 'Image' | 'Video'>('Text');
     const [reqAmount, setReqAmount] = useState(10);
     const [reqTopic, setReqTopic] = useState("");
     const [isSending, setIsSending] = useState(false);
@@ -220,6 +220,9 @@ function ConfessionsRoom() {
 
     // Invite Modal
     const [showInviteModal, setShowInviteModal] = useState(false);
+
+    // Incoming Modal
+    const [showIncomingModal, setShowIncomingModal] = useState(false);
 
     // Discover room on mount — prefer roomId from URL, then auto-discover
     useEffect(() => {
@@ -319,27 +322,56 @@ function ConfessionsRoom() {
                 .channel('fan-notifications')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
                     (payload) => {
-                        if (payload.new.type === 'request_delivered') {
-                            showToast(payload.new.message, 'success');
+                        if (payload.new.type === 'confession_request_update') {
+                            const isError = payload.new.message.includes('declined');
+                            showToast(payload.new.message, isError ? 'error' : 'success');
                             fetchRequests();
                         }
                     }
                 )
                 .subscribe();
-            return () => { supabase.removeChannel(confessionChannel); supabase.removeChannel(notifChannel); };
+            // Realtime: direct updates to confession_requests
+            const reqsChannel = supabase
+                .channel(`fan-requests-${urlSessionId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'confession_requests', filter: `session_id=eq.${urlSessionId}` },
+                    (payload) => {
+                        if (payload.eventType === 'UPDATE' && payload.new.status === 'delivered' && payload.old?.status !== 'delivered') {
+                            if (payload.new.fan_id === user.id) {
+                                showToast("Your confession request has been delivered! Check it out.", "success");
+                            }
+                        }
+                        fetchRequests();
+                    }
+                )
+                .subscribe();
+
+            return () => { 
+                supabase.removeChannel(confessionChannel); 
+                supabase.removeChannel(notifChannel); 
+                supabase.removeChannel(reqsChannel);
+            };
         }
-    }, [user, roomId]);
+    }, [user, roomId, urlSessionId]);
 
     const fetchWallet = async () => {
         await refreshWallet();
     };
 
     const fetchRequests = async () => {
+        if (!urlSessionId) return;
         setLoadingRequests(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`);
-            const data = await res.json();
-            if (data.requests) setRequests(data.requests);
+            const { data, error } = await supabase
+                .from("confession_requests")
+                .select("*")
+                .eq("session_id", urlSessionId)
+                .order("created_at", { ascending: false });
+            
+            if (error) {
+                console.error("DB Fetch Error:", error);
+                return;
+            }
+            if (data) setRequests(data);
         } catch (e) {
             console.error("Failed requests", e);
         } finally {
@@ -457,7 +489,7 @@ function ConfessionsRoom() {
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/request`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: reqType, amount: reqAmount, topic: reqTopic, paymentMethod: selectedPaymentMethod, is_anonymous: isAnon, confession_mode: confessionMode })
+                body: JSON.stringify({ type: reqType, amount: reqAmount, topic: reqTopic, paymentMethod: selectedPaymentMethod, is_anonymous: isAnon, confession_mode: confessionMode, sessionId: urlSessionId })
             });
             const data = await res.json();
             if (data.success) {
@@ -594,9 +626,21 @@ function ConfessionsRoom() {
                                     <span className="hidden sm:inline">Invite</span>
                                 </button>
                                 <WalletPill />
-                                <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all hidden sm:flex border border-transparent hover:border-border/50">
-                                    <UserRound className="h-4 w-4 text-primary" /> Requests
-                                </button>
+                                
+                                {(() => {
+                                    const unreadCount = requests.filter(r => r.status === 'delivered').length;
+                                    return (
+                                        <button onClick={() => setShowIncomingModal(true)} className="relative inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all hidden sm:flex border border-transparent hover:border-border/50">
+                                            <UserRound className="h-4 w-4 text-primary" /> Incoming
+                                            {unreadCount > 0 && (
+                                                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-in zoom-in">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })()}
+
                                 <button className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-transparent hover:bg-secondary/80 transition-all text-foreground/80 hover:text-foreground">
                                     <Menu className="h-5 w-5" />
                                 </button>
@@ -772,6 +816,49 @@ function ConfessionsRoom() {
                             <Btn variant="solid" onClick={() => handleApproveDelivery(reviewRequest.id)} className="w-full py-4 bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30 rounded-2xl font-black">
                                 Approve & Release Funds
                             </Btn>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── MODAL: Incoming Requests ── */}
+                {showIncomingModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+                        <div className="w-full max-w-md rounded-[32px] border border-primary/20 bg-[#120205] p-8 shadow-[0_0_50px_rgba(255,42,109,0.15)] relative">
+                            <button onClick={() => setShowIncomingModal(false)} className="absolute top-6 right-6 text-white/50 hover:text-white"><X className="w-5 h-5" /></button>
+                            <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
+                                <UserRound className="w-6 h-6 text-primary" /> Incoming Deliveries
+                            </h3>
+                            
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                                {requests.filter(r => r.status === 'delivered').length === 0 ? (
+                                    <div className="text-center py-8 text-white/40 italic">
+                                        No incoming deliveries right now.
+                                    </div>
+                                ) : (
+                                    requests.filter(r => r.status === 'delivered').map((req, i) => (
+                                        <div key={req.id || i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold border border-primary/30">
+                                                    💌
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-white mb-0.5">{req.topic}</p>
+                                                    <p className="text-xs text-primary">Delivered • €{req.amount}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setReviewRequest(req);
+                                                    setShowIncomingModal(false);
+                                                }}
+                                                className="w-full sm:w-auto px-4 py-2 rounded-lg gradient-pink text-sm font-bold text-white shadow-[0_0_15px_rgba(255,42,109,0.4)] hover:scale-105 transition-all"
+                                            >
+                                                Review
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

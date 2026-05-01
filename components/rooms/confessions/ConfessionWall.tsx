@@ -94,7 +94,7 @@ const UnlockedConfessionCard = ({
                     )}
                     {confession.type !== 'Text' && (
                         <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-black/60 text-white border border-white/20 backdrop-blur-md">
-                            {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
+                            {confession.type === 'Voice' ? '🎙 Voice' : confession.type === 'Image' ? '📷 Image' : '🎬 Video'}
                         </span>
                     )}
                 </div>
@@ -102,7 +102,7 @@ const UnlockedConfessionCard = ({
                 <div className="flex justify-end p-2 pb-0">
                     {confession.type !== 'Text' && (
                         <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary/80 border border-primary/20">
-                            {confession.type === 'Voice' ? '🎙 Voice' : '🎬 Video'}
+                            {confession.type === 'Voice' ? '🎙 Voice' : confession.type === 'Image' ? '📷 Image' : '🎬 Video'}
                         </span>
                     )}
                 </div>

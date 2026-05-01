@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageSquare, Plus, DollarSign, User, Eye, Edit3, Trash2, X, Heart } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import AddConfessionModal from "./AddConfessionModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -24,7 +25,7 @@ interface Confession {
     created_at: string;
 }
 
-const ConfessionsLeftSidebar = () => {
+const ConfessionsLeftSidebar = ({ sessionId }: { sessionId?: string | null }) => {
     const { user } = useAuth();
     const [stats, setStats] = useState({ fans: 0, confessions: 0, tips: 0, earned: 0 });
     const [viewerCount, setViewerCount] = useState(0);
@@ -70,38 +71,134 @@ const ConfessionsLeftSidebar = () => {
                 .order("created_at", { ascending: false });
             if (confList) setConfessions(confList);
 
-            // Get confession count
-            const { count: confCount } = await supabase
-                .from("confessions")
-                .select("*", { count: "exact", head: true })
-                .eq("room_id", room.id);
+            // Get session start time if sessionId is provided
+            let sessionStart = null;
+            if (sessionId) {
+                const { data: sessionData } = await supabase
+                    .from("room_sessions")
+                    .select("created_at")
+                    .eq("id", sessionId)
+                    .single();
+                if (sessionData) sessionStart = sessionData.created_at;
+            }
 
-            // Get wallet balance
-            const { data: wallet } = await supabase
-                .from("wallets")
-                .select("balance")
-                .eq("user_id", user!.id)
-                .single();
+            // Fetch session confessions count
+            let confQuery = supabase.from("confession_requests").select("*", { count: "exact", head: true });
+            if (sessionId) confQuery = confQuery.eq("session_id", sessionId);
+            else confQuery = confQuery.eq("room_id", room.id);
+            const { count: confCount } = await confQuery;
 
-            // Get follower count
-            const { count: followers } = await supabase
-                .from("subscriptions")
-                .select("*", { count: "exact", head: true })
-                .eq("creator_id", user!.id)
-                .eq("status", "active");
+            // Fetch total tips for session
+            const totalTips = await fetchTipTotal(supabase, user!.id, sessionStart);
 
-            setStats({
-                fans: followers || 0,
+            // Fetch session earned (sum of confession_requests amounts + tips)
+            let earnQuery = supabase.from("confession_requests").select("amount");
+            if (sessionId) earnQuery = earnQuery.eq("session_id", sessionId);
+            else earnQuery = earnQuery.eq("room_id", room.id);
+            
+            const { data: earnData } = await earnQuery;
+            const requestTotal = earnData ? earnData.reduce((sum, r) => sum + (r.amount || 0), 0) : 0;
+
+            setStats(prev => ({
+                ...prev,
                 confessions: confCount || 0,
-                tips: 0,
-                earned: wallet?.balance || 0,
-            });
+                tips: totalTips,
+                earned: requestTotal + totalTips,
+            }));
         }
 
         init();
 
         return () => {};
-    }, [user]);
+    }, [user, sessionId]);
+
+    // Helper: fetch tip total from notifications table for this creator
+    const fetchTipTotal = async (supabase: any, userId: string, sessionStart?: string | null) => {
+        let query = supabase
+            .from("notifications")
+            .select("message")
+            .eq("user_id", userId)
+            .eq("type", "confession_tip");
+            
+        if (sessionStart) {
+            query = query.gte("created_at", sessionStart);
+        }
+
+        const { data: tipNotifs } = await query;
+        if (!tipNotifs || tipNotifs.length === 0) return 0;
+        return tipNotifs.reduce((sum: number, n: any) => {
+            // Parse amount from message string like "... (€10) ..."
+            const match = n.message?.match(/€(\d+(?:\.\d+)?)/);
+            return sum + (match ? Number(match[1]) : 0);
+        }, 0);
+    };
+
+    // Helper: refresh tips + earned in summary (called on each real-time tip event)
+    const refreshSummaryStats = useCallback(async () => {
+        if (!user) return;
+        const supabase = createClient();
+
+        let sessionStart = null;
+        if (sessionId) {
+            const { data: sessionData } = await supabase.from("room_sessions").select("created_at").eq("id", sessionId).single();
+            if (sessionData) sessionStart = sessionData.created_at;
+        }
+
+        const totalTips = await fetchTipTotal(supabase, user.id, sessionStart);
+        
+        let earnQuery = supabase.from("confession_requests").select("amount");
+        if (sessionId) earnQuery = earnQuery.eq("session_id", sessionId);
+        
+        const { data: earnData } = await earnQuery;
+        const requestTotal = earnData ? earnData.reduce((sum, r) => sum + (r.amount || 0), 0) : 0;
+
+        setStats(prev => ({
+            ...prev,
+            tips: totalTips,
+            earned: requestTotal + totalTips,
+        }));
+    }, [user, sessionId]);
+
+    // Real-time: listen for confession_tip notifications → show toast + refresh summary
+    useEffect(() => {
+        if (!user) return;
+        const supabase = createClient();
+
+        // Subscribe to notifications table for this creator's confession tips
+        const notifChannel = supabase
+            .channel('creator-confession-tip-notifs')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${user.id}`,
+            }, (payload: any) => {
+                const notif = payload.new;
+                if (notif?.type === 'confession_tip') {
+                    // Show styled toast
+                    toast(
+                        notif.message || 'You received a reaction tip! 🎉',
+                        {
+                            icon: '💖',
+                            duration: 5000,
+                            style: {
+                                background: 'linear-gradient(135deg, #1a0510, #2d0a1e)',
+                                border: '1px solid rgba(244, 63, 94, 0.4)',
+                                color: '#fecdd3',
+                                boxShadow: '0 0 20px rgba(244, 63, 94, 0.25)',
+                            },
+                        }
+                    );
+                    // Refresh summary numbers (tips + earned)
+                    refreshSummaryStats();
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(notifChannel);
+        };
+    }, [user, refreshSummaryStats]);
 
     // Presence for live viewer count — scoped to room
     useEffect(() => {
@@ -111,7 +208,9 @@ const ConfessionsLeftSidebar = () => {
             config: { presence: { key: user.id } },
         });
         channel.on("presence", { event: "sync" }, () => {
-            setViewerCount(Object.keys(channel.presenceState()).length);
+            const count = Object.keys(channel.presenceState()).length;
+            setViewerCount(count);
+            setStats(prev => ({ ...prev, fans: count }));
         });
         channel.subscribe(async (status) => {
             if (status === "SUBSCRIBED") {
@@ -177,8 +276,8 @@ const ConfessionsLeftSidebar = () => {
                         <span>Confessions: <span className="conf-text-gold font-semibold">{stats.confessions.toLocaleString()}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
-                        <DollarSign className="h-4 w-4 conf-text-gold" />
-                        <span>Tips: <span className="conf-text-gold font-semibold">€{stats.tips.toLocaleString()}</span></span>
+                        <Heart className="h-4 w-4 conf-text-gold" />
+                        <span>Reaction Tips: <span className="conf-text-gold font-semibold">€{stats.tips.toLocaleString()}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
                         <DollarSign className="h-4 w-4 conf-text-gold" />

@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/v1/rooms/[roomId]/confessions/request
  * Fan: get their own confession requests for this room.
@@ -44,7 +46,11 @@ export async function GET(
 
     const { data: requests, error } = await query;
 
+    console.log(`[Confessions API] GET ${roomId}: user=${user.id}, room.host_id=${room?.host_id}`);
+    console.log(`[Confessions API] Requests found: ${requests?.length}`);
+
     if (error) {
+        console.error(`[Confessions API] DB Error:`, error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -59,7 +65,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { type, topic, amount, fan_name, is_anonymous, confession_mode } = body;
+    const { type, topic, amount, fan_name, is_anonymous, confession_mode, sessionId } = body;
     const mode = confession_mode === 'global' ? 'global' : '1on1';
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -127,6 +133,7 @@ export async function POST(
         .from("confession_requests")
         .insert({
             room_id: roomId,
+            session_id: sessionId || null,
             fan_id: user.id,
             creator_id: creatorId,
             type,

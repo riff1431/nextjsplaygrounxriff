@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Send, Lock, User, MessageSquare, Mic, Video, Users, Globe } from "lucide-react";
+import { Send, Lock, User, MessageSquare, Image as ImageIcon, Video, Users, Globe } from "lucide-react";
 
 interface RequestConfessionProps {
-    reqType: 'Text' | 'Audio' | 'Video';
-    setReqType: (type: 'Text' | 'Audio' | 'Video') => void;
+    reqType: 'Text' | 'Image' | 'Video';
+    setReqType: (type: 'Text' | 'Image' | 'Video') => void;
     reqAmount: number;
     setReqAmount: (amount: number) => void;
     reqTopic: string;
@@ -22,7 +22,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
 }) => {
     const tabs = [
         { id: "Text" as const, icon: MessageSquare, label: "Text" },
-        { id: "Audio" as const, icon: Mic, label: "Audio" },
+        { id: "Image" as const, icon: ImageIcon, label: "Image" },
         { id: "Video" as const, icon: Video, label: "Video" },
     ];
 

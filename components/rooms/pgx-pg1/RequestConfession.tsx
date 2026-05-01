@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Lock, User, MessageSquare, Mic, Video, Users, Globe } from "lucide-react";
+import { Send, Lock, User, MessageSquare, Image as ImageIcon, Video, Users, Globe } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
@@ -15,7 +15,7 @@ interface RequestConfessionProps {
 const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
   const { user } = useAuth();
   const { balance, refresh } = useWallet();
-  const [activeTab, setActiveTab] = useState<"Text" | "Audio" | "Video">("Text");
+  const [activeTab, setActiveTab] = useState<"Text" | "Image" | "Video">("Text");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [confessionMode, setConfessionMode] = useState<"1on1" | "global">("1on1");
   const [amount, setAmount] = useState("10");
@@ -25,7 +25,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
 
   const tabs = [
     { id: "Text" as const, icon: MessageSquare, label: "Text" },
-    { id: "Audio" as const, icon: Mic, label: "Audio" },
+    { id: "Image" as const, icon: ImageIcon, label: "Image" },
     { id: "Video" as const, icon: Video, label: "Video" },
   ];
 
