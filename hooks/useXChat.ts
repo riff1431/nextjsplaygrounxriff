@@ -82,7 +82,6 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
 
         const insertPayload: any = {
             room_id: roomId,
-            sender_id: user?.id,
             sender_name: senderName,
             body: body.trim(),
             lane,
