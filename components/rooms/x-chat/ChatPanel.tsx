@@ -101,8 +101,6 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                 p_amount: price,
                 p_description: `X Chat ${lane} message`,
                 p_room_id: roomId,
-                p_related_type: "xchat_message",
-                p_related_id: null,
             });
 
             if (rpcError) {
