@@ -11,7 +11,7 @@ import LiveDropBoard from "@/components/rooms/flashdrop-creator/LiveDropBoard";
 import SummaryBox from "@/components/rooms/flashdrop-creator/SummaryBox";
 import HighRollerPacks from "@/components/rooms/flashdrop-creator/HighRollerPacks";
 import DropRequests from "@/components/rooms/flashdrop-creator/DropRequests";
-import BottomStrip from "@/components/rooms/flashdrop-creator/BottomStrip";
+
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
@@ -110,7 +110,7 @@ function FlashdropCreatorStudio() {
                                 <HighRollerPacks roomId={roomId} />
                             </div>
                         </div>
-                        <BottomStrip roomId={roomId} />
+
                     </div>
 
                     {/* Right column — Drop Requests & Live Chat side by side */}

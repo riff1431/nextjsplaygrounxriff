@@ -56,7 +56,7 @@ export default function FlashDropsRoomPreview() {
     ]);
 
     // Pending purchase for SpendConfirmModal
-    const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string } | null>(null);
+    const [pendingSpend, setPendingSpend] = useState<{ amount: number; msg: string; mediaUrls?: string[] } | null>(null);
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
@@ -244,13 +244,13 @@ export default function FlashDropsRoomPreview() {
     }, [roomId, fetchDrops]);
 
     // Spend with confirmation
-    const requestSpend = (amount: number, msg: string) => {
-        setPendingSpend({ amount, msg });
+    const requestSpend = (amount: number, msg: string, mediaUrls?: string[]) => {
+        setPendingSpend({ amount, msg, mediaUrls });
     };
 
     const executeSpend = useCallback(async () => {
         if (!pendingSpend) return;
-        const { amount, msg } = pendingSpend;
+        const { amount, msg, mediaUrls } = pendingSpend;
         if (!roomId) {
             // Local fallback if no room discovered
             setToast(msg);
@@ -264,7 +264,7 @@ export default function FlashDropsRoomPreview() {
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, description: msg, sessionId: urlSessionId }),
+                body: JSON.stringify({ amount, description: msg, sessionId: urlSessionId, media_urls: mediaUrls }),
             });
             const data = await res.json();
             if (data.success) {

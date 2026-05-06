@@ -724,7 +724,7 @@ export default function Home() {
 
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null, fan_membership_id?: string | null } | null>(null);
     const [userAccountType, setUserAccountType] = useState<{ display_name: string, badge_icon: string, badge_color: string, badge_icon_url?: string | null } | null>(null);
-    const [membershipPlan, setMembershipPlan] = useState<{ display_name: string, badge_color: string, name: string } | null>(null);
+    const [membershipPlan, setMembershipPlan] = useState<{ display_name: string, badge_color: string, name: string, badge_icon_url?: string | null } | null>(null);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
 
@@ -871,7 +871,7 @@ export default function Home() {
                     if (profileData.fan_membership_id) {
                         const { data: planData, error: planError } = await supabase
                             .from('fan_membership_plans')
-                            .select('name, display_name, badge_color')
+                            .select('name, display_name, badge_color, badge_icon_url')
                             .eq('id', profileData.fan_membership_id)
                             .single();
 
@@ -1050,7 +1050,7 @@ export default function Home() {
                                 onClick={() => router.push('/account/membership')}
                                 className={cx(
                                     "inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer",
-                                    "transition-all duration-300 hover:scale-110",
+                                    "transition-all duration-300 hover:scale-110 overflow-hidden",
                                     membershipPlan
                                         ? ""
                                         : cx(fanTierClasses(fanTier), fanTierBg(fanTier)),
@@ -1064,7 +1064,13 @@ export default function Home() {
                                 } : undefined}
                                 title={`Membership: ${membershipPlan?.display_name || tierLabel}`}
                             >
-                                <Crown className="w-4 h-4" />
+                                {membershipPlan?.badge_icon_url ? (
+                                    <img src={membershipPlan.badge_icon_url} alt={membershipPlan.display_name} className="w-5 h-5 object-contain" />
+                                ) : membershipPlan ? (
+                                    <span className="text-sm">{{ bronze: "🥉", silver: "🥈", gold: "🥇" }[membershipPlan.name] || "⭐"}</span>
+                                ) : (
+                                    <Crown className="w-4 h-4" />
+                                )}
                             </button>
                         )}
 

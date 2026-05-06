@@ -39,8 +39,8 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { content, amount, description, sessionId } = body;
-    const finalContent = description || content || "Custom Request";
+    const { content, amount, description, sessionId, media_urls } = body;
+    let finalContent = description || content || "Custom Request";
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -66,9 +66,18 @@ export async function POST(
 
     const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
 
+    // Impulse spends and Pack purchases are instant reactions — auto-accept
+    const isImpulse = finalContent.includes('Impulse');
+    const isPack = finalContent.includes('Pack');
+
+    // For pack purchases, encode media URLs into content for the incoming notifications
+    if (isPack && Array.isArray(media_urls) && media_urls.length > 0) {
+        finalContent = finalContent + ' |__MEDIA__|' + JSON.stringify(media_urls);
+    }
+
     const { data: req, error: reqError } = await supabase
         .from("flash_drop_requests")
-        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content: finalContent, amount })
+        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content: finalContent, amount, status: (isImpulse || isPack) ? 'accepted' : 'pending' })
         .select().single();
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
@@ -104,11 +113,14 @@ export async function POST(
         await supabase.from("room_chat_messages").insert(insertPayload);
     }
 
-    await supabase.from("notifications").insert({
-        user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
-        message: `New drop request (€${amount}): "${finalContent}"`,
-        reference_id: req.id,
-    });
+    // Only send notification for actual custom requests, not impulse reactions or pack purchases
+    if (!isImpulse && !isPack) {
+        await supabase.from("notifications").insert({
+            user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
+            message: `New drop request (€${amount}): "${finalContent}"`,
+            reference_id: req.id,
+        });
+    }
 
     return NextResponse.json({ success: true, request: req, new_balance: splitResult.newBalance });
 }

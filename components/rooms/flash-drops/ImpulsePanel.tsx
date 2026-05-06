@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { X, Inbox } from "lucide-react";
 
 const impulseButtons = [
     { label: "Quick Like", price: 5, icon: "⚡" },
@@ -17,11 +20,12 @@ interface RollerPack {
     name: string;
     price: number;
     description?: string;
+    media_urls?: string[];
 }
 
 interface ImpulsePanelProps {
     roomId: string | null;
-    onSpend?: (amount: number, msg: string) => void;
+    onSpend?: (amount: number, msg: string, mediaUrls?: string[]) => void;
 }
 
 export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
@@ -33,6 +37,8 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
     const [requestStatus, setRequestStatus] = useState<"idle" | "submitted" | "accepted" | "declined">("idle");
     const [myRequestId, setMyRequestId] = useState<string | null>(null);
     const [rollerPacks, setRollerPacks] = useState<RollerPack[]>([]);
+    const [purchasedPackNames, setPurchasedPackNames] = useState<Set<string>>(new Set());
+    const [viewingPack, setViewingPack] = useState<RollerPack | null>(null);
 
     // Fetch dynamic roller packs
     const fetchPacks = useCallback(async () => {
@@ -62,6 +68,54 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
             .subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [roomId, fetchPacks]);
+
+    // Fetch and listen for purchased packs
+    useEffect(() => {
+        if (!roomId || !user) return;
+        const fetchPurchases = async () => {
+            const { data } = await supabase
+                .from("flash_drop_requests")
+                .select("content")
+                .eq("room_id", roomId)
+                .eq("fan_id", user.id)
+                .like("content", "%💎 Purchased Pack:%");
+            
+            if (data) {
+                const names = new Set<string>();
+                data.forEach(req => {
+                    const match = req.content.match(/💎 Purchased Pack: (.*?) \(/);
+                    if (match && match[1]) {
+                        names.add(match[1]);
+                    }
+                });
+                setPurchasedPackNames(names);
+            }
+        };
+        fetchPurchases();
+
+        const channel = supabase
+            .channel(`fan-purchases-${roomId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "flash_drop_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const newReq = payload.new as any;
+                if (newReq.fan_id === user.id && newReq.content.includes("💎 Purchased Pack:")) {
+                    const match = newReq.content.match(/💎 Purchased Pack: (.*?) \(/);
+                    if (match && match[1]) {
+                        setPurchasedPackNames(prev => {
+                            const next = new Set(prev);
+                            next.add(match[1]);
+                            return next;
+                        });
+                    }
+                }
+            })
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, user]);
 
     // Listen for status updates on the fan's own request
     useEffect(() => {
@@ -158,18 +212,63 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
             <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
                 <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-2 uppercase tracking-widest">High Roller Packs</h2>
                 {rollerPacks.length > 0 ? (
-                    <div className="space-y-1">
-                        {rollerPacks.map((pack) => (
-                            <button
-                                key={pack.id}
-                                onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (€${pack.price})`)}
-                                className="w-full flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-primary/15 border border-transparent hover:border-primary/40 transition-all group"
-                            >
-                                <span className="fd-font-body font-bold text-xs text-foreground/85 group-hover:text-foreground transition-colors">
-                                    {pack.name}
-                                </span>
-                            </button>
-                        ))}
+                    <div className="space-y-2">
+                        {[...rollerPacks].reverse().slice(0, 7).map((pack) => {
+                            const mediaCount = pack.media_urls?.length || 0;
+                            const isPurchased = purchasedPackNames.has(pack.name);
+                            return (
+                                <div
+                                    key={pack.id}
+                                    className="rounded-lg border border-primary/25 bg-black/30 hover:border-primary/60 hover:bg-primary/5 transition-all group"
+                                    style={{ boxShadow: "0 0 6px hsl(330 100% 55% / 0.05)" }}
+                                >
+                                    <div className="flex items-center gap-2.5 px-3 py-2">
+                                        {/* Pack info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="fd-font-body font-bold text-xs text-foreground/90 truncate group-hover:text-foreground transition-colors">
+                                                {pack.name}
+                                            </p>
+                                            {mediaCount > 0 && (
+                                                <p className="text-[9px] text-primary/70 font-semibold mt-0.5 flex items-center gap-1">
+                                                    <span>📁</span>
+                                                    {mediaCount} {mediaCount === 1 ? 'file' : 'files'} included
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Price + Buy */}
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="fd-font-tech font-black text-sm fd-neon-text">€{pack.price}</span>
+                                            {isPurchased ? (
+                                                <button
+                                                    onClick={() => setViewingPack(pack)}
+                                                    className="px-2.5 py-1 rounded-lg fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    style={{
+                                                        background: "linear-gradient(135deg, hsl(160 100% 40%), hsl(160 100% 30%))",
+                                                        boxShadow: "0 0 12px hsl(160 100% 45% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                                        textShadow: "0 0 6px rgba(255,255,255,0.3)",
+                                                    }}
+                                                >
+                                                    View
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (€${pack.price})`, pack.media_urls)}
+                                                    className="px-2.5 py-1 rounded-lg fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    style={{
+                                                        background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(330 100% 65%))",
+                                                        boxShadow: "0 0 12px hsl(330 100% 55% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                                        textShadow: "0 0 6px rgba(255,255,255,0.3)",
+                                                    }}
+                                                >
+                                                    Buy
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <p className="text-center text-foreground/30 text-[10px] py-2 fd-font-body">No packs available yet</p>
@@ -237,6 +336,89 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                     )}
                 </form>
             </div>
+
+            {/* Modal for full view of purchased pack media */}
+            {typeof window !== "undefined" && createPortal(
+                <AnimatePresence>
+                    {viewingPack && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100000] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+                            onClick={() => setViewingPack(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                                exit={{ scale: 0.95, y: 20 }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-black/90 border border-primary/40 rounded-2xl p-5 sm:p-6 max-w-2xl w-full shadow-[0_0_50px_hsl(330_100%_55%/0.2)] flex flex-col max-h-[90vh]"
+                            >
+                                <div className="flex items-center justify-between mb-4 shrink-0 border-b border-white/10 pb-4">
+                                    <div className="flex flex-col">
+                                        <h2 className="text-xl font-black text-primary fd-font-tech tracking-widest uppercase">
+                                            💎 Pack Purchased
+                                        </h2>
+                                        <p className="text-sm text-white/50 font-medium">
+                                            {viewingPack.name}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setViewingPack(null)}
+                                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-all border border-white/10"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="overflow-y-auto flex-1 themed-scrollbar pr-2">
+                                    <div className="mb-6 bg-primary/10 border border-primary/20 rounded-xl p-4">
+                                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">Pack Details</p>
+                                        <p className="text-base text-white/90 leading-relaxed italic font-medium">
+                                            {viewingPack.name} — €{viewingPack.price}
+                                        </p>
+                                    </div>
+
+                                    {viewingPack.media_urls && viewingPack.media_urls.length > 0 ? (
+                                        <div className="flex flex-col">
+                                            <span className="text-[11px] font-bold text-green-400 uppercase tracking-widest mb-3">
+                                                {viewingPack.media_urls.length} Media {viewingPack.media_urls.length === 1 ? 'File' : 'Files'}
+                                            </span>
+                                            <div className="flex flex-col gap-3">
+                                                {viewingPack.media_urls.map((mediaUrl, i) => {
+                                                    const isVideo = mediaUrl.match(/\.(mp4|ogg|webm|mov|avi)$/i);
+                                                    if (isVideo) {
+                                                        return (
+                                                            <div key={i}>
+                                                                <video src={mediaUrl} controls autoPlay={i === 0} className="w-full max-h-[60vh] rounded-xl border border-primary/40 object-contain bg-black/60 shadow-[0_0_30px_hsl(330_100%_55%/0.2)]" />
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <div key={i}>
+                                                            <img src={mediaUrl} alt="Pack Media" className="w-full max-h-[60vh] rounded-xl border border-primary/40 object-contain bg-black/60 shadow-[0_0_30px_hsl(330_100%_55%/0.2)]" />
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-12 bg-white/5 rounded-xl border border-white/5 flex flex-col items-center justify-center">
+                                            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                                                <Inbox size={24} className="text-white/20" />
+                                            </div>
+                                            <p className="text-sm font-bold text-white/40 uppercase tracking-widest">No Media Attached</p>
+                                            <p className="text-xs text-white/30 mt-1">This pack has no attachments.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }

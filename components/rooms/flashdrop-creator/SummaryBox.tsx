@@ -7,7 +7,6 @@ interface SummaryStats {
     fans: number;
     drops: number;
     packs: number;
-    bundles: number;
     pendingRequests: number;
     tips: number;
 }
@@ -58,7 +57,7 @@ function StatSpacer() {
 const SummaryBox = ({ roomId }: SummaryBoxProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState<SummaryStats>({
-        fans: 0, drops: 0, packs: 0, bundles: 0, pendingRequests: 0, tips: 0
+        fans: 0, drops: 0, packs: 0, pendingRequests: 0, tips: 0
     });
 
     const fetchStats = useCallback(async () => {
@@ -73,11 +72,6 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
 
             const { count: packsCount } = await supabase
                 .from("flash_drop_roller_packs")
-                .select("*", { count: "exact", head: true })
-                .eq("room_id", roomId);
-
-            const { count: bundlesCount } = await supabase
-                .from("flash_drop_bundles")
                 .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId);
 
@@ -117,7 +111,6 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
                 fans: uniqueFans,
                 drops: dropsCount || 0,
                 packs: packsCount || 0,
-                bundles: bundlesCount || 0,
                 pendingRequests: pendingCount || 0,
                 tips: totalTips,
             });
@@ -134,7 +127,7 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
             .on("postgres_changes", { event: "*", schema: "public", table: "flash_drops", filter: `room_id=eq.${roomId}` }, fetchStats)
             .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` }, fetchStats)
             .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_roller_packs", filter: `room_id=eq.${roomId}` }, fetchStats)
-            .on("postgres_changes", { event: "*", schema: "public", table: "flash_drop_bundles", filter: `room_id=eq.${roomId}` }, fetchStats)
+
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "room_session_tips" }, fetchStats)
             .subscribe();
         return () => { supabase.removeChannel(channel); };
@@ -162,11 +155,8 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
                     </div>
                 </div>
 
-                {/* Row 2: BUNDLES · REQUESTS · TIPS */}
+                {/* Row 2: REQUESTS · TIPS */}
                 <div className="flex items-end gap-1.5">
-                    <div className="flex-1 min-w-0">
-                        <StatTile label="Bundles" value={stats.bundles} roomId={roomId} />
-                    </div>
                     <div className="flex-1 min-w-0">
                         <StatTile label="Requests" value={stats.pendingRequests} roomId={roomId} />
                     </div>

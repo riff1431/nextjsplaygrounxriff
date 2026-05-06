@@ -112,11 +112,21 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
         if (!isOpen) setUnreadCount(0);
     };
 
+    /** Parse the media portion — could be a single URL string or a JSON array of URLs */
+    const parseMediaUrls = (mediaPart: string | undefined | null): string[] => {
+        if (!mediaPart) return [];
+        const trimmed = mediaPart.trim();
+        if (trimmed.startsWith('[')) {
+            try { return JSON.parse(trimmed); } catch { return []; }
+        }
+        return trimmed ? [trimmed] : [];
+    };
+
     const renderMediaThumbnail = (mediaUrl: string) => {
-        const isVideo = mediaUrl.match(/\.(mp4|ogg|webm)$/i);
+        const isVideo = mediaUrl.match(/\.(mp4|ogg|webm|mov|avi)$/i);
         if (isVideo) {
             return (
-                <div className="relative w-full h-20 rounded-lg overflow-hidden border border-primary/20 bg-black/60 mt-2">
+                <div className="relative w-full h-20 rounded-lg overflow-hidden border border-primary/20 bg-black/60">
                     <video src={mediaUrl} className="w-full h-full object-cover opacity-60 pointer-events-none" />
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-6 h-6 rounded-full bg-primary/80 flex items-center justify-center text-white text-[10px] shadow-[0_0_10px_hsl(330_100%_55%/0.5)]">
@@ -127,12 +137,30 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
             );
         }
         return (
-            <img src={mediaUrl} alt="Drop Media" className="w-full h-20 rounded-lg mt-2 border border-primary/20 object-cover bg-black/40" />
+            <img src={mediaUrl} alt="Drop Media" className="w-full h-20 rounded-lg border border-primary/20 object-cover bg-black/40" />
+        );
+    };
+
+    /** Render a grid of media thumbnails for the notification list */
+    const renderMediaThumbnails = (urls: string[]) => {
+        if (urls.length === 0) return null;
+        if (urls.length === 1) return <div className="mt-2">{renderMediaThumbnail(urls[0])}</div>;
+        return (
+            <div className="grid grid-cols-3 gap-1 mt-2">
+                {urls.slice(0, 3).map((url, i) => (
+                    <div key={i}>{renderMediaThumbnail(url)}</div>
+                ))}
+                {urls.length > 3 && (
+                    <div className="flex items-center justify-center bg-black/40 rounded-lg border border-primary/20 text-[10px] font-bold text-white/50">
+                        +{urls.length - 3} more
+                    </div>
+                )}
+            </div>
         );
     };
 
     const renderFullMedia = (mediaUrl: string) => {
-        const isVideo = mediaUrl.match(/\.(mp4|ogg|webm)$/i);
+        const isVideo = mediaUrl.match(/\.(mp4|ogg|webm|mov|avi)$/i);
         if (isVideo) {
             return (
                 <video src={mediaUrl} controls autoPlay className="w-full max-h-[60vh] rounded-xl border border-primary/40 object-contain bg-black/60 shadow-[0_0_30px_hsl(330_100%_55%/0.2)]" />
@@ -140,6 +168,19 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
         }
         return (
             <img src={mediaUrl} alt="Drop Media" className="w-full max-h-[60vh] rounded-xl border border-primary/40 object-contain bg-black/60 shadow-[0_0_30px_hsl(330_100%_55%/0.2)]" />
+        );
+    };
+
+    /** Render all media in a gallery for the full view modal */
+    const renderFullMediaGallery = (urls: string[]) => {
+        if (urls.length === 0) return null;
+        if (urls.length === 1) return renderFullMedia(urls[0]);
+        return (
+            <div className="flex flex-col gap-3">
+                {urls.map((url, i) => (
+                    <div key={i}>{renderFullMedia(url)}</div>
+                ))}
+            </div>
         );
     };
 
@@ -216,7 +257,8 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                     notifications.map((n) => {
                                         const parts = n.content.split(' |__MEDIA__|');
                                         const textContent = parts[0];
-                                        const resolvedMediaUrl = parts[1] || n.media_url;
+                                        const mediaUrls = parseMediaUrls(parts[1] || n.media_url);
+                                        const isPack = textContent.includes('Pack');
 
                                         return (
                                         <div
@@ -229,7 +271,7 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                         >
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-primary group-hover:text-white transition-colors">
-                                                    Custom Drop: €{n.amount}
+                                                    {isPack ? `💎 Pack: €${n.amount}` : `Custom Drop: €${n.amount}`}
                                                 </span>
                                                 <span className="text-[9px] text-white/40">
                                                     {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -239,12 +281,12 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                                 "{textContent}"
                                             </p>
                                             
-                                            {resolvedMediaUrl ? (
+                                            {mediaUrls.length > 0 ? (
                                                 <div className="mt-1">
                                                     <span className="text-[9px] text-green-400 font-bold uppercase tracking-widest block">
-                                                        Media Attached
+                                                        {mediaUrls.length} Media {mediaUrls.length === 1 ? 'File' : 'Files'} Included
                                                     </span>
-                                                    {renderMediaThumbnail(resolvedMediaUrl)}
+                                                    {renderMediaThumbnails(mediaUrls)}
                                                 </div>
                                             ) : (
                                                 <div className="mt-2 p-1.5 rounded bg-black/40 border border-white/10 flex items-center justify-center">
@@ -269,7 +311,8 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                     {viewingNotification && (() => {
                         const parts = viewingNotification.content.split(' |__MEDIA__|');
                         const textContent = parts[0];
-                        const resolvedMediaUrl = parts[1] || viewingNotification.media_url;
+                        const mediaUrls = parseMediaUrls(parts[1] || viewingNotification.media_url);
+                        const isPack = textContent.includes('Pack');
 
                         return (
                             <motion.div
@@ -289,7 +332,7 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                     <div className="flex items-center justify-between mb-4 shrink-0 border-b border-white/10 pb-4">
                                         <div className="flex flex-col">
                                             <h2 className="text-xl font-black text-primary fd-font-tech tracking-widest uppercase">
-                                                Accepted Request
+                                                {isPack ? '💎 Pack Purchased' : 'Accepted Request'}
                                             </h2>
                                             <p className="text-sm text-white/50 font-medium">
                                                 {new Date(viewingNotification.created_at).toLocaleString()}
@@ -305,16 +348,20 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
 
                                     <div className="overflow-y-auto flex-1 themed-scrollbar pr-2">
                                         <div className="mb-6 bg-primary/10 border border-primary/20 rounded-xl p-4">
-                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">Original Request • €{viewingNotification.amount}</p>
+                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
+                                                {isPack ? `Pack Purchase • €${viewingNotification.amount}` : `Original Request • €${viewingNotification.amount}`}
+                                            </p>
                                             <p className="text-base text-white/90 leading-relaxed italic font-medium">
                                                 "{textContent}"
                                             </p>
                                         </div>
 
-                                        {resolvedMediaUrl ? (
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-[11px] font-bold text-green-400 uppercase tracking-widest mb-3 self-start">Delivery Attached</span>
-                                                {renderFullMedia(resolvedMediaUrl)}
+                                        {mediaUrls.length > 0 ? (
+                                            <div className="flex flex-col">
+                                                <span className="text-[11px] font-bold text-green-400 uppercase tracking-widest mb-3">
+                                                    {mediaUrls.length} Media {mediaUrls.length === 1 ? 'File' : 'Files'}
+                                                </span>
+                                                {renderFullMediaGallery(mediaUrls)}
                                             </div>
                                         ) : (
                                             <div className="py-12 bg-white/5 rounded-xl border border-white/5 flex flex-col items-center justify-center">

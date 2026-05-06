@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit, MapPin, Calendar, Link as LinkIcon, Users, UserPlus, UserCheck, Heart, Camera, Share2, Crown, Lock, ArrowLeft, MessageSquare, Sparkles, Star, ScrollText, CalendarClock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { uploadToLocalServer } from "@/utils/uploadHelper";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard, { Post } from "@/components/posts/PostCard";
 import SubscriptionModal from "@/components/subscriptions/SubscriptionModal";
@@ -86,8 +87,68 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
+    const [localAvatarUrl, setLocalAvatarUrl] = useState(profile.avatar_url);
+    const [localCoverUrl, setLocalCoverUrl] = useState(profile.cover_url);
     const supabase = createClient();
     const router = useRouter();
+
+    useEffect(() => {
+        setLocalAvatarUrl(profile.avatar_url);
+        setLocalCoverUrl(profile.cover_url);
+    }, [profile.avatar_url, profile.cover_url]);
+
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setUploading(true);
+            if (!event.target.files || event.target.files.length === 0) return;
+            const file = event.target.files[0];
+            const publicUrl = await uploadToLocalServer(file);
+            
+            const { error } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', profile.id);
+                
+            if (error) throw error;
+            
+            setLocalAvatarUrl(publicUrl);
+            toast.success("Profile photo updated!");
+            router.refresh();
+        } catch (error: any) {
+            console.error("Error uploading avatar:", error);
+            toast.error("Error uploading profile photo");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleCoverUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setUploading(true);
+            if (!event.target.files || event.target.files.length === 0) return;
+            const file = event.target.files[0];
+            const publicUrl = await uploadToLocalServer(file);
+            
+            const { error } = await supabase
+                .from('profiles')
+                .update({ cover_url: publicUrl })
+                .eq('id', profile.id);
+                
+            if (error) throw error;
+            
+            setLocalCoverUrl(publicUrl);
+            toast.success("Cover photo updated!");
+            router.refresh();
+        } catch (error: any) {
+            console.error("Error uploading cover:", error);
+            toast.error("Error uploading cover photo");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         const checkSubscription = async () => {
@@ -185,9 +246,9 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
         <div className="min-h-screen bg-black text-white pb-20 font-sans">
             {/* 1. Cover Area with Hex Grid */}
             <div className="relative h-96 md:h-[550px] w-full overflow-hidden border-b-2 border-pink-500/20">
-                {profile.cover_url ? (
+                {localCoverUrl ? (
                     <div className="absolute inset-0 z-0">
-                        <img src={profile.cover_url} alt="Cover" className="w-full h-full object-cover" />
+                        <img src={localCoverUrl} alt="Cover" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
                     </div>
                 ) : (
@@ -207,11 +268,22 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
 
                 {/* Cover Edit Button */}
                 {isOwner && (
-                    <Link href="/settings/profile">
-                        <button className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white/80 p-2 rounded-full backdrop-blur-md transition-colors border border-white/10">
-                            <Camera className="w-5 h-5" />
+                    <>
+                        <button 
+                            onClick={() => coverInputRef.current?.click()}
+                            disabled={uploading}
+                            className="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white/80 p-2 rounded-full backdrop-blur-md transition-colors border border-white/10"
+                        >
+                            <Camera className={`w-5 h-5 ${uploading ? 'animate-pulse' : ''}`} />
                         </button>
-                    </Link>
+                        <input
+                            type="file"
+                            ref={coverInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleCoverUpload}
+                        />
+                    </>
                 )}
             </div>
 
@@ -220,15 +292,28 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                     {/* 2. Avatar */}
                     <div className="relative group -mt-10 md:-mt-12">
                         <Avatar className="w-40 h-40 md:w-48 md:h-48 border-[6px] border-black shadow-2xl ring-4 ring-pink-500/20">
-                            <AvatarImage src={profile.avatar_url || ""} alt={profile.username || "User"} className="object-cover" />
+                            <AvatarImage src={localAvatarUrl || ""} alt={profile.username || "User"} className="object-cover" />
                             <AvatarFallback className="bg-zinc-900 text-3xl font-bold text-zinc-500">
                                 {(profile.username?.[0] || profile.full_name?.[0] || "?").toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
                         {isOwner && (
-                            <button className="absolute bottom-1 right-1 bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-full shadow-lg border-2 border-black transition-colors">
-                                <Camera className="w-4 h-4" />
-                            </button>
+                            <>
+                                <button 
+                                    onClick={() => avatarInputRef.current?.click()}
+                                    disabled={uploading}
+                                    className="absolute bottom-1 right-1 bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-full shadow-lg border-2 border-black transition-colors"
+                                >
+                                    <Camera className={`w-4 h-4 ${uploading ? 'animate-pulse' : ''}`} />
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={avatarInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleAvatarUpload}
+                                />
+                            </>
                         )}
                     </div>
 

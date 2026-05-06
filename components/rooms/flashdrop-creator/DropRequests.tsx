@@ -33,14 +33,20 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
                 .limit(20);
-            if (data) setRequests(data as DropRequest[]);
+            // Filter out impulse spends and pack purchases — they are reactions/instant buys, not custom requests
+            if (data) setRequests((data as DropRequest[]).filter(r => !r.content.includes('Impulse') && !r.content.includes('Purchased Pack')));
         }
         fetchRequests();
 
         const channel = supabase
             .channel(`flash-drop-requests-${roomId}`)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` },
-                (payload) => setRequests(prev => [payload.new as DropRequest, ...prev]))
+                (payload) => {
+                    const newReq = payload.new as DropRequest;
+                    // Skip impulse spends and pack purchases — they are reactions/instant buys, not requests
+                    if (newReq.content.includes('Impulse') || newReq.content.includes('Purchased Pack')) return;
+                    setRequests(prev => [newReq, ...prev]);
+                })
             .subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [roomId]);

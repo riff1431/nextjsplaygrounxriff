@@ -32,18 +32,20 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
 
-    // Check existing count
+    // Check existing count — only count truly active drops (not ended AND not expired)
     const { count, error: countError } = await supabase
         .from("flash_drops")
         .select("*", { count: 'exact', head: true })
-        .eq("room_id", roomId);
+        .eq("room_id", roomId)
+        .neq("status", "Ended")
+        .gt("ends_at", new Date().toISOString());
 
     if (countError) {
         return NextResponse.json({ error: countError.message }, { status: 500 });
     }
 
-    if (count !== null && count >= 12) {
-        return NextResponse.json({ error: "Maximum limit of 12 drops reached for this room." }, { status: 400 });
+    if (count !== null && count >= 50) {
+        return NextResponse.json({ error: "Maximum limit of 50 active drops reached." }, { status: 400 });
     }
 
     const body = await request.json();

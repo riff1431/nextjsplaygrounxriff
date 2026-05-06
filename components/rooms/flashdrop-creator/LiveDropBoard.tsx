@@ -99,7 +99,25 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
             .select("*")
             .eq("room_id", roomId)
             .order("created_at", { ascending: false });
-        if (data) setDrops(data as FlashDrop[]);
+        if (data) {
+            const now = Date.now();
+            // Auto-end any drops whose timer has expired but still marked "Live"
+            const expiredLiveDrops = data.filter(
+                (d: any) => d.status === "Live" && d.ends_at && new Date(d.ends_at).getTime() <= now
+            );
+            if (expiredLiveDrops.length > 0) {
+                // Batch-update expired drops to "Ended" in DB
+                for (const d of expiredLiveDrops) {
+                    supabase
+                        .from("flash_drops")
+                        .update({ status: "Ended" })
+                        .eq("id", d.id)
+                        .then(() => {});
+                    d.status = "Ended"; // Also update local state immediately
+                }
+            }
+            setDrops(data as FlashDrop[]);
+        }
         setLoading(false);
     }, [roomId]);
 
@@ -215,15 +233,22 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
         }
     };
 
+    // A drop is truly active if it's not "Ended" AND its timer hasn't expired
+    const isDropActive = (d: FlashDrop) =>
+        d.status !== "Ended" && (!d.ends_at || new Date(d.ends_at).getTime() > Date.now());
+
+    // Count of truly active drops (used for the 12-drop cap)
+    const liveDropsCount = drops.filter(isDropActive).length;
+
     const activeDrops = drops.filter(d => {
-        if (d.status !== "Live") return false;
+        if (!isDropActive(d)) return false;
         if (kindFilter === "photos") return d.kind === "Photo";
         if (kindFilter === "videos") return d.kind === "Video";
         return true;
     });
 
     const endedDrops = drops.filter(d => {
-        if (d.status !== "Ended") return false;
+        if (isDropActive(d)) return false;
         if (kindFilter === "photos") return d.kind === "Photo";
         if (kindFilter === "videos") return d.kind === "Video";
         return true;
@@ -251,16 +276,11 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    disabled={!roomId || drops.length >= 12}
+                    disabled={!roomId}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative"
                 >
                     <Plus size={14} />
                     Add Drop
-                    {drops.length >= 12 && (
-                        <div className="absolute bottom-full right-0 mb-2 invisible group-hover:visible bg-black/90 border border-primary/40 px-2 py-1 rounded text-[10px] whitespace-nowrap z-50">
-                            Max 12 drops reached
-                        </div>
-                    )}
                 </button>
             </div>
 

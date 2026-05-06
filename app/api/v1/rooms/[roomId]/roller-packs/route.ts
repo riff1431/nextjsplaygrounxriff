@@ -41,7 +41,7 @@ export async function POST(
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { name, price, description } = body;
+    const { name, price, description, media_urls } = body;
 
     if (!name || !price || price <= 0) {
         return NextResponse.json({ error: "Name and valid price required" }, { status: 400 });
@@ -55,6 +55,7 @@ export async function POST(
             name,
             price,
             description: description || null,
+            media_urls: Array.isArray(media_urls) ? media_urls : [],
         })
         .select()
         .single();

@@ -366,122 +366,130 @@ export default function FanConfessionsBrowsePage() {
                             </button>
                         </div>
 
-                        {/* ── HERO STATS ─────────────────────────────── */}
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            {[
-                                { label: "Soft & Spicy", count: softCount + spicyCount, icon: <Sparkles className="w-4 h-4" />, color: "text-pink-300", bg: "bg-pink-500/10", border: "border-pink-500/20" },
-                                { label: "Dark & Dirty", count: darkCount, icon: <Flame className="w-4 h-4" />, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-                                { label: "Total Active", count: confessions.length, icon: <Lock className="w-4 h-4" />, color: "text-purple-300", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-                            ].map((stat) => (
-                                <div key={stat.label} className={cn("rounded-2xl border p-3 text-center", stat.bg, stat.border)}>
-                                    <div className={cn("flex items-center justify-center gap-1 mb-1", stat.color)}>
-                                        {stat.icon}
-                                        <span className="text-xl font-black">{loading ? "–" : stat.count}</span>
-                                    </div>
-                                    <p className="text-[10px] text-white/40 font-medium">{stat.label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* ── SEARCH + FILTERS ───────────────────────── */}
-                        <div className="mb-6 space-y-3">
-                            {/* Search Bar */}
-                            <div className="relative">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                                <input
-                                    type="text"
-                                    value={searchInput}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    placeholder="Search by creator name…"
-                                    className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm text-white placeholder-white/25 focus:outline-none focus:border-rose-500/50 focus:bg-white/8 transition"
-                                />
-                                {searchInput && (
-                                    <button
-                                        onClick={() => { setSearchInput(""); setSearchQuery(""); }}
-                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                )}
+                        {/* ── BROWSE CONFESSIONS SECTION ──────────────── */}
+                        <div className="relative rounded-3xl border border-rose-500/20 bg-black/20 p-6 md:p-8 backdrop-blur-sm mt-4">
+                            {/* Section Title */}
+                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#0a0005] px-4">
+                                <h2 className="text-sm font-bold text-rose-400 tracking-wider whitespace-nowrap">Browse live confessions</h2>
                             </div>
 
-                            {/* Tier Filters (scrollable) */}
-                            <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-scrollbar:none]">
-                                {TIERS.map(t => {
-                                    const tc = TIER_COLORS[t];
-                                    const isActive = tier === t;
-                                    return (
+                            {/* ── HERO STATS ─────────────────────────────── */}
+                            <div className="grid grid-cols-3 gap-3 mb-6 mt-2">
+                                {[
+                                    { label: "Soft & Spicy", count: softCount + spicyCount, icon: <Sparkles className="w-4 h-4" />, color: "text-pink-300", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+                                    { label: "Dark & Dirty", count: darkCount, icon: <Flame className="w-4 h-4" />, color: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+                                    { label: "Total Active", count: confessions.length, icon: <Lock className="w-4 h-4" />, color: "text-purple-300", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+                                ].map((stat) => (
+                                    <div key={stat.label} className={cn("rounded-2xl border p-3 text-center", stat.bg, stat.border)}>
+                                        <div className={cn("flex items-center justify-center gap-1 mb-1", stat.color)}>
+                                            {stat.icon}
+                                            <span className="text-xl font-black">{loading ? "–" : stat.count}</span>
+                                        </div>
+                                        <p className="text-[10px] text-white/40 font-medium">{stat.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* ── SEARCH + FILTERS ───────────────────────── */}
+                            <div className="mb-6 space-y-3">
+                                {/* Search Bar */}
+                                <div className="relative">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                    <input
+                                        type="text"
+                                        value={searchInput}
+                                        onChange={(e) => handleSearch(e.target.value)}
+                                        placeholder="Search by creator name…"
+                                        className="w-full pl-10 pr-10 py-3 rounded-2xl bg-white/5 border border-white/10 text-sm text-white placeholder-white/25 focus:outline-none focus:border-rose-500/50 focus:bg-white/8 transition"
+                                    />
+                                    {searchInput && (
                                         <button
-                                            key={t}
-                                            onClick={() => handleTierChange(t)}
-                                            className={cn(
-                                                "shrink-0 text-xs font-bold px-4 py-1.5 rounded-full border transition-all",
-                                                isActive
-                                                    ? cn(tc.bg, tc.text, tc.border, tc.glow, "scale-105")
-                                                    : "bg-white/5 text-white/40 border-white/10 hover:text-white/70 hover:bg-white/8"
-                                            )}
+                                            onClick={() => { setSearchInput(""); setSearchQuery(""); }}
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition"
                                         >
-                                            {t}
+                                            <X className="w-4 h-4" />
                                         </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* ── CONFESSION GRID ─────────────────────────── */}
-                        {loading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
-                            </div>
-                        ) : confessions.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-24 text-center">
-                                <div className="relative mb-6">
-                                    <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
-                                        <Lock className="w-8 h-8 text-rose-400/40" />
-                                    </div>
-                                    <div className="absolute inset-0 rounded-full bg-rose-500/5 blur-2xl animate-pulse" />
-                                </div>
-                                <h2 className="text-white/60 text-lg font-bold mb-2">No Confessions Found</h2>
-                                <p className="text-white/30 text-sm max-w-xs">
-                                    {searchInput ? `No confessions match "${searchInput}". Try a different creator name.` : "No active confessions published yet. Check back soon!"}
-                                </p>
-                                {searchInput && (
-                                    <button
-                                        onClick={() => { setSearchInput(""); setSearchQuery(""); setTier("All"); }}
-                                        className="mt-6 px-5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-sm font-bold border border-rose-500/20 transition"
-                                    >
-                                        Clear Search
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="flex items-center justify-between mb-4">
-                                    <p className="text-white/40 text-sm">
-                                        <span className="text-white font-bold">{confessions.length}</span>{" "}
-                                        {tier !== "All" ? `${tier} ` : ""}confession{confessions.length !== 1 ? "s" : ""}
-                                    </p>
-                                    <button
-                                        onClick={() => router.push("/rooms/confessions")}
-                                        className="inline-flex items-center gap-1.5 text-rose-400 text-xs font-bold hover:text-rose-300 transition"
-                                    >
-                                        Enter Room
-                                        <ChevronRight className="w-3 h-3" />
-                                    </button>
+                                    )}
                                 </div>
 
+                                {/* Tier Filters (scrollable) */}
+                                <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-scrollbar:none]">
+                                    {TIERS.map(t => {
+                                        const tc = TIER_COLORS[t];
+                                        const isActive = tier === t;
+                                        return (
+                                            <button
+                                                key={t}
+                                                onClick={() => handleTierChange(t)}
+                                                className={cn(
+                                                    "shrink-0 text-xs font-bold px-4 py-1.5 rounded-full border transition-all",
+                                                    isActive
+                                                        ? cn(tc.bg, tc.text, tc.border, tc.glow, "scale-105")
+                                                        : "bg-white/5 text-white/40 border-white/10 hover:text-white/70 hover:bg-white/8"
+                                                )}
+                                            >
+                                                {t}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* ── CONFESSION GRID ─────────────────────────── */}
+                            {loading ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                    {confessions.map(c => (
-                                        <ConfessionCard
-                                            key={c.id}
-                                            confession={c}
-                                            isUnlocked={myUnlocks.has(c.id)}
-                                            onUnlock={setUnlockTarget}
-                                        />
-                                    ))}
+                                    {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
                                 </div>
-                            </>
-                        )}
+                            ) : confessions.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-24 text-center">
+                                    <div className="relative mb-6">
+                                        <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto">
+                                            <Lock className="w-8 h-8 text-rose-400/40" />
+                                        </div>
+                                        <div className="absolute inset-0 rounded-full bg-rose-500/5 blur-2xl animate-pulse" />
+                                    </div>
+                                    <h2 className="text-white/60 text-lg font-bold mb-2">No Confessions Found</h2>
+                                    <p className="text-white/30 text-sm max-w-xs">
+                                        {searchInput ? `No confessions match "${searchInput}". Try a different creator name.` : "No active confessions published yet. Check back soon!"}
+                                    </p>
+                                    {searchInput && (
+                                        <button
+                                            onClick={() => { setSearchInput(""); setSearchQuery(""); setTier("All"); }}
+                                            className="mt-6 px-5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-sm font-bold border border-rose-500/20 transition"
+                                        >
+                                            Clear Search
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <p className="text-white/40 text-sm">
+                                            <span className="text-white font-bold">{confessions.length}</span>{" "}
+                                            {tier !== "All" ? `${tier} ` : ""}confession{confessions.length !== 1 ? "s" : ""}
+                                        </p>
+                                        <button
+                                            onClick={() => router.push("/rooms/confessions")}
+                                            className="inline-flex items-center gap-1.5 text-rose-400 text-xs font-bold hover:text-rose-300 transition"
+                                        >
+                                            Enter Room
+                                            <ChevronRight className="w-3 h-3" />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {confessions.map(c => (
+                                            <ConfessionCard
+                                                key={c.id}
+                                                confession={c}
+                                                isUnlocked={myUnlocks.has(c.id)}
+                                                onUnlock={setUnlockTarget}
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </main>
                 </div>
 

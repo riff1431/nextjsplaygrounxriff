@@ -11,7 +11,6 @@ import { createClient } from "@/utils/supabase/client";
 import dynamic from "next/dynamic";
 import { toast as sonnerToast } from "sonner";
 
-import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import InviteModal from "@/components/rooms/InviteModal";
@@ -660,7 +659,6 @@ function ConfessionsRoom() {
                                     <UserPlus className="h-4 w-4" />
                                     <span className="hidden sm:inline">Invite</span>
                                 </button>
-                                <WalletPill />
                                 
                                 {(() => {
                                     const unreadCount = requests.filter(r => r.status === 'delivered').length;
