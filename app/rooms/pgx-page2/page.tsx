@@ -140,10 +140,42 @@ function PgxPage2Inner() {
     const [buying, setBuying] = useState<string | null>(null);
     const [chatInput, setChatInput] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
+
+    // Session Status Gating
+    const [sessionStatus, setSessionStatus] = useState<string | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
 
     const { messages, sendMessage } = useBarChat(roomId, sessionId);
+
+    // Session Status Gating — fetch initial status and subscribe to realtime updates
+    useEffect(() => {
+        if (!sessionId) {
+            setSessionStatus('active');
+            return;
+        }
+
+        const fetchSessionStatus = async () => {
+            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', sessionId).single();
+            if (data) {
+                if (data.status === 'ended') setSessionStatus('ended');
+                else if (!data.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            }
+        };
+        fetchSessionStatus();
+
+        const channel = supabase.channel(`session-status-${sessionId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${sessionId}` }, (payload) => {
+                const newData = payload.new;
+                if (newData.status === 'ended') setSessionStatus('ended');
+                else if (!newData.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [sessionId, supabase]);
 
     /* ── Fetch session data ─── */
     useEffect(() => {
@@ -234,6 +266,55 @@ function PgxPage2Inner() {
         return (
             <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: BG }}>
                 <Loader2 style={{ width: "32px", height: "32px", color: PURPLE, animation: "spin 1s linear infinite" }} />
+            </div>
+        );
+    }
+
+    /* ── Session Status Gating — Waiting for Host ─── */
+    if (sessionStatus === 'pending') {
+        return (
+            <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', fontFamily: "'Montserrat', sans-serif", color: FG }}>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/rooms/bar-lounge/lounge-bg-v2.png)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.2 }} />
+                <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'hsla(270,50%,8%,0.8)' }} />
+                
+                <button onClick={() => router.push('/rooms/bar-lounge')} style={{ position: 'absolute', top: '24px', left: '24px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', background: 'hsla(0,0%,100%,0.1)', border: '1px solid hsla(0,0%,100%,0.1)', cursor: 'pointer', color: FG, zIndex: 20, transition: 'all 0.2s' }}>
+                    <ArrowLeft style={{ width: '18px', height: '18px' }} />
+                </button>
+
+                <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ width: '64px', height: '64px', border: `4px solid hsla(42,90%,55%,0.2)`, borderTopColor: GOLD, borderRadius: '9999px', animation: 'spin 1s linear infinite', marginBottom: '32px', boxShadow: `0 0 30px hsla(42,90%,55%,0.3)` }} />
+                    <h1 style={{ fontSize: '2rem', fontWeight: 900, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '12px', textAlign: 'center', padding: '0 16px', ...glowTextGold, fontFamily: "'Playfair Display', serif" }}>
+                        Waiting for Host
+                    </h1>
+                    <p style={{ color: 'hsla(0,0%,100%,0.6)', fontSize: '14px', fontWeight: 500, letterSpacing: '0.05em' }}>
+                        The Bar Lounge session will begin shortly.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    /* ── Session Status Gating — Session Ended ─── */
+    if (sessionStatus === 'ended') {
+        return (
+            <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', fontFamily: "'Montserrat', sans-serif", color: FG }}>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: 'url(/rooms/bar-lounge/lounge-bg-v2.png)', backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.1, filter: 'grayscale(100%)' }} />
+                <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: 'hsla(270,50%,8%,0.9)' }} />
+                
+                <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'hsla(0,0%,100%,0.05)', border: '1px solid hsla(0,0%,100%,0.1)', padding: '40px', borderRadius: '24px', backdropFilter: 'blur(12px)' }}>
+                    <div style={{ width: '64px', height: '64px', background: 'hsla(0,0%,100%,0.1)', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', border: '1px solid hsla(0,0%,100%,0.1)' }}>
+                        <span style={{ fontSize: '24px' }}>🍸</span>
+                    </div>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '12px', ...glowTextGold, fontFamily: "'Playfair Display', serif" }}>
+                        Session Ended
+                    </h1>
+                    <p style={{ color: 'hsla(0,0%,100%,0.5)', fontSize: '14px', fontWeight: 500, marginBottom: '32px' }}>
+                        This Bar Lounge session has concluded.
+                    </p>
+                    <button onClick={() => router.push('/rooms/bar-lounge')} style={{ ...btnGold, padding: '12px 32px', fontSize: '14px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', boxShadow: `0 0 20px hsla(42,90%,55%,0.3)` }}>
+                        Return to Lobby
+                    </button>
+                </div>
             </div>
         );
     }

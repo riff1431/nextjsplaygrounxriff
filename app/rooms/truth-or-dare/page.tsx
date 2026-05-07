@@ -118,7 +118,7 @@ function TruthOrDareContent() {
 
     // Session State
     const [loading, setLoading] = useState(true);
-    const [sessionStatus, setSessionStatus] = useState<'active' | 'ended' | 'loading'>('loading');
+    const [sessionStatus, setSessionStatus] = useState<'active' | 'ended' | 'pending' | 'loading'>('loading');
     const [access, setAccess] = useState<'granted' | 'locked'>('locked'); // Default locked for security
     const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
     const [sessionInfo, setSessionInfo] = useState<{ title: string; desc: string; price: number; isPrivate: boolean } | null>(null);
@@ -325,6 +325,32 @@ function TruthOrDareContent() {
         }
         checkAccess();
     }, [roomId, supabase]);
+
+    // Session Status Gating — check room_sessions for pending (pre-live) state
+    useEffect(() => {
+        if (!sessionId) return;
+
+        const fetchSessionStatus = async () => {
+            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', sessionId).single();
+            if (data) {
+                if (data.status === 'ended') setSessionStatus('ended');
+                else if (!data.live_started_at) setSessionStatus('pending');
+                // else: active is handled by the truth_dare_games check below
+            }
+        };
+        fetchSessionStatus();
+
+        const sessionGateChannel = supabase.channel(`session-gate-${sessionId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${sessionId}` }, (payload) => {
+                const newData = payload.new;
+                if (newData.status === 'ended') setSessionStatus('ended');
+                else if (!newData.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(sessionGateChannel); };
+    }, [sessionId, supabase]);
 
     // Realtime Status Updates
     useEffect(() => {
@@ -786,12 +812,49 @@ function TruthOrDareContent() {
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-pink-500">Checking access...</div>;
 
+    if (sessionStatus === 'pending') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white relative">
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, hsl(270,50%,8%), hsl(280,40%,5%))' }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-pink-500/5 via-transparent to-purple-500/5" />
+                
+                <button onClick={onBack} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition-all z-20">
+                    <ArrowLeft size={18} />
+                </button>
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full animate-spin mb-8" style={{ boxShadow: '0 0 30px hsla(320, 100%, 65%, 0.4)' }} />
+                    <h1 className="text-2xl md:text-4xl font-black text-white uppercase tracking-[0.2em] mb-3 text-center px-4" style={{ textShadow: '0 0 20px hsla(320, 100%, 65%, 0.5)' }}>
+                        Waiting for Creator
+                    </h1>
+                    <p className="text-white/60 text-sm font-medium tracking-wide">
+                        The Truth or Dare session will begin shortly.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     if (sessionStatus === 'ended' && roomId) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-6 text-center">
-                <div className="text-xl font-bold mb-2">Session Ended</div>
-                <p className="text-gray-400 mb-6">This Truth or Dare session is no longer active.</p>
-                <button onClick={onBack} className="px-6 py-2 bg-pink-600 rounded-xl">Back to Home</button>
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white relative">
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, hsl(270,50%,5%), hsl(280,30%,3%))' }} />
+                <div className="absolute inset-0 bg-black/60" />
+                
+                <div className="relative z-10 flex flex-col items-center bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-md">
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6 border border-white/10">
+                        <span className="text-2xl">🎭</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-3" style={{ textShadow: '0 0 15px rgba(255,255,255,0.2)' }}>
+                        Session Ended
+                    </h1>
+                    <p className="text-white/50 text-sm font-medium mb-8">
+                        This Truth or Dare session has concluded.
+                    </p>
+                    <button onClick={onBack} className="px-8 py-3 rounded-xl text-white font-bold tracking-widest uppercase hover:brightness-110 transition-all text-sm" style={{ background: 'linear-gradient(135deg, hsl(320, 100%, 55%), hsl(280, 80%, 60%))', boxShadow: '0 0 20px hsla(320, 100%, 65%, 0.3)' }}>
+                        Return to Dashboard
+                    </button>
+                </div>
             </div>
         );
     }

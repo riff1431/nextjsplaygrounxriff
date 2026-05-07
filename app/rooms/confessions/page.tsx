@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
-    MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus
+    MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus, Loader2
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -223,6 +223,40 @@ function ConfessionsRoom() {
 
     // Incoming Modal
     const [showIncomingModal, setShowIncomingModal] = useState(false);
+
+    // Session Status Gating
+    const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+
+    // Session Status Gating — fetch initial status and subscribe to realtime updates
+    useEffect(() => {
+        if (!urlSessionId) {
+            setSessionStatus('active');
+            return;
+        }
+
+        const supabase = createClient();
+
+        const fetchSessionStatus = async () => {
+            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', urlSessionId).single();
+            if (data) {
+                if (data.status === 'ended') setSessionStatus('ended');
+                else if (!data.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            }
+        };
+        fetchSessionStatus();
+
+        const channel = supabase.channel(`session-status-${urlSessionId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${urlSessionId}` }, (payload) => {
+                const newData = payload.new;
+                if (newData.status === 'ended') setSessionStatus('ended');
+                else if (!newData.live_started_at) setSessionStatus('pending');
+                else setSessionStatus('active');
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [urlSessionId]);
 
     // Discover room on mount — prefer roomId from URL, then auto-discover
     useEffect(() => {
@@ -623,6 +657,59 @@ function ConfessionsRoom() {
     // ========================================================================
     // RENDER
     // ========================================================================
+
+    // Session Status Gating — Waiting for Creator
+    if (sessionStatus === 'pending') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center text-white relative" style={{ background: '#0f0505' }}>
+                <div className="absolute inset-0 pointer-events-none">
+                    <img src="/assets/bg-flames.png" alt="" className="w-full h-full object-cover opacity-20" />
+                    <div className="absolute inset-0 bg-black/50" />
+                </div>
+                
+                <button onClick={() => router.push('/home')} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all z-20">
+                    <ArrowLeft size={18} />
+                </button>
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 border-4 border-rose-500/20 border-t-rose-500 rounded-full animate-spin mb-8" style={{ boxShadow: '0 0 30px hsla(350, 80%, 55%, 0.4)' }} />
+                    <h1 className="text-2xl md:text-4xl font-black text-white uppercase tracking-[0.2em] mb-3 text-center px-4" style={{ textShadow: '0 0 20px hsla(350, 80%, 55%, 0.5)' }}>
+                        Waiting for Creator
+                    </h1>
+                    <p className="text-white/60 text-sm font-medium tracking-wide">
+                        The confession session will begin shortly.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Session Status Gating — Session Ended
+    if (sessionStatus === 'ended') {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center text-white relative" style={{ background: '#0f0505' }}>
+                <div className="absolute inset-0 pointer-events-none">
+                    <img src="/assets/bg-flames.png" alt="" className="w-full h-full object-cover opacity-10 grayscale" />
+                    <div className="absolute inset-0 bg-black/80" />
+                </div>
+                
+                <div className="relative z-10 flex flex-col items-center bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-md">
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
+                        <span className="text-2xl">💔</span>
+                    </div>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-3">
+                        Session Ended
+                    </h1>
+                    <p className="text-white/50 text-sm font-medium mb-8">
+                        This confession session has concluded.
+                    </p>
+                    <button onClick={() => router.push('/home')} className="px-8 py-3 rounded-xl text-white font-bold tracking-widest uppercase hover:brightness-110 transition-all text-sm" style={{ background: 'linear-gradient(135deg, hsl(350, 80%, 50%), hsl(350, 80%, 60%))' }}>
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ProtectRoute allowedRoles={["fan", "creator"]}>
