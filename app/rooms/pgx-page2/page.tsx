@@ -10,7 +10,6 @@ import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import dynamic from "next/dynamic";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus } from "lucide-react";
-import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
@@ -513,13 +512,6 @@ function PgxPage2Inner() {
                 roomId={roomId}
             />
 
-            {/* Per-Minute Billing */}
-            <BillingOverlay
-                sessionId={sessionId}
-                accentHsl="280, 100%, 70%"
-                rateLabel="€2/min"
-                exitRoute="/rooms/bar-lounge"
-            />
         </div>
     );
 }

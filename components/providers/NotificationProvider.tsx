@@ -81,24 +81,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     // const audio = new Audio('/sounds/notification.mp3');
                     // audio.play().catch(e => console.log('Audio play failed', e));
 
-                    // Toast — enhanced for room invitations
-                    if (newNotif.type === "room_invitation" && newNotif.link) {
-                        toast("💖 Room Invitation", {
-                            description: newNotif.message,
-                            duration: 15000,
-                            action: {
-                                label: "Enter Room",
-                                onClick: () => window.location.href = newNotif.link!,
-                            },
-                        });
-                    } else {
-                        toast(newNotif.title, {
-                            description: newNotif.message,
-                            action: newNotif.link ? {
-                                label: "View",
-                                onClick: () => window.location.href = newNotif.link!
-                            } : undefined,
-                        });
+                    // Check if we should skip the global toast to prevent duplicates in specific rooms
+                    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+                    const skipToast = (newNotif.type === 'confession_tip' || newNotif.type === 'confession_request' || newNotif.type === 'confession_request_update') && pathname.includes('/rooms/confessions');
+
+                    if (!skipToast) {
+                        // Toast — enhanced for room invitations
+                        if (newNotif.type === "room_invitation" && newNotif.link) {
+                            toast("💖 Room Invitation", {
+                                description: newNotif.message,
+                                duration: 15000,
+                                action: {
+                                    label: "Enter Room",
+                                    onClick: () => window.location.href = newNotif.link!,
+                                },
+                            });
+                        } else {
+                            toast(newNotif.title, {
+                                description: newNotif.message,
+                                action: newNotif.link ? {
+                                    label: "View",
+                                    onClick: () => window.location.href = newNotif.link!
+                                } : undefined,
+                            });
+                        }
                     }
                 }
             )

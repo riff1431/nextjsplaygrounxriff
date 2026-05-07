@@ -15,7 +15,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { toast as sonnerToast } from "sonner";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
-import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifications";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -530,13 +529,6 @@ export default function FlashDropsRoomPreview() {
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
 
-                {/* Per-Minute Billing */}
-                <BillingOverlay
-                    sessionId={urlSessionId}
-                    accentHsl="330, 100%, 55%"
-                    rateLabel="€2/min"
-                    exitRoute="/rooms/flash-drop-sessions"
-                />
             </div>
         </ProtectRoute>
     );

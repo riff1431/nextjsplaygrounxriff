@@ -15,7 +15,6 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
-import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -874,7 +873,7 @@ function ConfessionsRoom() {
                                 <p className="text-rose-100 text-lg">{reviewRequest.delivery_content}</p>
                             </div>
                             <Btn variant="solid" onClick={() => handleApproveDelivery(reviewRequest.id)} className="w-full py-4 bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30 rounded-2xl font-black">
-                                Approve & Release Funds
+                                Completed!
                             </Btn>
                         </div>
                     </div>
@@ -933,13 +932,6 @@ function ConfessionsRoom() {
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
 
-                {/* Per-Minute Billing */}
-                <BillingOverlay
-                    sessionId={urlSessionId}
-                    accentHsl="350, 85%, 55%"
-                    rateLabel="€2/min"
-                    exitRoute="/rooms/confessions-sessions"
-                />
             </div>
         </ProtectRoute>
     );

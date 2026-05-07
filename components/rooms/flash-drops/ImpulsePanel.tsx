@@ -9,10 +9,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Inbox } from "lucide-react";
 
 const impulseButtons = [
-    { label: "Quick Like", price: 5, icon: "⚡" },
-    { label: "Hype", price: 10, icon: "👤" },
-    { label: "Boost", price: 25, icon: "🚀" },
-    { label: "Flex", price: 50, icon: "✉️" },
+    { label: "Kiss", price: 5, icon: "💋" },
+    { label: "Hug", price: 10, icon: "🤗" },
+    { label: "Heart", price: 25, icon: "❤️" },
+    { label: "Diamond", price: 50, icon: "💎" },
 ];
 
 interface RollerPack {
@@ -219,7 +219,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                             return (
                                 <div
                                     key={pack.id}
-                                    className="rounded-lg border border-primary/25 bg-black/30 hover:border-primary/60 hover:bg-primary/5 transition-all group"
+                                    className="rounded-xl border border-primary/25 bg-black/30 hover:border-primary/60 hover:bg-primary/5 transition-all group"
                                     style={{ boxShadow: "0 0 6px hsl(330 100% 55% / 0.05)" }}
                                 >
                                     <div className="flex items-center gap-2.5 px-3 py-2">
@@ -242,7 +242,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                             {isPurchased ? (
                                                 <button
                                                     onClick={() => setViewingPack(pack)}
-                                                    className="px-2.5 py-1 rounded-lg fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    className="px-2.5 py-1 rounded-xl fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                                                     style={{
                                                         background: "linear-gradient(135deg, hsl(160 100% 40%), hsl(160 100% 30%))",
                                                         boxShadow: "0 0 12px hsl(160 100% 45% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
@@ -254,7 +254,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                             ) : (
                                                 <button
                                                     onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (€${pack.price})`, pack.media_urls)}
-                                                    className="px-2.5 py-1 rounded-lg fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    className="px-2.5 py-1 rounded-xl fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                                                     style={{
                                                         background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(330 100% 65%))",
                                                         boxShadow: "0 0 12px hsl(330 100% 55% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
@@ -283,17 +283,17 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                 </div>
 
                 {requestStatus === "submitted" && (
-                    <div className="mb-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-[11px] text-yellow-400 text-center font-semibold">
+                    <div className="mb-2 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-[11px] text-yellow-400 text-center font-semibold">
                         ⏳ Request pending — awaiting creator...
                     </div>
                 )}
                 {requestStatus === "accepted" && (
-                    <div className="mb-2 p-2 rounded-lg bg-green-500/10 border border-green-500/30 text-[11px] text-green-400 text-center font-semibold">
+                    <div className="mb-2 p-2 rounded-xl bg-green-500/10 border border-green-500/30 text-[11px] text-green-400 text-center font-semibold">
                         🎉 Your request was accepted!
                     </div>
                 )}
                 {requestStatus === "declined" && (
-                    <div className="mb-2 p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-[11px] text-red-400 text-center font-semibold">
+                    <div className="mb-2 p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-[11px] text-red-400 text-center font-semibold">
                         ❌ Request declined. Try a new one!
                     </div>
                 )}
@@ -353,7 +353,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                 animate={{ scale: 1, y: 0 }}
                                 exit={{ scale: 0.95, y: 20 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="bg-black/90 border border-primary/40 rounded-2xl p-5 sm:p-6 max-w-2xl w-full shadow-[0_0_50px_hsl(330_100%_55%/0.2)] flex flex-col max-h-[90vh]"
+                                className="bg-black/90 border border-primary/40 rounded-xl p-5 sm:p-6 max-w-2xl w-full shadow-[0_0_50px_hsl(330_100%_55%/0.2)] flex flex-col max-h-[90vh]"
                             >
                                 <div className="flex items-center justify-between mb-4 shrink-0 border-b border-white/10 pb-4">
                                     <div className="flex flex-col">

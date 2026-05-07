@@ -88,11 +88,30 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
             const { data: earnData } = await earnQuery;
             const requestTotal = earnData ? earnData.reduce((sum, r) => sum + (r.amount || 0), 0) : 0;
 
+            // Fetch session confession unlocks
+            const { data: unlocksData } = await supabase
+                .from("confession_unlocks")
+                .select(`
+                    price_paid,
+                    created_at,
+                    confessions!inner(room_id)
+                `)
+                .eq("confessions.room_id", roomId);
+
+            const sessionUnlocks = unlocksData ? unlocksData.filter((u: any) => {
+                if (sessionStart) {
+                    return new Date(u.created_at) >= new Date(sessionStart);
+                }
+                return true;
+            }) : [];
+            const unlocksCount = sessionUnlocks.length;
+            const unlocksTotal = sessionUnlocks.reduce((sum: number, u: any) => sum + (Number(u.price_paid) || 0), 0);
+
             setStats(prev => ({
                 ...prev,
-                confessions: confCount || 0,
+                confessions: (confCount || 0) + unlocksCount,
                 tips: totalTips,
-                earned: requestTotal + totalTips,
+                earned: requestTotal + totalTips + unlocksTotal,
             }));
         }
 
@@ -141,12 +160,33 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
         const { data: earnData } = await earnQuery;
         const requestTotal = earnData ? earnData.reduce((sum, r) => sum + (r.amount || 0), 0) : 0;
 
+        // Fetch session confession unlocks
+        let unlocksTotal = 0;
+        if (roomId) {
+            const { data: unlocksData } = await supabase
+                .from("confession_unlocks")
+                .select(`
+                    price_paid,
+                    created_at,
+                    confessions!inner(room_id)
+                `)
+                .eq("confessions.room_id", roomId);
+
+            const sessionUnlocks = unlocksData ? unlocksData.filter((u: any) => {
+                if (sessionStart) {
+                    return new Date(u.created_at) >= new Date(sessionStart);
+                }
+                return true;
+            }) : [];
+            unlocksTotal = sessionUnlocks.reduce((sum: number, u: any) => sum + (Number(u.price_paid) || 0), 0);
+        }
+
         setStats(prev => ({
             ...prev,
             tips: totalTips,
-            earned: requestTotal + totalTips,
+            earned: requestTotal + totalTips + unlocksTotal,
         }));
-    }, [user, sessionId]);
+    }, [user, sessionId, roomId]);
 
     // Real-time: listen for confession_tip notifications → show toast + refresh summary
     useEffect(() => {
@@ -163,12 +203,16 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                 filter: `user_id=eq.${user.id}`,
             }, (payload: any) => {
                 const notif = payload.new;
-                if (notif?.type === 'confession_tip') {
+                if (notif?.type === 'confession_tip' || notif?.type === 'confession_unlock' || notif?.type === 'confession_request') {
+                    let toastIcon = '💖';
+                    if (notif.type === 'confession_unlock') toastIcon = '🔓';
+                    else if (notif.type === 'confession_request') toastIcon = '📝';
+
                     // Show styled toast
                     toast(
-                        notif.message || 'You received a reaction tip! 🎉',
+                        notif.message || 'You received a new interaction! 🎉',
                         {
-                            icon: '💖',
+                            icon: toastIcon,
                             duration: 5000,
                             style: {
                                 background: 'linear-gradient(135deg, #1a0510, #2d0a1e)',
@@ -180,6 +224,7 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                     );
                     // Refresh summary numbers (tips + earned)
                     refreshSummaryStats();
+                    refreshConfessions();
                 }
             })
             .subscribe();

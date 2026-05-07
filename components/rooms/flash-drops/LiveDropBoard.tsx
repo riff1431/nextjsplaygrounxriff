@@ -66,12 +66,16 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
     // Fetch user's unlocked drops
     const fetchUnlocked = useCallback(async () => {
         if (!roomId || !user) return;
-        const { data } = await supabase
-            .from("flash_drop_unlocks")
-            .select("drop_id")
-            .eq("user_id", user.id);
-        if (data) {
-            setUnlockedIds(new Set(data.map((u: any) => u.drop_id)));
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/flash-drops/unlocks`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.unlocks) {
+                    setUnlockedIds(new Set(data.unlocks));
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch unlocks:", error);
         }
     }, [roomId, user]);
 
