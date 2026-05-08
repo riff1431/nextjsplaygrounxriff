@@ -200,14 +200,19 @@ function TruthOrDareContent() {
                     .eq('room_id', roomId)
                     .maybeSingle();
 
-                if (gameError || !game || game.status !== 'active') {
+                if (gameError || !game || game.status === 'ended') {
                     console.warn("Session ended or not found", gameError);
                     setSessionStatus('ended');
                     setLoading(false);
                     return;
                 }
 
-                setSessionStatus('active');
+                if (game.status === 'pending') {
+                    setSessionStatus('pending');
+                } else {
+                    setSessionStatus('active');
+                }
+                
                 setHostId(game.room?.host_id);
                 setSessionInfo({
                     title: game.session_title || "Truth or Dare",
@@ -326,25 +331,25 @@ function TruthOrDareContent() {
         checkAccess();
     }, [roomId, supabase]);
 
-    // Session Status Gating — check room_sessions for pending (pre-live) state
+    // Session Status Gating — check truth_dare_sessions for pending (pre-live) state
     useEffect(() => {
         if (!sessionId) return;
 
         const fetchSessionStatus = async () => {
-            const { data } = await supabase.from('room_sessions').select('status, live_started_at').eq('id', sessionId).single();
+            const { data } = await supabase.from('truth_dare_sessions').select('status, started_at').eq('id', sessionId).single();
             if (data) {
                 if (data.status === 'ended') setSessionStatus('ended');
-                else if (!data.live_started_at) setSessionStatus('pending');
-                // else: active is handled by the truth_dare_games check below
+                else if (data.status === 'pending') setSessionStatus('pending');
+                else setSessionStatus('active');
             }
         };
         fetchSessionStatus();
 
         const sessionGateChannel = supabase.channel(`session-gate-${sessionId}`)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${sessionId}` }, (payload) => {
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_sessions', filter: `id=eq.${sessionId}` }, (payload) => {
                 const newData = payload.new;
                 if (newData.status === 'ended') setSessionStatus('ended');
-                else if (!newData.live_started_at) setSessionStatus('pending');
+                else if (newData.status === 'pending') setSessionStatus('pending');
                 else setSessionStatus('active');
             })
             .subscribe();
@@ -363,6 +368,8 @@ function TruthOrDareContent() {
                     setSessionStatus('ended');
                 } else if (newData.status === 'active') {
                     setSessionStatus('active');
+                } else if (newData.status === 'pending') {
+                    setSessionStatus('pending');
                 }
             })
             .subscribe();

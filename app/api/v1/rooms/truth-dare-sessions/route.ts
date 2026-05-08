@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
                 price: Number(price) || 0,
                 cost_per_min: isPrivate ? costPerMin : 0,
                 creator_start_fee: creatorFee,
-                status: "active",
+                status: "pending",
             })
             .select()
             .single();
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
             session_description: description,
             is_private: isPrivate,
             unlock_price: Number(price) || 0,
-            status: "active",
+            status: "pending",
             updated_at: new Date().toISOString(),
         }, { onConflict: "room_id" });
 

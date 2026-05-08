@@ -11,14 +11,14 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
-        // Fetch active sessions (without FK join — fetch profiles separately)
+        // Fetch active and pending sessions (without FK join — fetch profiles separately)
         const { data: rawSessions, error } = await supabase
             .from("truth_dare_sessions")
             .select(`
                 id, title, description, session_type, is_private, price, cost_per_min,
                 status, started_at, creator_id, room_id
             `)
-            .eq("status", "active")
+            .in("status", ["active", "pending"])
             .is("ended_at", null)
             .order("started_at", { ascending: false });
 

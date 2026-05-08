@@ -228,7 +228,7 @@ export default function TruthOrDareCreatorPage() {
                 if (g.replay_until) setReplayUntil(new Date(g.replay_until).getTime());
 
                 // Session Info
-                if (g.status === 'active') {
+                if (g.status === 'active' || g.status === 'pending') {
                     setSessionActive(true);
                     setSessionInfo({
                         title: g.session_title || "Truth or Dare Session",
@@ -244,7 +244,7 @@ export default function TruthOrDareCreatorPage() {
                         .from('truth_dare_sessions')
                         .select('id')
                         .eq('room_id', rid)
-                        .eq('status', 'active')
+                        .in('status', ['active', 'pending'])
                         .order('started_at', { ascending: false })
                         .limit(1)
                         .maybeSingle();
@@ -1007,7 +1007,21 @@ export default function TruthOrDareCreatorPage() {
                                 setShowStartModal(true);
                                 return null;
                             }
-                            return new Date().toISOString();
+                            try {
+                                const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'GO_LIVE' })
+                                });
+                                if (res.ok) {
+                                    // Trigger stream layout update immediately
+                                    setIsBroadcasting(true);
+                                    return new Date().toISOString();
+                                }
+                            } catch (e) {
+                                console.error('Failed to go live:', e);
+                            }
+                            return null;
                         }}
                         customEnd={async () => {
                             setShowExitConfirmation(true);
@@ -1137,7 +1151,7 @@ export default function TruthOrDareCreatorPage() {
                                 Past Sessions
                             </h3>
                             <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
-                                {history.filter((s: any) => s.status !== 'active').slice(0, 10).map((s: any, i: number) => (
+                                {history.filter((s: any) => s.status !== 'active' && s.status !== 'pending').slice(0, 10).map((s: any, i: number) => (
                                     <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-3 py-2">
                                         <div>
                                             <div className="text-xs text-white font-medium">{s.session_title || s.title || "Untitled"}</div>

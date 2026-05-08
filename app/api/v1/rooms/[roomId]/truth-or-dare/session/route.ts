@@ -67,6 +67,27 @@ export async function POST(
             return NextResponse.json({ success: true, message: "Session started" });
         }
 
+        if (action === 'GO_LIVE') {
+            // A. Update Session History Record to active
+            const { error: sessionError } = await supabase
+                .from('truth_dare_sessions')
+                .update({ status: 'active', started_at: new Date().toISOString() })
+                .eq('room_id', roomId)
+                .eq('status', 'pending');
+
+            if (sessionError) console.error("Error going live in history:", sessionError);
+
+            // B. Update Game State to active
+            const { error: updateError } = await supabase
+                .from('truth_dare_games')
+                .update({ status: 'active', updated_at: new Date().toISOString() })
+                .eq('room_id', roomId);
+
+            if (updateError) throw updateError;
+
+            return NextResponse.json({ success: true, message: "Session is now live" });
+        }
+
         if (action === 'END_SESSION') {
             // A. Close History Record
             const { error: sessionError } = await supabase
