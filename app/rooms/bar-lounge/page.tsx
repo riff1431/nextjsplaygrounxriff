@@ -69,7 +69,8 @@ export default function BarLoungeRoom() {
     const [isLoading, setIsLoading] = useState(true);
     const [mySession, setMySession] = useState<Room | null>(null);
     const [roomId, setRoomId] = useState<string | null>(null);
-    const { messages, sendMessage } = useBarChat(roomId);
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const { messages, sendMessage } = useBarChat(roomId, sessionId);
     const [hostId, setHostId] = useState<string | null>(null);
     const [hostProfile, setHostProfile] = useState<any>(null);
     const [billingActive, setBillingActive] = useState(false);
@@ -210,13 +211,27 @@ export default function BarLoungeRoom() {
                 await supabase.from("rooms").update({ status: "live" }).eq("id", mySession.id);
                 setMySession({ ...mySession, status: "live" });
             }
+            // Fetch the active session_id for this room
+            const { data: activeSession } = await supabase
+                .from("room_sessions").select("id")
+                .eq("room_id", mySession.id).eq("status", "active")
+                .order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (activeSession) setSessionId(activeSession.id);
             setRoomId(mySession.id); setHostId(user.id); setViewState("hosting"); setIsLoading(false); return; 
         }
         const { data } = await supabase.from("rooms").insert({ host_id: user.id, title: `${user.user_metadata?.full_name || user.email?.split('@')[0]}'s Lounge`, status: "live", type: "bar-lounge" }).select().single();
-        if (data) { setMySession(data); setRoomId(data.id); setHostId(user.id); setViewState("hosting"); }
+        if (data) {
+            // Fetch the active session_id for newly created room
+            const { data: activeSession } = await supabase
+                .from("room_sessions").select("id")
+                .eq("room_id", data.id).eq("status", "active")
+                .order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (activeSession) setSessionId(activeSession.id);
+            setMySession(data); setRoomId(data.id); setHostId(user.id); setViewState("hosting");
+        }
         setIsLoading(false);
     };
-    const endHosting = async () => { if (!confirm("End session?") || !roomId) return; const { error } = await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId); if (!error) { setMySession(null); setRoomId(null); setHostId(null); setViewState("lobby"); } };
+    const endHosting = async () => { if (!confirm("End session?") || !roomId) return; const { error } = await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId); if (!error) { setMySession(null); setRoomId(null); setHostId(null); setSessionId(null); setViewState("lobby"); } };
 
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -248,7 +263,7 @@ export default function BarLoungeRoom() {
     const confirmPurchase = (type: string, label: string, price: number, meta: any = {}) => { if (!roomId) return; setPendingPurchase({ type, label, price, meta }); };
     const handlePurchase = async (type: string, label: string, price: number, meta: any = {}) => {
         if (!roomId) return; activateBilling();
-        try { const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, label, amount: price }) }); const data = await res.json(); if (!data.success) pushFx([], `Purchase failed: ${data.error || "Insufficient funds"}`); else pushFx([], `${label} sent!`); } catch { pushFx([], 'Network error'); }
+        try { const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/request`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, label, amount: price, sessionId }) }); const data = await res.json(); if (!data.success) pushFx([], `Purchase failed: ${data.error || "Insufficient funds"}`); else pushFx([], `${label} sent!`); } catch { pushFx([], 'Network error'); }
     };
     const doSpin = () => { if (spinning || !roomId) return; confirmPurchase("spin", "Spin the Bottle", SPIN_PRICE); };
     const executeSpinAfterConfirm = async () => {

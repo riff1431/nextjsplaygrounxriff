@@ -60,7 +60,7 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
-                .limit(50);
+                .limit(7);
             
             if (data) {
                 setRequests(data as Request[]);
@@ -78,8 +78,8 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
             }, (payload) => {
                 const req = payload.new as Request;
 
-                // Add to list
-                setRequests((prev) => [req, ...prev]);
+                // Add to list, keeping only the 7 most recent
+                setRequests((prev) => [req, ...prev].slice(0, 7));
 
                 // Creator toast notification
                 const emoji = typeEmoji(req.type);

@@ -26,10 +26,19 @@ export async function GET(
         if (!upsertError) game = newGame;
     }
 
-    // 2. Fetch active creators (for now, assume creator of room + others joined?)
-    // Mocking creators list for now, or fetching from room participants if available.
+    // 2. Fetch active creators
     // In a real system, we'd query room_participants where role='creator'
-    const creators: any[] = [];
+    const { data: participants } = await supabase
+        .from('room_participants')
+        .select('user_id, role, profiles(full_name, username)')
+        .eq('room_id', roomId)
+        .eq('role', 'creator');
+        
+    const creators = participants ? participants.map((p: any) => ({
+        id: p.user_id,
+        name: p.profiles?.full_name || p.profiles?.username || "Creator",
+        isHost: true // or derive if they are the room host
+    })) : [];
 
     // 3. Fetch camera slots (on-camera fans)
     const { data: slots } = await supabase

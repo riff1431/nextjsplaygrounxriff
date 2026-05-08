@@ -269,12 +269,12 @@ export default function TruthOrDareCreatorPage() {
                 })));
             }
 
-            // Mock creators/fans for visual slots if API returns empty for now
+            // Creators populated dynamically from API (room_participants)
             if (data.creators && data.creators.length > 0) {
                 setCreators(data.creators);
             } else {
-                // Default to just me
-                setCreators([{ id: currentUserId, name: "Me", isHost: true }]);
+                // Fallback gracefully to current user if DB sync hasn't occurred yet
+                setCreators([{ id: currentUserId, name: "Creator", isHost: true }]);
             }
 
             // Fans are now populated dynamically via Presence subscription
@@ -686,22 +686,10 @@ export default function TruthOrDareCreatorPage() {
                 startedAt: Date.now()
             });
 
-            // 4. Broadcast Realtime Event & Update Game Table
+            // 4. Broadcast Realtime Event
             if (roomId) {
-                // Update Game Table (Persistence for late joiners)
-                await supabase.from('truth_dare_games')
-                    .update({
-                        current_round_data: {
-                            id: item.id,
-                            type: item.type.includes('TRUTH') ? 'truth' : 'dare',
-                            text: pText,
-                            fanName: item.fanName,
-                            tier: item.meta.tier,
-                            customType: item.type.includes('TRUTH') ? 'custom_truth' : 'custom_dare',
-                            startedAt: Date.now()
-                        }
-                    })
-                    .eq('room_id', roomId);
+                // The serve API already updates the game table state.
+                // We just need to broadcast the event for instant UI animation on the fan side.
 
                 // Broadcast Event (Instant Animation)
                 // We'll use the existing channel or a new one. Let's use the 'room:ID' channel if possible, 

@@ -31,6 +31,21 @@ const CreatorBarLounge = () => {
     useEffect(() => {
         if (!user) return;
         async function findRoomAndSession() {
+            // If we have a sessionId, get room_id directly from the session (most reliable)
+            if (sessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("title, room_id")
+                    .eq("id", sessionId)
+                    .single();
+                if (session) {
+                    setSessionTitle(session.title);
+                    if (session.room_id) setRoomId(session.room_id);
+                    return; // room_id resolved from session — skip rooms table lookup
+                }
+            }
+
+            // Fallback: look up room from rooms table
             const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")
@@ -41,15 +56,6 @@ const CreatorBarLounge = () => {
 
             if (rooms && rooms.length > 0) {
                 setRoomId(rooms[0].id);
-            }
-
-            if (sessionId) {
-                const { data: session } = await supabase
-                    .from("room_sessions")
-                    .select("title")
-                    .eq("id", sessionId)
-                    .single();
-                if (session) setSessionTitle(session.title);
             }
         }
         findRoomAndSession();
@@ -78,7 +84,7 @@ const CreatorBarLounge = () => {
     // --- Live View ---
     return (
         <div
-            className="min-h-screen w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme"
+            className="h-[100dvh] w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme overflow-hidden"
             style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-v2.png')" }}
         >
             {/* Top Bar */}
@@ -111,25 +117,27 @@ const CreatorBarLounge = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 flex-1 grid grid-cols-1 lg:grid-cols-[350px_650px_350px] p-4 max-w-[1600px] mx-auto">
-                {/* Left - Chat */}
-                <div className="h-full hidden lg:flex">
-                    <LoungeChat roomId={roomId} sessionId={sessionId} />
-                </div>
-
-                {/* Center - Video */}
-                <div className="h-full flex items-center justify-center w-full">
-                    <div className="w-full h-full">
-                        <VideoStage roomId={roomId} />
+            <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-y-auto lg:overflow-hidden">
+                <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] xl:grid-cols-[320px_1fr_320px] 2xl:grid-cols-[350px_1fr_350px] gap-4">
+                    {/* Left - Chat */}
+                    <div className="h-full hidden lg:flex min-h-[400px]">
+                        <LoungeChat roomId={roomId} sessionId={sessionId} />
                     </div>
-                </div>
 
-                {/* Right - Requests & Summary */}
-                <div className="hidden lg:flex flex-col gap-4 h-full">
-                    <div className="flex-1">
-                        <IncomingRequests roomId={roomId} />
+                    {/* Center - Video */}
+                    <div className="h-full flex items-center justify-center w-full min-h-[400px]">
+                        <div className="w-full h-full">
+                            <VideoStage roomId={roomId} />
+                        </div>
                     </div>
-                    <SummaryPanel roomId={roomId} />
+
+                    {/* Right - Requests & Summary */}
+                    <div className="hidden lg:flex flex-col gap-4 h-full min-h-[400px]">
+                        <div className="flex-1 min-h-0">
+                            <IncomingRequests roomId={roomId} />
+                        </div>
+                        <SummaryPanel roomId={roomId} />
+                    </div>
                 </div>
             </div>
 

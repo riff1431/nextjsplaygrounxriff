@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense, useCallback } from "react";
+import React, { useState, useEffect, useRef, Suspense, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useBarChat } from "@/hooks/useBarChat";
@@ -140,6 +140,13 @@ function PgxPage2Inner() {
     const [buying, setBuying] = useState<string | null>(null);
     const [chatInput, setChatInput] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    // Update time every 10 seconds to refresh the pinned message timer
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 10000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
@@ -147,6 +154,24 @@ function PgxPage2Inner() {
     const supabase = createClient();
 
     const { messages, sendMessage } = useBarChat(roomId, sessionId);
+
+    // Find active pinned user
+    const activePinMessage = useMemo(() => {
+        // Search backwards to find the most recent pin message
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            if (m.is_system && m.content.includes("📌")) {
+                const pinTime = new Date(m.created_at).getTime();
+                // Check if it's within 10 minutes
+                if (currentTime - pinTime <= 10 * 60 * 1000) {
+                    return m;
+                }
+                // If the most recent one is expired, no older ones are active
+                break;
+            }
+        }
+        return null;
+    }, [messages, currentTime]);
 
     // Session Status Gating — fetch initial status and subscribe to realtime updates
     useEffect(() => {
@@ -215,7 +240,7 @@ function PgxPage2Inner() {
             const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/request`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type, label, amount: price }),
+                body: JSON.stringify({ type, label, amount: price, sessionId }),
             });
             const data = await res.json();
             if (data.success) {
@@ -230,7 +255,7 @@ function PgxPage2Inner() {
         } finally {
             setBuying(null);
         }
-    }, [roomId, buying, showToast, refreshWallet]);
+    }, [roomId, buying, showToast, refreshWallet, sessionId]);
 
     const handleTip = (amount: number) => doPurchase("tip", `€${amount} Tip`, amount, `tip-${amount}`);
     const handleCustomTip = () => {
@@ -542,6 +567,26 @@ function PgxPage2Inner() {
                                 Live
                             </span>
                         </div>
+
+                        {/* Pinned User Banner */}
+                        {activePinMessage && (
+                            <div style={{ ...chatMsg, ...glowPink, marginBottom: "12px", border: `1px solid hsla(320,100%,65%,0.5)`, background: "hsla(320,60%,30%,0.15)", flexShrink: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                    <span style={{ fontSize: "14px" }}>📌</span>
+                                    <span style={{ fontWeight: 700, fontSize: "12px", color: PINK, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pinned to Top</span>
+                                    <span style={{ marginLeft: "auto", fontSize: "11px", color: MUTED, fontWeight: 600 }}>
+                                        {Math.ceil((10 * 60 * 1000 - (currentTime - new Date(activePinMessage.created_at).getTime())) / 60000)}m left
+                                    </span>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span style={{ fontSize: "16px", flexShrink: 0 }}>👑</span>
+                                    <div style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        <span style={{ fontWeight: 700, fontSize: "14px", color: "#fff" }}>{activePinMessage.handle}</span>
+                                        <span style={{ fontSize: "13px", color: "hsla(0,0%,100%,0.7)", marginLeft: "6px" }}>is the life of the party!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="pg2-scroll" style={{ flex: 1, overflowY: "auto", paddingRight: "4px", marginBottom: "12px", minHeight: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
                             {messages.length === 0 && (

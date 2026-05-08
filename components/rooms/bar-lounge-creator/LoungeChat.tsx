@@ -20,17 +20,27 @@ const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Debug: log roomId changes
+    useEffect(() => {
+        console.log("[LoungeChat] roomId:", roomId, "sessionId:", sessionId, "user:", user?.id);
+    }, [roomId, sessionId, user]);
+
     const handleSend = async () => {
-        if (!message.trim() || !roomId) return;
+        console.log("[LoungeChat] handleSend called, roomId:", roomId, "message:", message.trim());
+        if (!message.trim() || !roomId) {
+            console.warn("[LoungeChat] Send blocked — roomId:", roomId, "message empty:", !message.trim());
+            return;
+        }
         try {
             await sendMessage(
                 message.trim(),
                 user?.id,
                 user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Creator"
             );
+            console.log("[LoungeChat] Message sent successfully");
             setMessage("");
         } catch (err) {
-            console.error("Failed to send message:", err);
+            console.error("[LoungeChat] Failed to send message:", err);
         }
     };
 

@@ -141,8 +141,9 @@ export default function BarLoungeCreatorStudioPage() {
     const [isLive, setIsLive] = useState(false);
     const [chat, setChat] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-    const { messages, sendMessage } = useBarChat(roomId);
+    const { messages, sendMessage } = useBarChat(roomId, activeSessionId);
 
     const [fans, setFans] = useState<FanRow[]>([]);
     const [events, setEvents] = useState<RevenueEvent[]>([]);
@@ -331,6 +332,12 @@ export default function BarLoungeCreatorStudioPage() {
         if (newRoom) {
             setRoomId(newRoom.id);
             setRooms([newRoom, ...rooms]);
+            // Fetch the active session_id for scoping chat
+            const { data: activeSess } = await supabase
+                .from("room_sessions").select("id")
+                .eq("room_id", newRoom.id).eq("status", "active")
+                .order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (activeSess) setActiveSessionId(activeSess.id);
             setIsLive(true);
             setViewState("live");
             loadRoomEvents(newRoom.id);
@@ -346,6 +353,7 @@ export default function BarLoungeCreatorStudioPage() {
             await supabase.from("rooms").update({ status: "ended" }).eq("id", roomId);
         }
         setRoomId(null);
+        setActiveSessionId(null);
         setIsLive(false);
         setViewState("history");
         // Refresh room list
@@ -469,8 +477,14 @@ export default function BarLoungeCreatorStudioPage() {
                                         End Session
                                     </button>
                                     <button
-                                        onClick={() => {
+                                        onClick={async () => {
                                             setRoomId(room.id);
+                                            // Fetch the active session_id for scoping chat
+                                            const { data: activeSess } = await supabase
+                                                .from("room_sessions").select("id")
+                                                .eq("room_id", room.id).eq("status", "active")
+                                                .order("created_at", { ascending: false }).limit(1).maybeSingle();
+                                            if (activeSess) setActiveSessionId(activeSess.id);
                                             setIsLive(true);
                                             setViewState("live");
                                             loadRoomEvents(room.id);

@@ -68,7 +68,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { type, label, amount } = body;
+    const { type, label, amount, sessionId } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -113,6 +113,7 @@ export async function POST(
             type: safeType,
             label,
             amount,
+            ...(sessionId ? { session_id: sessionId } : {}),
         })
         .select().single();
 
@@ -143,6 +144,7 @@ export async function POST(
         handle: profile?.username || "Fan",
         content: `${emoji} ${profile?.username || "Fan"} ${safeType === "tip" ? "sent a" : "bought"} ${label || type} (€${amount})`,
         is_system: true,
+        ...(sessionId ? { session_id: sessionId } : {}),
     });
 
     return NextResponse.json({ success: true, request: req, new_balance: splitResult.newBalance });

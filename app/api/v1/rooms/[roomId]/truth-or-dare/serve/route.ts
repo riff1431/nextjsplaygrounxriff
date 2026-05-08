@@ -35,10 +35,7 @@ export async function POST(
     // Simple mock logic for generating prompt text from tier if not custom
     if (item.type === 'TIER_PURCHASE') {
         promptSource = 'tier';
-        // In production, fetch from a "prompts" table. 
-        // For now, we'll generate a generic one or pass it from client? 
-        // Ideally server-side generation.
-        promptLabel = `${item.meta?.tier} Challenge (Generated)`;
+        promptLabel = item.meta?.text || `${item.meta?.tier} Challenge (Generated)`;
     } else if (item.type === 'CUSTOM_TRUTH' || item.type === 'CUSTOM_DARE') {
         promptSource = 'custom';
         promptLabel = item.meta?.text;
@@ -59,11 +56,19 @@ export async function POST(
     // 3. Update Game State (set current prompt) & Mark Queue Item Served
     // We can transaction this or just do sequentially.
 
-    // Mark served
+    // Mark served in queue
     await supabase
         .from("truth_dare_queue")
         .update({ is_served: true })
         .eq("id", queueItemId);
+
+    // Mark as active/answered in requests if request_id exists
+    if (item.meta?.request_id) {
+        await supabase
+            .from("truth_dare_requests")
+            .update({ status: 'answered', answered_at: new Date().toISOString() })
+            .eq("id", item.meta.request_id);
+    }
 
     // Update game
     const { data: game, error: updateError } = await supabase
