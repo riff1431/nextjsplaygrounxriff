@@ -187,61 +187,55 @@ function TruthOrDareContent() {
     const [creatorCount] = useState(1);
     const [fanCount, setFanCount] = useState(0);
 
-    // Load Session Data
+    // Load Session Data — uses server-side API to bypass RLS
     useEffect(() => {
         if (!roomId) return;
 
         async function checkAccess() {
             try {
-                // 1. Get Game State
-                const { data: game, error: gameError } = await supabase
-                    .from('truth_dare_games')
-                    .select(`*, room:rooms(host_id)`)
-                    .eq('room_id', roomId)
-                    .maybeSingle();
+                // 1. Call the server-side check-access API (bypasses RLS via admin client)
+                const params = new URLSearchParams({ roomId });
+                if (sessionId) params.set("sessionId", sessionId);
 
-                if (gameError || !game || game.status === 'ended') {
-                    console.warn("Session ended or not found", gameError);
+                const res = await fetch(`/api/v1/rooms/truth-dare-sessions/check-access?${params.toString()}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    console.error("Check access API error:", data.error);
                     setSessionStatus('ended');
                     setLoading(false);
                     return;
                 }
 
-                if (game.status === 'pending') {
-                    setSessionStatus('pending');
-                } else {
-                    setSessionStatus('active');
-                }
-                
-                setHostId(game.room?.host_id);
-                setSessionInfo({
-                    title: game.session_title || "Truth or Dare",
-                    desc: game.session_description,
-                    price: Number(game.unlock_price),
-                    isPrivate: game.is_private
-                });
+                // 2. Apply session status
+                const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: activeSessionId } = data;
 
-                // Fetch host profile for avatar
-                if (game.room?.host_id) {
-                    const { data: hostProfile } = await supabase
-                        .from('profiles')
-                        .select('avatar_url, full_name, username')
-                        .eq('id', game.room.host_id)
-                        .single();
-
-                    if (hostProfile) {
-                        setHostAvatarUrl(hostProfile.avatar_url);
-                        setHostName(hostProfile.full_name || hostProfile.username || 'Creator');
-                    }
+                setSessionStatus(status as any);
+                if (status === 'ended') {
+                    setLoading(false);
+                    return;
                 }
 
-                // 2. Check Access
+                // 3. Set host info
+                if (hId) setHostId(hId);
+                if (info) {
+                    setSessionInfo({
+                        title: info.title || "Truth or Dare",
+                        desc: info.desc,
+                        price: Number(info.price || 0),
+                        isPrivate: info.isPrivate || false,
+                    });
+                }
+                if (hostProfile) {
+                    setHostAvatarUrl(hostProfile.avatar_url);
+                    setHostName(hostProfile.full_name || hostProfile.username || 'Creator');
+                }
+
+                // 4. Get current user info (for profile/presence — profiles table has public read)
                 const { data: { user } } = await supabase.auth.getUser();
-
                 if (user) {
                     setUserId(user.id);
 
-                    // Fetch profile for presence
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('full_name, username, avatar_url')
@@ -252,78 +246,21 @@ function TruthOrDareContent() {
                         setUserName(profile.full_name || profile.username || user.email?.split('@')[0] || 'Anonymous');
                         setUserAvatar(profile.avatar_url);
                     }
-
-                    // A. Check Payment (Unlocks table + Entries table) - Valid for both Public and Private
-                    const { data: unlock } = await supabase
-                        .from('truth_dare_unlocks')
-                        .select('id')
-                        .eq('room_id', roomId)
-                        .eq('fan_id', user.id)
-                        .maybeSingle();
-
-                    if (unlock) {
-                        console.log("Access Granted: User has paid (unlocks).");
-                        setAccess('granted');
-                        return; // Done
-                    }
-
-                    // Also check truth_dare_entries (new entry fee table)
-                    const { data: entry } = await supabase
-                        .from('truth_dare_entries')
-                        .select('id')
-                        .eq('room_id', roomId)
-                        .eq('fan_id', user.id)
-                        .maybeSingle();
-
-                    if (entry) {
-                        console.log("Access Granted: User has paid (entries).");
-                        setAccess('granted');
-                        return; // Done
-                    }
-
-                    // B. If Private, check Request Status
-                    if (game.is_private) {
-                        // Get active session for this room to query join requests
-                        const { data: activeSession } = await supabase
-                            .from('truth_dare_sessions')
-                            .select('id')
-                            .eq('room_id', roomId)
-                            .eq('status', 'active')
-                            .order('started_at', { ascending: false })
-                            .limit(1)
-                            .maybeSingle();
-
-                        if (activeSession) {
-                            const { data: req } = await supabase
-                                .from('room_join_requests')
-                                .select('status')
-                                .eq('session_id', activeSession.id)
-                                .eq('user_id', user.id)
-                                .maybeSingle();
-
-                            if (req) {
-                                setRequestStatus(req.status as any);
-                            } else {
-                                setRequestStatus('none');
-                            }
-                        } else {
-                            setRequestStatus('none');
-                        }
-                    } else {
-                        // Public Room: Auto-approve request logic for payment flow
-                        setRequestStatus('approved');
-                    }
-                } else {
-                    console.log("Access Locked: No user.");
                 }
 
-                // Default: Locked
-                setAccess('locked');
+                // 5. Set access and request status from API response
+                setAccess(accessResult as any);
+                if (reqStatus) {
+                    setRequestStatus(reqStatus as any);
+                } else if (!info?.isPrivate) {
+                    setRequestStatus('approved');
+                }
+
+                console.log(`Access check result: status=${status}, access=${accessResult}, requestStatus=${reqStatus}`);
 
             } catch (e) {
                 console.error("checkAccess failed", e);
-                // If error, keep loading or show error, do not expose content
-                setSessionStatus('ended'); // Safest fallback
+                setSessionStatus('ended');
             } finally {
                 setLoading(false);
             }
@@ -405,8 +342,9 @@ function TruthOrDareContent() {
                 }
             })
             .on('broadcast', { event: 'countdown_start' }, (payload) => {
-                // Check if this is for the current user
-                if (payload.payload?.fanId === userId) {
+                // Only show countdown for truth/dare requests, not tips/reactions
+                const pType = payload.payload?.type;
+                if (payload.payload?.fanId === userId && pType !== 'tip' && pType !== 'reaction') {
                     console.log('⏱️ Countdown started for my request:', payload.payload);
                     // The showCountdown state is already triggered in processPayment
                     // This is a backup sync mechanism
@@ -504,6 +442,8 @@ function TruthOrDareContent() {
         }
 
         // Live Chat — fetch existing + subscribe to new messages (session-scoped by timestamp)
+        // Clear previous session's messages immediately
+        setChatMessages([]);
         let sessionStartedAt: string | null = null;
 
         const fetchChatMessages = async () => {
@@ -567,7 +507,7 @@ function TruthOrDareContent() {
                 supabase.removeChannel(presenceChannel);
             }
         };
-    }, [roomId, userId, userName, userAvatar, supabase, scrollChatToBottom]);
+    }, [roomId, sessionId, userId, userName, userAvatar, supabase, scrollChatToBottom]);
 
     // Calculate and subscribe to Top Spenders (Truth King / Dare King)
     useEffect(() => {
@@ -599,7 +539,9 @@ function TruthOrDareContent() {
                 const { data: requests, error } = await reqQuery;
 
                 if (error || !requests || requests.length === 0) {
-                    // No requests yet - show default
+                    // No requests yet — reset to clean slate
+                    setTopDareKing(null);
+                    setTopTruthKing(null);
                     return;
                 }
 
@@ -682,7 +624,7 @@ function TruthOrDareContent() {
         return () => {
             supabase.removeChannel(topSpenderChannel);
         };
-    }, [roomId, supabase]);
+    }, [roomId, sessionId, supabase]);
 
     // Chat send handler
     const handleChatSend = async () => {
@@ -713,12 +655,12 @@ function TruthOrDareContent() {
         if (!roomId || !userId) return;
         setUnlocking(true);
         try {
-            // Look up the active session for this room
+            // Look up the active or pending session for this room
             const { data: activeSession } = await supabase
                 .from('truth_dare_sessions')
                 .select('id')
                 .eq('room_id', roomId)
-                .eq('status', 'active')
+                .in('status', ['active', 'pending'])
                 .order('started_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();

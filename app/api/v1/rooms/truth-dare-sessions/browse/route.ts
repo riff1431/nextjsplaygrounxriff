@@ -1,18 +1,21 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // ──────────────────────────────────────────────────
 // GET /api/v1/rooms/truth-dare-sessions/browse
 // Fan-facing: list active sessions with creator info
+// Uses admin client to bypass RLS on truth_dare_sessions
 // ──────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
-    const supabase = await createClient();
+    const supabase = await createClient();      // For auth check
+    const admin = createAdminClient();           // For data queries (bypasses RLS)
 
     const { data: { user } } = await supabase.auth.getUser();
 
     try {
-        // Fetch active and pending sessions (without FK join — fetch profiles separately)
-        const { data: rawSessions, error } = await supabase
+        // Fetch active and pending sessions using admin client (bypasses RLS)
+        const { data: rawSessions, error } = await admin
             .from("truth_dare_sessions")
             .select(`
                 id, title, description, session_type, is_private, price, cost_per_min,
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
         let liveRoomIds = new Set<string>();
 
         if (roomIds.length > 0) {
-            const { data: liveRooms } = await supabase
+            const { data: liveRooms } = await admin
                 .from("rooms")
                 .select("id")
                 .in("id", roomIds)
@@ -59,7 +62,7 @@ export async function GET(request: NextRequest) {
         let profileMap: Record<string, any> = {};
 
         if (creatorIds.length > 0) {
-            const { data: profiles } = await supabase
+            const { data: profiles } = await admin
                 .from("profiles")
                 .select("id, full_name, username, avatar_url")
                 .in("id", creatorIds);
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
             // Get user's join requests across all sessions (using room_join_requests table)
             const allSessionIds = (sessions || []).map((s: any) => s.id);
             if (allSessionIds.length > 0) {
-                const { data: requests } = await supabase
+                const { data: requests } = await admin
                     .from("room_join_requests")
                     .select("session_id, status")
                     .eq("user_id", user.id)
@@ -102,7 +105,7 @@ export async function GET(request: NextRequest) {
             // Get user's existing participations
             const sessionIds = (sessions || []).map((s: any) => s.id);
             if (sessionIds.length > 0) {
-                const { data: participations } = await supabase
+                const { data: participations } = await admin
                     .from("truth_dare_session_participants")
                     .select("session_id")
                     .eq("user_id", user.id)
@@ -129,7 +132,7 @@ export async function GET(request: NextRequest) {
         let participantCounts: Record<string, number> = {};
 
         if (sessionIds.length > 0) {
-            const { data: participants } = await supabase
+            const { data: participants } = await admin
                 .from("truth_dare_session_participants")
                 .select("session_id")
                 .in("session_id", sessionIds);

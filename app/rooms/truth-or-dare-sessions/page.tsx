@@ -106,20 +106,13 @@ export default function TruthOrDareSessionsBrowse() {
         fetchSessions();
     }, [fetchSessions]);
 
-    // Realtime updates for sessions
+    // Poll for session updates every 15 seconds (more reliable than realtime which is blocked by RLS for fans)
     useEffect(() => {
-        const channel = supabase
-            .channel("browse_sessions")
-            .on("postgres_changes", {
-                event: "*",
-                schema: "public",
-                table: "truth_dare_sessions",
-            }, () => {
-                fetchSessions();
-            })
-            .subscribe();
+        const interval = setInterval(() => {
+            fetchSessions();
+        }, 15000);
 
-        return () => { supabase.removeChannel(channel); };
+        return () => clearInterval(interval);
     }, [fetchSessions]);
 
     async function handleJoin(session: Session) {

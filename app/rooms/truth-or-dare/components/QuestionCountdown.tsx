@@ -40,8 +40,14 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
                 filter: `fan_id=eq.${userId}`
             },
             (payload) => {
-                console.log('New request detected:', payload.new);
-                setPendingRequest(payload.new);
+                const newReq = payload.new as any;
+                // Only show countdown for actual truth/dare requests, not tips or reactions
+                if (newReq.type === 'tip' || newReq.type === 'reaction') {
+                    console.log('Ignoring tip/reaction for countdown:', newReq.type);
+                    return;
+                }
+                console.log('New truth/dare request detected:', newReq);
+                setPendingRequest(newReq);
             }
         );
 

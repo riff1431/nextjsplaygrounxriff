@@ -1,0 +1,209 @@
+import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * GET /api/v1/rooms/truth-dare-sessions/check-access?roomId=X&sessionId=Y
+ * Fan-facing: check session status and user access for a room.
+ * Uses admin client to bypass RLS on truth_dare_sessions.
+ * Returns: { sessionStatus, access, sessionInfo, hostId, hostProfile, requestStatus }
+ */
+export async function GET(request: NextRequest) {
+    const supabase = await createClient();
+    const admin = createAdminClient();
+
+    const { searchParams } = new URL(request.url);
+    const roomId = searchParams.get("roomId");
+    const sessionIdParam = searchParams.get("sessionId");
+
+    if (!roomId) {
+        return NextResponse.json({ error: "roomId is required" }, { status: 400 });
+    }
+
+    try {
+        // 1. Get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // 2. Get game state (truth_dare_games — singleton per room)
+        const { data: game } = await admin
+            .from("truth_dare_games")
+            .select("*, room:rooms(host_id)")
+            .eq("room_id", roomId)
+            .maybeSingle();
+
+        // 3. Get latest active/pending session from truth_dare_sessions
+        const { data: latestSession } = await admin
+            .from("truth_dare_sessions")
+            .select("id, title, description, is_private, price, status, creator_id, room_id")
+            .eq("room_id", roomId)
+            .in("status", ["active", "pending"])
+            .order("started_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        // 4. Determine session status
+        const gameStatus = game?.status;
+        const sessionTableStatus = latestSession?.status;
+
+        // If both sources say ended/missing
+        if ((!game || gameStatus === "ended") && !latestSession) {
+            return NextResponse.json({
+                sessionStatus: "ended",
+                access: "locked",
+                sessionInfo: null,
+                hostId: null,
+                hostProfile: null,
+                requestStatus: null,
+            });
+        }
+
+        // Prefer session table if game table is stale
+        const effectiveStatus =
+            gameStatus === "ended" || !game
+                ? sessionTableStatus || "ended"
+                : gameStatus;
+
+        if (effectiveStatus === "ended") {
+            return NextResponse.json({
+                sessionStatus: "ended",
+                access: "locked",
+                sessionInfo: null,
+                hostId: null,
+                hostProfile: null,
+                requestStatus: null,
+            });
+        }
+
+        // 5. Determine host ID
+        let hostId = game?.room?.host_id || latestSession?.creator_id || null;
+        if (!hostId) {
+            const { data: roomData } = await admin
+                .from("rooms")
+                .select("host_id")
+                .eq("id", roomId)
+                .single();
+            hostId = roomData?.host_id || null;
+        }
+
+        // 6. Build session info
+        const sessionInfo = {
+            title: game?.session_title || latestSession?.title || "Truth or Dare",
+            desc: game?.session_description || latestSession?.description || null,
+            price: Number(game?.unlock_price ?? latestSession?.price ?? 0),
+            isPrivate: game?.is_private ?? latestSession?.is_private ?? false,
+        };
+
+        // 7. Fetch host profile
+        let hostProfile = null;
+        if (hostId) {
+            const { data: hp } = await admin
+                .from("profiles")
+                .select("avatar_url, full_name, username")
+                .eq("id", hostId)
+                .single();
+            hostProfile = hp;
+        }
+
+        // 8. Check access if user is authenticated
+        let access: "granted" | "locked" = "locked";
+        let requestStatus: string | null = null;
+        const activeSessionId = latestSession?.id || sessionIdParam;
+
+        if (user) {
+            // A. Check if user is a session participant
+            if (activeSessionId) {
+                const { data: participant } = await admin
+                    .from("truth_dare_session_participants")
+                    .select("id")
+                    .eq("session_id", activeSessionId)
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+                if (participant) {
+                    access = "granted";
+                }
+            }
+
+            // B. Check truth_dare_unlocks (session-scoped then fallback)
+            if (access !== "granted") {
+                if (activeSessionId) {
+                    const { data: unlock } = await admin
+                        .from("truth_dare_unlocks")
+                        .select("id")
+                        .eq("room_id", roomId)
+                        .eq("fan_id", user.id)
+                        .eq("session_id", activeSessionId)
+                        .maybeSingle();
+                    if (unlock) access = "granted";
+                }
+
+                if (access !== "granted") {
+                    // Fallback: check without session_id (legacy records)
+                    const { data: unlockLegacy } = await admin
+                        .from("truth_dare_unlocks")
+                        .select("id")
+                        .eq("room_id", roomId)
+                        .eq("fan_id", user.id)
+                        .maybeSingle();
+                    if (unlockLegacy) access = "granted";
+                }
+            }
+
+            // C. Check truth_dare_entries
+            if (access !== "granted") {
+                if (activeSessionId) {
+                    const { data: entry } = await admin
+                        .from("truth_dare_entries")
+                        .select("id")
+                        .eq("room_id", roomId)
+                        .eq("fan_id", user.id)
+                        .eq("session_id", activeSessionId)
+                        .maybeSingle();
+                    if (entry) access = "granted";
+                }
+
+                if (access !== "granted") {
+                    const { data: entryLegacy } = await admin
+                        .from("truth_dare_entries")
+                        .select("id")
+                        .eq("room_id", roomId)
+                        .eq("fan_id", user.id)
+                        .maybeSingle();
+                    if (entryLegacy) access = "granted";
+                }
+            }
+
+            // D. Check request status for private sessions
+            const isPrivate = sessionInfo.isPrivate;
+            if (isPrivate && activeSessionId) {
+                const { data: req } = await admin
+                    .from("room_join_requests")
+                    .select("status")
+                    .eq("session_id", activeSessionId)
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+                requestStatus = req?.status || "none";
+            } else if (!isPrivate) {
+                requestStatus = "approved";
+            }
+
+            // E. Check if user is the host (creator always has access)
+            if (user.id === hostId) {
+                access = "granted";
+            }
+        }
+
+        return NextResponse.json({
+            sessionStatus: effectiveStatus,
+            access,
+            sessionInfo,
+            hostId,
+            hostProfile,
+            requestStatus,
+            sessionId: activeSessionId,
+        });
+    } catch (err: any) {
+        console.error("Check access error:", err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}

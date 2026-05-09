@@ -74,14 +74,25 @@ export async function POST(
         }
 
         if (action === 'GO_LIVE') {
-            // A. Update Session History Record to active
-            const { error: sessionError } = await supabase
+            // A. Find the most recent pending session for this room
+            const { data: pendingSession } = await supabase
                 .from('truth_dare_sessions')
-                .update({ status: 'active', started_at: new Date().toISOString() })
+                .select('id')
                 .eq('room_id', roomId)
-                .eq('status', 'pending');
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-            if (sessionError) console.error("Error going live in history:", sessionError);
+            if (pendingSession) {
+                // Update only this specific session to active
+                const { error: sessionError } = await supabase
+                    .from('truth_dare_sessions')
+                    .update({ status: 'active', started_at: new Date().toISOString() })
+                    .eq('id', pendingSession.id);
+
+                if (sessionError) console.error("Error going live in history:", sessionError);
+            }
 
             // B. Update Game State to active
             const { error: updateError } = await supabase
@@ -90,6 +101,9 @@ export async function POST(
                 .eq('room_id', roomId);
 
             if (updateError) throw updateError;
+
+            // C. Ensure room status is live
+            await supabase.from('rooms').update({ status: 'live' }).eq('id', roomId);
 
             return NextResponse.json({ success: true, message: "Session is now live" });
         }

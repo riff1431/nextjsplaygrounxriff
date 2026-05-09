@@ -302,27 +302,30 @@ export async function POST(
             // but for now we just log it. Request is paid and recorded.
         }
 
-        // 7. Broadcast countdown_start event for synchronized display on both fan and creator views
-        try {
-            const channel = supabase.channel(`room:${roomId}`);
-            await channel.send({
-                type: 'broadcast',
-                event: 'countdown_start',
-                payload: {
-                    requestId: newRequest.id,
-                    fanId: user.id,
-                    fanName,
-                    type,
-                    tier,
-                    content: finalContent,
-                    amount: price,
-                    startedAt: Date.now()
-                }
-            });
-            console.log('Broadcast countdown_start event sent for request:', newRequest.id);
-        } catch (broadcastError) {
-            console.error('Failed to broadcast countdown event:', broadcastError);
-            // Non-fatal - the request is already saved
+        // 7. Broadcast countdown_start event ONLY for truth/dare requests (not tips/reactions)
+        const isTruthDareRequest = ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(type);
+        if (isTruthDareRequest) {
+            try {
+                const channel = supabase.channel(`room:${roomId}`);
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'countdown_start',
+                    payload: {
+                        requestId: newRequest.id,
+                        fanId: user.id,
+                        fanName,
+                        type,
+                        tier,
+                        content: finalContent,
+                        amount: price,
+                        startedAt: Date.now()
+                    }
+                });
+                console.log('Broadcast countdown_start event sent for request:', newRequest.id);
+            } catch (broadcastError) {
+                console.error('Failed to broadcast countdown event:', broadcastError);
+                // Non-fatal - the request is already saved
+            }
         }
 
         return NextResponse.json({ success: true, request: newRequest });

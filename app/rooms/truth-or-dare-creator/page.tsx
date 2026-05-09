@@ -399,6 +399,13 @@ export default function TruthOrDareCreatorPage() {
                 console.log('🔔 RECEIVED NEW REQUEST EVENT:', request);
                 console.log('📊 Room ID check:', { requestRoomId: request.room_id, currentRoomId: roomId });
 
+                // ── SESSION GUARD: Only process requests from the current session ──
+                // Skip requests that were created before the current session started
+                if (activeSessionStartedAt && request.created_at && request.created_at < activeSessionStartedAt) {
+                    console.log('⏩ Skipping old request from previous session:', request.id);
+                    return;
+                }
+
                 // Determine type and tier
                 const isSystemPrompt = request.type?.startsWith('system_');
                 const isCustom = request.type?.startsWith('custom_');
@@ -579,7 +586,7 @@ export default function TruthOrDareCreatorPage() {
             supabase.removeChannel(channel);
             supabase.removeChannel(broadcastChannel);
         };
-    }, [roomId]);
+    }, [roomId, activeSessionStartedAt]);
 
     // 3. Presence Subscription - Track live viewers
     useEffect(() => {
@@ -905,12 +912,6 @@ export default function TruthOrDareCreatorPage() {
 
             toast.success(`Session "${sessionForm.title}" is now live! 🎭`);
 
-            // Track active session ID for invite API
-            if (data.session?.id) {
-                setActiveSessionId(data.session.id);
-                setActiveSessionStartedAt(data.session.started_at || data.session.created_at || new Date().toISOString());
-            }
-
             // ── CLEAN SLATE: Reset all session-scoped data ──
             setQueue([]);
             setActivityFeed([]);
@@ -926,6 +927,14 @@ export default function TruthOrDareCreatorPage() {
             setVotesTV({ truth: 0, dare: 0 });
             setDoubleDareArmed(false);
             setReplayUntil(null);
+
+            // Track active session ID + timestamp AFTER clean slate
+            // This triggers TodCreatorLiveChat to clear and re-fetch messages for the new session
+            const sessionTimestamp = data.session?.started_at || data.session?.created_at || new Date().toISOString();
+            if (data.session?.id) {
+                setActiveSessionId(data.session.id);
+            }
+            setActiveSessionStartedAt(sessionTimestamp);
 
             // Optimistic update — enter the studio immediately
             setSessionActive(true);
@@ -1049,36 +1058,38 @@ export default function TruthOrDareCreatorPage() {
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <SessionLiveControls
-                        sessionId={roomId || ""}
-                        accentHsl="330, 80%, 55%"
-                        initialLiveStartedAt={sessionActive ? new Date().toISOString() : null}
-                        customGoLive={async () => {
-                            if (!sessionActive) {
-                                setShowStartModal(true);
-                                return null;
-                            }
-                            try {
-                                const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'GO_LIVE' })
-                                });
-                                if (res.ok) {
-                                    // Trigger stream layout update immediately
-                                    setIsBroadcasting(true);
-                                    return new Date().toISOString();
+                    {sessionActive && isInStudio && (
+                        <SessionLiveControls
+                            sessionId={roomId || ""}
+                            accentHsl="330, 80%, 55%"
+                            initialLiveStartedAt={sessionActive ? new Date().toISOString() : null}
+                            customGoLive={async () => {
+                                if (!sessionActive) {
+                                    setShowStartModal(true);
+                                    return null;
                                 }
-                            } catch (e) {
-                                console.error('Failed to go live:', e);
-                            }
-                            return null;
-                        }}
-                        customEnd={async () => {
-                            setShowExitConfirmation(true);
-                        }}
-                        onEnd={() => {}}
-                    />
+                                try {
+                                    const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ action: 'GO_LIVE' })
+                                    });
+                                    if (res.ok) {
+                                        // Trigger stream layout update immediately
+                                        setIsBroadcasting(true);
+                                        return new Date().toISOString();
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to go live:', e);
+                                }
+                                return null;
+                            }}
+                            customEnd={async () => {
+                                setShowExitConfirmation(true);
+                            }}
+                            onEnd={() => {}}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -1253,6 +1264,22 @@ export default function TruthOrDareCreatorPage() {
                                                         <button
                                                             onClick={() => {
                                                                 // Rejoin: set session active state and enter studio
+                                                                // ── CLEAN SLATE: Reset all session-scoped data on rejoin ──
+                                                                setQueue([]);
+                                                                setActivityFeed([]);
+                                                                setSessionEarnings({ total: 0, tips: 0, truths: 0, dares: 0, custom: 0 });
+                                                                setFanSpending({});
+                                                                setCurrentPrompt(null);
+                                                                setPromptElapsed(0);
+                                                                setActiveCountdown(null);
+                                                                setActiveTip(null);
+                                                                setEarningsNotification(null);
+                                                                setPendingRequests([]);
+                                                                setVotesTier({ bronze: 0, silver: 0, gold: 0 });
+                                                                setVotesTV({ truth: 0, dare: 0 });
+                                                                setDoubleDareArmed(false);
+                                                                setReplayUntil(null);
+
                                                                 setSessionActive(true);
                                                                 setSessionInfo({
                                                                     title: s.session_title || s.title || "Truth or Dare Session",
@@ -1263,6 +1290,18 @@ export default function TruthOrDareCreatorPage() {
                                                                 setActiveSessionStartedAt(s.started_at || s.created_at || new Date().toISOString());
                                                                 setIsInStudio(true);
                                                                 setShowStartModal(false);
+
+                                                                // Re-fetch session earnings from API for this specific session
+                                                                if (roomId) {
+                                                                    fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`)
+                                                                        .then(r => r.json())
+                                                                        .then(data => {
+                                                                            if (data.currentEarnings) {
+                                                                                setSessionEarnings(prev => ({ ...prev, ...data.currentEarnings }));
+                                                                            }
+                                                                        })
+                                                                        .catch(e => console.error('Failed to fetch session earnings on rejoin:', e));
+                                                                }
                                                             }}
                                                             className="flex-1 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-green-900/20"
                                                         >
@@ -1416,7 +1455,7 @@ export default function TruthOrDareCreatorPage() {
                     </div>
 
                     {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className="flex-[2] min-w-[300px] min-h-0">
+                    <div className="flex-[1.5] min-w-[280px] min-h-0">
                         <TodCreatorRequestPanel
                             title="Incoming Requests"
                             accentColor="pink"
@@ -1443,7 +1482,7 @@ export default function TruthOrDareCreatorPage() {
                     </div>
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className="flex-1 min-w-[200px] min-h-0">
+                    <div className="flex-[1.5] min-w-[280px] min-h-0">
                         <TodCreatorLiveChat roomId={roomId} sessionStartedAt={activeSessionStartedAt} viewerCount={fans.length} />
                     </div>
                 </div>
