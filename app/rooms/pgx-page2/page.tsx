@@ -141,6 +141,9 @@ function PgxPage2Inner() {
     const [chatInput, setChatInput] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [currentTime, setCurrentTime] = useState(Date.now());
+    // Track VIP/booth request statuses
+    const [vipRequestStatus, setVipRequestStatus] = useState<'idle' | 'pending' | 'accepted' | 'declined'>('idle');
+    const [boothRequestStatus, setBoothRequestStatus] = useState<'idle' | 'pending' | 'accepted' | 'declined'>('idle');
 
     // Update time every 10 seconds to refresh the pinned message timer
     useEffect(() => {
@@ -232,7 +235,7 @@ function PgxPage2Inner() {
     /* ── Auto-scroll chat ─── */
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-    /* ── INSTANT PURCHASE ─── */
+    /* ── PURCHASE / TIP / REQUEST ─── */
     const doPurchase = useCallback(async (type: string, label: string, price: number, itemId: string) => {
         if (!roomId || buying) return;
         setBuying(itemId);
@@ -244,11 +247,19 @@ function PgxPage2Inner() {
             });
             const data = await res.json();
             if (data.success) {
+                const isTipLike = ["drink", "tip", "champagne", "vip_bottle"].includes(type);
+                const isRequest = ["vip", "booth"].includes(type);
                 const emoji = type === "drink" ? "🍸" : type === "tip" ? "💰" : type === "vip" ? "👑" : type === "booth" ? "🛋️" : type === "pin" ? "📌" : "⚡";
-                showToast(`${emoji} ${label} sent! -€${price} from your wallet`, "success");
+                if (isRequest) {
+                    if (type === "vip") setVipRequestStatus("pending");
+                    if (type === "booth") setBoothRequestStatus("pending");
+                    showToast(`${emoji} ${label} requested! Waiting for creator approval...`, "info");
+                } else {
+                    showToast(`${emoji} ${label} sent! -€${price} from your wallet`, "success");
+                }
                 await refreshWallet();
             } else {
-                showToast(data.error === "Insufficient balance" ? "💸 Not enough balance. Top up your wallet!" : `Purchase failed: ${data.error || "Unknown error"}`, "error");
+                showToast(data.error === "Insufficient balance" ? "💸 Not enough balance. Top up your wallet!" : `Failed: ${data.error || "Unknown error"}`, "error");
             }
         } catch {
             showToast("Network error. Please try again.", "error");
@@ -258,11 +269,39 @@ function PgxPage2Inner() {
     }, [roomId, buying, showToast, refreshWallet, sessionId]);
 
     const handleTip = (amount: number) => doPurchase("tip", `€${amount} Tip`, amount, `tip-${amount}`);
+    const handleDrinkTip = (drink: any) => {
+        const id = drink.id || drink.name;
+        doPurchase("tip", drink.name, drink.price, id);
+    };
     const handleCustomTip = () => {
         const a = Number(tipAmount);
         if (a > 0) { doPurchase("tip", `€${a} Tip`, a, `tip-custom`); setTipAmount(""); }
         else showToast("Enter a valid tip amount", "info");
     };
+
+    // Subscribe to request status updates (for VIP/booth accept/decline from creator)
+    useEffect(() => {
+        if (!roomId || !user) return;
+        const channel = supabase.channel(`bar-req-status-${roomId}-${user.id}`)
+            .on('postgres_changes', {
+                event: 'UPDATE', schema: 'public', table: 'bar_lounge_requests',
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const updated = payload.new as any;
+                if (updated.fan_id !== user.id) return;
+                const newStatus = updated.status as 'accepted' | 'declined';
+                if (updated.type === 'vip') {
+                    setVipRequestStatus(newStatus);
+                    showToast(newStatus === 'accepted' ? '👑 VIP Upgrade approved! Welcome to the VIP Lounge!' : '❌ VIP Upgrade was declined', newStatus === 'accepted' ? 'success' : 'error');
+                }
+                if (updated.type === 'booth') {
+                    setBoothRequestStatus(newStatus);
+                    showToast(newStatus === 'accepted' ? '🛋️ Booth reserved! Enjoy your private time!' : '❌ Booth reservation was declined', newStatus === 'accepted' ? 'success' : 'error');
+                }
+            })
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, user, supabase, showToast]);
     const handleSendChat = () => {
         if (!chatInput.trim()) return;
         sendMessage(chatInput, user?.id, user?.user_metadata?.full_name || "Guest");
@@ -419,7 +458,7 @@ function PgxPage2Inner() {
                                                 key={id}
                                                 className="pg2-drink-item"
                                                 style={{ ...drinkItem, opacity: buying && !isThisBuying ? 0.6 : 1, marginBottom: "4px" }}
-                                                onClick={() => !buying && doPurchase("drink", drink.name, drink.price, id)}
+                                                onClick={() => !buying && handleDrinkTip(drink)}
                                             >
                                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                     <span style={{ fontSize: "18px" }}>{drink.icon}</span>
@@ -439,31 +478,84 @@ function PgxPage2Inner() {
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
                                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
 
-                                <div style={{ ...glassPanel, ...glowGold, padding: "12px", cursor: buying ? "not-allowed" : "pointer", display: "flex", flexDirection: "column", gap: "8px", opacity: buying ? 0.7 : 1 }}
-                                    onClick={() => !buying && doPurchase("vip", "VIP Upgrade", vipPrice, "vip")}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <Crown className="pg2-glow-pulse" style={{ width: "20px", height: "20px", color: GOLD }} />
-                                        {buying === "vip"
-                                            ? <Loader2 style={{ width: "16px", height: "16px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                            : <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold }}>Upgrade to VIP - ${vipPrice}</span>}
-                                    </div>
-                                    <ul style={{ fontSize: "14px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
-                                        <li style={{ display: "flex", alignItems: "center", gap: "4px" }}><Sparkles style={{ width: "12px", height: "12px", color: PINK }} /> Exclusive Content</li>
-                                    </ul>
-                                </div>
-
-                                <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: buying ? "not-allowed" : "pointer", opacity: buying ? 0.7 : 1 }}
-                                    onClick={() => !buying && doPurchase("booth", "Booth Reservation", 300, "booth")}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <span style={{ fontSize: "18px" }}>🛋️</span>
-                                        <div>
-                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Reserve a Booth</span>
-                                            <span style={{ color: GOLD, fontWeight: 700, marginLeft: "8px" }}>€300</span>
-                                            <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>🎉 Private (5 mins)</p>
+                                {/* VIP Upgrade — Custom Request */}
+                                {vipRequestStatus === 'accepted' ? (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", flexDirection: "column", gap: "8px", border: "1px solid hsla(140,70%,45%,0.4)", background: "hsla(140,40%,15%,0.2)" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <Crown style={{ width: "20px", height: "20px", color: GOLD }} />
+                                            <span style={{ fontWeight: 700, color: "hsl(140,70%,55%)", fontSize: "14px" }}>✓ VIP Access Granted</span>
                                         </div>
-                                        {buying === "booth" && <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "8px" }} />}
+                                        <p style={{ fontSize: "12px", color: MUTED, margin: 0, marginLeft: "28px" }}>Enjoy your exclusive VIP perks!</p>
                                     </div>
-                                </div>
+                                ) : vipRequestStatus === 'pending' ? (
+                                    <div style={{ ...glassPanel, ...glowGold, padding: "12px", display: "flex", flexDirection: "column", gap: "8px", opacity: 0.8, cursor: "default" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <Crown className="pg2-glow-pulse" style={{ width: "20px", height: "20px", color: GOLD }} />
+                                            <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold, fontSize: "14px" }}>VIP Request Pending...</span>
+                                            <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "auto" }} />
+                                        </div>
+                                        <p style={{ fontSize: "12px", color: MUTED, margin: 0, marginLeft: "28px" }}>Waiting for creator approval</p>
+                                    </div>
+                                ) : vipRequestStatus === 'declined' ? (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", flexDirection: "column", gap: "8px", border: "1px solid hsla(0,70%,45%,0.3)", background: "hsla(0,40%,15%,0.15)" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <Crown style={{ width: "20px", height: "20px", color: MUTED }} />
+                                            <span style={{ fontWeight: 700, color: "hsl(0,70%,60%)", fontSize: "14px" }}>VIP Request Declined</span>
+                                        </div>
+                                        <button onClick={() => { setVipRequestStatus('idle'); }} style={{ fontSize: "12px", color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0, marginLeft: "28px", textAlign: "left" }}>Try again?</button>
+                                    </div>
+                                ) : (
+                                    <div style={{ ...glassPanel, ...glowGold, padding: "12px", cursor: buying ? "not-allowed" : "pointer", display: "flex", flexDirection: "column", gap: "8px", opacity: buying ? 0.7 : 1 }}
+                                        onClick={() => !buying && doPurchase("vip", "VIP Upgrade", vipPrice, "vip")}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <Crown className="pg2-glow-pulse" style={{ width: "20px", height: "20px", color: GOLD }} />
+                                            {buying === "vip"
+                                                ? <Loader2 style={{ width: "16px", height: "16px", color: GOLD, animation: "spin 1s linear infinite" }} />
+                                                : <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold }}>Upgrade to VIP - €{vipPrice}</span>}
+                                        </div>
+                                        <ul style={{ fontSize: "14px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
+                                            <li style={{ display: "flex", alignItems: "center", gap: "4px" }}><Sparkles style={{ width: "12px", height: "12px", color: PINK }} /> Exclusive Content</li>
+                                        </ul>
+                                        <p style={{ fontSize: "11px", color: "hsla(42,90%,55%,0.6)", margin: "0 0 0 28px", fontStyle: "italic" }}>Requires creator approval</p>
+                                    </div>
+                                )}
+
+                                {/* Booth Reservation — Custom Request */}
+                                {boothRequestStatus === 'accepted' ? (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid hsla(140,70%,45%,0.4)", background: "hsla(140,40%,15%,0.2)" }}>
+                                        <span style={{ fontSize: "18px" }}>🛋️</span>
+                                        <span style={{ fontWeight: 700, color: "hsl(140,70%,55%)", fontSize: "14px" }}>✓ Booth Reserved</span>
+                                    </div>
+                                ) : boothRequestStatus === 'pending' ? (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", opacity: 0.8, cursor: "default" }}>
+                                        <span style={{ fontSize: "18px" }}>🛋️</span>
+                                        <div style={{ flex: 1 }}>
+                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Booth Request Pending...</span>
+                                            <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>Waiting for creator approval</p>
+                                        </div>
+                                        <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
+                                    </div>
+                                ) : boothRequestStatus === 'declined' ? (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid hsla(0,70%,45%,0.3)", background: "hsla(0,40%,15%,0.15)" }}>
+                                        <span style={{ fontSize: "18px" }}>🛋️</span>
+                                        <span style={{ fontWeight: 700, color: "hsl(0,70%,60%)", fontSize: "14px" }}>Booth Declined</span>
+                                        <button onClick={() => setBoothRequestStatus('idle')} style={{ fontSize: "12px", color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginLeft: "auto" }}>Retry</button>
+                                    </div>
+                                ) : (
+                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: buying ? "not-allowed" : "pointer", opacity: buying ? 0.7 : 1 }}
+                                        onClick={() => !buying && doPurchase("booth", "Booth Reservation", 300, "booth")}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <span style={{ fontSize: "18px" }}>🛋️</span>
+                                            <div>
+                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Reserve a Booth</span>
+                                                <span style={{ color: GOLD, fontWeight: 700, marginLeft: "8px" }}>€300</span>
+                                                <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>🎉 Private (5 mins)</p>
+                                            </div>
+                                            {buying === "booth" && <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "8px" }} />}
+                                        </div>
+                                        <p style={{ fontSize: "11px", color: "hsla(42,90%,55%,0.6)", margin: 0, fontStyle: "italic" }}>Requires approval</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

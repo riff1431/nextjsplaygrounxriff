@@ -503,14 +503,33 @@ function TruthOrDareContent() {
                 });
         }
 
-        // Live Chat — fetch existing + subscribe to new messages
+        // Live Chat — fetch existing + subscribe to new messages (session-scoped by timestamp)
+        let sessionStartedAt: string | null = null;
+
         const fetchChatMessages = async () => {
-            const { data, error } = await supabase
+            // Look up session start time for scoping
+            if (sessionId && !sessionStartedAt) {
+                const { data: sess } = await supabase
+                    .from('truth_dare_sessions')
+                    .select('started_at, created_at')
+                    .eq('id', sessionId)
+                    .single();
+                sessionStartedAt = sess?.started_at || sess?.created_at || null;
+            }
+
+            let query = supabase
                 .from('chat_messages')
                 .select('id, room_id, user_id, username, message, created_at')
                 .eq('room_id', roomId)
                 .order('created_at', { ascending: true })
                 .limit(100);
+
+            // Scope to current session by timestamp
+            if (sessionStartedAt) {
+                query = query.gte('created_at', sessionStartedAt);
+            }
+
+            const { data, error } = await query;
 
             if (data && !error) {
                 setChatMessages(data);
@@ -520,7 +539,7 @@ function TruthOrDareContent() {
         fetchChatMessages();
 
         const chatChannel = supabase
-            .channel(`fan-chat-${roomId}`)
+            .channel(`fan-chat-${roomId}-${sessionId || 'nosession'}`)
             .on(
                 'postgres_changes',
                 {
@@ -531,6 +550,8 @@ function TruthOrDareContent() {
                 },
                 (payload) => {
                     const newMsg = payload.new as any;
+                    // Only add messages from the current session (by timestamp)
+                    if (sessionStartedAt && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
                     setChatMessages((prev) => [...prev, newMsg]);
                     setTimeout(scrollChatToBottom, 100);
                 }
@@ -554,11 +575,28 @@ function TruthOrDareContent() {
 
         const calculateTopSpenders = async () => {
             try {
-                // Fetch all requests for this room with spending data
-                const { data: requests, error } = await supabase
+                // Get the active session's started_at to scope requests
+                let sessionStartedAt: string | null = null;
+                if (sessionId) {
+                    const { data: sess } = await supabase
+                        .from('truth_dare_sessions')
+                        .select('started_at, created_at')
+                        .eq('id', sessionId)
+                        .single();
+                    sessionStartedAt = sess?.started_at || sess?.created_at || null;
+                }
+
+                // Fetch requests for this room, scoped to the current session
+                let reqQuery = supabase
                     .from('truth_dare_requests')
                     .select('fan_id, fan_name, type, amount')
                     .eq('room_id', roomId);
+
+                if (sessionStartedAt) {
+                    reqQuery = reqQuery.gte('created_at', sessionStartedAt);
+                }
+
+                const { data: requests, error } = await reqQuery;
 
                 if (error || !requests || requests.length === 0) {
                     // No requests yet - show default

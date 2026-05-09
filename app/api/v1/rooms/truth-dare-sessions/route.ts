@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
             role: "creator",
         });
 
-        // 7. Update/create game state row
+        // 7. Update/create game state row — CLEAN SLATE for new session
         await supabase.from("truth_dare_games").upsert({
             room_id,
             session_title: title,
@@ -188,6 +188,12 @@ export async function POST(request: NextRequest) {
             is_private: isPrivate,
             unlock_price: Number(price) || 0,
             status: "pending",
+            current_prompt: null,
+            votes_tier: null,
+            votes_tv: null,
+            is_double_dare_armed: false,
+            replay_until: null,
+            group_vote_state: null,
             updated_at: new Date().toISOString(),
         }, { onConflict: "room_id" });
 

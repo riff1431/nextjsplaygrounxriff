@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface Session {
     id: string;
@@ -60,6 +61,14 @@ function timeAgo(dateStr: string) {
 export default function TruthOrDareSessionsBrowse() {
     const router = useRouter();
     const supabase = createClient();
+    const { role, isLoading: authLoading } = useAuth();
+
+    // Redirect creators to their session creation dashboard
+    useEffect(() => {
+        if (!authLoading && role === "creator") {
+            router.push("/rooms/truth-or-dare-creator");
+        }
+    }, [role, authLoading, router]);
 
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);

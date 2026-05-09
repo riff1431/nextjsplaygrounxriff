@@ -87,6 +87,11 @@ export async function POST(
     // Get fan profile name
     const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
 
+    // Determine earnings category: drinks & tips are 'tips', VIP/booth/pin are 'custom_requests'
+    const isTipLike = ['drink', 'tip', 'champagne', 'vip_bottle'].includes(safeType);
+    const earningsCategory = isTipLike ? 'tips' : 'custom_requests';
+    const relatedType = isTipLike ? 'tip' : 'bar_request';
+
     // Payment with revenue split (85% creator / 15% platform)
     const splitResult = await applyRevenueSplit({
         supabase,
@@ -96,9 +101,9 @@ export async function POST(
         splitType: 'GLOBAL',
         description: `Bar Lounge: ${label || type}`,
         roomId,
-        relatedType: 'bar_request',
+        relatedType,
         relatedId: null,
-        earningsCategory: 'custom_requests',
+        earningsCategory,
     });
 
     if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
@@ -138,11 +143,13 @@ export async function POST(
                                     : safeType === "song" ? "🎵"
                                         : "⚡";
 
+    // For tip-like items, use "tipped" language; for custom requests, use "requested"
+    const verb = isTipLike ? 'tipped' : (safeType === 'vip' ? 'requested' : 'bought');
     await supabase.from("bar_lounge_messages").insert({
         room_id: roomId,
         user_id: user.id,
         handle: profile?.username || "Fan",
-        content: `${emoji} ${profile?.username || "Fan"} ${safeType === "tip" ? "sent a" : "bought"} ${label || type} (€${amount})`,
+        content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type} (€${amount})`,
         is_system: true,
         ...(sessionId ? { session_id: sessionId } : {}),
     });

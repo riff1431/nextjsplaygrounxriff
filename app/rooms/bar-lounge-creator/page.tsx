@@ -134,9 +134,9 @@ const CreatorBarLounge = () => {
                     {/* Right - Requests & Summary */}
                     <div className="hidden lg:flex flex-col gap-4 h-full min-h-[400px]">
                         <div className="flex-1 min-h-0">
-                            <IncomingRequests roomId={roomId} />
+                            <IncomingRequests roomId={roomId} sessionId={sessionId} />
                         </div>
-                        <SummaryPanel roomId={roomId} />
+                        <SummaryPanel roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>
             </div>

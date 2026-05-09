@@ -5,9 +5,10 @@ import { createClient } from "@/utils/supabase/client";
 
 interface SummaryPanelProps {
     roomId?: string;
+    sessionId?: string | null;
 }
 
-const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
+const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState({
         fans: 0,
@@ -20,20 +21,26 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
         if (!roomId) return;
 
         async function fetchStats() {
-            // Count unique chatters (fans)
-            const { count: fanCount } = await supabase
+            // Count unique chatters (fans) — scoped to session
+            let fanQuery = supabase
                 .from("bar_lounge_messages")
                 .select("user_id", { count: "exact", head: true })
                 .eq("room_id", roomId!)
                 .eq("is_system", false);
+            if (sessionId) fanQuery = fanQuery.eq("session_id", sessionId);
 
-            // Count drink purchases
-            const { data: requests } = await supabase
+            const { count: fanCount } = await fanQuery;
+
+            // Count requests — scoped to session
+            let reqQuery = supabase
                 .from("bar_lounge_requests")
                 .select("type, amount")
                 .eq("room_id", roomId!);
+            if (sessionId) reqQuery = reqQuery.eq("session_id", sessionId);
 
-            const drinkCount = requests?.filter((r) => r.type === "drink").length || 0;
+            const { data: requests } = await reqQuery;
+
+            const drinkCount = requests?.filter((r) => r.type === "drink" || r.type === "tip").length || 0;
             const tipTotal = requests?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
             const requestCount = requests?.length || 0;
 
@@ -49,7 +56,7 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
 
         // Real-time updates for requests
         const channel = supabase
-            .channel(`bar-summary-${roomId}`)
+            .channel(`bar-summary-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",
@@ -57,11 +64,14 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const newReq = payload.new as any;
+                // Ignore requests from other sessions
+                if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
+
                 setStats((prev) => ({
                     ...prev,
                     requests: prev.requests + 1,
                     tips: prev.tips + (newReq.amount || 0),
-                    drinks: newReq.type === "drink" ? prev.drinks + 1 : prev.drinks,
+                    drinks: (newReq.type === "drink" || newReq.type === "tip") ? prev.drinks + 1 : prev.drinks,
                 }));
             })
             .on("postgres_changes", {
@@ -71,6 +81,9 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const newMsg = payload.new as any;
+                // Ignore messages from other sessions
+                if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
+
                 if (!newMsg.is_system) {
                     setStats((prev) => ({
                         ...prev,
@@ -81,7 +94,7 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const statItems = [
         { label: "Fans", value: stats.fans.toLocaleString() },

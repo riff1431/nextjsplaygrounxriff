@@ -46,7 +46,7 @@ export async function POST(
 
             if (sessionError) throw sessionError;
 
-            // B. Update/Create Active Game State
+            // B. Update/Create Active Game State — CLEAN SLATE
             const { error: updateError } = await supabase
                 .from('truth_dare_games')
                 .upsert({
@@ -56,6 +56,12 @@ export async function POST(
                     is_private: isPrivate,
                     unlock_price: price,
                     status: 'active',
+                    current_prompt: null,
+                    votes_tier: null,
+                    votes_tv: null,
+                    is_double_dare_armed: false,
+                    replay_until: null,
+                    group_vote_state: null,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'room_id' });
 
@@ -89,7 +95,7 @@ export async function POST(
         }
 
         if (action === 'END_SESSION') {
-            // A. Close History Record
+            // A. Close History Records (both active and pending)
             const { error: sessionError } = await supabase
                 .from('truth_dare_sessions')
                 .update({
@@ -97,7 +103,7 @@ export async function POST(
                     ended_at: new Date().toISOString()
                 })
                 .eq('room_id', roomId)
-                .eq('status', 'active');
+                .in('status', ['active', 'pending']);
 
             if (sessionError) console.error("Error closing session history:", sessionError);
 

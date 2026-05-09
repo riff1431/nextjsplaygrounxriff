@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock } from "lucide-react";
+import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock, Square, AlertTriangle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
@@ -120,8 +120,13 @@ export default function TruthOrDareCreatorPage() {
     const [showExitConfirmation, setShowExitConfirmation] = useState(false); // Moved here
     const [isBroadcasting, setIsBroadcasting] = useState(false);
 
+    // End Session Confirmation Modal State
+    const [pendingEndSession, setPendingEndSession] = useState<{ id: string; title: string } | null>(null);
+    const [isEndingSession, setIsEndingSession] = useState(false);
+
     // Collab invite state
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const [activeSessionStartedAt, setActiveSessionStartedAt] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
@@ -165,49 +170,67 @@ export default function TruthOrDareCreatorPage() {
     // 1. Initialize Room ID & Load Data
     useEffect(() => {
         async function init() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            setMe({ id: user.id, name: user.user_metadata?.full_name || "Creator", isHost: true }); // Assume host for creator view
-
-            // Fetch creator profile for avatar
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('avatar_url, full_name, username')
-                .eq('id', user.id)
-                .single();
-
-            if (profile) {
-                setMyAvatarUrl(profile.avatar_url);
-                if (profile.full_name || profile.username) {
-                    setMe(prev => ({ ...prev, name: profile.full_name || profile.username || prev.name }));
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    setIsGameLoading(false);
+                    return;
                 }
-            }
 
-            // Find first room hosted by user of this specific type
-            const { data: room } = await supabase
-                .from('rooms')
-                .select('id')
-                .eq('host_id', user.id)
-                .eq('type', 'truth-or-dare')
-                .limit(1)
-                .single();
+                setMe({ id: user.id, name: user.user_metadata?.full_name || "Creator", isHost: true }); // Assume host for creator view
 
-            let targetRoomId = room?.id;
-
-            if (!targetRoomId) {
-                // Auto-create room for demo if missing
-                const { data: newRoom } = await supabase
-                    .from('rooms')
-                    .insert([{ host_id: user.id, title: "Truth or Dare Room", status: "live", type: "truth-or-dare" }])
-                    .select()
+                // Fetch creator profile for avatar
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('avatar_url, full_name, username')
+                    .eq('id', user.id)
                     .single();
-                targetRoomId = newRoom?.id;
-            }
 
-            if (targetRoomId) {
-                setRoomId(targetRoomId);
-                loadGameData(targetRoomId, user.id);
+                if (profile) {
+                    setMyAvatarUrl(profile.avatar_url);
+                    if (profile.full_name || profile.username) {
+                        setMe(prev => ({ ...prev, name: profile.full_name || profile.username || prev.name }));
+                    }
+                }
+
+                // Find first room hosted by user of this specific type
+                const { data: room, error: roomError } = await supabase
+                    .from('rooms')
+                    .select('id')
+                    .eq('host_id', user.id)
+                    .eq('type', 'truth-or-dare')
+                    .limit(1)
+                    .maybeSingle();
+
+                if (roomError) {
+                    console.error("Error fetching room:", roomError);
+                }
+
+                let targetRoomId = room?.id;
+
+                if (!targetRoomId) {
+                    // Auto-create room for demo if missing
+                    const { data: newRoom, error: createError } = await supabase
+                        .from('rooms')
+                        .insert([{ host_id: user.id, title: "Truth or Dare Room", status: "live", type: "truth-or-dare" }])
+                        .select()
+                        .single();
+                    if (createError) {
+                        console.error("Error creating room:", createError);
+                    }
+                    targetRoomId = newRoom?.id;
+                }
+
+                if (targetRoomId) {
+                    setRoomId(targetRoomId);
+                    loadGameData(targetRoomId, user.id);
+                } else {
+                    // Failed to find or create room — exit loading state
+                    setIsGameLoading(false);
+                }
+            } catch (err) {
+                console.error("Init failed:", err);
+                setIsGameLoading(false);
             }
         }
         init();
@@ -227,34 +250,37 @@ export default function TruthOrDareCreatorPage() {
                 setDoubleDareArmed(!!g.is_double_dare_armed);
                 if (g.replay_until) setReplayUntil(new Date(g.replay_until).getTime());
 
-                // Session Info
+                // Session Info — Always land on dashboard first.
+                // Store session info but do NOT auto-activate the studio.
+                // Creator must explicitly click "Rejoin" to enter the studio.
                 if (g.status === 'active' || g.status === 'pending') {
-                    setSessionActive(true);
                     setSessionInfo({
                         title: g.session_title || "Truth or Dare Session",
                         isPrivate: g.is_private || false,
                         price: g.unlock_price || 0
                     });
-                    // Do NOT auto-enter studio. Allow user to "Resume".
-                    // setIsInStudio(false); 
-                    setShowStartModal(false);
 
                     // Find active session ID from truth_dare_sessions for invite API
                     const { data: activeSession } = await supabase
                         .from('truth_dare_sessions')
-                        .select('id')
+                        .select('id, started_at, created_at')
                         .eq('room_id', rid)
                         .in('status', ['active', 'pending'])
                         .order('started_at', { ascending: false })
                         .limit(1)
                         .maybeSingle();
-                    if (activeSession) setActiveSessionId(activeSession.id);
+                    if (activeSession) {
+                        setActiveSessionId(activeSession.id);
+                        setActiveSessionStartedAt(activeSession.started_at || activeSession.created_at || new Date().toISOString());
+                    }
                 } else {
-                    setSessionActive(false);
-                    setIsInStudio(false);
-                    setShowStartModal(false); // Show Dashboard first
                     setActiveSessionId(null);
+                    setActiveSessionStartedAt(null);
                 }
+                // Always show dashboard first on page load
+                setSessionActive(false);
+                setIsInStudio(false);
+                setShowStartModal(false);
             }
 
             // Fetch Queue
@@ -882,21 +908,34 @@ export default function TruthOrDareCreatorPage() {
             // Track active session ID for invite API
             if (data.session?.id) {
                 setActiveSessionId(data.session.id);
+                setActiveSessionStartedAt(data.session.started_at || data.session.created_at || new Date().toISOString());
             }
 
-            // Optimistic update
+            // ── CLEAN SLATE: Reset all session-scoped data ──
+            setQueue([]);
+            setActivityFeed([]);
+            setSessionEarnings({ total: 0, tips: 0, truths: 0, dares: 0, custom: 0 });
+            setFanSpending({});
+            setCurrentPrompt(null);
+            setPromptElapsed(0);
+            setActiveCountdown(null);
+            setActiveTip(null);
+            setEarningsNotification(null);
+            setPendingRequests([]);
+            setVotesTier({ bronze: 0, silver: 0, gold: 0 });
+            setVotesTV({ truth: 0, dare: 0 });
+            setDoubleDareArmed(false);
+            setReplayUntil(null);
+
+            // Optimistic update — enter the studio immediately
             setSessionActive(true);
+            setIsInStudio(true);
             setSessionInfo({
                 title: sessionForm.title || "Live Truth or Dare",
                 isPrivate: sessionForm.isPrivate,
                 price: finalPrice
             });
             setShowStartModal(false);
-
-            router.push('/rooms/truth-or-dare-creator');
-
-            // Reload history
-            if (roomId && me.id) loadGameData(roomId, me.id);
         } catch (e: any) {
             console.error(e);
             toast.error("Failed to start session: " + e.message);
@@ -920,6 +959,7 @@ export default function TruthOrDareCreatorPage() {
                 setShowStartModal(false); // Return to Dashboard
                 setShowExitConfirmation(false); // Close Modal
                 setActiveSessionId(null);
+                setActiveSessionStartedAt(null);
                 setSlotInvites([]);
             }
         } catch (e) {
@@ -951,12 +991,15 @@ export default function TruthOrDareCreatorPage() {
     // Navigation Intercept is handled by state above
 
     // Loading state if checking roomId - Moved to after hooks
-    if (!roomId && isLive) { return <div className="tod-creator-theme min-h-screen p-3 lg:p-4 text-white flex items-center justify-center">Loading Room...</div>; }
+    if (!roomId && isGameLoading) { return <div className="tod-creator-theme min-h-screen p-3 lg:p-4 text-white flex items-center justify-center">Loading Room...</div>; }
 
     const handleBackNavigation = () => {
-        if (sessionActive && (!history[0] || history[0].status === 'active')) {
-            setShowExitConfirmation(true);
+        if (sessionActive && isInStudio) {
+            // In live studio → go back to session creation dashboard (keep session running)
+            setSessionActive(false);
+            setIsInStudio(false);
         } else {
+            // On dashboard → go back to Creator Studio
             router.push('/rooms/creator-studio');
         }
     };
@@ -965,7 +1008,15 @@ export default function TruthOrDareCreatorPage() {
 
 
     return (
-        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3">
+        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3 relative">
+            {/* Background Image */}
+            <div
+                className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: "url('/images/truth-or-dare-custom-bg.jpg')" }}
+            />
+            <div className="fixed inset-0 bg-black/60" />
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-stretch flex-1">
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-2 lg:mb-3 px-1">
                 <button
@@ -1129,9 +1180,15 @@ export default function TruthOrDareCreatorPage() {
                                 </div>
                             )}
 
+                            {/* Block new session if one is already active */}
+                            {history.some((s: any) => s.status === 'active' || s.status === 'pending') && (
+                                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                    <span className="text-amber-300 text-[11px]">⚠️ You have an active session running. End it below before starting a new one.</span>
+                                </div>
+                            )}
                             <button
                                 onClick={startSession}
-                                disabled={isCreatingSession || !sessionForm.title.trim()}
+                                disabled={isCreatingSession || !sessionForm.title.trim() || history.some((s: any) => s.status === 'active' || s.status === 'pending')}
                                 className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isCreatingSession ? (
@@ -1143,29 +1200,117 @@ export default function TruthOrDareCreatorPage() {
                         </div>
                     </div>
 
-                    {/* Past Sessions History */}
-                    {history.length > 0 && (
-                        <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4">
-                            <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 tod-creator-text-neon-blue" />
-                                Past Sessions
-                            </h3>
-                            <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
-                                {history.filter((s: any) => s.status !== 'active' && s.status !== 'pending').slice(0, 10).map((s: any, i: number) => (
-                                    <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-3 py-2">
-                                        <div>
-                                            <div className="text-xs text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
-                                            <div className="text-[10px] text-white/40 mt-0.5">{formatCanadaDate(s.started_at || s.created_at)}</div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-xs font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
-                                            <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
+                    {/* ─── Session History ─── */}
+                    {history.length > 0 && (() => {
+                        const activeSessions = history.filter((s: any) => s.status === 'active' || s.status === 'pending');
+                        const pastSessions = history.filter((s: any) => s.status !== 'active' && s.status !== 'pending').slice(0, 10);
+
+                        return (
+                            <div className="w-full space-y-4">
+                                {/* Active / Ongoing Sessions */}
+                                {activeSessions.length > 0 && (
+                                    <div className="w-full tod-creator-panel-bg rounded-xl p-4" style={{ border: '1px solid rgba(250,204,21,0.35)', boxShadow: '0 0 20px rgba(250,204,21,0.08)' }}>
+                                        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                            <span className="relative flex h-2.5 w-2.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+                                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-400" />
+                                            </span>
+                                            <span className="text-yellow-300">Ongoing Sessions</span>
+                                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300">
+                                                {activeSessions.length} Active
+                                            </span>
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {activeSessions.map((s: any, i: number) => (
+                                                <div key={s.id || i} className="bg-black/40 border border-yellow-500/20 rounded-xl p-3 hover:border-yellow-500/40 transition-all">
+                                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-sm text-white font-semibold truncate">{s.session_title || s.title || "Untitled Session"}</span>
+                                                                <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                                                                    s.status === 'active'
+                                                                        ? 'bg-green-500/20 border border-green-500/30 text-green-300'
+                                                                        : 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                                                                }`}>
+                                                                    {s.status === 'active' ? '● LIVE' : '○ PENDING'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-[10px] text-white/40">
+                                                                <span>{s.is_private ? '🔒 Private' : '🌐 Public'}</span>
+                                                                <span>Started {formatCanadaDate(s.started_at || s.created_at)}</span>
+                                                                {s.participant_count > 0 && <span>👥 {s.participant_count} viewers</span>}
+                                                            </div>
+                                                            {s.description && (
+                                                                <p className="text-[11px] text-white/30 mt-1 line-clamp-1">{s.description}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-right shrink-0">
+                                                            <div className="text-sm font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
+                                                            <div className="text-[10px] text-white/40">earned</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                // Rejoin: set session active state and enter studio
+                                                                setSessionActive(true);
+                                                                setSessionInfo({
+                                                                    title: s.session_title || s.title || "Truth or Dare Session",
+                                                                    isPrivate: s.is_private || false,
+                                                                    price: s.price || 0
+                                                                });
+                                                                setActiveSessionId(s.id);
+                                                                setActiveSessionStartedAt(s.started_at || s.created_at || new Date().toISOString());
+                                                                setIsInStudio(true);
+                                                                setShowStartModal(false);
+                                                            }}
+                                                            className="flex-1 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-green-900/20"
+                                                        >
+                                                            <Play className="w-3.5 h-3.5" /> Rejoin Session
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setPendingEndSession({ id: s.id, title: s.session_title || s.title || 'Untitled' })}
+                                                            className="py-2 px-4 rounded-lg bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                                                        >
+                                                            <Square className="w-3 h-3" /> End
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))}
+                                )}
+
+                                {/* Past Completed Sessions */}
+                                {pastSessions.length > 0 && (
+                                    <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4">
+                                        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                            <TrendingUp className="w-4 h-4 tod-creator-text-neon-blue" />
+                                            Past Sessions
+                                            <span className="ml-auto text-[10px] text-white/30">{pastSessions.length} sessions</span>
+                                        </h3>
+                                        <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                                            {pastSessions.map((s: any, i: number) => (
+                                                <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-3 py-2 hover:border-white/10 transition">
+                                                    <div>
+                                                        <div className="text-xs text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
+                                                        <div className="text-[10px] text-white/40 mt-0.5 flex items-center gap-2">
+                                                            <span>{formatCanadaDate(s.started_at || s.created_at)}</span>
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30">{s.is_private ? '🔒 Private' : '🌐 Public'}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-xs font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
+                                                        <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        );
+                    })()}
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
@@ -1299,7 +1444,7 @@ export default function TruthOrDareCreatorPage() {
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
                     <div className="flex-1 min-w-[200px] min-h-0">
-                        <TodCreatorLiveChat roomId={roomId} viewerCount={fans.length} />
+                        <TodCreatorLiveChat roomId={roomId} sessionStartedAt={activeSessionStartedAt} viewerCount={fans.length} />
                     </div>
                 </div>
             )}
@@ -1386,6 +1531,106 @@ export default function TruthOrDareCreatorPage() {
                     }
                 }}
             />
+            {/* ─── End Session Confirmation Modal ─── */}
+            {pendingEndSession && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { if (!isEndingSession) setPendingEndSession(null); }}>
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+                    {/* Modal */}
+                    <div
+                        className="relative w-[90%] max-w-md rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: 'linear-gradient(145deg, rgba(20,10,30,0.97), rgba(40,10,20,0.97))',
+                            border: '1px solid rgba(255,60,60,0.3)',
+                            boxShadow: '0 0 40px rgba(255,40,40,0.15), 0 0 80px rgba(255,0,80,0.08), inset 0 1px 0 rgba(255,255,255,0.05)'
+                        }}
+                    >
+                        {/* Top glow line */}
+                        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-red-500 to-transparent" />
+
+                        <div className="p-6">
+                            {/* Icon */}
+                            <div className="flex justify-center mb-4">
+                                <div className="relative">
+                                    <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-red-500/20 to-pink-600/20 border border-red-500/30 flex items-center justify-center">
+                                        <AlertTriangle className="w-7 h-7 text-red-400" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-center text-lg font-bold text-white mb-1">End Session</h3>
+                            <p className="text-center text-sm text-white/40 mb-5">This action cannot be undone</p>
+
+                            {/* Session Info */}
+                            <div className="mb-5 p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                                    <span className="text-sm text-white font-semibold truncate">{pendingEndSession.title}</span>
+                                </div>
+                                <p className="text-[11px] text-white/30 mt-1.5 pl-4">All viewers will be disconnected and the session will be marked as ended.</p>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setPendingEndSession(null)}
+                                    disabled={isEndingSession}
+                                    className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-semibold hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setIsEndingSession(true);
+                                        try {
+                                            const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${pendingEndSession.id}`, {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ status: 'ended' })
+                                            });
+                                            if (res.ok) {
+                                                setHistory(prev => prev.map(h => h.id === pendingEndSession.id ? { ...h, status: 'ended', ended_at: new Date().toISOString() } : h));
+                                                if (activeSessionId === pendingEndSession.id) {
+                                                    setSessionActive(false);
+                                                    setIsInStudio(false);
+                                                    setSessionInfo(null);
+                                                    setActiveSessionId(null);
+                                                    setActiveSessionStartedAt(null);
+                                                }
+                                                toast.success(`Session "${pendingEndSession.title}" ended`);
+                                            } else {
+                                                const errData = await res.json();
+                                                toast.error(errData.error || 'Failed to end session');
+                                            }
+                                        } catch (e) {
+                                            console.error(e);
+                                            toast.error('Failed to end session');
+                                        } finally {
+                                            setIsEndingSession(false);
+                                            setPendingEndSession(null);
+                                        }
+                                    }}
+                                    disabled={isEndingSession}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-red-900/30"
+                                >
+                                    {isEndingSession ? (
+                                        <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Ending...</>
+                                    ) : (
+                                        <><Square className="w-3.5 h-3.5" /> End Session</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Bottom glow line */}
+                        <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+                    </div>
+                </div>
+            )}
+        </div>{/* end content wrapper */}
         </div>
     );
 

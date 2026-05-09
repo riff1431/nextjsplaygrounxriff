@@ -44,9 +44,9 @@ function typeEmoji(type: string): string {
 }
 
 /* ── Types that are auto-completed (no accept/decline needed) ─── */
-const AUTO_COMPLETED_TYPES = new Set(["drink", "tip", "champagne", "vip_bottle", "vip", "pin"]);
+const AUTO_COMPLETED_TYPES = new Set(["drink", "tip", "champagne", "vip_bottle", "pin"]);
 
-const IncomingRequests = ({ roomId }: { roomId?: string }) => {
+const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: string | null }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<Request[]>([]);
     const { toasts, push: showToast, dismiss } = useCreatorToasts();
@@ -55,13 +55,17 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
         if (!roomId) return;
 
         const fetchRequests = async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from("bar_lounge_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
                 .limit(7);
             
+            // Scope to current session
+            if (sessionId) query = query.eq("session_id", sessionId);
+
+            const { data } = await query;
             if (data) {
                 setRequests(data as Request[]);
             }
@@ -69,7 +73,7 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
         fetchRequests();
 
         const channel = supabase
-            .channel(`bar-lounge-requests-${roomId}`)
+            .channel(`bar-lounge-requests-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",
@@ -77,6 +81,9 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const req = payload.new as Request;
+
+                // Ignore requests from other sessions
+                if (sessionId && (req as any).session_id && (req as any).session_id !== sessionId) return;
 
                 // Add to list, keeping only the 7 most recent
                 setRequests((prev) => [req, ...prev].slice(0, 7));
@@ -88,7 +95,7 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const handleAction = async (id: string, action: "accepted" | "declined") => {
         setRequests((prev) =>

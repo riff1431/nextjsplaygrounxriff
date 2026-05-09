@@ -94,7 +94,7 @@ export async function PATCH(
         // Verify ownership
         const { data: session } = await supabase
             .from("truth_dare_sessions")
-            .select("*, room:rooms(host_id)")
+            .select("*, room:rooms(id, host_id)")
             .eq("id", sessionId)
             .single();
 
@@ -102,7 +102,7 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
-        // Update session
+        // Update this specific session
         const { error: updateError } = await supabase
             .from("truth_dare_sessions")
             .update({
@@ -114,13 +114,29 @@ export async function PATCH(
 
         if (updateError) throw updateError;
 
-        // Also update the game state
-        await supabase
-            .from("truth_dare_games")
-            .update({ status: "ended", updated_at: new Date().toISOString() })
-            .eq("room_id", session.room_id);
+        // Check if there are any remaining active/pending sessions for this room
+        const { data: remainingSessions } = await supabase
+            .from("truth_dare_sessions")
+            .select("id")
+            .eq("room_id", session.room_id)
+            .in("status", ["active", "pending"])
+            .neq("id", sessionId)
+            .limit(1);
 
-        return NextResponse.json({ success: true });
+        // Only update game state and room status if no other sessions are active
+        if (!remainingSessions || remainingSessions.length === 0) {
+            await supabase
+                .from("truth_dare_games")
+                .update({ status: "ended", updated_at: new Date().toISOString() })
+                .eq("room_id", session.room_id);
+
+            await supabase
+                .from("rooms")
+                .update({ status: "ended" })
+                .eq("id", session.room_id);
+        }
+
+        return NextResponse.json({ success: true, message: `Session ${status}` });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
