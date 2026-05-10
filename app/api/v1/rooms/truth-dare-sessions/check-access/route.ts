@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         // 3. Get latest active/pending session from truth_dare_sessions
         const { data: latestSession } = await admin
             .from("truth_dare_sessions")
-            .select("id, title, description, is_private, price, status, creator_id, room_id")
+            .select("id, title, description, is_private, price, status, creator_id, room_id, started_at, created_at")
             .eq("room_id", roomId)
             .in("status", ["active", "pending"])
             .order("started_at", { ascending: false })
@@ -177,6 +177,7 @@ export async function GET(request: NextRequest) {
             hostProfile,
             requestStatus,
             sessionId: activeSessionId,
+            sessionStartedAt: latestSession?.started_at || latestSession?.created_at || null,
         });
     } catch (err: any) {
         console.error("Check access error:", err);

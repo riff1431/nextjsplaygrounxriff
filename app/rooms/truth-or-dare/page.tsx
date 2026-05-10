@@ -131,6 +131,8 @@ function TruthOrDareContent() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [userName, setUserName] = useState<string>('Anonymous');
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const [currentSessionStartedAt, setCurrentSessionStartedAt] = useState<string | null>(null);
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
@@ -208,7 +210,11 @@ function TruthOrDareContent() {
                 }
 
                 // 2. Apply session status
-                const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: activeSessionId } = data;
+                const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: resolvedSessionId, sessionStartedAt: sessStartedAt } = data;
+
+                // Store active session info for chat scoping
+                if (resolvedSessionId) setActiveSessionId(resolvedSessionId);
+                if (sessStartedAt) setCurrentSessionStartedAt(sessStartedAt);
 
                 setSessionStatus(status as any);
                 if (status === 'ended') {
@@ -453,19 +459,12 @@ function TruthOrDareContent() {
         // Live Chat — fetch existing + subscribe to new messages (session-scoped by timestamp)
         // Clear previous session's messages immediately
         setChatMessages([]);
-        let sessionStartedAt: string | null = null;
+
+        // Use the session start time from check-access (already in state)
+        // This avoids a second DB query and works even without sessionId in URL
+        const sessionStartedAt = currentSessionStartedAt;
 
         const fetchChatMessages = async () => {
-            // Look up session start time for scoping
-            if (sessionId && !sessionStartedAt) {
-                const { data: sess } = await supabase
-                    .from('truth_dare_sessions')
-                    .select('started_at, created_at')
-                    .eq('id', sessionId)
-                    .single();
-                sessionStartedAt = sess?.started_at || sess?.created_at || null;
-            }
-
             let query = supabase
                 .from('chat_messages')
                 .select('id, room_id, user_id, username, message, created_at')
@@ -516,7 +515,7 @@ function TruthOrDareContent() {
                 supabase.removeChannel(presenceChannel);
             }
         };
-    }, [roomId, sessionId, userId, userName, userAvatar, supabase, scrollChatToBottom]);
+    }, [roomId, sessionId, userId, userName, userAvatar, supabase, scrollChatToBottom, currentSessionStartedAt]);
 
     // Calculate and subscribe to Top Spenders (Truth King / Dare King)
     useEffect(() => {
