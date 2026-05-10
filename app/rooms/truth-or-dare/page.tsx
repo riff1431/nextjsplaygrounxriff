@@ -186,7 +186,6 @@ function TruthOrDareContent() {
     const [topDareKing, setTopDareKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
     const [topTruthKing, setTopTruthKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
 
-    const [creatorCount] = useState(1);
     const [fanCount, setFanCount] = useState(0);
 
     // Load Session Data — uses server-side API to bypass RLS
@@ -952,32 +951,29 @@ function TruthOrDareContent() {
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Left: Stream + Prompts */}
                     <div className="flex flex-col gap-4 flex-1 lg:flex-[2]">
-                        <div className={`grid gap-4 ${creatorCount === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                            {Array.from({ length: creatorCount }).map((_, i) => (
-                                <div
-                                    key={`creator-${i}`}
-                                    className="relative rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
-                                >
-                                    {i === 0 && roomId ? (
-                                        <LiveStreamWrapper
-                                            role="fan"
-                                            appId={APP_ID}
-                                            roomId={roomId}
-                                            uid={userId || 0}
-                                            hostId={hostId || 0}
-                                            hostAvatarUrl={hostAvatarUrl}
-                                            hostName={hostName}
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center animate-pulse">
-                                                <div className="w-8 h-8 rounded-full bg-white/5" />
-                                            </div>
-                                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Waiting for host...</span>
+                        <div className="grid gap-4 grid-cols-1">
+                            <div
+                                className="relative rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
+                            >
+                                {roomId ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={userId || 0}
+                                        hostId={hostId || 0}
+                                        hostAvatarUrl={hostAvatarUrl}
+                                        hostName={hostName}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center animate-pulse">
+                                            <div className="w-8 h-8 rounded-full bg-white/5" />
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Waiting for host...</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Prompt Section - 3 columns as in screenshot */}

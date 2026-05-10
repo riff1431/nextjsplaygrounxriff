@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,10 +8,10 @@ export async function GET(
 ) {
     const params = await props.params;
     const { roomId } = params;
-    const supabase = await createClient();
+    const admin = createAdminClient();
 
     // Find the current active/pending session to scope queue items
-    const { data: activeSession } = await supabase
+    const { data: activeSession } = await admin
         .from("truth_dare_sessions")
         .select("id, started_at, created_at")
         .eq("room_id", roomId)
@@ -19,7 +20,7 @@ export async function GET(
         .limit(1)
         .maybeSingle();
 
-    let query = supabase
+    let query = admin
         .from("truth_dare_queue")
         .select("*")
         .eq("room_id", roomId)

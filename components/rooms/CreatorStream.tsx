@@ -22,6 +22,8 @@ interface CreatorStreamProps {
     uid: string | number;
     avatarUrl?: string | null;
     creatorName?: string;
+    /** Callback to expose Agora remote users to parent (for rendering collab streams) */
+    onRemoteUsersChange?: (users: any[]) => void;
 }
 
 interface FanProfile {
@@ -30,7 +32,7 @@ interface FanProfile {
     avatar_url: string | null;
 }
 
-export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName }: CreatorStreamProps) {
+export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName, onRemoteUsersChange }: CreatorStreamProps) {
     const supabase = createClient();
     const [token, setToken] = useState<string | null>(null);
     const [numericUid, setNumericUid] = useState<number>(0);
@@ -54,8 +56,13 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     const [countdown, setCountdown] = useState<number | null>(null);
 
     // Fan Presence State
-    const remoteUsers = useRemoteUsers(); // Track connected fans
+    const remoteUsers = useRemoteUsers(); // Track connected fans/collab creators
     const [fans, setFans] = useState<FanProfile[]>([]);
+
+    // Expose remote users to parent for collab slot rendering
+    useEffect(() => {
+        onRemoteUsersChange?.(remoteUsers);
+    }, [remoteUsers, remoteUsers.length, onRemoteUsersChange]);
 
     // Final safety cleanup on unmount - Defined early to avoid Hook Order errors
     useEffect(() => {

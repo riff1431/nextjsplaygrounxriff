@@ -78,13 +78,20 @@ export default function TodInviteCreatorModal({
             setMessage("");
             setInviteStatus("idle");
             setErrorMsg("");
+            setExistingInvites([]); // Clear stale invites from previous session
         }
     }, [isOpen]);
+
+    // Clear existing invites when sessionId changes (new session started)
+    useEffect(() => {
+        setExistingInvites([]);
+    }, [sessionId]);
 
     // Load existing invites when modal opens
     useEffect(() => {
         if (!isOpen || !sessionId) return;
         async function fetchExistingInvites() {
+            setExistingInvites([]); // Clear immediately to prevent stale data flash
             setLoadingInvites(true);
             try {
                 const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${sessionId}/invite-creator`);

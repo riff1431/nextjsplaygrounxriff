@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock, Square, AlertTriangle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -21,6 +21,8 @@ import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/Interactio
 import BrandLogo from "@/components/common/BrandLogo";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import TodInviteCreatorModal from "@/components/rooms/truth-or-dare-creator/TodInviteCreatorModal";
+import dynamic from "next/dynamic";
+const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
 
 // ---------- Pricing / constants ----------
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -82,6 +84,7 @@ function TruthOrDareCreatorContent() {
     const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
     const isHost = !!me.isHost;
     const [isLive, setIsLive] = useState(true);
+    const [hostCreatorId, setHostCreatorId] = useState<string | null>(null); // Host user ID (for collab creators to render host's remote stream)
 
     // Data State
     const [creators, setCreators] = useState<Creator[]>([]);
@@ -140,6 +143,11 @@ function TruthOrDareCreatorContent() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
+    // Agora remote users from the host's CreatorStream — used to render collab streams in invite slots
+    const [agoraRemoteUsers, setAgoraRemoteUsers] = useState<any[]>([]);
+    const handleRemoteUsersChange = useCallback((users: any[]) => {
+        setAgoraRemoteUsers(users);
+    }, []);
 
     const startCountdown = () => {
         setCountdown(3);
@@ -207,54 +215,51 @@ function TruthOrDareCreatorContent() {
                     }
                 }
 
-                // ── COLLAB MODE: If collabSessionId is present, load that session's room ──
+                // ── COLLAB MODE: If collabSessionId is present, load via API (bypasses RLS) ──
                 if (collabSessionId) {
-                    const { data: collabSession } = await supabase
-                        .from('truth_dare_sessions')
-                        .select('id, room_id, status, title, started_at, created_at, is_private, price')
-                        .eq('id', collabSessionId)
-                        .single();
+                    try {
+                        console.log('[Collab] Joining session:', collabSessionId, 'inviteId:', collabInviteId);
+                        const collabRes = await fetch(`/api/v1/rooms/truth-dare-sessions/${collabSessionId}/collab-join`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ inviteId: collabInviteId || undefined }),
+                        });
+                        const collabData = await collabRes.json();
+                        console.log('[Collab] Response:', collabRes.status, collabData);
 
-                    if (!collabSession) {
-                        toast.error('Session not found or has ended.');
-                        setIsGameLoading(false);
-                        return;
-                    }
-
-                    if (collabSession.status !== 'active' && collabSession.status !== 'pending') {
-                        toast.error('This session has already ended.');
-                        setIsGameLoading(false);
-                        return;
-                    }
-
-                    // Auto-accept the invite if still pending
-                    if (collabInviteId) {
-                        try {
-                            await fetch(`/api/v1/rooms/sessions/${collabSessionId}/respond-invite`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ accept: true }),
-                            });
-                        } catch (e) {
-                            console.warn('Auto-accept invite failed (may already be accepted):', e);
+                        if (!collabRes.ok || !collabData.success) {
+                            const errMsg = collabData.error || 'Session not found or has ended.';
+                            console.error('[Collab] Join failed:', errMsg);
+                            toast.error(errMsg);
+                            setIsGameLoading(false);
+                            return;
                         }
-                    }
 
-                    // Use the session's room
-                    setRoomId(collabSession.room_id);
-                    setActiveSessionId(collabSession.id);
-                    setActiveSessionStartedAt(collabSession.started_at || collabSession.created_at || new Date().toISOString());
-                    setSessionActive(true);
-                    setIsInStudio(true);
-                    setIsSessionLive(collabSession.status === 'active');
-                    setIsBroadcasting(collabSession.status === 'active');
-                    setSessionInfo({
-                        title: collabSession.title || 'Truth or Dare Collab',
-                        isPrivate: collabSession.is_private || false,
-                        price: collabSession.price || 0,
-                    });
-                    loadGameData(collabSession.room_id, user.id);
-                    toast.success('Welcome to the collab session! 🎭');
+                        const collabSession = collabData.session;
+
+                        // Track the host creator ID for rendering their remote stream
+                        setHostCreatorId(collabSession.creator_id);
+
+                        // Use the session's room
+                        setRoomId(collabSession.room_id);
+                        setActiveSessionId(collabSession.id);
+                        setActiveSessionStartedAt(collabSession.started_at || collabSession.created_at || new Date().toISOString());
+                        setSessionActive(true);
+                        setIsInStudio(true);
+                        setIsSessionLive(collabSession.status === 'active');
+                        setIsBroadcasting(collabSession.status === 'active');
+                        setSessionInfo({
+                            title: collabSession.title || 'Truth or Dare Collab',
+                            isPrivate: collabSession.is_private || false,
+                            price: collabSession.price || 0,
+                        });
+                        loadGameData(collabSession.room_id, user.id, true); // skipDashboardReset for collab
+                        toast.success(`Welcome to the collab session! 🎭 (${collabData.invite?.split_pct || 0}% split)`);
+                    } catch (e) {
+                        console.error('Collab join failed:', e);
+                        toast.error('Failed to join collab session.');
+                        setIsGameLoading(false);
+                    }
                     return;
                 }
 
@@ -302,7 +307,7 @@ function TruthOrDareCreatorContent() {
         init();
     }, [collabSessionId, collabInviteId]);
 
-    async function loadGameData(rid: string, currentUserId: string) {
+    async function loadGameData(rid: string, currentUserId: string, skipDashboardReset: boolean = false) {
         try {
             // Fetch initial state via API
             const res = await fetch(`/api/v1/rooms/${rid}/truth-or-dare/creator`);
@@ -326,27 +331,32 @@ function TruthOrDareCreatorContent() {
                         price: g.unlock_price || 0
                     });
 
-                    // Find active session ID from truth_dare_sessions for invite API
-                    const { data: activeSession } = await supabase
-                        .from('truth_dare_sessions')
-                        .select('id, started_at, created_at')
-                        .eq('room_id', rid)
-                        .in('status', ['active', 'pending'])
-                        .order('started_at', { ascending: false })
-                        .limit(1)
-                        .maybeSingle();
-                    if (activeSession) {
-                        setActiveSessionId(activeSession.id);
-                        setActiveSessionStartedAt(activeSession.started_at || activeSession.created_at || new Date().toISOString());
+                    // Find active session ID via API (bypasses RLS)
+                    try {
+                        const sessRes = await fetch(`/api/v1/rooms/${rid}/truth-or-dare/session`);
+                        const sessData = await sessRes.json();
+                        const activeSession = sessData.history?.find((s: any) => s.status === 'active' || s.status === 'pending');
+                        if (activeSession) {
+                            setActiveSessionId(activeSession.id);
+                            setActiveSessionStartedAt(activeSession.started_at || activeSession.created_at || new Date().toISOString());
+                        } else {
+                            setActiveSessionId(null);
+                            setActiveSessionStartedAt(null);
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch active session:', e);
                     }
                 } else {
                     setActiveSessionId(null);
                     setActiveSessionStartedAt(null);
                 }
-                // Always show dashboard first on page load
-                setSessionActive(false);
-                setIsInStudio(false);
-                setShowStartModal(false);
+                // For normal host mode, always show dashboard first on page load.
+                // For collab mode (skipDashboardReset=true), keep the studio active.
+                if (!skipDashboardReset) {
+                    setSessionActive(false);
+                    setIsInStudio(false);
+                    setShowStartModal(false);
+                }
             }
 
             // Fetch Queue
@@ -996,6 +1006,7 @@ function TruthOrDareCreatorContent() {
             setVotesTV({ truth: 0, dare: 0 });
             setDoubleDareArmed(false);
             setReplayUntil(null);
+            setSlotInvites([]); // Clear collab invites from previous session
 
             // Track active session ID + timestamp AFTER clean slate
             // This triggers TodCreatorLiveChat to clear and re-fetch messages for the new session
@@ -1075,25 +1086,37 @@ function TruthOrDareCreatorContent() {
         }
     }
 
-    // Fetch invites for active session + realtime subscription
+    // Fetch invites for active session + realtime subscription + polling fallback
     useEffect(() => {
         if (!activeSessionId) { setSlotInvites([]); return; }
         async function fetchInvites() {
             try {
                 const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${activeSessionId}/invite-creator`);
                 const data = await res.json();
-                if (data.invites) setSlotInvites(data.invites);
+                if (data.invites) {
+                    console.log('[ToD] Invites loaded:', data.invites.length, data.invites.map((i: any) => ({ id: i.id, status: i.status, invited_creator_id: i.invited_creator_id })));
+                    setSlotInvites(data.invites);
+                } else if (data.error) {
+                    console.error('[ToD] Invite fetch API error:', data.error);
+                }
             } catch (e) { console.error('Failed to fetch invites:', e); }
         }
         fetchInvites();
 
+        // Realtime subscription (may not fire if RLS blocks postgres_changes)
         const inviteChannel = supabase.channel(`invites_${activeSessionId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'creator_invite_splits', filter: `session_id=eq.${activeSessionId}` }, () => {
                 fetchInvites();
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(inviteChannel); };
+        // Polling fallback — refresh every 8 seconds to catch accepted invites
+        const pollInterval = setInterval(fetchInvites, 8000);
+
+        return () => {
+            supabase.removeChannel(inviteChannel);
+            clearInterval(pollInterval);
+        };
     }, [activeSessionId]);
 
     // Navigation Intercept is handled by state above
@@ -1172,20 +1195,27 @@ function TruthOrDareCreatorContent() {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ action: 'GO_LIVE' })
                                     });
+                                    const data = await res.json();
                                     if (res.ok) {
-                                        // Trigger stream layout update immediately
-                                        setIsBroadcasting(true);
+                                        setIsSessionLive(true);
+                                        startCountdown();
+                                        toast.success('You are now LIVE! 🔴');
                                         return new Date().toISOString();
+                                    } else {
+                                        toast.error(data.error || 'Failed to go live');
+                                        return null;
                                     }
                                 } catch (e) {
                                     console.error('Failed to go live:', e);
+                                    toast.error('Failed to go live');
+                                    return null;
                                 }
-                                return null;
                             }}
-                            customEnd={async () => {
+                            customEnd={isHost ? async () => {
                                 setShowExitConfirmation(true);
-                            }}
+                            } : undefined}
                             onEnd={() => {}}
+                            hideEnd={!isHost}
                         />
                     )}
                 </div>
@@ -1513,40 +1543,88 @@ function TruthOrDareCreatorContent() {
                     <div className="flex flex-col gap-2 lg:gap-3" style={{ width: '42%', minWidth: '380px' }}>
                         {/* 2x2 Video Grid */}
                         <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-                            {/* Vid 1 — Main Stream */}
+                            {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
                             <div className="relative overflow-hidden">
                                 <div className="absolute inset-0">
-                                    <TodCreatorStreamViewer
-                                        roomId={roomId}
-                                        userId={me.id}
-                                        appId={APP_ID}
-                                        avatarUrl={myAvatarUrl}
-                                        creatorName={me.name}
-                                        viewerCount={fans.length}
-                                    />
+                                    {isHost ? (
+                                        <TodCreatorStreamViewer
+                                            roomId={roomId}
+                                            userId={me.id}
+                                            appId={APP_ID}
+                                            avatarUrl={myAvatarUrl}
+                                            creatorName={me.name}
+                                            viewerCount={fans.length}
+                                            onRemoteUsersChange={handleRemoteUsersChange}
+                                        />
+                                    ) : (
+                                        /* Collab creator: show host's remote stream in Slot 1 */
+                                        <TodCreatorStreamViewer
+                                            roomId={roomId}
+                                            userId={me.id}
+                                            appId={APP_ID}
+                                            avatarUrl={null}
+                                            creatorName="Host"
+                                            viewerCount={fans.length}
+                                            remoteHostId={hostCreatorId}
+                                        />
+                                    )}
                                 </div>
                             </div>
                             {/* Vid Slots 2-4 — Clickable Invite Slots */}
-                            {[0, 1, 2].map((slotIdx) => {
+                            {/* Vid Slot 2: For collab creator, show own camera stream */}
+                            {!isHost && (
+                                <div className="relative overflow-hidden" style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div className="absolute inset-0">
+                                        <TodCreatorStreamViewer
+                                            roomId={roomId}
+                                            userId={me.id}
+                                            appId={APP_ID}
+                                            avatarUrl={myAvatarUrl}
+                                            creatorName={me.name}
+                                            viewerCount={0}
+                                            isCollabSelf={true}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            {/* Vid Slots 2-4 (Host) or 3-4 (Collab) — Invite Slots */}
+                            {(isHost ? [0, 1, 2] : [0, 1]).map((slotIdx) => {
                                 const invite = slotInvites[slotIdx];
-                                const borderStyle = slotIdx === 0
+                                const isAcceptedWithStream = invite?.status === 'accepted' && invite?.invited_creator_id;
+                                const gridSlotIdx = isHost ? slotIdx : slotIdx + 1; // offset for collab (slot 2 is own cam)
+                                const borderStyle = gridSlotIdx === 0
                                     ? { borderLeft: '1px solid rgba(255,255,255,0.06)' }
-                                    : slotIdx === 1
+                                    : gridSlotIdx === 1
                                     ? { borderTop: '1px solid rgba(255,255,255,0.06)' }
                                     : { borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' };
                                 return (
-                                    <button
+                                    <div
                                         key={`slot-${slotIdx}`}
-                                        onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
                                         className="relative flex items-center justify-center transition-all group"
                                         style={{
-                                            background: invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
+                                            background: isAcceptedWithStream ? 'rgba(0,0,0,0.6)' : invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
                                             ...borderStyle,
                                             cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
                                         }}
+                                        onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
                                     >
-                                        {invite && invite.status !== 'declined' ? (
-                                            /* Invited creator display */
+                                        {isAcceptedWithStream && isHost ? (() => {
+                                            /* Host view: Show accepted collab creator's REMOTE Agora stream.
+                                               Match the invite to a remote Agora user. Remote users who are
+                                               publishers (collab creators) appear in agoraRemoteUsers. We use
+                                               slotIdx to pick the correct one (first accepted invite → first remote user). */
+                                            const collabRemoteUser = agoraRemoteUsers[slotIdx] || null;
+                                            return (
+                                                <div className="absolute inset-0">
+                                                    <CollabRemoteStream
+                                                        user={collabRemoteUser}
+                                                        avatarUrl={invite.invited?.avatar_url}
+                                                        creatorName={invite.invited?.full_name || invite.invited?.username || 'Collab'}
+                                                    />
+                                                </div>
+                                            );
+                                        })() : invite && invite.status !== 'declined' ? (
+                                            /* Invited creator display (pending or accepted without stream) */
                                             <div className="text-center">
                                                 <div className={`w-12 h-12 rounded-full mx-auto mb-1.5 overflow-hidden border-2 ${
                                                     invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
@@ -1590,7 +1668,7 @@ function TruthOrDareCreatorContent() {
                                                 <span className="text-[10px] text-white/25 font-medium group-hover:text-pink-300/60 transition">Invite Creator</span>
                                             </div>
                                         )}
-                                    </button>
+                                    </div>
                                 );
                             })}
                         </div>

@@ -16,9 +16,11 @@ interface FanStreamProps {
     hostId: string | number; // not used for matching (Agora uses numeric UIDs)
     hostAvatarUrl?: string | null;
     hostName?: string;
+    /** If provided, callback when the number of remote broadcasters changes */
+    onRemoteCountChange?: (count: number) => void;
 }
 
-export default function FanStream({ appId, channelName, uid, hostAvatarUrl, hostName }: FanStreamProps) {
+export default function FanStream({ appId, channelName, uid, hostAvatarUrl, hostName, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
     const [numericUid, setNumericUid] = useState<number>(0);
     const client = useRTCClient();
@@ -66,10 +68,13 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
         isReady
     );
 
-    // In a 1-to-many Bar Lounge, the only broadcaster is the host
+    // All remote broadcasters (host + collab creators)
     const remoteUsers = useRemoteUsers();
-    const broadcaster = remoteUsers[0] ?? null;
-    const hostHasVideo = broadcaster?.hasVideo ?? false;
+
+    // Notify parent when remote user count changes
+    useEffect(() => {
+        onRemoteCountChange?.(remoteUsers.length);
+    }, [remoteUsers.length, onRemoteCountChange]);
 
     // Loading state
     if (!isReady) {
@@ -130,6 +135,56 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
             <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
         </div>
     );
+
+    // ── Multi-creator layout: 2/3/4 creators ──
+    if (remoteUsers.length > 1) {
+        const count = remoteUsers.length;
+        // 2 creators: side-by-side (1 row, 2 cols)
+        // 3 creators: 2 on top, 1 centered below (2x2 grid, 3 cells)
+        // 4 creators: 2x2 grid
+        const gridStyle: React.CSSProperties = count <= 2
+            ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr' }
+            : { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' };
+
+        return (
+            <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl" style={gridStyle}>
+                {remoteUsers.slice(0, 4).map((user, idx) => (
+                    <div
+                        key={`remote-${user.uid}`}
+                        className="relative overflow-hidden"
+                        style={{
+                            // If 3 creators and this is the 3rd (idx=2), center it spanning visually
+                            ...(count === 3 && idx === 2 ? { gridColumn: '1 / -1', maxWidth: '50%', justifySelf: 'center' } : {}),
+                            borderRight: (idx % 2 === 0 && idx < count - 1 && !(count === 3 && idx === 2)) ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                            borderTop: idx >= 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                        }}
+                    >
+                        <RemoteUser user={user} cover="cover" className="w-full h-full" />
+                        {!user.hasVideo && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                                <VideoOff className="w-8 h-8 text-gray-600" />
+                            </div>
+                        )}
+                        {/* Creator label */}
+                        <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">
+                            <span className="text-[10px] font-bold text-white/80">
+                                {idx === 0 ? '👑 Creator 1' : `🎬 Creator ${idx + 1}`}
+                            </span>
+                        </div>
+                        {/* LIVE badge */}
+                        <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-red-600/90 px-2 py-0.5 rounded-md">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            <span className="text-[9px] font-bold text-white">LIVE</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    // ── Single creator layout (original) ──
+    const broadcaster = remoteUsers[0] ?? null;
+    const hostHasVideo = broadcaster?.hasVideo ?? false;
 
     return (
         <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border border-white/5 shadow-2xl">

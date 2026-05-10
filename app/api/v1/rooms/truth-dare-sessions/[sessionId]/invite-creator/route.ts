@@ -259,16 +259,34 @@ export async function GET(
     }
 
     try {
+        // Step 1: Fetch invites (no FK join — avoids FK name mismatch issues)
         const { data: invites, error } = await admin
             .from("creator_invite_splits")
-            .select("*, invited:profiles!creator_invite_splits_invited_creator_id_fkey(id, username, full_name, avatar_url)")
+            .select("*")
             .eq("session_id", sessionId)
             .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        return NextResponse.json({ invites: invites || [] });
+        // Step 2: Enrich with profile data for invited creators
+        const enriched = await Promise.all(
+            (invites || []).map(async (inv: any) => {
+                let invited = null;
+                if (inv.invited_creator_id) {
+                    const { data: profile } = await admin
+                        .from("profiles")
+                        .select("id, username, full_name, avatar_url")
+                        .eq("id", inv.invited_creator_id)
+                        .maybeSingle();
+                    invited = profile;
+                }
+                return { ...inv, invited };
+            })
+        );
+
+        return NextResponse.json({ invites: enriched });
     } catch (err: any) {
+        console.error("Invite-creator GET error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

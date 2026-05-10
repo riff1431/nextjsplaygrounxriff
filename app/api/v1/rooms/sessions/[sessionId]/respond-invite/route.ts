@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -12,6 +13,7 @@ export async function POST(
 ) {
     const { sessionId } = await params;
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -26,8 +28,8 @@ export async function POST(
             return NextResponse.json({ error: "accept field is required" }, { status: 400 });
         }
 
-        // Find the pending invite for this creator
-        const { data: invite, error: fetchError } = await supabase
+        // Find the pending invite for this creator (use admin to bypass RLS)
+        const { data: invite, error: fetchError } = await admin
             .from("creator_invite_splits")
             .select("*")
             .eq("session_id", sessionId)
@@ -41,7 +43,7 @@ export async function POST(
 
         // Update invite status
         const newStatus = accept ? "accepted" : "declined";
-        const { data: updated, error: updateError } = await supabase
+        const { data: updated, error: updateError } = await admin
             .from("creator_invite_splits")
             .update({
                 status: newStatus,
@@ -55,7 +57,7 @@ export async function POST(
 
         // If accepted, add as session participant with role 'invited_creator'
         if (accept) {
-            await supabase.from("room_session_participants").upsert({
+            await admin.from("room_session_participants").upsert({
                 session_id: sessionId,
                 user_id: user.id,
                 role: "invited_creator",
@@ -63,13 +65,13 @@ export async function POST(
         }
 
         // Notify the inviter
-        const { data: profile } = await supabase
+        const { data: profile } = await admin
             .from("profiles")
             .select("username")
             .eq("id", user.id)
             .single();
 
-        await supabase.from("notifications").insert({
+        await admin.from("notifications").insert({
             user_id: invite.inviter_creator_id,
             actor_id: user.id,
             type: "creator_invite_response",

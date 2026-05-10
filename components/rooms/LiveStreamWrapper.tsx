@@ -13,9 +13,11 @@ interface LiveStreamWrapperProps {
     appId: string;
     hostAvatarUrl?: string | null; // Creator's avatar URL
     hostName?: string; // Creator's display name
+    /** Callback to expose Agora remote users (only for host role) */
+    onRemoteUsersChange?: (users: any[]) => void;
 }
 
-export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, hostAvatarUrl, hostName }: LiveStreamWrapperProps) {
+export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, hostAvatarUrl, hostName, onRemoteUsersChange }: LiveStreamWrapperProps) {
     const [client, setClient] = useState<any>(null);
 
     useEffect(() => {
@@ -38,6 +40,7 @@ export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, ho
                     uid={uid}
                     avatarUrl={hostAvatarUrl}
                     creatorName={hostName}
+                    onRemoteUsersChange={onRemoteUsersChange}
                 />
             ) : (
                 // For fan, uid is their ID, hostId is who they watch

@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 /** Platform fee is no longer charged to creators. Kept for reference. */
@@ -17,6 +18,7 @@ const PLATFORM_ACCOUNT_ID = process.env.PLATFORM_ACCOUNT_ID || "00000000-0000-00
 // ──────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     try {
         // Fetch sessions where this user is creator (via room host or creator_id)
-        const { data: sessions, error } = await supabase
+        const { data: sessions, error } = await admin
             .from("truth_dare_sessions")
             .select(`
                 *,
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
         let requestCounts: Record<string, number> = {};
 
         if (sessionIds.length > 0) {
-            const { data: participants } = await supabase
+            const { data: participants } = await admin
                 .from("truth_dare_session_participants")
                 .select("session_id")
                 .in("session_id", sessionIds);
@@ -58,7 +60,7 @@ export async function GET(request: NextRequest) {
             const privateSessionIds = privateSessions.map((s: any) => s.id);
 
             if (privateSessionIds.length > 0) {
-                const { data: requests } = await supabase
+                const { data: requests } = await admin
                     .from("room_join_requests")
                     .select("session_id, status")
                     .in("session_id", privateSessionIds)

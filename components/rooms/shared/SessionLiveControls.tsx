@@ -23,6 +23,10 @@ interface SessionLiveControlsProps {
      * Custom end handler. If provided, replaces the default API call.
      */
     customEnd?: () => Promise<void>;
+    /**
+     * If true, hides the End button entirely (for collab creators who shouldn't end sessions).
+     */
+    hideEnd?: boolean;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -45,6 +49,7 @@ export default function SessionLiveControls({
     initialLiveStartedAt,
     customGoLive,
     customEnd,
+    hideEnd,
 }: SessionLiveControlsProps) {
     const [liveStartedAt, setLiveStartedAt] = useState<number | null>(
         initialLiveStartedAt ? new Date(initialLiveStartedAt).getTime() : null
@@ -222,7 +227,7 @@ export default function SessionLiveControls({
                     <Play className="w-3.5 h-3.5" style={{ fill: "currentColor" }} />
                     {isLoading ? "Starting…" : "Go Live"}
                 </button>
-            ) : (
+            ) : !hideEnd ? (
                 <button
                     onClick={handleEnd}
                     disabled={isLoading}
@@ -238,7 +243,7 @@ export default function SessionLiveControls({
                     <Square className="w-3.5 h-3.5" style={{ fill: "currentColor" }} />
                     {isLoading ? "Ending…" : "End"}
                 </button>
-            )}
+            ) : null}
         </div>
     );
 }

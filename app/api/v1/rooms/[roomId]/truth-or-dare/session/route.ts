@@ -1,5 +1,6 @@
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -7,6 +8,7 @@ export async function POST(
     { params }: { params: Promise<{ roomId: string }> }
 ) {
     const supabase = await createClient();
+    const admin = createAdminClient();
     const { roomId } = await params;
 
     // 1. Auth Check
@@ -19,21 +21,45 @@ export async function POST(
         const body = await request.json();
         const { action, title, description, isPrivate, price } = body;
 
-        // 2. Verify Room Ownership
-        const { data: room, error: roomError } = await supabase
+        // 2. Verify Room Access — host OR accepted collab creator
+        const { data: room } = await admin
             .from('rooms')
             .select('host_id')
             .eq('id', roomId)
-            .single();
+            .maybeSingle();
 
-        if (roomError || !room || room.host_id !== user.id) {
+        if (!room) {
+            return NextResponse.json({ error: "Room not found" }, { status: 404 });
+        }
+
+        const isRoomHost = room.host_id === user.id;
+
+        // If not the host, check if this user is an accepted collab creator for this room
+        let isCollabCreator = false;
+        if (!isRoomHost) {
+            const { data: invite } = await admin
+                .from('creator_invite_splits')
+                .select('id')
+                .eq('invited_creator_id', user.id)
+                .eq('status', 'accepted')
+                .limit(1)
+                .maybeSingle();
+            isCollabCreator = !!invite;
+        }
+
+        if (!isRoomHost && !isCollabCreator) {
             return NextResponse.json({ error: "Room not found or unauthorized" }, { status: 403 });
         }
 
         // 3. Handle Actions
         if (action === 'START_SESSION') {
+            // Only hosts can start sessions
+            if (!isRoomHost) {
+                return NextResponse.json({ error: "Only the host can start sessions" }, { status: 403 });
+            }
+
             // A. Create Session History Record
-            const { error: sessionError } = await supabase
+            const { error: sessionError } = await admin
                 .from('truth_dare_sessions')
                 .insert({
                     room_id: roomId,
@@ -47,7 +73,7 @@ export async function POST(
             if (sessionError) throw sessionError;
 
             // B. Update/Create Active Game State — CLEAN SLATE
-            const { error: updateError } = await supabase
+            const { error: updateError } = await admin
                 .from('truth_dare_games')
                 .upsert({
                     room_id: roomId,
@@ -68,14 +94,14 @@ export async function POST(
             if (updateError) throw updateError;
 
             // Ensure room status is live
-            await supabase.from('rooms').update({ status: 'live' }).eq('id', roomId);
+            await admin.from('rooms').update({ status: 'live' }).eq('id', roomId);
 
             return NextResponse.json({ success: true, message: "Session started" });
         }
 
         if (action === 'GO_LIVE') {
             // A. Find the most recent pending session for this room
-            const { data: pendingSession } = await supabase
+            const { data: pendingSession } = await admin
                 .from('truth_dare_sessions')
                 .select('id')
                 .eq('room_id', roomId)
@@ -86,7 +112,7 @@ export async function POST(
 
             if (pendingSession) {
                 // Update only this specific session to active
-                const { error: sessionError } = await supabase
+                const { error: sessionError } = await admin
                     .from('truth_dare_sessions')
                     .update({ status: 'active', started_at: new Date().toISOString() })
                     .eq('id', pendingSession.id);
@@ -95,7 +121,7 @@ export async function POST(
             }
 
             // B. Update Game State to active
-            const { error: updateError } = await supabase
+            const { error: updateError } = await admin
                 .from('truth_dare_games')
                 .update({ status: 'active', updated_at: new Date().toISOString() })
                 .eq('room_id', roomId);
@@ -103,14 +129,19 @@ export async function POST(
             if (updateError) throw updateError;
 
             // C. Ensure room status is live
-            await supabase.from('rooms').update({ status: 'live' }).eq('id', roomId);
+            await admin.from('rooms').update({ status: 'live' }).eq('id', roomId);
 
             return NextResponse.json({ success: true, message: "Session is now live" });
         }
 
         if (action === 'END_SESSION') {
+            // Only hosts can end sessions
+            if (!isRoomHost) {
+                return NextResponse.json({ error: "Only the host can end sessions" }, { status: 403 });
+            }
+
             // A. Close History Records (both active and pending)
-            const { error: sessionError } = await supabase
+            const { error: sessionError } = await admin
                 .from('truth_dare_sessions')
                 .update({
                     status: 'ended',
@@ -122,7 +153,7 @@ export async function POST(
             if (sessionError) console.error("Error closing session history:", sessionError);
 
             // B. Update Game State
-            const { error: updateError } = await supabase
+            const { error: updateError } = await admin
                 .from('truth_dare_games')
                 .update({
                     status: 'ended',
@@ -133,7 +164,7 @@ export async function POST(
             if (updateError) throw updateError;
 
             // C. Set room status to 'ended' so it no longer appears as live
-            await supabase.from('rooms').update({ status: 'ended' }).eq('id', roomId);
+            await admin.from('rooms').update({ status: 'ended' }).eq('id', roomId);
 
             // D. Broadcast session_ended to all connected fans for instant UI update
             try {
@@ -165,10 +196,17 @@ export async function GET(
     { params }: { params: Promise<{ roomId: string }> }
 ) {
     const supabase = await createClient();
+    const admin = createAdminClient();
     const { roomId } = await params;
 
+    // Auth check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     try {
-        const { data: history, error } = await supabase
+        const { data: history, error } = await admin
             .from('truth_dare_sessions')
             .select('*')
             .eq('room_id', roomId)
@@ -184,7 +222,7 @@ export async function GET(
         const activeSession = history?.find((s: any) => s.status === 'active');
 
         if (activeSession) {
-            const { data: requests } = await supabase
+            const { data: requests } = await admin
                 .from('truth_dare_requests')
                 .select('amount, type, status, created_at')
                 .eq('room_id', roomId)
