@@ -186,7 +186,7 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                                             textTransform: "uppercase",
                                             letterSpacing: "0.5px",
                                         }}>
-                                            {req.type}
+                                            {req.type === 'tip' ? 'Drink' : req.type}
                                         </span>
                                     </div>
                                     <p className="text-xs mt-0.5 truncate" style={{ color: "hsla(45,100%,95%,0.5)" }}>

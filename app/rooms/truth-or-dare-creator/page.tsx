@@ -37,7 +37,7 @@ type CustomType = "truth" | "dare";
 type QueueItemType = "TIER_PURCHASE" | "CUSTOM_TRUTH" | "CUSTOM_DARE" | "TIP" | "CROWD_VOTE_TIER" | "CROWD_VOTE_TV" | "REPLAY_PURCHASE" | "TIME_EXTENSION" | "ANGLE_UNLOCK" | "DOUBLE_DARE";
 
 type QueueItem = { id: string; type: QueueItemType; createdAt: number; fanName?: string; amount: number; meta: Record<string, any>; };
-type ActivityItem = { id: string; timestamp: number; fanName: string; type: 'truth' | 'dare' | 'tip' | 'custom_truth' | 'custom_dare'; tier?: TierId; amount: number; message?: string; };
+type ActivityItem = { id: string; timestamp: number; fanName: string; type: 'truth' | 'dare' | 'tip' | 'reaction' | 'custom_truth' | 'custom_dare'; tier?: TierId; amount: number; message?: string; };
 type SessionEarnings = { total: number; tips: number; truths: number; dares: number; custom: number; };
 type TipItem = { id: string; fanName: string; amount: number; message?: string; };
 type CountdownRequest = { requestId: string; fanId: string; fanName: string; type: string; tier: string; content: string; amount: number; startedAt: number; };
@@ -62,6 +62,14 @@ function formatCanadaDate(isoString: string | null | undefined) {
     } catch (e) {
         return d.toLocaleDateString("en-CA");
     }
+}
+
+// Map reaction tier names to their emoji characters
+function getReactionEmoji(name?: string): string {
+    if (!name) return '💋';
+    const map: Record<string, string> = { 'Kiss': '💋', 'Love': '❤️', 'Spicy': '🔥', 'Dark': '🖤' };
+    // Try exact match first, then case-insensitive
+    return map[name] || map[Object.keys(map).find(k => k.toLowerCase() === name.toLowerCase()) || ''] || '💋';
 }
 
 export default function TruthOrDareCreatorPage() {
@@ -119,6 +127,8 @@ export default function TruthOrDareCreatorPage() {
     const [showStartModal, setShowStartModal] = useState(false);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false); // Moved here
     const [isBroadcasting, setIsBroadcasting] = useState(false);
+    const [isSessionLive, setIsSessionLive] = useState(false); // false = pending (pre-live), true = live
+    const [isGoingLive, setIsGoingLive] = useState(false);
 
     // End Session Confirmation Modal State
     const [pendingEndSession, setPendingEndSession] = useState<{ id: string; title: string } | null>(null);
@@ -410,9 +420,12 @@ export default function TruthOrDareCreatorPage() {
                 const isSystemPrompt = request.type?.startsWith('system_');
                 const isCustom = request.type?.startsWith('custom_');
                 const isTip = request.type === 'tip';
+                const isReaction = request.type === 'reaction';
 
                 const interactionType = isTip
                     ? 'tip'
+                    : isReaction
+                        ? 'reaction'
                     : isSystemPrompt
                         ? request.type.split('_')[1] as 'truth' | 'dare'
                         : isCustom
@@ -426,13 +439,13 @@ export default function TruthOrDareCreatorPage() {
                 // 🔔 IMMEDIATE FEEDBACK: Sound + Toast
                 playNotificationSound();
 
-                if (isTip) {
-                    // Show Tip Overlay (Separate Dialog)
+                if (isTip || isReaction) {
+                    // Show Tip/Reaction Overlay (Separate Dialog)
                     setActiveTip({
                         id: request.id,
                         fanName,
                         amount,
-                        message: request.content
+                        message: isReaction ? `Sent a ${request.tier} reaction!` : request.content
                     });
 
                     // Auto-hide tip overlay after 7 seconds
@@ -440,7 +453,7 @@ export default function TruthOrDareCreatorPage() {
                         setActiveTip(null);
                     }, 7000);
                 } else {
-                    // Standard Toast for others
+                    // Standard Toast for truth/dare requests
                     toast.custom((t) => (
                         <div className="bg-gradient-to-r from-purple-900/90 to-pink-900/90 border border-pink-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(236,72,153,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
                             <div className={`p-3 rounded-full ${interactionType === 'truth' ? 'bg-cyan-500/20' : 'bg-pink-500/20'} border ${interactionType === 'truth' ? 'border-cyan-500/30' : 'border-pink-500/30'}`}>
@@ -472,10 +485,10 @@ export default function TruthOrDareCreatorPage() {
                     id: request.id,
                     timestamp: new Date(request.created_at).getTime(),
                     fanName,
-                    type: isCustom ? `custom_${interactionType}` as any : interactionType as any,
-                    tier: isSystemPrompt ? tier : undefined,
+                    type: isReaction ? 'reaction' : isTip ? 'tip' : isCustom ? `custom_${interactionType}` as any : interactionType as any,
+                    tier: isSystemPrompt ? tier : (isReaction ? (request.tier as TierId) : undefined),
                     amount,
-                    message: isCustom ? request.content : undefined
+                    message: isReaction ? `${request.tier} reaction` : isCustom ? request.content : undefined
                 };
 
                 setActivityFeed(prev => {
@@ -489,8 +502,8 @@ export default function TruthOrDareCreatorPage() {
                     const newEarnings = { ...prev };
                     newEarnings.total += amount;
 
-                    if (isTip) {
-                        newEarnings.tips += amount;
+                    if (isTip || isReaction) {
+                        newEarnings.tips += amount; // Reactions also count as tips for earnings
                     } else if (isCustom) {
                         newEarnings.custom += amount;
                     } else if (interactionType === 'truth') {
@@ -910,7 +923,7 @@ export default function TruthOrDareCreatorPage() {
                 setCreatorWalletBalance(data.new_balance);
             }
 
-            toast.success(`Session "${sessionForm.title}" is now live! 🎭`);
+            toast.success(`Session "${sessionForm.title}" created! Click Go Live to start. 🎭`);
 
             // ── CLEAN SLATE: Reset all session-scoped data ──
             setQueue([]);
@@ -936,9 +949,11 @@ export default function TruthOrDareCreatorPage() {
             }
             setActiveSessionStartedAt(sessionTimestamp);
 
-            // Optimistic update — enter the studio immediately
+            // Enter the studio in PRE-LIVE (pending) state — creator must click "Go Live"
             setSessionActive(true);
             setIsInStudio(true);
+            setIsSessionLive(false); // Session is pending, not live yet
+            setIsBroadcasting(false);
             setSessionInfo({
                 title: sessionForm.title || "Live Truth or Dare",
                 isPrivate: sessionForm.isPrivate,
@@ -953,6 +968,32 @@ export default function TruthOrDareCreatorPage() {
         }
     }
 
+    // Go Live — transitions pending session to active
+    async function goLive() {
+        if (!roomId || isGoingLive) return;
+        setIsGoingLive(true);
+        try {
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'GO_LIVE' })
+            });
+            if (res.ok) {
+                setIsSessionLive(true);
+                setIsBroadcasting(true);
+                toast.success('You are now LIVE! 🔴');
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'Failed to go live');
+            }
+        } catch (e) {
+            console.error('Failed to go live:', e);
+            toast.error('Failed to go live');
+        } finally {
+            setIsGoingLive(false);
+        }
+    }
+
     async function endSession() {
         if (!roomId) return;
         // if (!confirm("End the current session?")) return; // Removed confirm, using modal
@@ -964,6 +1005,8 @@ export default function TruthOrDareCreatorPage() {
             if (res.ok) {
                 setSessionActive(false);
                 setIsInStudio(false); // Exit Studio
+                setIsSessionLive(false);
+                setIsBroadcasting(false);
                 setSessionInfo(null);
                 setShowStartModal(false); // Return to Dashboard
                 setShowExitConfirmation(false); // Close Modal
@@ -1004,9 +1047,8 @@ export default function TruthOrDareCreatorPage() {
 
     const handleBackNavigation = () => {
         if (sessionActive && isInStudio) {
-            // In live studio → go back to session creation dashboard (keep session running)
-            setSessionActive(false);
-            setIsInStudio(false);
+            // In live studio → show exit confirmation modal (minimize or end)
+            setShowExitConfirmation(true);
         } else {
             // On dashboard → go back to Creator Studio
             router.push('/rooms/creator-studio');
@@ -1058,7 +1100,7 @@ export default function TruthOrDareCreatorPage() {
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
-                    {sessionActive && isInStudio && (
+                    {sessionActive && isInStudio && isSessionLive && (
                         <SessionLiveControls
                             sessionId={roomId || ""}
                             accentHsl="330, 80%, 55%"
@@ -1205,7 +1247,7 @@ export default function TruthOrDareCreatorPage() {
                                 {isCreatingSession ? (
                                     <>⏳ Creating Session...</>
                                 ) : (
-                                    <><Play className="w-4 h-4" /> Go Live</>
+                                    <><Play className="w-4 h-4" /> Create Session</>
                                 )}
                             </button>
                         </div>
@@ -1281,6 +1323,8 @@ export default function TruthOrDareCreatorPage() {
                                                                 setReplayUntil(null);
 
                                                                 setSessionActive(true);
+                                                                setIsSessionLive(s.status === 'active'); // Show Go Live overlay if still pending
+                                                                setIsBroadcasting(s.status === 'active');
                                                                 setSessionInfo({
                                                                     title: s.session_title || s.title || "Truth or Dare Session",
                                                                     isPrivate: s.is_private || false,
@@ -1353,7 +1397,61 @@ export default function TruthOrDareCreatorPage() {
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
-                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0" style={{ height: 'calc(100vh - 70px)' }}>
+                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0 relative" style={{ height: 'calc(100vh - 70px)' }}>
+
+                    {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
+                    {!isSessionLive && (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md rounded-xl">
+                            <div className="flex flex-col items-center gap-6 max-w-md text-center px-6">
+                                {/* Pulsing ring */}
+                                <div className="relative">
+                                    <div className="absolute inset-0 w-28 h-28 rounded-full border-2 border-pink-500/40 animate-ping" />
+                                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-600/20 to-purple-600/20 border-2 border-pink-500/50 flex items-center justify-center" style={{ boxShadow: '0 0 60px hsla(330, 100%, 60%, 0.3)' }}>
+                                        <span className="text-4xl">🎭</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2" style={{ textShadow: '0 0 20px hsla(330, 100%, 65%, 0.5)' }}>
+                                        Ready to Go Live?
+                                    </h2>
+                                    <p className="text-sm text-white/50 leading-relaxed">
+                                        Your session <span className="text-pink-300 font-semibold">"{sessionInfo?.title}"</span> has been created.
+                                        When you go live, fans will be able to see and join your session.
+                                    </p>
+                                </div>
+
+                                {/* Go Live Button */}
+                                <button
+                                    onClick={goLive}
+                                    disabled={isGoingLive}
+                                    className="group relative px-12 py-4 rounded-2xl text-white font-black text-lg uppercase tracking-widest transition-all hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
+                                    style={{
+                                        background: 'linear-gradient(135deg, hsl(340, 90%, 50%), hsl(300, 80%, 50%))',
+                                        boxShadow: '0 0 40px hsla(330, 100%, 60%, 0.4), 0 8px 30px rgba(0,0,0,0.5)',
+                                    }}
+                                >
+                                    {isGoingLive ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                            Going Live...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-3 h-3 rounded-full bg-white animate-pulse" />
+                                            Go Live
+                                        </>
+                                    )}
+                                    {/* Glow effect */}
+                                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{ boxShadow: '0 0 60px hsla(330, 100%, 60%, 0.6)' }} />
+                                </button>
+
+                                <p className="text-[11px] text-white/30 mt-1">
+                                    💡 Tip: Check your camera and setup before going live
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ═══ LEFT SECTION: Video Grid + Bottom Row ═══ */}
                     <div className="flex flex-col gap-2 lg:gap-3" style={{ width: '42%', minWidth: '380px' }}>
@@ -1473,6 +1571,18 @@ export default function TruthOrDareCreatorPage() {
                                         meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request` }
                                     }))
                             ] as any}
+                            activityItems={activityFeed
+                                .filter(a => a.type === 'tip' || a.type === 'reaction')
+                                .map(a => ({
+                                    id: a.id,
+                                    fanName: a.fanName,
+                                    amount: a.amount,
+                                    type: a.type as 'tip' | 'reaction',
+                                    emoji: a.type === 'reaction' ? getReactionEmoji(a.tier || a.message) : undefined,
+                                    message: a.message,
+                                    timestamp: a.timestamp
+                                }))
+                            }
                             onServe={serveQueueItem as any}
                             onDismiss={(q: any) => {
                                 setQueue(qq => qq.filter(x => x.id !== q.id));
@@ -1495,19 +1605,25 @@ export default function TruthOrDareCreatorPage() {
                 onEndSession={async () => { await endSession(); }}
                 onMinimizeSession={() => {
                     setShowExitConfirmation(false);
-                    router.push('/rooms/creator-studio');
+                    setSessionActive(false);
+                    setIsInStudio(false);
                 }}
                 roomName="Truth or Dare"
                 accentHsl="330, 80%, 55%"
             />
 
-            {/* Cute Real-time Tip Alert Dialog */}
+            {/* Cute Real-time Tip/Reaction Alert Dialog */}
             {activeTip && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
-                    <div className="bg-black/80 backdrop-blur-xl border-2 border-green-500/50 rounded-[2rem] p-8 shadow-[0_0_100px_rgba(34,197,94,0.4)] animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center">
-                        <div className="text-3xl font-black text-white mb-1 uppercase drop-shadow-lg">New Tip!</div>
-                        <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-emerald-300 to-green-400">€${activeTip.amount}</div>
-                        <p className="text-green-200 mt-2">{activeTip.fanName}</p>
+                    <div className={`bg-black/80 backdrop-blur-xl border-2 ${activeTip.message?.includes('reaction') ? 'border-purple-500/50 shadow-[0_0_100px_rgba(168,85,247,0.4)]' : 'border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.4)]'} rounded-[2rem] p-8 animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center`}>
+                        <div className="text-3xl font-black text-white mb-1 uppercase drop-shadow-lg">
+                            {activeTip.message?.includes('reaction') ? 'New Reaction!' : 'New Tip!'}
+                        </div>
+                        <div className={`text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r ${activeTip.message?.includes('reaction') ? 'from-purple-400 via-pink-300 to-purple-400' : 'from-green-400 via-emerald-300 to-green-400'}`}>€{activeTip.amount}</div>
+                        <p className={`${activeTip.message?.includes('reaction') ? 'text-purple-200' : 'text-green-200'} mt-2`}>{activeTip.fanName}</p>
+                        {activeTip.message && (
+                            <p className="text-white/50 text-sm mt-1">{activeTip.message}</p>
+                        )}
                         <button onClick={() => setActiveTip(null)} className="mt-4 px-4 py-2 bg-white/10 rounded pointer-events-auto">Dismiss</button>
                     </div>
                 </div>

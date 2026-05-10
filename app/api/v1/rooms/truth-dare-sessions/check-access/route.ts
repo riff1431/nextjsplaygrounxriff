@@ -124,53 +124,29 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // B. Check truth_dare_unlocks (session-scoped then fallback)
-            if (access !== "granted") {
-                if (activeSessionId) {
-                    const { data: unlock } = await admin
-                        .from("truth_dare_unlocks")
-                        .select("id")
-                        .eq("room_id", roomId)
-                        .eq("fan_id", user.id)
-                        .eq("session_id", activeSessionId)
-                        .maybeSingle();
-                    if (unlock) access = "granted";
-                }
-
-                if (access !== "granted") {
-                    // Fallback: check without session_id (legacy records)
-                    const { data: unlockLegacy } = await admin
-                        .from("truth_dare_unlocks")
-                        .select("id")
-                        .eq("room_id", roomId)
-                        .eq("fan_id", user.id)
-                        .maybeSingle();
-                    if (unlockLegacy) access = "granted";
-                }
+            // B. Check truth_dare_unlocks (strict session-scoped — no legacy fallback)
+            // Each session is unique: old entries/unlocks do NOT grant access to new sessions
+            if (access !== "granted" && activeSessionId) {
+                const { data: unlock } = await admin
+                    .from("truth_dare_unlocks")
+                    .select("id")
+                    .eq("room_id", roomId)
+                    .eq("fan_id", user.id)
+                    .eq("session_id", activeSessionId)
+                    .maybeSingle();
+                if (unlock) access = "granted";
             }
 
-            // C. Check truth_dare_entries
-            if (access !== "granted") {
-                if (activeSessionId) {
-                    const { data: entry } = await admin
-                        .from("truth_dare_entries")
-                        .select("id")
-                        .eq("room_id", roomId)
-                        .eq("fan_id", user.id)
-                        .eq("session_id", activeSessionId)
-                        .maybeSingle();
-                    if (entry) access = "granted";
-                }
-
-                if (access !== "granted") {
-                    const { data: entryLegacy } = await admin
-                        .from("truth_dare_entries")
-                        .select("id")
-                        .eq("room_id", roomId)
-                        .eq("fan_id", user.id)
-                        .maybeSingle();
-                    if (entryLegacy) access = "granted";
-                }
+            // C. Check truth_dare_entries (strict session-scoped — no legacy fallback)
+            if (access !== "granted" && activeSessionId) {
+                const { data: entry } = await admin
+                    .from("truth_dare_entries")
+                    .select("id")
+                    .eq("room_id", roomId)
+                    .eq("fan_id", user.id)
+                    .eq("session_id", activeSessionId)
+                    .maybeSingle();
+                if (entry) access = "granted";
             }
 
             // D. Check request status for private sessions

@@ -10,6 +10,7 @@ import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import dynamic from "next/dynamic";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus } from "lucide-react";
+import EmojiPicker from "@/components/common/EmojiPicker";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
@@ -77,7 +78,6 @@ const DEFAULT_DRINKS = [
     { id: "d7", name: "Liquid Lust Shot", price: 50, icon: "❤️\u200d🔥" },
     { id: "d8", name: "Cream & Scream Shot", price: 50, icon: "🍦" },
     { id: "d9", name: "Temptation Shot", price: 50, icon: "🍎" },
-    { id: "d10", name: "Devil's Kiss Shot", price: 50, icon: "💋" },
 ];
 
 /* ── Toast system ─────────────────────────────────────────────────── */
@@ -450,7 +450,7 @@ function PgxPage2Inner() {
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "8px" }}>
                                 <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 0 }}>Drink Menu</h3>
                                 <div>
-                                    {drinks.map((drink: any) => {
+                                    {drinks.slice(0, 9).map((drink: any) => {
                                         const id = drink.id || drink.name;
                                         const isThisBuying = buying === id;
                                         return (
@@ -708,11 +708,16 @@ function PgxPage2Inner() {
                         </div>
 
                         {/* Chat input */}
-                        <div style={{ display: "flex", gap: "8px" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                             <input type="text" placeholder="Send a message..." value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                                 style={{ flex: 1, borderRadius: "0.5rem", padding: "8px 12px", fontSize: "14px", background: "hsla(270,30%,18%,0.3)", border: "1px solid hsla(280,40%,30%,0.3)", color: FG, outline: "none", fontFamily: "'Montserrat', sans-serif" }}
+                            />
+                            <EmojiPicker
+                                onEmojiSelect={(emoji) => setChatInput((prev) => prev + emoji)}
+                                accentColor={GOLD}
+                                position="top"
                             />
                             <button className="pg2-btn-glow" style={{ ...btnGlow, padding: "8px 16px", fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }} onClick={handleSendChat}>
                                 SEND

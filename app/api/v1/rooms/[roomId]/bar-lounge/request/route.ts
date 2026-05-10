@@ -143,8 +143,8 @@ export async function POST(
                                     : safeType === "song" ? "🎵"
                                         : "⚡";
 
-    // For tip-like items, use "tipped" language; for custom requests, use "requested"
-    const verb = isTipLike ? 'tipped' : (safeType === 'vip' ? 'requested' : 'bought');
+    // For tip-like items, use "Sent" language; for custom requests, use "requested"
+    const verb = isTipLike ? 'Sent' : (safeType === 'vip' ? 'requested' : 'bought');
     await supabase.from("bar_lounge_messages").insert({
         room_id: roomId,
         user_id: user.id,

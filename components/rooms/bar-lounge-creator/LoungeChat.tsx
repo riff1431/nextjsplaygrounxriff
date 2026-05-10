@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Camera } from "lucide-react";
+import EmojiPicker from "@/components/common/EmojiPicker";
 import { useBarChat } from "@/hooks/useBarChat";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -90,6 +91,11 @@ const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
                     }}
                 >
                     <Camera className="w-4 h-4" style={{ color: "hsl(280, 15%, 60%)" }} />
+                    <EmojiPicker
+                        onEmojiSelect={(emoji) => setMessage((prev) => prev + emoji)}
+                        accentColor="hsl(45, 90%, 55%)"
+                        position="top"
+                    />
                     <input
                         type="text"
                         placeholder="Type a message..."

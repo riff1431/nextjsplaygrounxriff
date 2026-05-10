@@ -115,6 +115,23 @@ export default function TruthOrDareSessionsBrowse() {
         return () => clearInterval(interval);
     }, [fetchSessions]);
 
+    // Real-time subscription for instant session discovery
+    // Supplements polling — catches new session creation and session endings immediately
+    useEffect(() => {
+        const sessionChannel = supabase.channel('tod_session_discovery')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'truth_dare_sessions',
+            }, () => {
+                // Any session change → refresh the list
+                fetchSessions();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(sessionChannel); };
+    }, [fetchSessions, supabase]);
+
     async function handleJoin(session: Session) {
         if (!user) {
             toast.error("Please sign in to join a session.");

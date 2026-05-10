@@ -134,6 +134,20 @@ export async function PATCH(
                 .from("rooms")
                 .update({ status: "ended" })
                 .eq("id", session.room_id);
+
+            // Broadcast session_ended to all connected fans for instant UI update
+            try {
+                const broadcastChannel = supabase.channel(`room:${session.room_id}`);
+                await broadcastChannel.send({
+                    type: 'broadcast',
+                    event: 'session_ended',
+                    payload: { roomId: session.room_id, sessionId, endedAt: new Date().toISOString() }
+                });
+                supabase.removeChannel(broadcastChannel);
+            } catch (broadcastErr) {
+                console.error("Failed to broadcast session_ended:", broadcastErr);
+                // Non-fatal — fans will still catch it via postgres_changes
+            }
         }
 
         return NextResponse.json({ success: true, message: `Session ${status}` });

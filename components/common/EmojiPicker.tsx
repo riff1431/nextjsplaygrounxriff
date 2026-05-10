@@ -1,0 +1,201 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Smile } from "lucide-react";
+
+const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
+    {
+        label: "Smileys",
+        emojis: ["😀", "😂", "🤣", "😍", "🥰", "😘", "😜", "🤩", "😎", "🥳", "😏", "😈", "🤗", "🤭", "🫣", "😱", "🥺", "😭", "🤯", "🫠"],
+    },
+    {
+        label: "Love & Hearts",
+        emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "💖", "💝", "💗", "💓", "💞", "💕", "💘", "💋", "😻", "🫶", "❤️‍🔥", "💑", "💏"],
+    },
+    {
+        label: "Gestures",
+        emojis: ["👍", "👎", "👏", "🙌", "🤝", "✌️", "🤞", "🤙", "👋", "🫡", "💪", "🙏", "☝️", "👆", "👇", "👈", "👉", "🫰", "🤌", "🤏"],
+    },
+    {
+        label: "Party & Fun",
+        emojis: ["🎉", "🎊", "🎵", "🎶", "🎤", "🎸", "🎹", "🥂", "🍾", "🍻", "🍸", "🍹", "🔥", "⚡", "✨", "🌟", "💫", "🎯", "🏆", "👑"],
+    },
+    {
+        label: "Reactions",
+        emojis: ["👀", "💯", "🙈", "🙉", "🙊", "💀", "☠️", "👻", "🤖", "👽", "🦄", "🐍", "🦋", "🌹", "🍀", "🌶️", "🍑", "🍆", "💎", "🚀"],
+    },
+];
+
+interface EmojiPickerProps {
+    onEmojiSelect: (emoji: string) => void;
+    /** Controls icon + popup accent color */
+    accentColor?: string;
+    /** Position the popup above or below the trigger */
+    position?: "top" | "bottom";
+}
+
+export default function EmojiPicker({ onEmojiSelect, accentColor = "hsl(45, 90%, 55%)", position = "top" }: EmojiPickerProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeCategory, setActiveCategory] = useState(0);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Close on click outside
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={containerRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            {/* Trigger button */}
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label="Open emoji picker"
+                style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "6px",
+                    transition: "all 0.2s",
+                    color: isOpen ? accentColor : "hsl(280, 15%, 60%)",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = accentColor; (e.currentTarget as HTMLButtonElement).style.background = "hsla(280, 40%, 25%, 0.3)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = isOpen ? accentColor : "hsl(280, 15%, 60%)"; (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
+            >
+                <Smile style={{ width: "18px", height: "18px" }} />
+            </button>
+
+            {/* Popup panel */}
+            {isOpen && (
+                <div
+                    style={{
+                        position: "absolute",
+                        [position === "top" ? "bottom" : "top"]: "calc(100% + 8px)",
+                        right: 0,
+                        width: "280px",
+                        maxHeight: "320px",
+                        background: "hsla(270, 40%, 12%, 0.95)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        border: "1px solid hsla(280, 60%, 45%, 0.35)",
+                        borderRadius: "12px",
+                        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px hsla(280, 100%, 70%, 0.15)",
+                        zIndex: 999,
+                        overflow: "hidden",
+                        animation: "emojiPickerFadeIn 0.15s ease-out",
+                    }}
+                >
+                    <style>{`
+                        @keyframes emojiPickerFadeIn {
+                            from { opacity: 0; transform: translateY(${position === "top" ? "8px" : "-8px"}); }
+                            to   { opacity: 1; transform: translateY(0); }
+                        }
+                        .emoji-grid-scroll::-webkit-scrollbar { width: 4px; }
+                        .emoji-grid-scroll::-webkit-scrollbar-track { background: transparent; }
+                        .emoji-grid-scroll::-webkit-scrollbar-thumb { background: hsla(280, 60%, 45%, 0.3); border-radius: 10px; }
+                        .emoji-btn:hover { background: hsla(280, 60%, 45%, 0.3) !important; transform: scale(1.2); }
+                    `}</style>
+
+                    {/* Category tabs */}
+                    <div style={{
+                        display: "flex",
+                        gap: "2px",
+                        padding: "6px 6px 0",
+                        borderBottom: "1px solid hsla(280, 60%, 45%, 0.2)",
+                    }}>
+                        {EMOJI_CATEGORIES.map((cat, idx) => (
+                            <button
+                                key={cat.label}
+                                type="button"
+                                onClick={() => setActiveCategory(idx)}
+                                style={{
+                                    flex: 1,
+                                    background: idx === activeCategory ? "hsla(280, 60%, 45%, 0.25)" : "transparent",
+                                    border: "none",
+                                    borderRadius: "8px 8px 0 0",
+                                    padding: "6px 4px",
+                                    cursor: "pointer",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    color: idx === activeCategory ? accentColor : "hsl(280, 15%, 55%)",
+                                    transition: "all 0.15s",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    fontFamily: "'Montserrat', sans-serif",
+                                }}
+                                title={cat.label}
+                            >
+                                {cat.emojis[0]}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Category label */}
+                    <div style={{
+                        padding: "8px 12px 4px",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        color: "hsl(280, 15%, 55%)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        fontFamily: "'Montserrat', sans-serif",
+                    }}>
+                        {EMOJI_CATEGORIES[activeCategory].label}
+                    </div>
+
+                    {/* Emoji grid */}
+                    <div
+                        className="emoji-grid-scroll"
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(8, 1fr)",
+                            gap: "2px",
+                            padding: "4px 8px 10px",
+                            overflowY: "auto",
+                            maxHeight: "220px",
+                        }}
+                    >
+                        {EMOJI_CATEGORIES[activeCategory].emojis.map((emoji) => (
+                            <button
+                                key={emoji}
+                                type="button"
+                                className="emoji-btn"
+                                onClick={() => {
+                                    onEmojiSelect(emoji);
+                                    setIsOpen(false);
+                                }}
+                                style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    fontSize: "20px",
+                                    padding: "4px",
+                                    borderRadius: "6px",
+                                    transition: "all 0.15s",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

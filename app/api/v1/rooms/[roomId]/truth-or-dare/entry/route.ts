@@ -22,14 +22,7 @@ export async function POST(
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Check if already entered
-    const { data: existing } = await admin
-        .from("truth_dare_entries")
-        .select("id").eq("room_id", roomId).eq("fan_id", user.id).single();
-
-    if (existing) return NextResponse.json({ success: true, alreadyEntered: true });
-
-    // Look up the current active session for session-scoped access (admin bypasses RLS)
+    // Look up the current active session first (admin bypasses RLS)
     const { data: activeSession } = await admin
         .from("truth_dare_sessions")
         .select("id")
@@ -40,6 +33,14 @@ export async function POST(
         .maybeSingle();
 
     const currentSessionId = activeSession?.id || null;
+
+    // Check if already entered — strict session-scoped (no cross-session re-use)
+    let existingQuery = admin.from("truth_dare_entries")
+        .select("id").eq("room_id", roomId).eq("fan_id", user.id);
+    if (currentSessionId) existingQuery = existingQuery.eq("session_id", currentSessionId);
+    const { data: existing } = await existingQuery.maybeSingle();
+
+    if (existing) return NextResponse.json({ success: true, alreadyEntered: true });
 
     const { data: room } = await admin.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });

@@ -409,6 +409,15 @@ function TruthOrDareContent() {
                     }, 5000);
                 }
             })
+            .on('broadcast', { event: 'session_ended' }, (payload) => {
+                console.log('🔴 Session ended broadcast received:', payload);
+                setSessionStatus('ended');
+                toast('Session has ended', {
+                    duration: 5000,
+                    position: 'top-center',
+                    style: { background: '#1a1a2e', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }
+                });
+            })
             .subscribe();
 
         // Presence tracking - announce this user's presence to the room

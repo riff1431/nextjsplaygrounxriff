@@ -135,6 +135,20 @@ export async function POST(
             // C. Set room status to 'ended' so it no longer appears as live
             await supabase.from('rooms').update({ status: 'ended' }).eq('id', roomId);
 
+            // D. Broadcast session_ended to all connected fans for instant UI update
+            try {
+                const broadcastChannel = supabase.channel(`room:${roomId}`);
+                await broadcastChannel.send({
+                    type: 'broadcast',
+                    event: 'session_ended',
+                    payload: { roomId, endedAt: new Date().toISOString() }
+                });
+                supabase.removeChannel(broadcastChannel);
+            } catch (broadcastErr) {
+                console.error("Failed to broadcast session_ended:", broadcastErr);
+                // Non-fatal — fans will still catch it via postgres_changes
+            }
+
             return NextResponse.json({ success: true, message: "Session ended" });
         }
 

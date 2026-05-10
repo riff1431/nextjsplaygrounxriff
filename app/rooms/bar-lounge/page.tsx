@@ -17,6 +17,7 @@ import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
+import EmojiPicker from "@/components/common/EmojiPicker";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -156,7 +157,6 @@ export default function BarLoungeRoom() {
                         { id: "d7", name: "Liquid Lust Shot", price: 50, icon: "❤️‍🔥" },
                         { id: "d8", name: "Cream & Scream Shot", price: 50, icon: "🍦" },
                         { id: "d9", name: "Temptation Shot", price: 50, icon: "🍎" },
-                        { id: "d10", name: "Devil's Kiss Shot", price: 50, icon: "💋" },
                     ]);
                 }
             } catch (err) { console.error(err); } finally { if (isMounted) setIsLoading(false); }
@@ -626,7 +626,7 @@ export default function BarLoungeRoom() {
                         <div style={{ borderTop: `1px solid ${C.borderStrong}`, paddingTop: "8px" }}>
                             <h3 style={{ fontSize: "12px", fontWeight: 600, color: C.muted, marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase" }}>Drink Menu</h3>
                             <div className="space-y-0">
-                                {drinks.map((drink: any) => (
+                                {drinks.slice(0, 9).map((drink: any) => (
                                     <div key={drink.id || drink.name} style={drinkItemStyle} onClick={() => confirmPurchase("drink", drink.name, drink.price, { special: drink.special })}
                                         onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "hsla(280,60%,45%,0.2)"; (e.currentTarget as HTMLDivElement).style.boxShadow = "0 0 10px hsla(280,100%,70%,0.2)"; }}
                                         onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = C.glassBgStrong; (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; }}>
@@ -757,7 +757,7 @@ export default function BarLoungeRoom() {
                             <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+€25</span>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" style={{ alignItems: "center" }}>
                             <input
                                 type="text"
                                 placeholder="Send a message..."
@@ -766,6 +766,11 @@ export default function BarLoungeRoom() {
                                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                                 className="flex-1 rounded-lg px-3 py-2 text-sm outline-none"
                                 style={{ background: "hsla(270,30%,18%,0.3)", border: `1px solid ${C.borderStrong}`, color: C.fg, fontFamily: "'Montserrat', sans-serif" }}
+                            />
+                            <EmojiPicker
+                                onEmojiSelect={(emoji) => setChatInput((prev) => prev + emoji)}
+                                accentColor={C.gold}
+                                position="top"
                             />
                             <button onClick={handleSendChat} style={{ ...btnGlowStyle, padding: "8px 16px", fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }}>
                                 SEND
