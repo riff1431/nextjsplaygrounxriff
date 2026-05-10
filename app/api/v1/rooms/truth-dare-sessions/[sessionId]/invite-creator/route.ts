@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -15,6 +16,7 @@ export async function POST(
 ) {
     const { sessionId } = await params;
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -34,7 +36,7 @@ export async function POST(
         }
 
         // Verify user is the session creator (Truth or Dare sessions table)
-        const { data: session } = await supabase
+        const { data: session } = await admin
             .from("truth_dare_sessions")
             .select("id, creator_id, status, room_id, title")
             .eq("id", sessionId)
@@ -57,7 +59,7 @@ export async function POST(
         }
 
         // Check for existing invite
-        const { data: existing } = await supabase
+        const { data: existing } = await admin
             .from("creator_invite_splits")
             .select("id, status")
             .eq("session_id", sessionId)
@@ -72,7 +74,7 @@ export async function POST(
         }
 
         // Verify invited user exists and is a creator
-        const { data: invitedProfile } = await supabase
+        const { data: invitedProfile } = await admin
             .from("profiles")
             .select("id, username, full_name, avatar_url, role")
             .eq("id", invited_creator_id)
@@ -80,6 +82,42 @@ export async function POST(
 
         if (!invitedProfile) {
             return NextResponse.json({ error: "Invited creator not found" }, { status: 404 });
+        }
+
+        // If a declined invite exists, update it instead of inserting
+        if (existing && existing.status === "declined") {
+            const { data: updatedInvite, error: updateError } = await admin
+                .from("creator_invite_splits")
+                .update({
+                    invited_split_pct: split_pct,
+                    status: "pending",
+                    responded_at: null,
+                    invite_message: message?.trim()?.slice(0, 200) || null,
+                })
+                .eq("id", existing.id)
+                .select()
+                .single();
+
+            if (updateError) throw updateError;
+
+            // Notify invited creator
+            const { data: inviterProfile } = await admin
+                .from("profiles")
+                .select("username, full_name")
+                .eq("id", user.id)
+                .single();
+
+            const inviterName = inviterProfile?.full_name || inviterProfile?.username || "A creator";
+
+            await admin.from("notifications").insert({
+                user_id: invited_creator_id,
+                actor_id: user.id,
+                type: "creator_invite",
+                message: `${inviterName} invited you to join "${session.title || "Truth or Dare"}" with a ${split_pct}% revenue split!`,
+                metadata: { session_id: sessionId, split_pct, room_id: session.room_id },
+            });
+
+            return NextResponse.json({ success: true, invite: updatedInvite });
         }
 
         // Create invite
@@ -91,12 +129,12 @@ export async function POST(
             status: "pending",
         };
 
-        // Add message if provided (column may or may not exist yet)
+        // Add message if provided
         if (message && message.trim()) {
             insertPayload.invite_message = message.trim().slice(0, 200);
         }
 
-        const { data: invite, error: insertError } = await supabase
+        const { data: invite, error: insertError } = await admin
             .from("creator_invite_splits")
             .insert(insertPayload)
             .select()
@@ -105,7 +143,7 @@ export async function POST(
         if (insertError) throw insertError;
 
         // Notify invited creator
-        const { data: inviterProfile } = await supabase
+        const { data: inviterProfile } = await admin
             .from("profiles")
             .select("username, full_name")
             .eq("id", user.id)
@@ -113,7 +151,7 @@ export async function POST(
 
         const inviterName = inviterProfile?.full_name || inviterProfile?.username || "A creator";
 
-        await supabase.from("notifications").insert({
+        await admin.from("notifications").insert({
             user_id: invited_creator_id,
             actor_id: user.id,
             type: "creator_invite",
@@ -134,6 +172,7 @@ export async function GET(
 ) {
     const { sessionId } = await params;
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -141,7 +180,7 @@ export async function GET(
     }
 
     try {
-        const { data: invites, error } = await supabase
+        const { data: invites, error } = await admin
             .from("creator_invite_splits")
             .select("*, invited:profiles!creator_invite_splits_invited_creator_id_fkey(id, username, full_name, avatar_url)")
             .eq("session_id", sessionId)

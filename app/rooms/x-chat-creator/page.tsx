@@ -131,17 +131,17 @@ const XChatCreatorPage = () => {
                             <LiveChat roomId={roomId} sessionId={sessionId} />
                         </div>
 
-                        {/* Center - Video Feeds */}
-                        <div className="flex flex-col gap-4 items-center justify-center w-full px-4 lg:px-12">
-                            {/* Top Feed - Creator Live Stream */}
+                        {/* Center - Video Feed */}
+                        <div className="flex flex-col items-center justify-center w-full px-4 lg:px-12 h-full pt-6">
+                            {/* Creator Live Stream */}
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="relative w-full rounded-xl overflow-hidden"
+                                className="relative rounded-xl overflow-hidden aspect-square"
                                 style={{
-                                    height: 'calc(50% - 8px)',
-                                    maxHeight: '320px',
+                                    width: '100%',
+                                    maxWidth: '650px',
                                     boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
                                     border: '2px solid rgba(255, 215, 0, 0.5)',
                                 }}
@@ -169,56 +169,6 @@ const XChatCreatorPage = () => {
                                 <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
                                     <span className="text-red-500 text-sm">❤️</span>
                                     <span className="text-sm font-bold text-foreground">800</span>
-                                </div>
-                            </motion.div>
-
-                            {/* Bottom Feed - Secondary View */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.35 }}
-                                className="relative w-full rounded-xl overflow-hidden"
-                                style={{
-                                    height: 'calc(50% - 8px)',
-                                    maxHeight: '320px',
-                                    boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
-                                    border: '2px solid rgba(255, 215, 0, 0.5)',
-                                }}
-                            >
-                                {roomId && user ? (
-                                    <LiveStreamWrapper
-                                        role="fan"
-                                        appId={APP_ID}
-                                        roomId={`${roomId}_fan`}
-                                        uid={user.id}
-                                        hostId="pending"
-                                        hostAvatarUrl=""
-                                        hostName="Fan stream"
-                                    />
-                                ) : (
-                                    <div className="relative w-full h-full group">
-                                        <img
-                                            src="/x-chat/streamer-female.png"
-                                            alt="Fan stream"
-                                            className="w-full h-full object-cover object-top filter brightness-50 group-hover:brightness-75 transition-all"
-                                        />
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => setIsInviteModalOpen(true)}
-                                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.5)] transform hover:scale-105 transition-all flex items-center gap-2"
-                                            >
-                                                <span>+ Invite Guest Creator</span>
-                                            </button>
-                                            <span className="text-xs text-white/70 mt-2 font-medium bg-black/40 px-2 py-0.5 rounded">
-                                                Revenue Split: 50%
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-                                {/* Stat badge */}
-                                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
-                                    <span className="text-primary text-sm">💎</span>
-                                    <span className="text-sm font-bold text-foreground">650</span>
                                 </div>
                             </motion.div>
                         </div>

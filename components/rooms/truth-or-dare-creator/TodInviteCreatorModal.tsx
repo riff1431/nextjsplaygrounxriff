@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import { X, Search, UserPlus, Loader2, Check, Clock, Percent, Send, AlertCircle } from "lucide-react";
+import { X, Search, UserPlus, Loader2, Check, Clock, Percent, Send, AlertCircle, Users, RefreshCw } from "lucide-react";
 
 type SearchedCreator = {
     id: string;
@@ -10,6 +10,21 @@ type SearchedCreator = {
     full_name: string;
     avatar_url: string | null;
     role: string;
+};
+
+type ExistingInvite = {
+    id: string;
+    invited_creator_id: string;
+    invited_split_pct: number;
+    status: string;
+    created_at: string;
+    invite_message?: string;
+    invited?: {
+        id: string;
+        username: string;
+        full_name: string;
+        avatar_url: string | null;
+    };
 };
 
 type InviteStatus = "idle" | "sending" | "sent" | "error";
@@ -44,6 +59,10 @@ export default function TodInviteCreatorModal({
     const [inviteStatus, setInviteStatus] = useState<InviteStatus>("idle");
     const [errorMsg, setErrorMsg] = useState("");
 
+    // Existing invites
+    const [existingInvites, setExistingInvites] = useState<ExistingInvite[]>([]);
+    const [loadingInvites, setLoadingInvites] = useState(false);
+
     // Portal mount
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
@@ -61,7 +80,25 @@ export default function TodInviteCreatorModal({
         }
     }, [isOpen]);
 
-    // Debounced creator search
+    // Load existing invites when modal opens
+    useEffect(() => {
+        if (!isOpen || !sessionId) return;
+        async function fetchExistingInvites() {
+            setLoadingInvites(true);
+            try {
+                const res = await fetch(`/api/v1/rooms/truth-dare-sessions/${sessionId}/invite-creator`);
+                const data = await res.json();
+                if (data.invites) setExistingInvites(data.invites);
+            } catch (e) {
+                console.error("Failed to load invites:", e);
+            } finally {
+                setLoadingInvites(false);
+            }
+        }
+        fetchExistingInvites();
+    }, [isOpen, sessionId]);
+
+    // Debounced creator search — searches ALL users, role badge shown dynamically
     useEffect(() => {
         if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
 
@@ -74,9 +111,12 @@ export default function TodInviteCreatorModal({
         setIsSearching(true);
         searchTimerRef.current = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/v1/users/search?q=${encodeURIComponent(searchQuery.trim())}&role=creator`);
+                const res = await fetch(`/api/v1/users/search?q=${encodeURIComponent(searchQuery.trim())}`);
                 const data = await res.json();
-                setSearchResults(data.users || []);
+                // Filter out users already invited in this session
+                const invitedIds = new Set(existingInvites.map(i => i.invited_creator_id));
+                const filtered = (data.users || []).filter((u: SearchedCreator) => !invitedIds.has(u.id));
+                setSearchResults(filtered);
             } catch (e) {
                 console.error("Search error:", e);
                 setSearchResults([]);
@@ -88,7 +128,7 @@ export default function TodInviteCreatorModal({
         return () => {
             if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         };
-    }, [searchQuery]);
+    }, [searchQuery, existingInvites]);
 
     // Send invite
     async function handleSendInvite() {
@@ -117,6 +157,19 @@ export default function TodInviteCreatorModal({
             setInviteStatus("sent");
             onInviteSent?.();
 
+            // Update existing invites list
+            if (data.invite) {
+                setExistingInvites(prev => [{
+                    ...data.invite,
+                    invited: {
+                        id: selectedCreator.id,
+                        username: selectedCreator.username,
+                        full_name: selectedCreator.full_name,
+                        avatar_url: selectedCreator.avatar_url,
+                    }
+                }, ...prev]);
+            }
+
             // Auto-close after brief success display
             setTimeout(() => {
                 onClose();
@@ -124,6 +177,48 @@ export default function TodInviteCreatorModal({
         } catch (e: any) {
             setInviteStatus("error");
             setErrorMsg(e.message || "Something went wrong");
+        }
+    }
+
+    // Role badge helper
+    function getRoleBadge(role: string) {
+        if (role === "creator") {
+            return (
+                <div className="px-2 py-1 rounded-md bg-pink-500/10 border border-pink-500/20">
+                    <span className="text-[10px] text-pink-300 font-bold uppercase">Creator</span>
+                </div>
+            );
+        }
+        return (
+            <div className="px-2 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/20">
+                <span className="text-[10px] text-cyan-300 font-bold uppercase">{role || "User"}</span>
+            </div>
+        );
+    }
+
+    // Invite status badge helper
+    function getStatusBadge(status: string) {
+        switch (status) {
+            case "accepted":
+                return (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-500/30">
+                        <Check className="w-2.5 h-2.5" /> Joined
+                    </span>
+                );
+            case "pending":
+                return (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/25">
+                        <Clock className="w-2.5 h-2.5 animate-pulse" /> Pending
+                    </span>
+                );
+            case "declined":
+                return (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/25">
+                        <X className="w-2.5 h-2.5" /> Declined
+                    </span>
+                );
+            default:
+                return null;
         }
     }
 
@@ -194,13 +289,13 @@ export default function TodInviteCreatorModal({
                                 )}
                             </div>
 
-                            {/* Results */}
+                            {/* Search Results */}
                             {searchResults.length > 0 && (
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider px-1">
-                                        Creators Found
+                                        Results — {searchResults.length} found
                                     </span>
-                                    <div className="space-y-1 max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                                    <div className="space-y-1 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
                                         {searchResults.map((creator) => (
                                             <button
                                                 key={creator.id}
@@ -224,9 +319,7 @@ export default function TodInviteCreatorModal({
                                                         @{creator.username}
                                                     </div>
                                                 </div>
-                                                <div className="px-2 py-1 rounded-md bg-pink-500/10 border border-pink-500/20">
-                                                    <span className="text-[10px] text-pink-300 font-bold uppercase">Creator</span>
-                                                </div>
+                                                {getRoleBadge(creator.role)}
                                             </button>
                                         ))}
                                     </div>
@@ -235,18 +328,67 @@ export default function TodInviteCreatorModal({
 
                             {/* Empty state */}
                             {searchQuery.trim().length >= 2 && !isSearching && searchResults.length === 0 && (
-                                <div className="text-center py-8 text-white/30">
+                                <div className="text-center py-6 text-white/30">
                                     <Search className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                                    <p className="text-sm">No creators found matching &quot;{searchQuery}&quot;</p>
+                                    <p className="text-sm">No users found matching &quot;{searchQuery}&quot;</p>
                                 </div>
                             )}
 
-                            {/* Initial state */}
+                            {/* Initial state — with pending invites */}
                             {searchQuery.trim().length < 2 && !isSearching && (
-                                <div className="text-center py-8 text-white/20">
-                                    <UserPlus className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                                    <p className="text-xs">Type at least 2 characters to search creators</p>
-                                </div>
+                                <>
+                                    {/* Existing invites section */}
+                                    {loadingInvites ? (
+                                        <div className="flex items-center justify-center py-6 gap-2 text-white/30">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            <span className="text-xs">Loading invites...</span>
+                                        </div>
+                                    ) : existingInvites.length > 0 ? (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between px-1">
+                                                <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Users className="w-3 h-3" />
+                                                    Sent Invites ({existingInvites.length})
+                                                </span>
+                                            </div>
+                                            <div className="space-y-1.5 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                                                {existingInvites.map((invite) => (
+                                                    <div
+                                                        key={invite.id}
+                                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/5"
+                                                    >
+                                                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/10 flex-shrink-0">
+                                                            {invite.invited?.avatar_url ? (
+                                                                <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/60 text-xs font-bold">
+                                                                    {(invite.invited?.full_name || invite.invited?.username || "?")[0].toUpperCase()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-xs font-semibold text-white truncate">
+                                                                {invite.invited?.full_name || invite.invited?.username || "Creator"}
+                                                            </div>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                {getStatusBadge(invite.status)}
+                                                                <span className="text-[9px] text-pink-400/60">{invite.invited_split_pct}% split</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="border-t border-white/5 pt-3 mt-2">
+                                                <p className="text-[10px] text-white/20 text-center">Search above to invite more creators</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-white/20">
+                                            <UserPlus className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                                            <p className="text-xs">Type at least 2 characters to search creators</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </>
                     ) : (

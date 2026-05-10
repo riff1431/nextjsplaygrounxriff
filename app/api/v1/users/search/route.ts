@@ -1,12 +1,15 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * GET /api/v1/users/search?q=searchterm
+ * GET /api/v1/users/search?q=searchterm&role=creator
  * Live user search by full_name or username.
+ * Uses admin client to bypass RLS for profile lookups.
  */
 export async function GET(request: NextRequest) {
     const supabase = await createClient();
+    const admin = createAdminClient();
     const q = request.nextUrl.searchParams.get("q");
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
     const searchTerm = `%${q.trim()}%`;
     const roleFilter = request.nextUrl.searchParams.get("role");
 
-    let query = supabase
+    let query = admin
         .from("profiles")
         .select("id, username, full_name, avatar_url, role")
         .neq("id", user.id)
