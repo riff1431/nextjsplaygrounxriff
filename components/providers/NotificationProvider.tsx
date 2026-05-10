@@ -96,6 +96,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                                     onClick: () => window.location.href = newNotif.link!,
                                 },
                             });
+                        } else if (newNotif.type === "creator_invite") {
+                            // Premium collab invite toast
+                            const meta = newNotif.metadata || {};
+                            const splitPct = meta.split_pct || "?";
+                            const sessionTitle = meta.session_title || "Truth or Dare";
+                            const collabLink = meta.collab_link || newNotif.link || "/account/notifications";
+                            toast("🎭 Collab Invite!", {
+                                description: `You've been invited to "${sessionTitle}" — ${splitPct}% revenue split!`,
+                                duration: 15000,
+                                action: {
+                                    label: "Join Session",
+                                    onClick: () => window.location.href = collabLink,
+                                },
+                            });
                         } else {
                             toast(newNotif.title, {
                                 description: newNotif.message,

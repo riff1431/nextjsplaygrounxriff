@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { X, Search, UserPlus, Loader2, Check, Clock, Percent, Send, AlertCircle, Users, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 type SearchedCreator = {
     id: string;
@@ -156,6 +157,13 @@ export default function TodInviteCreatorModal({
 
             setInviteStatus("sent");
             onInviteSent?.();
+
+            // Sender-side success toast
+            const invitedName = selectedCreator.full_name || selectedCreator.username;
+            toast.success(`Invite sent to @${selectedCreator.username}! 🎉`, {
+                description: `${invitedName} will receive a DM and notification with your ${splitPct}% split offer.`,
+                duration: 5000,
+            });
 
             // Update existing invites list
             if (data.invite) {

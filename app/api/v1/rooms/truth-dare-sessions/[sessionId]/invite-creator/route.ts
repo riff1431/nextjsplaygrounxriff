@@ -50,7 +50,7 @@ export async function POST(
             return NextResponse.json({ error: "Only the session creator can invite creators" }, { status: 403 });
         }
 
-        if (session.status !== "active") {
+        if (session.status !== "active" && session.status !== "pending") {
             return NextResponse.json({ error: "Session is not active" }, { status: 400 });
         }
 
@@ -84,6 +84,115 @@ export async function POST(
             return NextResponse.json({ error: "Invited creator not found" }, { status: 404 });
         }
 
+        // Fetch inviter profile once (used by both paths)
+        const { data: inviterProfile } = await admin
+            .from("profiles")
+            .select("username, full_name, avatar_url")
+            .eq("id", user.id)
+            .single();
+
+        const inviterName = inviterProfile?.full_name || inviterProfile?.username || "A creator";
+        const sessionTitle = session.title || "Truth or Dare";
+
+        // ─── Helper: Send DM + Notification to invited creator ───
+        async function sendInviteDMAndNotification(inviteId: string) {
+            try {
+                // Build the unique collab link for the invited creator
+                const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/[^/]*$/, "") || "";
+                const collabLink = `/rooms/truth-or-dare-creator?collabSessionId=${sessionId}&inviteId=${inviteId}`;
+                const fullCollabLink = `${origin}${collabLink}`;
+
+                // 1. Enhanced notification with title + link
+                const notifPayload: Record<string, any> = {
+                    user_id: invited_creator_id,
+                    actor_id: user!.id,
+                    type: "creator_invite",
+                    message: `${inviterName} invited you to join "${sessionTitle}" with a ${split_pct}% revenue split!`,
+                };
+                // Add optional fields only if they exist in the schema
+                notifPayload.title = "🎭 Collab Invite";
+                notifPayload.link = collabLink;
+                notifPayload.metadata = {
+                    session_id: sessionId,
+                    split_pct,
+                    room_id: session.room_id,
+                    invite_id: inviteId,
+                    inviter_username: inviterProfile?.username || null,
+                    inviter_avatar: inviterProfile?.avatar_url || null,
+                    session_title: sessionTitle,
+                    collab_link: collabLink,
+                };
+
+                const { error: notifError } = await admin.from("notifications").insert(notifPayload);
+                if (notifError) {
+                    console.error("Notification insert error:", notifError.message);
+                    // Fallback: try without the new columns
+                    await admin.from("notifications").insert({
+                        user_id: invited_creator_id,
+                        actor_id: user!.id,
+                        type: "creator_invite",
+                        message: `${inviterName} invited you to join "${sessionTitle}" with a ${split_pct}% revenue split!`,
+                        reference_id: inviteId,
+                    });
+                }
+
+                // 2. Send DM to the invited creator
+                // Find existing conversation between inviter and invitee
+                const { data: inviterConvos } = await admin
+                    .from("dm_participants")
+                    .select("conversation_id")
+                    .eq("user_id", user!.id);
+
+                const { data: inviteeConvos } = await admin
+                    .from("dm_participants")
+                    .select("conversation_id")
+                    .eq("user_id", invited_creator_id);
+
+                const inviterIds = new Set(inviterConvos?.map(c => c.conversation_id) || []);
+                const sharedConvId = inviteeConvos?.find(c => inviterIds.has(c.conversation_id))?.conversation_id;
+
+                let conversationId = sharedConvId || null;
+
+                // Create conversation if none exists
+                if (!conversationId) {
+                    const newConvId = crypto.randomUUID();
+                    await admin.from("dm_conversations").insert({ id: newConvId });
+                    await admin.from("dm_participants").insert([
+                        { conversation_id: newConvId, user_id: user!.id },
+                        { conversation_id: newConvId, user_id: invited_creator_id },
+                    ]);
+                    conversationId = newConvId;
+                }
+
+                // Build rich DM content with collab link
+                const personalMsg = message?.trim() ? `\n\n💬 "${message.trim().slice(0, 200)}"` : "";
+
+                const dmContent =
+                    `🎭 You've been invited to collab!\n\n` +
+                    `📌 Session: ${sessionTitle}\n` +
+                    `💰 Revenue Split: You get ${split_pct}%${personalMsg}\n\n` +
+                    `🔗 Join as collab creator: ${fullCollabLink}\n\n` +
+                    `Tap the link above to join the session! 💖`;
+
+                // Insert the DM
+                await admin.from("dm_messages").insert({
+                    conversation_id: conversationId,
+                    sender_id: user!.id,
+                    content: dmContent,
+                    type: "text",
+                });
+
+                // Update conversation timestamp
+                await admin
+                    .from("dm_conversations")
+                    .update({ updated_at: new Date().toISOString() })
+                    .eq("id", conversationId);
+            } catch (err) {
+                // Best-effort — don't fail the invite if notification/DM fails
+                console.error("Failed to send invite notification/DM:", err);
+            }
+        }
+
         // If a declined invite exists, update it instead of inserting
         if (existing && existing.status === "declined") {
             const { data: updatedInvite, error: updateError } = await admin
@@ -100,22 +209,7 @@ export async function POST(
 
             if (updateError) throw updateError;
 
-            // Notify invited creator
-            const { data: inviterProfile } = await admin
-                .from("profiles")
-                .select("username, full_name")
-                .eq("id", user.id)
-                .single();
-
-            const inviterName = inviterProfile?.full_name || inviterProfile?.username || "A creator";
-
-            await admin.from("notifications").insert({
-                user_id: invited_creator_id,
-                actor_id: user.id,
-                type: "creator_invite",
-                message: `${inviterName} invited you to join "${session.title || "Truth or Dare"}" with a ${split_pct}% revenue split!`,
-                metadata: { session_id: sessionId, split_pct, room_id: session.room_id },
-            });
+            await sendInviteDMAndNotification(existing.id);
 
             return NextResponse.json({ success: true, invite: updatedInvite });
         }
@@ -142,22 +236,7 @@ export async function POST(
 
         if (insertError) throw insertError;
 
-        // Notify invited creator
-        const { data: inviterProfile } = await admin
-            .from("profiles")
-            .select("username, full_name")
-            .eq("id", user.id)
-            .single();
-
-        const inviterName = inviterProfile?.full_name || inviterProfile?.username || "A creator";
-
-        await admin.from("notifications").insert({
-            user_id: invited_creator_id,
-            actor_id: user.id,
-            type: "creator_invite",
-            message: `${inviterName} invited you to join "${session.title || "Truth or Dare"}" with a ${split_pct}% revenue split!`,
-            metadata: { session_id: sessionId, split_pct, room_id: session.room_id },
-        });
+        await sendInviteDMAndNotification(invite.id);
 
         return NextResponse.json({ success: true, invite });
     } catch (err: any) {

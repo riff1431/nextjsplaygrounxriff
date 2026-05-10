@@ -3,5 +3,19 @@
 import { Toaster } from "sonner";
 
 export default function ToasterProvider() {
-    return <Toaster theme="dark" position="top-center" richColors />;
+    return (
+        <Toaster
+            theme="dark"
+            position="top-right"
+            richColors
+            toastOptions={{
+                style: {
+                    background: "rgba(10, 5, 20, 0.95)",
+                    border: "1px solid rgba(236, 72, 153, 0.25)",
+                    backdropFilter: "blur(12px)",
+                },
+                className: "!shadow-[0_0_30px_rgba(236,72,153,0.15)]",
+            }}
+        />
+    );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock, Square, AlertTriangle } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -72,7 +72,7 @@ function getReactionEmoji(name?: string): string {
     return map[name] || map[Object.keys(map).find(k => k.toLowerCase() === name.toLowerCase()) || ''] || '💋';
 }
 
-export default function TruthOrDareCreatorPage() {
+function TruthOrDareCreatorContent() {
     const router = useRouter();
     const supabase = createClient();
 
@@ -178,6 +178,10 @@ export default function TruthOrDareCreatorPage() {
     const [showOverlay, setShowOverlay] = useState(false);
 
     // 1. Initialize Room ID & Load Data
+    const searchParams = useSearchParams();
+    const collabSessionId = searchParams?.get("collabSessionId");
+    const collabInviteId = searchParams?.get("inviteId");
+
     useEffect(() => {
         async function init() {
             try {
@@ -187,7 +191,7 @@ export default function TruthOrDareCreatorPage() {
                     return;
                 }
 
-                setMe({ id: user.id, name: user.user_metadata?.full_name || "Creator", isHost: true }); // Assume host for creator view
+                setMe({ id: user.id, name: user.user_metadata?.full_name || "Creator", isHost: !collabSessionId }); // Collab creators are not hosts
 
                 // Fetch creator profile for avatar
                 const { data: profile } = await supabase
@@ -203,6 +207,58 @@ export default function TruthOrDareCreatorPage() {
                     }
                 }
 
+                // ── COLLAB MODE: If collabSessionId is present, load that session's room ──
+                if (collabSessionId) {
+                    const { data: collabSession } = await supabase
+                        .from('truth_dare_sessions')
+                        .select('id, room_id, status, title, started_at, created_at, is_private, price')
+                        .eq('id', collabSessionId)
+                        .single();
+
+                    if (!collabSession) {
+                        toast.error('Session not found or has ended.');
+                        setIsGameLoading(false);
+                        return;
+                    }
+
+                    if (collabSession.status !== 'active' && collabSession.status !== 'pending') {
+                        toast.error('This session has already ended.');
+                        setIsGameLoading(false);
+                        return;
+                    }
+
+                    // Auto-accept the invite if still pending
+                    if (collabInviteId) {
+                        try {
+                            await fetch(`/api/v1/rooms/sessions/${collabSessionId}/respond-invite`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ accept: true }),
+                            });
+                        } catch (e) {
+                            console.warn('Auto-accept invite failed (may already be accepted):', e);
+                        }
+                    }
+
+                    // Use the session's room
+                    setRoomId(collabSession.room_id);
+                    setActiveSessionId(collabSession.id);
+                    setActiveSessionStartedAt(collabSession.started_at || collabSession.created_at || new Date().toISOString());
+                    setSessionActive(true);
+                    setIsInStudio(true);
+                    setIsSessionLive(collabSession.status === 'active');
+                    setIsBroadcasting(collabSession.status === 'active');
+                    setSessionInfo({
+                        title: collabSession.title || 'Truth or Dare Collab',
+                        isPrivate: collabSession.is_private || false,
+                        price: collabSession.price || 0,
+                    });
+                    loadGameData(collabSession.room_id, user.id);
+                    toast.success('Welcome to the collab session! 🎭');
+                    return;
+                }
+
+                // ── NORMAL HOST MODE ──
                 // Find first room hosted by user of this specific type
                 const { data: room, error: roomError } = await supabase
                     .from('rooms')
@@ -244,7 +300,7 @@ export default function TruthOrDareCreatorPage() {
             }
         }
         init();
-    }, []);
+    }, [collabSessionId, collabInviteId]);
 
     async function loadGameData(rid: string, currentUserId: string) {
         try {
@@ -1789,4 +1845,12 @@ export default function TruthOrDareCreatorPage() {
         </div>
     );
 
+}
+
+export default function TruthOrDareCreatorPage() {
+    return (
+        <Suspense fallback={<div className="tod-creator-theme min-h-screen p-3 lg:p-4 text-white flex items-center justify-center">Loading...</div>}>
+            <TruthOrDareCreatorContent />
+        </Suspense>
+    );
 }

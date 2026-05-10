@@ -9,7 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import dynamic from "next/dynamic";
-import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus } from "lucide-react";
+import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -140,6 +140,9 @@ function PgxPage2Inner() {
     const [buying, setBuying] = useState<string | null>(null);
     const [chatInput, setChatInput] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showIncomingPanel, setShowIncomingPanel] = useState(false);
+    const [incomingItems, setIncomingItems] = useState<any[]>([]);
+    const [unseenCount, setUnseenCount] = useState(0);
     const [currentTime, setCurrentTime] = useState(Date.now());
     // Track VIP/booth request statuses
     const [vipRequestStatus, setVipRequestStatus] = useState<'idle' | 'pending' | 'accepted' | 'declined'>('idle');
@@ -302,6 +305,86 @@ function PgxPage2Inner() {
             .subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [roomId, user, supabase, showToast]);
+
+    /* ── Incoming notifications — fetch fan's own activity + realtime ─── */
+    useEffect(() => {
+        if (!roomId || !user) return;
+        const fetchIncoming = async () => {
+            let query = supabase
+                .from("bar_lounge_requests")
+                .select("*")
+                .eq("room_id", roomId)
+                .eq("fan_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(20);
+            if (sessionId) query = query.eq("session_id", sessionId);
+            const { data } = await query;
+            if (data) setIncomingItems(data);
+        };
+        fetchIncoming();
+
+        const channel = supabase
+            .channel(`fan-incoming-${roomId}-${user.id}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "bar_lounge_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const item = payload.new as any;
+                if (item.fan_id !== user.id) return;
+                if (sessionId && item.session_id && item.session_id !== sessionId) return;
+                setIncomingItems(prev => [item, ...prev].slice(0, 20));
+                if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
+            })
+            .on("postgres_changes", {
+                event: "UPDATE",
+                schema: "public",
+                table: "bar_lounge_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const updated = payload.new as any;
+                if (updated.fan_id !== user.id) return;
+                setIncomingItems(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, user, sessionId, supabase]);
+
+    const toggleIncomingPanel = () => {
+        setShowIncomingPanel(prev => !prev);
+        if (!showIncomingPanel) setUnseenCount(0);
+    };
+
+    const incomingTypeEmoji = (type: string) => {
+        switch (type) {
+            case "drink": return "🍸";
+            case "tip": return "💰";
+            case "vip": return "👑";
+            case "booth": return "🛋️";
+            case "pin": return "📌";
+            default: return "⚡";
+        }
+    };
+
+    const incomingStatusColor = (status: string) => {
+        switch (status) {
+            case "accepted": return { bg: "hsla(140,60%,20%,0.3)", border: "hsla(140,70%,45%,0.4)", text: "hsl(140,70%,55%)" };
+            case "declined": return { bg: "hsla(0,60%,20%,0.3)", border: "hsla(0,70%,55%,0.4)", text: "hsl(0,70%,60%)" };
+            case "pending": return { bg: "hsla(42,60%,20%,0.3)", border: "hsla(42,90%,55%,0.4)", text: GOLD };
+            default: return { bg: "hsla(280,40%,20%,0.2)", border: "hsla(280,60%,45%,0.25)", text: MUTED };
+        }
+    };
+
+    const formatTimeAgo = (dateStr?: string) => {
+        if (!dateStr) return "";
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        return `${Math.floor(diff / 3600)}h ago`;
+    };
+
     const handleSendChat = () => {
         if (!chatInput.trim()) return;
         sendMessage(chatInput, user?.id, user?.user_metadata?.full_name || "Guest");
@@ -430,7 +513,159 @@ function PgxPage2Inner() {
                         <UserPlus style={{ width: "14px", height: "14px" }} /> Invite
                     </button>
                 </div>
-                <WalletPill />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {/* Incoming Button */}
+                    <div style={{ position: "relative" }}>
+                        <button
+                            onClick={toggleIncomingPanel}
+                            className="pg2-btn-glow"
+                            style={{
+                                position: "relative",
+                                padding: "8px 16px",
+                                display: "inline-flex", alignItems: "center", gap: "8px",
+                                fontSize: "13px", fontWeight: 700,
+                                color: "#fff",
+                                cursor: "pointer",
+                                background: showIncomingPanel
+                                    ? "linear-gradient(135deg, hsla(0,80%,50%,0.9), hsla(340,80%,45%,0.9))"
+                                    : "linear-gradient(135deg, hsla(0,80%,50%,0.85), hsla(340,80%,50%,0.85))",
+                                border: "1px solid hsla(0,80%,60%,0.5)",
+                                borderRadius: "0.75rem",
+                                boxShadow: "0 0 15px hsla(0,80%,50%,0.4), 0 0 40px hsla(0,80%,50%,0.15)",
+                                transition: "all 0.3s",
+                            }}
+                        >
+                            <Bell style={{ width: "14px", height: "14px" }} />
+                            Incoming
+                            {unseenCount > 0 && (
+                                <span style={{
+                                    position: "absolute", top: "-6px", right: "-6px",
+                                    minWidth: "20px", height: "20px",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    borderRadius: "9999px",
+                                    background: GOLD,
+                                    color: BG,
+                                    fontSize: "11px", fontWeight: 800,
+                                    padding: "0 5px",
+                                    boxShadow: "0 0 10px hsla(42,90%,55%,0.6)",
+                                    animation: "glow-pulse 1.5s ease-in-out infinite",
+                                }}>
+                                    {unseenCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Incoming Dropdown Panel */}
+                        {showIncomingPanel && (
+                            <div style={{
+                                position: "absolute", top: "calc(100% + 12px)", right: 0,
+                                width: "380px", maxHeight: "480px",
+                                ...glassPanel,
+                                background: "hsla(270,50%,10%,0.95)",
+                                backdropFilter: "blur(24px)",
+                                border: "1px solid hsla(0,80%,50%,0.3)",
+                                borderRadius: "1rem",
+                                boxShadow: "0 8px 32px hsla(0,0%,0%,0.5), 0 0 20px hsla(0,80%,50%,0.2)",
+                                overflow: "hidden",
+                                animation: "pg2-slideIn 0.25s ease",
+                                zIndex: 100,
+                            }}>
+                                {/* Panel header */}
+                                <div style={{
+                                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                                    padding: "16px 20px",
+                                    borderBottom: "1px solid hsla(280,60%,45%,0.2)",
+                                    background: "hsla(0,60%,25%,0.15)",
+                                }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <Bell style={{ width: "18px", height: "18px", color: "hsl(0,80%,60%)" }} />
+                                        <span style={{ fontSize: "15px", fontWeight: 700, color: FG }}>My Activity</span>
+                                        <span style={{
+                                            fontSize: "11px", fontWeight: 600,
+                                            padding: "2px 8px", borderRadius: "9999px",
+                                            background: "hsla(0,80%,50%,0.2)",
+                                            border: "1px solid hsla(0,80%,50%,0.3)",
+                                            color: "hsl(0,80%,65%)",
+                                        }}>
+                                            {incomingItems.length}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowIncomingPanel(false)}
+                                        style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, padding: "4px", display: "flex", transition: "color 0.2s" }}
+                                    >
+                                        <X style={{ width: "16px", height: "16px" }} />
+                                    </button>
+                                </div>
+
+                                {/* Panel body */}
+                                <div className="pg2-scroll" style={{ maxHeight: "400px", overflowY: "auto", padding: "8px" }}>
+                                    {incomingItems.length === 0 ? (
+                                        <div style={{ padding: "32px 16px", textAlign: "center" }}>
+                                            <Bell style={{ width: "32px", height: "32px", color: `${MUTED}44`, margin: "0 auto 12px" }} />
+                                            <p style={{ color: MUTED, fontSize: "13px" }}>No activity yet this session</p>
+                                            <p style={{ color: `${MUTED}88`, fontSize: "12px", marginTop: "4px" }}>Buy a drink or tip to see your activity here</p>
+                                        </div>
+                                    ) : (
+                                        incomingItems.map((item: any) => {
+                                            const emoji = incomingTypeEmoji(item.type);
+                                            const sc = incomingStatusColor(item.status);
+                                            const isRequest = ["vip", "booth"].includes(item.type);
+
+                                            return (
+                                                <div key={item.id} style={{
+                                                    display: "flex", alignItems: "center", gap: "12px",
+                                                    padding: "10px 14px", marginBottom: "4px",
+                                                    borderRadius: "0.75rem",
+                                                    background: sc.bg,
+                                                    border: `1px solid ${sc.border}`,
+                                                    transition: "all 0.2s",
+                                                }}>
+                                                    <span style={{ fontSize: "22px", flexShrink: 0 }}>{emoji}</span>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                            <span style={{ fontSize: "13px", fontWeight: 600, color: FG }}>
+                                                                {item.label || item.type}
+                                                            </span>
+                                                            <span style={{
+                                                                fontSize: "12px", fontWeight: 700, color: GOLD,
+                                                            }}>€{item.amount}</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                                                            {isRequest && (
+                                                                <span style={{
+                                                                    fontSize: "10px", fontWeight: 700,
+                                                                    padding: "1px 6px", borderRadius: "4px",
+                                                                    background: sc.bg,
+                                                                    border: `1px solid ${sc.border}`,
+                                                                    color: sc.text,
+                                                                    textTransform: "uppercase",
+                                                                    letterSpacing: "0.5px",
+                                                                }}>
+                                                                    {item.status === "pending" ? "⏳ Awaiting approval" : item.status === "accepted" ? "✓ Approved" : item.status === "declined" ? "✗ Declined" : item.status}
+                                                                </span>
+                                                            )}
+                                                            {!isRequest && (
+                                                                <span style={{ fontSize: "10px", color: "hsl(140,70%,55%)", fontWeight: 600 }}>✓ Sent</span>
+                                                            )}
+                                                            {item.created_at && (
+                                                                <span style={{ fontSize: "10px", color: `${MUTED}88`, display: "flex", alignItems: "center", gap: "3px" }}>
+                                                                    <Clock style={{ width: "10px", height: "10px" }} />
+                                                                    {formatTimeAgo(item.created_at)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <WalletPill />
+                </div>
             </div>
 
             {/* Main grid */}
