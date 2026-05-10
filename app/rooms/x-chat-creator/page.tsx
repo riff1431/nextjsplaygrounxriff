@@ -175,8 +175,8 @@ const XChatCreatorPage = () => {
 
                         {/* Right - Requests + Summary */}
                         <div className="hidden lg:flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
-                            <IncomingRequests roomId={roomId} />
-                            <SummaryPanel roomId={roomId} />
+                            <IncomingRequests roomId={roomId} sessionId={sessionId} />
+                            <SummaryPanel roomId={roomId} sessionId={sessionId} />
                         </div>
                     </div>
                 </div>

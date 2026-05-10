@@ -39,6 +39,7 @@ function typeEmoji(type: string): string {
         case "champagne": return "🥂";
         case "vip_bottle": return "🍾";
         case "song": return "🎵";
+        case "custom": return "📩";
         default: return "⚡";
     }
 }
@@ -189,7 +190,7 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                                             {req.type === 'tip' ? 'Drink' : req.type}
                                         </span>
                                     </div>
-                                    <p className="text-xs mt-0.5 truncate" style={{ color: "hsla(45,100%,95%,0.5)" }}>
+                                    <p className="text-xs mt-0.5" style={{ color: "hsla(45,100%,95%,0.5)", display: "-webkit-box", WebkitLineClamp: req.type === 'custom' ? 3 : 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                         {req.label || req.message || req.type}
                                         <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€{req.amount}</span>
                                         {req.created_at && (

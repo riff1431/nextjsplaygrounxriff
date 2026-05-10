@@ -21,7 +21,7 @@ export async function POST(
     // Get room to find creator
     const { data: room } = await supabase
         .from("rooms")
-        .select("host_id")
+        .select("host_id, type")
         .eq("id", roomId)
         .single();
 
@@ -29,14 +29,14 @@ export async function POST(
         return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    // Fetch duration from room_settings
+    // Fetch duration from room_settings (dynamic by room type)
     const { data: settings } = await supabase
         .from("room_settings")
         .select("private_1on1_duration_seconds")
-        .eq("room_type", "suga-4-u")
+        .eq("room_type", room.type)
         .single();
 
-    const duration = settings?.private_1on1_duration_seconds || 60;
+    const duration = settings?.private_1on1_duration_seconds || 300; // 5 minutes default
 
     // Generate unique private channel name
     const callId = crypto.randomUUID();

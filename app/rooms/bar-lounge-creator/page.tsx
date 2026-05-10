@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Phone } from "lucide-react";
 
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import { usePrivateCall } from "@/hooks/usePrivateCall";
 import LoungeChat from "@/components/rooms/bar-lounge-creator/LoungeChat";
 import VideoStage from "@/components/rooms/bar-lounge-creator/VideoStage";
 import IncomingRequests from "@/components/rooms/bar-lounge-creator/IncomingRequests";
@@ -14,6 +15,8 @@ import WalletPill from "@/components/common/WalletPill";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
+import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCallCreatorModal";
+import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 
 
 const CreatorBarLounge = () => {
@@ -26,6 +29,10 @@ const CreatorBarLounge = () => {
     const [roomId, setRoomId] = useState<string | undefined>(undefined);
     const [sessionTitle, setSessionTitle] = useState<string | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState(false);
+    const [showIncomingCallsPanel, setShowIncomingCallsPanel] = useState(false);
+
+    // Private 1-on-1 call
+    const privateCall = usePrivateCall(roomId || null, user?.id || null, "creator");
 
     // When we have a sessionId, find/create the room and go straight to live view
     useEffect(() => {
@@ -107,7 +114,42 @@ const CreatorBarLounge = () => {
                         {sessionTitle || "Live Session"}
                     </p>
                 </div>
-                <div className="absolute right-4">
+                <div className="absolute right-4 flex items-center gap-3">
+                    {/* Incoming 1-on-1 calls */}
+                    <div className="relative" data-incoming-btn>
+                        <button
+                            onClick={() => setShowIncomingCallsPanel(prev => !prev)}
+                            className="relative h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all backdrop-blur-md shadow-lg"
+                            style={{
+                                background: "hsla(320, 80%, 45%, 0.8)",
+                                border: "1px solid hsla(320, 80%, 60%, 0.4)",
+                                color: "#fff",
+                                boxShadow: "0 0 15px hsla(320, 80%, 50%, 0.3)",
+                            }}
+                        >
+                            <Phone className="w-4 h-4" />
+                            <span className="hidden sm:inline">Incoming</span>
+                            {/* Notification badge */}
+                            {privateCall.pendingCalls.length > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                    {privateCall.pendingCalls.length}
+                                </span>
+                            )}
+                        </button>
+                        <S4uIncomingCallsPanel
+                            isOpen={showIncomingCallsPanel}
+                            onClose={() => setShowIncomingCallsPanel(false)}
+                            pendingCalls={privateCall.pendingCalls}
+                            isLoading={privateCall.isLoading}
+                            onAccept={(callId) => {
+                                privateCall.acceptCall(callId);
+                                setShowIncomingCallsPanel(false);
+                            }}
+                            onDecline={(callId) => {
+                                privateCall.declineCall(callId);
+                            }}
+                        />
+                    </div>
                     <SessionLiveControls
                         sessionId={sessionId!}
                         onEnd={() => router.push("/rooms/bar-lounge-creator")}
@@ -152,6 +194,20 @@ const CreatorBarLounge = () => {
                 roomName="Bar Lounge"
                 accentHsl="45, 90%, 55%"
             />
+
+            {/* Private 1-on-1 Call Modal — only for ringing/active/ended states (pending is handled by the Incoming panel) */}
+            {privateCall.callState && privateCall.callState.status !== "pending" && user && (
+                <PrivateCallCreatorModal
+                    callState={privateCall.callState}
+                    timeRemaining={privateCall.timeRemaining}
+                    userId={user.id}
+                    isLoading={privateCall.isLoading}
+                    onAcceptCall={() => privateCall.acceptCall()}
+                    onDeclineCall={() => privateCall.declineCall()}
+                    onEndCall={privateCall.endCall}
+                    onDismiss={privateCall.dismiss}
+                />
+            )}
         </div>
     );
 };

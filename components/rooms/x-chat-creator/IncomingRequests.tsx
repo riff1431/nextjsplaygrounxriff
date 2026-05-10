@@ -17,7 +17,7 @@ interface XChatRequest {
     creator_reply?: string;
 }
 
-const IncomingRequests = ({ roomId }: { roomId?: string }) => {
+const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: string | null }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<XChatRequest[]>([]);
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -33,31 +33,39 @@ const IncomingRequests = ({ roomId }: { roomId?: string }) => {
     useEffect(() => {
         if (!roomId) return;
 
+        // Reset for fresh session
+        setRequests([]);
+
         async function fetchRequests() {
-            const { data } = await supabase
+            let query = supabase
                 .from("x_chat_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
                 .limit(20);
+            if (sessionId) query = query.eq("session_id", sessionId);
+            const { data } = await query;
             if (data) setRequests(data as XChatRequest[]);
         }
         fetchRequests();
 
         const channel = supabase
-            .channel(`x-chat-requests-${roomId}`)
+            .channel(`x-chat-requests-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",
                 table: "x_chat_requests",
                 filter: `room_id=eq.${roomId}`,
             }, (payload: any) => {
-                setRequests((prev) => [payload.new as XChatRequest, ...prev]);
+                const newReq = payload.new as XChatRequest;
+                // Only add if it belongs to this session
+                if (sessionId && (newReq as any).session_id !== sessionId) return;
+                setRequests((prev) => [newReq, ...prev]);
             })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const handleAction = async (id: string, action: "accepted" | "declined", replyStr?: string) => {
         setRequests((prev) =>

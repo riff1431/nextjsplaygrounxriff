@@ -13,7 +13,7 @@ import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 
 // Allowed types in bar_lounge_requests check constraint
 const ALLOWED_TYPES = new Set([
-    "song", "champagne", "vip_bottle", "tip", "drink", "vip", "booth", "pin",
+    "song", "champagne", "vip_bottle", "tip", "drink", "vip", "booth", "pin", "custom",
 ]);
 
 // Normalise any incoming type to a constraint-safe value
@@ -33,6 +33,8 @@ function normaliseType(type: string, label?: string): string {
         "champagne_bottle": "champagne",
         "vip bottle": "vip_bottle",
         "vip_bottle_drink": "vip_bottle",
+        "custom_request": "custom",
+        "custom request": "custom",
     };
 
     const alias = aliases[t] || aliases[(label || "").toLowerCase().trim()];
@@ -89,8 +91,11 @@ export async function POST(
 
     // Determine earnings category: drinks & tips are 'tips', VIP/booth/pin are 'custom_requests'
     const isTipLike = ['drink', 'tip', 'champagne', 'vip_bottle'].includes(safeType);
+    const isCustom = safeType === 'custom';
     const earningsCategory = isTipLike ? 'tips' : 'custom_requests';
     const relatedType = isTipLike ? 'tip' : 'bar_request';
+    // Custom requests start as 'pending' and require creator approval
+    const initialStatus = isCustom ? 'pending' : undefined;
 
     // Payment with revenue split (85% creator / 15% platform)
     const splitResult = await applyRevenueSplit({
@@ -119,6 +124,7 @@ export async function POST(
             label,
             amount,
             ...(sessionId ? { session_id: sessionId } : {}),
+            ...(initialStatus ? { status: initialStatus } : {}),
         })
         .select().single();
 
@@ -141,10 +147,11 @@ export async function POST(
                             : safeType === "booth" ? "🛋️"
                                 : safeType === "pin" ? "📌"
                                     : safeType === "song" ? "🎵"
-                                        : "⚡";
+                                        : safeType === "custom" ? "📩"
+                                            : "⚡";
 
     // For tip-like items, use "Sent" language; for custom requests, use "requested"
-    const verb = isTipLike ? 'Sent' : (safeType === 'vip' ? 'requested' : 'bought');
+    const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'requested' : 'bought'));
     await supabase.from("bar_lounge_messages").insert({
         room_id: roomId,
         user_id: user.id,

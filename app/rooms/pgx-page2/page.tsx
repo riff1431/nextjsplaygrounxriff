@@ -6,13 +6,16 @@ import { createClient } from "@/utils/supabase/client";
 import { useBarChat } from "@/hooks/useBarChat";
 import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
+import { usePrivateCall } from "@/hooks/usePrivateCall";
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
+import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import dynamic from "next/dynamic";
-import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock } from "lucide-react";
+import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock, Phone } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
+const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -125,7 +128,7 @@ function PgxPage2Inner() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuth();
-    const { refresh: refreshWallet } = useWallet();
+    const { balance, pay, refresh: refreshWallet } = useWallet();
     const { toasts, push: showToast } = useToasts();
 
     const roomId = searchParams.get("roomId");
@@ -147,6 +150,15 @@ function PgxPage2Inner() {
     // Track VIP/booth request statuses
     const [vipRequestStatus, setVipRequestStatus] = useState<'idle' | 'pending' | 'accepted' | 'declined'>('idle');
     const [boothRequestStatus, setBoothRequestStatus] = useState<'idle' | 'pending' | 'accepted' | 'declined'>('idle');
+
+    // Private 1-on-1 call
+    const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
+    const [showPrivateCallConfirm, setShowPrivateCallConfirm] = useState(false);
+    const PRIVATE_CALL_PRICE = 500;
+
+    // Custom Request
+    const [customReqText, setCustomReqText] = useState("");
+    const [customReqAmount, setCustomReqAmount] = useState<number | string>("");
 
     // Update time every 10 seconds to refresh the pinned message timer
     useEffect(() => {
@@ -281,6 +293,15 @@ function PgxPage2Inner() {
         if (a > 0) { doPurchase("tip", `€${a} Tip`, a, `tip-custom`); setTipAmount(""); }
         else showToast("Enter a valid tip amount", "info");
     };
+    const handleCustomRequest = () => {
+        const a = Number(customReqAmount);
+        const text = customReqText.trim();
+        if (!text) { showToast("Type your request message", "info"); return; }
+        if (!a || a < 5) { showToast("Minimum €5 for custom requests", "info"); return; }
+        doPurchase("custom", text, a, `custom-req-${Date.now()}`);
+        setCustomReqText("");
+        setCustomReqAmount("");
+    };
 
     // Subscribe to request status updates (for VIP/booth accept/decline from creator)
     useEffect(() => {
@@ -300,6 +321,9 @@ function PgxPage2Inner() {
                 if (updated.type === 'booth') {
                     setBoothRequestStatus(newStatus);
                     showToast(newStatus === 'accepted' ? '🛋️ Booth reserved! Enjoy your private time!' : '❌ Booth reservation was declined', newStatus === 'accepted' ? 'success' : 'error');
+                }
+                if (updated.type === 'custom') {
+                    showToast(newStatus === 'accepted' ? '📩 Custom request approved by creator!' : '❌ Custom request was declined', newStatus === 'accepted' ? 'success' : 'error');
                 }
             })
             .subscribe();
@@ -364,6 +388,7 @@ function PgxPage2Inner() {
             case "vip": return "👑";
             case "booth": return "🛋️";
             case "pin": return "📌";
+            case "custom": return "📩";
             default: return "⚡";
         }
     };
@@ -610,7 +635,7 @@ function PgxPage2Inner() {
                                         incomingItems.map((item: any) => {
                                             const emoji = incomingTypeEmoji(item.type);
                                             const sc = incomingStatusColor(item.status);
-                                            const isRequest = ["vip", "booth"].includes(item.type);
+                                            const isRequest = ["vip", "booth", "custom"].includes(item.type);
 
                                             return (
                                                 <div key={item.id} style={{
@@ -791,6 +816,114 @@ function PgxPage2Inner() {
                                         <p style={{ fontSize: "11px", color: "hsla(42,90%,55%,0.6)", margin: 0, fontStyle: "italic" }}>Requires approval</p>
                                     </div>
                                 )}
+
+                                {/* Private 1-on-1 Session */}
+                                <div
+                                    style={{
+                                        ...glassPanel,
+                                        padding: "12px",
+                                        cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
+                                        opacity: (buying || privateCall.callState) ? 0.7 : 1,
+                                        marginTop: "4px",
+                                        background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
+                                        border: "1px solid hsla(320,80%,55%,0.35)",
+                                        transition: "all 0.3s",
+                                    }}
+                                    className="pg2-btn-glow"
+                                    onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <div style={{
+                                            width: "36px", height: "36px", borderRadius: "9999px",
+                                            background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            border: "1px solid hsla(320,80%,60%,0.3)",
+                                            flexShrink: 0,
+                                        }}>
+                                            <Phone style={{ width: "16px", height: "16px", color: PINK }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
+                                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
+                                            </div>
+                                            <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
+                                        </div>
+                                    </div>
+                                    <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
+                                </div>
+
+                                {/* ── Custom Request — Unlimited ── */}
+                                <div style={{
+                                    ...glassPanel,
+                                    padding: "14px",
+                                    marginTop: "4px",
+                                    background: "linear-gradient(135deg, hsla(270,60%,25%,0.2), hsla(42,50%,25%,0.15))",
+                                    border: "1px solid hsla(42,90%,55%,0.25)",
+                                }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                                        <span style={{ fontSize: "18px" }}>📩</span>
+                                        <span style={{ fontWeight: 700, color: GOLD, fontSize: "14px", ...glowTextGold }}>Custom Request</span>
+                                        <span style={{
+                                            marginLeft: "auto", fontSize: "10px", fontWeight: 600,
+                                            padding: "2px 8px", borderRadius: "9999px",
+                                            background: "hsla(140,70%,45%,0.15)",
+                                            border: "1px solid hsla(140,70%,45%,0.3)",
+                                            color: "hsl(140,70%,55%)",
+                                        }}>UNLIMITED</span>
+                                    </div>
+                                    <textarea
+                                        placeholder="Type your request for the creator..."
+                                        value={customReqText}
+                                        onChange={(e) => setCustomReqText(e.target.value.slice(0, 1000))}
+                                        rows={3}
+                                        style={{
+                                            width: "100%", resize: "none",
+                                            borderRadius: "0.5rem", padding: "10px 12px",
+                                            fontSize: "13px", lineHeight: "1.4",
+                                            background: "hsla(270,30%,18%,0.4)",
+                                            border: "1px solid hsla(280,40%,30%,0.3)",
+                                            color: FG, outline: "none",
+                                            fontFamily: "'Montserrat', sans-serif",
+                                        }}
+                                    />
+                                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center" }}>
+                                        <div style={{
+                                            ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "6px",
+                                            padding: "8px 12px", cursor: "text",
+                                        }}>
+                                            <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Min €5</span>
+                                            <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
+                                            <input
+                                                type="number"
+                                                min="5"
+                                                placeholder="Amount"
+                                                value={customReqAmount}
+                                                onChange={(e) => setCustomReqAmount(e.target.value)}
+                                                onKeyDown={(e) => e.key === "Enter" && handleCustomRequest()}
+                                                style={{
+                                                    background: "transparent", border: "none", outline: "none",
+                                                    color: FG, fontFamily: "'Montserrat', sans-serif",
+                                                    fontSize: "13px", flex: 1, minWidth: 0, width: "100%",
+                                                }}
+                                            />
+                                        </div>
+                                        <button
+                                            className="pg2-btn-gold"
+                                            disabled={!!buying || !customReqText.trim() || !customReqAmount || Number(customReqAmount) < 5}
+                                            style={{
+                                                ...btnGold, flexShrink: 0, padding: "8px 16px",
+                                                fontSize: "12px", fontWeight: 700,
+                                                opacity: (buying || !customReqText.trim() || !customReqAmount || Number(customReqAmount) < 5) ? 0.5 : 1,
+                                                display: "flex", alignItems: "center", gap: "4px",
+                                            }}
+                                            onClick={handleCustomRequest}
+                                        >
+                                            {buying?.startsWith("custom-req") ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Send"}
+                                        </button>
+                                    </div>
+                                    <p style={{ fontSize: "10px", color: MUTED, margin: "6px 0 0 0", fontStyle: "italic" }}>Requires creator approval • Private message</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -969,6 +1102,53 @@ function PgxPage2Inner() {
                 onClose={() => setShowInviteModal(false)}
                 roomId={roomId}
             />
+
+            {/* Private 1-on-1 Spend Confirmation */}
+            <SpendConfirmModal
+                isOpen={showPrivateCallConfirm}
+                onClose={() => setShowPrivateCallConfirm(false)}
+                title="Private 1-on-1 Video Call"
+                itemLabel="👑 Private 1-on-1 Session"
+                amount={PRIVATE_CALL_PRICE}
+                walletBalance={balance}
+                description={`Pay €${PRIVATE_CALL_PRICE} for a Private 1-on-1 video call with ${hostProfile?.full_name || hostProfile?.username || 'the creator'}?`}
+                confirmLabel="Pay & Request Call"
+                onConfirm={async () => {
+                    if (!roomId || !hostId) return;
+                    const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+                    // Deduct from wallet
+                    const payment = await pay(hostId, PRIVATE_CALL_PRICE, "Private 1-on-1 Video Call", roomId, 'private_1on1');
+                    if (!payment.success) {
+                        showToast(payment.error || "Payment failed", "error");
+                        return;
+                    }
+                    // Initiate the private call
+                    const callResult = await privateCall.initiateCall(fanName);
+                    if (callResult) {
+                        showToast("👑 Private 1-on-1 requested! Waiting for creator...", "info");
+                    } else {
+                        showToast("Failed to initiate video call", "error");
+                    }
+                    await refreshWallet();
+                    setShowPrivateCallConfirm(false);
+                }}
+            />
+
+            {/* Private 1-on-1 Call Modal (handles all call states) */}
+            {privateCall.callState && user && (
+                <PrivateCallFanModal
+                    callState={privateCall.callState}
+                    timeRemaining={privateCall.timeRemaining}
+                    userId={user.id}
+                    isLoading={privateCall.isLoading}
+                    onAcceptRinging={privateCall.acceptRinging}
+                    onRejectRinging={privateCall.rejectRinging}
+                    onEndCall={privateCall.endCall}
+                    onDismiss={privateCall.dismiss}
+                    hostAvatarUrl={hostProfile?.avatar_url || undefined}
+                    hostName={hostProfile?.full_name || hostProfile?.username || "Creator"}
+                />
+            )}
 
         </div>
     );

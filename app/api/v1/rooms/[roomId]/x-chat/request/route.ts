@@ -13,7 +13,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { message, amount } = body;
+    const { message, amount, session_id } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -54,16 +54,19 @@ export async function POST(
 
     const fanName = profile?.full_name || profile?.username || "Anonymous";
 
+    const insertPayload: any = {
+        room_id: roomId,
+        fan_id: user.id,
+        fan_name: fanName,
+        message: message || "Wants to chat",
+        avatar_url: profile?.avatar_url,
+        status: "pending",
+    };
+    if (session_id) insertPayload.session_id = session_id;
+
     const { data: req, error } = await supabase
         .from("x_chat_requests")
-        .insert({
-            room_id: roomId,
-            fan_id: user.id,
-            fan_name: fanName,
-            message: message || "Wants to chat",
-            avatar_url: profile?.avatar_url,
-            status: "pending",
-        })
+        .insert(insertPayload)
         .select()
         .single();
 

@@ -165,22 +165,32 @@ const XChatRoom = () => {
     /* ── request subscription ───────────────────────────── */
     useEffect(() => {
         if (!roomId || !user) return;
+
+        // Reset for fresh session
+        setRequestStatus("none");
+
         (async () => {
-            const { data: ex } = await supabase.from("x_chat_requests")
+            let query = supabase.from("x_chat_requests")
                 .select("id, status").eq("room_id", roomId).eq("fan_id", user.id)
-                .order("created_at", { ascending: false }).limit(1).single();
+                .order("created_at", { ascending: false }).limit(1);
+            if (urlSessionId) query = query.eq("session_id", urlSessionId);
+            const { data: ex } = await query.single();
             if (ex) setRequestStatus(ex.status as RequestStatus);
         })();
-        const ch = supabase.channel(`xchat-req-${roomId}-${user.id}`)
+        const ch = supabase.channel(`xchat-req-${roomId}-${user.id}-${urlSessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "UPDATE", schema: "public",
                 table: "x_chat_requests", filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const u = payload.new as any;
-                if (u.fan_id === user.id) setRequestStatus(u.status);
+                if (u.fan_id === user.id) {
+                    // Only update if belongs to current session
+                    if (urlSessionId && u.session_id !== urlSessionId) return;
+                    setRequestStatus(u.status);
+                }
             }).subscribe();
         return () => { supabase.removeChannel(ch); };
-    }, [roomId, user]);
+    }, [roomId, user, urlSessionId]);
 
     /* ── session timer ──────────────────────────────────── */
     useEffect(() => {
@@ -202,7 +212,7 @@ const XChatRoom = () => {
         try {
             const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: "Wants to chat" }),
+                body: JSON.stringify({ message: "Wants to chat", session_id: urlSessionId }),
             });
             if ((await r.json()).success) setRequestStatus("pending");
         } finally { setRequestLoading(false); }
@@ -223,7 +233,7 @@ const XChatRoom = () => {
             if (pending.reactionType === "voice_note_boost") {
                 const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: `Voice Note Reply: ${voicePrompt}`, amount: pending.price }),
+                    body: JSON.stringify({ message: `Voice Note Reply: ${voicePrompt}`, amount: pending.price, session_id: urlSessionId }),
                 });
                 const d = await r.json();
                 if (d.success) { toast.success("Voice note request sent!"); setVoicePrompt(""); refresh?.(); }
@@ -232,7 +242,7 @@ const XChatRoom = () => {
             }
             const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/reaction`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ reactionType: pending.reactionType, amount: pending.price }),
+                body: JSON.stringify({ reactionType: pending.reactionType, amount: pending.price, session_id: urlSessionId }),
             });
             const d = await r.json();
             if (d.success) {
@@ -351,7 +361,7 @@ const XChatRoom = () => {
                         </div>
                         <div className="xchat-header-right">
                             {renderStatus()}
-                            {roomId && <IncomingReplies roomId={roomId} />}
+                            {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
                             <WalletPill />
                         </div>
                     </header>

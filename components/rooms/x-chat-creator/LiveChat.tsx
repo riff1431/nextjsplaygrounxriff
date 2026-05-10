@@ -29,6 +29,9 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
     useEffect(() => {
         if (!roomId) return;
 
+        // Reset messages for fresh session
+        setMessages([]);
+
         // Fetch existing messages
         async function fetchMessages() {
             let query = supabase
@@ -37,7 +40,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(100);
-            // if (sessionId) query = query.eq("session_id", sessionId);
+            if (sessionId) query = query.eq("session_id", sessionId);
             const { data } = await query;
             if (data) setMessages(data);
         }
@@ -69,7 +72,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     // Auto-scroll on new messages
     useEffect(() => {
@@ -90,7 +93,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             paid_amount: 0,
             status: "Answered",
         };
-        // if (sessionId) insertPayload.session_id = sessionId;
+        if (sessionId) insertPayload.session_id = sessionId;
         await supabase.from("x_chat_messages").insert(insertPayload);
         setMessage("");
     };

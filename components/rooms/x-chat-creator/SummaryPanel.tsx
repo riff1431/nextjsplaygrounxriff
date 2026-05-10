@@ -7,9 +7,10 @@ import { toast } from "sonner";
 
 interface SummaryPanelProps {
     roomId?: string;
+    sessionId?: string | null;
 }
 
-const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
+const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState({
         totalMessages: 0,
@@ -23,24 +24,40 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
     useEffect(() => {
         if (!roomId) return;
 
+        // Reset stats for fresh session
+        setStats({
+            totalMessages: 0,
+            queuedMessages: 0,
+            answeredMessages: 0,
+            totalReactions: 0,
+            totalTips: 0,
+            totalRequests: 0,
+        });
+
         async function fetchStats() {
             // Fetch message stats
-            const { data: messages } = await supabase
+            let msgQuery = supabase
                 .from("x_chat_messages")
                 .select("id, status, paid_amount")
                 .eq("room_id", roomId);
+            if (sessionId) msgQuery = msgQuery.eq("session_id", sessionId);
+            const { data: messages } = await msgQuery;
 
             // Fetch reactions
-            const { data: reactions } = await supabase
+            let rxnQuery = supabase
                 .from("x_chat_reactions")
                 .select("id, amount")
                 .eq("room_id", roomId);
+            if (sessionId) rxnQuery = rxnQuery.eq("session_id", sessionId);
+            const { data: reactions } = await rxnQuery;
 
             // Fetch requests
-            const { data: requests } = await supabase
+            let reqQuery = supabase
                 .from("x_chat_requests")
                 .select("id")
                 .eq("room_id", roomId);
+            if (sessionId) reqQuery = reqQuery.eq("session_id", sessionId);
+            const { data: requests } = await reqQuery;
 
             if (messages) {
                 const queued = messages.filter(m => m.status === "Queued").length;
@@ -62,28 +79,31 @@ const SummaryPanel = ({ roomId }: SummaryPanelProps) => {
 
         // Subscribe to changes for live updates
         const channel = supabase
-            .channel(`summary-${roomId}`)
+            .channel(`summary-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const msg = payload.new;
+                if (sessionId && msg.session_id !== sessionId) return;
                 if (msg.paid_amount > 0) {
                     toast.success(`🎉 New Tip: €${msg.paid_amount} from ${msg.sender_name}!`);
                 }
                 fetchStats();
             })
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                if (sessionId && (payload.new as any).session_id !== sessionId) return;
                 const numAmount = Number(payload.new.amount) || 0;
                 if (numAmount > 0) {
                     toast.success(`🎁 Action received! (€${numAmount})`);
                 }
                 fetchStats();
             })
-            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, () => {
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+                if (sessionId && (payload.new as any)?.session_id !== sessionId) return;
                 fetchStats();
             })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },

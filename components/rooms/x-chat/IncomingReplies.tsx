@@ -21,7 +21,7 @@ interface XChatRequest {
     updated_at: string;
 }
 
-export default function IncomingReplies({ roomId }: { roomId: string }) {
+export default function IncomingReplies({ roomId, sessionId }: { roomId: string; sessionId?: string | null }) {
     const { user } = useAuth();
     const supabase = createClient();
     const [replies, setReplies] = useState<XChatRequest[]>([]);
@@ -34,8 +34,12 @@ export default function IncomingReplies({ roomId }: { roomId: string }) {
     useEffect(() => {
         if (!user || !roomId) return;
 
+        // Reset for fresh session
+        setReplies([]);
+        setUnreadCount(0);
+
         const fetchInitial = async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from("x_chat_requests")
                 .select("*")
                 .eq("room_id", roomId)
@@ -43,14 +47,16 @@ export default function IncomingReplies({ roomId }: { roomId: string }) {
                 .eq("status", "accepted")
                 .not("creator_reply", "is", null)
                 .order("updated_at", { ascending: false });
+            if (sessionId) query = query.eq("session_id", sessionId);
 
+            const { data } = await query;
             if (data) setReplies(data);
         };
 
         fetchInitial();
 
         const channel = supabase
-            .channel(`incoming-replies-${roomId}-${user.id}`)
+            .channel(`incoming-replies-${roomId}-${user.id}-${sessionId || 'all'}`)
             .on(
                 "postgres_changes",
                 {
@@ -61,6 +67,8 @@ export default function IncomingReplies({ roomId }: { roomId: string }) {
                 },
                 (payload) => {
                     const updated = payload.new as XChatRequest;
+                    // Only process if belongs to current session
+                    if (sessionId && (updated as any).session_id !== sessionId) return;
                     if (updated.room_id === roomId && updated.status === "accepted" && updated.creator_reply) {
                         setReplies((prev) => {
                             if (prev.some(r => r.id === updated.id)) {
@@ -83,7 +91,7 @@ export default function IncomingReplies({ roomId }: { roomId: string }) {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [user, roomId, isOpen]);
+    }, [user, roomId, sessionId, isOpen]);
 
     // Close on click outside
     useEffect(() => {

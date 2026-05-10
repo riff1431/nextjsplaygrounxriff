@@ -24,6 +24,9 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
             return;
         }
 
+        // Reset messages for fresh session start
+        setMessages([]);
+
         // Load initial messages
         const load = async () => {
             let query = supabase
@@ -31,7 +34,7 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true });
-            // if (sessionId) query = query.eq("session_id", sessionId);
+            if (sessionId) query = query.eq("session_id", sessionId);
 
             const { data, error } = await query;
 
@@ -88,7 +91,7 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
             paid_amount: paidAmount,
             status: "Queued"
         };
-        // if (sessionId) insertPayload.session_id = sessionId;
+        if (sessionId) insertPayload.session_id = sessionId;
 
         const { data, error } = await supabase.from("x_chat_messages").insert(insertPayload).select().single();
 

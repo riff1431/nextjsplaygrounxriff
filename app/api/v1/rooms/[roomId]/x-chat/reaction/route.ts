@@ -17,6 +17,7 @@ export async function POST(
     const body = await request.json();
     const reactionType = body.reactionType || body.type;
     const amount = body.amount;
+    const session_id = body.session_id;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,9 +41,12 @@ export async function POST(
 
     if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
 
+    const insertPayload: any = { room_id: roomId, fan_id: user.id, reaction_type: reactionType, amount };
+    if (session_id) insertPayload.session_id = session_id;
+
     const { data: reaction, error: insertError } = await supabase
         .from("x_chat_reactions")
-        .insert({ room_id: roomId, fan_id: user.id, reaction_type: reactionType, amount })
+        .insert(insertPayload)
         .select().single();
 
     if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
