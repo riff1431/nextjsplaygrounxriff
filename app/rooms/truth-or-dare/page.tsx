@@ -460,57 +460,56 @@ function TruthOrDareContent() {
         // Clear previous session's messages immediately
         setChatMessages([]);
 
-        // Use the session start time from check-access (already in state)
-        // This avoids a second DB query and works even without sessionId in URL
+        // Guard: Don't load chat until we have the session start time
+        // This prevents loading ALL old messages before check-access returns
         const sessionStartedAt = currentSessionStartedAt;
+        let chatChannel: ReturnType<typeof supabase.channel> | null = null;
 
-        const fetchChatMessages = async () => {
-            let query = supabase
-                .from('chat_messages')
-                .select('id, room_id, user_id, username, message, created_at')
-                .eq('room_id', roomId)
-                .order('created_at', { ascending: true })
-                .limit(100);
+        if (sessionStartedAt) {
+            const fetchChatMessages = async () => {
+                let query = supabase
+                    .from('chat_messages')
+                    .select('id, room_id, user_id, username, message, created_at')
+                    .eq('room_id', roomId)
+                    .gte('created_at', sessionStartedAt)
+                    .order('created_at', { ascending: true })
+                    .limit(100);
 
-            // Scope to current session by timestamp
-            if (sessionStartedAt) {
-                query = query.gte('created_at', sessionStartedAt);
-            }
+                const { data, error } = await query;
 
-            const { data, error } = await query;
-
-            if (data && !error) {
-                setChatMessages(data);
-            }
-            setTimeout(scrollChatToBottom, 150);
-        };
-        fetchChatMessages();
-
-        const chatChannel = supabase
-            .channel(`fan-chat-${roomId}-${sessionId || 'nosession'}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'chat_messages',
-                    filter: `room_id=eq.${roomId}`,
-                },
-                (payload) => {
-                    const newMsg = payload.new as any;
-                    // Only add messages from the current session (by timestamp)
-                    if (sessionStartedAt && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
-                    setChatMessages((prev) => [...prev, newMsg]);
-                    setTimeout(scrollChatToBottom, 100);
+                if (data && !error) {
+                    setChatMessages(data);
                 }
-            )
-            .subscribe();
+                setTimeout(scrollChatToBottom, 150);
+            };
+            fetchChatMessages();
+
+            chatChannel = supabase
+                .channel(`fan-chat-${roomId}-${sessionId || 'nosession'}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'chat_messages',
+                        filter: `room_id=eq.${roomId}`,
+                    },
+                    (payload) => {
+                        const newMsg = payload.new as any;
+                        // Only add messages from the current session (by timestamp)
+                        if (newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
+                        setChatMessages((prev) => [...prev, newMsg]);
+                        setTimeout(scrollChatToBottom, 100);
+                    }
+                )
+                .subscribe();
+        }
 
         return () => {
             supabase.removeChannel(gameStatusChannel);
             supabase.removeChannel(roomRequestChannel);
             supabase.removeChannel(gameChannel);
-            supabase.removeChannel(chatChannel);
+            if (chatChannel) supabase.removeChannel(chatChannel);
             if (presenceChannel) {
                 supabase.removeChannel(presenceChannel);
             }
