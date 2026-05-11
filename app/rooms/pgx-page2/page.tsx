@@ -970,7 +970,7 @@ function PgxPage2Inner() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden", justifyContent: "flex-end" }}>
 
                         {/* Live stream — adjusted aspect ratio */}
-                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", aspectRatio: "16/9", minHeight: "0", width: "100%" }}>
+                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", aspectRatio: "1/1", minHeight: "0", width: "100%", maxWidth: "600px", margin: "0 auto" }}>
 
                             {/* Real Agora fan stream */}
                             {roomId && user ? (
@@ -986,7 +986,7 @@ function PgxPage2Inner() {
                                     />
                                 </div>
                             ) : (
-                                <div style={{ width: "100%", aspectRatio: "4/3", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "0.75rem" }}>
+                                <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "0.75rem" }}>
                                     <Wine style={{ width: "60px", height: "60px", color: `${GOLD}33` }} />
                                     <span style={{ fontSize: "13px", color: MUTED }}>Connecting to stream...</span>
                                 </div>
