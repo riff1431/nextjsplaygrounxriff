@@ -75,8 +75,8 @@ export async function POST(
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (!type || !amount || amount <= 0) {
-        return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (!type || amount === undefined || (amount <= 0 && type !== 'custom')) {
+        return NextResponse.json({ error: "Missing fields or invalid amount" }, { status: 400 });
     }
 
     // Normalise type to allowed constraint values
@@ -98,20 +98,24 @@ export async function POST(
     const initialStatus = isCustom ? 'pending' : undefined;
 
     // Payment with revenue split (85% creator / 15% platform)
-    const splitResult = await applyRevenueSplit({
-        supabase,
-        fanUserId: user.id,
-        creatorUserId: room.host_id,
-        grossAmount: amount,
-        splitType: 'GLOBAL',
-        description: `Bar Lounge: ${label || type}`,
-        roomId,
-        relatedType,
-        relatedId: null,
-        earningsCategory,
-    });
-
-    if (!splitResult.success) return NextResponse.json({ error: splitResult.error || "Payment failed" }, { status: 400 });
+    // Payment with revenue split (85% creator / 15% platform) (Skip if free/0)
+    let splitResult = { success: true, newBalance: undefined as number | undefined, error: undefined as string | undefined };
+    if (amount > 0) {
+        const res = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: room.host_id,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: `Bar Lounge: ${label || type}`,
+            roomId,
+            relatedType,
+            relatedId: null,
+            earningsCategory,
+        });
+        if (!res.success) return NextResponse.json({ error: res.error || "Payment failed" }, { status: 400 });
+        splitResult = res;
+    }
 
     // Insert request with safe type
     const { data: req, error: reqError } = await supabase
@@ -152,11 +156,12 @@ export async function POST(
 
     // For tip-like items, use "Sent" language; for custom requests, use "requested"
     const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'requested' : 'bought'));
+    const amountStr = amount > 0 ? ` (€${amount})` : '';
     await supabase.from("bar_lounge_messages").insert({
         room_id: roomId,
         user_id: user.id,
         handle: profile?.username || "Fan",
-        content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type} (€${amount})`,
+        content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type}${amountStr}`,
         is_system: true,
         ...(sessionId ? { session_id: sessionId } : {}),
     });

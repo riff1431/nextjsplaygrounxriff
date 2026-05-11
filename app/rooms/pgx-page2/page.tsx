@@ -294,13 +294,10 @@ function PgxPage2Inner() {
         else showToast("Enter a valid tip amount", "info");
     };
     const handleCustomRequest = () => {
-        const a = Number(customReqAmount);
         const text = customReqText.trim();
         if (!text) { showToast("Type your request message", "info"); return; }
-        if (!a || a < 5) { showToast("Minimum €5 for custom requests", "info"); return; }
-        doPurchase("custom", text, a, `custom-req-${Date.now()}`);
+        doPurchase("custom", text, 0, `custom-req-${Date.now()}`);
         setCustomReqText("");
-        setCustomReqAmount("");
     };
 
     // Subscribe to request status updates (for VIP/booth accept/decline from creator)
@@ -855,34 +852,14 @@ function PgxPage2Inner() {
                                                     fontFamily: "'Montserrat', sans-serif",
                                                 }}
                                             />
-                                            <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center" }}>
-                                                <div style={{
-                                                    ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "6px",
-                                                    padding: "8px 12px", cursor: "text",
-                                                }}>
-                                                    <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Min €5</span>
-                                                    <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
-                                                    <input
-                                                        type="number"
-                                                        min="5"
-                                                        placeholder="Amount"
-                                                        value={customReqAmount}
-                                                        onChange={(e) => setCustomReqAmount(e.target.value)}
-                                                        onKeyDown={(e) => e.key === "Enter" && handleCustomRequest()}
-                                                        style={{
-                                                            background: "transparent", border: "none", outline: "none",
-                                                            color: FG, fontFamily: "'Montserrat', sans-serif",
-                                                            fontSize: "13px", flex: 1, minWidth: 0, width: "100%",
-                                                        }}
-                                                    />
-                                                </div>
+                                            <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center", justifyContent: "flex-end" }}>
                                                 <button
                                                     className="pg2-btn-gold"
-                                                    disabled={!!buying || !customReqText.trim() || !customReqAmount || Number(customReqAmount) < 5}
+                                                    disabled={!!buying || !customReqText.trim()}
                                                     style={{
-                                                        ...btnGold, flexShrink: 0, padding: "8px 16px",
+                                                        ...btnGold, padding: "8px 24px",
                                                         fontSize: "12px", fontWeight: 700,
-                                                        opacity: (buying || !customReqText.trim() || !customReqAmount || Number(customReqAmount) < 5) ? 0.5 : 1,
+                                                        opacity: (buying || !customReqText.trim()) ? 0.5 : 1,
                                                         display: "flex", alignItems: "center", gap: "4px",
                                                     }}
                                                     onClick={handleCustomRequest}
