@@ -138,6 +138,7 @@ function PgxPage2Inner() {
     const [hostProfile, setHostProfile] = useState<{ full_name?: string; username?: string; avatar_url?: string } | null>(null);
     const [drinks, setDrinks] = useState<any[]>(DEFAULT_DRINKS);
     const [vipPrice, setVipPrice] = useState(150);
+    const [customRequestShortcuts, setCustomRequestShortcuts] = useState<string[]>(["Show me boobs", "Do something spicy", "Change outfit", "Dance for me", "Say my name"]);
     const [isLoading, setIsLoading] = useState(true);
     const [tipAmount, setTipAmount] = useState<number | string>("");
     const [buying, setBuying] = useState<string | null>(null);
@@ -234,6 +235,7 @@ function PgxPage2Inner() {
                 if (mounted && cfg) {
                     if (cfg.menu_items?.length) setDrinks(cfg.menu_items);
                     if (cfg.vip_price) setVipPrice(cfg.vip_price);
+                    if (cfg.custom_requests?.length) setCustomRequestShortcuts(cfg.custom_requests);
                 }
             } finally { if (mounted) setIsLoading(false); }
         })();
@@ -854,7 +856,7 @@ function PgxPage2Inner() {
                                             />
                                             
                                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
-                                                {["Show me boobs", "Do something spicy", "Change outfit", "Dance for me", "Say my name"].map(shortcut => (
+                                                {customRequestShortcuts.map(shortcut => (
                                                     <button
                                                         key={shortcut}
                                                         onClick={() => setCustomReqText(shortcut)}

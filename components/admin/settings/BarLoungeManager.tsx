@@ -30,6 +30,7 @@ interface BarConfig {
     ultra_vip_price: number;
     spin_odds: SpinOutcome[];
     menu_items: Drink[];
+    custom_requests?: string[];
 }
 
 const DRINK_TONES = [
@@ -313,6 +314,53 @@ export default function BarLoungeManager() {
                             {config.spin_odds?.reduce((a, b) => a + (b.odds || 0), 0)}%
                         </span>
                     </div>
+                </div>
+            </NeonCard>
+
+            {/* Custom Requests Shortcuts */}
+            <NeonCard className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <AdminSectionTitle
+                        icon={<Plus className="w-5 h-5 text-yellow-400" />}
+                        title="Custom Request Shortcuts"
+                        sub="Manage the quick-action shortcut buttons for fans"
+                    />
+                    <NeonButton 
+                        onClick={() => setConfig({ ...config, custom_requests: [...(config.custom_requests || []), "New Shortcut"] })} 
+                        variant="ghost" 
+                        className="flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Add Shortcut
+                    </NeonButton>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                    {(config.custom_requests || []).map((req, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                            <input
+                                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-yellow-500/50 outline-none transition-colors"
+                                value={req}
+                                onChange={(e) => {
+                                    const newReqs = [...(config.custom_requests || [])];
+                                    newReqs[idx] = e.target.value;
+                                    setConfig({ ...config, custom_requests: newReqs });
+                                }}
+                            />
+                            <button
+                                onClick={() => {
+                                    const newReqs = [...(config.custom_requests || [])];
+                                    newReqs.splice(idx, 1);
+                                    setConfig({ ...config, custom_requests: newReqs });
+                                }}
+                                className="p-3 hover:bg-white/10 rounded-xl text-red-400 transition-colors border border-transparent hover:border-red-500/30"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        </div>
+                    ))}
+                    {(!config.custom_requests || config.custom_requests.length === 0) && (
+                        <div className="text-gray-500 text-sm italic">No shortcuts configured. Fans will have to type manually.</div>
+                    )}
                 </div>
             </NeonCard>
 
