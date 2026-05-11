@@ -36,11 +36,6 @@ const XChatCreatorPage = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            if (urlRoomId) {
-                setRoomId(urlRoomId);
-                return;
-            }
-
             // Fetch room_id from the session (most reliable)
             const { data: session } = await supabase
                 .from("room_sessions")
@@ -50,6 +45,11 @@ const XChatCreatorPage = () => {
 
             if (session?.room_id) {
                 setRoomId(session.room_id);
+                return;
+            }
+
+            if (urlRoomId) {
+                setRoomId(urlRoomId);
                 return;
             }
 
