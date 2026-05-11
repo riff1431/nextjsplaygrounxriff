@@ -818,78 +818,6 @@ function PgxPage2Inner() {
                                     </div>
                                 )}
 
-                                {/* Booth Reservation — Custom Request */}
-                                {boothRequestStatus === 'accepted' ? (
-                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid hsla(140,70%,45%,0.4)", background: "hsla(140,40%,15%,0.2)" }}>
-                                        <span style={{ fontSize: "18px" }}>🛋️</span>
-                                        <span style={{ fontWeight: 700, color: "hsl(140,70%,55%)", fontSize: "14px" }}>✓ Booth Reserved</span>
-                                    </div>
-                                ) : boothRequestStatus === 'pending' ? (
-                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", opacity: 0.8, cursor: "default" }}>
-                                        <span style={{ fontSize: "18px" }}>🛋️</span>
-                                        <div style={{ flex: 1 }}>
-                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Booth Request Pending...</span>
-                                            <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>Waiting for creator approval</p>
-                                        </div>
-                                        <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                    </div>
-                                ) : boothRequestStatus === 'declined' ? (
-                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", gap: "8px", border: "1px solid hsla(0,70%,45%,0.3)", background: "hsla(0,40%,15%,0.15)" }}>
-                                        <span style={{ fontSize: "18px" }}>🛋️</span>
-                                        <span style={{ fontWeight: 700, color: "hsl(0,70%,60%)", fontSize: "14px" }}>Booth Declined</span>
-                                        <button onClick={() => setBoothRequestStatus('idle')} style={{ fontSize: "12px", color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginLeft: "auto" }}>Retry</button>
-                                    </div>
-                                ) : (
-                                    <div style={{ ...glassPanel, padding: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: buying ? "not-allowed" : "pointer", opacity: buying ? 0.7 : 1 }}
-                                        onClick={() => !buying && doPurchase("booth", "Booth Reservation", 300, "booth")}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                            <span style={{ fontSize: "18px" }}>🛋️</span>
-                                            <div>
-                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Reserve a Booth</span>
-                                                <span style={{ color: GOLD, fontWeight: 700, marginLeft: "8px" }}>€300</span>
-                                                <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>🎉 Private (5 mins)</p>
-                                            </div>
-                                            {buying === "booth" && <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "8px" }} />}
-                                        </div>
-                                        <p style={{ fontSize: "11px", color: "hsla(42,90%,55%,0.6)", margin: 0, fontStyle: "italic" }}>Requires approval</p>
-                                    </div>
-                                )}
-
-                                {/* Private 1-on-1 Session */}
-                                <div
-                                    style={{
-                                        ...glassPanel,
-                                        padding: "12px",
-                                        cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
-                                        opacity: (buying || privateCall.callState) ? 0.7 : 1,
-                                        marginTop: "4px",
-                                        background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
-                                        border: "1px solid hsla(320,80%,55%,0.35)",
-                                        transition: "all 0.3s",
-                                    }}
-                                    className="pg2-btn-glow"
-                                    onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
-                                >
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                        <div style={{
-                                            width: "36px", height: "36px", borderRadius: "9999px",
-                                            background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            border: "1px solid hsla(320,80%,60%,0.3)",
-                                            flexShrink: 0,
-                                        }}>
-                                            <Phone style={{ width: "16px", height: "16px", color: PINK }} />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
-                                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
-                                            </div>
-                                            <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
-                                </div>
 
                                 {/* ── Custom Request — Unlimited ── */}
                                 <div style={{
@@ -961,6 +889,42 @@ function PgxPage2Inner() {
                                         </button>
                                     </div>
                                     <p style={{ fontSize: "10px", color: MUTED, margin: "6px 0 0 0", fontStyle: "italic" }}>Requires creator approval • Private message</p>
+                                </div>
+
+                                {/* Private 1-on-1 Session */}
+                                <div
+                                    style={{
+                                        ...glassPanel,
+                                        padding: "12px",
+                                        cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
+                                        opacity: (buying || privateCall.callState) ? 0.7 : 1,
+                                        marginTop: "4px",
+                                        background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
+                                        border: "1px solid hsla(320,80%,55%,0.35)",
+                                        transition: "all 0.3s",
+                                    }}
+                                    className="pg2-btn-glow"
+                                    onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <div style={{
+                                            width: "36px", height: "36px", borderRadius: "9999px",
+                                            background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            border: "1px solid hsla(320,80%,60%,0.3)",
+                                            flexShrink: 0,
+                                        }}>
+                                            <Phone style={{ width: "16px", height: "16px", color: PINK }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
+                                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
+                                            </div>
+                                            <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
+                                        </div>
+                                    </div>
+                                    <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
                                 </div>
                             </div>
                         </div>
