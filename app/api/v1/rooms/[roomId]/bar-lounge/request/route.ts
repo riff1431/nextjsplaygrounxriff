@@ -126,7 +126,7 @@ export async function POST(
             fan_name: profile?.username || "Anonymous",
             type: safeType,
             label,
-            amount: amount > 0 ? amount : null,
+            amount,
             ...(sessionId ? { session_id: sessionId } : {}),
             ...(initialStatus ? { status: initialStatus } : {}),
         })
