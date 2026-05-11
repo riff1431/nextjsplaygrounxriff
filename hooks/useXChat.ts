@@ -48,8 +48,9 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
         load();
 
         // Subscribe to changes (INSERT and UPDATE for replies)
+        const channelName = sessionId ? `x-chat-${roomId}-${sessionId}` : `x-chat-${roomId}`;
         const channel = supabase
-            .channel(`x-chat-${roomId}`)
+            .channel(channelName)
             .on(
                 "postgres_changes",
                 {
@@ -59,7 +60,10 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
                     filter: `room_id=eq.${roomId}`
                 },
                 (payload) => {
-                    const changedMsg = payload.new as XChatMessage;
+                    const changedMsg = payload.new as any;
+                    
+                    // If we're scoped to a session, ignore messages from other sessions
+                    if (sessionId && changedMsg.session_id && changedMsg.session_id !== sessionId) return;
 
                     if (payload.eventType === 'INSERT') {
                         setMessages((prev) => {
@@ -85,6 +89,7 @@ export function useXChat(roomId: string | null, sessionId?: string | null) {
 
         const insertPayload: any = {
             room_id: roomId,
+            sender_id: user?.id || null,
             sender_name: senderName,
             body: body.trim(),
             lane,

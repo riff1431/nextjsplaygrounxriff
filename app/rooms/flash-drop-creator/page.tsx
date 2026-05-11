@@ -34,6 +34,19 @@ function FlashdropCreatorStudio() {
         if (!user) return;
         const supabase = createClient();
         async function findRoom() {
+            if (sessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("room_id")
+                    .eq("id", sessionId)
+                    .single();
+
+                if (session?.room_id) {
+                    setRoomId(session.room_id);
+                    return;
+                }
+            }
+
             const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")

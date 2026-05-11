@@ -57,6 +57,19 @@ const Suga4UCreatorPage = () => {
         if (!user || !sessionId) return;
         const supabase = createClient();
         async function findRoom() {
+            // Fetch room_id from the session (most reliable)
+            const { data: session } = await supabase
+                .from("room_sessions")
+                .select("room_id")
+                .eq("id", sessionId)
+                .single();
+
+            if (session?.room_id) {
+                setRoomId(session.room_id);
+                return;
+            }
+
+            // Fallback: Find creator's suga-4-u room
             const { data: rooms } = await supabase
                 .from("rooms")
                 .select("id")

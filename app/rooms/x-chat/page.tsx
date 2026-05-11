@@ -145,6 +145,30 @@ const XChatRoom = () => {
     /* ── fetch room ─────────────────────────────────────── */
     useEffect(() => {
         async function fetchRoom() {
+            // 1. Prioritize session_id as the source of truth
+            if (urlSessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("room_id, creator_id")
+                    .eq("id", urlSessionId)
+                    .single();
+
+                if (session?.room_id) {
+                    setRoomId(session.room_id);
+                    setHostId(session.creator_id);
+                    const { data: p } = await supabase.from("profiles")
+                        .select("username, full_name, avatar_url")
+                        .eq("id", session.creator_id).single();
+                    if (p) {
+                        const name = p.full_name || p.username || "Host";
+                        setHostName(name);
+                        setHostAvatar(p.avatar_url || null);
+                    }
+                    return;
+                }
+            }
+
+            // 2. Fallback logic
             let q = supabase.from("rooms").select("id, host_id, title")
                 .eq("status", "live").eq("type", "x-chat");
             if (urlRoomId) q = q.eq("id", urlRoomId);
@@ -168,8 +192,7 @@ const XChatRoom = () => {
             }
         }
         fetchRoom();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [urlSessionId, urlRoomId, supabase]);
 
     /* ── request subscription ───────────────────────────── */
     useEffect(() => {
@@ -264,13 +287,7 @@ const XChatRoom = () => {
 
     /* ── header status badge ────────────────────────────── */
     const renderStatus = () => {
-        if (requestStatus === "none") return (
-            <button onClick={sendRequest} disabled={!roomId || requestLoading}
-                className="xchat-header-btn xchat-header-btn--blue">
-                {requestLoading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
-                Invite Creator
-            </button>
-        );
+        if (requestStatus === "none") return null;
         if (requestStatus === "pending") return (
             <div className="xchat-header-btn xchat-header-btn--yellow">
                 <Clock size={13} className="animate-pulse" /> Request Pending…

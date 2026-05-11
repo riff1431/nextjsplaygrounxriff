@@ -92,6 +92,32 @@ const Suga4URoom = () => {
 
     React.useEffect(() => {
         async function fetchRoom() {
+            // 1. Prioritize session_id as the source of truth
+            if (urlSessionId) {
+                const { data: session } = await supabase
+                    .from("room_sessions")
+                    .select("room_id, creator_id")
+                    .eq("id", urlSessionId)
+                    .single();
+
+                if (session?.room_id) {
+                    setRoomId(session.room_id);
+                    setHostId(session.creator_id);
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('username, full_name, avatar_url')
+                        .eq('id', session.creator_id)
+                        .single();
+
+                    if (profile) {
+                        setHostName(profile.full_name || profile.username || "Creator");
+                        setHostAvatar(profile.avatar_url || null);
+                    }
+                    return;
+                }
+            }
+
+            // 2. Fallback logic
             let query = supabase
                 .from('rooms')
                 .select('id, host_id')
@@ -125,7 +151,7 @@ const Suga4URoom = () => {
             }
         }
         fetchRoom();
-    }, [supabase, urlRoomId]);
+    }, [supabase, urlRoomId, urlSessionId]);
 
     if (sessionStatus === 'pending') {
         return (

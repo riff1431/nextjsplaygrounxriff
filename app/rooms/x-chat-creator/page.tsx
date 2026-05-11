@@ -41,12 +41,25 @@ const XChatCreatorPage = () => {
                 return;
             }
 
-            // Find creator's x-chat room
+            // Fetch room_id from the session (most reliable)
+            const { data: session } = await supabase
+                .from("room_sessions")
+                .select("room_id")
+                .eq("id", sessionId)
+                .single();
+
+            if (session?.room_id) {
+                setRoomId(session.room_id);
+                return;
+            }
+
+            // Fallback: Find creator's x-chat room
             const { data: room } = await supabase
                 .from('rooms')
                 .select('id')
                 .eq('host_id', user.id)
                 .eq('type', 'x-chat')
+                .order('created_at', { ascending: true })
                 .limit(1)
                 .single();
 
