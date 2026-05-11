@@ -852,6 +852,30 @@ function PgxPage2Inner() {
                                                     fontFamily: "'Montserrat', sans-serif",
                                                 }}
                                             />
+                                            
+                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+                                                {["Show me boobs", "Do something spicy", "Change outfit", "Dance for me", "Say my name"].map(shortcut => (
+                                                    <button
+                                                        key={shortcut}
+                                                        onClick={() => setCustomReqText(shortcut)}
+                                                        style={{
+                                                            background: "hsla(280,40%,30%,0.2)",
+                                                            border: "1px solid hsla(280,40%,40%,0.3)",
+                                                            borderRadius: "9999px",
+                                                            padding: "4px 10px",
+                                                            fontSize: "11px",
+                                                            color: MUTED,
+                                                            cursor: "pointer",
+                                                            transition: "all 0.2s"
+                                                        }}
+                                                        onMouseEnter={(e) => { e.currentTarget.style.color = GOLD; e.currentTarget.style.borderColor = "hsla(42,90%,55%,0.5)"; e.currentTarget.style.background = "hsla(42,90%,55%,0.1)"; }}
+                                                        onMouseLeave={(e) => { e.currentTarget.style.color = MUTED; e.currentTarget.style.borderColor = "hsla(280,40%,40%,0.3)"; e.currentTarget.style.background = "hsla(280,40%,30%,0.2)"; }}
+                                                    >
+                                                        {shortcut}
+                                                    </button>
+                                                ))}
+                                            </div>
+
                                             <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center", justifyContent: "flex-end" }}>
                                                 <button
                                                     className="pg2-btn-gold"
