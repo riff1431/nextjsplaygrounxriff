@@ -734,6 +734,44 @@ function PgxPage2Inner() {
                                 </div>
                             </div>
 
+                            {/* Tips section — Quick Tips */}
+                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "10px", marginTop: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "4px", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>💰 Quick Tips</h3>
+                                {/* Preset tip amounts */}
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                    {[10, 25, 50].map((amount) => (
+                                        <button key={amount} className="pg2-tip-btn" disabled={!!buying}
+                                            style={{ ...tipBtn, flex: 1, fontSize: "13px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "6px 8px" }}
+                                            onClick={() => handleTip(amount)}>
+                                            {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Custom tip row */}
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                    <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "4px", padding: "6px 10px", cursor: "text" }}>
+                                        <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Custom</span>
+                                        <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Amount"
+                                            value={tipAmount}
+                                            onChange={(e) => setTipAmount(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
+                                            style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "13px", flex: 1, minWidth: 0, width: "100%" }}
+                                        />
+                                    </div>
+                                    <button
+                                        className="pg2-btn-gold"
+                                        disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
+                                        style={{ ...btnGold, flexShrink: 0, padding: "6px 14px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.6 : 1 }}
+                                        onClick={handleCustomTip}>
+                                        {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* VIP section */}
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
                                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
@@ -979,42 +1017,7 @@ function PgxPage2Inner() {
                             )}
                         </div>
 
-                        {/* Tips — pinned below the stream, matches reference */}
-                        <div style={{ flexShrink: 0, borderRadius: "0.75rem", border: "1px solid hsla(280,40%,30%,0.2)", padding: "12px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                            {/* Preset tip amounts */}
-                            <div style={{ display: "flex", gap: "10px" }}>
-                                {[10, 25, 50].map((amount) => (
-                                    <button key={amount} className="pg2-tip-btn" disabled={!!buying}
-                                        style={{ ...tipBtn, flex: 1, fontSize: "14px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}
-                                        onClick={() => handleTip(amount)}>
-                                        {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
-                                    </button>
-                                ))}
-                            </div>
-                            {/* Custom tip row — matches reference */}
-                            <div style={{ display: "flex", gap: "10px" }}>
-                                <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "6px", padding: "10px 14px", cursor: "text" }}>
-                                    <span style={{ color: MUTED, fontSize: "14px", whiteSpace: "nowrap" }}>Custom</span>
-                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700 }}>€</span>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        placeholder="Amount"
-                                        value={tipAmount}
-                                        onChange={(e) => setTipAmount(e.target.value)}
-                                        onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
-                                        style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "14px", flex: 1, minWidth: 0, width: "100%" }}
-                                    />
-                                </div>
-                                <button
-                                    className="pg2-btn-gold"
-                                    disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
-                                    style={{ ...btnGold, flexShrink: 0, padding: "10px 24px", fontSize: "14px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.6 : 1 }}
-                                    onClick={handleCustomTip}>
-                                    {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
-                                </button>
-                            </div>
-                        </div>
+
                     </div>
 
 
