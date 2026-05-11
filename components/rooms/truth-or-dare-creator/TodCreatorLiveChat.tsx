@@ -14,13 +14,24 @@ interface ChatMessage {
     created_at: string;
 }
 
+interface ActivityItem {
+    id: string;
+    fanName: string;
+    amount: number;
+    type: 'tip' | 'reaction';
+    emoji?: string;
+    message?: string;
+    timestamp: number;
+}
+
 interface TodCreatorLiveChatProps {
     roomId: string | null;
     sessionStartedAt?: string | null;
     viewerCount?: number;
+    activityItems?: ActivityItem[];
 }
 
-const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0 }: TodCreatorLiveChatProps) => {
+const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activityItems = [] }: TodCreatorLiveChatProps) => {
     const supabase = createClient();
     const [msg, setMsg] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -138,10 +149,31 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0 }: TodCr
         setSending(false);
     };
 
-    const formatTime = (dateStr: string) => {
+    const formatTime = (dateStr: string | number) => {
         const d = new Date(dateStr);
         return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
+
+    type ChatItem = ChatMessage & { isActivity: false; timestamp: number };
+    type ActItem = ActivityItem & { isActivity: true; timestamp: number };
+
+    const allItems: (ChatItem | ActItem)[] = [
+        ...messages.map((m): ChatItem => ({
+            ...m,
+            isActivity: false,
+            timestamp: new Date(m.created_at).getTime()
+        })),
+        ...(activityItems || []).map((a): ActItem => ({
+            ...a,
+            isActivity: true,
+            timestamp: a.timestamp
+        }))
+    ].sort((a, b) => a.timestamp - b.timestamp);
+
+    // Auto-scroll on new combined items
+    useEffect(() => {
+        scrollToBottom();
+    }, [allItems.length]);
 
     return (
         <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
@@ -164,15 +196,45 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0 }: TodCr
                     <div className="flex items-center justify-center h-full">
                         <Loader2 className="w-5 h-5 animate-spin text-white/40" />
                     </div>
-                ) : messages.length === 0 ? (
+                ) : allItems.length === 0 ? (
                     <div className="flex items-center justify-center h-full">
                         <p className="text-white/40 text-xs tracking-wider uppercase">No messages yet</p>
                     </div>
                 ) : (
-                    messages.map((m) => {
+                    allItems.map((item) => {
+                        if (item.isActivity) {
+                            return (
+                                <div key={`activity-${item.id}`} className="flex items-start gap-2.5 group">
+                                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white border ${item.type === 'reaction' ? 'bg-purple-600/30 border-purple-400' : 'bg-green-600/30 border-green-400'}`}>
+                                        {item.emoji || (item.type === 'tip' ? '💰' : '✨')}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className={`font-bold text-xs ${item.type === 'reaction' ? 'text-purple-400' : 'text-green-400'}`}>
+                                                {item.fanName || "Unknown"}
+                                            </span>
+                                            <span className="text-[10px] text-white/30 ml-auto shrink-0">
+                                                {formatTime(item.timestamp)}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-white/80 mt-0.5 break-words max-w-[200px] leading-snug">
+                                            {item.type === 'reaction' ? `sent ${item.message || 'a reaction'}` : `sent a €${item.amount} tip`}
+                                        </p>
+                                    </div>
+                                    <div className="shrink-0 flex items-center">
+                                        <span className="text-xs font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
+                                            +€{item.amount}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // Chat Message
+                        const m = item as any;
                         const isMe = m.user_id === myProfile?.id;
                         return (
-                            <div key={m.id} className="flex items-start gap-2.5 group">
+                            <div key={`chat-${m.id}`} className="flex items-start gap-2.5 group">
                                 <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white border ${isMe ? 'bg-blue-600/30 border-blue-400' : 'bg-pink-600/30 border-pink-400'}`}>
                                     {m.username?.charAt(0).toUpperCase() || '?'}
                                 </div>

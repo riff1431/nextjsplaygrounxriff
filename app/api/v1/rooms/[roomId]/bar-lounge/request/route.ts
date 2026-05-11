@@ -97,9 +97,8 @@ export async function POST(
     // Custom requests start as 'pending' and require creator approval
     const initialStatus = isCustom ? 'pending' : undefined;
 
-    // Payment with revenue split (85% creator / 15% platform)
     // Payment with revenue split (85% creator / 15% platform) (Skip if free/0)
-    let splitResult = { success: true, newBalance: undefined as number | undefined, error: undefined as string | undefined };
+    let splitResult: { success: boolean; newBalance?: number; error?: string } = { success: true };
     if (amount > 0) {
         const res = await applyRevenueSplit({
             supabase,

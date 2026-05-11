@@ -1705,6 +1705,21 @@ function TruthOrDareCreatorContent() {
                                         meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request` }
                                     }))
                             ] as any}
+                                // No longer passing tips/reactions to Request Panel
+                            onServe={serveQueueItem as any}
+                            onDismiss={(q: any) => {
+                                setQueue(qq => qq.filter(x => x.id !== q.id));
+                                setActivityFeed(af => af.filter(x => x.id !== q.id));
+                            }}
+                        />
+                    </div>
+
+                    {/* ═══ COL: Live Chat (full height) ═══ */}
+                    <div className="flex-[1.5] min-w-[280px] min-h-0">
+                        <TodCreatorLiveChat 
+                            roomId={roomId} 
+                            sessionStartedAt={activeSessionStartedAt} 
+                            viewerCount={fans.length} 
                             activityItems={activityFeed
                                 .filter(a => a.type === 'tip' || a.type === 'reaction')
                                 .map(a => ({
@@ -1717,17 +1732,7 @@ function TruthOrDareCreatorContent() {
                                     timestamp: a.timestamp
                                 }))
                             }
-                            onServe={serveQueueItem as any}
-                            onDismiss={(q: any) => {
-                                setQueue(qq => qq.filter(x => x.id !== q.id));
-                                setActivityFeed(af => af.filter(x => x.id !== q.id));
-                            }}
                         />
-                    </div>
-
-                    {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className="flex-[1.5] min-w-[280px] min-h-0">
-                        <TodCreatorLiveChat roomId={roomId} sessionStartedAt={activeSessionStartedAt} viewerCount={fans.length} />
                     </div>
                 </div>
             )}
