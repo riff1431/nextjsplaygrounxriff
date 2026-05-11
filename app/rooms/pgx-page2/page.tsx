@@ -966,11 +966,11 @@ function PgxPage2Inner() {
                         </div>
                     </div>
 
-                    {/* ═══ CENTER: Live Stream + Tips ═══ */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden", justifyContent: "flex-end" }}>
+                    {/* ═══ CENTER: Live Stream ═══ */}
+                    <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", justifyContent: "center", alignItems: "center", height: "100%" }}>
 
                         {/* Live stream — adjusted aspect ratio */}
-                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", aspectRatio: "1/1", minHeight: "0", width: "100%", maxWidth: "600px", margin: "0 auto" }}>
+                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", aspectRatio: "1/1", minHeight: "0", width: "100%", maxWidth: "850px", maxHeight: "85vh", margin: "0 auto" }}>
 
                             {/* Real Agora fan stream */}
                             {roomId && user ? (

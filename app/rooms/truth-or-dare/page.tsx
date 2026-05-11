@@ -133,6 +133,7 @@ function TruthOrDareContent() {
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [currentSessionStartedAt, setCurrentSessionStartedAt] = useState<string | null>(null);
+    const [collabCreators, setCollabCreators] = useState<any[]>([]);
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
@@ -209,11 +210,12 @@ function TruthOrDareContent() {
                 }
 
                 // 2. Apply session status
-                const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: resolvedSessionId, sessionStartedAt: sessStartedAt } = data;
+                const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: resolvedSessionId, sessionStartedAt: sessStartedAt, collabCreators: collabs } = data;
 
                 // Store active session info for chat scoping
                 if (resolvedSessionId) setActiveSessionId(resolvedSessionId);
                 if (sessStartedAt) setCurrentSessionStartedAt(sessStartedAt);
+                if (collabs) setCollabCreators(collabs);
 
                 setSessionStatus(status as any);
                 if (status === 'ended') {
@@ -964,6 +966,7 @@ function TruthOrDareContent() {
                                         hostId={hostId || 0}
                                         hostAvatarUrl={hostAvatarUrl}
                                         hostName={hostName}
+                                        collabCreators={collabCreators}
                                     />
                                 ) : (
                                     <div className="flex flex-col items-center gap-4">

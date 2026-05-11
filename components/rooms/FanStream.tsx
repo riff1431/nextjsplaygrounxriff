@@ -18,9 +18,20 @@ interface FanStreamProps {
     hostName?: string;
     /** If provided, callback when the number of remote broadcasters changes */
     onRemoteCountChange?: (count: number) => void;
+    collabCreators?: { id: string, name: string, avatarUrl?: string }[];
 }
 
-export default function FanStream({ appId, channelName, uid, hostAvatarUrl, hostName, onRemoteCountChange }: FanStreamProps) {
+function toNumericUid(input: string | number): number {
+    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+        hash = hash >>> 0;
+    }
+    return hash || 1;
+}
+
+export default function FanStream({ appId, channelName, uid, hostId, hostAvatarUrl, hostName, collabCreators, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
     const [numericUid, setNumericUid] = useState<number>(0);
     const client = useRTCClient();
@@ -146,11 +157,25 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
             ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr' }
             : { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' };
 
+        const hostNumericUid = hostId ? toNumericUid(hostId) : null;
+
         return (
             <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl" style={gridStyle}>
-                {remoteUsers.slice(0, 4).map((user, idx) => (
-                    <div
-                        key={`remote-${user.uid}`}
+                {remoteUsers.slice(0, 4).map((user, idx) => {
+                    let displayName = `Creator ${idx + 1}`;
+                    let isHost = false;
+                    
+                    if (hostNumericUid && user.uid === hostNumericUid) {
+                        displayName = hostName || 'Creator';
+                        isHost = true;
+                    } else if (collabCreators) {
+                        const collab = collabCreators.find(c => toNumericUid(c.id) === user.uid);
+                        if (collab) displayName = collab.name;
+                    }
+
+                    return (
+                        <div
+                            key={`remote-${user.uid}`}
                         className="relative overflow-hidden"
                         style={{
                             // If 3 creators and this is the 3rd (idx=2), center it spanning visually
@@ -166,9 +191,11 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
                             </div>
                         )}
                         {/* Creator label */}
-                        <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">
+                        <div className="absolute bottom-2 left-2 z-10 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10 flex items-center gap-1">
+                            {isHost && <span className="text-[10px]">👑</span>}
+                            {!isHost && <span className="text-[10px]">🎬</span>}
                             <span className="text-[10px] font-bold text-white/80">
-                                {idx === 0 ? '👑 Creator 1' : `🎬 Creator ${idx + 1}`}
+                                {displayName}
                             </span>
                         </div>
                         {/* LIVE badge */}
@@ -177,7 +204,8 @@ export default function FanStream({ appId, channelName, uid, hostAvatarUrl, host
                             <span className="text-[9px] font-bold text-white">LIVE</span>
                         </div>
                     </div>
-                ))}
+                );
+            })}
             </div>
         );
     }
