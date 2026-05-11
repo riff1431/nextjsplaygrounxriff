@@ -39,7 +39,7 @@ const VideoStage = ({ roomId }: VideoStageProps) => {
 
             {/* Video frame */}
             <div
-                className="rounded-xl w-full lg:w-[82%] h-[72%] lg:h-[82%] max-w-[650px] flex items-center justify-center relative overflow-hidden shadow-xl"
+                className="rounded-xl aspect-square w-full max-w-[550px] flex items-center justify-center relative overflow-hidden shadow-xl"
                 style={{
                     border: "2px solid hsl(45, 90%, 55%)",
                     boxShadow: "0 0 15px hsla(45, 90%, 55%, 0.3), inset 0 0 15px hsla(45, 90%, 55%, 0.1)",

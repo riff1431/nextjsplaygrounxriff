@@ -47,7 +47,15 @@ function typeEmoji(type: string): string {
 /* ── Types that are auto-completed (no accept/decline needed) ─── */
 const AUTO_COMPLETED_TYPES = new Set(["drink", "tip", "champagne", "vip_bottle", "pin"]);
 
-const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: string | null }) => {
+interface IncomingRequestsProps {
+    roomId?: string;
+    sessionId?: string | null;
+    pendingPrivateCalls?: any[];
+    onAcceptPrivateCall?: (callId: string) => void;
+    onDeclinePrivateCall?: (callId: string) => void;
+}
+
+const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAcceptPrivateCall, onDeclinePrivateCall }: IncomingRequestsProps) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<Request[]>([]);
     const { toasts, push: showToast, dismiss } = useCreatorToasts();
@@ -60,6 +68,7 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                 .from("bar_lounge_requests")
                 .select("*")
                 .eq("room_id", roomId)
+                .not("type", "in", '("drink","tip","champagne","vip_bottle","pin")')
                 .order("created_at", { ascending: false })
                 .limit(7);
             
@@ -86,10 +95,13 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                 // Ignore requests from other sessions
                 if (sessionId && (req as any).session_id && (req as any).session_id !== sessionId) return;
 
-                // Add to list, keeping only the 7 most recent
-                setRequests((prev) => [req, ...prev].slice(0, 7));
+                // Ignore drink/tip/etc from visual list
+                if (!AUTO_COMPLETED_TYPES.has(req.type)) {
+                    // Add to list, keeping only the 7 most recent
+                    setRequests((prev) => [req, ...prev].slice(0, 7));
+                }
 
-                // Creator toast notification
+                // Creator toast notification (still show for everything)
                 const emoji = typeEmoji(req.type);
                 showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +€${req.amount}`);
             })
@@ -157,9 +169,57 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
             <div className="glass-panel p-4 h-full flex flex-col w-full overflow-hidden">
                 <h2 className="text-lg font-semibold text-gold font-title mb-3">Incoming</h2>
                 <div className="space-y-2 overflow-y-auto flex-1 pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "hsla(42,90%,55%,0.3) transparent" }}>
-                    {requests.length === 0 && (
+                    {requests.length === 0 && pendingPrivateCalls.length === 0 && (
                         <p className="text-sm text-white/40">No requests yet</p>
                     )}
+                    
+                    {/* Private calls at the top */}
+                    {pendingPrivateCalls.map((call) => (
+                        <div key={call.callId} className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all" style={{
+                            background: "hsla(320,40%,20%,0.3)",
+                            border: "1px solid hsla(320,60%,45%,0.3)",
+                        }}>
+                            <span style={{ fontSize: "20px", flexShrink: 0 }}>📞</span>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold truncate" style={{ color: "hsla(45,100%,95%,0.9)" }}>
+                                        {call.fanName || "A fan"}
+                                    </span>
+                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
+                                        background: "hsla(320,80%,60%,0.15)",
+                                        color: "hsl(320,80%,70%)",
+                                        border: "1px solid hsla(320,80%,60%,0.25)",
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.5px",
+                                    }}>
+                                        1-on-1
+                                    </span>
+                                </div>
+                                <p className="text-xs mt-0.5" style={{ color: "hsla(45,100%,95%,0.5)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                    Private Video Call
+                                    <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€500</span>
+                                </p>
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                                <button
+                                    onClick={() => onAcceptPrivateCall?.(call.callId)}
+                                    className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
+                                    style={{ borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }}
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    onClick={() => onDeclinePrivateCall?.(call.callId)}
+                                    className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
+                                    style={{ borderColor: "hsla(320, 80%, 60%, 0.5)", color: "hsl(320, 80%, 60%)", background: "hsla(320, 80%, 60%, 0.1)" }}
+                                >
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Standard Requests */}
                     {requests.map((req) => {
                         const isAutoCompleted = AUTO_COMPLETED_TYPES.has(req.type);
                         const emoji = typeEmoji(req.type);
