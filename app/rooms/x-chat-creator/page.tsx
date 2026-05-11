@@ -138,10 +138,10 @@ const XChatCreatorPage = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="relative rounded-xl overflow-hidden aspect-square"
+                                className="relative rounded-xl overflow-hidden aspect-video"
                                 style={{
                                     width: '100%',
-                                    maxWidth: '650px',
+                                    maxWidth: '900px',
                                     boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
                                     border: '2px solid rgba(255, 215, 0, 0.5)',
                                 }}

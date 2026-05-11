@@ -29,7 +29,7 @@ const VideoStage = ({ roomId }: VideoStageProps) => {
     const { user } = useAuth();
 
     return (
-        <div className="relative flex flex-col items-center justify-end h-full pb-12 xl:pb-20">
+        <div className="relative flex flex-col items-center justify-end h-full pb-4 xl:pb-8">
             {/* Floating hearts */}
             <FloatingHeart delay={0} left="10%" />
             <FloatingHeart delay={1} left="25%" />

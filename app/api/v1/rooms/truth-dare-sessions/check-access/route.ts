@@ -93,8 +93,10 @@ export async function GET(request: NextRequest) {
             isPrivate: game?.is_private ?? latestSession?.is_private ?? false,
         };
 
-        // 7. Fetch host profile
+        // 7. Fetch host profile and collab creators
         let hostProfile = null;
+        let collabCreators: any[] = [];
+        
         if (hostId) {
             const { data: hp } = await admin
                 .from("profiles")
@@ -104,10 +106,35 @@ export async function GET(request: NextRequest) {
             hostProfile = hp;
         }
 
+        const activeSessionId = latestSession?.id || sessionIdParam;
+
+        if (activeSessionId) {
+            const { data: participants } = await admin
+                .from("room_session_participants")
+                .select("user_id")
+                .eq("session_id", activeSessionId)
+                .eq("role", "invited_creator");
+
+            if (participants && participants.length > 0) {
+                const userIds = participants.map(p => p.user_id);
+                const { data: profiles } = await admin
+                    .from("profiles")
+                    .select("id, full_name, username, avatar_url")
+                    .in("id", userIds);
+                
+                if (profiles) {
+                    collabCreators = profiles.map(p => ({
+                        id: p.id,
+                        name: p.full_name || p.username || "Creator",
+                        avatarUrl: p.avatar_url
+                    }));
+                }
+            }
+        }
+
         // 8. Check access if user is authenticated
         let access: "granted" | "locked" = "locked";
         let requestStatus: string | null = null;
-        const activeSessionId = latestSession?.id || sessionIdParam;
 
         if (user) {
             // A. Check if user is a session participant
@@ -178,6 +205,7 @@ export async function GET(request: NextRequest) {
             requestStatus,
             sessionId: activeSessionId,
             sessionStartedAt: latestSession?.started_at || latestSession?.created_at || null,
+            collabCreators,
         });
     } catch (err: any) {
         console.error("Check access error:", err);
