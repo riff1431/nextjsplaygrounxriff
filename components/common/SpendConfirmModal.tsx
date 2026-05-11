@@ -20,6 +20,7 @@ interface SpendConfirmModalProps {
     inputPlaceholder?: string;
     inputValue?: string;
     onInputChange?: (val: string) => void;
+    allowInput?: boolean;
 }
 
 export default function SpendConfirmModal({
@@ -36,6 +37,7 @@ export default function SpendConfirmModal({
     inputPlaceholder = "Enter your prompt...",
     inputValue = "",
     onInputChange,
+    allowInput,
 }: SpendConfirmModalProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -122,7 +124,7 @@ export default function SpendConfirmModal({
                     </div>
 
                     {/* Remaining */}
-                    {!insufficient && !requireInput && (
+                    {!insufficient && !requireInput && !allowInput && (
                         <div className="text-xs text-white/40 text-center">
                             Remaining after purchase:{" "}
                             <span className="text-white/70 font-medium">
@@ -132,7 +134,7 @@ export default function SpendConfirmModal({
                     )}
 
                     {/* Optional Input */}
-                    {requireInput && (
+                    {(requireInput || allowInput) && (
                         <div className="mb-2">
                             <input
                                 type="text"

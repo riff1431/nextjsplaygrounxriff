@@ -176,77 +176,91 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                                 <div className="flex flex-col gap-2 mt-2">
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => {
-                                                if (r.message.startsWith("Voice Note Reply:")) {
-                                                    setReplyingTo(r.id);
-                                                } else {
-                                                    handleAction(r.id, "accepted");
-                                                }
-                                            }}
-                                            className="bg-success text-success-foreground text-xs font-bold px-4 py-1 rounded hover:opacity-90 transition-opacity"
+                                            onClick={() => setReplyingTo(r.id)}
+                                            className="bg-success text-success-foreground text-xs font-bold px-4 py-1.5 rounded hover:opacity-90 transition-opacity"
                                         >
                                             ACCEPT
                                         </button>
                                         <button
                                             onClick={() => handleAction(r.id, "declined")}
-                                            className="bg-secondary text-foreground text-xs font-bold px-4 py-1 rounded border border-border hover:bg-muted transition-colors"
+                                            className="bg-secondary text-foreground text-xs font-bold px-4 py-1.5 rounded border border-border hover:bg-muted transition-colors"
                                         >
                                             DECLINE
                                         </button>
                                     </div>
                                     {replyingTo === r.id && (
-                                        <div className="flex flex-col gap-2 mt-1 bg-black/20 p-2 rounded border border-border">
-                                            <textarea
-                                                value={replyText}
-                                                onChange={e => setReplyText(e.target.value)}
-                                                placeholder="Enter text reply..."
-                                                className="w-full bg-input rounded px-2 py-1.5 text-xs focus:outline-emerald-500 resize-none"
-                                                rows={2}
-                                            />
-                                            
-                                            {/* Media File Display */}
-                                            {mediaFile && (
-                                                <div className="flex items-center justify-between bg-primary/10 border border-primary/20 text-primary px-2 py-1 rounded text-xs">
-                                                    <span className="truncate max-w-[150px]">{mediaFile.name}</span>
-                                                    <button onClick={() => setMediaFile(null)} className="text-primary hover:text-white"><X size={12} /></button>
-                                                </div>
-                                            )}
-
-                                            <div className="flex gap-2 justify-between items-center">
-                                                <div className="flex gap-2">
-                                                    {isRecording ? (
-                                                        <button onClick={stopRecording} className="p-1.5 bg-red-500/20 text-red-500 rounded hover:bg-red-500/40" title="Stop Recording">
-                                                            <Square size={14} fill="currentColor" />
+                                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="panel-glass max-w-md w-full rounded-2xl p-5 border border-white/10 shadow-2xl relative"
+                                            >
+                                                <button 
+                                                    onClick={() => { setReplyingTo(null); setMediaFile(null); setReplyText(""); }} 
+                                                    className="absolute top-4 right-4 text-white/50 hover:text-white"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                                <h3 className="text-lg font-bold text-gold mb-1">Accept Request</h3>
+                                                <p className="text-sm text-white/70 mb-4">You are accepting {r.fan_name}'s request. Attach media or a message (optional).</p>
+                                                
+                                                <textarea
+                                                    value={replyText}
+                                                    onChange={e => setReplyText(e.target.value)}
+                                                    placeholder="Type a message to the fan..."
+                                                    className="w-full bg-black/40 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-gold/50 border border-white/10 resize-none"
+                                                    rows={3}
+                                                />
+                                                
+                                                {/* Media File Display */}
+                                                {mediaFile && (
+                                                    <div className="flex items-center justify-between bg-white/5 border border-white/10 px-3 py-2 rounded-lg mt-3">
+                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                            <Upload size={14} className="text-gold flex-shrink-0" />
+                                                            <span className="truncate text-sm">{mediaFile.name}</span>
+                                                        </div>
+                                                        <button onClick={() => setMediaFile(null)} className="text-white/50 hover:text-red-400 p-1">
+                                                            <X size={14} />
                                                         </button>
-                                                    ) : (
-                                                        <button onClick={startRecording} className="p-1.5 bg-secondary text-muted-foreground rounded hover:text-white" title="Record Voice Note">
-                                                            <Mic size={14} />
-                                                        </button>
-                                                    )}
-                                                    
-                                                    <button onClick={() => fileInputRef.current?.click()} className="p-1.5 bg-secondary text-muted-foreground rounded hover:text-white" title="Upload Media">
-                                                        <Upload size={14} />
-                                                    </button>
-                                                    <input 
-                                                        type="file" 
-                                                        ref={fileInputRef} 
-                                                        className="hidden" 
-                                                        onChange={handleFileSelect}
-                                                    />
-                                                </div>
+                                                    </div>
+                                                )}
 
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => { setReplyingTo(null); setMediaFile(null); setReplyText(""); }} className="text-[10px] text-muted-foreground hover:text-white">Cancel</button>
+                                                <div className="flex gap-3 justify-between items-center mt-4 pt-4 border-t border-white/10">
+                                                    <div className="flex gap-2">
+                                                        {isRecording ? (
+                                                            <button onClick={stopRecording} className="flex items-center gap-2 px-3 py-2 bg-red-500/20 text-red-500 rounded-lg border border-red-500/30 hover:bg-red-500/30 transition-colors" title="Stop Recording">
+                                                                <Square size={14} fill="currentColor" />
+                                                                <span className="text-xs font-bold hidden sm:inline">Stop</span>
+                                                            </button>
+                                                        ) : (
+                                                            <button onClick={startRecording} className="flex items-center gap-2 px-3 py-2 bg-white/5 text-white/70 rounded-lg border border-white/10 hover:text-white hover:bg-white/10 transition-colors" title="Record Voice Note">
+                                                                <Mic size={14} />
+                                                                <span className="text-xs hidden sm:inline">Voice</span>
+                                                            </button>
+                                                        )}
+                                                        
+                                                        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-3 py-2 bg-white/5 text-white/70 rounded-lg border border-white/10 hover:text-white hover:bg-white/10 transition-colors" title="Upload Media">
+                                                            <Upload size={14} />
+                                                            <span className="text-xs hidden sm:inline">Upload</span>
+                                                        </button>
+                                                        <input 
+                                                            type="file" 
+                                                            ref={fileInputRef} 
+                                                            className="hidden" 
+                                                            onChange={handleFileSelect}
+                                                        />
+                                                    </div>
+
                                                     <button 
                                                         onClick={() => handleAcceptWithReply(r.id)} 
-                                                        disabled={uploading || (!replyText && !mediaFile)}
-                                                        className="text-[10px] bg-primary text-white px-2 py-1 rounded font-bold flex items-center gap-1 disabled:opacity-50"
+                                                        disabled={uploading}
+                                                        className="bg-gold text-black px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-yellow-400 transition-colors disabled:opacity-50"
                                                     >
-                                                        {uploading && <Loader2 size={10} className="animate-spin" />}
-                                                        Send Reply
+                                                        {uploading && <Loader2 size={14} className="animate-spin" />}
+                                                        Submit Accept
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         </div>
                                     )}
                                 </div>
@@ -263,10 +277,10 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                                                 if (isLink) {
                                                     if (line.match(/\.(webm|mp3|wav|m4a)$/i)) {
                                                         return <VoiceNotePlayer key={idx} src={line} />;
-                                                    } else if (line.match(/\.(jpeg|jpg|gif|png)$/i)) {
-                                                        return <img key={idx} src={line} alt="reply media" className="max-h-24 rounded mt-1" />;
+                                                    } else if (line.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                                                        return <img key={idx} src={line} alt="reply media" className="max-w-full max-h-32 object-contain rounded mt-1" />;
                                                     } else if (line.match(/\.(mp4|ogg)$/i)) {
-                                                        return <video key={idx} src={line} controls className="max-h-24 rounded mt-1" />;
+                                                        return <video key={idx} src={line} controls className="max-w-full max-h-32 object-contain rounded mt-1" />;
                                                     }
                                                     return <a key={idx} href={line} target="_blank" rel="noopener noreferrer" className="underline text-blue-400 mt-1 block truncate">{line}</a>;
                                                 }

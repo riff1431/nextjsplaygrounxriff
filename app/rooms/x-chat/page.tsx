@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Clock, XCircle, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, Clock, XCircle, Loader2, UserPlus, Pin, Mic, Megaphone, HelpCircle, Shirt, MessageSquare, Eye, Zap } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -41,12 +41,14 @@ const stickersRow2 = [
     { emoji: "🎁", label: "Gift",  price: 50, type: "sticker_gift" },
 ];
 const visibilityBoosts = [
-    { label: "Pin my name to top (1 min)", price: 25, type: "pin" },
-    { label: "Voice note reply",           price: 35, type: "voice_note_boost" },
+    { label: "Pin my name to top (1 min)", price: 25, type: "pin", icon: Pin, colorClass: "icon-pink" },
+    { label: "Voice note reply",           price: 35, type: "voice_note_boost", icon: Mic, colorClass: "icon-blue" },
+    { label: "Say my name + Shoutout",     price: 15, type: "shoutout", icon: Megaphone, colorClass: "icon-purple" },
 ];
 const directAccess = [
-    { label: "Private question",       price: 20, type: "private_question" },
-    { label: "1:1 mini chat (2 min)",  price: 60, type: "mini_chat" },
+    { label: "Private question",       price: 20, type: "private_question", icon: HelpCircle, colorClass: "icon-teal" },
+    { label: "Change the Outfit",  price: 60, type: "mini_chat", icon: Shirt, colorClass: "icon-orange" },
+    { label: "Choose my topic",            price: 40, type: "choose_topic", icon: MessageSquare, colorClass: "icon-green" },
 ];
 
 /* ─── inline reaction chip ───────────────────────────────── */
@@ -65,10 +67,17 @@ const ReactionChip = ({
 
 /* ─── boost row chip ─────────────────────────────────────── */
 const BoostRow = ({
-    label, price, onClick,
-}: { label: string; price: number; onClick: () => void }) => (
+    label, price, icon: Icon, colorClass, onClick,
+}: { label: string; price: number; icon?: any; colorClass?: string; onClick: () => void }) => (
     <button onClick={onClick} className="xchat-boost-row">
-        <span className="xchat-boost-label">{label}</span>
+        <div className="xchat-boost-row-left">
+            {Icon && (
+                <div className={`xchat-boost-row-icon-wrapper ${colorClass || ''}`}>
+                    <Icon size={14} className="xchat-animated-icon" />
+                </div>
+            )}
+            <span className="xchat-boost-label">{label}</span>
+        </div>
         <span className="xchat-boost-price">€{price}</span>
     </button>
 );
@@ -230,19 +239,19 @@ const XChatRoom = () => {
     const handleReactionSend = async () => {
         if (!pending || !roomId) return;
         try {
-            if (pending.reactionType === "voice_note_boost") {
+            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "choose_topic") {
                 const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: `Voice Note Reply: ${voicePrompt}`, amount: pending.price, session_id: urlSessionId }),
+                    body: JSON.stringify({ message: `${pending.label}: ${voicePrompt}`, amount: pending.price, session_id: urlSessionId }),
                 });
                 const d = await r.json();
-                if (d.success) { toast.success("Voice note request sent!"); setVoicePrompt(""); refresh?.(); }
+                if (d.success) { toast.success(`${pending.label} request sent!`); setVoicePrompt(""); refresh?.(); }
                 else { toast.error(d.error || "Failed"); throw new Error(d.error); }
                 return;
             }
             const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/reaction`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ reactionType: pending.reactionType, amount: pending.price, session_id: urlSessionId }),
+                body: JSON.stringify({ reactionType: pending.reactionType, amount: pending.price, session_id: urlSessionId, message: voicePrompt }),
             });
             const d = await r.json();
             if (d.success) {
@@ -472,7 +481,10 @@ const XChatRoom = () => {
                             <div className="xchat-bottom-row">
                                 {/* Visibility Boosts */}
                                 <div className="xchat-boost-card">
-                                    <span className="xchat-section-label">Visibility Boosts</span>
+                                    <div className="xchat-section-header">
+                                        <Eye size={14} className="xchat-section-header-icon" />
+                                        <span className="xchat-section-label" style={{ marginBottom: 0 }}>Visibility Boosts</span>
+                                    </div>
                                     <div className="xchat-boost-list">
                                         {visibilityBoosts.map(b => (
                                             <BoostRow key={b.type} {...b}
@@ -483,7 +495,10 @@ const XChatRoom = () => {
 
                                 {/* Direct Access */}
                                 <div className="xchat-boost-card">
-                                    <span className="xchat-section-label">Direct Access</span>
+                                    <div className="xchat-section-header">
+                                        <Zap size={14} className="xchat-section-header-icon" />
+                                        <span className="xchat-section-label" style={{ marginBottom: 0 }}>Direct Access</span>
+                                    </div>
                                     <div className="xchat-boost-list">
                                         {directAccess.map(d => (
                                             <BoostRow key={d.type} {...d}
@@ -507,13 +522,18 @@ const XChatRoom = () => {
                 <SpendConfirmModal
                     isOpen={!!pending}
                     onClose={() => { setPending(null); setVoicePrompt(""); }}
-                    title={pending?.reactionType === "voice_note_boost" ? "Request Voice Note" : "Confirm Purchase"}
+                    title={pending?.reactionType === "voice_note_boost" || pending?.reactionType === "choose_topic" ? `Request ${pending.label}` : "Confirm Purchase"}
                     itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
                     amount={pending?.price || 0}
                     walletBalance={balance}
                     onConfirm={handleReactionSend}
-                    requireInput={pending?.reactionType === "voice_note_boost"}
-                    inputPlaceholder="What should the voice note be about?"
+                    requireInput={pending?.reactionType === "voice_note_boost" || pending?.reactionType === "choose_topic"}
+                    allowInput={true}
+                    inputPlaceholder={
+                        pending?.reactionType === "voice_note_boost" ? "What should the voice note be about?" : 
+                        pending?.reactionType === "choose_topic" ? "What topic do you want to choose?" : 
+                        "Add an optional message..."
+                    }
                     inputValue={voicePrompt}
                     onInputChange={setVoicePrompt}
                 />

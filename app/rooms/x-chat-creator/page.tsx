@@ -132,7 +132,7 @@ const XChatCreatorPage = () => {
                         </div>
 
                         {/* Center - Video Feed */}
-                        <div className="flex flex-col items-center justify-center w-full px-4 lg:px-12 h-full pt-6">
+                        <div className="flex flex-col items-center justify-end w-full px-4 lg:px-12 h-full pb-10">
                             {/* Creator Live Stream */}
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}

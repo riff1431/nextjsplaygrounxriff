@@ -126,8 +126,8 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
             const isLink = line.startsWith('http') || line.startsWith('/api/');
             if (isLink) {
                 if (line.match(/\.(webm|mp3|wav|m4a)$/i)) return <VoiceNotePlayer key={idx} src={line} />;
-                if (line.match(/\.(jpeg|jpg|gif|png)$/i)) return <img key={idx} src={line} alt="reply media" className="max-h-32 rounded mt-2 border border-white/10" />;
-                if (line.match(/\.(mp4|ogg)$/i)) return <video key={idx} src={line} controls className="max-h-32 rounded mt-2 border border-white/10" />;
+                if (line.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return <img key={idx} src={line} alt="reply media" className="max-w-full max-h-32 object-contain rounded mt-2 border border-white/10" />;
+                if (line.match(/\.(mp4|ogg)$/i)) return <video key={idx} src={line} controls className="max-w-full max-h-32 object-contain rounded mt-2 border border-white/10" />;
                 return <a key={idx} href={line} target="_blank" rel="noopener noreferrer" className="underline text-blue-400 mt-1 block truncate text-xs">{line}</a>;
             }
             return <p key={idx} className="text-sm text-white/90 leading-relaxed mt-1">{line}</p>;

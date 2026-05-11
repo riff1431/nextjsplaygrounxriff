@@ -18,6 +18,7 @@ export async function POST(
     const reactionType = body.reactionType || body.type;
     const amount = body.amount;
     const session_id = body.session_id;
+    const message = body.message;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,9 +54,14 @@ export async function POST(
 
     const fanName = user.user_metadata?.full_name || user.email?.split("@")[0] || "A fan";
 
+    let notifMessage = `${fanName} sent ${reactionType} reaction (€${amount})`;
+    if (message && message.trim().length > 0) {
+        notifMessage += ` - "${message.trim()}"`;
+    }
+
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "xchat_reaction",
-        message: `${fanName} sent ${reactionType} reaction (€${amount})`, reference_id: reaction.id,
+        message: notifMessage, reference_id: reaction.id,
     });
 
     return NextResponse.json({ success: true, reaction, new_balance: splitResult.newBalance });
