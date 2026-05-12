@@ -271,24 +271,23 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
 
     // ─── Idle State: Always show when no active campaigns ───
     const renderIdleState = () => (
-        <div className="w-full flex-1 flex flex-col justify-center bg-gradient-to-br from-gray-900/60 via-gray-950/60 to-gray-900/60 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 relative overflow-hidden">
+        <div className="w-full flex-1 min-h-[220px] flex flex-col glass-panel p-3 lg:p-4 border-white/10 bg-black/20 rounded-2xl relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-3xl rounded-full -mr-8 -mt-8 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-20 h-20 bg-pink-500/5 blur-3xl rounded-full -ml-6 -mb-6 pointer-events-none" />
             
             {/* Section Header */}
-            <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/15 to-pink-500/15 border border-purple-500/20">
-                    <Target className="w-4 h-4 text-purple-400" />
+            <div className="flex items-center gap-2 mb-2 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Target className="w-3 h-3 text-purple-400" />
                 </div>
-                <div>
-                    <h3 className="text-sm font-bold text-white tracking-wide">Group Voting</h3>
-                    <p className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">Vote together to unlock goals</p>
-                </div>
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Vote together to unlock goals
+                </h3>
             </div>
 
             {/* Waiting State */}
-            <div className="flex flex-col items-center py-5 gap-3">
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
                 {/* Animated voting icon */}
                 <motion.div
                     animate={{ 
@@ -302,8 +301,8 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                     }}
                     className="relative"
                 >
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-white/[0.06] flex items-center justify-center">
-                        <Users className="w-7 h-7 text-purple-400/70" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-white/[0.06] flex items-center justify-center">
+                        <Users className="w-6 h-6 text-purple-400/70" />
                     </div>
                     {/* Pulse ring */}
                     <motion.div
@@ -321,22 +320,22 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                 </motion.div>
 
                 <div className="text-center space-y-1">
-                    <p className="text-xs font-semibold text-gray-300">Waiting for Goals</p>
+                    <p className="text-xs font-semibold text-gray-200">Waiting for Goals</p>
                     <p className="text-[10px] text-gray-500 leading-relaxed max-w-[200px]">
                         Creator will set group voting goals — vote together to make things happen! 
                     </p>
                 </div>
+            </div>
 
-                {/* Mini info cards */}
-                <div className="flex gap-2 mt-2 w-full">
-                    <div className="flex-1 p-2.5 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-center">
-                        <Zap className="w-3.5 h-3.5 text-cyan-400/60 mx-auto mb-1" />
-                        <span className="text-[9px] font-bold text-cyan-400/70 uppercase tracking-wider">Truth</span>
-                    </div>
-                    <div className="flex-1 p-2.5 rounded-xl bg-pink-500/5 border border-pink-500/10 text-center">
-                        <Flame className="w-3.5 h-3.5 text-pink-400/60 mx-auto mb-1" />
-                        <span className="text-[9px] font-bold text-pink-400/70 uppercase tracking-wider">Dare</span>
-                    </div>
+            {/* Mini info cards */}
+            <div className="flex gap-2 mt-auto pt-3 shrink-0">
+                <div className="flex-1 py-2 px-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex flex-col items-center justify-center gap-1 transition-all hover:bg-cyan-500/10">
+                    <Zap className="w-4 h-4 text-cyan-400/80" />
+                    <span className="text-[10px] font-bold text-cyan-400/90 uppercase tracking-widest">Truth</span>
+                </div>
+                <div className="flex-1 py-2 px-3 rounded-xl bg-pink-500/5 border border-pink-500/10 flex flex-col items-center justify-center gap-1 transition-all hover:bg-pink-500/10">
+                    <Flame className="w-4 h-4 text-pink-400/80" />
+                    <span className="text-[10px] font-bold text-pink-400/90 uppercase tracking-widest">Dare</span>
                 </div>
             </div>
         </div>

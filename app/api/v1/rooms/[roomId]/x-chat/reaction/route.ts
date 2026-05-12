@@ -64,11 +64,21 @@ export async function POST(
         message: notifMessage, reference_id: reaction.id,
     });
 
+    const cleanType = reactionType.replace('reaction_', '').replace('sticker_', '');
+    const EMOJI_MAP: Record<string, string> = {
+        boost: "🔥", shine: "💎", crown: "👑", pulse: "⚡",
+        kiss: "💋", tease: "😈", rose: "🌹", gift: "🎁",
+    };
+    const emoji = EMOJI_MAP[cleanType] || "";
+    
+    const msgContent = message && message.trim().length > 0 ? message.trim() : `Sent ${cleanType} reaction`;
+    const finalBody = emoji ? `${emoji} ${msgContent}` : msgContent;
+
     const chatPayload: any = {
         room_id: roomId,
         sender_id: user.id,
         sender_name: fanName,
-        body: message && message.trim().length > 0 ? message.trim() : `Sent ${reactionType.replace('reaction_', '').replace('sticker_', '')} reaction`,
+        body: finalBody,
         lane: amount >= 50 ? "Priority" : "Paid",
         paid_amount: amount,
         status: "Queued"

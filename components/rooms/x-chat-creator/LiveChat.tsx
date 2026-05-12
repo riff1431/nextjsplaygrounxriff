@@ -107,6 +107,41 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
         return null;
     };
 
+    const getMessageData = (msg: ChatMsg) => {
+        let icon = msg.lane === "Priority" ? "👑" : msg.lane === "Paid" ? "💎" : "🙂";
+        let text = msg.body;
+
+        const KNOWN_EMOJIS = ["🔥", "💎", "👑", "⚡", "💋", "😈", "🌹", "🎁", "📌", "🎤", "📢", "❓", "👕", "💬"];
+        const firstChar = Array.from(text)[0];
+        
+        if (firstChar && KNOWN_EMOJIS.includes(firstChar)) {
+            icon = firstChar;
+            // Remove the emoji and space from the body
+            text = text.slice(firstChar.length).trim();
+        } else {
+            // Fallback for old messages without prefixed emoji
+            const EMOJI_MAP: Record<string, string> = {
+                "sent boost": "🔥",
+                "sent shine": "💎",
+                "sent crown": "👑",
+                "sent pulse": "⚡",
+                "sent kiss": "💋",
+                "sent tease": "😈",
+                "sent rose": "🌹",
+                "sent gift": "🎁"
+            };
+            const lowerBody = text.toLowerCase();
+            for (const [key, e] of Object.entries(EMOJI_MAP)) {
+                if (lowerBody.includes(key)) {
+                    icon = e;
+                    break;
+                }
+            }
+        }
+
+        return { icon, text };
+    };
+
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     return (
@@ -147,37 +182,40 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 {filteredMessages.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">No messages yet</p>
                 )}
-                {filteredMessages.map((m, i) => (
-                    <motion.div
-                        key={m.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: Math.min(i * 0.02, 0.5) }}
-                        className="flex items-start gap-2 py-1"
-                    >
-                        <span className="text-lg flex-shrink-0">
-                            {m.lane === "Priority" ? "👑" : m.lane === "Paid" ? "💎" : "🙂"}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline gap-2">
-                                <span className="font-semibold text-sm text-foreground">{m.sender_name}</span>
-                                {getLaneBadge(m)}
-                                {m.paid_amount > 0 && (
-                                    <span className="text-[10px] text-gold">€{m.paid_amount}</span>
-                                )}
-                                <span className="text-xs text-muted-foreground">
-                                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </div>
-                            <p className="text-sm text-foreground/80 break-words">{m.body}</p>
-                            {m.creator_reply && (
-                                <div className="mt-1 pl-2 border-l-2 border-primary/30">
-                                    <p className="text-xs text-primary">↳ {m.creator_reply}</p>
+                {filteredMessages.map((m, i) => {
+                    const { icon, text } = getMessageData(m);
+                    return (
+                        <motion.div
+                            key={m.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: Math.min(i * 0.02, 0.5) }}
+                            className="flex items-start gap-2 py-1"
+                        >
+                            <span className="text-lg flex-shrink-0">
+                                {icon}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="font-semibold text-sm text-foreground">{m.sender_name}</span>
+                                    {getLaneBadge(m)}
+                                    {m.paid_amount > 0 && (
+                                        <span className="text-[10px] text-gold">€{m.paid_amount}</span>
+                                    )}
+                                    <span className="text-xs text-muted-foreground">
+                                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
                                 </div>
-                            )}
-                        </div>
-                    </motion.div>
-                ))}
+                                <p className="text-sm text-foreground/80 break-words">{text}</p>
+                                {m.creator_reply && (
+                                    <div className="mt-1 pl-2 border-l-2 border-primary/30">
+                                        <p className="text-xs text-primary">↳ {m.creator_reply}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             {/* Input */}
