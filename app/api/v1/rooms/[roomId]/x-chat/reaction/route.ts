@@ -64,5 +64,18 @@ export async function POST(
         message: notifMessage, reference_id: reaction.id,
     });
 
+    const chatPayload: any = {
+        room_id: roomId,
+        sender_id: user.id,
+        sender_name: fanName,
+        body: message && message.trim().length > 0 ? message.trim() : `Sent ${reactionType.replace('reaction_', '').replace('sticker_', '')} reaction`,
+        lane: amount >= 50 ? "Priority" : "Paid",
+        paid_amount: amount,
+        status: "Queued"
+    };
+    if (session_id) chatPayload.session_id = session_id;
+
+    await supabase.from("x_chat_messages").insert(chatPayload);
+
     return NextResponse.json({ success: true, reaction, new_balance: splitResult.newBalance });
 }

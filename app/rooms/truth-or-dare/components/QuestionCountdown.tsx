@@ -128,9 +128,12 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
         gold: { primary: "yellow-400", secondary: "yellow-600", glow: "rgba(250, 204, 21, 0.5)" }
     };
 
-    const tier = pendingRequest.tier || "bronze";
+    const isCustom = pendingRequest.type?.startsWith("custom_");
+    const displayTier = isCustom ? "CUSTOM" : (pendingRequest.tier || "bronze");
     const type = pendingRequest.type?.includes("truth") ? "truth" : "dare";
-    const colors = tierColors[tier as keyof typeof tierColors];
+    // For custom requests, default to bronze colors if no tier is passed
+    const colorTier = pendingRequest.tier || "bronze";
+    const colors = tierColors[colorTier as keyof typeof tierColors] || tierColors.bronze;
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-in fade-in duration-500">
@@ -206,50 +209,50 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
                     </div>
                 </div>
             ) : (
-                // Question Dialog
-                <div className="w-full max-w-3xl mx-4 bg-gradient-to-br from-purple-950/60 to-pink-950/60 backdrop-blur-2xl border-2 border-pink-500/60 rounded-3xl p-8 sm:p-12 shadow-[0_0_100px_rgba(236,72,153,0.6)] animate-in zoom-in-95 duration-700">
+                // Question Dialog — compact
+                <div className="w-full max-w-sm mx-4 bg-gradient-to-br from-purple-950/60 to-pink-950/60 backdrop-blur-2xl border border-pink-500/50 rounded-2xl p-5 shadow-[0_0_60px_rgba(236,72,153,0.4)] animate-in zoom-in-95 duration-700">
                     {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-pink-500/30 backdrop-blur-md border-2 border-pink-500/50 mb-6 shadow-[0_0_30px_rgba(236,72,153,0.4)] animate-pulse">
-                            <Star className="w-6 h-6 text-yellow-400" />
-                            <span className="text-base sm:text-lg font-black text-pink-200 uppercase tracking-wide">
-                                {tier} {type}
+                    <div className="text-center mb-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/30 backdrop-blur-md border border-pink-500/40 mb-3 shadow-[0_0_20px_rgba(236,72,153,0.3)] animate-pulse">
+                            <Star className="w-4 h-4 text-yellow-400" />
+                            <span className="text-xs font-black text-pink-200 uppercase tracking-wide">
+                                {displayTier} {type}
                             </span>
-                            <Star className="w-6 h-6 text-yellow-400" />
+                            <Star className="w-4 h-4 text-yellow-400" />
                         </div>
-                        <h2 className="text-3xl sm:text-5xl font-black text-white mb-2 bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
-                            Your Question!
+                        <h2 className="text-xl font-black text-white mb-1 bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+                            Your {type === "truth" ? "Truth" : "Dare"}!
                         </h2>
-                        <p className="text-gray-400 text-sm sm:text-base">
+                        <p className="text-gray-400 text-xs">
                             The creator has accepted your request
                         </p>
                     </div>
 
                     {/* Question */}
-                    <div className="rounded-2xl bg-black/80 backdrop-blur-md border-2 border-white/30 p-6 sm:p-8 mb-8 shadow-[inset_0_0_60px_rgba(236,72,153,0.1)]">
-                        <div className="text-2xl sm:text-4xl font-bold text-white leading-relaxed text-center">
-                            "{questionData?.question || pendingRequest.question || "Waiting for creator to reveal..."}"
+                    <div className="rounded-xl bg-black/80 backdrop-blur-md border border-white/20 p-4 mb-4 shadow-[inset_0_0_30px_rgba(236,72,153,0.08)]">
+                        <div className="text-base font-bold text-white leading-relaxed text-center">
+                            "{questionData?.question || pendingRequest.content || "Waiting for creator to reveal..."}"
                         </div>
                     </div>
 
                     {/* Status */}
                     <div className="text-center">
-                        <div className="text-base sm:text-lg text-pink-300 font-bold mb-4">
+                        <div className="text-sm text-pink-300 font-bold mb-3">
                             🎥 Creator is preparing to answer...
                         </div>
 
                         {/* Animated Dots */}
-                        <div className="flex justify-center gap-3">
+                        <div className="flex justify-center gap-2">
                             <div
-                                className="w-3 h-3 bg-pink-400 rounded-full animate-bounce shadow-[0_0_20px_rgba(236,72,153,0.8)]"
+                                className="w-2 h-2 bg-pink-400 rounded-full animate-bounce shadow-[0_0_12px_rgba(236,72,153,0.8)]"
                                 style={{ animationDelay: '0ms', animationDuration: '1s' }}
                             />
                             <div
-                                className="w-3 h-3 bg-pink-400 rounded-full animate-bounce shadow-[0_0_20px_rgba(236,72,153,0.8)]"
+                                className="w-2 h-2 bg-pink-400 rounded-full animate-bounce shadow-[0_0_12px_rgba(236,72,153,0.8)]"
                                 style={{ animationDelay: '150ms', animationDuration: '1s' }}
                             />
                             <div
-                                className="w-3 h-3 bg-pink-400 rounded-full animate-bounce shadow-[0_0_20px_rgba(236,72,153,0.8)]"
+                                className="w-2 h-2 bg-pink-400 rounded-full animate-bounce shadow-[0_0_12px_rgba(236,72,153,0.8)]"
                                 style={{ animationDelay: '300ms', animationDuration: '1s' }}
                             />
                         </div>
@@ -257,7 +260,7 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
                         {/* Close Button */}
                         <button
                             onClick={onClose}
-                            className="mt-8 px-8 py-3 rounded-xl bg-gradient-to-r from-pink-600/80 to-purple-600/80 hover:from-pink-600 hover:to-purple-600 text-white font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(236,72,153,0.4)]"
+                            className="mt-5 px-6 py-2.5 rounded-xl bg-gradient-to-r from-pink-600/80 to-purple-600/80 hover:from-pink-600 hover:to-purple-600 text-white text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(236,72,153,0.3)]"
                         >
                             Continue Watching
                         </button>

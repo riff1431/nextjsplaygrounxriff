@@ -83,7 +83,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
                     // Check if we should skip the global toast to prevent duplicates in specific rooms
                     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-                    const skipToast = (newNotif.type === 'confession_tip' || newNotif.type === 'confession_request' || newNotif.type === 'confession_request_update') && pathname.includes('/rooms/confessions');
+                    const isConfession = (newNotif.type === 'confession_tip' || newNotif.type === 'confession_request' || newNotif.type === 'confession_request_update') && pathname.includes('/rooms/confessions');
+                    const isBarLounge = newNotif.type === 'bar_request' && pathname.includes('/rooms/bar-lounge');
+                    const skipToast = isConfession || isBarLounge;
 
                     if (!skipToast) {
                         // Toast — enhanced for room invitations

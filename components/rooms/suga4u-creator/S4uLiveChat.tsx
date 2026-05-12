@@ -42,7 +42,7 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
 
     return (
         <div className="s4u-creator-glass-panel p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
-            <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3 flex items-center gap-2">
+            <h3 className="s4u-creator-font-display text-lg font-bold text-white mb-3 flex items-center gap-2 shrink-0">
                 <Heart className="w-4 h-4 s4u-creator-text-primary fill-current" />
                 Live Chat
             </h3>
@@ -66,7 +66,7 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
                     </div>
                 ))}
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center shrink-0">
                 <div className="flex-1 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
                     <input
                         value={input}

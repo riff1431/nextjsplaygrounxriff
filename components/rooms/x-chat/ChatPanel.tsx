@@ -145,7 +145,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
     return (
         <div className="glass-card flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             {/* Display Filters */}
-            <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3">
+            <div className="flex px-4 pt-3 pb-2 gap-2 border-b border-border mb-3 shrink-0">
                 {(["All", "Paid", "Priority"] as const).map(tab => (
                     <button
                         key={tab}
@@ -164,7 +164,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scroll space-y-3 px-4 mb-2 pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 chat-scroll space-y-3 px-4 mb-2 pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {filteredMessages.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-8 italic">
                         No messages yet. Start the conversation!
@@ -209,7 +209,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
             </div>
 
             {/* Input Section */}
-            <div className="px-4 pb-4 mt-auto relative">
+            <div className="px-4 pb-4 mt-auto relative shrink-0">
                 {/* Send Lane Selector */}
                 <div className="flex gap-1.5 mb-3">
                     {(Object.keys(LANE_CONFIG) as Lane[]).map((lane) => {

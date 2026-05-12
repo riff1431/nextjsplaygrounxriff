@@ -160,7 +160,7 @@ const CreatorBarLounge = () => {
 
             {/* Content */}
             <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-y-auto lg:overflow-hidden">
-                <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[280px_1fr_280px] xl:grid-cols-[320px_1fr_320px] 2xl:grid-cols-[350px_1fr_350px] gap-4">
+                <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
                     {/* Left - Chat */}
                     <div className="h-full hidden lg:flex min-h-[400px]">
                         <LoungeChat roomId={roomId} sessionId={sessionId} />

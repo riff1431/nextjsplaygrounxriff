@@ -112,7 +112,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
     return (
         <div className="panel-glass rounded-lg flex flex-col h-full overflow-hidden w-full pgx-chat-wrapper">
             {/* Header */}
-            <div className="flex flex-col border-b border-border">
+            <div className="flex flex-col border-b border-border shrink-0">
                 <div className="flex items-center justify-between px-4 py-3 pb-2">
                     <h2 className="font-display text-sm tracking-widest gold-text flex items-center gap-2">
                         💬 LIVE CHAT
@@ -143,7 +143,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-3 py-2 space-y-2 pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-3 py-2 space-y-2 pgx-chat-messages hide-scrollbar">
                 {filteredMessages.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">No messages yet</p>
                 )}
@@ -181,7 +181,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             </div>
 
             {/* Input */}
-            <div className="px-3 py-2 border-t border-border relative">
+            <div className="px-3 py-2 border-t border-border relative shrink-0">
                 {/* Quick Emoji Picker */}
                 {showEmojis && (
                     <div className="absolute bottom-[3.5rem] left-2 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg">

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRoomSession } from "@/hooks/useRoomSession";
-import { X, Lock, Globe, DollarSign } from "lucide-react";
+import { X, Lock, Globe, DollarSign, Euro } from "lucide-react";
 
 interface StartSessionModalProps {
     roomType: string;
@@ -236,7 +236,7 @@ export default function StartSessionModal({
                                 Entry Price (min €20)
                             </label>
                             <div style={{ position: "relative" }}>
-                                <DollarSign
+                                <Euro
                                     size={16}
                                     style={{
                                         position: "absolute",
@@ -272,10 +272,10 @@ export default function StartSessionModal({
                     {sessionType === "private" && (
                         <div style={{ marginBottom: "16px" }}>
                             <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                                Cost Per Min ($)
+                                Cost Per Min (€)
                             </label>
                             <div style={{ position: "relative" }}>
-                                <DollarSign
+                                <Euro
                                     size={16}
                                     style={{
                                         position: "absolute",

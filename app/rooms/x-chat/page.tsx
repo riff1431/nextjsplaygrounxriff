@@ -262,7 +262,7 @@ const XChatRoom = () => {
     const handleReactionSend = async () => {
         if (!pending || !roomId) return;
         try {
-            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "choose_topic") {
+            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "choose_topic" || pending.reactionType === "private_question" || pending.reactionType === "mini_chat") {
                 const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: `${pending.label}: ${voicePrompt}`, amount: pending.price, session_id: urlSessionId }),
@@ -539,16 +539,22 @@ const XChatRoom = () => {
                 <SpendConfirmModal
                     isOpen={!!pending}
                     onClose={() => { setPending(null); setVoicePrompt(""); }}
-                    title={pending?.reactionType === "voice_note_boost" || pending?.reactionType === "choose_topic" ? `Request ${pending.label}` : "Confirm Purchase"}
+                    title={
+                        ["voice_note_boost", "choose_topic", "private_question", "mini_chat"].includes(pending?.reactionType || "") 
+                            ? `Request ${pending?.label}` 
+                            : "Confirm Purchase"
+                    }
                     itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
                     amount={pending?.price || 0}
                     walletBalance={balance}
                     onConfirm={handleReactionSend}
-                    requireInput={pending?.reactionType === "voice_note_boost" || pending?.reactionType === "choose_topic"}
+                    requireInput={["voice_note_boost", "choose_topic", "private_question", "mini_chat"].includes(pending?.reactionType || "")}
                     allowInput={true}
                     inputPlaceholder={
                         pending?.reactionType === "voice_note_boost" ? "What should the voice note be about?" : 
                         pending?.reactionType === "choose_topic" ? "What topic do you want to choose?" : 
+                        pending?.reactionType === "private_question" ? "Type your private question here..." :
+                        pending?.reactionType === "mini_chat" ? "What do you want the creator to wear?" :
                         "Add an optional message..."
                     }
                     inputValue={voicePrompt}

@@ -1138,7 +1138,7 @@ function TruthOrDareCreatorContent() {
 
 
     return (
-        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3 relative">
+        <div className="tod-creator-theme h-screen max-h-screen flex flex-col items-stretch p-2 lg:p-3 relative overflow-hidden">
             {/* Background Image */}
             <div
                 className="fixed inset-0 bg-cover bg-center bg-no-repeat"
@@ -1146,7 +1146,7 @@ function TruthOrDareCreatorContent() {
             />
             <div className="fixed inset-0 bg-black/60" />
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-stretch flex-1">
+            <div className="relative z-10 flex flex-col items-stretch flex-1 min-h-0 overflow-hidden">
             {/* Top Bar */}
             <div className="flex items-center justify-between mb-2 lg:mb-3 px-1">
                 <button
@@ -1288,7 +1288,7 @@ function TruthOrDareCreatorContent() {
                             {/* Fan Entry Price - Only shown for Private sessions */}
                             {sessionForm.isPrivate && (
                                 <div>
-                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Fan Entry Price ($)</label>
+                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Fan Entry Price (€)</label>
                                     <input
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
@@ -1305,7 +1305,7 @@ function TruthOrDareCreatorContent() {
                             {/* Cost Per Min - Only shown for Private sessions */}
                             {sessionForm.isPrivate && (
                                 <div>
-                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Cost Per Min ($)</label>
+                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Cost Per Min (€)</label>
                                     <input
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
@@ -1483,7 +1483,7 @@ function TruthOrDareCreatorContent() {
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
-                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0 relative" style={{ height: 'calc(100vh - 70px)' }}>
+                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0 relative overflow-hidden" style={{ height: 'calc(100vh - 70px)' }}>
 
                     {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
                     {!isSessionLive && (
@@ -1687,7 +1687,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className="flex-[1.5] min-w-[280px] min-h-0">
+                    <div className="flex-[1.5] min-w-[280px] min-h-0 overflow-hidden">
                         <TodCreatorRequestPanel
                             title="Incoming Requests"
                             accentColor="pink"
@@ -1715,7 +1715,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className="flex-[1.5] min-w-[280px] min-h-0">
+                    <div className="flex-[1.5] min-w-[280px] min-h-0 overflow-hidden">
                         <TodCreatorLiveChat 
                             roomId={roomId} 
                             sessionStartedAt={activeSessionStartedAt} 

@@ -154,14 +154,14 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
     return (
         <div className={`neon-glass-card flex flex-col ${className || ""}`}>
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 shrink-0">
                 <MessageSquare className="w-4 h-4 text-rose-400" />
                 <h3 className="text-sm font-bold text-white/90">Live Chat</h3>
                 <span className="ml-auto text-[10px] text-white/40">{messages.length} msgs</span>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto max-h-[500px] p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 max-h-[500px] p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar">
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-white/30" />
@@ -193,7 +193,7 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
             </div>
 
             {/* Input */}
-            <div className="p-2.5 border-t border-white/10">
+            <div className="p-2.5 border-t border-white/10 shrink-0">
                 <div className="flex gap-2">
                     <input
                         type="text"

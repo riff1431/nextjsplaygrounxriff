@@ -54,28 +54,8 @@ export async function POST(
             }
         }
 
-        // 4. Broadcast the answered event
-        try {
-            const channel = supabase.channel(`room:${roomId}`);
-            await channel.send({
-                type: 'broadcast',
-                event: 'question_revealed',
-                payload: {
-                    requestId,
-                    earnedAmount: earnedAmount || updatedRequest?.amount || 0,
-                    fanName: updatedRequest?.fan_name,
-                    fanId: updatedRequest?.fan_id,
-                    type: updatedRequest?.type,
-                    tier: updatedRequest?.tier,
-                    question: updatedRequest?.content,
-                    creatorResponse: creatorResponse, // Allow empty string
-                    timestamp: Date.now()
-                }
-            });
-            console.log('📢 Broadcast question_revealed event');
-        } catch (broadcastError) {
-            console.error('Failed to broadcast:', broadcastError);
-        }
+        // Note: Broadcast for question_revealed is now handled client-side
+        // in CreatorCountdown.tsx immediately after this API returns success.
 
         return NextResponse.json({
             success: true,

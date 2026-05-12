@@ -179,7 +179,7 @@ export async function PATCH(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { requestId, status } = body;
+    const { requestId, status, creator_reply } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -190,7 +190,7 @@ export async function PATCH(
 
     const { data: updated, error } = await supabase
         .from("bar_lounge_requests")
-        .update({ status })
+        .update({ status, ...(creator_reply !== undefined ? { creator_reply } : {}) })
         .eq("id", requestId)
         .eq("room_id", roomId)
         .select().single();

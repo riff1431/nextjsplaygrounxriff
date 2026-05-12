@@ -30,7 +30,7 @@ const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
 
     return (
         <div className="flex flex-col h-full glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl pgx-chat-wrapper">
-            <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+            <div className="p-5 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                     <MessageSquare className="w-5 h-5 text-gold" />
                     <h2 className="font-title text-xl font-bold text-gold tracking-wide">
@@ -43,7 +43,7 @@ const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 chat-scroll pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
+            <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4 chat-scroll pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
@@ -67,7 +67,7 @@ const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
                 <div ref={chatEndRef} />
             </div>
 
-            <div className="p-5 bg-black/40 border-t border-white/5 space-y-4">
+            <div className="p-5 bg-black/40 border-t border-white/5 space-y-4 shrink-0">
                 <div className="pin-badge w-fit mx-auto cursor-pointer hover:bg-gold/20 transition-colors">
                     📍 PIN NAME TO TOP
                 </div>

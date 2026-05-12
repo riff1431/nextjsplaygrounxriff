@@ -780,6 +780,26 @@ function TruthOrDareContent() {
                         },
                     }).catch(() => { });
                 }
+
+                // Broadcast countdown_start event ONLY for truth/dare requests
+                const isTruthDareRequest = ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(confirmModal.type);
+                if (isTruthDareRequest && data.request) {
+                    const reqChannel = supabase.channel(`room:${roomId}`);
+                    reqChannel.send({
+                        type: 'broadcast',
+                        event: 'countdown_start',
+                        payload: {
+                            requestId: data.request.id,
+                            fanId: userId,
+                            fanName: userName,
+                            type: confirmModal.type,
+                            tier: confirmModal.tier,
+                            content: data.request.content,
+                            amount: data.request.amount,
+                            startedAt: Date.now()
+                        }
+                    });
+                }
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
                 setResultModal({

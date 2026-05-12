@@ -306,31 +306,8 @@ export async function POST(
             }
         }
 
-        // 7. Broadcast countdown_start event ONLY for truth/dare requests (not tips/reactions)
-        const isTruthDareRequest = ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(type);
-        if (isTruthDareRequest) {
-            try {
-                const channel = supabase.channel(`room:${roomId}`);
-                await channel.send({
-                    type: 'broadcast',
-                    event: 'countdown_start',
-                    payload: {
-                        requestId: newRequest.id,
-                        fanId: user.id,
-                        fanName,
-                        type,
-                        tier,
-                        content: finalContent,
-                        amount: price,
-                        startedAt: Date.now()
-                    }
-                });
-                console.log('Broadcast countdown_start event sent for request:', newRequest.id);
-            } catch (broadcastError) {
-                console.error('Failed to broadcast countdown event:', broadcastError);
-                // Non-fatal - the request is already saved
-            }
-        }
+        // Note: Broadcast for countdown_start is now handled client-side in page.tsx
+        // immediately after this API returns success.
 
         return NextResponse.json({ success: true, request: newRequest });
 

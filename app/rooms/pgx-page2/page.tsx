@@ -138,7 +138,7 @@ function PgxPage2Inner() {
     const [hostProfile, setHostProfile] = useState<{ full_name?: string; username?: string; avatar_url?: string } | null>(null);
     const [drinks, setDrinks] = useState<any[]>(DEFAULT_DRINKS);
     const [vipPrice, setVipPrice] = useState(150);
-    const [customRequestShortcuts, setCustomRequestShortcuts] = useState<string[]>(["Show me boobs", "Do something spicy", "Change outfit", "Dance for me", "Say my name"]);
+    const [customRequestShortcuts, setCustomRequestShortcuts] = useState<string[]>(["Show me boobs", "Do something spicy", "Change outfit", "Dance for me"]);
     const [isLoading, setIsLoading] = useState(true);
     const [tipAmount, setTipAmount] = useState<number | string>("");
     const [buying, setBuying] = useState<string | null>(null);
@@ -733,43 +733,7 @@ function PgxPage2Inner() {
                                 </div>
                             </div>
 
-                            {/* Tips section — Quick Tips */}
-                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "10px", marginTop: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                                <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "4px", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>💰 Quick Tips</h3>
-                                {/* Preset tip amounts */}
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                    {[10, 25, 50].map((amount) => (
-                                        <button key={amount} className="pg2-tip-btn" disabled={!!buying}
-                                            style={{ ...tipBtn, flex: 1, fontSize: "13px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "6px 8px" }}
-                                            onClick={() => handleTip(amount)}>
-                                            {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
-                                        </button>
-                                    ))}
-                                </div>
-                                {/* Custom tip row */}
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                    <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "4px", padding: "6px 10px", cursor: "text" }}>
-                                        <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Custom</span>
-                                        <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            placeholder="Amount"
-                                            value={tipAmount}
-                                            onChange={(e) => setTipAmount(e.target.value)}
-                                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
-                                            style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "13px", flex: 1, minWidth: 0, width: "100%" }}
-                                        />
-                                    </div>
-                                    <button
-                                        className="pg2-btn-gold"
-                                        disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
-                                        style={{ ...btnGold, flexShrink: 0, padding: "6px 14px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.6 : 1 }}
-                                        onClick={handleCustomTip}>
-                                        {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
-                                    </button>
-                                </div>
-                            </div>
+
 
                             {/* VIP section */}
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -839,21 +803,42 @@ function PgxPage2Inner() {
                                                     color: "hsl(140,70%,55%)",
                                                 }}>UNLIMITED</span>
                                             </div>
-                                            <textarea
-                                                placeholder="Type your request for the creator..."
-                                                value={customReqText}
-                                                onChange={(e) => setCustomReqText(e.target.value.slice(0, 1000))}
-                                                rows={3}
-                                                style={{
-                                                    width: "100%", resize: "none",
-                                                    borderRadius: "0.5rem", padding: "10px 12px",
-                                                    fontSize: "13px", lineHeight: "1.4",
-                                                    background: "hsla(270,30%,18%,0.4)",
-                                                    border: "1px solid hsla(280,40%,30%,0.3)",
-                                                    color: FG, outline: "none",
-                                                    fontFamily: "'Montserrat', sans-serif",
-                                                }}
-                                            />
+                                            <div style={{ position: "relative", width: "100%" }}>
+                                                <textarea
+                                                    placeholder="Type your request for the creator..."
+                                                    value={customReqText}
+                                                    onChange={(e) => setCustomReqText(e.target.value.slice(0, 1000))}
+                                                    rows={3}
+                                                    style={{
+                                                        width: "100%", resize: "none",
+                                                        borderRadius: "0.5rem", padding: "10px 12px",
+                                                        paddingBottom: "36px",
+                                                        fontSize: "13px", lineHeight: "1.4",
+                                                        background: "hsla(270,30%,18%,0.4)",
+                                                        border: "1px solid hsla(280,40%,30%,0.3)",
+                                                        color: FG, outline: "none",
+                                                        fontFamily: "'Montserrat', sans-serif",
+                                                    }}
+                                                />
+                                                <button
+                                                    className="pg2-btn-gold"
+                                                    disabled={!!buying || !customReqText.trim()}
+                                                    style={{
+                                                        position: "absolute",
+                                                        bottom: "8px",
+                                                        right: "8px",
+                                                        ...btnGold,
+                                                        padding: "4px 12px",
+                                                        fontSize: "11px",
+                                                        fontWeight: 700,
+                                                        opacity: (buying || !customReqText.trim()) ? 0.5 : 1,
+                                                        display: "flex", alignItems: "center", gap: "4px",
+                                                    }}
+                                                    onClick={handleCustomRequest}
+                                                >
+                                                    {buying?.startsWith("custom-req") ? <Loader2 style={{ width: "12px", height: "12px", animation: "spin 1s linear infinite" }} /> : "Send"}
+                                                </button>
+                                            </div>
                                             
                                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
                                                 {customRequestShortcuts.map(shortcut => (
@@ -878,21 +863,6 @@ function PgxPage2Inner() {
                                                 ))}
                                             </div>
 
-                                            <div style={{ display: "flex", gap: "8px", marginTop: "8px", alignItems: "center", justifyContent: "flex-end" }}>
-                                                <button
-                                                    className="pg2-btn-gold"
-                                                    disabled={!!buying || !customReqText.trim()}
-                                                    style={{
-                                                        ...btnGold, padding: "8px 24px",
-                                                        fontSize: "12px", fontWeight: 700,
-                                                        opacity: (buying || !customReqText.trim()) ? 0.5 : 1,
-                                                        display: "flex", alignItems: "center", gap: "4px",
-                                                    }}
-                                                    onClick={handleCustomRequest}
-                                                >
-                                                    {buying?.startsWith("custom-req") ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Send"}
-                                                </button>
-                                            </div>
                                             <p style={{ fontSize: "10px", color: MUTED, margin: "6px 0 0 0", fontStyle: "italic" }}>Requires creator approval • Private message</p>
                                         </div>
                                     ) : (
@@ -940,50 +910,16 @@ function PgxPage2Inner() {
                                     )}
                                 </div>
 
-                                {/* Private 1-on-1 Session */}
-                                <div
-                                    style={{
-                                        ...glassPanel,
-                                        padding: "12px",
-                                        cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
-                                        opacity: (buying || privateCall.callState) ? 0.7 : 1,
-                                        marginTop: "4px",
-                                        background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
-                                        border: "1px solid hsla(320,80%,55%,0.35)",
-                                        transition: "all 0.3s",
-                                    }}
-                                    className="pg2-btn-glow"
-                                    onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
-                                >
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                        <div style={{
-                                            width: "36px", height: "36px", borderRadius: "9999px",
-                                            background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            border: "1px solid hsla(320,80%,60%,0.3)",
-                                            flexShrink: 0,
-                                        }}>
-                                            <Phone style={{ width: "16px", height: "16px", color: PINK }} />
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                                <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
-                                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
-                                            </div>
-                                            <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
-                                </div>
+
                             </div>
                         </div>
                     </div>
 
-                    {/* ═══ CENTER: Live Stream ═══ */}
-                    <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", justifyContent: "flex-end", alignItems: "center", height: "100%", paddingBottom: "16px" }}>
+                    {/* ═══ CENTER: Live Stream & Actions ═══ */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }}>
 
-                        {/* Live stream — adjusted aspect ratio */}
-                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", aspectRatio: "4/3", minHeight: "0", width: "100%", maxHeight: "100%", margin: "0 auto" }}>
+                        {/* Live stream — flexible height */}
+                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", flex: 1, minHeight: "0", width: "100%", margin: "0 auto" }}>
 
                             {/* Real Agora fan stream */}
                             {roomId && user ? (
@@ -1030,6 +966,84 @@ function PgxPage2Inner() {
                             )}
                         </div>
 
+                        {/* Quick Tips and 1-on-1 */}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", flexShrink: 0 }}>
+                            {/* Tips section — Quick Tips */}
+                            <div style={{ ...glassPanel, flex: 1, minWidth: "280px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "4px", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>💰 Quick Tips</h3>
+                                {/* Preset tip amounts */}
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                    {[10, 25, 50].map((amount) => (
+                                        <button key={amount} className="pg2-tip-btn" disabled={!!buying}
+                                            style={{ ...tipBtn, flex: 1, fontSize: "13px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "6px 8px" }}
+                                            onClick={() => handleTip(amount)}>
+                                            {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
+                                        </button>
+                                    ))}
+                                </div>
+                                {/* Custom tip row */}
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                    <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "4px", padding: "6px 10px", cursor: "text" }}>
+                                        <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Custom</span>
+                                        <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            placeholder="Amount"
+                                            value={tipAmount}
+                                            onChange={(e) => setTipAmount(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
+                                            style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "13px", flex: 1, minWidth: 0, width: "100%" }}
+                                        />
+                                    </div>
+                                    <button
+                                        className="pg2-btn-gold"
+                                        disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
+                                        style={{ ...btnGold, flexShrink: 0, padding: "6px 14px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.6 : 1 }}
+                                        onClick={handleCustomTip}>
+                                        {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Private 1-on-1 Session */}
+                            <div
+                                style={{
+                                    ...glassPanel,
+                                    flex: 1,
+                                    minWidth: "280px",
+                                    padding: "12px",
+                                    cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
+                                    opacity: (buying || privateCall.callState) ? 0.7 : 1,
+                                    background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
+                                    border: "1px solid hsla(320,80%,55%,0.35)",
+                                    transition: "all 0.3s",
+                                    display: "flex", flexDirection: "column", justifyContent: "center"
+                                }}
+                                className="pg2-btn-glow"
+                                onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <div style={{
+                                        width: "36px", height: "36px", borderRadius: "9999px",
+                                        background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        border: "1px solid hsla(320,80%,60%,0.3)",
+                                        flexShrink: 0,
+                                    }}>
+                                        <Phone style={{ width: "16px", height: "16px", color: PINK }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
+                                            <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
+                                        </div>
+                                        <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
+                            </div>
+                        </div>
 
                     </div>
 

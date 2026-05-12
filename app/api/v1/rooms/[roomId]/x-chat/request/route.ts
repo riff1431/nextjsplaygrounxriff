@@ -71,6 +71,21 @@ export async function POST(
         .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (amount > 0) {
+        const chatPayload: any = {
+            room_id: roomId,
+            sender_id: user.id,
+            sender_name: fanName,
+            body: message || "Wants to chat",
+            lane: amount >= 50 ? "Priority" : "Paid",
+            paid_amount: amount,
+            status: "Queued"
+        };
+        if (session_id) chatPayload.session_id = session_id;
+        await supabase.from("x_chat_messages").insert(chatPayload);
+    }
+
     return NextResponse.json({ success: true, request: req });
 }
 

@@ -58,6 +58,7 @@ export default function SessionChatPanel({
                     gap: "8px",
                     padding: "12px 16px",
                     borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    flexShrink: 0,
                 }}
             >
                 <MessageCircle size={16} color="hsl(280,100%,70%)" />
@@ -77,6 +78,7 @@ export default function SessionChatPanel({
                     flexDirection: "column",
                     padding: "10px 14px",
                     maxHeight,
+                    minHeight: 0,
                     gap: "6px",
                 }}
             >
@@ -156,6 +158,7 @@ export default function SessionChatPanel({
                     gap: "8px",
                     padding: "10px 14px",
                     borderTop: "1px solid rgba(255,255,255,0.06)",
+                    flexShrink: 0,
                 }}
             >
                 <input

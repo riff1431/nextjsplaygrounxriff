@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Flame, Sparkles, Crown, Zap, CheckCircle, XCircle, DollarSign, Timer, X } from "lucide-react";
 import { playNotificationSound, playSuccessSound, playMoneySound } from "@/utils/sounds";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
 interface CountdownRequest {
@@ -85,6 +86,25 @@ export default function CreatorCountdown({ request, roomId, onComplete, onDismis
             if (!apiRes.ok) {
                 throw new Error('Failed to submit answer');
             }
+
+            // Client-side broadcast of question_revealed
+            const supabase = createClient();
+            const channel = supabase.channel(`room:${roomId}`);
+            channel.send({
+                type: 'broadcast',
+                event: 'question_revealed',
+                payload: {
+                    requestId: request.requestId,
+                    earnedAmount: request.amount || 0,
+                    fanName: request.fanName,
+                    fanId: request.fanId,
+                    type: request.type,
+                    tier: request.tier,
+                    question: request.content,
+                    creatorResponse: response,
+                    timestamp: Date.now()
+                }
+            });
 
             setShowSuccess(true);
             playSuccessSound();

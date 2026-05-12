@@ -70,7 +70,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                 .eq("room_id", roomId)
                 .not("type", "in", '("drink","tip","champagne","vip_bottle","pin")')
                 .order("created_at", { ascending: false })
-                .limit(7);
+                .limit(50);
             
             // Scope to current session
             if (sessionId) query = query.eq("session_id", sessionId);
@@ -97,8 +97,8 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
 
                 // Ignore drink/tip/etc from visual list
                 if (!AUTO_COMPLETED_TYPES.has(req.type)) {
-                    // Add to list, keeping only the 7 most recent
-                    setRequests((prev) => [req, ...prev].slice(0, 7));
+                    // Add to list, keeping only the 50 most recent
+                    setRequests((prev) => [req, ...prev].slice(0, 50));
                 }
 
                 // Creator toast notification (still show for everything)
@@ -200,7 +200,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                     <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€500</span>
                                 </p>
                             </div>
-                            <div className="flex gap-1 shrink-0">
+                            <div className="flex flex-col gap-1 shrink-0">
                                 <button
                                     onClick={() => onAcceptPrivateCall?.(call.callId)}
                                     className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
@@ -240,15 +240,17 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                         <span className="text-sm font-semibold truncate" style={{ color: "hsla(45,100%,95%,0.9)" }}>
                                             {req.fan_name || "A fan"}
                                         </span>
-                                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
-                                            background: isAutoCompleted ? "hsla(42,90%,55%,0.15)" : "hsla(280,80%,60%,0.15)",
-                                            color: isAutoCompleted ? "hsl(42,90%,55%)" : "hsl(280,80%,70%)",
-                                            border: `1px solid ${isAutoCompleted ? "hsla(42,90%,55%,0.25)" : "hsla(280,80%,60%,0.25)"}`,
-                                            textTransform: "uppercase",
-                                            letterSpacing: "0.5px",
-                                        }}>
-                                            {req.type === 'tip' ? 'Drink' : req.type}
-                                        </span>
+                                        {req.type !== 'custom' && (
+                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded" style={{
+                                                background: isAutoCompleted ? "hsla(42,90%,55%,0.15)" : "hsla(280,80%,60%,0.15)",
+                                                color: isAutoCompleted ? "hsl(42,90%,55%)" : "hsl(280,80%,70%)",
+                                                border: `1px solid ${isAutoCompleted ? "hsla(42,90%,55%,0.25)" : "hsla(280,80%,60%,0.25)"}`,
+                                                textTransform: "uppercase",
+                                                letterSpacing: "0.5px",
+                                            }}>
+                                                {req.type === 'tip' ? 'Drink' : req.type}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-xs mt-0.5" style={{ color: "hsla(45,100%,95%,0.5)", display: "-webkit-box", WebkitLineClamp: req.type === 'custom' ? 3 : 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                         {req.label || req.message || req.type}
@@ -265,7 +267,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                 {isAutoCompleted ? (
                                     <CheckCircle style={{ width: "16px", height: "16px", color: "hsl(140,70%,55%)", flexShrink: 0 }} />
                                 ) : req.status === "pending" ? (
-                                    <div className="flex gap-1 shrink-0">
+                                    <div className="flex flex-col gap-1 shrink-0">
                                         <button
                                             onClick={() => handleAction(req.id, "accepted")}
                                             className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"

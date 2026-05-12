@@ -415,7 +415,7 @@ export default function RoomSessionDashboard({
                                 <>
                                     <div>
                                         <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">
-                                            Fan Entry Price ($)
+                                            Fan Entry Price (€)
                                         </label>
                                         <input
                                             type="number"
@@ -439,7 +439,7 @@ export default function RoomSessionDashboard({
                                     </div>
                                     <div>
                                         <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">
-                                            Cost Per Min ($)
+                                            Cost Per Min (€)
                                         </label>
                                         <input
                                             type="number"
