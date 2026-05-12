@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { CheckCircle, X } from "lucide-react";
+import CreatorReplyModal from "./CreatorReplyModal";
 
 interface Request {
     id: string;
@@ -59,6 +60,9 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
     const supabase = createClient();
     const [requests, setRequests] = useState<Request[]>([]);
     const { toasts, push: showToast, dismiss } = useCreatorToasts();
+    
+    const [replyModalOpen, setReplyModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
 
     useEffect(() => {
         if (!roomId) return;
@@ -110,7 +114,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
         return () => { supabase.removeChannel(channel); };
     }, [roomId, sessionId]);
 
-    const handleAction = async (id: string, action: "accepted" | "declined") => {
+    const handleAction = async (id: string, action: "accepted" | "declined", creatorReply?: any) => {
         setRequests((prev) =>
             prev.map((r) => (r.id === id ? { ...r, status: action } : r))
         );
@@ -118,9 +122,13 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
             await fetch(`/api/v1/rooms/${roomId}/bar-lounge/request`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: id, status: action }),
+                body: JSON.stringify({ requestId: id, status: action, creatorReply }),
             });
         }
+    };
+
+    const handleSendReply = (requestId: string, replyData: { text?: string; mediaUrl?: string; mediaType?: string }) => {
+        handleAction(requestId, "accepted", replyData);
     };
 
     const formatTimeAgo = (dateStr?: string) => {
@@ -269,11 +277,18 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                 ) : req.status === "pending" ? (
                                     <div className="flex flex-col gap-1 shrink-0">
                                         <button
-                                            onClick={() => handleAction(req.id, "accepted")}
+                                            onClick={() => {
+                                                if (req.type === "custom") {
+                                                    setSelectedRequest(req);
+                                                    setReplyModalOpen(true);
+                                                } else {
+                                                    handleAction(req.id, "accepted");
+                                                }
+                                            }}
                                             className="px-3 py-1 rounded text-xs font-medium border hover:opacity-80 transition-colors"
                                             style={{ borderColor: "hsla(45, 90%, 55%, 0.5)", color: "hsl(45, 90%, 55%)", background: "hsla(45, 90%, 55%, 0.1)" }}
                                         >
-                                            Accept
+                                            {req.type === "custom" ? "Reply" : "Accept"}
                                         </button>
                                         <button
                                             onClick={() => handleAction(req.id, "declined")}
@@ -299,6 +314,13 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                     })}
                 </div>
             </div>
+
+            <CreatorReplyModal
+                isOpen={replyModalOpen}
+                onClose={() => { setReplyModalOpen(false); setSelectedRequest(null); }}
+                request={selectedRequest}
+                onSend={handleSendReply}
+            />
         </>
     );
 };

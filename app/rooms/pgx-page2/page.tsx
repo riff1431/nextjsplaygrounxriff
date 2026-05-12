@@ -11,6 +11,7 @@ import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import dynamic from "next/dynamic";
+import VipDeliveryModal from "@/components/rooms/pgx-page2/VipDeliveryModal";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock, Phone } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 
@@ -160,6 +161,10 @@ function PgxPage2Inner() {
     // Custom Request
     const [customReqText, setCustomReqText] = useState("");
     const [customReqAmount, setCustomReqAmount] = useState<number | string>("");
+    
+    // VIP Delivery
+    const [vipDeliveryOpen, setVipDeliveryOpen] = useState(false);
+    const [vipDeliveryData, setVipDeliveryData] = useState<any>(null);
 
     // Update time every 10 seconds to refresh the pinned message timer
     useEffect(() => {
@@ -322,7 +327,24 @@ function PgxPage2Inner() {
                     showToast(newStatus === 'accepted' ? '🛋️ Booth reserved! Enjoy your private time!' : '❌ Booth reservation was declined', newStatus === 'accepted' ? 'success' : 'error');
                 }
                 if (updated.type === 'custom') {
-                    showToast(newStatus === 'accepted' ? '📩 Custom request approved by creator!' : '❌ Custom request was declined', newStatus === 'accepted' ? 'success' : 'error');
+                    if (newStatus === 'accepted') {
+                        if (updated.creator_reply) {
+                            // Creator attached media or text, open the delivery modal!
+                            setVipDeliveryData({
+                                creatorName: creatorName !== "[CreatorName]" ? creatorName : "Creator",
+                                text: updated.creator_reply.text,
+                                mediaUrl: updated.creator_reply.mediaUrl,
+                                mediaType: updated.creator_reply.mediaType,
+                                originalRequestLabel: updated.label || "Custom Request"
+                            });
+                            setVipDeliveryOpen(true);
+                        } else {
+                            // Standard text toast
+                            showToast('📩 Custom request approved by creator!', 'success');
+                        }
+                    } else {
+                        showToast('❌ Custom request was declined', 'error');
+                    }
                 }
             })
             .subscribe();
@@ -680,6 +702,40 @@ function PgxPage2Inner() {
                                                             )}
                                                         </div>
                                                     </div>
+                                                    
+                                                    {/* View Reply Button for Custom Requests with media */}
+                                                    {item.type === "custom" && item.creator_reply && (
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setVipDeliveryData({
+                                                                    creatorName: creatorName !== "[CreatorName]" ? creatorName : "Creator",
+                                                                    text: item.creator_reply.text,
+                                                                    mediaUrl: item.creator_reply.mediaUrl,
+                                                                    mediaType: item.creator_reply.mediaType,
+                                                                    originalRequestLabel: item.label || "Custom Request"
+                                                                });
+                                                                setVipDeliveryOpen(true);
+                                                                setShowIncomingPanel(false);
+                                                            }}
+                                                            style={{
+                                                                background: "hsla(280, 80%, 60%, 0.2)",
+                                                                border: "1px solid hsla(280, 80%, 60%, 0.5)",
+                                                                color: "hsl(280, 80%, 80%)",
+                                                                padding: "4px 8px",
+                                                                borderRadius: "0.5rem",
+                                                                fontSize: "11px",
+                                                                fontWeight: 600,
+                                                                marginLeft: "auto",
+                                                                cursor: "pointer",
+                                                                transition: "all 0.2s"
+                                                            }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.background = "hsla(280, 80%, 60%, 0.4)"}
+                                                            onMouseLeave={(e) => e.currentTarget.style.background = "hsla(280, 80%, 60%, 0.2)"}
+                                                        >
+                                                            View Reply
+                                                        </button>
+                                                    )}
                                                 </div>
                                             );
                                         })
@@ -918,130 +974,124 @@ function PgxPage2Inner() {
                     {/* ═══ CENTER: Live Stream & Actions ═══ */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }}>
 
-                        {/* Live stream — flexible height */}
-                        <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", flex: 1, minHeight: "0", width: "100%", margin: "0 auto" }}>
+                        {/* Live stream — 4:3 landscape positioned at the bottom */}
+                        <div style={{ width: "100%", marginTop: "auto", flexShrink: 0 }}>
+                            <div style={{ position: "relative", ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem", width: "100%", paddingBottom: "75%" }}>
+                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column" }}>
 
-                            {/* Real Agora fan stream */}
-                            {roomId && user ? (
-                                <div style={{ width: "100%", height: "100%", borderRadius: "0.75rem", overflow: "hidden" }}>
-                                    <LiveStreamWrapper
-                                        role="fan"
-                                        appId={APP_ID}
-                                        roomId={roomId}
-                                        uid={user.id || 0}
-                                        hostId={hostId || ""}
-                                        hostAvatarUrl={hostProfile?.avatar_url || null}
-                                        hostName={creatorName}
-                                    />
-                                </div>
-                            ) : (
-                                <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "0.75rem" }}>
-                                    <Wine style={{ width: "60px", height: "60px", color: `${GOLD}33` }} />
-                                    <span style={{ fontSize: "13px", color: MUTED }}>Connecting to stream...</span>
-                                </div>
-                            )}
-
-                            {/* Floating hearts */}
-                            <div className="pg2-float" style={{ position: "absolute", top: "40px", right: "16px", zIndex: 10, pointerEvents: "none" }}>
-                                <Heart className="pg2-glow-pulse" style={{ width: "40px", height: "40px", color: PINK, fill: "hsla(320,100%,65%,0.5)", filter: "drop-shadow(0 0 10px hsla(320,100%,65%,0.6))" }} />
-                            </div>
-                            <div className="pg2-float" style={{ position: "absolute", top: "48px", right: "64px", animationDelay: "1s", zIndex: 10, pointerEvents: "none" }}>
-                                <Heart className="pg2-glow-pulse" style={{ width: "24px", height: "24px", color: PINK, fill: "hsla(320,100%,65%,0.3)", filter: "drop-shadow(0 0 8px hsla(320,100%,65%,0.4))" }} />
-                            </div>
-
-                            {/* Bottom gradient */}
-                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "64px", background: "linear-gradient(to top, hsla(270,50%,8%,0.8), transparent)", zIndex: 5, pointerEvents: "none" }} />
-
-                            {/* LIVE badge */}
-                            <div style={{ position: "absolute", top: "12px", left: "12px", zIndex: 10, display: "flex", alignItems: "center", gap: "6px", background: "hsla(0,80%,45%,0.9)", border: "1px solid hsla(0,80%,60%,0.5)", borderRadius: "9999px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "#fff", backdropFilter: "blur(8px)", letterSpacing: "0.08em" }}>
-                                <span className="pg2-glow-pulse" style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#fff", display: "inline-block" }} />
-                                LIVE
-                            </div>
-
-                            {/* Creator name badge */}
-                            {creatorName !== "[CreatorName]" && (
-                                <div style={{ position: "absolute", bottom: "12px", left: "12px", zIndex: 10, background: "hsla(270,50%,8%,0.75)", backdropFilter: "blur(8px)", borderRadius: "0.5rem", padding: "4px 10px", fontSize: "12px", fontWeight: 600, color: FG }}>
-                                    {creatorName}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Quick Tips and 1-on-1 */}
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", flexShrink: 0 }}>
-                            {/* Tips section — Quick Tips */}
-                            <div style={{ ...glassPanel, flex: 1, minWidth: "280px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                                <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "4px", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>💰 Quick Tips</h3>
-                                {/* Preset tip amounts */}
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                    {[10, 25, 50].map((amount) => (
-                                        <button key={amount} className="pg2-tip-btn" disabled={!!buying}
-                                            style={{ ...tipBtn, flex: 1, fontSize: "13px", textAlign: "center", opacity: buying ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "6px 8px" }}
-                                            onClick={() => handleTip(amount)}>
-                                            {buying === `tip-${amount}` ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : `€${amount}`}
-                                        </button>
-                                    ))}
-                                </div>
-                                {/* Custom tip row */}
-                                <div style={{ display: "flex", gap: "6px" }}>
-                                    <div style={{ ...tipBtn, flex: 1, display: "flex", alignItems: "center", gap: "4px", padding: "6px 10px", cursor: "text" }}>
-                                        <span style={{ color: MUTED, fontSize: "12px", whiteSpace: "nowrap" }}>Custom</span>
-                                        <span style={{ color: GOLD, fontSize: "13px", fontWeight: 700 }}>€</span>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            placeholder="Amount"
-                                            value={tipAmount}
-                                            onChange={(e) => setTipAmount(e.target.value)}
-                                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
-                                            style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "13px", flex: 1, minWidth: 0, width: "100%" }}
+                                    {/* Real Agora fan stream */}
+                                    {roomId && user ? (
+                                        <div style={{ width: "100%", height: "100%", borderRadius: "0.75rem", overflow: "hidden", flex: 1 }}>
+                                        <LiveStreamWrapper
+                                            role="fan"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id || 0}
+                                            hostId={hostId || ""}
+                                            hostAvatarUrl={hostProfile?.avatar_url || null}
+                                            hostName={creatorName}
                                         />
                                     </div>
-                                    <button
-                                        className="pg2-btn-gold"
-                                        disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
-                                        style={{ ...btnGold, flexShrink: 0, padding: "6px 14px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.6 : 1 }}
-                                        onClick={handleCustomTip}>
-                                        {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
-                                    </button>
+                                ) : (
+                                    <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px", borderRadius: "0.75rem", flex: 1 }}>
+                                        <Wine style={{ width: "60px", height: "60px", color: `${GOLD}33` }} />
+                                        <span style={{ fontSize: "13px", color: MUTED }}>Connecting to stream...</span>
+                                    </div>
+                                )}
+
+                                {/* Floating hearts */}
+                                <div className="pg2-float" style={{ position: "absolute", top: "40px", right: "16px", zIndex: 10, pointerEvents: "none" }}>
+                                    <Heart className="pg2-glow-pulse" style={{ width: "40px", height: "40px", color: PINK, fill: "hsla(320,100%,65%,0.5)", filter: "drop-shadow(0 0 10px hsla(320,100%,65%,0.6))" }} />
                                 </div>
+                                <div className="pg2-float" style={{ position: "absolute", top: "48px", right: "64px", animationDelay: "1s", zIndex: 10, pointerEvents: "none" }}>
+                                    <Heart className="pg2-glow-pulse" style={{ width: "24px", height: "24px", color: PINK, fill: "hsla(320,100%,65%,0.3)", filter: "drop-shadow(0 0 8px hsla(320,100%,65%,0.4))" }} />
+                                </div>
+
+                                {/* Bottom gradient */}
+                                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "64px", background: "linear-gradient(to top, hsla(270,50%,8%,0.8), transparent)", zIndex: 5, pointerEvents: "none" }} />
+
+                                {/* LIVE badge */}
+                                <div style={{ position: "absolute", top: "12px", left: "12px", zIndex: 10, display: "flex", alignItems: "center", gap: "6px", background: "hsla(0,80%,45%,0.9)", border: "1px solid hsla(0,80%,60%,0.5)", borderRadius: "9999px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, color: "#fff", backdropFilter: "blur(8px)", letterSpacing: "0.08em" }}>
+                                    <span className="pg2-glow-pulse" style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#fff", display: "inline-block" }} />
+                                    LIVE
+                                </div>
+
+                                {/* Creator name badge */}
+                                {creatorName !== "[CreatorName]" && (
+                                    <div style={{ position: "absolute", bottom: "12px", left: "12px", zIndex: 10, background: "hsla(270,50%,8%,0.75)", backdropFilter: "blur(8px)", borderRadius: "0.5rem", padding: "4px 10px", fontSize: "12px", fontWeight: 600, color: FG }}>
+                                        {creatorName}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Custom Tip and Private 1-on-1 */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", flexShrink: 0 }}>
+                            
+                            {/* Custom Tip row */}
+                            <div style={{ ...glassPanel, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }}>
+                                <div style={{ width: "28px", height: "28px", borderRadius: "9999px", background: "hsla(42,90%,55%,0.15)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid hsla(42,90%,55%,0.3)" }}>
+                                    <span style={{ fontSize: "14px" }}>💰</span>
+                                </div>
+                                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", background: "hsla(270,40%,15%,0.4)", borderRadius: "0.5rem", padding: "6px 12px", border: "1px solid hsla(280,60%,45%,0.2)" }}>
+                                    <span style={{ color: MUTED, fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Custom Tip</span>
+                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700, marginLeft: "auto" }}>€</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        placeholder="Amount"
+                                        value={tipAmount}
+                                        onChange={(e) => setTipAmount(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
+                                        style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "14px", width: "80px", fontWeight: 600 }}
+                                    />
+                                </div>
+                                <button
+                                    className="pg2-btn-gold"
+                                    disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
+                                    style={{ ...btnGold, flexShrink: 0, padding: "8px 20px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.5 : 1, minWidth: "100px", display: "flex", justifyContent: "center" }}
+                                    onClick={handleCustomTip}>
+                                    {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
+                                </button>
                             </div>
 
                             {/* Private 1-on-1 Session */}
                             <div
                                 style={{
                                     ...glassPanel,
-                                    flex: 1,
-                                    minWidth: "280px",
-                                    padding: "12px",
+                                    padding: "10px 14px",
                                     cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
                                     opacity: (buying || privateCall.callState) ? 0.7 : 1,
                                     background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
-                                    border: "1px solid hsla(320,80%,55%,0.35)",
+                                    border: "1px solid hsla(320,80%,55%,0.4)",
                                     transition: "all 0.3s",
-                                    display: "flex", flexDirection: "column", justifyContent: "center"
+                                    display: "flex", alignItems: "center", justifyContent: "space-between"
                                 }}
                                 className="pg2-btn-glow"
                                 onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
                             >
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                     <div style={{
-                                        width: "36px", height: "36px", borderRadius: "9999px",
+                                        width: "32px", height: "32px", borderRadius: "9999px",
                                         background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                         border: "1px solid hsla(320,80%,60%,0.3)",
                                         flexShrink: 0,
                                     }}>
-                                        <Phone style={{ width: "16px", height: "16px", color: PINK }} />
+                                        <Phone style={{ width: "14px", height: "14px", color: PINK }} />
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px" }}>Private 1-on-1</span>
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
                                             <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
                                         </div>
-                                        <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>👑 Direct video call with creator</p>
+                                        <span style={{ fontSize: "11px", color: MUTED }}>👑 Direct video call with creator</span>
                                     </div>
                                 </div>
-                                <p style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", margin: "6px 0 0 46px", fontStyle: "italic" }}>Requires approval</p>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <span style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", fontStyle: "italic", fontWeight: 600 }}>Requires approval</span>
+                                </div>
                             </div>
                         </div>
 
@@ -1180,6 +1230,11 @@ function PgxPage2Inner() {
                 />
             )}
 
+            <VipDeliveryModal
+                isOpen={vipDeliveryOpen}
+                onClose={() => setVipDeliveryOpen(false)}
+                delivery={vipDeliveryData}
+            />
         </div>
     );
 }
