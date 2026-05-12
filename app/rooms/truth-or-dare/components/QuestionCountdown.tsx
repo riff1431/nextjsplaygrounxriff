@@ -170,7 +170,7 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
 
                     {/* Message */}
                     <div className="text-2xl sm:text-3xl text-gray-200 font-bold mb-2">
-                        Your {tier.toUpperCase()} {type.toUpperCase()} is being prepared...
+                        Your {displayTier.toUpperCase()} {type.toUpperCase()} is being prepared...
                     </div>
                     <div className="text-sm text-gray-400">
                         The creator will reveal your question shortly
