@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+</head>
+<body>
+<h1>Agora Connection Test</h1>
+<div id="status">Connecting...</div>
+<script>
+async function test() {
+    try {
+        const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        const appId = "c64c688cfa1c48d09bcaec99cc4f24d1";
+        // Attempt to join with null token
+        await client.join(appId, "test", null, null);
+        document.getElementById("status").innerText = "SUCCESS! App ID only mode works.";
+    } catch(e) {
+        document.getElementById("status").innerText = "FAILED: " + e.message;
+        console.error(e);
+    }
+}
+test();
+</script>
+</body>
+</html>
