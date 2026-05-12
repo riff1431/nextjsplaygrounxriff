@@ -6,14 +6,16 @@ import {
     useJoin,
     useRemoteUsers,
     useRTCClient,
+    useConnectionState,
+    useIsConnected,
 } from 'agora-rtc-react';
 import { VideoOff } from 'lucide-react';
 
 interface FanStreamProps {
     appId: string;
     channelName: string;
-    uid: string | number; // fan's Supabase UUID — converted to numeric
-    hostId: string | number; // not used for matching (Agora uses numeric UIDs)
+    uid: string | number; // fan's Supabase UUID
+    hostId: string | number;
     hostAvatarUrl?: string | null;
     hostName?: string;
     /** If provided, callback when the number of remote broadcasters changes */
@@ -21,22 +23,12 @@ interface FanStreamProps {
     collabCreators?: { id: string, name: string, avatarUrl?: string }[];
 }
 
-function toNumericUid(input: string | number): number {
-    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
-    let hash = 5381;
-    for (let i = 0; i < input.length; i++) {
-        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
-        hash = hash >>> 0;
-    }
-    return hash || 1;
-}
-
 export default function FanStream({ appId, channelName, uid, hostId, hostAvatarUrl, hostName, collabCreators, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
-    const [numericUid, setNumericUid] = useState<number>(0);
+    const [stringUid, setStringUid] = useState<string>(String(uid));
     const client = useRTCClient();
 
-    // Fetch Token + numeric UID
+    // Fetch Token + string UID
     useEffect(() => {
         let mounted = true;
         async function fetchToken() {
@@ -52,8 +44,12 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                 });
                 const data = await res.json();
                 if (!mounted) return;
-                if (data.token !== undefined) setToken(data.token);   // null = App ID only mode
-                if (data.numericUid) setNumericUid(data.numericUid);
+                if (data.token !== undefined) {
+                    setToken(data.token);
+                } else {
+                    setToken(null);
+                }
+                if (data.stringUid) setStringUid(data.stringUid);
             } catch (e) {
                 console.error("FanStream: Failed to fetch token", e);
                 if (mounted) setToken(null); // default to App ID only
@@ -73,14 +69,16 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
     }, [client]);
 
     // Join as audience — only when token has resolved (null = App ID only, string = with token)
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined;
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        { appid: appId, channel: channelName, token: token ?? null, uid: stringUid },
         isReady
     );
 
     // All remote broadcasters (host + collab creators)
     const remoteUsers = useRemoteUsers();
+    const connectionState = useConnectionState();
+    const isConnected = useIsConnected();
 
     // Notify parent when remote user count changes
     useEffect(() => {
@@ -130,15 +128,21 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                             {hostName}
                         </h3>
                     )}
-                    <div className="flex items-center justify-center gap-3 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-xl">
-                        <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.3s]" />
-                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.15s]" />
-                            <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce" />
-                        </div>
-                        <span className="text-xs font-medium text-gold/90 uppercase tracking-widest">{label}</span>
+                        {connectionState === 'DISCONNECTED' && !isConnected ? (
+                            <div className="flex items-center justify-center gap-2 bg-red-950/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-red-500/30 shadow-xl">
+                                <span className="text-xs font-medium text-red-400 uppercase tracking-widest">Connection Failed</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center gap-3 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-xl">
+                                <div className="flex gap-1">
+                                    <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                    <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                    <span className="w-1.5 h-1.5 bg-gold rounded-full animate-bounce" />
+                                </div>
+                                <span className="text-xs font-medium text-gold/90 uppercase tracking-widest">{label}</span>
+                            </div>
+                        )}
                     </div>
-                </div>
             </div>
 
             {/* Decorative Orbs */}
@@ -157,19 +161,17 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
             ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr' }
             : { display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' };
 
-        const hostNumericUid = hostId ? toNumericUid(hostId) : null;
-
         return (
             <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden border border-white/5 shadow-2xl" style={gridStyle}>
                 {remoteUsers.slice(0, 4).map((user, idx) => {
                     let displayName = `Creator ${idx + 1}`;
                     let isHost = false;
                     
-                    if (hostNumericUid && user.uid === hostNumericUid) {
+                    if (hostId && user.uid === String(hostId)) {
                         displayName = hostName || 'Creator';
                         isHost = true;
                     } else if (collabCreators) {
-                        const collab = collabCreators.find(c => toNumericUid(c.id) === user.uid);
+                        const collab = collabCreators.find(c => String(c.id) === String(user.uid));
                         if (collab) displayName = collab.name;
                     }
 

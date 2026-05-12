@@ -47,13 +47,16 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
         fetchMessages();
 
         // Subscribe to real-time changes
+        const channelName = sessionId ? `x-chat-${roomId}-${sessionId}` : `x-chat-${roomId}`;
+        const filterStr = sessionId ? `session_id=eq.${sessionId}` : `room_id=eq.${roomId}`;
+
         const channel = supabase
-            .channel(`creator-livechat-${roomId}`)
+            .channel(channelName)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",
                 table: "x_chat_messages",
-                filter: `room_id=eq.${roomId}`,
+                filter: filterStr,
             }, (payload: any) => {
                 setMessages((prev) => {
                     if (prev.some(m => m.id === (payload.new as ChatMsg).id)) return prev;
@@ -64,7 +67,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 event: "UPDATE",
                 schema: "public",
                 table: "x_chat_messages",
-                filter: `room_id=eq.${roomId}`,
+                filter: filterStr,
             }, (payload: any) => {
                 const updated = payload.new as ChatMsg;
                 setMessages((prev) => prev.map(m => m.id === updated.id ? updated : m));

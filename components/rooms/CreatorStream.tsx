@@ -9,6 +9,7 @@ import {
     usePublish,
     useJoin,
     useIsConnected,
+    useConnectionState,
     useRemoteUsers,
     useRTCClient,
 } from 'agora-rtc-react';
@@ -34,8 +35,8 @@ interface FanProfile {
 
 export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName, onRemoteUsersChange }: CreatorStreamProps) {
     const supabase = createClient();
-    const [token, setToken] = useState<string | null>(null);
-    const [numericUid, setNumericUid] = useState<number>(0);
+    const [token, setToken] = useState<string | null | undefined>(undefined);
+    const [stringUid, setStringUid] = useState<string>(String(uid));
     const [isStreaming, setIsStreaming] = useState(true);
     const client = useRTCClient();
 
@@ -151,9 +152,9 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 if (data.token !== undefined) {
                     setToken(data.token);
                 } else {
-                    throw new Error("No token returned from API");
+                    setToken(null);
                 }
-                if (data.numericUid) setNumericUid(data.numericUid);
+                if (data.stringUid) setStringUid(data.stringUid);
             } catch (e: any) {
                 console.error("Failed to fetch token", e);
                 if (mounted) setError(e.message || "Failed to load studio token.");
@@ -164,15 +165,11 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     }, [channelName, uid]);
 
     // Join & Publish
-    console.log("CreatorStream: Joining with UID:", uid);
-    // Join always to establish connection? Or only when streaming? 
-    // Usually better to join early, publish later. Let's keep join conditional or always? 
-    // If we join always, we are "in the room". 
-    // Let's stick to: Join always (so we can get remote users/chat), Publish only when isStreaming.
+    console.log("CreatorStream: Joining with UID:", stringUid);
 
     useJoin(
-        { appid: appId, channel: channelName, token: token || null, uid: numericUid || uid },
-        !!token && numericUid > 0
+        { appid: appId, channel: channelName, token: token ?? null, uid: stringUid },
+        token !== undefined
     );
 
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);
@@ -210,6 +207,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     // Removed the "stop tracks when !isStreaming" effect.
 
     const isConnected = useIsConnected();
+    const connectionState = useConnectionState();
 
     if (error) {
         return (
@@ -226,7 +224,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
         );
     }
 
-    if (!token) return (
+    if (token === undefined) return (
         <div className="w-full h-full bg-black rounded-2xl flex items-center justify-center">
             <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" />
@@ -354,11 +352,23 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
             </div>
 
             {/* LIVE Status Badge */}
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
                 {isStreaming && isConnected ? (
                     <span className="px-2 py-1 rounded-md bg-red-600 text-[10px] font-bold text-white shadow-lg animate-pulse">
                         LIVE
                     </span>
+                ) : isStreaming && !isConnected ? (
+                    <>
+                        <span className="px-2 py-1 rounded-md bg-yellow-600/90 text-[10px] font-bold text-white shadow-lg">
+                            {connectionState === 'DISCONNECTED' ? 'CONNECTION FAILED' : connectionState.toUpperCase()}
+                        </span>
+                        {connectionState === 'DISCONNECTED' && (
+                            <div className="bg-red-950/90 text-red-200 text-[10px] p-2 rounded-md border border-red-500/50 max-w-[200px] text-right shadow-xl">
+                                <strong>Broadcast Failed:</strong> Could not connect to Agora Edge Servers.<br/>
+                                Please verify your <code>NEXT_PUBLIC_AGORA_APP_ID</code> and Certificate.
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <span className="px-2 py-1 rounded-md bg-black/60 border border-white/10 text-[10px] text-gray-400">
                         OFFLINE
