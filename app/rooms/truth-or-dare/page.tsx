@@ -26,6 +26,11 @@ import {
     Send, // Added Send icon for tips
     UserPlus, // Added for Invite button
     Wallet, // Added Wallet
+    Bell,
+    Clock,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -188,6 +193,11 @@ function TruthOrDareContent() {
     const [topTruthKing, setTopTruthKing] = useState<{ name: string; avatar: string | null; total: number } | null>(null);
 
     const [fanCount, setFanCount] = useState(0);
+
+    // Incoming activity state
+    const [showIncomingPanel, setShowIncomingPanel] = useState(false);
+    const [incomingItems, setIncomingItems] = useState<any[]>([]);
+    const [unseenCount, setUnseenCount] = useState(0);
 
     // Load Session Data — uses server-side API to bypass RLS
     useEffect(() => {
@@ -630,6 +640,85 @@ function TruthOrDareContent() {
         };
     }, [roomId, sessionId, supabase]);
 
+    /* ── Incoming activity tracking ─── */
+    useEffect(() => {
+        if (!roomId || !userId) return;
+        const fetchIncoming = async () => {
+            let query = supabase
+                .from("truth_dare_requests")
+                .select("*")
+                .eq("room_id", roomId)
+                .eq("fan_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(20);
+            
+            const { data } = await query;
+            if (data) setIncomingItems(data);
+        };
+        fetchIncoming();
+
+        const channel = supabase
+            .channel(`fan-incoming-${roomId}-${userId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "truth_dare_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const item = payload.new as any;
+                if (item.fan_id !== userId) return;
+                setIncomingItems(prev => [item, ...prev].slice(0, 20));
+                if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
+            })
+            .on("postgres_changes", {
+                event: "UPDATE",
+                schema: "public",
+                table: "truth_dare_requests",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const updated = payload.new as any;
+                if (updated.fan_id !== userId) return;
+                setIncomingItems(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, userId, supabase, showIncomingPanel]);
+
+    const toggleIncomingPanel = () => {
+        setShowIncomingPanel(prev => !prev);
+        if (!showIncomingPanel) setUnseenCount(0);
+    };
+
+    const incomingTypeEmoji = (type: string) => {
+        switch (type) {
+            case "system_truth":
+            case "custom_truth": return "💭";
+            case "system_dare":
+            case "custom_dare": return "🔥";
+            case "tip": return "💰";
+            case "reaction": return "✨";
+            default: return "⚡";
+        }
+    };
+
+    const incomingStatusColor = (status: string) => {
+        switch (status) {
+            case "completed": return { bg: "hsla(140,60%,20%,0.3)", border: "hsla(140,70%,45%,0.4)", text: "hsl(140,70%,55%)" };
+            case "rejected": return { bg: "hsla(0,60%,20%,0.3)", border: "hsla(0,70%,55%,0.4)", text: "hsl(0,70%,60%)" };
+            case "pending": return { bg: "hsla(42,60%,20%,0.3)", border: "hsla(42,90%,55%,0.4)", text: "hsl(42,90%,55%)" };
+            default: return { bg: "hsla(280,40%,20%,0.2)", border: "hsla(280,60%,45%,0.25)", text: "hsl(280,20%,65%)" };
+        }
+    };
+
+    const formatTimeAgo = (dateStr?: string) => {
+        if (!dateStr) return "";
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        return `${Math.floor(diff / 3600)}h ago`;
+    };
+
     // Chat send handler
     const handleChatSend = async () => {
         if (!chatInput.trim() || !roomId || !userId || chatSending) return;
@@ -871,14 +960,14 @@ function TruthOrDareContent() {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="h-screen w-screen bg-black text-white flex flex-col overflow-hidden">
             {/* Host Tools: Request Manager (Private Rooms) */}
             {userId && hostId && userId === hostId && sessionInfo?.isPrivate && (
                 <RoomRequestManager roomId={roomId!} />
             )}
 
             {/* Header - Minimal Style matching screenshot */}
-            <div className="relative z-50 pt-4 pb-0 px-6 flex items-center justify-between">
+            <div className="relative z-50 pt-2 pb-1.5 px-3 sm:px-4 lg:px-6 flex items-center justify-between shrink-0">
                 <div className="pointer-events-auto flex items-center gap-4">
                     <button
                         onClick={onBack}
@@ -898,6 +987,117 @@ function TruthOrDareContent() {
                         <UserPlus className="w-4 h-4" />
                         <span className="text-xs font-bold hidden sm:inline">Invite</span>
                     </button>
+
+                    {/* Incoming Activity Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={toggleIncomingPanel}
+                            className={`p-2 rounded-full border transition-all hover:scale-105 backdrop-blur-md flex items-center gap-1.5 px-3 ${
+                                showIncomingPanel 
+                                ? "border-purple-400 bg-purple-500/30 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]" 
+                                : "border-purple-500/30 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300"
+                            }`}
+                        >
+                            <Bell className={`w-4 h-4 ${unseenCount > 0 ? "animate-bounce" : ""}`} />
+                            <span className="text-xs font-bold hidden sm:inline">Incoming</span>
+                            {unseenCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-purple-500 text-white text-[10px] font-black px-1 shadow-[0_0_10px_rgba(168,85,247,0.5)]">
+                                    {unseenCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <AnimatePresence>
+                            {showIncomingPanel && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute top-full right-0 mt-3 w-80 bg-[#16161e]/95 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-[60]"
+                                >
+                                    {/* Panel Header */}
+                                    <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                                <Bell className="w-4 h-4 text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-white">My Activity</h3>
+                                                <p className="text-[10px] text-white/40 uppercase tracking-wider">Latest Requests</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => setShowIncomingPanel(false)}
+                                            className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {/* Panel Body */}
+                                    <div className="max-h-[360px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10">
+                                        {incomingItems.length === 0 ? (
+                                            <div className="py-12 px-4 text-center">
+                                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                                                    <Zap className="w-6 h-6 text-white/10" />
+                                                </div>
+                                                <p className="text-sm text-white/40">No recent activity</p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-1">
+                                                {incomingItems.map((item) => {
+                                                    const emoji = incomingTypeEmoji(item.type);
+                                                    const sc = incomingStatusColor(item.status);
+                                                    return (
+                                                        <div 
+                                                            key={item.id}
+                                                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                            style={{ 
+                                                                background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
+                                                                border: `1px solid ${sc.border}`
+                                                            }}
+                                                        >
+                                                            <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                    <span className="text-xs font-bold text-white truncate">
+                                                                        {item.content || (item.type.includes('truth') ? 'Truth' : item.type.includes('dare') ? 'Dare' : 'Request')}
+                                                                    </span>
+                                                                    <span className="text-[10px] font-black text-purple-400">€{item.amount}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span 
+                                                                        className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
+                                                                        style={{ 
+                                                                            borderColor: sc.border,
+                                                                            color: sc.text,
+                                                                            background: `${sc.border}10`
+                                                                        }}
+                                                                    >
+                                                                        {item.status}
+                                                                    </span>
+                                                                    <span className="text-[9px] text-white/30 flex items-center gap-1">
+                                                                        <Clock className="w-2.5 h-2.5" />
+                                                                        {formatTimeAgo(item.created_at)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Panel Footer */}
+                                    <div className="p-3 bg-white/5 border-t border-white/5 text-center">
+                                        <p className="text-[9px] text-white/30 uppercase tracking-widest">Powered by PlaygroundX</p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
                     <WalletPill />
                 </div>
             </div>
@@ -969,40 +1169,38 @@ function TruthOrDareContent() {
                 }}
             />
 
-            <main className="relative z-10 pt-0 p-4 lg:p-6 lg:pt-2 max-w-[1600px] mx-auto">
-                <div className="flex flex-col lg:flex-row gap-4">
+            <main className="relative z-10 flex-1 min-h-0 p-1.5 sm:p-2 lg:px-3 lg:py-2 w-full">
+                <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 h-full">
                     {/* Left: Stream + Prompts */}
-                    <div className="flex flex-col gap-4 flex-1 lg:flex-[2]">
-                        <div className="grid gap-4 grid-cols-1">
-                            <div
-                                className="relative rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
-                            >
-                                {roomId ? (
-                                    <LiveStreamWrapper
-                                        role="fan"
-                                        appId={APP_ID}
-                                        roomId={roomId}
-                                        uid={userId || 0}
-                                        hostId={hostId || 0}
-                                        hostAvatarUrl={hostAvatarUrl}
-                                        hostName={hostName}
-                                        collabCreators={collabCreators}
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center animate-pulse">
-                                            <div className="w-8 h-8 rounded-full bg-white/5" />
-                                        </div>
-                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Waiting for host...</span>
+                    <div className="flex flex-col gap-2 lg:gap-3 flex-1 lg:flex-[2] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                        <div
+                            className="relative rounded-2xl lg:rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
+                        >
+                            {roomId ? (
+                                <LiveStreamWrapper
+                                    role="fan"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={userId || 0}
+                                    hostId={hostId || 0}
+                                    hostAvatarUrl={hostAvatarUrl}
+                                    hostName={hostName}
+                                    collabCreators={collabCreators}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full border-2 border-white/10 flex items-center justify-center animate-pulse">
+                                        <div className="w-8 h-8 rounded-full bg-white/5" />
                                     </div>
-                                )}
-                            </div>
+                                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Waiting for host...</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Prompt Section - 3 columns as in screenshot */}
-                        <div className="glass-panel p-4 border-white/10 bg-white/5">
+                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 border-white/10 bg-white/5">
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                                 {/* Col 1: System Dares (now on left) */}
                                 <div className="space-y-4">
                                     <h4 className="text-sm font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
@@ -1050,7 +1248,7 @@ function TruthOrDareContent() {
                                 </div>
 
                                 {/* Col 3: Custom Requests */}
-                                <div className="space-y-4">
+                                <div className="space-y-4 col-span-2 sm:col-span-1">
                                     <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-widest pb-2 px-2 bg-purple-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)' }}>Custom Requests</h4>
                                     <div className="flex gap-2">
                                         <button
@@ -1086,7 +1284,7 @@ function TruthOrDareContent() {
                     </div>
 
                     {/* Middle: Kings + Actions + Spinner */}
-                    <div className="flex flex-col gap-4 w-full lg:w-[320px]">
+                    <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[280px] xl:w-[320px] min-h-0 overflow-y-auto shrink-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                         {/* Profiles */}
                         <div className="flex gap-3">
                             <ProfileCard
@@ -1108,7 +1306,7 @@ function TruthOrDareContent() {
                         {/* Action Buttons */}
                         {/* Action Buttons row - strictly matching icons in screenshot */}
                         {/* Reaction Bar */}
-                        <div className="glass-panel p-4 flex justify-between gap-2 border-white/10 bg-black/20">
+                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 flex justify-between gap-1.5 sm:gap-2 border-white/10 bg-black/20">
                             {[
                                 { name: "Kiss", emoji: "💋", price: 10 },
                                 { name: "Love", emoji: "❤️", price: 20 },
@@ -1130,7 +1328,7 @@ function TruthOrDareContent() {
                         </div>
 
                         {/* Tip Creator Section */}
-                        <div className="glass-panel p-4 border-white/10 bg-black/20">
+                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 border-white/10 bg-black/20">
                             <div className="flex items-center gap-2 mb-3">
                                 <Send className="w-4 h-4 text-green-400" />
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Tip Creator</h3>
@@ -1161,8 +1359,8 @@ function TruthOrDareContent() {
                     </div>
 
                     {/* Right: Dedicated Chat Column */}
-                    <div className="flex flex-col gap-4 w-full lg:w-[380px]">
-                        <div className="glass-panel border-white/10 bg-white/5 flex flex-col h-[700px] lg:h-[800px] overflow-hidden">
+                    <div className="flex flex-col w-full lg:w-[280px] xl:w-[340px] 2xl:w-[380px] min-h-0 shrink-0">
+                        <div className="glass-panel border-white/10 bg-white/5 flex flex-col flex-1 min-h-0 overflow-hidden">
                             {/* Chat Header */}
                             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
                                 <h3 className="text-sm font-bold text-white flex items-center gap-2">

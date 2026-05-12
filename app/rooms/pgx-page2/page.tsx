@@ -1026,16 +1026,16 @@ function PgxPage2Inner() {
                         </div>
                         </div>
 
-                        {/* Custom Tip and Private 1-on-1 */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", flexShrink: 0 }}>
+                        {/* Custom Tip and Private 1-on-1 merged into one row */}
+                        <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }}>
                             
                             {/* Custom Tip row */}
-                            <div style={{ ...glassPanel, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }}>
+                            <div style={{ ...glassPanel, flex: 1, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }}>
                                 <div style={{ width: "28px", height: "28px", borderRadius: "9999px", background: "hsla(42,90%,55%,0.15)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid hsla(42,90%,55%,0.3)" }}>
                                     <span style={{ fontSize: "14px" }}>💰</span>
                                 </div>
                                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", background: "hsla(270,40%,15%,0.4)", borderRadius: "0.5rem", padding: "6px 12px", border: "1px solid hsla(280,60%,45%,0.2)" }}>
-                                    <span style={{ color: MUTED, fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Custom Tip</span>
+                                    <span style={{ color: MUTED, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>Custom Tip</span>
                                     <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700, marginLeft: "auto" }}>€</span>
                                     <input
                                         type="number"
@@ -1044,15 +1044,15 @@ function PgxPage2Inner() {
                                         value={tipAmount}
                                         onChange={(e) => setTipAmount(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
-                                        style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "14px", width: "80px", fontWeight: 600 }}
+                                        style={{ background: "transparent", border: "none", outline: "none", color: FG, fontFamily: "'Montserrat', sans-serif", fontSize: "12px", width: "60px", fontWeight: 600 }}
                                     />
                                 </div>
                                 <button
                                     className="pg2-btn-gold"
                                     disabled={!!buying || !tipAmount || Number(tipAmount) <= 0}
-                                    style={{ ...btnGold, flexShrink: 0, padding: "8px 20px", fontSize: "12px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.5 : 1, minWidth: "100px", display: "flex", justifyContent: "center" }}
+                                    style={{ ...btnGold, flexShrink: 0, padding: "8px 16px", fontSize: "11px", opacity: (buying || !tipAmount || Number(tipAmount) <= 0) ? 0.5 : 1, minWidth: "80px", display: "flex", justifyContent: "center" }}
                                     onClick={handleCustomTip}>
-                                    {buying === "tip-custom" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
+                                    {buying === "tip-custom" ? <Loader2 style={{ width: "12px", height: "12px", animation: "spin 1s linear infinite" }} /> : "Tip Now"}
                                 </button>
                             </div>
 
@@ -1060,7 +1060,8 @@ function PgxPage2Inner() {
                             <div
                                 style={{
                                     ...glassPanel,
-                                    padding: "10px 14px",
+                                    flex: 1,
+                                    padding: "8px 14px",
                                     cursor: (buying || privateCall.callState) ? "not-allowed" : "pointer",
                                     opacity: (buying || privateCall.callState) ? 0.7 : 1,
                                     background: "linear-gradient(135deg, hsla(280,80%,30%,0.25), hsla(320,80%,35%,0.2))",
@@ -1071,29 +1072,30 @@ function PgxPage2Inner() {
                                 className="pg2-btn-glow"
                                 onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
                             >
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                     <div style={{
-                                        width: "32px", height: "32px", borderRadius: "9999px",
+                                        width: "28px", height: "28px", borderRadius: "9999px",
                                         background: "linear-gradient(135deg, hsla(320,80%,55%,0.4), hsla(280,80%,55%,0.4))",
                                         display: "flex", alignItems: "center", justifyContent: "center",
                                         border: "1px solid hsla(320,80%,60%,0.3)",
                                         flexShrink: 0,
                                     }}>
-                                        <Phone style={{ width: "14px", height: "14px", color: PINK }} />
+                                        <Phone style={{ width: "12px", height: "12px", color: PINK }} />
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                            <span style={{ fontWeight: 700, color: FG, fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
-                                            <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                            <span style={{ fontWeight: 700, color: FG, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
+                                            <span style={{ color: GOLD, fontWeight: 700, fontSize: "13px" }}>€{PRIVATE_CALL_PRICE}</span>
                                         </div>
-                                        <span style={{ fontSize: "11px", color: MUTED }}>👑 Direct video call with creator</span>
+                                        <span style={{ fontSize: "10px", color: MUTED }}>Direct video call</span>
                                     </div>
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <span style={{ fontSize: "10px", color: "hsla(320,80%,65%,0.6)", fontStyle: "italic", fontWeight: 600 }}>Requires approval</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                    <span style={{ fontSize: "9px", color: "hsla(320,80%,65%,0.6)", fontStyle: "italic", fontWeight: 600 }}>Requires approval</span>
                                 </div>
                             </div>
                         </div>
+
 
                     </div>
 

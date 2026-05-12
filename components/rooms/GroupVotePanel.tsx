@@ -271,7 +271,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
 
     // ─── Idle State: Always show when no active campaigns ───
     const renderIdleState = () => (
-        <div className="w-full bg-gradient-to-br from-gray-900/60 via-gray-950/60 to-gray-900/60 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 relative overflow-hidden">
+        <div className="w-full flex-1 flex flex-col justify-center bg-gradient-to-br from-gray-900/60 via-gray-950/60 to-gray-900/60 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-3xl rounded-full -mr-8 -mt-8 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-20 h-20 bg-pink-500/5 blur-3xl rounded-full -ml-6 -mb-6 pointer-events-none" />
@@ -343,7 +343,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
     );
 
     return (
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-3 flex-1 min-h-0">
             {hasActiveCampaign ? (
                 <>
                     {/* Active Campaign Header */}
