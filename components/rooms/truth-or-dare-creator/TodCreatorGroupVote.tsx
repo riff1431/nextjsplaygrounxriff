@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { Zap, Video } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -25,9 +25,10 @@ const DEFAULT_STATE: GroupVoteState = {
 
 interface TodCreatorGroupVoteProps {
     roomId?: string | null;
+    onStartCall?: (type: 'truth' | 'dare') => void;
 }
 
-const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
+const TodCreatorGroupVote = ({ roomId, onStartCall }: TodCreatorGroupVoteProps) => {
     const supabase = createClient();
     const [state, setState] = useState<GroupVoteState>(DEFAULT_STATE);
     const [loading, setLoading] = useState<{ truth: boolean; dare: boolean }>({ truth: false, dare: false });
@@ -182,13 +183,24 @@ const TodCreatorGroupVote = ({ roomId }: TodCreatorGroupVoteProps) => {
                                 />
                             </div>
                         </div>
-                        <button
-                            onClick={() => handleAction(type, "STOP")}
-                            disabled={isLoading}
-                            className="w-full py-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-[11px] transition-all disabled:opacity-50"
-                        >
-                            {isLoading ? "Stopping..." : "⏹ Stop"}
-                        </button>
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                onClick={() => handleAction(type, "STOP")}
+                                disabled={isLoading}
+                                className="flex-1 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-[11px] transition-all disabled:opacity-50"
+                            >
+                                {isLoading ? "Stopping..." : "⏹ Stop"}
+                            </button>
+                            {campaign.current >= campaign.target && (
+                                <button
+                                    onClick={() => onStartCall?.(type)}
+                                    disabled={isLoading}
+                                    className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition-all shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-1 disabled:opacity-50"
+                                >
+                                    <Video className="w-3.5 h-3.5" /> Call Fans
+                                </button>
+                            )}
+                        </div>
                     </>
                 ) : (
                     <>

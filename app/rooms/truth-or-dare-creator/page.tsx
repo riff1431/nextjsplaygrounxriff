@@ -14,6 +14,8 @@ import TodCreatorStreamViewer from "@/components/rooms/truth-or-dare-creator/Tod
 import TodCreatorRoomEarnings from "@/components/rooms/truth-or-dare-creator/TodCreatorRoomEarnings";
 import TodCreatorRequestPanel from "@/components/rooms/truth-or-dare-creator/TodCreatorRequestPanel";
 import GroupVoteManager from "@/components/rooms/truth-or-dare-creator/TodCreatorGroupVote";
+import GroupCallCreatorModal from "@/components/rooms/truth-or-dare-creator/GroupCallCreatorModal";
+import { useGroupCall } from "@/hooks/useGroupCall";
 
 import CreatorCountdown from "@/app/creator/rooms/truth-or-dare/components/CreatorCountdown";
 import EarningsModal from "@/app/creator/rooms/truth-or-dare/components/EarningsModal";
@@ -184,6 +186,9 @@ function TruthOrDareCreatorContent() {
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
+
+    // Group Call State
+    const groupCall = useGroupCall(roomId, me?.id || null, "creator");
 
     // 1. Initialize Room ID & Load Data
     const searchParams = useSearchParams();
@@ -1681,7 +1686,10 @@ function TruthOrDareCreatorContent() {
                             </div>
                             {/* Group Voting */}
                             <div className="min-h-0 overflow-auto">
-                                <GroupVoteManager roomId={roomId} />
+                                <GroupVoteManager 
+                                    roomId={roomId} 
+                                    onStartCall={(type) => groupCall.initiateCall(type)}
+                                />
                             </div>
                         </div>
                     </div>
@@ -1804,6 +1812,16 @@ function TruthOrDareCreatorContent() {
                 notification={earningsNotification as any}
                 onClose={() => setEarningsNotification(null)}
             />
+
+            {/* Group Call Creator Modal */}
+            {groupCall.callState && (
+                <GroupCallCreatorModal
+                    callState={groupCall.callState}
+                    userId={me.id}
+                    onEndCall={groupCall.endCall}
+                    onDismiss={groupCall.dismiss}
+                />
+            )}
 
             {/* Dashboard View Support for resuming previous logic gracefully if not in studio */}
             {!isInStudio && false && (

@@ -43,6 +43,8 @@ import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVo
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
+import { useGroupCall } from "@/hooks/useGroupCall";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -139,6 +141,9 @@ function TruthOrDareContent() {
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [currentSessionStartedAt, setCurrentSessionStartedAt] = useState<string | null>(null);
     const [collabCreators, setCollabCreators] = useState<any[]>([]);
+
+    // Group Call State
+    const groupCall = useGroupCall(roomId, userId, "fan");
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
@@ -1673,6 +1678,17 @@ function TruthOrDareContent() {
 
             {/* Invitation Popup (receiver side) */}
             <InvitationPopup />
+
+            {/* Group Call Fan Modal */}
+            {groupCall.callState && (
+                <GroupCallFanModal
+                    callState={groupCall.callState}
+                    userId={userId || ""}
+                    onAcceptCall={groupCall.acceptCall}
+                    onDeclineCall={groupCall.declineCall}
+                    onDismiss={groupCall.dismiss}
+                />
+            )}
 
         </div >
     );
