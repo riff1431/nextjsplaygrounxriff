@@ -100,11 +100,16 @@ function GroupCallStreamInner({ appId, channelName, uid, role }: GroupCallStream
                 const data = await res.json();
                 if (!mounted) return;
                 if (data.token !== undefined) setToken(data.token);
+                // Use stringUid > numericUid > original uid as fallback
                 if (data.stringUid) setAgoraUid(data.stringUid);
                 else if (data.numericUid) setAgoraUid(data.numericUid);
+                else setAgoraUid(String(uid)); // fallback: use original uid
             } catch (e) {
                 console.error("Failed to fetch token", e);
-                if (mounted) setToken(null);
+                if (mounted) {
+                    setToken(null);
+                    setAgoraUid(String(uid)); // fallback so join can still proceed
+                }
             }
         }
         if (channelName && uid) fetchToken();

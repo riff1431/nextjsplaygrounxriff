@@ -20,27 +20,38 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
     const supabaseRef = useRef(createClient());
     const supabase = supabaseRef.current;
 
+    // ─── Broadcast Listener ────────────────────────────────────────────────────
+    // IMPORTANT: Channel name MUST match what the server broadcasts to (`room:${roomId}`).
+    // Supabase broadcast is topic-based — clients only receive events from channels they
+    // subscribe to BY NAME. The old collision with gameChannel is resolved because we removed
+    // the group_call_started handler from gameChannel in the fan page.
     useEffect(() => {
         if (!roomId || !userId) return;
 
-        const channel = supabase.channel(`room:${roomId}`)
+        // Must match the server's broadcast topic
+        const channelName = `room:${roomId}`;
+
+        const channel = supabase.channel(channelName)
             .on("broadcast", { event: "group_call_started" }, (payload) => {
                 const d = payload.payload;
-                
+
                 if (role === "creator") {
-                    // Creator auto-joins their own call
-                    setCallState({
-                        callId: d.callId,
-                        roomId: d.roomId,
-                        creatorId: d.creatorId,
-                        agoraChannel: d.agoraChannel,
-                        participantFanIds: d.participantFanIds,
-                        type: d.type,
-                        status: "active"
+                    // Creator: broadcast confirms the call — don't overwrite optimistic state
+                    setCallState(prev => {
+                        if (prev?.status === "active") return prev;
+                        return {
+                            callId: d.callId,
+                            roomId: d.roomId,
+                            creatorId: d.creatorId,
+                            agoraChannel: d.agoraChannel,
+                            participantFanIds: d.participantFanIds,
+                            type: d.type,
+                            status: "active"
+                        };
                     });
                 } else if (role === "fan") {
-                    // If fan is in the participants list, they get invited
-                    if (d.participantFanIds.includes(userId)) {
+                    // Fan: only invited fans get the call
+                    if (Array.isArray(d.participantFanIds) && d.participantFanIds.includes(userId)) {
                         setCallState({
                             callId: d.callId,
                             roomId: d.roomId,
@@ -55,19 +66,71 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
             })
             .on("broadcast", { event: "group_call_ended" }, (payload) => {
                 const d = payload.payload;
-                setCallState(prev => prev && prev.callId === d.callId ? { ...prev, status: "ended" } : prev);
-                setTimeout(() => setCallState(null), 3000);
+                setCallState(prev =>
+                    prev && prev.callId === d.callId
+                        ? { ...prev, status: "ended" }
+                        : prev
+                );
+                // Auto-dismiss after 4 seconds
+                setTimeout(() => setCallState(null), 4000);
             })
-            .subscribe();
+            .subscribe((status) => {
+                if (status === "SUBSCRIBED") {
+                    console.log(`[useGroupCall] ✅ Subscribed as ${role} to ${channelName}`);
+                } else if (status === "CHANNEL_ERROR") {
+                    console.error(`[useGroupCall] ❌ Channel error for ${channelName}`);
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, [roomId, userId, role]);
 
+    // ─── DB Hydration (Late-Join / Reconnect Support) ──────────────────────────
+    // On mount (when userId is known), check if there's an active call in the DB.
+    // This handles fans who refresh the page or join after the broadcast was sent.
+    useEffect(() => {
+        if (!roomId || !userId || role !== "fan") return;
+
+        async function hydrateFromDB() {
+            try {
+                const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/active`);
+                if (!res.ok) return;
+                const { call } = await res.json();
+                if (!call) return;
+
+                // Only set state if this fan is a participant and not already in a call
+                if (
+                    Array.isArray(call.participant_fan_ids) &&
+                    call.participant_fan_ids.includes(userId)
+                ) {
+                    setCallState(prev => {
+                        // Don't overwrite a state that's already been set (e.g. by broadcast)
+                        if (prev) return prev;
+                        return {
+                            callId: call.id,
+                            roomId: call.room_id,
+                            creatorId: call.creator_id,
+                            agoraChannel: call.agora_channel,
+                            participantFanIds: call.participant_fan_ids,
+                            type: call.type,
+                            status: "invited"
+                        };
+                    });
+                }
+            } catch (err) {
+                console.error("[useGroupCall] DB hydration error:", err);
+            }
+        }
+
+        hydrateFromDB();
+    }, [roomId, userId, role]);
+
+    // ─── Creator: Initiate Call ────────────────────────────────────────────────
     const initiateCall = useCallback(async (type: 'truth' | 'dare') => {
         if (!roomId) return null;
-        // Guard: prevent initiating a second call while one is already active
+        // Guard: prevent double-initiation
         if (callState && callState.status === "active") {
             toast.warning("A group call is already in progress.");
             return null;
@@ -88,8 +151,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
                 if (data.participantFanIds.length === 0) {
                     toast.warning("No eligible fans found for this campaign.");
                 }
-                // State will be set by the broadcast listener to ensure sync, 
-                // but we can also set it immediately for perceived performance
+                // Set state optimistically — broadcast will also arrive and confirm
                 setCallState({
                     callId: data.callId,
                     roomId: roomId,
@@ -99,7 +161,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
                     type,
                     status: "active"
                 });
-                toast.success(`Group ${type} call started!`);
+                toast.success(`Group ${type} call started! ${data.participantFanIds.length} fans invited.`);
                 return data;
             }
             return null;
@@ -112,17 +174,22 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         }
     }, [roomId, userId, callState]);
 
+    // ─── Fan: Accept Call ──────────────────────────────────────────────────────
     const acceptCall = useCallback(() => {
-        if (!callState) return;
         setCallState(prev => prev ? { ...prev, status: "active" } : null);
-    }, [callState]);
+    }, []);
 
+    // ─── Fan: Decline Call ─────────────────────────────────────────────────────
     const declineCall = useCallback(() => {
         setCallState(null);
     }, []);
 
+    // ─── Creator: End Call ─────────────────────────────────────────────────────
     const endCall = useCallback(async () => {
         if (!roomId || !callState) return;
+        // Optimistically mark as ended locally
+        setCallState(prev => prev ? { ...prev, status: "ended" } : null);
+        setTimeout(() => setCallState(null), 4000);
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/${callState.callId}`, {
                 method: "PATCH",
@@ -139,6 +206,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         }
     }, [roomId, callState]);
 
+    // ─── Dismiss (after ended state shown) ────────────────────────────────────
     const dismiss = useCallback(() => {
         setCallState(null);
     }, []);

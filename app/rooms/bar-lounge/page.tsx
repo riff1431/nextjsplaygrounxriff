@@ -334,7 +334,7 @@ export default function BarLoungeRoom() {
                                 <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: "#ef4444" }} />
                                 <span style={{ fontSize: "14px", fontWeight: 700, color: `${C.gold}b3`, textTransform: "uppercase", letterSpacing: "0.1em" }}>{activeSessions.length} Live {activeSessions.length === 1 ? 'Session' : 'Sessions'}</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {activeSessions.map((session: any, i: number) => {
                                     const creatorName = session.profiles?.full_name || session.profiles?.handle || "Creator";
                                     return (
@@ -487,7 +487,6 @@ export default function BarLoungeRoom() {
                                                     color: C.gold,
                                                     textShadow: `0 0 10px hsla(42,90%,55%,0.3)`,
                                                 }}>
-                                                    <DollarSign style={{ width: 11, height: 11 }} />
                                                     <span>€{(session as any).entry_fee || ENTRY_FEE}</span>
                                                 </div>
                                             </div>

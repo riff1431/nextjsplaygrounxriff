@@ -145,10 +145,66 @@ function TruthOrDareContent() {
 
     // Group Call State
     const groupCall = useGroupCall(roomId, userId, "fan");
-    const groupCallRef = useRef(groupCall);
+
+    // Reactive toast: fires when hook transitions to 'invited' (avoids stale closure)
+    // This replaces the old inline handler inside gameChannel that had a null userId bug.
+    const prevCallStatus = useRef<string | null>(null);
     useEffect(() => {
-        groupCallRef.current = groupCall;
-    }, [groupCall]);
+        const status = groupCall.callState?.status ?? null;
+        const prevStatus = prevCallStatus.current;
+        prevCallStatus.current = status;
+
+        // Only show toast on fresh invitation (not on re-renders)
+        if (status === "invited" && prevStatus !== "invited") {
+            const callType = groupCall.callState?.type || "truth";
+            const toastId = toast.custom((t) => (
+                <div className="bg-[#1a1a2e]/95 border border-cyan-500/30 backdrop-blur-xl rounded-2xl p-4 shadow-2xl flex items-center gap-4 w-full max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center animate-pulse">
+                        <Video className="w-6 h-6 text-cyan-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-white text-sm">Group Call Unlocked!</h4>
+                        <p className="text-xs text-white/60 truncate">Join the {callType} video session now.</p>
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                onClick={() => {
+                                    groupCall.acceptCall();
+                                    toast.dismiss(t);
+                                }}
+                                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all"
+                            >
+                                Join Call
+                            </button>
+                            <button
+                                onClick={() => {
+                                    groupCall.declineCall();
+                                    toast.dismiss(t);
+                                }}
+                                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 text-[10px] font-bold rounded-lg transition-all"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ), { duration: 15000 });
+
+            // Add to Incoming Panel
+            const callId = groupCall.callState?.callId || "";
+            const virtualItem = {
+                id: `group-call-${callId}`,
+                type: "group_call",
+                status: "calling",
+                content: `Group ${callType.toUpperCase()} Call`,
+                amount: 0,
+                created_at: new Date().toISOString()
+            };
+            setIncomingItems(prev => [virtualItem, ...prev].slice(0, 20));
+            setUnseenCount(prev => prev + 1);
+
+            return () => { toast.dismiss(toastId as any); };
+        }
+    }, [groupCall.callState?.status]);
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
@@ -445,53 +501,10 @@ function TruthOrDareContent() {
                     style: { background: '#1a1a2e', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }
                 });
             })
-            .on('broadcast', { event: 'group_call_started' }, (payload) => {
-                const d = payload.payload;
-                if (d.participantFanIds.includes(userId)) {
-                    // Show Toaster
-                    toast.custom((t) => (
-                        <div className="bg-[#1a1a2e]/95 border border-cyan-500/30 backdrop-blur-xl rounded-2xl p-4 shadow-2xl flex items-center gap-4 w-full max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
-                            <div className="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center animate-pulse">
-                                <Video className="w-6 h-6 text-cyan-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-white text-sm">Group Call Unlocked!</h4>
-                                <p className="text-xs text-white/60 truncate">Join the {d.type} video session now.</p>
-                                <div className="flex gap-2 mt-2">
-                                    <button 
-                                        onClick={() => {
-                                            groupCallRef.current.acceptCall();
-                                            toast.dismiss(t);
-                                        }}
-                                        className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all"
-                                    >
-                                        Accept
-                                    </button>
-                                    <button 
-                                        onClick={() => toast.dismiss(t)}
-                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 text-[10px] font-bold rounded-lg transition-all"
-                                    >
-                                        Dismiss
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ), { duration: 10000 });
-
-                    // Add to Incoming Panel (Virtual Item)
-                    const virtualItem = {
-                        id: `group-call-${d.callId}`,
-                        type: "group_call",
-                        status: "calling",
-                        content: `Group ${d.type.toUpperCase()} Call`,
-                        amount: 0,
-                        created_at: new Date().toISOString()
-                    };
-                    setIncomingItems(prev => [virtualItem, ...prev].slice(0, 20));
-                    if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
-                }
-            })
             .subscribe();
+            // NOTE: group_call_started is handled by the useGroupCall hook
+            // (via its own dedicated channel) + a reactive useEffect above.
+            // The old inline handler here had a stale userId=null closure bug.
 
         // Presence tracking - announce this user's presence to the room
         // Only track if we have valid user data
@@ -1143,7 +1156,7 @@ function TruthOrDareContent() {
                                                                     <button 
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            groupCallRef.current.acceptCall();
+                                                                            groupCall.acceptCall();
                                                                             setShowIncomingPanel(false);
                                                                         }}
                                                                         className="mt-2 w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(6,182,212,0.3)]"

@@ -23,7 +23,15 @@ export async function PATCH(
     }
 
     try {
-        // Broadcast end event
+        // 2. Mark call as ended in DB (allows fans to know the call is over on reconnect)
+        await supabase
+            .from('group_calls')
+            .update({ status: 'ended', ended_at: new Date().toISOString() })
+            .eq('id', callId)
+            .eq('room_id', roomId)
+            .eq('creator_id', user.id);
+
+        // 3. Broadcast end event to all connected clients
         await supabase.channel(`room:${roomId}`).send({
             type: 'broadcast',
             event: 'group_call_ended',

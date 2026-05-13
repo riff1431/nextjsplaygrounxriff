@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Phone } from "lucide-react";
 
@@ -19,7 +19,7 @@ import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCa
 import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 
 
-const CreatorBarLounge = () => {
+const CreatorBarLoungeInner = () => {
     const router = useRouter();
     const { user, isLoading: authLoading } = useAuth();
     const searchParams = useSearchParams();
@@ -218,4 +218,14 @@ const CreatorBarLounge = () => {
     );
 };
 
-export default CreatorBarLounge;
+export default function CreatorBarLounge() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(270, 40%, 6%)" }}>
+                <div className="w-8 h-8 border-3 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+            </div>
+        }>
+            <CreatorBarLoungeInner />
+        </Suspense>
+    );
+}

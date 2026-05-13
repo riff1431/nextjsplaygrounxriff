@@ -250,7 +250,7 @@ function PgxPage2Inner() {
                 if (mounted && cfg) {
                     if (cfg.menu_items?.length) setDrinks(cfg.menu_items);
                     if (cfg.vip_price) setVipPrice(cfg.vip_price);
-                    if (cfg.custom_requests?.length) setCustomRequestShortcuts(cfg.custom_requests);
+                    if (cfg.custom_requests?.length) setCustomRequestShortcuts(cfg.custom_requests.filter((r: string) => r.toLowerCase() !== "say my name"));
                 }
             } finally { if (mounted) setIsLoading(false); }
         })();
@@ -303,7 +303,7 @@ function PgxPage2Inner() {
     const handleTip = (amount: number) => doPurchase("tip", `€${amount} Tip`, amount, `tip-${amount}`);
     const handleDrinkTip = (drink: any) => {
         const id = drink.id || drink.name;
-        doPurchase("tip", drink.name, drink.price, id);
+        doPurchase("drink", drink.name, drink.price, id);
     };
     const handleCustomTip = () => {
         const a = Number(tipAmount);
@@ -1110,7 +1110,7 @@ function PgxPage2Inner() {
 
 
                     {/* ═══ RIGHT: Lounge Chat ═══ */}
-                    <div style={{ paddingBottom: "112px", padding: "16px", display: "flex", flexDirection: "column", height: "100%", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
+                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "hidden", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.25rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Lounge Chat</h2>
                             <span style={liveBadge}>

@@ -25,7 +25,14 @@ export async function POST(
     }
 
     try {
-        // 3. Get active session to filter requests
+        // 3. End any previous active calls for this room (cleanup)
+        await supabase
+            .from('group_calls')
+            .update({ status: 'ended', ended_at: new Date().toISOString() })
+            .eq('room_id', roomId)
+            .eq('status', 'active');
+
+        // 4. Get active session to filter requests
         const { data: activeSession } = await supabase
             .from('truth_dare_sessions')
             .select('started_at')
@@ -46,19 +53,36 @@ export async function POST(
         }
 
         const { data: requests, error: reqError } = await reqQuery;
-
         if (reqError) throw reqError;
 
         // Get unique fan IDs
         const fanIds = Array.from(new Set(requests?.map(r => r.fan_id) || []));
         
-        console.log(`[GroupCallAPI] Starting call for ${type}. Active session started at: ${activeSession?.started_at}. Found ${fanIds.length} unique participants:`, fanIds);
+        console.log(`[GroupCallAPI] Starting ${type} call. Session started: ${activeSession?.started_at}. Participants: ${fanIds.length}`, fanIds);
 
-        // 4. Generate Call details
+        // 5. Generate Call details
         const callId = uuidv4();
         const agoraChannel = `group-call-${roomId}-${type}-${Date.now()}`;
 
-        // 5. Broadcast to the room
+        // 6. Persist call to DB (enables late-join + reconnection)
+        const { error: insertError } = await supabase
+            .from('group_calls')
+            .insert({
+                id: callId,
+                room_id: roomId,
+                creator_id: user.id,
+                agora_channel: agoraChannel,
+                participant_fan_ids: fanIds,
+                type,
+                status: 'active',
+            });
+
+        if (insertError) {
+            console.error('[GroupCallAPI] Failed to persist call:', insertError);
+            // Non-fatal: still proceed with broadcast
+        }
+
+        // 7. Broadcast to all connected fans in this room
         console.log(`[GroupCallAPI] Broadcasting group_call_started to room:${roomId}`);
         await supabase.channel(`room:${roomId}`).send({
             type: 'broadcast',

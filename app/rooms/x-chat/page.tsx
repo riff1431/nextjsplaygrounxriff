@@ -43,7 +43,6 @@ const stickersRow2 = [
 const visibilityBoosts = [
     { label: "Pin my name to top (1 min)", price: 25, type: "pin", icon: Pin, colorClass: "icon-pink" },
     { label: "Voice note reply",           price: 35, type: "voice_note_boost", icon: Mic, colorClass: "icon-blue" },
-    { label: "Say my name + Shoutout",     price: 15, type: "shoutout", icon: Megaphone, colorClass: "icon-purple" },
 ];
 const directAccess = [
     { label: "Private question",       price: 20, type: "private_question", icon: HelpCircle, colorClass: "icon-teal" },
