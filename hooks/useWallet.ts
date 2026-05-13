@@ -77,22 +77,32 @@ export function useWallet() {
                 .limit(500);
 
             if (txs && txs.length > 0 && walletData) {
-                let incoming = 0;
-                let outgoing = 0;
-                txs.forEach((tx: any) => {
-                    const amt = Number(tx.amount);
-                    if (tx.type === "deposit" || tx.type === "credit") {
-                        incoming += amt;
-                    } else if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer") {
-                        outgoing += amt;
-                    }
-                });
-                const computed = Math.max(0, incoming - outgoing);
-                walletData = { ...walletData, balance: computed };
+                // Check if any admin adjustments exist — if so, trust the DB wallet balance directly
+                const hasAdminAdjustment = txs.some((tx: any) =>
+                    tx.type === "admin_credit" || tx.type === "admin_debit"
+                );
 
-                // Sync DB if drifted
-                if (Math.abs(Number(data?.balance ?? 0) - computed) > 0.005) {
-                    supabase.from("wallets").update({ balance: computed }).eq("user_id", user.id).then(() => {});
+                if (hasAdminAdjustment) {
+                    // Admin set an absolute balance — use it directly, no recomputation
+                    // The walletData.balance is already the correct value from the DB
+                } else {
+                    let incoming = 0;
+                    let outgoing = 0;
+                    txs.forEach((tx: any) => {
+                        const amt = Number(tx.amount);
+                        if (tx.type === "deposit" || tx.type === "credit") {
+                            incoming += amt;
+                        } else if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer") {
+                            outgoing += amt;
+                        }
+                    });
+                    const computed = Math.max(0, incoming - outgoing);
+                    walletData = { ...walletData, balance: computed };
+
+                    // Sync DB if drifted
+                    if (Math.abs(Number(data?.balance ?? 0) - computed) > 0.005) {
+                        supabase.from("wallets").update({ balance: computed }).eq("user_id", user.id).then(() => {});
+                    }
                 }
             }
 

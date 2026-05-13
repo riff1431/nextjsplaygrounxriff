@@ -162,17 +162,28 @@ export default function UserManagement() {
         setIsSaving(true);
 
         try {
-            const { error } = await supabase.rpc('admin_update_user_details', {
-                target_user_id: editingUser.id,
-                new_balance: parseFloat(walletBalance),
-                new_account_type_id: selectedAccountType || null,
-                new_creator_level_id: selectedCreatorLevel || null,
-                new_kyc_status: selectedKycStatus || null
+            const res = await fetch('/api/admin/users/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: editingUser.id,
+                    walletBalance: walletBalance,
+                    accountTypeId: selectedAccountType || null,
+                    creatorLevelId: selectedCreatorLevel || null,
+                    kycStatus: selectedKycStatus || null,
+                }),
             });
 
-            if (error) throw error;
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Update failed');
 
             toast.success("User updated successfully");
+            await logAction('ADMIN_UPDATE_USER', editingUser.id, {
+                wallet: walletBalance,
+                accountType: selectedAccountType,
+                creatorLevel: selectedCreatorLevel,
+                kycStatus: selectedKycStatus,
+            });
             setEditingUser(null);
 
             // Refresh local state

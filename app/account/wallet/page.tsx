@@ -119,16 +119,21 @@ export default function WalletPage() {
                 let spent = 0;
                 let deposited = 0;
                 let credited = 0;
+                let adminCredits = 0;
+                let adminDebits = 0;
                 let pending = 0;
 
                 txs.forEach((tx: any) => {
                     if (tx.status === "completed") {
-                        if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer") {
-                            spent += Number(tx.amount);
+                        if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer" || tx.type === "admin_debit") {
+                            if (tx.type === "admin_debit") adminDebits += Number(tx.amount);
+                            else spent += Number(tx.amount);
                         } else if (tx.type === "deposit") {
                             deposited += Number(tx.amount);
                         } else if (tx.type === "credit") {
                             credited += Number(tx.amount);
+                        } else if (tx.type === "admin_credit") {
+                            adminCredits += Number(tx.amount);
                         }
                     }
                     if (tx.status === "pending") {
@@ -137,20 +142,30 @@ export default function WalletPage() {
                 });
 
                 // True available balance = all money in − all money out
-                const computedBalance = Math.max(0, deposited + credited - spent);
+                // Admin sets an absolute balance; trust the wallets table if an admin_credit/debit exists
+                const hasAdminAdjustment = txs.some((tx: any) =>
+                    (tx.type === "admin_credit" || tx.type === "admin_debit") && tx.status === "completed"
+                );
 
-                setTotalSpent(spent);
-                setTotalDeposited(deposited);
+                let computedBalance: number;
+                if (hasAdminAdjustment) {
+                    // Trust the wallet row — admin set it directly
+                    computedBalance = Number(wallet?.balance ?? 0);
+                } else {
+                    computedBalance = Math.max(0, deposited + credited - spent);
+                    // Sync wallets.balance if it drifted from reality
+                    if (wallet && Math.abs(Number(wallet.balance) - computedBalance) > 0.005) {
+                        await supabase
+                            .from("wallets")
+                            .update({ balance: computedBalance })
+                            .eq("id", wallet.id);
+                    }
+                }
+
+                setTotalSpent(spent + adminDebits);
+                setTotalDeposited(deposited + adminCredits);
                 setPendingAmount(pending);
                 setBalance(computedBalance);
-
-                // Sync wallets.balance if it drifted from reality
-                if (wallet && Math.abs(Number(wallet.balance) - computedBalance) > 0.005) {
-                    await supabase
-                        .from("wallets")
-                        .update({ balance: computedBalance })
-                        .eq("id", wallet.id);
-                }
             } else {
                 // No transactions — trust wallets.balance
                 setBalance(Number(wallet?.balance ?? 0));
@@ -485,11 +500,19 @@ export default function WalletPage() {
                             </div>
                         ) : (
                             displayedTx.map(tx => {
-                                const isIncoming = tx.type === "deposit" || tx.type === "credit";
+                                const isIncoming = [
+                                    "deposit", "credit", "admin_credit"
+                                ].includes(tx.type);
+                                const isAdminAction = tx.type === "admin_credit" || tx.type === "admin_debit";
                                 const txIcon = isIncoming
                                     ? <ArrowDownLeft className="w-4 h-4" />
                                     : <ArrowUpRight className="w-4 h-4" />;
-                                const txColor = isIncoming ? "bg-green-500/15 text-green-400" : "bg-pink-500/15 text-pink-400";
+                                const txColor = isIncoming
+                                    ? (isAdminAction ? "bg-blue-500/15 text-blue-400" : "bg-green-500/15 text-green-400")
+                                    : (isAdminAction ? "bg-amber-500/15 text-amber-400" : "bg-pink-500/15 text-pink-400");
+                                const amountColor = isIncoming
+                                    ? (isAdminAction ? "text-blue-400" : "text-green-400")
+                                    : "text-white";
 
                                 return (
                                     <NeonCard key={tx.id} className="p-4 flex items-center justify-between border-white/[0.05] hover:border-pink-500/20 transition group">
@@ -498,8 +521,15 @@ export default function WalletPage() {
                                                 {txIcon}
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="text-sm font-medium text-white truncate">
-                                                    {tx.description || (isIncoming ? "Deposit" : "Payment")}
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-white truncate">
+                                                        {tx.description || (isIncoming ? "Deposit" : "Payment")}
+                                                    </span>
+                                                    {isAdminAction && (
+                                                        <span className="shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-blue-400 font-bold">
+                                                            Admin
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className="text-xs text-gray-500">
@@ -509,7 +539,7 @@ export default function WalletPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={`text-sm font-bold shrink-0 ${isIncoming ? "text-green-400" : "text-white"}`}>
+                                        <div className={`text-sm font-bold shrink-0 ${amountColor}`}>
                                             {isIncoming ? "+" : "−"}{fmt(Number(tx.amount))}
                                         </div>
                                     </NeonCard>
