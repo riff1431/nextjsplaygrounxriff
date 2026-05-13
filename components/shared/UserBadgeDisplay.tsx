@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 // Module level cache to avoid duplicate fetches for the same user
 const userBadgeCache: Record<string, any> = {};
 
-export default function UserBadgeDisplay({ userId }: { userId: string }) {
+export default function UserBadgeDisplay({ userId, exclude = [] }: { userId: string, exclude?: string[] }) {
     const [badges, setBadges] = useState(userBadgeCache[userId] || null);
 
     useEffect(() => {
@@ -40,11 +40,17 @@ export default function UserBadgeDisplay({ userId }: { userId: string }) {
 
     if (!badges) return null;
 
+    const shouldShow = (badgeData: any) => {
+        if (!badgeData || !badgeData.display_name) return false;
+        const name = badgeData.display_name.toLowerCase();
+        return !exclude.some(ex => name.includes(ex.toLowerCase()));
+    };
+
     return (
         <UserBadgesInline
-            accountType={badges.accountType}
-            membership={badges.membership}
-            level={badges.level}
+            accountType={shouldShow(badges.accountType) ? badges.accountType : null}
+            membership={shouldShow(badges.membership) ? badges.membership : null}
+            level={shouldShow(badges.level) ? badges.level : null}
         />
     );
 }

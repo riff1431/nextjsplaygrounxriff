@@ -1972,7 +1972,7 @@ body {
   width: 100%;
   aspect-ratio: 16 / 9;
   /* cap — canvas can never exceed 40% of viewport height */
-  max-height: 55vh;
+  max-height: 40vh;
 }
 
 .xchat-canvas-placeholder {
@@ -2100,7 +2100,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 0.4rem 0.5rem;
+  padding: 0.5rem 0.6rem;
 }
 
 .xchat-reaction-divider {
@@ -2122,9 +2122,9 @@ body {
 
 /* chip row */
 .xchat-chip-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 /* individual chip — compact size */
@@ -2182,8 +2182,8 @@ body {
 .xchat-boost-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.5rem 0.6rem;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
   border-radius: 0.75rem;
   background: linear-gradient(135deg, rgba(20, 20, 20, 0.6), rgba(0, 0, 0, 0.8));
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2216,7 +2216,7 @@ body {
 .xchat-boost-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
   flex: 1;
 }
 
@@ -2224,8 +2224,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.4rem;
-  padding: 0.4rem 0.6rem;
+  gap: 0.5rem;
+  padding: 0.6rem 0.7rem;
   border-radius: 0.5rem;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2411,6 +2411,6 @@ body {
   .xchat-chip-emoji { font-size: 0.95rem; }
   .xchat-chip-label { font-size: 0.7rem; }
   .xchat-chip-price { font-size: 0.7rem; }
-  .xchat-canvas  { max-height: 60vh; }
+  .xchat-canvas  { max-height: 42vh; }
 }
 

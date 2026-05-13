@@ -24,15 +24,19 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 type RequestStatus = "none" | "pending" | "accepted" | "declined";
 
 /* ─── monetisation data ──────────────────────────────────── */
-const reactions = [
+const reactionsRow1 = [
     { emoji: "🔥", label: "Boost", price: 2,  type: "reaction_boost" },
     { emoji: "💎", label: "Shine", price: 5,  type: "reaction_shine" },
+];
+const stickersRow1 = [
+    { emoji: "💋", label: "Kiss",  price: 5,  type: "sticker_kiss" },
+    { emoji: "😈", label: "Tease", price: 10, type: "sticker_tease" },
+];
+const reactionsRow2 = [
     { emoji: "👑", label: "Crown", price: 10, type: "reaction_crown" },
     { emoji: "⚡", label: "Pulse", price: 15, type: "reaction_pulse" },
 ];
-const stickers = [
-    { emoji: "💋", label: "Kiss",  price: 5,  type: "sticker_kiss" },
-    { emoji: "😈", label: "Tease", price: 10, type: "sticker_tease" },
+const stickersRow2 = [
     { emoji: "🌹", label: "Rose",  price: 25, type: "sticker_rose" },
     { emoji: "🎁", label: "Gift",  price: 50, type: "sticker_gift" },
 ];
@@ -258,7 +262,7 @@ const XChatRoom = () => {
     const handleReactionSend = async () => {
         if (!pending || !roomId) return;
         try {
-            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "choose_topic" || pending.reactionType === "private_question" || pending.reactionType === "mini_chat" || pending.reactionType === "shoutout") {
+            if (pending.reactionType === "voice_note_boost" || pending.reactionType === "choose_topic" || pending.reactionType === "private_question" || pending.reactionType === "mini_chat") {
                 const r = await fetch(`/api/v1/rooms/${roomId}/x-chat/request`, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: `${pending.label}: ${voicePrompt}`, amount: pending.price, session_id: urlSessionId }),
@@ -446,12 +450,12 @@ const XChatRoom = () => {
                                 <div className="xchat-canvas-label">canvas area</div>
                             </div>
 
-                            {/* PAID REACTIONS & STICKERS */}
+                            {/* PAID REACTIONS – ROW 1 */}
                             <div className="xchat-reaction-card">
                                 <div className="xchat-reaction-half xchat-reaction-half--left">
                                     <span className="xchat-section-label">Paid Reactions</span>
                                     <div className="xchat-chip-row">
-                                        {reactions.map(r => (
+                                        {reactionsRow1.map(r => (
                                             <ReactionChip key={r.type} {...r}
                                                 onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} />
                                         ))}
@@ -461,7 +465,28 @@ const XChatRoom = () => {
                                 <div className="xchat-reaction-half xchat-reaction-half--right">
                                     <span className="xchat-section-label">Paid Stickers</span>
                                     <div className="xchat-chip-row">
-                                        {stickers.map(s => (
+                                        {stickersRow1.map(s => (
+                                            <ReactionChip key={s.type} {...s}
+                                                onClick={() => setPending({ label: s.label, price: s.price, reactionType: s.type, emoji: s.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PAID REACTIONS – ROW 2 (paid reaction section) */}
+                            <div className="xchat-reaction-card">
+                                <div className="xchat-reaction-half xchat-reaction-half--left">
+                                    <div className="xchat-chip-row">
+                                        {reactionsRow2.map(r => (
+                                            <ReactionChip key={r.type} {...r}
+                                                onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="xchat-reaction-divider" />
+                                <div className="xchat-reaction-half xchat-reaction-half--right">
+                                    <div className="xchat-chip-row">
+                                        {stickersRow2.map(s => (
                                             <ReactionChip key={s.type} {...s}
                                                 onClick={() => setPending({ label: s.label, price: s.price, reactionType: s.type, emoji: s.emoji })} />
                                         ))}
@@ -515,7 +540,7 @@ const XChatRoom = () => {
                     isOpen={!!pending}
                     onClose={() => { setPending(null); setVoicePrompt(""); }}
                     title={
-                        ["voice_note_boost", "choose_topic", "private_question", "mini_chat", "shoutout"].includes(pending?.reactionType || "") 
+                        ["voice_note_boost", "choose_topic", "private_question", "mini_chat"].includes(pending?.reactionType || "") 
                             ? `Request ${pending?.label}` 
                             : "Confirm Purchase"
                     }
@@ -523,14 +548,13 @@ const XChatRoom = () => {
                     amount={pending?.price || 0}
                     walletBalance={balance}
                     onConfirm={handleReactionSend}
-                    requireInput={["voice_note_boost", "choose_topic", "private_question", "mini_chat", "shoutout"].includes(pending?.reactionType || "")}
+                    requireInput={["voice_note_boost", "choose_topic", "private_question", "mini_chat"].includes(pending?.reactionType || "")}
                     allowInput={true}
                     inputPlaceholder={
                         pending?.reactionType === "voice_note_boost" ? "What should the voice note be about?" : 
                         pending?.reactionType === "choose_topic" ? "What topic do you want to choose?" : 
                         pending?.reactionType === "private_question" ? "Type your private question here..." :
                         pending?.reactionType === "mini_chat" ? "What do you want the creator to wear?" :
-                        pending?.reactionType === "shoutout" ? "What name should the creator say?" :
                         "Add an optional message..."
                     }
                     inputValue={voicePrompt}

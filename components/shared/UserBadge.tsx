@@ -55,23 +55,15 @@ export default function UserBadge({
 
     if (isInline) {
         return (
-            <span
-                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${className}`}
-                style={{
-                    backgroundColor: `${badgeData.badge_color}20`,
-                    color: badgeData.badge_color,
-                    border: `1px solid ${badgeData.badge_color}40`,
-                }}
-                title={badgeData.display_name}
-            >
+            <span className={`inline-flex items-center justify-center ${className}`}>
                 {badgeData.badge_icon_url ? (
                     <img
                         src={badgeData.badge_icon_url}
                         alt=""
-                        className="w-3 h-3"
+                        className="w-4 h-4 object-contain"
                     />
                 ) : (
-                    <span className="text-[9px]">{getIcon()}</span>
+                    <span className="text-[12px] leading-none drop-shadow-md" style={{ color: badgeData.badge_color }}>{getIcon()}</span>
                 )}
             </span>
         );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
@@ -82,6 +82,31 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, activeFilter]);
+
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    // Update time every 10 seconds to refresh the pinned message timer
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const activePinMessage = React.useMemo(() => {
+        // Search backwards to find the most recent pin message
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            if (m.status === "Pinned" && m.body.includes("📌")) {
+                const pinTime = new Date(m.created_at).getTime();
+                // Check if it's within 1 minute
+                if (currentTime - pinTime <= 60 * 1000) {
+                    return m;
+                }
+                // If the most recent one is expired, no older ones are active
+                break;
+            }
+        }
+        return null;
+    }, [messages, currentTime]);
 
     const handleSend = async () => {
         if (!message.trim() || !roomId) return;
@@ -176,8 +201,28 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 </div>
             </div>
 
+            {/* Pinned User Banner */}
+            {activePinMessage && (
+                <div className="mx-3 mt-2 p-2 rounded-lg border border-pink-500/50 bg-pink-500/10 shadow-[0_0_15px_rgba(236,72,153,0.15)] shrink-0 flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">📌</span>
+                        <span className="font-bold text-[11px] text-pink-400 uppercase tracking-wider">Pinned to Top</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground font-semibold">
+                            {Math.ceil((60 * 1000 - (currentTime - new Date(activePinMessage.created_at).getTime())) / 60000)}m left
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-base shrink-0">👑</span>
+                        <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                            <span className="font-bold text-sm text-white">{activePinMessage.sender_name}</span>
+                            <span className="text-xs text-white/70 ml-1.5">is the life of the party!</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-3 py-2 space-y-2 pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 scrollbar-thin px-3 py-2 space-y-2 pgx-chat-messages hide-scrollbar mt-1">
                 {filteredMessages.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-4">No messages yet</p>
                 )}
