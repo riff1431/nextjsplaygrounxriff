@@ -56,7 +56,7 @@ export default function UserBadge({
     if (isInline) {
         return (
             <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${className}`}
+                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${className}`}
                 style={{
                     backgroundColor: `${badgeData.badge_color}20`,
                     color: badgeData.badge_color,
@@ -73,7 +73,6 @@ export default function UserBadge({
                 ) : (
                     <span className="text-[9px]">{getIcon()}</span>
                 )}
-                <span>{badgeData.display_name}</span>
             </span>
         );
     }

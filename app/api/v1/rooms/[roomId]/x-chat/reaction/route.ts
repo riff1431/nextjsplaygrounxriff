@@ -68,20 +68,25 @@ export async function POST(
     const EMOJI_MAP: Record<string, string> = {
         boost: "🔥", shine: "💎", crown: "👑", pulse: "⚡",
         kiss: "💋", tease: "😈", rose: "🌹", gift: "🎁",
+        pin: "📌",
     };
     const emoji = EMOJI_MAP[cleanType] || "";
-    
-    const msgContent = message && message.trim().length > 0 ? message.trim() : `Sent ${cleanType} reaction`;
-    const finalBody = emoji ? `${emoji} ${msgContent}` : msgContent;
+
+    // Pin type gets a special system-style message for banner detection
+    const isPin = cleanType === "pin";
+    const msgContent = isPin
+        ? `📌 ${fanName} pinned their name to the top!`
+        : (message && message.trim().length > 0 ? message.trim() : `Sent ${cleanType} reaction`);
+    const finalBody = isPin ? msgContent : (emoji ? `${emoji} ${msgContent}` : msgContent);
 
     const chatPayload: any = {
         room_id: roomId,
         sender_id: user.id,
         sender_name: fanName,
         body: finalBody,
-        lane: amount >= 50 ? "Priority" : "Paid",
+        lane: isPin ? "Priority" : (amount >= 50 ? "Priority" : "Paid"),
         paid_amount: amount,
-        status: "Queued"
+        status: isPin ? "Pinned" : "Queued"
     };
     if (session_id) chatPayload.session_id = session_id;
 

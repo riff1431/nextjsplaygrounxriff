@@ -1560,6 +1560,7 @@ function TruthOrDareCreatorContent() {
                                             creatorName={me.name}
                                             viewerCount={fans.length}
                                             onRemoteUsersChange={handleRemoteUsersChange}
+                                            isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
                                         />
                                     ) : (
                                         /* Collab creator: show host's remote stream in Slot 1 */

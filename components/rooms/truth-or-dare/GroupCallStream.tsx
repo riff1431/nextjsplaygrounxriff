@@ -64,8 +64,9 @@ function GroupCallStreamInner({ appId, channelName, uid, role }: GroupCallStream
     }, [client]);
 
     // Local tracks
-    const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
-    const { localCameraTrack } = useLocalCameraTrack(true);
+    const { localMicrophoneTrack, error: micError } = useLocalMicrophoneTrack(true);
+    const { localCameraTrack, error: camError } = useLocalCameraTrack(true);
+    const trackError = micError || camError;
     const vidRef = useRef<HTMLDivElement>(null);
 
     // Play local track

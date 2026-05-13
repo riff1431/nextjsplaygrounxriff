@@ -8,6 +8,12 @@ interface SummaryPanelProps {
     sessionId?: string | null;
 }
 
+/** Types that are auto-completed (drinks/tips) — not actionable "requests" */
+const DRINK_TYPES = new Set(["drink", "champagne", "vip_bottle"]);
+const TIP_LIKE_TYPES = new Set(["drink", "tip", "champagne", "vip_bottle", "pin"]);
+/** Types that are actionable incoming requests requiring creator acceptance */
+const REQUEST_TYPES = new Set(["vip", "booth", "song", "custom"]);
+
 const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState({
@@ -16,6 +22,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
         tips: 0,
         requests: 0,
     });
+    const [fanIds, setFanIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (!roomId) return;
@@ -24,14 +31,16 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
             // Count unique chatters (fans) — scoped to session
             let fanQuery = supabase
                 .from("bar_lounge_messages")
-                .select("user_id", { count: "exact", head: true })
+                .select("user_id")
                 .eq("room_id", roomId!)
                 .eq("is_system", false);
             if (sessionId) fanQuery = fanQuery.eq("session_id", sessionId);
 
-            const { count: fanCount } = await fanQuery;
+            const { data: fansData } = await fanQuery;
+            const uniqueFans = new Set<string>(fansData?.filter(m => m.user_id).map(m => m.user_id as string) || []);
+            setFanIds(uniqueFans);
 
-            // Count requests — scoped to session
+            // Fetch all requests — scoped to session
             let reqQuery = supabase
                 .from("bar_lounge_requests")
                 .select("type, amount")
@@ -40,12 +49,17 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
 
             const { data: requests } = await reqQuery;
 
-            const drinkCount = requests?.filter((r) => r.type === "drink" || r.type === "tip").length || 0;
-            const tipTotal = requests?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
-            const requestCount = requests?.length || 0;
+            // Drinks: only actual drink orders (drink, champagne, vip_bottle)
+            const drinkCount = requests?.filter((r) => DRINK_TYPES.has(r.type)).length || 0;
+            // Tips: sum amounts from all tip-like auto-completed items
+            const tipTotal = requests
+                ?.filter((r) => TIP_LIKE_TYPES.has(r.type))
+                .reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
+            // Requests: only actionable items that need creator acceptance
+            const requestCount = requests?.filter((r) => REQUEST_TYPES.has(r.type)).length || 0;
 
             setStats({
-                fans: fanCount || 0,
+                fans: uniqueFans.size,
                 drinks: drinkCount,
                 tips: tipTotal,
                 requests: requestCount,
@@ -67,11 +81,14 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
                 // Ignore requests from other sessions
                 if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
 
+                const type = newReq.type as string;
+                const amount = newReq.amount || 0;
+
                 setStats((prev) => ({
                     ...prev,
-                    requests: prev.requests + 1,
-                    tips: prev.tips + (newReq.amount || 0),
-                    drinks: (newReq.type === "drink" || newReq.type === "tip") ? prev.drinks + 1 : prev.drinks,
+                    drinks: DRINK_TYPES.has(type) ? prev.drinks + 1 : prev.drinks,
+                    tips: TIP_LIKE_TYPES.has(type) ? prev.tips + amount : prev.tips,
+                    requests: REQUEST_TYPES.has(type) ? prev.requests + 1 : prev.requests,
                 }));
             })
             .on("postgres_changes", {
@@ -84,11 +101,13 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
                 // Ignore messages from other sessions
                 if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
 
-                if (!newMsg.is_system) {
-                    setStats((prev) => ({
-                        ...prev,
-                        fans: prev.fans + 1, // approximate — increments per message
-                    }));
+                if (!newMsg.is_system && newMsg.user_id) {
+                    setFanIds(prev => {
+                        const newSet = new Set(prev);
+                        newSet.add(newMsg.user_id);
+                        setStats(s => ({ ...s, fans: newSet.size }));
+                        return newSet;
+                    });
                 }
             })
             .subscribe();

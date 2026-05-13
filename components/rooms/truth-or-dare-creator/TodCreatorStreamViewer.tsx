@@ -19,6 +19,8 @@ interface TodCreatorStreamViewerProps {
     isCollabSelf?: boolean;
     /** Callback to expose Agora remote users to parent (only used when broadcasting as host) */
     onRemoteUsersChange?: (users: any[]) => void;
+    /** If true, the stream should release the camera (e.g. for a modal call) */
+    isPaused?: boolean;
 }
 
 const TodCreatorStreamViewer = ({
@@ -31,12 +33,13 @@ const TodCreatorStreamViewer = ({
     remoteHostId,
     isCollabSelf,
     onRemoteUsersChange,
+    isPaused,
 }: TodCreatorStreamViewerProps) => {
     const canStream = roomId && userId && appId;
 
     return (
         <div className="relative rounded-xl overflow-hidden tod-creator-neon-border-pink tod-creator-glow-pink h-full">
-            {canStream ? (
+            {canStream && !isPaused ? (
                 remoteHostId ? (
                     /* Viewing a remote host's stream (collab creator watching the main host) */
                     <LiveStreamWrapper

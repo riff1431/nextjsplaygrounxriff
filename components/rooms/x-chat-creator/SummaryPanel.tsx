@@ -17,9 +17,12 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
         queuedMessages: 0,
         answeredMessages: 0,
         totalReactions: 0,
+        totalStickers: 0,
         totalTips: 0,
         totalRequests: 0,
+        fans: 0,
     });
+    const [fanIds, setFanIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (!roomId) return;
@@ -30,23 +33,26 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
             queuedMessages: 0,
             answeredMessages: 0,
             totalReactions: 0,
+            totalStickers: 0,
             totalTips: 0,
             totalRequests: 0,
+            fans: 0,
         });
+        setFanIds(new Set());
 
         async function fetchStats() {
-            // Fetch message stats
+            // Fetch message stats — tips are summed from here (includes reaction-originated messages)
             let msgQuery = supabase
                 .from("x_chat_messages")
-                .select("id, status, paid_amount")
+                .select("id, status, paid_amount, sender_id")
                 .eq("room_id", roomId);
             if (sessionId) msgQuery = msgQuery.eq("session_id", sessionId);
             const { data: messages } = await msgQuery;
 
-            // Fetch reactions
+            // Fetch reactions with reaction_type to differentiate reactions vs stickers
             let rxnQuery = supabase
                 .from("x_chat_reactions")
-                .select("id, amount")
+                .select("id, amount, reaction_type")
                 .eq("room_id", roomId);
             if (sessionId) rxnQuery = rxnQuery.eq("session_id", sessionId);
             const { data: reactions } = await rxnQuery;
@@ -62,16 +68,25 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
             if (messages) {
                 const queued = messages.filter(m => m.status === "Queued").length;
                 const answered = messages.filter(m => m.status === "Answered").length;
-                const messageTips = messages.reduce((sum, m) => sum + (Number(m.paid_amount) || 0), 0);
-                const reactionTips = reactions?.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) || 0;
+                // Tips: sum from messages only (reactions already insert messages with paid_amount)
+                const tipTotal = messages.reduce((sum, m) => sum + (Number(m.paid_amount) || 0), 0);
+
+                // Split reactions vs stickers by reaction_type prefix
+                const reactionCount = reactions?.filter(r => !r.reaction_type?.startsWith("sticker_")).length || 0;
+                const stickerCount = reactions?.filter(r => r.reaction_type?.startsWith("sticker_")).length || 0;
+
+                const uniqueFans = new Set<string>(messages.filter(m => m.sender_id).map(m => m.sender_id as string));
+                setFanIds(uniqueFans);
 
                 setStats({
                     totalMessages: messages.length,
                     queuedMessages: queued,
                     answeredMessages: answered,
-                    totalReactions: reactions?.length || 0,
-                    totalTips: messageTips + reactionTips,
+                    totalReactions: reactionCount,
+                    totalStickers: stickerCount,
+                    totalTips: tipTotal,
                     totalRequests: requests?.length || 0,
+                    fans: uniqueFans.size,
                 });
             }
         }
@@ -86,19 +101,36 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
                 if (msg.paid_amount > 0) {
                     toast.success(`🎉 New Tip: €${msg.paid_amount} from ${msg.sender_name}!`);
                 }
-                fetchStats();
+                if (msg.sender_id) {
+                    setFanIds(prev => {
+                        const newSet = new Set(prev);
+                        newSet.add(msg.sender_id);
+                        setStats(s => ({ ...s, fans: newSet.size }));
+                        return newSet;
+                    });
+                }
+                setStats(prev => ({
+                    ...prev,
+                    totalMessages: prev.totalMessages + 1,
+                    totalTips: prev.totalTips + (Number(msg.paid_amount) || 0),
+                    queuedMessages: msg.status === "Queued" ? prev.queuedMessages + 1 : prev.queuedMessages,
+                }));
             })
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, (payload: any) => {
-                if (sessionId && (payload.new as any).session_id !== sessionId) return;
-                const numAmount = Number(payload.new.amount) || 0;
-                if (numAmount > 0) {
-                    toast.success(`🎁 Action received! (€${numAmount})`);
-                }
-                fetchStats();
+                const rxn = payload.new;
+                if (sessionId && rxn.session_id !== sessionId) return;
+                const isSticker = rxn.reaction_type?.startsWith("sticker_");
+                setStats(prev => ({
+                    ...prev,
+                    totalReactions: isSticker ? prev.totalReactions : prev.totalReactions + 1,
+                    totalStickers: isSticker ? prev.totalStickers + 1 : prev.totalStickers,
+                }));
             })
             .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, (payload: any) => {
-                if (sessionId && (payload.new as any)?.session_id !== sessionId) return;
-                fetchStats();
+                if (payload.eventType === "INSERT") {
+                    if (sessionId && (payload.new as any)?.session_id !== sessionId) return;
+                    setStats(prev => ({ ...prev, totalRequests: prev.totalRequests + 1 }));
+                }
             })
             .subscribe();
 
@@ -107,9 +139,9 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
 
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
-        { icon: "🎭", label: "STICKERS", value: stats.totalReactions.toLocaleString() },
+        { icon: "🎭", label: "STICKERS", value: stats.totalStickers.toLocaleString() },
         { icon: "💰", label: "TIPS (EUR)", value: `€${stats.totalTips.toLocaleString()}` },
-        { icon: "👥", label: "FANS", value: stats.totalMessages.toLocaleString() },
+        { icon: "👥", label: "FANS", value: stats.fans.toLocaleString() },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];
 

@@ -156,14 +156,19 @@ export async function POST(
     // For tip-like items, use "Sent" language; for custom requests, use "requested"
     const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'requested' : 'bought'));
     const amountStr = amount > 0 ? ` (€${amount})` : '';
-    await supabase.from("bar_lounge_messages").insert({
-        room_id: roomId,
-        user_id: user.id,
-        handle: profile?.username || "Fan",
-        content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type}${amountStr}`,
-        is_system: true,
-        ...(sessionId ? { session_id: sessionId } : {}),
-    });
+    
+    // Skip posting VIP and Custom requests to the chat feed.
+    // They will only appear in the Creator's Incoming notifications panel.
+    if (safeType !== 'vip' && safeType !== 'custom') {
+        await supabase.from("bar_lounge_messages").insert({
+            room_id: roomId,
+            user_id: user.id,
+            handle: profile?.username || "Fan",
+            content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type}${amountStr}`,
+            is_system: true,
+            ...(sessionId ? { session_id: sessionId } : {}),
+        });
+    }
 
     return NextResponse.json({ success: true, request: req, new_balance: splitResult.newBalance });
 }

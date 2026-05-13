@@ -55,7 +55,7 @@ class StreamErrorBoundary extends React.Component<{children: React.ReactNode}, {
 
 function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remoteName }: PrivateCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [numericUid, setNumericUid] = useState<number>(0);
+    const [stringUid, setStringUid] = useState<string>(String(uid));
     const client = useRTCClient();
 
     // Ensure we are a host so we can publish
@@ -105,7 +105,7 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
                 const data = await res.json();
                 if (!mounted) return;
                 if (data.token !== undefined) setToken(data.token);
-                if (data.numericUid) setNumericUid(data.numericUid);
+                if (data.stringUid) setStringUid(data.stringUid);
             } catch (e) {
                 console.error("Failed to fetch token", e);
                 if (mounted) setToken(null);
@@ -115,11 +115,11 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
         return () => { mounted = false; };
     }, [channelName, uid]);
 
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined && !!stringUid;
     
     // Join the channel
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        { appid: appId, channel: channelName, token: token ?? null, uid: stringUid },
         isReady
     );
 

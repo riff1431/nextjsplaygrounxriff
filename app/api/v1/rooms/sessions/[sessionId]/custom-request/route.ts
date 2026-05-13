@@ -98,14 +98,8 @@ export async function POST(
 
         if (insertError) throw insertError;
 
-        // System chat message
-        await supabase.from("room_session_messages").insert({
-            session_id: sessionId,
-            user_id: user.id,
-            username: "System",
-            message: `📩 ${profile?.username || "A fan"} sent a €${amount} request!`,
-            is_system: true,
-        });
+        // System chat message is skipped for custom requests; 
+        // they appear in the Creator's Incoming notifications panel instead.
 
         return NextResponse.json({
             success: true,

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Heart, Send } from "lucide-react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import EmojiPicker from "@/components/common/EmojiPicker";
 
 const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: string | null }) => {
     const { activity, sendMessage } = useSuga4U(roomId, sessionId);
@@ -69,6 +70,11 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
                     onKeyPress={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Type a message..."
                     className="flex-1 bg-muted/50 rounded-full px-4 py-2 text-sm outline-none border border-gold/20 focus:border-pink/50 transition-colors"
+                />
+                <EmojiPicker
+                    onEmojiSelect={(emoji) => setInputText(prev => prev + emoji)}
+                    accentColor="hsl(45, 90%, 55%)"
+                    position="top"
                 />
                 <button
                     onClick={handleSend}

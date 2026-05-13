@@ -166,6 +166,16 @@ function PgxPage2Inner() {
     const [vipDeliveryOpen, setVipDeliveryOpen] = useState(false);
     const [vipDeliveryData, setVipDeliveryData] = useState<any>(null);
 
+    // Helper: safely parse creator_reply whether it's a JSONB object, JSON string, or plain text
+    const parseCreatorReply = useCallback((raw: any): { text?: string; mediaUrl?: string; mediaType?: string } | null => {
+        if (!raw) return null;
+        if (typeof raw === 'object') return raw; // Already parsed JSONB
+        if (typeof raw === 'string') {
+            try { return JSON.parse(raw); } catch { return { text: raw }; }
+        }
+        return null;
+    }, []);
+
     // Update time every 10 seconds to refresh the pinned message timer
     useEffect(() => {
         const interval = setInterval(() => setCurrentTime(Date.now()), 10000);
@@ -328,13 +338,14 @@ function PgxPage2Inner() {
                 }
                 if (updated.type === 'custom') {
                     if (newStatus === 'accepted') {
-                        if (updated.creator_reply) {
+                        const reply = parseCreatorReply(updated.creator_reply);
+                        if (reply) {
                             // Creator attached media or text, open the delivery modal!
                             setVipDeliveryData({
                                 creatorName: creatorName !== "[CreatorName]" ? creatorName : "Creator",
-                                text: updated.creator_reply.text,
-                                mediaUrl: updated.creator_reply.mediaUrl,
-                                mediaType: updated.creator_reply.mediaType,
+                                text: reply.text,
+                                mediaUrl: reply.mediaUrl,
+                                mediaType: reply.mediaType,
                                 originalRequestLabel: updated.label || "Custom Request"
                             });
                             setVipDeliveryOpen(true);
@@ -708,13 +719,16 @@ function PgxPage2Inner() {
                                                         <button 
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                setVipDeliveryData({
-                                                                    creatorName: creatorName !== "[CreatorName]" ? creatorName : "Creator",
-                                                                    text: item.creator_reply.text,
-                                                                    mediaUrl: item.creator_reply.mediaUrl,
-                                                                    mediaType: item.creator_reply.mediaType,
-                                                                    originalRequestLabel: item.label || "Custom Request"
-                                                                });
+                                                                const reply = parseCreatorReply(item.creator_reply);
+                                                                if (reply) {
+                                                                    setVipDeliveryData({
+                                                                        creatorName: creatorName !== "[CreatorName]" ? creatorName : "Creator",
+                                                                        text: reply.text,
+                                                                        mediaUrl: reply.mediaUrl,
+                                                                        mediaType: reply.mediaType,
+                                                                        originalRequestLabel: item.label || "Custom Request"
+                                                                    });
+                                                                }
                                                                 setVipDeliveryOpen(true);
                                                                 setShowIncomingPanel(false);
                                                             }}
@@ -1083,16 +1097,11 @@ function PgxPage2Inner() {
                                         <Phone style={{ width: "12px", height: "12px", color: PINK }} />
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                            <span style={{ fontWeight: 700, color: FG, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
-                                            <span style={{ color: GOLD, fontWeight: 700, fontSize: "13px" }}>€{PRIVATE_CALL_PRICE}</span>
-                                        </div>
+                                        <span style={{ fontWeight: 700, color: FG, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
                                         <span style={{ fontSize: "10px", color: MUTED }}>Direct video call</span>
                                     </div>
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                    <span style={{ fontSize: "9px", color: "hsla(320,80%,65%,0.6)", fontStyle: "italic", fontWeight: 600 }}>Requires approval</span>
-                                </div>
+                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
                             </div>
                         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Zap, DollarSign, Crown, Smile } from "lucide-react";
+import { Send, Zap, DollarSign, Crown } from "lucide-react";
 import { useXChat, XChatMessage } from "@/hooks/useXChat";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
@@ -9,7 +9,7 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
-import EmojiPicker from 'emoji-picker-react';
+import EmojiPicker from "@/components/common/EmojiPicker";
 import { VoiceNotePlayer } from "@/components/common/VoiceNotePlayer";
 
 type Lane = "Free" | "Paid" | "Priority";
@@ -38,6 +38,30 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
     const [pendingSend, setPendingSend] = useState(false);
     const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    // Update time every 10 seconds to refresh the pinned message timer
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const activePinMessage = React.useMemo(() => {
+        // Search backwards to find the most recent pin message
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const m = messages[i];
+            if (m.status === "Pinned" && m.body.includes("📌")) {
+                const pinTime = new Date(m.created_at).getTime();
+                // Check if it's within 1 minute
+                if (currentTime - pinTime <= 60 * 1000) {
+                    return m;
+                }
+                // If the most recent one is expired, no older ones are active
+                break;
+            }
+        }
+        return null;
+    }, [messages, currentTime]);
 
     useEffect(() => {
         if (user?.user_metadata?.full_name) {
@@ -163,8 +187,28 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                 ))}
             </div>
 
+            {/* Pinned User Banner */}
+            {activePinMessage && (
+                <div className="mx-4 mt-2 p-2 rounded-lg border border-pink-500/50 bg-pink-500/10 shadow-[0_0_15px_rgba(236,72,153,0.15)] shrink-0 flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm">📌</span>
+                        <span className="font-bold text-xs text-pink-400 uppercase tracking-wider">Pinned to Top</span>
+                        <span className="ml-auto text-[11px] text-muted-foreground font-semibold">
+                            {Math.ceil((60 * 1000 - (currentTime - new Date(activePinMessage.created_at).getTime())) / 60000)}m left
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-base shrink-0">👑</span>
+                        <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                            <span className="font-bold text-sm text-white">{activePinMessage.sender_name}</span>
+                            <span className="text-xs text-white/70 ml-1.5">is the life of the party!</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 chat-scroll space-y-3 px-4 mb-2 pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 chat-scroll space-y-3 px-4 mb-2 mt-2 pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {filteredMessages.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-8 italic">
                         No messages yet. Start the conversation!
@@ -232,27 +276,12 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                     })}
                 </div>
 
-                {/* Quick Emoji Picker */}
-                {showEmojis && (
-                    <div className="absolute bottom-[4.5rem] left-4 z-50 shadow-2xl rounded-2xl overflow-hidden border border-border">
-                        <EmojiPicker
-                            theme={"dark" as any}
-                            onEmojiClick={(emojiData) => {
-                                setMessage(prev => prev + emojiData.emoji);
-                            }}
-                            width={300}
-                            height={400}
-                        />
-                    </div>
-                )}
-
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowEmojis(!showEmojis)}
-                        className="glass-card-inner px-3 py-2 transition-colors text-muted-foreground hover:text-foreground"
-                    >
-                        <Smile size={18} />
-                    </button>
+                    <EmojiPicker
+                        onEmojiSelect={(emoji) => setMessage(prev => prev + emoji)}
+                        accentColor="hsl(45, 90%, 55%)"
+                        position="top"
+                    />
                     <input
                         type="text"
                         value={message}

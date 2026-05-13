@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Send, Smile } from "lucide-react";
+import { Send } from "lucide-react";
+import EmojiPicker from "@/components/common/EmojiPicker";
 import { createClient } from "@/utils/supabase/client";
 
 interface ChatMsg {
@@ -23,8 +24,6 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
     const [activeFilter, setActiveFilter] = useState<"All" | "Paid" | "Priority">("All");
     const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    const EMOJIS = ["😀","😂","😍","🔥","🎉","👍","🙏","❤️","✨","💯","😎","👀","👑","💰"];
 
     useEffect(() => {
         if (!roomId) return;
@@ -220,27 +219,12 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
 
             {/* Input */}
             <div className="px-3 py-2 border-t border-border relative shrink-0">
-                {/* Quick Emoji Picker */}
-                {showEmojis && (
-                    <div className="absolute bottom-[3.5rem] left-2 panel-glass p-2 grid grid-cols-7 gap-2 z-50 rounded-lg">
-                        {EMOJIS.map(emoji => (
-                            <button
-                                key={emoji}
-                                onClick={() => { setMessage(prev => prev + emoji); setShowEmojis(false); }}
-                                className="hover:scale-125 transition-transform text-lg"
-                            >
-                                {emoji}
-                            </button>
-                        ))}
-                    </div>
-                )}
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowEmojis(!showEmojis)}
-                        className="bg-secondary/50 px-3 rounded hover:bg-secondary transition-colors text-muted-foreground flex items-center justify-center"
-                    >
-                        <Smile className="w-4 h-4" />
-                    </button>
+                    <EmojiPicker
+                        onEmojiSelect={(emoji) => setMessage(prev => prev + emoji)}
+                        accentColor="hsl(45, 90%, 55%)"
+                        position="top"
+                    />
                     <input
                         type="text"
                         placeholder="Broadcast a message..."

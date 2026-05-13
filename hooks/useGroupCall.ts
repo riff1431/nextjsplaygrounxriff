@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 export interface GroupCallState {
     callId: string;
@@ -66,6 +67,11 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
 
     const initiateCall = useCallback(async (type: 'truth' | 'dare') => {
         if (!roomId) return null;
+        // Guard: prevent initiating a second call while one is already active
+        if (callState && callState.status === "active") {
+            toast.warning("A group call is already in progress.");
+            return null;
+        }
         setIsLoading(true);
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call`, {
@@ -74,7 +80,14 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
                 body: JSON.stringify({ type }),
             });
             const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || "Failed to start group call");
+                return null;
+            }
             if (data.success) {
+                if (data.participantFanIds.length === 0) {
+                    toast.warning("No eligible fans found for this campaign.");
+                }
                 // State will be set by the broadcast listener to ensure sync, 
                 // but we can also set it immediately for perceived performance
                 setCallState({
@@ -86,16 +99,18 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
                     type,
                     status: "active"
                 });
+                toast.success(`Group ${type} call started!`);
                 return data;
             }
             return null;
         } catch (err) {
             console.error("Failed to initiate group call:", err);
+            toast.error("Failed to start group call. Please try again.");
             return null;
         } finally {
             setIsLoading(false);
         }
-    }, [roomId, userId]);
+    }, [roomId, userId, callState]);
 
     const acceptCall = useCallback(() => {
         if (!callState) return;
@@ -109,13 +124,18 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
     const endCall = useCallback(async () => {
         if (!roomId || !callState) return;
         try {
-            await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/${callState.callId}`, {
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/${callState.callId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "end" }),
             });
+            if (!res.ok) {
+                const data = await res.json();
+                toast.error(data.error || "Failed to end group call");
+            }
         } catch (err) {
             console.error("Failed to end group call:", err);
+            toast.error("Failed to end group call.");
         }
     }, [roomId, callState]);
 

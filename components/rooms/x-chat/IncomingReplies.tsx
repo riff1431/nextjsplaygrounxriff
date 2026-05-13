@@ -26,7 +26,18 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
     const supabase = createClient();
     const [replies, setReplies] = useState<XChatRequest[]>([]);
     const [isOpen, setIsOpen] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [lastOpenedAt, setLastOpenedAt] = useState<number>(() => {
+        if (typeof window !== "undefined") {
+            return parseInt(localStorage.getItem(`xchat_incoming_last_opened_${roomId}`) || "0");
+        }
+        return 0;
+    });
+
+    const unreadCount = React.useMemo(() => {
+        if (isOpen) return 0;
+        return replies.filter(r => new Date(r.updated_at).getTime() > lastOpenedAt).length;
+    }, [replies, isOpen, lastOpenedAt]);
+
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -36,7 +47,6 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
 
         // Reset for fresh session
         setReplies([]);
-        setUnreadCount(0);
 
         const fetchInitial = async () => {
             let query = supabase
@@ -77,10 +87,6 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
                             return [updated, ...prev];
                         });
 
-                        if (!isOpen) {
-                            setUnreadCount((prev) => prev + 1);
-                        }
-
                         toast.success("New reply from Creator!", {
                             description: updated.creator_reply.substring(0, 50) + (updated.creator_reply.length > 50 ? "..." : ""),
                             icon: <Bell className="text-gold" size={16} />,
@@ -91,7 +97,7 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [user, roomId, sessionId, isOpen]);
+    }, [user, roomId, sessionId]);
 
     // Close on click outside
     useEffect(() => {
@@ -117,8 +123,17 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
                 right: window.innerWidth - rect.right,
             });
         }
-        setIsOpen(prev => !prev);
-        if (!isOpen) setUnreadCount(0);
+        setIsOpen(prev => {
+            const next = !prev;
+            if (next) {
+                const now = Date.now();
+                setLastOpenedAt(now);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(`xchat_incoming_last_opened_${roomId}`, now.toString());
+                }
+            }
+            return next;
+        });
     };
 
     const renderReplyContent = (content: string) =>

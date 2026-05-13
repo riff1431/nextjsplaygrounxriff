@@ -45,6 +45,7 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 import { useGroupCall } from "@/hooks/useGroupCall";
+import EmojiPicker from "@/components/common/EmojiPicker";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
@@ -1429,7 +1430,7 @@ function TruthOrDareContent() {
                     </div>
 
                     {/* Right: Dedicated Chat Column */}
-                    <div className="flex flex-col w-full lg:w-[280px] xl:w-[340px] 2xl:w-[380px] min-h-0 shrink-0">
+                    <div className="flex flex-col w-full lg:w-[280px] xl:w-[340px] 2xl:w-[380px] min-h-0 shrink-0 lg:h-full overflow-hidden">
                         <div className="glass-panel border-white/10 bg-white/5 flex flex-col flex-1 min-h-0 overflow-hidden">
                             {/* Chat Header */}
                             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
@@ -1495,6 +1496,11 @@ function TruthOrDareContent() {
                                         }}
                                         disabled={!userId || !roomId}
                                         className="flex-1 bg-white/5 border border-white/10 rounded-xl py-2.5 pl-4 pr-3 text-xs text-white placeholder:text-gray-500 focus:border-white/20 focus:bg-white/10 transition-all outline-none disabled:opacity-40"
+                                    />
+                                    <EmojiPicker
+                                        onEmojiSelect={(emoji) => setChatInput(prev => prev + emoji)}
+                                        accentColor="hsl(320, 100%, 65%)"
+                                        position="top"
                                     />
                                     <button
                                         onClick={handleChatSend}

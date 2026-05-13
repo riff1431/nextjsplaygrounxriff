@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Loader2, MessageSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import EmojiPicker from "@/components/common/EmojiPicker";
 
 interface ChatMsg {
     id: string;
@@ -203,6 +204,11 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
                         placeholder={user ? "Type a message..." : "Log in to chat"}
                         disabled={!user}
                         className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none focus:border-rose-500/40 focus:bg-white/8 transition disabled:opacity-40"
+                    />
+                    <EmojiPicker
+                        onEmojiSelect={(emoji) => setNewMessage(prev => prev + emoji)}
+                        accentColor="hsl(350, 80%, 60%)"
+                        position="top"
                     />
                     <button
                         onClick={handleSend}
