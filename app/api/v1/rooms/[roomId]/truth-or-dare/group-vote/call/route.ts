@@ -51,12 +51,15 @@ export async function POST(
 
         // Get unique fan IDs
         const fanIds = Array.from(new Set(requests?.map(r => r.fan_id) || []));
+        
+        console.log(`[GroupCallAPI] Starting call for ${type}. Active session started at: ${activeSession?.started_at}. Found ${fanIds.length} unique participants:`, fanIds);
 
         // 4. Generate Call details
         const callId = uuidv4();
         const agoraChannel = `group-call-${roomId}-${type}-${Date.now()}`;
 
         // 5. Broadcast to the room
+        console.log(`[GroupCallAPI] Broadcasting group_call_started to room:${roomId}`);
         await supabase.channel(`room:${roomId}`).send({
             type: 'broadcast',
             event: 'group_call_started',

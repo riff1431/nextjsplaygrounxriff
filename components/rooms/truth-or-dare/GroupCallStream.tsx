@@ -53,7 +53,7 @@ class StreamErrorBoundary extends React.Component<{children: React.ReactNode}, {
 
 function GroupCallStreamInner({ appId, channelName, uid, role }: GroupCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [numericUid, setNumericUid] = useState<number>(0);
+    const [agoraUid, setAgoraUid] = useState<string | number | null>(null);
     const client = useRTCClient();
 
     // Everyone broadcasts in a group call
@@ -99,7 +99,8 @@ function GroupCallStreamInner({ appId, channelName, uid, role }: GroupCallStream
                 const data = await res.json();
                 if (!mounted) return;
                 if (data.token !== undefined) setToken(data.token);
-                if (data.numericUid) setNumericUid(data.numericUid);
+                if (data.stringUid) setAgoraUid(data.stringUid);
+                else if (data.numericUid) setAgoraUid(data.numericUid);
             } catch (e) {
                 console.error("Failed to fetch token", e);
                 if (mounted) setToken(null);
@@ -109,10 +110,10 @@ function GroupCallStreamInner({ appId, channelName, uid, role }: GroupCallStream
         return () => { mounted = false; };
     }, [channelName, uid]);
 
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined && agoraUid !== null;
     
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        { appid: appId, channel: channelName, token: token ?? null, uid: agoraUid },
         isReady
     );
 

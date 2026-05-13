@@ -144,6 +144,10 @@ function TruthOrDareContent() {
 
     // Group Call State
     const groupCall = useGroupCall(roomId, userId, "fan");
+    const groupCallRef = useRef(groupCall);
+    useEffect(() => {
+        groupCallRef.current = groupCall;
+    }, [groupCall]);
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<{ id: string; room_id: string; user_id: string; username: string; message: string; created_at: string }[]>([]);
@@ -440,6 +444,52 @@ function TruthOrDareContent() {
                     style: { background: '#1a1a2e', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5' }
                 });
             })
+            .on('broadcast', { event: 'group_call_started' }, (payload) => {
+                const d = payload.payload;
+                if (d.participantFanIds.includes(userId)) {
+                    // Show Toaster
+                    toast.custom((t) => (
+                        <div className="bg-[#1a1a2e]/95 border border-cyan-500/30 backdrop-blur-xl rounded-2xl p-4 shadow-2xl flex items-center gap-4 w-full max-w-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center animate-pulse">
+                                <Video className="w-6 h-6 text-cyan-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-white text-sm">Group Call Unlocked!</h4>
+                                <p className="text-xs text-white/60 truncate">Join the {d.type} video session now.</p>
+                                <div className="flex gap-2 mt-2">
+                                    <button 
+                                        onClick={() => {
+                                            groupCallRef.current.acceptCall();
+                                            toast.dismiss(t);
+                                        }}
+                                        className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all"
+                                    >
+                                        Accept
+                                    </button>
+                                    <button 
+                                        onClick={() => toast.dismiss(t)}
+                                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 text-[10px] font-bold rounded-lg transition-all"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ), { duration: 10000 });
+
+                    // Add to Incoming Panel (Virtual Item)
+                    const virtualItem = {
+                        id: `group-call-${d.callId}`,
+                        type: "group_call",
+                        status: "calling",
+                        content: `Group ${d.type.toUpperCase()} Call`,
+                        amount: 0,
+                        created_at: new Date().toISOString()
+                    };
+                    setIncomingItems(prev => [virtualItem, ...prev].slice(0, 20));
+                    if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
+                }
+            })
             .subscribe();
 
         // Presence tracking - announce this user's presence to the room
@@ -703,6 +753,7 @@ function TruthOrDareContent() {
             case "custom_dare": return "🔥";
             case "tip": return "💰";
             case "reaction": return "✨";
+            case "group_call": return "📞";
             default: return "⚡";
         }
     };
@@ -712,6 +763,7 @@ function TruthOrDareContent() {
             case "completed": return { bg: "hsla(140,60%,20%,0.3)", border: "hsla(140,70%,45%,0.4)", text: "hsl(140,70%,55%)" };
             case "rejected": return { bg: "hsla(0,60%,20%,0.3)", border: "hsla(0,70%,55%,0.4)", text: "hsl(0,70%,60%)" };
             case "pending": return { bg: "hsla(42,60%,20%,0.3)", border: "hsla(42,90%,55%,0.4)", text: "hsl(42,90%,55%)" };
+            case "calling": return { bg: "hsla(180,60%,20%,0.3)", border: "hsla(180,90%,55%,0.4)", text: "hsl(180,90%,55%)" };
             default: return { bg: "hsla(280,40%,20%,0.2)", border: "hsla(280,60%,45%,0.25)", text: "hsl(280,20%,65%)" };
         }
     };
@@ -1086,6 +1138,19 @@ function TruthOrDareContent() {
                                                                         {formatTimeAgo(item.created_at)}
                                                                     </span>
                                                                 </div>
+                                                                {item.type === "group_call" && item.status === "calling" && (
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            groupCallRef.current.acceptCall();
+                                                                            setShowIncomingPanel(false);
+                                                                        }}
+                                                                        className="mt-2 w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                                                                    >
+                                                                        <Video className="w-3.5 h-3.5" />
+                                                                        Accept Call
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );

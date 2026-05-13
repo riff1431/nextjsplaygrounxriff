@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export interface GroupCallState {
@@ -123,7 +123,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         setCallState(null);
     }, []);
 
-    return {
+    return useMemo(() => ({
         callState,
         isLoading,
         initiateCall,
@@ -131,5 +131,5 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         declineCall,
         endCall,
         dismiss
-    };
+    }), [callState, isLoading, initiateCall, acceptCall, declineCall, endCall, dismiss]);
 }
