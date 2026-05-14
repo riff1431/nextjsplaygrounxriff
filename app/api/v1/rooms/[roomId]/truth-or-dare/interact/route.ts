@@ -29,7 +29,25 @@ export async function POST(
 
     try {
         const body = await request.json();
-        const { type, tier, content: customContent, amount: customAmount } = body;
+        const { type, tier, content: customContent, amount: customAmount, session_id: providedSessionId } = body;
+
+        // Resolve session_id — use provided or look up the active session for this room
+        let sessionId = providedSessionId || null;
+        if (!sessionId) {
+            const adminSupabaseForSession = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+            const { data: activeSession } = await adminSupabaseForSession
+                .from('truth_dare_sessions')
+                .select('id')
+                .eq('room_id', roomId)
+                .in('status', ['active', 'pending'])
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            sessionId = activeSession?.id || null;
+        }
         // type: 'system_truth' | 'system_dare' | 'custom_truth' | 'custom_dare'
 
         // 2. Determine Price and Content
@@ -252,7 +270,7 @@ export async function POST(
             console.error("CRITICAL: Money deducted but not added to creator!", { fan: user.id, host: hostId, amount: price });
         }
 
-        // 5. Record Request
+        // 5. Record Request (with session_id for session isolation)
         const { data: newRequest, error: reqError } = await supabase
             .from('truth_dare_requests')
             .insert({
@@ -261,10 +279,10 @@ export async function POST(
                 type,
                 tier,
                 content: finalContent,
-
                 amount: price,
                 status: 'pending',
-                fan_name: fanName
+                fan_name: fanName,
+                session_id: sessionId
             })
             .select()
             .single();
@@ -283,6 +301,7 @@ export async function POST(
                 user_id: user.id,
                 username: fanName,
                 message: chatMessage,
+                session_id: sessionId
             }).then(({ error }) => {
                 if (error) console.error('Failed to insert tip/reaction chat message:', error);
             });
@@ -309,6 +328,7 @@ export async function POST(
                     type: queueType,
                     amount: price,
                     status: 'pending',
+                    session_id: sessionId,
                     meta: {
                         tier: tier,
                         text: finalContent, // The prompt

@@ -481,9 +481,9 @@ function TruthOrDareCreatorContent() {
                 console.log('📊 Room ID check:', { requestRoomId: request.room_id, currentRoomId: roomId });
 
                 // ── SESSION GUARD: Only process requests from the current session ──
-                // Skip requests that were created before the current session started
-                if (activeSessionStartedAt && request.created_at && request.created_at < activeSessionStartedAt) {
-                    console.log('⏩ Skipping old request from previous session:', request.id);
+                // Skip requests that belong to a different session
+                if (activeSessionId && request.session_id && request.session_id !== activeSessionId) {
+                    console.log('⏩ Skipping request from different session:', request.id, 'session:', request.session_id);
                     return;
                 }
 
@@ -694,7 +694,7 @@ function TruthOrDareCreatorContent() {
             supabase.removeChannel(channel);
             supabase.removeChannel(broadcastChannel);
         };
-    }, [roomId, activeSessionStartedAt]);
+    }, [roomId, activeSessionId]);
 
     // 3. Presence Subscription - Track live viewers
     useEffect(() => {
@@ -1751,7 +1751,8 @@ function TruthOrDareCreatorContent() {
                     <div className="flex-[1.5] min-w-[280px] min-h-0 overflow-hidden">
                         <TodCreatorLiveChat 
                             roomId={roomId} 
-                            sessionStartedAt={activeSessionStartedAt} 
+                            sessionStartedAt={activeSessionStartedAt}
+                            sessionId={activeSessionId}
                             viewerCount={fans.length} 
                             activityItems={activityFeed
                                 .filter(a => a.type === 'tip' || a.type === 'reaction')

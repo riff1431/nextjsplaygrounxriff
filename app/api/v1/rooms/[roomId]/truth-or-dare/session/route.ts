@@ -59,7 +59,7 @@ export async function POST(
             }
 
             // A. Create Session History Record
-            const { error: sessionError } = await admin
+            const { data: newSession, error: sessionError } = await admin
                 .from('truth_dare_sessions')
                 .insert({
                     room_id: roomId,
@@ -68,9 +68,12 @@ export async function POST(
                     is_private: isPrivate,
                     price: price,
                     status: 'active'
-                });
+                })
+                .select('id')
+                .single();
 
             if (sessionError) throw sessionError;
+            const newSessionId = newSession?.id;
 
             // B. Update/Create Active Game State — CLEAN SLATE
             const { error: updateError } = await admin
@@ -88,6 +91,7 @@ export async function POST(
                     is_double_dare_armed: false,
                     replay_until: null,
                     group_vote_state: null,
+                    session_id: newSessionId || null,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'room_id' });
 
@@ -226,8 +230,8 @@ export async function GET(
                 .from('truth_dare_requests')
                 .select('amount, type, status, created_at')
                 .eq('room_id', roomId)
-                .eq('status', 'answered')
-                .gte('created_at', activeSession.started_at);
+                .eq('session_id', activeSession.id)
+                .eq('status', 'answered');
 
             if (requests) {
                 requests.forEach((r: any) => {

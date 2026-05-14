@@ -27,11 +27,12 @@ interface ActivityItem {
 interface TodCreatorLiveChatProps {
     roomId: string | null;
     sessionStartedAt?: string | null;
+    sessionId?: string | null;
     viewerCount?: number;
     activityItems?: ActivityItem[];
 }
 
-const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activityItems = [] }: TodCreatorLiveChatProps) => {
+const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount = 0, activityItems = [] }: TodCreatorLiveChatProps) => {
     const supabase = createClient();
     const [msg, setMsg] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -69,7 +70,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
     useEffect(() => {
         setMessages([]);
         setLoading(true);
-    }, [sessionStartedAt]);
+    }, [sessionId, sessionStartedAt]);
 
     useEffect(() => {
         if (!roomId) return;
@@ -83,8 +84,10 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
                 .order("created_at", { ascending: true })
                 .limit(100);
 
-            // If we have a session start time, only fetch messages from this session
-            if (sessionStartedAt) {
+            // Session-scoped filtering: prefer session_id, fall back to timestamp
+            if (sessionId) {
+                query = query.eq("session_id", sessionId);
+            } else if (sessionStartedAt) {
                 query = query.gte("created_at", sessionStartedAt);
             }
 
@@ -99,9 +102,9 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
 
         fetchMessages();
 
-        // Realtime subscription
+        // Realtime subscription — use unique channel name per session
         const channel = supabase
-            .channel(`tod-chat-${roomId}-${sessionStartedAt || 'nosession'}`)
+            .channel(`tod-chat-${roomId}-${sessionId || sessionStartedAt || 'nosession'}`)
             .on(
                 "postgres_changes",
                 {
@@ -112,8 +115,9 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
                 },
                 (payload) => {
                     const newMsg = payload.new as any;
-                    // Only add messages created after session start
-                    if (sessionStartedAt && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
+                    // Only add messages from the current session
+                    if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
+                    if (!sessionId && sessionStartedAt && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
                     setMessages((prev) => [...prev, newMsg as ChatMessage]);
                     setTimeout(scrollToBottom, 100);
                 }
@@ -123,7 +127,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, sessionStartedAt]);
+    }, [roomId, sessionId, sessionStartedAt]);
 
     // Auto-scroll on new messages
     useEffect(() => {
@@ -139,6 +143,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, viewerCount = 0, activit
             user_id: myProfile.id,
             username: myProfile.name,
             message: msg.trim(),
+            session_id: sessionId || null,
         });
 
         if (error) {

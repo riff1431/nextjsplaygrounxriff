@@ -558,11 +558,19 @@ function TruthOrDareContent() {
         const sessionStartedAt = currentSessionStartedAt || new Date().toISOString();
 
         const fetchChatMessages = async () => {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('chat_messages')
                 .select('id, room_id, user_id, username, message, created_at')
-                .eq('room_id', roomId)
-                .gte('created_at', sessionStartedAt)
+                .eq('room_id', roomId);
+
+            // Session-scoped filtering: prefer session_id, fall back to timestamp
+            if (activeSessionId) {
+                query = query.eq('session_id', activeSessionId);
+            } else {
+                query = query.gte('created_at', sessionStartedAt);
+            }
+
+            const { data, error } = await query
                 .order('created_at', { ascending: true })
                 .limit(100);
 
@@ -585,8 +593,9 @@ function TruthOrDareContent() {
                 },
                 (payload) => {
                     const newMsg = payload.new as any;
-                    // Only add messages from the current session (by timestamp)
-                    if (newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
+                    // Only add messages from the current session
+                    if (activeSessionId && newMsg.session_id && newMsg.session_id !== activeSessionId) return;
+                    if (!activeSessionId && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
                     setChatMessages((prev) => [...prev, newMsg]);
                     setTimeout(scrollChatToBottom, 100);
                 }
@@ -627,7 +636,10 @@ function TruthOrDareContent() {
                     .select('fan_id, fan_name, type, amount')
                     .eq('room_id', roomId);
 
-                if (sessionStartedAt) {
+                // Session-scoped: prefer session_id, fall back to timestamp
+                if (activeSessionId) {
+                    reqQuery = reqQuery.eq('session_id', activeSessionId);
+                } else if (sessionStartedAt) {
                     reqQuery = reqQuery.gte('created_at', sessionStartedAt);
                 }
 
@@ -732,6 +744,11 @@ function TruthOrDareContent() {
                 .eq("fan_id", userId)
                 .order("created_at", { ascending: false })
                 .limit(20);
+
+            // Session-scoped: prefer session_id, fall back to no filter
+            if (activeSessionId) {
+                query = query.eq("session_id", activeSessionId);
+            }
             
             const { data } = await query;
             if (data) setIncomingItems(data);
@@ -812,6 +829,7 @@ function TruthOrDareContent() {
             user_id: userId,
             username: userName,
             message: chatInput.trim(),
+            session_id: activeSessionId || null,
         });
 
         if (error) {
@@ -899,7 +917,8 @@ function TruthOrDareContent() {
                 type: confirmModal.type,
                 tier: confirmModal.tier,
                 content: confirmModal.content,
-                amount: confirmModal.price
+                amount: confirmModal.price,
+                session_id: activeSessionId || undefined
             };
 
             if (confirmModal.type === 'crowd_vote') {

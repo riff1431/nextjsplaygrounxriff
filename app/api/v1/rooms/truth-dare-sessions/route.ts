@@ -196,6 +196,7 @@ export async function POST(request: NextRequest) {
             is_double_dare_armed: false,
             replay_until: null,
             group_vote_state: null,
+            session_id: session.id,
             updated_at: new Date().toISOString(),
         }, { onConflict: "room_id" });
 

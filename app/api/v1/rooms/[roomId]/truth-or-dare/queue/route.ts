@@ -13,7 +13,7 @@ export async function GET(
     // Find the current active/pending session to scope queue items
     const { data: activeSession } = await admin
         .from("truth_dare_sessions")
-        .select("id, started_at, created_at")
+        .select("id")
         .eq("room_id", roomId)
         .in("status", ["active", "pending"])
         .order("started_at", { ascending: false })
@@ -28,12 +28,9 @@ export async function GET(
         .order("created_at", { ascending: false })
         .limit(50);
 
-    // Only return queue items from the current session
+    // Only return queue items from the current session (session_id-based isolation)
     if (activeSession) {
-        const sessionStart = activeSession.started_at || activeSession.created_at;
-        if (sessionStart) {
-            query = query.gte("created_at", sessionStart);
-        }
+        query = query.eq("session_id", activeSession.id);
     }
 
     const { data: queue, error } = await query;
