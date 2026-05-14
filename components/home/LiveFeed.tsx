@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Lock, Radio, Users, ChevronRight } from "lucide-react";
 import SessionPreviewModal from "@/components/live/SessionPreviewModal";
+import { cs } from "@/utils/currency";
 
 interface ActiveStream {
     id: string;
@@ -173,7 +174,7 @@ export default function LiveFeed() {
                                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center shadow-lg shadow-pink-500/30 mb-2">
                                             <Lock className="w-7 h-7 text-white" />
                                         </div>
-                                        <span className="text-white font-bold text-lg drop-shadow-md">Unlock for €{stream.unlock_price}</span>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">Unlock for {cs()}{stream.unlock_price}</span>
                                     </div>
                                 )}
 

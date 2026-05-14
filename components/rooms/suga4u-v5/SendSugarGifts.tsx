@@ -1,3 +1,4 @@
+import { cs } from "@/utils/currency";
 const gifts = [
     { amount: 10, emoji: "💎" },
     { amount: 25, emoji: "💎" },
@@ -16,7 +17,7 @@ const SendSugarGifts = () => (
             {gifts.map((g, i) => (
                 <button key={i} className="neon-border-pink glass-panel py-3 text-center hover:bg-muted/50 transition-colors">
                     <span className="text-lg">{g.emoji}</span>
-                    <p className="text-foreground font-bold text-sm">€{g.amount}</p>
+                    <p className="text-foreground font-bold text-sm">{cs()}{g.amount}</p>
                 </button>
             ))}
         </div>

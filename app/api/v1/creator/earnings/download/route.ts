@@ -14,8 +14,10 @@ import { getCreatorInvoice } from '@/utils/finance/invoiceService';
 import { generateEarningsExcel } from '@/utils/finance/excelExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 export async function GET(req: NextRequest) {
+    const SYM = await getServerCurrencySymbol();
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -95,8 +97,8 @@ export async function GET(req: NextRequest) {
             startY: 55,
             head: [['Description', 'Amount']],
             body: [
-                ['Gross Collected', `€${invoice.summary.gross_collected.toFixed(2)}`],
-                ['Net Earnings (Your Share)', `€${invoice.summary.creator_earned.toFixed(2)}`],
+                ['Gross Collected', `${SYM}${invoice.summary.gross_collected.toFixed(2)}`],
+                ['Net Earnings (Your Share)', `${SYM}${invoice.summary.creator_earned.toFixed(2)}`],
                 ['Total Events', `${invoice.summary.events_count}`],
             ],
             theme: 'striped',
@@ -117,7 +119,7 @@ export async function GET(req: NextRequest) {
                 new Date(line.occurred_at).toLocaleDateString(),
                 (line.revenue_type || '').replace(/_/g, ' '),
                 line.fan_username || 'Unknown',
-                `€${line.creator_share.toFixed(2)}`,
+                `${SYM}${line.creator_share.toFixed(2)}`,
             ]),
             theme: 'grid',
             headStyles: { fillColor: [236, 72, 153], textColor: [255, 255, 255] },

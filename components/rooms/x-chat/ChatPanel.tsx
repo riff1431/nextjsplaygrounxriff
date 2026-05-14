@@ -11,6 +11,8 @@ import { createClient } from "@/utils/supabase/client";
 
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { VoiceNotePlayer } from "@/components/common/VoiceNotePlayer";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 type Lane = "Free" | "Paid" | "Priority";
 
@@ -140,7 +142,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
             await sendMessage(message, senderName, lane, price);
             setMessage("");
             refresh?.();
-            toast.success(`${lane} message sent! (€${price})`);
+            toast.success(`${lane} message sent! (${cs()}${price})`);
         } catch (err: any) {
             console.error("Failed to send paid message:", err);
             toast.error("Failed to send message: " + (err.message || "Unknown error"));
@@ -201,6 +203,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                         <span className="text-base shrink-0">👑</span>
                         <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
                             <span className="font-bold text-sm text-white">{activePinMessage.sender_name}</span>
+                            {activePinMessage.sender_id && <UserBadgeDisplay userId={activePinMessage.sender_id} />}
                             <span className="text-xs text-white/70 ml-1.5">is the life of the party!</span>
                         </div>
                     </div>
@@ -218,9 +221,10 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                     <div key={msg.id} className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-primary font-medium text-sm">@{msg.sender_name}</span>
+                            {msg.sender_id && <UserBadgeDisplay userId={msg.sender_id} />}
                             {getLaneBadge(msg)}
                             {msg.paid_amount > 0 && (
-                                <span className="text-[10px] text-gold font-semibold">€{msg.paid_amount}</span>
+                                <span className="text-[10px] text-gold font-semibold">{cs()}{msg.paid_amount}</span>
                             )}
                             {getStatusBadge(msg.status)}
                         </div>
@@ -270,7 +274,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                             >
                                 {config.icon}
                                 {lane}
-                                {config.price > 0 && <span className="text-gold text-[10px]">€{config.price}</span>}
+                                {config.price > 0 && <span className="text-gold text-[10px]">{cs()}{config.price}</span>}
                             </button>
                         );
                     })}
@@ -292,7 +296,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                                 ? "Waiting for room..."
                                 : selectedLane === "Free"
                                     ? "Type message..."
-                                    : `${selectedLane} message (€${LANE_CONFIG[selectedLane].price})...`
+                                    : `${selectedLane} message (${cs()}${LANE_CONFIG[selectedLane].price})...`
                         }
                         disabled={!roomId}
                         className="flex-1 bg-input border border-border rounded px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
@@ -308,7 +312,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                             }`}
                     >
                         {LANE_CONFIG[selectedLane].icon}
-                        {LANE_CONFIG[selectedLane].price > 0 ? `€${LANE_CONFIG[selectedLane].price}` : "Send"}
+                        {LANE_CONFIG[selectedLane].price > 0 ? `${cs()}${LANE_CONFIG[selectedLane].price}` : "Send"}
                     </button>
                 </div>
             </div>

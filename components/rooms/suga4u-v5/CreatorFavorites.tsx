@@ -1,3 +1,4 @@
+import { cs } from "@/utils/currency";
 const categories = [
     { label: "CUTE", emoji: "🎀" },
     { label: "LUXURT", emoji: "💎" },
@@ -37,7 +38,7 @@ const CreatorFavorites = () => (
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm">{item.name} {item.emoji}</p>
-                        <p className="text-gold font-bold">€{item.price.toLocaleString()}</p>
+                        <p className="text-gold font-bold">{cs()}{item.price.toLocaleString()}</p>
                     </div>
                     <div className="flex flex-col gap-1 flex-shrink-0">
                         {item.reveal && (

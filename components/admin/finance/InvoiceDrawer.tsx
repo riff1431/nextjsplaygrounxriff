@@ -27,6 +27,7 @@ type InvoiceData = {
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { cs } from "@/utils/currency";
 
 export default function InvoiceDrawer({
     invoice,
@@ -76,9 +77,9 @@ export default function InvoiceDrawer({
             startY: 65,
             head: [['Description', 'Amount']],
             body: [
-                ['Gross Collected', `€${invoice.summary.gross_collected.toFixed(2)}`],
-                ['Platform Fee', `€${invoice.summary.platform_earned.toFixed(2)}`],
-                ['Net Payout', `€${invoice.summary.creator_earned.toFixed(2)}`],
+                ['Gross Collected', `${cs()}${invoice.summary.gross_collected.toFixed(2)}`],
+                ['Platform Fee', `${cs()}${invoice.summary.platform_earned.toFixed(2)}`],
+                ['Net Payout', `${cs()}${invoice.summary.creator_earned.toFixed(2)}`],
             ],
             theme: 'striped',
             headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
@@ -96,8 +97,8 @@ export default function InvoiceDrawer({
                 new Date(line.occurred_at).toLocaleDateString(),
                 line.revenue_type.toUpperCase(),
                 line.fan_username || 'Unknown',
-                `€${line.creator_share.toFixed(2)}`,
-                `€${line.gross_amount.toFixed(2)}` // Showing gross here provides context, or maybe show net? Invoice logic implies paying out net.
+                `${cs()}${line.creator_share.toFixed(2)}`,
+                `${cs()}${line.gross_amount.toFixed(2)}` // Showing gross here provides context, or maybe show net? Invoice logic implies paying out net.
                 // Actually, let's show net to creator in the amount column for clarity 
             ]),
             // Let's refine the columns: Date, Type, Fan, Split %, Net Amount
@@ -113,7 +114,7 @@ export default function InvoiceDrawer({
                 line.revenue_type,
                 line.fan_username || 'Unknown',
                 line.split_name || '-',
-                `€${line.creator_share.toFixed(2)}`
+                `${cs()}${line.creator_share.toFixed(2)}`
             ]),
             theme: 'grid',
             headStyles: { fillColor: [255, 79, 216], textColor: [255, 255, 255] },
@@ -142,15 +143,15 @@ export default function InvoiceDrawer({
                         {/* ... existing summary ... */}
                         <div className="flex w-full justify-between">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Gross</span>
-                            <span className="text-white font-mono">€{invoice.summary.gross_collected.toFixed(2)}</span>
+                            <span className="text-white font-mono">{cs()}{invoice.summary.gross_collected.toFixed(2)}</span>
                         </div>
                         <div className="flex w-full justify-between">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Net Payout</span>
-                            <span className="text-[var(--cyan)] font-mono text-lg">€{invoice.summary.creator_earned.toFixed(2)}</span>
+                            <span className="text-[var(--cyan)] font-mono text-lg">{cs()}{invoice.summary.creator_earned.toFixed(2)}</span>
                         </div>
                         <div className="flex w-full justify-between border-t border-[var(--line)] pt-2 mt-2">
                             <span className="text-xs uppercase tracking-wider text-[var(--muted2)]">Platform</span>
-                            <span className="text-[var(--pink)] font-mono">€{invoice.summary.platform_earned.toFixed(2)}</span>
+                            <span className="text-[var(--pink)] font-mono">{cs()}{invoice.summary.platform_earned.toFixed(2)}</span>
                         </div>
                     </div>
 

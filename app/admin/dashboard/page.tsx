@@ -15,6 +15,7 @@ import {
     Bell,
     MessageCircle,
     Flame,
+    Coins,
     Palette,
     Menu,
     X,
@@ -56,6 +57,7 @@ import BankPaymentReviewPanel from "../../../components/admin/finance/BankPaymen
 import AdminCreatorEarnings from "../../../components/admin/finance/AdminCreatorEarnings";
 import PolicyEditor from "../../../components/admin/settings/PolicyEditor";
 import ImportantPagesManager from "../../../components/admin/settings/ImportantPagesManager";
+import CurrencyManager from "../../../components/admin/settings/CurrencyManager";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -91,7 +93,8 @@ type AdminModule =
     | "room-settings" // Links to /admin/rooms
     | "finance-payouts" // Links to /admin/finance/payouts
     | "revenue-splits" // Links to /admin/finance/splits
-    | "creator-earnings"; // Creator Earnings panel
+    | "creator-earnings" // Creator Earnings panel
+    | "currency"; // Default Currency
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -142,6 +145,7 @@ export default function AdminDashboardPage() {
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
         { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
         { id: "important-pages", label: "Important Pages", icon: <FileText className="w-4 h-4" />, tone: "amber" },
+        { id: "currency", label: "Default Currency", icon: <Coins className="w-4 h-4" />, tone: "green" },
         { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
         { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
         { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
@@ -310,6 +314,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
                                 <Tile id="creator-levels" label="Creator Levels" icon={<Star className="w-4 h-4" />} tone="pink" desc="Creator tiers" />
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
+                                <Tile id="currency" label="Default Currency" icon={<Coins className="w-4 h-4" />} tone="green" desc="Set display currency" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="creator-earnings" label="Creator Earnings" icon={<DollarSign className="w-4 h-4" />} tone="green" desc="All creator activity" />
@@ -342,6 +347,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "theme" && <AdminThemeEditor />}
                     {bizModule === "policy" && <PolicyEditor />}
                     {bizModule === "important-pages" && <ImportantPagesManager />}
+                    {bizModule === "currency" && <CurrencyManager />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

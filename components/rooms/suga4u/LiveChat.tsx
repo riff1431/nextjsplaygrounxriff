@@ -3,6 +3,8 @@ import { Heart, Send } from "lucide-react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import EmojiPicker from "@/components/common/EmojiPicker";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: string | null }) => {
     const { activity, sendMessage } = useSuga4U(roomId, sessionId);
@@ -29,7 +31,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
     };
 
     const formatActivity = (a: ActivityEvent) => {
-        if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">€{a.amount}</span>!</span>;
+        if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">{cs()}{a.amount}</span>!</span>;
         if (a.type === 'PAID_REQUEST') return <span>requested: {a.label} (${a.amount})</span>;
         if (a.type === 'OFFER_CLAIM') return <span>claimed offer: {a.label}</span>;
         return <span>{a.label}</span>;
@@ -55,6 +57,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
                         </div>
                         <p className="leading-snug">
                             <span className={`font-bold ${isHighlight(m.type) ? "text-gold" : "text-pink-light"}`}>{m.fanName}:</span>{" "}
+                            {m.fanId && <UserBadgeDisplay userId={m.fanId} />}{" "}
                             <span className="text-foreground/80">{formatActivity(m)}</span>
                             {isHighlight(m.type) && <Heart className="inline w-3 h-3 text-pink fill-pink ml-1" />}
                         </p>

@@ -7,6 +7,7 @@ import { Search, Filter, Crown, Lock, User, Video, Mic, ArrowLeft, Users } from 
 import BrandLogo from '@/components/common/BrandLogo';
 
 import SessionPreviewModal from '@/components/live/SessionPreviewModal';
+import { cs } from "@/utils/currency";
 
 type LiveRoom = {
     id: string;
@@ -170,7 +171,7 @@ export default function LiveSessionsPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-lg font-bold text-green-400">€{room.meta?.price || 10}</div>
+                                        <div className="text-lg font-bold text-green-400">{cs()}{room.meta?.price || 10}</div>
                                         <div className="text-[10px] text-gray-500">Entry</div>
                                     </div>
                                 </div>

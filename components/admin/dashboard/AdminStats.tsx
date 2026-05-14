@@ -4,6 +4,7 @@ import { Users, CreditCard, Bell, TrendingUp } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { NeonCard } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
+import { cs } from "@/utils/currency";
 
 export default function AdminStats() {
     const supabase = createClient();
@@ -90,7 +91,7 @@ export default function AdminStats() {
                 />
                 <StatCard
                     label="Total Revenue"
-                    value={`€${stats.totalRevenue.toLocaleString()}`}
+                    value={`${cs()}${stats.totalRevenue.toLocaleString()}`}
                     icon={<CreditCard className="w-5 h-5" />}
                     tone="green"
                 />

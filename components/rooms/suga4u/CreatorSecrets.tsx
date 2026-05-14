@@ -5,6 +5,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -41,7 +42,7 @@ const CreatorSecrets = ({ roomId, hostId }: { roomId: string | null; hostId?: st
             
             // Mark as unlocked locally
             setUnlockedIds(prev => new Set(prev).add(confirmSecret.id));
-            toast.success(`🔓 Secret unlocked: ${confirmSecret.name}`, { description: confirmSecret.description || `€${confirmSecret.unlock_price} spent` });
+            toast.success(`🔓 Secret unlocked: ${confirmSecret.name}`, { description: confirmSecret.description || `${cs()}${confirmSecret.unlock_price} spent` });
             setConfirmSecret(null);
         } catch (err: any) {
             console.error("Failed to unlock secret:", err);

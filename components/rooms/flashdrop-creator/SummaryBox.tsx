@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 interface SummaryStats {
     fans: number;
@@ -161,7 +162,7 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
                         <StatTile label="Requests" value={stats.pendingRequests} roomId={roomId} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <StatTile label="Tips (€)" value={stats.tips} roomId={roomId} />
+                        <StatTile label="Tips (${cs()})" value={stats.tips} roomId={roomId} />
                     </div>
                 </div>
             </div>

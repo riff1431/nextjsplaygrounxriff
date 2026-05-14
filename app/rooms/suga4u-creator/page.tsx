@@ -21,6 +21,7 @@ import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCa
 import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -45,7 +46,7 @@ const Suga4UCreatorPage = () => {
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const r = payload.new;
                 toast.success(`New Paid Request from ${r.fan_name}`, {
-                    description: `${r.label} (€${r.price})`,
+                    description: `${r.label} (${cs()}${r.price})`,
                     duration: 5000,
                 });
             })

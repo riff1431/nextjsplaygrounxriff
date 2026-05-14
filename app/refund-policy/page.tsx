@@ -4,6 +4,7 @@ import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
 import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { Wallet, Ban, AlertTriangle, ShieldCheck, Scale, Info, CreditCard, History } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 export default function RefundPolicyPage() {
   return (
@@ -34,7 +35,7 @@ export default function RefundPolicyPage() {
             </h2>
             <ul className="mt-4 space-y-4 text-[13px] text-gray-300 list-disc pl-5">
               <li>Users fund an internal wallet before spending.</li>
-              <li>Minimum funding is €25.</li>
+              <li>Minimum funding is {cs()}25.</li>
               <li>Spend is deducted first from the wallet balance.</li>
               <li>Used wallet funds are strictly non-refundable.</li>
             </ul>

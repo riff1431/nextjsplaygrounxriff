@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/truth-or-dare/tip
@@ -11,6 +12,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -30,7 +32,7 @@ export async function POST(
         creatorUserId: room.host_id,
         grossAmount: amount,
         splitType: 'GLOBAL',
-        description: `Truth or Dare tip: €${amount}`,
+        description: `Truth or Dare tip: ${SYM}${amount}`,
         roomId,
         relatedType: 'td_tip',
         relatedId: null,
@@ -50,7 +52,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "td_tip",
-        message: `${profile?.username || "Fan"} tipped €${amount} in Truth or Dare!`,
+        message: `${profile?.username || "Fan"} tipped ${SYM}${amount} in Truth or Dare!`,
         reference_id: tip.id,
     });
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X, AlertCircle } from 'lucide-react';
+import { cs } from "@/utils/currency";
 
 const CheckoutForm = ({ amount, roomId, confirmUrl, onClose, onSuccess }: { amount: number, roomId?: string, confirmUrl?: string, onClose: () => void, onSuccess: () => void }) => {
     const stripe = useStripe();
@@ -63,7 +64,7 @@ const CheckoutForm = ({ amount, roomId, confirmUrl, onClose, onSuccess }: { amou
                 disabled={isLoading || !stripe || !elements}
                 className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl transition disabled:opacity-50"
             >
-                {isLoading ? 'Processing...' : `Pay €${amount.toFixed(2)}`}
+                {isLoading ? 'Processing...' : `Pay ${cs()}${amount.toFixed(2)}`}
             </button>
         </form>
     );

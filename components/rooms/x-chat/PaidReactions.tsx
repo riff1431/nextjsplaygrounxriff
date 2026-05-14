@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const reactions = [
     { emoji: "🔥", label: "Boost", price: 2 },
@@ -116,7 +117,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                             className="glass-card-inner px-4 py-3 font-semibold text-base text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center justify-center gap-2 active:scale-95 border border-white/5"
                         >
                             <span className="text-xl">{r.emoji}</span>
-                            <span>{r.label} <span className="text-gold ml-1">€{r.price}</span></span>
+                            <span>{r.label} <span className="text-gold ml-1">{cs()}{r.price}</span></span>
                         </button>
                     ))}
                 </div>
@@ -134,7 +135,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                             className="glass-card-inner px-4 py-3 font-semibold text-base text-foreground hover:border-gold/50 hover:bg-gold/5 transition-all flex items-center justify-center gap-2 active:scale-95 border border-white/5"
                         >
                             <span className="text-xl">{s.emoji}</span>
-                            <span>{s.label} <span className="text-gold ml-1">€{s.price}</span></span>
+                            <span>{s.label} <span className="text-gold ml-1">{cs()}{s.price}</span></span>
                         </button>
                     ))}
                 </div>
@@ -151,7 +152,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                             onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })}
                             className="glass-card-inner w-full flex items-center justify-between px-4 py-3 font-semibold text-base text-foreground/90 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98] border border-white/5"
                         >
-                            <span>{b.label}</span><span className="text-gold font-bold">€{b.price}</span>
+                            <span>{b.label}</span><span className="text-gold font-bold">{cs()}{b.price}</span>
                         </button>
                     ))}
                 </div>
@@ -168,7 +169,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                             onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })}
                             className="glass-card-inner w-full flex justify-between px-3 py-2 text-sm text-foreground/80 hover:border-gold/50 hover:bg-gold/5 transition-all active:scale-[0.98]"
                         >
-                            <span>{d.label}</span><span className="text-gold">€{d.price}</span>
+                            <span>{d.label}</span><span className="text-gold">{cs()}{d.price}</span>
                         </button>
                     ))}
                 </div>

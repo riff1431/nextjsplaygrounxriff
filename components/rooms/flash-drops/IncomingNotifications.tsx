@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { cs } from "@/utils/currency";
 
 interface FlashDropRequest {
     id: string;
@@ -271,7 +272,7 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                         >
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-[10px] font-black uppercase tracking-wider text-primary group-hover:text-white transition-colors">
-                                                    {isPack ? `💎 Pack: €${n.amount}` : `Custom Drop: €${n.amount}`}
+                                                    {isPack ? `💎 Pack: ${cs()}${n.amount}` : `Custom Drop: ${cs()}${n.amount}`}
                                                 </span>
                                                 <span className="text-[9px] text-white/40">
                                                     {new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -349,7 +350,7 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                                     <div className="overflow-y-auto flex-1 themed-scrollbar pr-2">
                                         <div className="mb-6 bg-primary/10 border border-primary/20 rounded-xl p-4">
                                             <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
-                                                {isPack ? `Pack Purchase • €${viewingNotification.amount}` : `Original Request • €${viewingNotification.amount}`}
+                                                {isPack ? `Pack Purchase • ${cs()}${viewingNotification.amount}` : `Original Request • ${cs()}${viewingNotification.amount}`}
                                             </p>
                                             <p className="text-base text-white/90 leading-relaxed italic font-medium">
                                                 "{textContent}"

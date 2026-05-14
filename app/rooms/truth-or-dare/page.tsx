@@ -46,11 +46,13 @@ import InvitationPopup from "@/components/rooms/InvitationPopup";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 import { useGroupCall } from "@/hooks/useGroupCall";
 import EmojiPicker from "@/components/common/EmojiPicker";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 // import AgoraProvider, { createAgoraClient } from "@/components/providers/AgoraProvider"; // Removed
 // import FanStream from "@/components/rooms/FanStream"; // Removed
 
 import dynamic from 'next/dynamic';
+import { cs } from "@/utils/currency";
 const LiveStreamWrapper = dynamic<any>(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 const QuestionCountdown = dynamic<any>(() => import('./components/QuestionCountdown'), { ssr: false });
 const FanAnswerModal = dynamic<any>(() => import('./components/FanAnswerModal'), { ssr: false });
@@ -471,7 +473,7 @@ function TruthOrDareContent() {
                 const tipData = payload.payload;
                 if (tipData && tipData.userId !== userId) {
                     // Show toast for other fans' tips
-                    toast(`🎉 ${tipData.userName} tipped €${tipData.amount}!`, {
+                    toast(`🎉 ${tipData.userName} tipped ${cs()}${tipData.amount}!`, {
                         duration: 4000,
                         position: 'top-center',
                         style: { background: '#1a1a2e', border: '1px solid rgba(236,72,153,0.4)', color: '#f9a8d4' }
@@ -1204,7 +1206,7 @@ function TruthOrDareContent() {
                                                                     <span className="text-xs font-bold text-white truncate">
                                                                         {item.content || (item.type.includes('truth') ? 'Truth' : item.type.includes('dare') ? 'Dare' : 'Request')}
                                                                     </span>
-                                                                    <span className="text-[10px] font-black text-purple-400">€{item.amount}</span>
+                                                                    <span className="text-[10px] font-black text-purple-400">{cs()}{item.amount}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span 
@@ -1269,7 +1271,7 @@ function TruthOrDareContent() {
 
                             <div className="p-3 rounded-xl bg-black/40 border border-white/10 mb-5">
                                 <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Entry Fee</div>
-                                <div className="text-2xl font-bold text-purple-300">€{sessionInfo.price}</div>
+                                <div className="text-2xl font-bold text-purple-300">{cs()}{sessionInfo.price}</div>
                             </div>
 
                             <button
@@ -1372,7 +1374,7 @@ function TruthOrDareContent() {
                                                         <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-base font-bold text-white">€{t.price}</span>
+                                                <span className="text-base font-bold text-white">{cs()}{t.price}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -1395,7 +1397,7 @@ function TruthOrDareContent() {
                                                         <p className="text-[11px] text-gray-500 leading-none mt-0.5">{t.desc}</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-base font-bold text-white">€{t.price}</span>
+                                                <span className="text-base font-bold text-white">{cs()}{t.price}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -1409,13 +1411,13 @@ function TruthOrDareContent() {
                                             onClick={() => setCustomType("truth")}
                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "truth" ? "bg-blue-600/50 shadow-[0_0_20px_rgba(59,130,246,0.5)] text-white scale-105" : "bg-blue-900/10 text-blue-400/70 hover:bg-blue-500/10"}`}
                                         >
-                                            Custom Truth (€25)
+                                            Custom Truth ({cs()}25)
                                         </button>
                                         <button
                                             onClick={() => setCustomType("dare")}
                                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${customType === "dare" ? "bg-red-600/50 shadow-[0_0_20px_rgba(239,68,68,0.5)] text-white scale-105" : "bg-red-900/10 text-red-400/70 hover:bg-red-500/10"}`}
                                         >
-                                            Custom Dare (€35)
+                                            Custom Dare ({cs()}35)
                                         </button>
                                     </div>
                                     <textarea
@@ -1475,7 +1477,7 @@ function TruthOrDareContent() {
                                     <span className="text-xl group-hover:scale-125 transition-transform">{r.emoji}</span>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold tracking-tighter text-purple-200">{r.name}</span>
-                                        <span className="text-[8px] font-bold text-white/50">€{r.price}</span>
+                                        <span className="text-[8px] font-bold text-white/50">{cs()}{r.price}</span>
                                     </div>
                                 </button>
                             ))}
@@ -1492,11 +1494,11 @@ function TruthOrDareContent() {
                                     <button
                                         key={`tip-${amount}`}
                                         disabled={isSubmitting}
-                                        onClick={() => openConfirmation('tip', `€${amount}`, `Tip €${amount}`, amount)}
+                                        onClick={() => openConfirmation('tip', `${cs()}${amount}`, `Tip ${cs()}${amount}`, amount)}
                                         className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 transition-all group hover:scale-105 shadow-[0_0_8px_rgba(34,197,94,0.15)] hover:shadow-[0_0_16px_rgba(34,197,94,0.3)]"
                                     >
                                         <span className="text-lg group-hover:scale-110 transition-transform">💰</span>
-                                        <span className="text-[10px] font-bold text-green-300">€{amount}</span>
+                                        <span className="text-[10px] font-bold text-green-300">{cs()}{amount}</span>
                                     </button>
                                 ))}
                             </div>
@@ -1549,6 +1551,7 @@ function TruthOrDareContent() {
                                                         <span className={`font-bold text-[11px] ${isMe ? 'text-pink-400' : 'text-amber-400'}`}>
                                                             {m.username || 'Anonymous'}
                                                         </span>
+                                                        {m.user_id && <UserBadgeDisplay userId={m.user_id} />}
                                                         <span className="text-[9px] text-white/25 ml-auto shrink-0">
                                                             {formatChatTime(m.created_at)}
                                                         </span>
@@ -1651,7 +1654,7 @@ function TruthOrDareContent() {
                                 <div className={`p-3 rounded-xl border ${confirmModal.type === 'tip' ? 'bg-green-950/30 border-green-500/30' : 'bg-black/40 border-white/10'}`}>
                                     <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Total Cost</div>
                                     <div className={`text-2xl font-bold flex items-center justify-center gap-1 ${confirmModal.type === 'tip' ? 'text-green-400' : 'text-white'}`}>
-                                        <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>€</span>{confirmModal.price}
+                                        <span className={confirmModal.type === 'tip' ? 'text-green-600' : 'text-pink-500'}>{cs()}</span>{confirmModal.price}
                                     </div>
                                 </div>
 

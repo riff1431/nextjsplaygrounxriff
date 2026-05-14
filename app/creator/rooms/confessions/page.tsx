@@ -25,6 +25,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "../../../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 // ---- Helpers --------------------------------------------------------------
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -836,7 +837,7 @@ export default function CreatorConfessionsStudio() {
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <span className="font-bold text-rose-200">{req.topic}</span>
                                                         <span className="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{req.type}</span>
-                                                        <span className="text-xs font-bold text-green-400">€{req.amount}</span>
+                                                        <span className="text-xs font-bold text-green-400">{cs()}{req.amount}</span>
                                                     </div>
                                                     <div className="text-xs text-gray-400">
                                                         From Fan (ID: ...{req.fan_id.slice(-4)}) • {new Date(req.created_at).toLocaleDateString()}

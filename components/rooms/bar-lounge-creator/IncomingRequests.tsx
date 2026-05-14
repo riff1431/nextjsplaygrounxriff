@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { CheckCircle, X } from "lucide-react";
 import CreatorReplyModal from "./CreatorReplyModal";
+import { cs } from "@/utils/currency";
 
 interface Request {
     id: string;
@@ -107,7 +108,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
 
                 // Creator toast notification (still show for everything)
                 const emoji = typeEmoji(req.type);
-                showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +€${req.amount}`);
+                showToast(`${emoji} ${req.fan_name || "A fan"} ${req.type === "tip" ? "sent" : "bought"} ${req.label || req.type} — +${cs()}${req.amount}`);
             })
             .subscribe();
 
@@ -205,7 +206,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                 </div>
                                 <p className="text-xs mt-0.5" style={{ color: "hsla(45,100%,95%,0.5)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                     Private Video Call
-                                    <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€500</span>
+                                    <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>{cs()}500</span>
                                 </p>
                             </div>
                             <div className="flex flex-col gap-1 shrink-0">
@@ -263,7 +264,7 @@ const IncomingRequests = ({ roomId, sessionId, pendingPrivateCalls = [], onAccep
                                     <p className="text-xs mt-0.5" style={{ color: "hsla(45,100%,95%,0.5)", display: "-webkit-box", WebkitLineClamp: req.type === 'custom' ? 3 : 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                                         {req.label || req.message || req.type}
                                         {req.amount != null && req.amount > 0 && (
-                                            <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>€{req.amount}</span>
+                                            <span style={{ color: "hsl(42,90%,55%)", fontWeight: 700, marginLeft: "6px" }}>{cs()}{req.amount}</span>
                                         )}
                                         {req.created_at && (
                                             <span style={{ marginLeft: "6px", color: "hsla(45,100%,95%,0.3)" }}>· {formatTimeAgo(req.created_at)}</span>

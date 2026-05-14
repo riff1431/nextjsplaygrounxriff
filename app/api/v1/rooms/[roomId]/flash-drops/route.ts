@@ -1,11 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 // GET: Fetch All Drops
 export async function GET(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -28,6 +30,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -78,7 +81,7 @@ export async function POST(
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — €${price || 0} · ${rarity || 'Common'}`;
+    const systemMsg = `⚡ NEW DROP: "${title}" is now LIVE — ${SYM}${price || 0} · ${rarity || 'Common'}`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
     let query = supabase

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, Wallet, AlertCircle, Loader2 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
+import { cs } from "@/utils/currency";
 
 interface PaymentConfirmModalProps {
     isOpen: boolean;
@@ -109,7 +110,7 @@ export default function PaymentConfirmModal({
                 >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Entry Fee</span>
-                        <span style={{ color: "#fff", fontSize: "18px", fontWeight: 700 }}>€{entryFee}</span>
+                        <span style={{ color: "#fff", fontSize: "18px", fontWeight: 700 }}>{cs()}{entryFee}</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Pricing Model</span>
@@ -184,7 +185,7 @@ export default function PaymentConfirmModal({
                     ) : insufficient ? (
                         "Insufficient Balance"
                     ) : (
-                        `Pay €${entryFee} & Join`
+                        `Pay ${cs()}${entryFee} & Join`
                     )}
                 </button>
             </div>

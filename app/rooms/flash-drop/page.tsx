@@ -16,6 +16,7 @@ import { toast as sonnerToast } from "sonner";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifications";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -211,7 +212,7 @@ export default function FlashDropsRoomPreview() {
                 event: 'INSERT', schema: 'public', table: 'flash_drops', filter: `room_id=eq.${roomId}`
             }, (payload) => {
                 const drop = payload.new as any;
-                addTickerItem(`⚡ NEW DROP: ${drop.title} — €${drop.price} · ${drop.rarity}`);
+                addTickerItem(`⚡ NEW DROP: ${drop.title} — ${cs()}${drop.price} · ${drop.rarity}`);
                 sonnerToast.info(`⚡ New drop: ${drop.title} just went live!`);
                 fetchDrops();
             })
@@ -229,7 +230,7 @@ export default function FlashDropsRoomPreview() {
             }, (payload) => {
                 const req = payload.new as any;
                 if (req.fan_name) {
-                    addTickerItem(`💰 ${req.fan_name} submitted a €${req.amount} drop request!`);
+                    addTickerItem(`💰 ${req.fan_name} submitted a ${cs()}${req.amount} drop request!`);
                 }
             })
             .subscribe((status) => {

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Send, MessageSquare, Crown, Zap } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMessage {
     id: string;
@@ -323,6 +324,7 @@ export default function FlashDropLiveChat({
                                         }}
                                     >
                                         {m.sender_name}
+                                        {m.sender_id && <UserBadgeDisplay userId={m.sender_id} />}
                                         {isHostMsg && (
                                             <span
                                                 className="ml-1 text-[8px] font-black uppercase tracking-widest px-1 rounded"

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/bar-lounge/request
@@ -48,6 +49,7 @@ export async function GET(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -66,6 +68,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -136,7 +139,7 @@ export async function POST(
     // Notification
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "bar_request",
-        message: `${profile?.username || "Fan"} ordered ${label || type} (€${amount})`,
+        message: `${profile?.username || "Fan"} ordered ${label || type} (${SYM}${amount})`,
         reference_id: req.id,
     });
 
@@ -155,7 +158,7 @@ export async function POST(
 
     // For tip-like items, use "Sent" language; for custom requests, use "requested"
     const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'bought' : 'bought'));
-    const amountStr = amount > 0 ? ` (€${amount})` : '';
+    const amountStr = amount > 0 ? ` (${SYM}${amount})` : '';
     
     // Skip posting Custom requests to the chat feed.
     // They will only appear in the Creator's Incoming notifications panel.
@@ -183,6 +186,7 @@ export async function PATCH(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();

@@ -5,6 +5,7 @@ import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProtectRoute } from "../../../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 // -------------------- helpers --------------------
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -281,7 +282,7 @@ export default function XChatCreatorView() {
                                     Answered gross (preview)
                                 </div>
                                 <div className="text-sm text-yellow-100 font-semibold">
-                                    €{stats.gross.toLocaleString()}
+                                    {cs()}{stats.gross.toLocaleString()}
                                 </div>
                             </div>
                             
@@ -290,7 +291,7 @@ export default function XChatCreatorView() {
                                     Total Tips (EUR)
                                 </div>
                                 <div className="text-sm text-emerald-100 font-semibold flex items-center gap-1">
-                                    <span className="text-lg leading-none">💰</span> €{(stats.gross + stats.pendingGross).toLocaleString()}
+                                    <span className="text-lg leading-none">💰</span> {cs()}{(stats.gross + stats.pendingGross).toLocaleString()}
                                 </div>
                             </div>
 
@@ -356,7 +357,7 @@ export default function XChatCreatorView() {
                                                             )}
                                                         >
                                                             {m.lane}
-                                                            {typeof m.paid === "number" ? ` • €${m.paid}` : ""}
+                                                            {typeof m.paid === "number" ? ` • ${cs()}${m.paid}` : ""}
                                                         </span>
 
                                                         <span className="text-[10px] px-2 py-[2px] rounded-full border border-white/10 text-gray-300 bg-black/40">

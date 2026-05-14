@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
+import { cs } from "@/utils/currency";
 
 const PinnedOfferDrops = ({ roomId }: { roomId: string | null }) => {
     const { offers, claimOffer } = useSuga4U(roomId);
@@ -47,7 +48,7 @@ const PinnedOfferDrops = ({ roomId }: { roomId: string | null }) => {
                             disabled={ended}
                             className={`w-full py-2 text-sm font-bold tracking-wider ${ended ? "bg-gray-700 cursor-not-allowed text-gray-400" : "btn-gold"}`}
                         >
-                            {ended ? "OFFER ENDED" : `UNLOCK €${o.price}`}
+                            {ended ? "OFFER ENDED" : `UNLOCK ${cs()}${o.price}`}
                         </button>
                     </div>
                 );

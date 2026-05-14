@@ -8,6 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import AddConfessionModal from "./AddConfessionModal";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -135,8 +136,8 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
         const { data: tipNotifs } = await query;
         if (!tipNotifs || tipNotifs.length === 0) return 0;
         return tipNotifs.reduce((sum: number, n: any) => {
-            // Parse amount from message string like "... (€10) ..."
-            const match = n.message?.match(/€(\d+(?:\.\d+)?)/);
+            // Parse amount from message string — match any currency symbol followed by digits
+            const match = n.message?.match(new RegExp(`\\${cs()}(\\d+(?:\\.\\d+)?)`)) || n.message?.match(/(\d+(?:\.\d+)?)/);
             return sum + (match ? Number(match[1]) : 0);
         }, 0);
     };
@@ -311,11 +312,11 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
                         <Heart className="h-4 w-4 conf-text-gold" />
-                        <span>Reaction Tips: <span className="conf-text-gold font-semibold">€{stats.tips.toLocaleString()}</span></span>
+                        <span>Reaction Tips: <span className="conf-text-gold font-semibold">{cs()}{stats.tips.toLocaleString()}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-white/60">
                         <DollarSign className="h-4 w-4 conf-text-gold" />
-                        <span>Earned: <span className="conf-text-gold font-semibold">€{stats.earned.toLocaleString()}</span></span>
+                        <span>Earned: <span className="conf-text-gold font-semibold">{cs()}{stats.earned.toLocaleString()}</span></span>
                     </div>
                 </div>
             </div>
@@ -349,7 +350,7 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                         >
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs text-white font-medium truncate">{c.title}</p>
-                                <p className="text-[10px] text-white/40">{c.tier} • €{c.price}</p>
+                                <p className="text-[10px] text-white/40">{c.tier} • {cs()}{c.price}</p>
                             </div>
                             <div className="flex items-center gap-2 text-white/40">
                                 <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
@@ -381,7 +382,7 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                         </button>
                         <h3 className="text-xl font-bold text-white mb-1.5 pr-8">{viewConfessionTarget.title}</h3>
                         <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-[10px] uppercase font-bold text-white mb-4 shadow-sm">
-                            {viewConfessionTarget.tier} • €{viewConfessionTarget.price}
+                            {viewConfessionTarget.tier} • {cs()}{viewConfessionTarget.price}
                         </div>
                         <div className="text-sm font-medium italic text-white/80 leading-relaxed border-l-2 border-white/20 pl-4 py-1 mb-2 bg-white/5 rounded-r-lg">
                             {viewConfessionTarget.content || viewConfessionTarget.teaser || "No content available."}

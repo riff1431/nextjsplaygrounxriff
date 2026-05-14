@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Smile, Plus, Trash2, Loader2, ChevronLeft, Edit2, Save, X } from "lucide-react";
 import Link from "next/link";
+import { cs } from "@/utils/currency";
 
 interface Reaction {
     id: string;
@@ -110,7 +111,7 @@ export default function AdminReactionCatalogPage() {
                             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
                         </div>
                         <div>
-                            <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", display: "block", marginBottom: "4px" }}>Price ($)</label>
+                            <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", display: "block", marginBottom: "4px" }}>Price ({cs()})</label>
                             <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} min={0} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
                         </div>
                         <button onClick={handleAdd} style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: "hsl(150,80%,40%)", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", height: "fit-content" }}>
@@ -144,7 +145,7 @@ export default function AdminReactionCatalogPage() {
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>{rx.name}</div>
                                 <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>
-                                    {rx.room_type || "All rooms"} • ${rx.price}
+                                    {rx.room_type || "All rooms"} • {cs()}{rx.price}
                                 </div>
                             </div>
                             <button

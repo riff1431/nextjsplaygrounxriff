@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/respond-join
@@ -10,6 +11,7 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const { sessionId } = await params;
     const supabase = await createClient();
 
@@ -64,7 +66,7 @@ export async function POST(
 
         // 4. Notify the fan
         const notifMessage = action === "approve"
-            ? `Your request to join "${session.title}" was approved! Entry fee: €${session.entry_fee}`
+            ? `Your request to join "${session.title}" was approved! Entry fee: ${SYM}${session.entry_fee}`
             : `Your request to join "${session.title}" was rejected.`;
 
         await supabase.from("notifications").insert({
@@ -94,6 +96,7 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const { sessionId } = await params;
     const supabase = await createClient();
 

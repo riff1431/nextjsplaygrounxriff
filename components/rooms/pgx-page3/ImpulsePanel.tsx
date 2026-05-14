@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, User, Mail } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 const impulseButtons = [
   { label: "Quick Like", price: 5, icon: "⚡" },
@@ -45,7 +46,7 @@ export default function ImpulsePanel() {
               <span className="text-l opacity-70">{btn.icon}</span>
               <span>
                 <span className="neon-text-m italic text-l">{btn.label}:</span>{" "}
-                <span className="font-tech font-bold neon-text text-l">€{btn.price}</span>
+                <span className="font-tech font-bold neon-text text-l">{cs()}{btn.price}</span>
               </span>
             </button>
           ))}
@@ -76,7 +77,7 @@ export default function ImpulsePanel() {
       <div className="glass-panel neon-border rounded-xl p-2.5 shrink-0">
         <div className="mb-2 flex items-center justify-between">
           <span className="font-tech text-xl font-bold neon-text-sm">Request A Drop</span>
-          <span className="font-tech text-l font-bold neon-text">€250</span>
+          <span className="font-tech text-l font-bold neon-text">{cs()}250</span>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3">
           <textarea

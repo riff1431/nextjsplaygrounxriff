@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import TopUpModal from "@/components/wallet/TopUpModal";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import { cs } from "@/utils/currency";
 
 interface WalletPillProps {
     className?: string;
@@ -56,7 +57,7 @@ export default function WalletPill({ className = "", compact = false }: WalletPi
             >
                 <Coins size={compact ? 12 : 14} className="text-amber-400" />
                 <span className="font-bold text-white">
-                    {isLoading ? "..." : `€${balance.toFixed(0)}`}
+                    {isLoading ? "..." : `${cs()}${balance.toFixed(0)}`}
                 </span>
                 <Plus
                     size={compact ? 10 : 12}

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 const PLATFORM_ACCOUNT_ID = process.env.PLATFORM_ACCOUNT_ID || "00000000-0000-0000-0000-000000000001";
 
@@ -124,6 +125,7 @@ async function addParticipantWithPayment(
     user: any,
     sessionId: string
 ) {
+    const SYM = await getServerCurrencySymbol();
     const price = Number(session.price) || 0;
     const creatorId = session.creator_id || session.room?.host_id;
 
@@ -185,7 +187,7 @@ async function addParticipantWithPayment(
     return NextResponse.json({
         success: true,
         status: "joined",
-        message: price > 0 ? `Joined the room and charged €${price}` : "Joined successfully!",
+        message: price > 0 ? `Joined the room and charged ${SYM}${price}` : "Joined successfully!",
         room_id: session.room_id,
     });
 }

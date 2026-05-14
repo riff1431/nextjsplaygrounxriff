@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, Package, Image as ImageIcon, Film, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface RollerPack {
     id: string;
@@ -196,7 +197,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
                     <input
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        placeholder="Price (€)"
+                        placeholder="Price (${cs()})"
                         type="number"
                         min="1"
                         disabled={isProcessing}
@@ -345,7 +346,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
 
                                 <div className="pl-3 pr-2 py-2">
                                     <div className="flex items-baseline gap-0.5 mb-0.5">
-                                        <span className="text-[10px] font-bold text-primary/70">€</span>
+                                        <span className="text-[10px] font-bold text-primary/70">{cs()}</span>
                                         <span className="font-display text-lg font-black" style={{ color: "#fff", textShadow: "0 0 10px hsl(var(--primary)/0.6)" }}>
                                             {pack.price.toLocaleString()}
                                         </span>

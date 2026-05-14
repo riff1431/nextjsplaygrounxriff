@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/billing
@@ -12,6 +13,7 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const { sessionId } = await params;
     const supabase = await createClient();
 
@@ -39,8 +41,8 @@ export async function POST(
         // Determine rate and split type
         const isPrivate = session.session_type === 'private' || session.is_private;
         const rate = isPrivate
-            ? Math.max(session.cost_per_min || 5, 5) // Private: min €5/min
-            : 2; // Public: €2/min
+            ? Math.max(session.cost_per_min || 5, 5) // Private: min ${SYM}5/min
+            : 2; // Public: ${SYM}2/min
         const splitType = isPrivate ? 'PRIVATE_PER_MIN' : 'PUBLIC_PER_MIN';
 
         // Get last billing record for this session + fan
@@ -115,6 +117,7 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const { sessionId } = await params;
     const supabase = await createClient();
 

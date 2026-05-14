@@ -9,6 +9,7 @@ import SessionChatPanel from "./SessionChatPanel";
 import FanStream from "@/components/rooms/FanStream";
 import { DollarSign, Heart, Send, Wallet, Loader2, Flag } from "lucide-react";
 import ReportModal from "@/components/common/ReportModal";
+import { cs } from "@/utils/currency";
 
 interface FanSessionViewProps {
     sessionId: string;
@@ -66,7 +67,7 @@ export default function FanSessionView({
     const handleTip = async () => {
         const result = await sendTip(Number(tipAmount));
         if (result?.success) {
-            showFeedback(`💰 Tipped €${tipAmount}!`);
+            showFeedback(`💰 Tipped ${cs()}${tipAmount}!`);
             setShowTipModal(false);
         } else {
             showFeedback(result?.error || "Tip failed");
@@ -86,7 +87,7 @@ export default function FanSessionView({
         if (!requestText.trim()) return;
         const result = await sendCustomRequest(requestText.trim(), Number(requestAmount));
         if (result?.success) {
-            showFeedback(`📩 Request sent for €${requestAmount}!`);
+            showFeedback(`📩 Request sent for ${cs()}${requestAmount}!`);
             setShowRequestModal(false);
             setRequestText("");
         } else {
@@ -114,7 +115,7 @@ export default function FanSessionView({
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "10px", padding: "6px 14px" }}>
                         <Wallet size={14} color="hsl(150,80%,60%)" />
-                        <span style={{ color: "hsl(150,80%,60%)", fontSize: "14px", fontWeight: 600 }}>€{(balance || 0).toFixed(2)}</span>
+                        <span style={{ color: "hsl(150,80%,60%)", fontSize: "14px", fontWeight: 600 }}>{cs()}{(balance || 0).toFixed(2)}</span>
                     </div>
                 </div>
 
@@ -180,7 +181,7 @@ export default function FanSessionView({
                                     key={rx.id}
                                     onClick={() => handleReaction(rx.id, rx.emoji)}
                                     disabled={interactionLoading}
-                                    title={`${rx.name} — €${rx.price}`}
+                                    title={`${rx.name} — ${cs()}${rx.price}`}
                                     style={{
                                         display: "flex",
                                         alignItems: "center",
@@ -196,7 +197,7 @@ export default function FanSessionView({
                                     }}
                                 >
                                     <span style={{ fontSize: "16px" }}>{rx.emoji}</span>
-                                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>€{rx.price}</span>
+                                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)" }}>{cs()}{rx.price}</span>
                                 </button>
                             ))}
                             
@@ -289,7 +290,7 @@ export default function FanSessionView({
                             style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 14px", color: "#fff", fontSize: "14px", outline: "none", marginBottom: "16px", boxSizing: "border-box" }}
                         />
                         <button onClick={handleTip} disabled={interactionLoading} style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, hsl(45,100%,50%), hsl(25,100%,50%))", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
-                            {interactionLoading ? "Sending..." : `Send €${tipAmount} Tip`}
+                            {interactionLoading ? "Sending..." : `Send ${cs()}${tipAmount} Tip`}
                         </button>
                     </div>
                 </div>
@@ -330,7 +331,7 @@ export default function FanSessionView({
                             ))}
                         </div>
                         <button onClick={handleCustomRequest} disabled={interactionLoading || !requestText.trim()} style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, hsl(280,100%,55%), hsl(330,90%,50%))", color: "#fff", fontSize: "14px", fontWeight: 700, cursor: "pointer", opacity: requestText.trim() ? 1 : 0.5 }}>
-                            {interactionLoading ? "Sending..." : `Send Request — €${requestAmount}`}
+                            {interactionLoading ? "Sending..." : `Send Request — ${cs()}${requestAmount}`}
                         </button>
                     </div>
                 </div>

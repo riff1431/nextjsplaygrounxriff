@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SPLIT_CONFIG } from "@/utils/finance/splitConfig";
+import { cs } from "@/utils/currency";
 
 interface SessionSplitDisclosureProps {
     isPrivate: boolean;
@@ -32,12 +33,12 @@ export default function SessionSplitDisclosure({
 
     const rows = [
         {
-            label: `Entry Fee ${entryFee > 0 ? `(€${entryFee})` : ''}`,
+            label: `Entry Fee ${entryFee > 0 ? `({cs()}${entryFee})` : ''}`,
             you: entry.creator,
             platform: entry.platform,
         },
         {
-            label: `Per-Minute ${costPerMin > 0 ? `(€${costPerMin}/min)` : `(€${isPrivate ? '5+' : '2'}/min)`}`,
+            label: `Per-Minute ${costPerMin > 0 ? `({cs()}${costPerMin}/min)` : `({cs()}${isPrivate ? '5+' : '2'}/min)`}`,
             you: perMin.creator,
             platform: perMin.platform,
         },

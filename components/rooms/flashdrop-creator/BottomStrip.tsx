@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, Package, ImageIcon, Video, Upload, Loader2, FileX, ShoppingBag, BadgeCheck } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface Bundle {
     id: string;
@@ -177,7 +178,7 @@ const BottomStrip = ({ roomId }: BottomStripProps) => {
                                     className="bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/35 focus:outline-none focus:border-primary/80 focus:bg-white/15 transition-all" />
                             </div>
                             <div className="flex flex-col gap-1 w-20">
-                                <label className="text-[9px] text-white/50 font-bold uppercase tracking-wider">Price (€) *</label>
+                                <label className="text-[9px] text-white/50 font-bold uppercase tracking-wider">Price ({cs()}) *</label>
                                 <input value={price} onChange={e => setPrice(e.target.value)} placeholder="0" type="number" min="1"
                                     className="bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/35 focus:outline-none focus:border-primary/80 focus:bg-white/15 transition-all" />
                             </div>
@@ -263,7 +264,7 @@ const BottomStrip = ({ roomId }: BottomStripProps) => {
                                     <div className="flex items-baseline gap-1">
                                         <span className="font-display text-2xl font-black leading-none"
                                             style={{ color: "#fff", textShadow: "0 0 14px hsl(var(--primary)/0.8)" }}>
-                                            €{bundle.price.toLocaleString()}
+                                            {cs()}{bundle.price.toLocaleString()}
                                         </span>
                                     </div>
 

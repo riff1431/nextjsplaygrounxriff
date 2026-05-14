@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/suga/gift
@@ -11,6 +12,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -54,7 +56,7 @@ export async function POST(
 
     await supabase.from("notifications").insert({
         user_id: room.host_id, actor_id: user.id, type: "suga_gift",
-        message: `${profile?.username || "Fan"} sent a ${giftType} gift (€${amount})!`,
+        message: `${profile?.username || "Fan"} sent a ${giftType} gift (${SYM}${amount})!`,
         reference_id: gift?.id,
     });
 

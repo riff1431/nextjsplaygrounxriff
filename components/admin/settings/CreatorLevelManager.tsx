@@ -7,6 +7,7 @@ import { AdminSectionTitle } from "../shared/AdminTable";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { uploadToLocalServer } from "@/utils/uploadHelper";
+import { cs } from "@/utils/currency";
 
 interface CreatorLevel {
     id: string;
@@ -221,7 +222,7 @@ export default function CreatorLevelManager() {
                                         {level.price > 0 && (
                                             <div className="flex items-center gap-1 text-sm">
                                                 <DollarSign className="w-3 h-3 text-yellow-400" />
-                                                <span className="text-white font-bold">€{level.price}</span>
+                                                <span className="text-white font-bold">{cs()}{level.price}</span>
                                             </div>
                                         )}
                                         {level.required_posts && level.price > 0 && (

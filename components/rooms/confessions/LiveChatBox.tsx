@@ -5,6 +5,7 @@ import { Send, Loader2, MessageSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import EmojiPicker from "@/components/common/EmojiPicker";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMsg {
     id: string;
@@ -182,6 +183,7 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
                                     <span className={`text-xs font-bold truncate ${msg.sender_id === user?.id ? "text-rose-400" : "text-white/80"}`}>
                                         {msg.sender_name}
                                     </span>
+                                    <UserBadgeDisplay userId={msg.sender_id} />
                                     <span className="text-white/20 text-[9px] ml-auto shrink-0">
                                         {formatTime(msg.created_at)}
                                     </span>

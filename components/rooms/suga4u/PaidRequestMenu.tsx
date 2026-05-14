@@ -4,6 +4,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const quickRequests = [
     { type: "POSE", name: "Pose", price: 15, emoji: "📸" },
@@ -38,7 +39,7 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
 
             // Create Request
             await createRequest(r.type, r.name, "Custom request from fan view", r.price, fanName);
-            toast.success(`📸 Request sent: ${r.name}`, { description: `€${r.price} request submitted` });
+            toast.success(`📸 Request sent: ${r.name}`, { description: `${cs()}${r.price} request submitted` });
         } catch (err) {
             console.error("Failed to send request:", err);
             toast.error("Failed to send request");
@@ -63,7 +64,7 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                         className="neon-border-pink glass-panel py-2 px-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-xs block">{r.emoji} {r.name}</span>
-                        <p className="text-pink font-bold text-sm">€{r.price}</p>
+                        <p className="text-pink font-bold text-sm">{cs()}{r.price}</p>
                     </button>
                 ))}
             </div>
@@ -78,7 +79,7 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                     itemLabel={confirmReq.name}
                     amount={confirmReq.price}
                     walletBalance={balance}
-                    description={`Pay €${confirmReq.price} to request ${confirmReq.name}?`}
+                    description={`Pay ${cs()}${confirmReq.price} to request ${confirmReq.name}?`}
                     confirmLabel="Pay & Request"
                 />
             )}

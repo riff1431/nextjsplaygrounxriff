@@ -41,6 +41,7 @@ import EarningsModal from "./components/EarningsModal";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager";
 import { playMoneySound } from "@/utils/sounds";
 import GroupVoteManager from "./components/GroupVoteManager";
+import { cs } from "@/utils/currency";
 
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
@@ -171,7 +172,7 @@ function formatMMSS(totalSeconds: number) {
     return `${mm}:${ss}`;
 }
 function money(n: number | undefined | null) {
-    return `€${(n ?? 0).toFixed(0)}`;
+    return `${cs()}${(n ?? 0).toFixed(0)}`;
 }
 function timeAgo(ts: number) {
     const d = Math.max(0, Date.now() - ts);
@@ -616,7 +617,7 @@ export default function TruthOrDareCreatorRoom() {
                     const existing = prev[fanKey] || { name: fanName, total: 0 };
                     const newTotal = existing.total + amount;
 
-                    console.log(`💰 Fan spending updated: ${fanName} spent €${amount} (Total: €${newTotal})`);
+                    console.log(`💰 Fan spending updated: ${fanName} spent ${cs()}${amount} (Total: ${cs()}${newTotal})`);
 
                     return {
                         ...prev,
@@ -749,7 +750,7 @@ export default function TruthOrDareCreatorRoom() {
     useEffect(() => {
         if (topSpender !== "—") {
             const topSpenderData = Object.values(fanSpending).sort((a, b) => b.total - a.total)[0];
-            console.log(`👑 Top Spender (Dare King): ${topSpender} with €${topSpenderData?.total.toFixed(2)}`);
+            console.log(`👑 Top Spender (Dare King): ${topSpender} with ${cs()}${topSpenderData?.total.toFixed(2)}`);
         }
     }, [topSpender, fanSpending]);
 
@@ -1223,7 +1224,7 @@ export default function TruthOrDareCreatorRoom() {
                         <div className="p-5 rounded-2xl bg-gray-900 border border-white/5">
                             <div className="text-gray-400 text-xs mb-1 uppercase tracking-wider">Wallet Balance</div>
                             <div className="text-2xl font-bold text-green-400">
-                                {creatorWalletBalance !== null ? `€${creatorWalletBalance.toFixed(2)}` : "..."}
+                                {creatorWalletBalance !== null ? `${cs()}${creatorWalletBalance.toFixed(2)}` : "..."}
                             </div>
                         </div>
                     </div>
@@ -1306,7 +1307,7 @@ export default function TruthOrDareCreatorRoom() {
                                                     {session.is_private ? "Private" : "Public"}
                                                 </span>
                                                 <span className="text-gray-600">•</span>
-                                                <span className="text-gray-300 font-medium">€{Number(session.price || 0).toFixed(0)} entry</span>
+                                                <span className="text-gray-300 font-medium">{cs()}{Number(session.price || 0).toFixed(0)} entry</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 ml-4">

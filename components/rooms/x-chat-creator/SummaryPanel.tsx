@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface SummaryPanelProps {
     roomId?: string;
@@ -99,7 +100,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
                 const msg = payload.new;
                 if (sessionId && msg.session_id !== sessionId) return;
                 if (msg.paid_amount > 0) {
-                    toast.success(`🎉 New Tip: €${msg.paid_amount} from ${msg.sender_name}!`);
+                    toast.success(`🎉 New Tip: ${cs()}${msg.paid_amount} from ${msg.sender_name}!`);
                 }
                 if (msg.sender_id) {
                     setFanIds(prev => {
@@ -140,7 +141,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
         { icon: "🎭", label: "STICKERS", value: stats.totalStickers.toLocaleString() },
-        { icon: "💰", label: "TIPS (EUR)", value: `€${stats.totalTips.toLocaleString()}` },
+        { icon: "💰", label: "TIPS (EUR)", value: `${cs()}${stats.totalTips.toLocaleString()}` },
         { icon: "👥", label: "FANS", value: stats.fans.toLocaleString() },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];

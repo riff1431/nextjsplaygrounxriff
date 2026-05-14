@@ -4,6 +4,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const actions = [
     { name: "Say My Name", price: 20, emoji: "💋" },
@@ -64,7 +65,7 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                     toast.error("Failed to initiate video call");
                 }
             } else {
-                toast.success(`${a.emoji} ${a.name} activated!`, { description: `€${a.price} sent to creator` });
+                toast.success(`${a.emoji} ${a.name} activated!`, { description: `${cs()}${a.price} sent to creator` });
             }
         } catch (err) {
             console.error("Failed to trigger action:", err);
@@ -85,7 +86,7 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                         className="neon-border-pink glass-panel py-2 px-2 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-[11px] block">{a.emoji} {a.name}</span>
-                        <p className="text-pink font-bold text-sm">€{a.price}</p>
+                        <p className="text-pink font-bold text-sm">{cs()}{a.price}</p>
                     </button>
                 ))}
             </div>
@@ -96,7 +97,7 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                     disabled={!roomId || !hostId}
                     className="w-full mt-2 btn-pink py-2 text-sm glow-pink disabled:opacity-50"
                 >
-                    {a.emoji} {a.name} <span className="font-bold">€{a.price}</span>
+                    {a.emoji} {a.name} <span className="font-bold">{cs()}{a.price}</span>
                 </button>
             ))}
             
@@ -112,8 +113,8 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                     walletBalance={balance}
                     description={
                         confirmAction.isPrivateCall
-                            ? `Pay €${confirmAction.price} for a Private 1-on-1 video call with the creator?`
-                            : `Pay €${confirmAction.price} to trigger ${confirmAction.name}?`
+                            ? `Pay ${cs()}${confirmAction.price} for a Private 1-on-1 video call with the creator?`
+                            : `Pay ${cs()}${confirmAction.price} to trigger ${confirmAction.name}?`
                     }
                     confirmLabel={confirmAction.isPrivateCall ? "Pay & Request Call" : "Pay Now"}
                 />

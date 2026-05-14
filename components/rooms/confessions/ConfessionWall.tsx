@@ -3,6 +3,7 @@ import { Heart, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
+import { cs } from "@/utils/currency";
 
 export interface CreatorInfo {
     id: string;
@@ -61,7 +62,7 @@ const LockedConfessionCard = ({
                 className="w-full py-2 rounded-lg text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 mt-auto gradient-pink hover:opacity-90"
             >
                 <Heart className="w-3 h-3 fill-current text-white" />
-                <span className="text-white font-bold drop-shadow-sm">Unlock for €{confession.price}</span>
+                <span className="text-white font-bold drop-shadow-sm">Unlock for {cs()}{confession.price}</span>
             </button>
         </div>
     );
@@ -159,10 +160,10 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                 {/* Reaction buttons */}
                 <div className="flex gap-1.5">
                     {[
-                        { icon: "💋", label: "KISS", price: "€10", val: 10 },
-                        { icon: "❤️", label: "LOVE", price: "€20", val: 20 },
-                        { icon: "🔥", label: "SPICY", price: "€30", val: 30 },
-                        { icon: "💎", label: "DIAMOND", price: "€40", val: 40 },
+                        { icon: "💋", label: "KISS", price: "${cs()}10", val: 10 },
+                        { icon: "❤️", label: "LOVE", price: "${cs()}20", val: 20 },
+                        { icon: "🔥", label: "SPICY", price: "${cs()}30", val: 30 },
+                        { icon: "💎", label: "DIAMOND", price: "${cs()}40", val: 40 },
                     ].map((tip, i) => (
                         <button
                             key={i}

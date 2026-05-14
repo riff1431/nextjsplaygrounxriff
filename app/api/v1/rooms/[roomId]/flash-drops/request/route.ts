@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/flash-drops/request
@@ -18,6 +19,7 @@ export async function GET(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -35,6 +37,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -85,8 +88,8 @@ export async function POST(
     const systemMsg = finalContent.includes('Pack') || finalContent.includes('Bundle')
         ? `🎁 ${profile?.username || "Anonymous"} ${finalContent.replace('🎁 ', '')}`
         : finalContent.includes('Impulse')
-            ? `⚡ ${profile?.username || "Anonymous"} sent €${amount} for ${finalContent.replace('⚡ Impulse ', '').split(':')[0]}!`
-            : `💰 ${profile?.username || "Anonymous"} submitted a €${amount} custom drop request!`;
+            ? `⚡ ${profile?.username || "Anonymous"} sent ${SYM}${amount} for ${finalContent.replace('⚡ Impulse ', '').split(':')[0]}!`
+            : `💰 ${profile?.username || "Anonymous"} submitted a ${SYM}${amount} custom drop request!`;
 
     // Insert System Message into Chat (Server-side to avoid duplication)
     let query = supabase
@@ -117,7 +120,7 @@ export async function POST(
     if (!isImpulse && !isPack) {
         await supabase.from("notifications").insert({
             user_id: room.host_id, actor_id: user.id, type: "flash_drop_request",
-            message: `New drop request (€${amount}): "${finalContent}"`,
+            message: `New drop request (${SYM}${amount}): "${finalContent}"`,
             reference_id: req.id,
         });
     }
@@ -129,6 +132,7 @@ export async function PATCH(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();

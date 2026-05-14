@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, Lock, User, MessageSquare, Image as ImageIcon, Video, Users, Globe } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface RequestConfessionProps {
     reqType: 'Text' | 'Image' | 'Video';
@@ -58,7 +59,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
                     <span>My Offer Amount</span>
                 </div>
                 <div className="relative group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 gold-text font-bold text-lg group-focus-within:scale-110 transition-transform">€</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 gold-text font-bold text-lg group-focus-within:scale-110 transition-transform">{cs()}</span>
                     <input
                         type="number"
                         value={reqAmount || ''}

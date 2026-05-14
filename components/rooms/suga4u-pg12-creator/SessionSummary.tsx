@@ -1,9 +1,10 @@
 "use client";
 
 import { Heart, DollarSign, Users, Clock, TrendingUp, Gift } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 const stats = [
-    { icon: DollarSign, label: "Total Earned", value: "€2,450" },
+    { icon: DollarSign, label: "Total Earned", value: "${cs()}2,450" },
     { icon: Users, label: "Viewers", value: "1,247" },
     { icon: Clock, label: "Duration", value: "2h 34m" },
     { icon: TrendingUp, label: "Peak Viewers", value: "892" },

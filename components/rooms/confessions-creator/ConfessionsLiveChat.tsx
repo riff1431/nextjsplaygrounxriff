@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMsg {
     id: string;
@@ -178,6 +179,7 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                                     <span className={`text-sm font-medium truncate ${msg.sender_id === user?.id ? "text-[hsl(330,90%,65%)]" : "text-white"}`}>
                                         {msg.sender_name}
                                     </span>
+                                    <UserBadgeDisplay userId={msg.sender_id} />
                                     <span className="text-xs">💜</span>
                                     <span className="text-white/60 text-xs ml-auto shrink-0">
                                         {formatTime(msg.created_at)}

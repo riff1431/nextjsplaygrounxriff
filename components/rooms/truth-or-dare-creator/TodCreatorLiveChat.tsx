@@ -4,6 +4,8 @@ import { Heart, Send, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMessage {
     id: string;
@@ -240,12 +242,12 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                                             </span>
                                         </div>
                                         <p className="text-sm text-white/80 mt-0.5 break-words max-w-[200px] leading-snug">
-                                            {item.type === 'reaction' ? `sent ${item.message || 'a reaction'}` : `sent a €${item.amount} tip`}
+                                            {item.type === 'reaction' ? `sent ${item.message || 'a reaction'}` : `sent a ${cs()}${item.amount} tip`}
                                         </p>
                                     </div>
                                     <div className="shrink-0 flex items-center">
                                         <span className="text-xs font-bold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
-                                            +€{item.amount}
+                                            +{cs()}{item.amount}
                                         </span>
                                     </div>
                                 </div>
@@ -265,6 +267,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                                         <span className={`font-bold text-xs ${isMe ? 'tod-creator-text-neon-blue' : 'tod-creator-text-neon-pink'}`}>
                                             {m.username || "Unknown"}
                                         </span>
+                                        {m.user_id && <UserBadgeDisplay userId={m.user_id} />}
                                         {m.created_at && (
                                             <span className="text-[10px] text-white/30 ml-auto shrink-0">
                                                 {formatTime(m.created_at)}

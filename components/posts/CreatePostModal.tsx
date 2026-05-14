@@ -10,6 +10,7 @@ import { Image as ImageIcon, Video, Type, Upload, X, Loader2 } from "lucide-reac
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { uploadToLocalServer } from "@/utils/uploadHelper";
+import { cs } from "@/utils/currency";
 
 export default function CreatePostModal({ currentUserId, onPostCreated, trigger }: { currentUserId: string | null, onPostCreated: () => void, trigger?: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -160,7 +161,7 @@ export default function CreatePostModal({ currentUserId, onPostCreated, trigger 
 
                             {isPaid && (
                                 <div className="flex items-center gap-2 flex-1">
-                                    <span className="text-sm text-zinc-500">€</span>
+                                    <span className="text-sm text-zinc-500">{cs()}</span>
                                     <input
                                         type="number"
                                         placeholder="Price"

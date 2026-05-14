@@ -7,6 +7,7 @@ import ContestantCard from "@/components/rooms/pgx-pg8/ContestantCard";
 import BuyVotes from "@/components/rooms/pgx-pg8/BuyVotes";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cs } from "@/utils/currency";
 
 const contestants = [
     { rank: 1, name: "ALEXA", votes: "8.4k", gradient: "bg-gradient-to-br from-pink-600/60 to-purple-800/60" },
@@ -49,7 +50,7 @@ export default function CompetitionRoom() {
                                 <LiveChat />
                             </div>
                             {/* <button className="flex-shrink-0 w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-foreground font-display text-sm font-bold tracking-wider py-2 rounded-lg border border-border neon-border transition-all hover:brightness-110">
-                💰 SEND TIP — €5
+                💰 SEND TIP — {cs()}5
               </button> */}
                         </div>
 

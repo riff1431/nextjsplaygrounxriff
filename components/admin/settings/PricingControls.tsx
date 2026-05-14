@@ -5,6 +5,7 @@ import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle, AdminTable } from "../shared/AdminTable";
 import { AdminPill } from "../shared/AdminPill";
 import { useAdmin, GlobalPricing } from "../hooks/useAdmin";
+import { cs } from "@/utils/currency";
 
 export default function PricingControls() {
     const { fetchSetting, updateSetting } = useAdmin();
@@ -62,7 +63,7 @@ export default function PricingControls() {
                     <div className="text-sm text-cyan-200">Global Defaults</div>
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <label className="text-xs text-gray-300">
-                            Entry Fee ($)
+                            Entry Fee ({cs()})
                             <input
                                 type="number"
                                 value={pricing.entry_fee}
@@ -197,8 +198,8 @@ export default function PricingControls() {
                             { key: "mode", label: "Mode", w: "140px" },
                         ]}
                         rows={[
-                            { room: "Suga4U Global", entry: `€${pricing.entry_fee}`, free: `${pricing.free_minutes}m`, rate: `€${pricing.rate_per_minute}/m`, mode: <AdminPill tone="pink">Global</AdminPill> },
-                            { room: "Bar Lounge (Override)", entry: `€${Math.max(0, pricing.entry_fee - 5)}`, free: `${Math.max(0, pricing.free_minutes - 5)}m`, rate: `€${pricing.rate_per_minute}/m`, mode: <AdminPill tone="amber">Override</AdminPill> },
+                            { room: "Suga4U Global", entry: `${cs()}${pricing.entry_fee}`, free: `${pricing.free_minutes}m`, rate: `${cs()}${pricing.rate_per_minute}/m`, mode: <AdminPill tone="pink">Global</AdminPill> },
+                            { room: "Bar Lounge (Override)", entry: `${cs()}${Math.max(0, pricing.entry_fee - 5)}`, free: `${Math.max(0, pricing.free_minutes - 5)}m`, rate: `${cs()}${pricing.rate_per_minute}/m`, mode: <AdminPill tone="amber">Override</AdminPill> },
                         ]}
                     />
                 </div>

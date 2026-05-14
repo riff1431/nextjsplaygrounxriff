@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { CheckCircle2, XCircle, Clock, Paperclip, User } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface DropRequest {
     id: string;
@@ -109,7 +110,7 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
 
                                     <div className="min-w-0">
                                         <p className="text-[11px] text-white/70 truncate leading-tight">{req.content.split(' |__MEDIA__|')[0]}</p>
-                                        <p className="text-[10px] font-bold neon-text">€{req.amount}</p>
+                                        <p className="text-[10px] font-bold neon-text">{cs()}{req.amount}</p>
                                     </div>
 
                                     {/* Action area */}

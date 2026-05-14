@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import OnboardingPaymentModal from "../OnboardingPaymentModal";
+import { cs } from "@/utils/currency";
 
 interface MembershipPlan {
     id: string;
@@ -189,7 +190,7 @@ export default function FanMembershipStep({ onComplete }: Props) {
                                 ) : (
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-3xl font-bold text-white">
-                                            ${plan.price}
+                                            {cs()}{plan.price}
                                         </span>
                                         <span className="text-gray-400 text-sm">/month</span>
                                     </div>
@@ -240,7 +241,7 @@ export default function FanMembershipStep({ onComplete }: Props) {
                         ) : selectedPlan?.price && selectedPlan.price > 0 ? (
                             <span className="flex items-center gap-2">
                                 <CreditCard className="w-5 h-5" />
-                                Pay ${selectedPlan.price} & Continue
+                                Pay {cs()}{selectedPlan.price} & Continue
                             </span>
                         ) : (
                             "Get Started Free →"

@@ -14,6 +14,7 @@ import IncomingReplies from "@/components/rooms/x-chat/IncomingReplies";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(
     () => import("@/components/rooms/LiveStreamWrapper"),
@@ -61,7 +62,7 @@ const ReactionChip = ({
     >
         <span className="xchat-chip-emoji">{emoji}</span>
         <span className="xchat-chip-label">{label}</span>
-        <span className="xchat-chip-price">€{price}</span>
+        <span className="xchat-chip-price">{cs()}{price}</span>
     </button>
 );
 
@@ -78,7 +79,7 @@ const BoostRow = ({
             )}
             <span className="xchat-boost-label">{label}</span>
         </div>
-        <span className="xchat-boost-price">€{price}</span>
+        <span className="xchat-boost-price">{cs()}{price}</span>
     </button>
 );
 
@@ -304,7 +305,7 @@ const XChatRoom = () => {
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                     Live — {formatTime(elapsed)}
                 </div>
-                <span className="text-gold font-bold text-sm">€{runningCharge}</span>
+                <span className="text-gold font-bold text-sm">{cs()}{runningCharge}</span>
                 <button onClick={endSession} className="xchat-header-btn xchat-header-btn--red">End Session</button>
             </div>
         );

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Wallet, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cs } from "@/utils/currency";
 
 interface SpendConfirmModalProps {
     isOpen: boolean;
@@ -107,7 +108,7 @@ export default function SpendConfirmModal({
                         <div>
                             <p className="text-xs text-white/50 mb-0.5">Price</p>
                             <p className="text-xl font-bold text-emerald-400">
-                                ${amount.toFixed(2)}
+                                {cs()}{amount.toFixed(2)}
                             </p>
                         </div>
                         <div className="text-right">
@@ -118,7 +119,7 @@ export default function SpendConfirmModal({
                                 className={`text-lg font-bold ${insufficient ? "text-red-400" : "text-white"
                                     }`}
                             >
-                                ${walletBalance.toFixed(2)}
+                                {cs()}{walletBalance.toFixed(2)}
                             </p>
                         </div>
                     </div>
@@ -128,7 +129,7 @@ export default function SpendConfirmModal({
                         <div className="text-xs text-white/40 text-center">
                             Remaining after purchase:{" "}
                             <span className="text-white/70 font-medium">
-                                ${(walletBalance - amount).toFixed(2)}
+                                {cs()}{(walletBalance - amount).toFixed(2)}
                             </span>
                         </div>
                     )}
@@ -155,7 +156,7 @@ export default function SpendConfirmModal({
                                     Insufficient funds
                                 </p>
                                 <p className="text-[10px] text-red-300/70">
-                                    You need ${(amount - walletBalance).toFixed(2)} more. Top up
+                                    You need {cs()}{(amount - walletBalance).toFixed(2)} more. Top up
                                     your wallet to continue.
                                 </p>
                             </div>
@@ -194,7 +195,7 @@ export default function SpendConfirmModal({
                                 ) : loading ? (
                                     <Loader2 size={16} className="animate-spin" />
                                 ) : (
-                                    confirmLabel || `Pay €${amount.toFixed(2)}`
+                                    confirmLabel || `Pay ${cs()}${amount.toFixed(2)}`
                                 )}
                             </button>
                         )}

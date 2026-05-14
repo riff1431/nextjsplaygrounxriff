@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/confessions/unlock
@@ -12,6 +13,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -100,7 +102,7 @@ export async function POST(
             user_id: creatorId,
             actor_id: user.id,
             type: "confession_unlock",
-            message: `Someone unlocked your confession "${confession.title}" for €${price}`,
+            message: `Someone unlocked your confession "${confession.title}" for ${SYM}${price}`,
             reference_id: confessionId,
         });
     }

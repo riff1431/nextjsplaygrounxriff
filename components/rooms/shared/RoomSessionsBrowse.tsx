@@ -11,6 +11,8 @@ import {
 import { toast } from "sonner";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "./RoomEntryInfoModal";
 import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 /* ─────────── Types ─────────── */
 interface Session {
@@ -470,6 +472,11 @@ export default function RoomSessionsBrowse({
                                         <h3 style={{ fontSize: "14px", fontWeight: 700, color: isHovered ? accentColor : "#fff", margin: "0 0 4px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                                             {session.title}
                                         </h3>
+                                        {session.description && (
+                                            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", margin: "0 0 2px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+                                                {session.description}
+                                            </p>
+                                        )}
 
                                     </div>
 
@@ -488,7 +495,10 @@ export default function RoomSessionsBrowse({
                                                 creatorName={creatorName}
                                                 avatarUrl={session.creator?.avatar_url}
                                             >
-                                                <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff" }}>{creatorName}</div>
+                                                <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                    {creatorName}
+                                                    <UserBadgeDisplay userId={session.creator_id} />
+                                                </div>
                                             </CreatorProfileHover>
                                             <div style={{ fontSize: "10px", color: accentLight, marginTop: "1px" }}>{timeAgo(session.started_at)}</div>
                                         </div>
@@ -502,7 +512,7 @@ export default function RoomSessionsBrowse({
                                             <span>{session.participant_count} viewers</span>
                                         </div>
                                         <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 800, color: price > 0 ? "#fcd34d" : accentColor }}>
-                                            {price > 0 ? <span>€{price}</span> : <><Zap style={{ width: 11, height: 11 }} /><span>Free</span></>}
+                                            {price > 0 ? <span>{cs()}{price}</span> : <><Zap style={{ width: 11, height: 11 }} /><span>Free</span></>}
                                         </div>
                                     </div>
 

@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
+import { cs } from "@/utils/currency";
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -57,7 +58,7 @@ const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 ml-auto pl-2">
-                                <span className="text-sm font-bold s4u-creator-text-gold">€{item.buy_price}</span>
+                                <span className="text-sm font-bold s4u-creator-text-gold">{cs()}{item.buy_price}</span>
                                 <button 
                                     onClick={() => deleteFavorite(item.id)}
                                     className="text-white/40 hover:text-red-400 transition-colors p-1"

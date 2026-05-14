@@ -1,11 +1,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 // ──────────────────────────────────────────────────
 // GET /api/v1/rooms/sessions?room_type=truth-or-dare&status=active
 // List sessions, optionally filtered by room_type and status
 // ──────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const roomType = searchParams.get("room_type");
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
 // Body: { room_type, title, description?, session_type, price? }
 // ──────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -104,7 +107,7 @@ export async function POST(request: NextRequest) {
             entryFee = Number(price) || 0;
             if (entryFee < Number(settings.min_private_entry_fee)) {
                 return NextResponse.json({
-                    error: `Private session fee must be at least €${settings.min_private_entry_fee}`,
+                    error: `Private session fee must be at least ${SYM}${settings.min_private_entry_fee}`,
                 }, { status: 400 });
             }
         }
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
             costPerMin = Number(cost_per_min) || 0;
             if (costPerMin < 4) {
                 return NextResponse.json({
-                    error: "Cost per minute must be at least €4 for private sessions",
+                    error: "Cost per minute must be at least ${SYM}4 for private sessions",
                 }, { status: 400 });
             }
         }

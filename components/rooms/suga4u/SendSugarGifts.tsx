@@ -4,6 +4,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const gifts = [
     { name: "Diamond", amount: 10, emoji: "💎" },
@@ -39,7 +40,7 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
             // Route to pending requests
             await createRequest("GIFT", g.name, `Sent ${g.name}`, g.amount, fanName);
             
-            toast.success(`${g.emoji} Gift sent: ${g.name}`, { description: `€${g.amount} sent to creator` });
+            toast.success(`${g.emoji} Gift sent: ${g.name}`, { description: `${cs()}${g.amount} sent to creator` });
         } catch (err) {
             console.error("Failed to send gift:", err);
             toast.error("Failed to send gift");
@@ -64,7 +65,7 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
                         className="neon-border-pink glass-panel py-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
                     >
                         <span className="text-lg">{g.emoji}</span>
-                        <p className="text-foreground font-bold text-sm">€{g.amount}</p>
+                        <p className="text-foreground font-bold text-sm">{cs()}{g.amount}</p>
                     </button>
                 ))}
             </div>
@@ -79,7 +80,7 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
                     itemLabel={confirmGift.name}
                     amount={confirmGift.amount}
                     walletBalance={balance}
-                    description={`Send €${confirmGift.amount} ${confirmGift.name} to the creator?`}
+                    description={`Send ${cs()}${confirmGift.amount} ${confirmGift.name} to the creator?`}
                     confirmLabel="Send Gift"
                 />
             )}

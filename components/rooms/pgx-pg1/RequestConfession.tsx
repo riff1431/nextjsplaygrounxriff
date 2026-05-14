@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useAuth } from "@/app/context/AuthContext";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface RequestConfessionProps {
   roomId: string | null;
@@ -115,7 +116,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
             </span>
           </div>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 gold-text font-bold text-sm">€</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 gold-text font-bold text-sm">{cs()}</span>
             <input
               type="number"
               value={amount}
@@ -211,7 +212,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
         amount={parsedAmount}
         walletBalance={balance}
         description={topic || "Confession request"}
-        confirmLabel={`Pay €${parsedAmount.toFixed(2)}`}
+        confirmLabel={`Pay ${cs()}${parsedAmount.toFixed(2)}`}
       />
     </>
   );

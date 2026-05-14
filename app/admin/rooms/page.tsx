@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Settings, Check, X, Loader2, ChevronLeft, Save, ChevronDown, ChevronUp, Plus, Trash2, Info } from "lucide-react";
 import Link from "next/link";
+import { cs } from "@/utils/currency";
 
 interface InfoItem {
     emoji: string;
@@ -160,7 +161,7 @@ export default function AdminRoomSettingsPage() {
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px" }}>
                                 {/* Fees */}
                                 <div>
-                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public Entry Fee ($)</label>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public Entry Fee ({cs()})</label>
                                     <input
                                         type="number"
                                         defaultValue={s.public_entry_fee}
@@ -173,7 +174,7 @@ export default function AdminRoomSettingsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Min Private Fee ($)</label>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Min Private Fee ({cs()})</label>
                                     <input
                                         type="number"
                                         defaultValue={s.min_private_entry_fee}
@@ -186,7 +187,7 @@ export default function AdminRoomSettingsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public $/min</label>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public {cs()}/min</label>
                                     <input
                                         type="number"
                                         defaultValue={s.public_cost_per_min ?? 2}
@@ -200,7 +201,7 @@ export default function AdminRoomSettingsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private $/min (min)</label>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private {cs()}/min (min)</label>
                                     <input
                                         type="number"
                                         defaultValue={s.min_private_cost_per_min ?? 5}

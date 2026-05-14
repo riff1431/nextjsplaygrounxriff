@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { X, CheckSquare, Square, Loader2 } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 /* ═══════════════════════════════════════════════════════════
    Room Entry Info Modal
@@ -453,7 +454,7 @@ export default function RoomEntryInfoModal({
                                             color: "#fcd34d",
                                             letterSpacing: "0.3px",
                                         }}>
-                                            Entry: ${entryFee}
+                                            Entry: {cs()}{entryFee}
                                         </span>
                                     </div>
                                 )}
@@ -474,7 +475,7 @@ export default function RoomEntryInfoModal({
                                             color: accentColor,
                                             letterSpacing: "0.3px",
                                         }}>
-                                            ${(costPerMin !== undefined && costPerMin > 0) ? costPerMin : 1}/min
+                                            {cs()}{(costPerMin !== undefined && costPerMin > 0) ? costPerMin : 1}/min
                                         </span>
                                     </div>
                                 ) : null}

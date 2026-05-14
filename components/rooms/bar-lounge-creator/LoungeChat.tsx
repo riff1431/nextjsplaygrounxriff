@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { useBarChat } from "@/hooks/useBarChat";
 import { useAuth } from "@/app/context/AuthContext";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface LoungeChatProps {
     roomId?: string;
@@ -67,6 +68,7 @@ const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
                             <span className={`font-medium ${getDisplayColor(msg)} text-xs`}>
                                 {msg.is_system ? "⚡ System" : (msg.handle || "Anonymous")}
                             </span>
+                            {!msg.is_system && msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
                             <span className="text-[10px] ml-2" style={{ color: "hsl(280, 15%, 60%)" }}>
                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </span>

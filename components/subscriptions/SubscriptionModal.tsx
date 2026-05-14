@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Profile } from "@/types";
 import { useWallet } from "@/hooks/useWallet";
+import { cs } from "@/utils/currency";
 
 interface SubscriptionModalProps {
     isOpen: boolean;
@@ -138,7 +139,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                                     >
                                         <div className="text-xs text-zinc-400 font-medium uppercase tracking-wider mb-2">Weekly</div>
                                         <div className="text-2xl font-bold text-white mb-1">
-                                            ${weeklyPrice.toFixed(2)}
+                                            {cs()}{weeklyPrice.toFixed(2)}
                                         </div>
                                         <div className="text-[10px] text-zinc-500">Billed every 7 days</div>
                                         {selectedTier === 'weekly' && (
@@ -165,7 +166,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                                         )}
                                         <div className="text-xs text-zinc-400 font-medium uppercase tracking-wider mb-2">Monthly</div>
                                         <div className="text-2xl font-bold text-white mb-1">
-                                            ${monthlyPrice.toFixed(2)}
+                                            {cs()}{monthlyPrice.toFixed(2)}
                                         </div>
                                         <div className="text-[10px] text-zinc-500">Billed every 30 days</div>
                                         {selectedTier === 'monthly' && (
@@ -202,7 +203,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                             <div className="text-center">
                                 <h3 className="font-semibold text-lg text-white">Pay with Wallet</h3>
                                 <p className="text-zinc-400 text-sm mt-1">
-                                    {selectedTier === 'weekly' ? 'Weekly' : 'Monthly'} subscription — ${selectedPrice.toFixed(2)}
+                                    {selectedTier === 'weekly' ? 'Weekly' : 'Monthly'} subscription — {cs()}{selectedPrice.toFixed(2)}
                                 </p>
                             </div>
 
@@ -223,7 +224,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                                             <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
                                         ) : (
                                             <p className={`text-lg font-bold ${insufficient ? "text-red-400" : "text-emerald-400"}`}>
-                                                ${balance.toFixed(2)}
+                                                {cs()}{balance.toFixed(2)}
                                             </p>
                                         )}
                                     </div>
@@ -234,12 +235,12 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                             <div className="bg-zinc-950/50 rounded-xl p-4 border border-zinc-800/50 space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-zinc-400">Subscription</span>
-                                    <span className="text-white font-medium">${selectedPrice.toFixed(2)}</span>
+                                    <span className="text-white font-medium">{cs()}{selectedPrice.toFixed(2)}</span>
                                 </div>
                                 {!insufficient && !walletLoading && (
                                     <div className="flex justify-between text-sm border-t border-zinc-800 pt-2">
                                         <span className="text-zinc-400">Remaining after</span>
-                                        <span className="text-zinc-300">${(balance - selectedPrice).toFixed(2)}</span>
+                                        <span className="text-zinc-300">{cs()}{(balance - selectedPrice).toFixed(2)}</span>
                                     </div>
                                 )}
                             </div>
@@ -251,7 +252,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                                     <div>
                                         <p className="text-sm font-semibold text-red-300">Insufficient funds</p>
                                         <p className="text-xs text-red-300/70 mt-0.5">
-                                            You need ${(selectedPrice - balance).toFixed(2)} more. Top up your wallet to continue.
+                                            You need {cs()}{(selectedPrice - balance).toFixed(2)} more. Top up your wallet to continue.
                                         </p>
                                     </div>
                                 </div>
@@ -285,7 +286,7 @@ export default function SubscriptionModal({ isOpen, onClose, creator, currentUse
                                             Processing...
                                         </>
                                     ) : (
-                                        `Pay $${selectedPrice.toFixed(2)}`
+                                        `Pay ${cs()}${selectedPrice.toFixed(2)}`
                                     )}
                                 </button>
                             )}

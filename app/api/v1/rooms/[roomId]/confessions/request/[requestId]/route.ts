@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * PATCH /api/v1/rooms/[roomId]/confessions/request/[requestId]
@@ -12,6 +13,7 @@ export async function PATCH(
     request: NextRequest,
     props: { params: Promise<{ roomId: string; requestId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId, requestId } = params;
     const supabase = await createClient();
@@ -107,7 +109,7 @@ export async function PATCH(
                 user_id: updated.creator_id,
                 actor_id: user.id,
                 type: "confession_completed",
-                message: `Fan accepted your confession delivery! You earned €${updated.amount}.`,
+                message: `Fan accepted your confession delivery! You earned ${SYM}${updated.amount}.`,
                 reference_id: requestId,
             });
         }

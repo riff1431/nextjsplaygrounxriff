@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Zap, Flame, StopCircle, Play, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface GroupVoteState {
     truth?: {
@@ -161,7 +162,7 @@ export default function GroupVoteManager({ roomId }: Props) {
                                 onChange={(e) => setTruthForm({ ...truthForm, target: Number(e.target.value) })}
                             />
                             <div className="relative w-1/2">
-                                <span className="absolute left-3 top-2 text-gray-500 text-sm">€</span>
+                                <span className="absolute left-3 top-2 text-gray-500 text-sm">{cs()}</span>
                                 <input
                                     type="number"
                                     placeholder="Price"
@@ -229,7 +230,7 @@ export default function GroupVoteManager({ roomId }: Props) {
                                 onChange={(e) => setDareForm({ ...dareForm, target: Number(e.target.value) })}
                             />
                             <div className="relative w-1/2">
-                                <span className="absolute left-3 top-2 text-gray-500 text-sm">€</span>
+                                <span className="absolute left-3 top-2 text-gray-500 text-sm">{cs()}</span>
                                 <input
                                     type="number"
                                     placeholder="Price"

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Crown, Users, Video, Lock, CheckCircle, Play, Mic, AlertCircle, User, Wallet, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import { cs } from "@/utils/currency";
 
 type SessionPreviewModalProps = {
     session: any;
@@ -229,11 +230,11 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                     {/* Pricing + Wallet Balance */}
                     <div className="mb-5 p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
                         <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
-                        <div className="text-2xl font-bold text-white">€{price}</div>
+                        <div className="text-2xl font-bold text-white">{cs()}{price}</div>
                         <div className="mt-2 flex items-center justify-center gap-2">
                             <Wallet className="w-3.5 h-3.5 text-gray-400" />
                             <span className={`text-xs font-medium ${insufficient ? 'text-red-300' : 'text-emerald-300'}`}>
-                                Wallet: {walletBalance !== null ? `€${walletBalance.toFixed(2)}` : 'Loading...'}
+                                Wallet: {walletBalance !== null ? `${cs()}${walletBalance.toFixed(2)}` : 'Loading...'}
                             </span>
                         </div>
                     </div>
@@ -245,7 +246,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                             <div>
                                 <p className="text-xs font-semibold text-red-300">Insufficient funds</p>
                                 <p className="text-[10px] text-red-300/70">
-                                    You need €{(price - (walletBalance || 0)).toFixed(2)} more.
+                                    You need {cs()}{(price - (walletBalance || 0)).toFixed(2)} more.
                                 </p>
                             </div>
                         </div>
@@ -311,7 +312,7 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                             {unlocking ? (
                                 <><Loader2 className="w-4 h-4 animate-spin" /> Paying...</>
                             ) : (
-                                <>Pay €{price} & Enter <Play className="w-4 h-4 fill-current" /></>
+                                <>Pay {cs()}{price} & Enter <Play className="w-4 h-4 fill-current" /></>
                             )}
                         </button>
                     )}

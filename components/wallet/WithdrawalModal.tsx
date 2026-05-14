@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X, ArrowUpRight, Banknote, Building2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface WithdrawalModalProps {
     isOpen: boolean;
@@ -25,7 +26,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
         e.preventDefault();
         const val = parseFloat(amount);
         if (isNaN(val) || val < 10) {
-            toast.error("Minimum withdrawal is €10");
+            toast.error("Minimum withdrawal is ${cs()}10");
             return;
         }
         if (val > balance) {
@@ -71,7 +72,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
 
                 <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10">
                     <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Available Balance</div>
-                    <div className="text-2xl font-bold text-white">€{balance.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-white">{cs()}{balance.toFixed(2)}</div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,7 +88,7 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
                             placeholder="0.00"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">Minimum withdrawal amount is €10.00</p>
+                        <p className="text-xs text-gray-500 mt-1">Minimum withdrawal amount is {cs()}10.00</p>
                     </div>
 
                     <div>

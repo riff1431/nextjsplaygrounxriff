@@ -11,6 +11,8 @@ import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import WalletPill from "@/components/common/WalletPill";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 
 /* ─── Types ─────────────────────────────────────────────────── */
@@ -121,13 +123,14 @@ function ConfessionCard({
                         <span className="text-white/40 text-[11px]">
                             {confession.creator.full_name || confession.creator.username || "Creator"}
                         </span>
+                        {confession.creator.id && <UserBadgeDisplay userId={confession.creator.id} />}
                     </div>
                 )}
 
                 {/* Action Row */}
                 <div className="flex items-center justify-between">
                     <span className="text-amber-400 font-bold text-sm">
-                        ${confession.price}
+                        {cs()}{confession.price}
                     </span>
 
                     {isUnlocked ? (

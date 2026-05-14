@@ -8,7 +8,6 @@ import {
     Users,
     Lock,
     Globe,
-    DollarSign,
     Clock,
     ArrowLeft,
     Zap,
@@ -25,6 +24,8 @@ import {
 import { toast } from "sonner";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
 import { useAuth } from "@/app/context/AuthContext";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface Session {
     id: string;
@@ -666,8 +667,10 @@ export default function TruthOrDareSessionsBrowse() {
                                                 overflow: "hidden", textOverflow: "ellipsis",
                                                 whiteSpace: "nowrap" as const,
                                                 textShadow: "0 0 5px rgba(236,72,153,0.3)",
+                                                display: "flex", alignItems: "center", gap: "4px",
                                             }}>
                                                 {creatorName}
+                                                <UserBadgeDisplay userId={session.creator_id} />
                                             </div>
                                             <div style={{
                                                 fontSize: "10px", color: "rgba(244,114,182,0.6)",
@@ -703,10 +706,7 @@ export default function TruthOrDareSessionsBrowse() {
                                             textShadow: price > 0 ? "0 0 10px rgba(251,191,36,0.3)" : "0 0 10px rgba(236,72,153,0.3)",
                                         }}>
                                             {price > 0 ? (
-                                                <>
-                                                    <DollarSign style={{ width: 11, height: 11 }} />
-                                                    <span>€{price}</span>
-                                                </>
+                                                <span>{cs()}{price}</span>
                                             ) : (
                                                 <>
                                                     <Zap style={{ width: 11, height: 11 }} />
@@ -824,7 +824,7 @@ export default function TruthOrDareSessionsBrowse() {
                                                 ) : session.is_private ? (
                                                     <><Lock style={{ width: 12, height: 12 }} /> Enter Room</>
                                                 ) : price > 0 ? (
-                                                    <><DollarSign style={{ width: 12, height: 12 }} /> Enter Room</>
+                                                    <><Play style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room</>
                                                 ) : (
                                                     <><Zap style={{ width: 12, height: 12, fill: "#fff" }} /> Enter Room</>
                                                 )}

@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Flame, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { cs } from "@/utils/currency";
 
 interface CampaignState {
     isActive: boolean;
@@ -183,7 +184,7 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
                         <span className={isDone ? "text-green-400" : "text-white"}>
                             {state.current} / {state.target}
                         </span>
-                        {!isDone && <span className="text-gold">€{state.price}/vote</span>}
+                        {!isDone && <span className="text-gold">{cs()}{state.price}/vote</span>}
                     </div>
 
                     <div className="w-full h-2.5 bg-black/50 rounded-full overflow-hidden border border-white/5">

@@ -20,6 +20,7 @@ import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/sha
 import EmojiPicker from "@/components/common/EmojiPicker";
 import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -274,8 +275,8 @@ export default function BarLoungeRoom() {
         try { const res = await fetch(`/api/v1/rooms/${roomId}/bar-lounge/spin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: SPIN_PRICE }) }); const data = await res.json(); if (data.success) { setSpinResult(data.result || data.spin?.result); setTimeout(() => setSpinning(false), 1100); } else { setSpinning(false); pushFx([], `Spin failed: ${data.error || "Insufficient funds"}`); } } catch { setSpinning(false); pushFx([], 'Network error'); }
     };
 
-    const handleTip = (amount: number) => { confirmPurchase("tip", `€${amount} Tip`, amount); };
-    const handleCustomTip = () => { const amt = Number(tipAmount); if (amt > 0) confirmPurchase("tip", `€${amt} Tip`, amt); };
+    const handleTip = (amount: number) => { confirmPurchase("tip", `${cs()}${amount} Tip`, amount); };
+    const handleCustomTip = () => { const amt = Number(tipAmount); if (amt > 0) confirmPurchase("tip", `${cs()}${amt} Tip`, amt); };
 
     const handleSendChat = () => {
         if (!chatInput.trim()) return;
@@ -504,7 +505,7 @@ export default function BarLoungeRoom() {
                                                     color: C.gold,
                                                     textShadow: `0 0 10px hsla(42,90%,55%,0.3)`,
                                                 }}>
-                                                    <span>€{(session as any).entry_fee || ENTRY_FEE}</span>
+                                                    <span>{cs()}{(session as any).entry_fee || ENTRY_FEE}</span>
                                                 </div>
                                             </div>
 
@@ -650,7 +651,7 @@ export default function BarLoungeRoom() {
                                             <span style={{ fontSize: "18px" }}>{drink.icon}</span>
                                             <span style={{ color: C.fg, fontWeight: 500, fontSize: "14px" }}>{drink.name}</span>
                                         </div>
-                                        <span style={{ color: C.gold, fontWeight: 600 }}>€{drink.price}</span>
+                                        <span style={{ color: C.gold, fontWeight: 600 }}>{cs()}{drink.price}</span>
                                     </div>
                                 ))}
                             </div>
@@ -673,7 +674,7 @@ export default function BarLoungeRoom() {
                                     <span style={{ fontSize: "20px" }}>🛋️</span>
                                     <div>
                                         <span style={{ fontWeight: 700, color: C.fg, fontSize: "15px" }}>Reserve a Booth</span>
-                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px", fontSize: "15px" }}>€300</span>
+                                        <span style={{ color: C.gold, fontWeight: 700, marginLeft: "8px", fontSize: "15px" }}>{cs()}300</span>
                                         <p style={{ fontSize: "13px", color: C.muted, marginTop: "2px" }}>🎉 Private (5 mins)</p>
                                     </div>
                                 </div>
@@ -714,7 +715,7 @@ export default function BarLoungeRoom() {
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-1 flex items-center gap-1" style={{ ...tipBtnStyle, padding: "8px 12px" }}>
-                                    <span style={{ color: C.gold }}>€</span>
+                                    <span style={{ color: C.gold }}>{cs()}</span>
                                     <input type="number" placeholder="Custom Amount" value={tipAmount} onChange={(e) => setTipAmount(e.target.value)} className="bg-transparent outline-none flex-1 text-sm" style={{ color: C.fg, fontFamily: "'Montserrat', sans-serif" }} />
                                 </div>
                                 <button style={{ ...btnGoldStyle, padding: "8px 16px", flex: 1, fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }} onClick={handleCustomTip}>
@@ -730,7 +731,7 @@ export default function BarLoungeRoom() {
                                     <Sparkles className="w-5 h-5" style={{ color: C.gold }} />
                                     <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", fontWeight: 700, color: C.gold, ...glowTextGold }}>Spin the Bottle</h2>
                                 </div>
-                                <div style={{ padding: "4px 12px", borderRadius: "9999px", background: `${C.gold}1a`, border: `1px solid ${C.gold}33`, color: C.gold, fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em" }}>€{SPIN_PRICE} PER SPIN</div>
+                                <div style={{ padding: "4px 12px", borderRadius: "9999px", background: `${C.gold}1a`, border: `1px solid ${C.gold}33`, color: C.gold, fontSize: "12px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em" }}>{cs()}{SPIN_PRICE} PER SPIN</div>
                             </div>
                             <div className="rounded-2xl p-8 flex items-center justify-center relative overflow-hidden group" style={{ background: `${C.bg}66`, border: `1px solid hsla(0,0%,100%,0.05)` }}>
                                 <div className={`bl-bottle relative z-10 transition-transform ${spinning ? "bl-bottle-spin" : ""}`}>🥂</div>
@@ -773,7 +774,7 @@ export default function BarLoungeRoom() {
                         <div style={{ ...chatMsgStyle, ...glowPink, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", cursor: "pointer" }} onClick={() => confirmPurchase("pin", "Pin Name to Top", 25)}>
                             <span style={{ fontSize: "18px" }}>🔥</span>
                             <span className="bl-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: C.neonPink }}>PIN NAME TO TOP 10 mins</span>
-                            <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+€25</span>
+                            <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+{cs()}25</span>
                         </div>
 
                         <div className="flex gap-2" style={{ alignItems: "center" }}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 interface SummaryPanelProps {
     roomId?: string;
@@ -132,7 +133,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const statItems = [
         { label: "Fans", value: stats.fans.toLocaleString() },
         { label: "Drinks", value: stats.drinks.toLocaleString() },
-        { label: "Tips", value: `€${stats.tips.toLocaleString()}` },
+        { label: "Tips", value: `${cs()}${stats.tips.toLocaleString()}` },
         { label: "Requests", value: stats.requests.toLocaleString() },
     ];
 

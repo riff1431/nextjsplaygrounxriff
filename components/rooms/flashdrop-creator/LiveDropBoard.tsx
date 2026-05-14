@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, Zap, Image, Video, Upload } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface FlashDrop {
     id: string;
@@ -350,7 +351,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
                                 {/* Price + Stock */}
                                 <div className="flex items-center justify-between mt-auto pt-1 border-t border-white/5">
-                                    <span className="text-sm font-black neon-text font-display">€{drop.price}</span>
+                                    <span className="text-sm font-black neon-text font-display">{cs()}{drop.price}</span>
                                     <span className="text-[10px] text-muted-foreground">
                                         {drop.inventory_remaining}/{drop.inventory_total}
                                     </span>
@@ -374,7 +375,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                             {endedDrops.slice(0, 3).map(drop => (
                                 <div key={drop.id} className="glass-card rounded-lg border border-border/30 px-3 py-1.5 opacity-40">
                                     <span className="font-display font-bold text-xs text-foreground/50 truncate block">{drop.title}</span>
-                                    <span className="text-xs text-muted-foreground">€{drop.price}</span>
+                                    <span className="text-xs text-muted-foreground">{cs()}{drop.price}</span>
                                 </div>
                             ))}
                         </div>
@@ -479,7 +480,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Price €</label>
+                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Price {cs()}</label>
                                     <input
                                         type="number"
                                         min="0"

@@ -5,6 +5,7 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { Eye, EyeOff, ExternalLink, X } from "lucide-react";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -74,7 +75,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
         if (type === 'REVEAL') {
             toast.success(`🔓 Revealed: ${item.name}`, { description: item.description || "Item details unlocked!" });
         } else {
-            toast.success(`🎁 Bought "${item.name}" for her!`, { description: `€${amount} sent to creator` });
+            toast.success(`🎁 Bought "${item.name}" for her!`, { description: `${cs()}${amount} sent to creator` });
         }
     };
 
@@ -148,7 +149,7 @@ const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: s
                                             <p className="font-bold text-sm tracking-tight truncate text-white/50 flex items-center gap-1">
                                                 <EyeOff className="w-3.5 h-3.5 inline" /> Hidden Favorite
                                             </p>
-                                            <p className="text-gold font-bold text-xs">€{item.buy_price.toLocaleString()}</p>
+                                            <p className="text-gold font-bold text-xs">{cs()}{item.buy_price.toLocaleString()}</p>
                                         </>
                                     )}
                                 </div>

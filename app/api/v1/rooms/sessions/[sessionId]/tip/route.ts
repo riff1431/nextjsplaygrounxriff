@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/tip
@@ -11,6 +12,7 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const { sessionId } = await params;
     const supabase = await createClient();
 
@@ -82,7 +84,7 @@ export async function POST(
             session_id: sessionId,
             user_id: user.id,
             username: "System",
-            message: `💰 ${profile?.username || "A fan"} tipped €${amount}!`,
+            message: `💰 ${profile?.username || "A fan"} tipped ${SYM}${amount}!`,
             is_system: true,
         });
 

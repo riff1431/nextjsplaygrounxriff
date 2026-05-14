@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import OnboardingPaymentModal from "../OnboardingPaymentModal";
+import { cs } from "@/utils/currency";
 
 interface CreatorLevel {
     id: string;
@@ -226,7 +227,7 @@ export default function CreatorLevelStep({ onComplete }: Props) {
                                                 <div className="flex items-center gap-1">
                                                     <DollarSign className="w-3 h-3 text-yellow-400" />
                                                     <span className="text-lg font-bold text-white">
-                                                        ${level.price}
+                                                        {cs()}{level.price}
                                                     </span>
                                                 </div>
                                             )}
@@ -294,7 +295,7 @@ export default function CreatorLevelStep({ onComplete }: Props) {
                         ) : selectedLevel && needsToPay(selectedLevel) ? (
                             <span className="flex items-center gap-2">
                                 <CreditCard className="w-5 h-5" />
-                                Pay ${selectedLevel.price} & Continue
+                                Pay {cs()}{selectedLevel.price} & Continue
                             </span>
                         ) : (
                             "Continue to Verification →"

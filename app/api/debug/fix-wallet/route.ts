@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/utils/supabase/admin';
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
+import { getServerCurrencySymbol } from '@/utils/serverCurrency';
 
 /**
  * GET /api/debug/fix-wallet
@@ -9,6 +10,7 @@ import { NextResponse } from 'next/server';
  * Uses admin client to bypass RLS.
  */
 export async function GET() {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
     const admin = createAdminClient();
 
@@ -55,7 +57,7 @@ export async function GET() {
             fixed: true,
             deleted: bogus,
             newBalance: correctBalance,
-            message: `Deleted ${bogus.length} bogus credit(s). Balance corrected to €${correctBalance.toFixed(2)}`,
+            message: `Deleted ${bogus.length} bogus credit(s). Balance corrected to ${SYM}${correctBalance.toFixed(2)}`,
         });
     }
 

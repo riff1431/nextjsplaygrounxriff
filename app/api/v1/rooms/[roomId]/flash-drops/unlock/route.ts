@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/flash-drops/unlock
@@ -11,6 +12,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -78,7 +80,7 @@ export async function POST(
         const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         await supabase.from("notifications").insert({
             user_id: creatorId, actor_id: user.id, type: "flash_drop",
-            message: `${profile?.username || "Fan"} unlocked "${drop.title}" (€${price})!`,
+            message: `${profile?.username || "Fan"} unlocked "${drop.title}" (${SYM}${price})!`,
             reference_id: dropId,
         });
     }

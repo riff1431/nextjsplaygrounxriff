@@ -1,5 +1,6 @@
 import React from "react";
 import { Wine, Crown, Sparkles } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface Drink {
     id: string;
@@ -73,7 +74,7 @@ const DrinkMenu: React.FC<DrinkMenuProps> = ({
                             <Crown className="w-5 h-5 text-gold animate-pulse" />
                             <span className="font-bold text-gold uppercase tracking-tighter">Upgrade to VIP</span>
                         </div>
-                        <span className="text-gold font-black">€{vipPrice}</span>
+                        <span className="text-gold font-black">{cs()}{vipPrice}</span>
                     </div>
                     <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3 text-gold/60" />
@@ -92,7 +93,7 @@ const DrinkMenu: React.FC<DrinkMenuProps> = ({
                             <span className="text-[10px] text-white/40 uppercase tracking-widest">Private (5 mins)</span>
                         </div>
                     </div>
-                    <span className="text-gold font-bold">€300</span>
+                    <span className="text-gold font-bold">{cs()}300</span>
                 </button>
             </div>
         </div>

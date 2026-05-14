@@ -16,6 +16,7 @@ export type ActivityEvent = {
     ts: number;
     type: ActivityEventType;
     fanName: string;
+    fanId?: string | null;
     label: string;
     amount: number;
 };
@@ -105,6 +106,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
                     ts: new Date(a.created_at).getTime(),
                     type: a.type,
                     fanName: a.fan_name,
+                    fanId: a.fan_id || null,
                     label: a.label,
                     amount: Number(a.amount)
                 })));
@@ -168,6 +170,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
                         ts: new Date(a.created_at).getTime(),
                         type: a.type,
                         fanName: a.fan_name,
+                        fanId: a.fan_id || null,
                         label: a.label,
                         amount: Number(a.amount)
                     }, ...prev];
@@ -305,6 +308,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
                     ts: new Date(data.created_at).getTime(),
                     type: data.type,
                     fanName: data.fan_name,
+                    fanId: data.fan_id || null,
                     label: data.label,
                     amount: Number(data.amount)
                 }, ...prev];

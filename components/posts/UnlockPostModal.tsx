@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { useRouter } from "next/navigation";
+import { cs } from "@/utils/currency";
 
 interface UnlockPostModalProps {
     isOpen: boolean;
@@ -114,7 +115,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                 <p className="text-zinc-400 text-sm">You are about to unlock exclusive content from</p>
                                 <p className="text-lg font-bold text-white mt-1">@{authorName}</p>
                                 <div className="mt-4 inline-block px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/30">
-                                    <span className="text-2xl font-bold text-pink-400">€{price.toFixed(2)}</span>
+                                    <span className="text-2xl font-bold text-pink-400">{cs()}{price.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -135,7 +136,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                             <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
                                         ) : (
                                             <p className={`text-lg font-bold ${insufficient ? "text-red-400" : "text-emerald-400"}`}>
-                                                €{balance.toFixed(2)}
+                                                {cs()}{balance.toFixed(2)}
                                             </p>
                                         )}
                                     </div>
@@ -147,7 +148,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                 <div className="text-xs text-zinc-500 text-center">
                                     Remaining after purchase:{" "}
                                     <span className="text-zinc-300 font-medium">
-                                        €{(balance - price).toFixed(2)}
+                                        {cs()}{(balance - price).toFixed(2)}
                                     </span>
                                 </div>
                             )}
@@ -159,7 +160,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                     <div>
                                         <p className="text-sm font-semibold text-red-300">Insufficient funds</p>
                                         <p className="text-xs text-red-300/70 mt-0.5">
-                                            You need €{(price - balance).toFixed(2)} more. Top up your wallet to continue.
+                                            You need {cs()}{(price - balance).toFixed(2)} more. Top up your wallet to continue.
                                         </p>
                                     </div>
                                 </div>
@@ -180,7 +181,7 @@ export default function UnlockPostModal({ isOpen, onClose, post, currentUserId, 
                                     disabled={loading || walletLoading}
                                     className="w-full h-12 text-lg font-bold rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-lg shadow-pink-500/20"
                                 >
-                                    Pay €{price.toFixed(2)}
+                                    Pay {cs()}{price.toFixed(2)}
                                 </Button>
                             )}
                         </div>

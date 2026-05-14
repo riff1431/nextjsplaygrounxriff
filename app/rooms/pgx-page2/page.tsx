@@ -15,6 +15,7 @@ import VipDeliveryModal from "@/components/rooms/pgx-page2/VipDeliveryModal";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock, Phone } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
@@ -317,7 +318,7 @@ function PgxPage2Inner() {
                     if (type === "booth") setBoothRequestStatus("pending");
                     showToast(`${emoji} ${label} requested! Waiting for creator approval...`, "info");
                 } else {
-                    showToast(`${emoji} ${label} sent! -€${price} from your wallet`, "success");
+                    showToast(`${emoji} ${label} sent! -${cs()}${price} from your wallet`, "success");
                 }
                 await refreshWallet();
             } else {
@@ -330,14 +331,14 @@ function PgxPage2Inner() {
         }
     }, [roomId, buying, showToast, refreshWallet, sessionId]);
 
-    const handleTip = (amount: number) => doPurchase("tip", `€${amount} Tip`, amount, `tip-${amount}`);
+    const handleTip = (amount: number) => doPurchase("tip", `${cs()}${amount} Tip`, amount, `tip-${amount}`);
     const handleDrinkTip = (drink: any) => {
         const id = drink.id || drink.name;
         doPurchase("drink", drink.name, drink.price, id);
     };
     const handleCustomTip = () => {
         const a = Number(tipAmount);
-        if (a > 0) { doPurchase("tip", `€${a} Tip`, a, `tip-custom`); setTipAmount(""); }
+        if (a > 0) { doPurchase("tip", `${cs()}${a} Tip`, a, `tip-custom`); setTipAmount(""); }
         else showToast("Enter a valid tip amount", "info");
     };
     const handleCustomRequest = () => {
@@ -716,7 +717,7 @@ function PgxPage2Inner() {
                                                             </span>
                                                             <span style={{
                                                                 fontSize: "12px", fontWeight: 700, color: GOLD,
-                                                            }}>€{item.amount}</span>
+                                                            }}>{cs()}{item.amount}</span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
                                                             {isRequest && (
@@ -825,7 +826,7 @@ function PgxPage2Inner() {
                                                 </div>
                                                 {isThisBuying
                                                     ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                                    : <span style={{ color: GOLD, fontWeight: 600 }}>€{drink.price}</span>
+                                                    : <span style={{ color: GOLD, fontWeight: 600 }}>{cs()}{drink.price}</span>
                                                 }
                                             </div>
                                         );
@@ -877,7 +878,7 @@ function PgxPage2Inner() {
                                                 <Crown className="pg2-glow-pulse" style={{ width: "20px", height: "20px", color: GOLD }} />
                                                 {buying === "vip"
                                                     ? <Loader2 style={{ width: "16px", height: "16px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                                    : <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold }}>Upgrade to VIP - €{vipPrice}</span>}
+                                                    : <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold }}>Upgrade to VIP - {cs()}{vipPrice}</span>}
                                             </div>
                                             <ul style={{ fontSize: "14px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
                                                 <li style={{ display: "flex", alignItems: "center", gap: "4px" }}><Sparkles style={{ width: "12px", height: "12px", color: PINK }} /> Exclusive Content</li>
@@ -1080,7 +1081,7 @@ function PgxPage2Inner() {
                                 </div>
                                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", background: "hsla(270,40%,15%,0.4)", borderRadius: "0.5rem", padding: "6px 12px", border: "1px solid hsla(280,60%,45%,0.2)" }}>
                                     <span style={{ color: MUTED, fontSize: "9px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>Custom Tip</span>
-                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700, marginLeft: "auto" }}>€</span>
+                                    <span style={{ color: GOLD, fontSize: "14px", fontWeight: 700, marginLeft: "auto" }}>{cs()}</span>
                                     <input
                                         type="number"
                                         min="1"
@@ -1131,7 +1132,7 @@ function PgxPage2Inner() {
                                         <span style={{ fontSize: "10px", color: MUTED }}>Direct video call</span>
                                     </div>
                                 </div>
-                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>€{PRIVATE_CALL_PRICE}</span>
+                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>{cs()}{PRIVATE_CALL_PRICE}</span>
                             </div>
                         </div>
 
@@ -1196,7 +1197,7 @@ function PgxPage2Inner() {
                             <span className="pg2-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: PINK }}>PIN NAME TO TOP 10 mins</span>
                             {buying === "pin"
                                 ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "auto" }} />
-                                : <span style={{ color: GOLD, fontWeight: 700, marginLeft: "auto" }}>+€25</span>}
+                                : <span style={{ color: GOLD, fontWeight: 700, marginLeft: "auto" }}>+{cs()}25</span>}
                         </div>
 
                         {/* Chat input */}
@@ -1235,7 +1236,7 @@ function PgxPage2Inner() {
                 itemLabel="👑 Private 1-on-1 Session"
                 amount={PRIVATE_CALL_PRICE}
                 walletBalance={balance}
-                description={`Pay €${PRIVATE_CALL_PRICE} for a Private 1-on-1 video call with ${hostProfile?.full_name || hostProfile?.username || 'the creator'}?`}
+                description={`Pay ${cs()}${PRIVATE_CALL_PRICE} for a Private 1-on-1 video call with ${hostProfile?.full_name || hostProfile?.username || 'the creator'}?`}
                 confirmLabel="Pay & Request Call"
                 onConfirm={async () => {
                     if (!roomId || !hostId) return;
@@ -1255,7 +1256,7 @@ function PgxPage2Inner() {
                             room_id: roomId,
                             user_id: user?.id ?? null,
                             handle: fanName,
-                            content: `📞 ${fanName} bought 1 on 1 Video Call (€${PRIVATE_CALL_PRICE})`,
+                            content: `📞 ${fanName} bought 1 on 1 Video Call (${cs()}${PRIVATE_CALL_PRICE})`,
                             is_system: true,
                             ...(sessionId ? { session_id: sessionId } : {}),
                         });

@@ -5,6 +5,7 @@ import { Image, Video, Play, Lock, Unlock } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface FlashDrop {
     id: string;
@@ -112,7 +113,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                 if (data.alreadyUnlocked) {
                     toast.info(`Already unlocked "${drop.title}"`);
                 } else {
-                    toast.success(`🔓 Unlocked "${drop.title}" for €${drop.price}!`);
+                    toast.success(`🔓 Unlocked "${drop.title}" for ${cs()}${drop.price}!`);
                 }
             } else {
                 toast.error(data.error || "Failed to unlock");
@@ -248,7 +249,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                                         {/* Price badge */}
                                         {isPaid && (
                                             <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-black fd-font-tech text-white shadow-[0_0_10px_hsl(330_100%_55%/0.4)] ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
-                                                {isUnlocked ? "✓" : `€${drop.price}`}
+                                                {isUnlocked ? "✓" : `${cs()}${drop.price}`}
                                             </span>
                                         )}
                                         {/* Kind icon */}
@@ -274,7 +275,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                                         </span>
                                         {isPaid && (
                                             <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-black fd-font-tech text-white ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
-                                                {isUnlocked ? "✓" : `€${drop.price}`}
+                                                {isUnlocked ? "✓" : `${cs()}${drop.price}`}
                                             </span>
                                         )}
                                     </div>

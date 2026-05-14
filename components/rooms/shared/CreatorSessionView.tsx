@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import SessionChatPanel from "./SessionChatPanel";
 import CreatorStream from "@/components/rooms/CreatorStream";
 import { DollarSign, Users, X, Check, Clock, MessageSquare } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface CreatorSessionViewProps {
     sessionId: string;
@@ -48,7 +49,7 @@ export default function CreatorSessionView({
                 <div style={{ fontSize: "48px" }}>🎬</div>
                 <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: 700 }}>Session Ended</h2>
                 <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>
-                    Total Earnings: <span style={{ color: "hsl(150,80%,60%)", fontWeight: 700 }}>€{totalEarnings.toFixed(2)}</span>
+                    Total Earnings: <span style={{ color: "hsl(150,80%,60%)", fontWeight: 700 }}>{cs()}{totalEarnings.toFixed(2)}</span>
                 </p>
             </div>
         );
@@ -236,9 +237,9 @@ export default function CreatorSessionView({
                                         </span>
                                         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", flex: 1 }}>
                                             <b style={{ color: "#fff" }}>{event.fan_name}</b>
-                                            {event.type === "tip" && ` tipped €${event.amount}`}
+                                            {event.type === "tip" && ` tipped ${cs()}${event.amount}`}
                                             {event.type === "reaction" && ` sent ${(event as any).emoji}`}
-                                            {event.type === "request" && ` requested (€${event.amount})`}
+                                            {event.type === "request" && ` requested (${cs()}${event.amount})`}
                                         </span>
                                     </div>
                                 ))

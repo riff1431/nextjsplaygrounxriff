@@ -1,6 +1,7 @@
 "use client";
 
 import { Zap, Play, Pause } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface QueueItem {
     id: string;
@@ -76,7 +77,7 @@ const TodCreatorRequestPanel = ({ title, accentColor, queue, activityItems, onSe
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                                 <span className={`font-bold text-sm ${iconColor}`}>{q.fanName ?? "Anonymous"}</span>
-                                <span className="font-bold text-green-400 text-sm">€{q.amount}</span>
+                                <span className="font-bold text-green-400 text-sm">{cs()}{q.amount}</span>
                             </div>
                             <p className="text-xs text-white/80 mt-1 line-clamp-2 leading-relaxed">
                                 {renderContent(q)}
@@ -131,7 +132,7 @@ const TodCreatorRequestPanel = ({ title, accentColor, queue, activityItems, onSe
                                         {new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </div>
-                                <span className="text-xs font-bold text-green-400 flex-shrink-0">+€{a.amount}</span>
+                                <span className="text-xs font-bold text-green-400 flex-shrink-0">+{cs()}{a.amount}</span>
                             </div>
                         ))}
                     </>

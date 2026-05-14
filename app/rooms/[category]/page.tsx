@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { NeonCard, NeonButton } from "@/components/ui/neon-shared";
 import { ArrowLeft, Lock, MessageCircle, Sparkles, Video, Crown, Trophy } from "lucide-react";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 // Fallback icon
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -125,6 +126,7 @@ export default function RoomCategoryPage({ params }: { params: { category: strin
                                     <h3 className="text-lg font-bold text-white mb-1">{room.title}</h3>
                                     <div className="text-sm text-gray-300 flex items-center gap-2">
                                         <span>@{room.host?.username || "Host"}</span>
+                                        {room.host_id && <UserBadgeDisplay userId={room.host_id} />}
                                         <span className="w-1 h-1 rounded-full bg-gray-500" />
                                         <span className="text-pink-400">{categoryInfo.label}</span>
                                     </div>

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /**
  * POST /api/v1/rooms/[roomId]/x-chat/reaction
@@ -11,6 +12,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const params = await props.params;
     const { roomId } = params;
     const supabase = await createClient();
@@ -54,7 +56,7 @@ export async function POST(
 
     const fanName = user.user_metadata?.full_name || user.email?.split("@")[0] || "A fan";
 
-    let notifMessage = `${fanName} sent ${reactionType} reaction (€${amount})`;
+    let notifMessage = `${fanName} sent ${reactionType} reaction (${SYM}${amount})`;
     if (message && message.trim().length > 0) {
         notifMessage += ` - "${message.trim()}"`;
     }

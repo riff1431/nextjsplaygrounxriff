@@ -4,6 +4,7 @@ import { Crown, Lock, Loader2, Check, AlertCircle, Upload, ArrowUpRight } from "
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CreatePostModal from "@/components/posts/CreatePostModal";
+import { cs } from "@/utils/currency";
 
 interface CsSubscriptionSettingsProps {
     weeklyPrice: number | null;
@@ -87,7 +88,7 @@ const CsSubscriptionBox = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscription
                     <div className="flex-1 min-w-0">
                         <label className="text-sm font-medium mb-1.5 block text-white">Weekly Price ($)</label>
                         <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
-                            <span className="text-white/40 mr-2">€</span>
+                            <span className="text-white/40 mr-2">{cs()}</span>
                             <input
                                 type="text"
                                 placeholder="e.g. 4.99"
@@ -100,7 +101,7 @@ const CsSubscriptionBox = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscription
                     <div className="flex-1 min-w-0">
                         <label className="text-sm font-medium mb-1.5 block text-white">Monthly Price ($)</label>
                         <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">
-                            <span className="text-white/40 mr-2">€</span>
+                            <span className="text-white/40 mr-2">{cs()}</span>
                             <input
                                 type="text"
                                 placeholder="e.g. 14.99"

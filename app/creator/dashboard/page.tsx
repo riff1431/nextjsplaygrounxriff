@@ -10,6 +10,7 @@ import CreatePostModal from "@/components/posts/CreatePostModal";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
+import { cs } from "@/utils/currency";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -195,7 +196,7 @@ export default function CreatorDashboard() {
                         </div>
                         <div>
                             <div className="text-gray-400 text-xs uppercase tracking-wider">Tips Earned</div>
-                            <div className="text-2xl font-bold text-gray-100">€{stats.earnings.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gray-100">{cs()}{stats.earnings.toLocaleString()}</div>
                         </div>
                     </div>
                     <div className="p-5 rounded-2xl bg-gray-900/50 border border-white/10 flex items-center gap-4">

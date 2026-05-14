@@ -7,6 +7,7 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import UnlockedConfessionModal from "./UnlockedConfessionModal";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface Confession {
   id: string;
@@ -41,7 +42,7 @@ const LockedConfessionCard = ({
         onClick={() => onUnlock(confession)}
         className="w-full py-1.5 rounded-md gradient-pink text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1"
       >
-        <Heart className="w-3 h-3 fill-current" /> Unlock for €{confession.price}
+        <Heart className="w-3 h-3 fill-current" /> Unlock for {cs()}{confession.price}
       </button>
     </div>
   );
@@ -130,10 +131,10 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
   };
 
   const tierTips = [
-    { icon: "💋", label: "KISS", price: "€10" },
-    { icon: "❤️", label: "LOVE", price: "€20" },
-    { icon: "🔥", label: "SPICY", price: "€30" },
-    { icon: "💎", label: "DIAMONDS", price: "€40" },
+    { icon: "💋", label: "KISS", price: "${cs()}10" },
+    { icon: "❤️", label: "LOVE", price: "${cs()}20" },
+    { icon: "🔥", label: "SPICY", price: "${cs()}30" },
+    { icon: "💎", label: "DIAMONDS", price: "${cs()}40" },
   ];
 
   return (
@@ -201,7 +202,7 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
           amount={unlockTarget.price}
           walletBalance={balance}
           description={`${unlockTarget.tier} • ${unlockTarget.type}`}
-          confirmLabel={`Unlock for €${unlockTarget.price}`}
+          confirmLabel={`Unlock for ${cs()}${unlockTarget.price}`}
         />
       )}
 

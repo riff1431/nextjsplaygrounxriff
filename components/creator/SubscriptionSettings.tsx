@@ -6,6 +6,7 @@ import { DollarSign, Save, Loader2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Profile } from "@/types";
+import { cs } from "@/utils/currency";
 
 export default function SubscriptionSettings({ user }: { user: any }) {
     const supabase = createClient();
@@ -100,7 +101,7 @@ export default function SubscriptionSettings({ user }: { user: any }) {
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">€</span>
+                            <span className="text-gray-500">{cs()}</span>
                         </div>
                         <input
                             type="number"
@@ -120,7 +121,7 @@ export default function SubscriptionSettings({ user }: { user: any }) {
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">€</span>
+                            <span className="text-gray-500">{cs()}</span>
                         </div>
                         <input
                             type="number"

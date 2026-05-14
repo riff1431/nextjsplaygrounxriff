@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DollarSign, Sparkles, TrendingUp, Coins, PartyPopper, Crown } from "lucide-react";
 import { playMoneySound } from "@/utils/sounds";
+import { cs } from "@/utils/currency";
 
 interface EarningsNotification {
     amount: number;
@@ -174,7 +175,7 @@ export default function EarningsModal({ notification, onClose }: EarningsModalPr
                                     transition={{ delay: 0.3, type: "spring", damping: 10 }}
                                     className="text-7xl font-black text-white mb-4 flex items-baseline justify-center gap-1"
                                 >
-                                    <span className="text-4xl">€</span>
+                                    <span className="text-4xl">{cs()}</span>
                                     <motion.span
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}

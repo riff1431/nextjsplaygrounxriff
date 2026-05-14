@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Zap, Flame, Loader2, CheckCircle2, Target, Users, Trophy, Vote, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { cs } from "@/utils/currency";
 
 interface GroupVoteState {
     truth?: {
@@ -261,7 +262,7 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                         ) : loadingVote === type ? (
                             <span className="flex items-center gap-2 animate-pulse"><Loader2 className="w-4 h-4 animate-spin" /> Voting...</span>
                         ) : (
-                            <span className="flex items-center gap-2"><Vote className="w-4 h-4" /> Vote {type.toUpperCase()} (€{cam.price})</span>
+                            <span className="flex items-center gap-2"><Vote className="w-4 h-4" /> Vote {type.toUpperCase()} ({cs()}{cam.price})</span>
                         )}
                     </button>
                 </div>

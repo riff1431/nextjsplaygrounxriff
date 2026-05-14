@@ -15,6 +15,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import TopUpModal from "@/components/wallet/TopUpModal";
 import WithdrawalModal from "@/components/wallet/WithdrawalModal";
 import { useAuth } from "@/app/context/AuthContext";
+import { cs } from "@/utils/currency";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ export default function WalletPage() {
                                     disabled={balance < 10}
                                     className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
                                 >
-                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? " (min €10)" : ""}
+                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? " (min ${cs()}10)" : ""}
                                 </button>
                             ) : (
                                 <button

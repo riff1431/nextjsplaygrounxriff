@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Inbox } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 const impulseButtons = [
     { label: "Kiss", price: 5, icon: "💋" },
@@ -146,11 +147,11 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
         e.preventDefault();
         const reqAmount = parseFloat(amount.replace(/[^0-9.]/g, ""));
         if (isNaN(reqAmount) || reqAmount < 10) {
-            toast.error("Minimum offer is €10");
+            toast.error("Minimum offer is ${cs()}10");
             return;
         }
         if (reqAmount > 1000) {
-            toast.error("Maximum offer is €1000");
+            toast.error("Maximum offer is ${cs()}1000");
             return;
         }
         if (!description.trim()) {
@@ -194,14 +195,14 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                     {impulseButtons.map((btn) => (
                         <button
                             key={btn.label}
-                            onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: €${btn.price}`)}
+                            onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: ${cs()}${btn.price}`)}
                             className="py-2 px-2.5 rounded-xl border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all fd-font-body font-bold text-xs text-foreground flex items-center justify-center gap-1.5 group"
                             style={{ boxShadow: "0 0 8px hsl(330 100% 55% / 0.12)" }}
                         >
                             <span className="text-xs opacity-80">{btn.icon}</span>
                             <span>
                                 <span className="fd-neon-text-sm italic tracking-tight">{btn.label}:</span>{" "}
-                                <span className="fd-font-tech font-black fd-neon-text text-base italic">€{btn.price}</span>
+                                <span className="fd-font-tech font-black fd-neon-text text-base italic">{cs()}{btn.price}</span>
                             </span>
                         </button>
                     ))}
@@ -238,7 +239,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
 
                                         {/* Price + Buy */}
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                            <span className="fd-font-tech font-black text-sm fd-neon-text">€{pack.price}</span>
+                                            <span className="fd-font-tech font-black text-sm fd-neon-text">{cs()}{pack.price}</span>
                                             {isPurchased ? (
                                                 <button
                                                     onClick={() => setViewingPack(pack)}
@@ -253,7 +254,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (€${pack.price})`, pack.media_urls)}
+                                                    onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (${cs()}${pack.price})`, pack.media_urls)}
                                                     className="px-2.5 py-1 rounded-xl fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                                                     style={{
                                                         background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(330 100% 65%))",
@@ -376,7 +377,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                                     <div className="mb-6 bg-primary/10 border border-primary/20 rounded-xl p-4">
                                         <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-2">Pack Details</p>
                                         <p className="text-base text-white/90 leading-relaxed italic font-medium">
-                                            {viewingPack.name} — €{viewingPack.price}
+                                            {viewingPack.name} — {cs()}{viewingPack.price}
                                         </p>
                                     </div>
 

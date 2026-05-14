@@ -23,6 +23,8 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { useBarChat } from "@/hooks/useBarChat";
 import dynamic from "next/dynamic";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -115,7 +117,7 @@ function tierChip(tier: BadgeTier) {
 }
 
 function money(n: number) {
-    return `€${n.toFixed(0)}`;
+    return `${cs()}${n.toFixed(0)}`;
 }
 
 function nowId(prefix: string) {
@@ -186,7 +188,7 @@ export default function BarLoungeCreatorStudioPage() {
                     setSpinOutcomes([
                         { id: "o1", label: "Pinned Message (1 min)", odds: 30, note: "Fan’s next message pins above chat." },
                         { id: "o2", label: "Priority Cam (2 min)", odds: 20, note: "Fan badge glows; creator sees first." },
-                        { id: "o3", label: "VIP Booth Discount €50", odds: 12, note: "Applies to VIP Booth unlock." },
+                        { id: "o3", label: "VIP Booth Discount ${cs()}50", odds: 12, note: "Applies to VIP Booth unlock." },
                         { id: "o4", label: "Free +2 Minutes", odds: 18, note: "Adds 2 minutes of free time." },
                         { id: "o5", label: "Creator Dares You", odds: 10, note: "Creator can send a dare prompt." },
                         { id: "o6", label: "Try Again", odds: 10, note: "No perk, but creator shoutout." },
@@ -678,7 +680,7 @@ export default function BarLoungeCreatorStudioPage() {
                                             {king.avatar_url ? <img src={king.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{king.handle[0]}</div>}
                                         </div>
                                         <span className="text-xs text-red-200 truncate max-w-[80px]">{king.handle}</span>
-                                        {king.spentTotal > 0 && <span className="text-[10px] text-yellow-400">€{king.spentTotal}</span>}
+                                        {king.spentTotal > 0 && <span className="text-[10px] text-yellow-400">{cs()}{king.spentTotal}</span>}
                                     </div>
                                 );
                             })()}
@@ -700,7 +702,7 @@ export default function BarLoungeCreatorStudioPage() {
                                             {queen.avatar_url ? <img src={queen.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-red-900/50 flex items-center justify-center text-red-200">{queen.handle[0]}</div>}
                                         </div>
                                         <span className="text-xs text-red-200 truncate max-w-[80px]">{queen.handle}</span>
-                                        {queen.spentTotal > 0 && <span className="text-[10px] text-yellow-400">€{queen.spentTotal}</span>}
+                                        {queen.spentTotal > 0 && <span className="text-[10px] text-yellow-400">{cs()}{queen.spentTotal}</span>}
                                     </div>
                                 );
                             })()}
@@ -749,7 +751,9 @@ export default function BarLoungeCreatorStudioPage() {
                                     <div key={m.id} className="text-sm text-gray-200 mb-2">
                                         <span className={cx("font-bold", isMe ? "text-fuchsia-300" : "text-violet-200")}>
                                             {m.handle || "Start"}
-                                        </span>: {m.content}
+                                        </span>
+                                        {m.user_id && <UserBadgeDisplay userId={m.user_id} />}
+                                        : {m.content}
                                     </div>
                                 );
                             })}

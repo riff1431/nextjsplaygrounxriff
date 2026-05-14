@@ -17,6 +17,7 @@ import {
     Star,
 } from "lucide-react";
 import Link from "next/link";
+import { cs } from "@/utils/currency";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface SplitRow {
@@ -278,7 +279,7 @@ function SplitCard({
                         {/* Entry Fee */}
                         {(row.entry_fee != null || ["PUBLIC_ENTRY", "PRIVATE_ENTRY"].includes(row.split_key)) && (
                             <div>
-                                <label style={labelStyle}>Entry Fee ($)</label>
+                                <label style={labelStyle}>Entry Fee ({cs()})</label>
                                 <input
                                     type="number"
                                     min={0} step={0.01}
@@ -293,7 +294,7 @@ function SplitCard({
                         {/* Cost Per Min */}
                         {(row.cost_per_min != null || ["PUBLIC_PER_MIN", "PRIVATE_PER_MIN"].includes(row.split_key)) && (
                             <div>
-                                <label style={labelStyle}>Rate ($/min)</label>
+                                <label style={labelStyle}>Rate ({cs()}/min)</label>
                                 <input
                                     type="number"
                                     min={0} step={0.01}
@@ -308,7 +309,7 @@ function SplitCard({
                         {/* Minimum Charge */}
                         {(row.min_charge != null || ["PRIVATE_ENTRY", "PRIVATE_PER_MIN"].includes(row.split_key)) && (
                             <div>
-                                <label style={labelStyle}>Min Charge ($)</label>
+                                <label style={labelStyle}>Min Charge ({cs()})</label>
                                 <input
                                     type="number"
                                     min={0} step={0.01}

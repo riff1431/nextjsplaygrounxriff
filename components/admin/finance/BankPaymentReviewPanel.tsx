@@ -7,6 +7,7 @@ import { AdminSectionTitle } from "../shared/AdminTable";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface BankSubmission {
     id: string;
@@ -326,7 +327,7 @@ export default function BankPaymentReviewPanel() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Amount</span>
-                                    <span className="text-green-400 font-bold">€{selectedSubmission.amount}</span>
+                                    <span className="text-green-400 font-bold">{cs()}{selectedSubmission.amount}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Type</span>

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import WalletPill from "@/components/common/WalletPill";
 import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useAuth } from "@/app/context/AuthContext";
+import { cs } from "@/utils/currency";
 
 /* ─────────── Types ─────────── */
 interface RoomSession {
@@ -415,7 +416,7 @@ export default function RoomSessionDashboard({
                                 <>
                                     <div>
                                         <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">
-                                            Fan Entry Price (€)
+                                            Fan Entry Price ({cs()})
                                         </label>
                                         <input
                                             type="number"
@@ -434,12 +435,12 @@ export default function RoomSessionDashboard({
                                             }}
                                         />
                                         <p className="text-[10px] text-white/30 mt-1 px-1">
-                                            Minimum €20. Fans pay this to join your private session.
+                                            Minimum {cs()}20. Fans pay this to join your private session.
                                         </p>
                                     </div>
                                     <div>
                                         <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">
-                                            Cost Per Min (€)
+                                            Cost Per Min ({cs()})
                                         </label>
                                         <input
                                             type="number"
@@ -458,7 +459,7 @@ export default function RoomSessionDashboard({
                                             }}
                                         />
                                         <p className="text-[10px] text-white/30 mt-1 px-1">
-                                            Minimum €4. Fans are charged per minute in your private session.
+                                            Minimum {cs()}4. Fans are charged per minute in your private session.
                                         </p>
                                     </div>
                                 </>

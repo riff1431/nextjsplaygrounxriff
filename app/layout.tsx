@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { PaymentProvider } from "./context/PaymentContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
 import ToasterProvider from "@/components/providers/ToasterProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import CookieBanner from "@/components/common/CookieBanner";
@@ -52,11 +53,13 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <PaymentProvider>
-              <NotificationProvider>
-                {children}
-                <CookieBanner />
-                <ToasterProvider />
-              </NotificationProvider>
+              <CurrencyProvider>
+                <NotificationProvider>
+                  {children}
+                  <CookieBanner />
+                  <ToasterProvider />
+                </NotificationProvider>
+              </CurrencyProvider>
             </PaymentProvider>
           </ThemeProvider>
         </AuthProvider>

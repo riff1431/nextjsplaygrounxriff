@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Image as ImageIcon, Video, Mic, Send, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 interface CreatorReplyModalProps {
     isOpen: boolean;
@@ -107,7 +108,7 @@ const CreatorReplyModal = ({ isOpen, onClose, request, onSend }: CreatorReplyMod
                     {/* Request Context Box */}
                     <div className="p-3 rounded-lg bg-black/40 border border-white/10 text-sm italic text-white/80">
                         "{request.label || request.message}"
-                        {request.amount > 0 && <span className="text-gold font-bold ml-2">€{request.amount}</span>}
+                        {request.amount > 0 && <span className="text-gold font-bold ml-2">{cs()}{request.amount}</span>}
                     </div>
 
                     {/* Media Preview Area */}

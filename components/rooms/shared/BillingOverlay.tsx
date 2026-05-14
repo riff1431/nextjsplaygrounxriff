@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Wallet, AlertTriangle, X } from "lucide-react";
 import { useSessionBilling } from "@/hooks/useSessionBilling";
+import { cs } from "@/utils/currency";
 
 /* ═══════════════════════════════════════════════════════════
    BillingOverlay — Per-minute billing UI for fan watching pages
@@ -158,7 +159,7 @@ export default function BillingOverlay({
                                 Total Spent
                             </div>
                             <div style={{ fontSize: "20px", fontWeight: 800, color: "hsl(42, 90%, 55%)" }}>
-                                €{billing.totalBilled}
+                                {cs()}{billing.totalBilled}
                             </div>
                         </div>
                     </div>
@@ -270,7 +271,7 @@ export default function BillingOverlay({
             }}>
                 <Wallet style={{ width: "13px", height: "13px" }} />
                 <span style={{ fontSize: "12px", fontWeight: 700 }}>
-                    €{billing.totalBilled}
+                    {cs()}{billing.totalBilled}
                 </span>
             </div>
 

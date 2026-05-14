@@ -3,11 +3,13 @@ import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from "next/server";
 import { SYSTEM_TRUTHS, SYSTEM_DARES } from "@/utils/truth_dare_prompts";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ roomId: string }> }
 ) {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
     const { roomId } = await params;
 
@@ -133,7 +135,7 @@ export async function POST(
             // Validate minimums
             const minPrice = type === 'custom_truth' ? 25 : 35;
             if (price < minPrice) {
-                return NextResponse.json({ error: `Minimum price is €${minPrice}` }, { status: 400 });
+                return NextResponse.json({ error: `Minimum price is ${SYM}${minPrice}` }, { status: 400 });
             }
         }
 
@@ -304,7 +306,7 @@ export async function POST(
         // the fan's and creator's live chat feeds (not just creator's activity panel)
         if (type === 'tip' || type === 'reaction') {
             const chatMessage = type === 'tip'
-                ? `💰 ${fanName} sent a €${price} tip!`
+                ? `💰 ${fanName} sent a ${SYM}${price} tip!`
                 : `✨ ${fanName} sent a ${tier || ''} reaction!`;
 
             const chatPayload: Record<string, any> = {

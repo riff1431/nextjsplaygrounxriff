@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { Clock, CheckCircle2, XCircle, Truck, Loader2 } from "lucide-react";
 import FanDeliveryModal from "./FanDeliveryModal";
+import { cs } from "@/utils/currency";
 
 interface ConfessionRequest {
   id: string;
@@ -123,7 +124,7 @@ const MyRequests = ({ roomId }: MyRequestsProps) => {
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-md bg-secondary text-xs font-semibold border border-border">
-                    <span className="gold-text">€{req.amount}</span>
+                    <span className="gold-text">{cs()}{req.amount}</span>
                   </span>
                 </div>
               );

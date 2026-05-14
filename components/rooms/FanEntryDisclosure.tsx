@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cs } from "@/utils/currency";
 
 interface FanEntryDisclosureProps {
     entryFee: number;
@@ -66,7 +67,7 @@ export default function FanEntryDisclosure({
                             fontSize: 16, fontWeight: 700,
                             color: entryFee > 0 ? "#ffd700" : "#4ade80",
                         }}>
-                            {entryFee > 0 ? `€${entryFee}` : "FREE"}
+                            {entryFee > 0 ? `${cs()}${entryFee}` : "FREE"}
                         </span>
                     </div>
 
@@ -82,7 +83,7 @@ export default function FanEntryDisclosure({
                             fontSize: 16, fontWeight: 700,
                             color: "#f97316",
                         }}>
-                            ${costPerMin}/min
+                            {cs()}{costPerMin}/min
                         </span>
                     </div>
 
@@ -143,7 +144,7 @@ export default function FanEntryDisclosure({
                             cursor: "pointer", fontSize: 13,
                         }}
                     >
-                        {entryFee > 0 ? `Pay €${entryFee} & Join` : "Join Now"}
+                        {entryFee > 0 ? `Pay ${cs()}${entryFee} & Join` : "Join Now"}
                     </button>
                 </div>
             </div>

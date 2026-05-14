@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerCurrencySymbol } from "@/utils/serverCurrency";
 
 /** Platform fee is no longer charged to creators. Kept for reference. */
 const DEFAULT_CREATOR_FEE = 0;
@@ -17,6 +18,7 @@ const PLATFORM_ACCOUNT_ID = process.env.PLATFORM_ACCOUNT_ID || "00000000-0000-00
 // List creator's sessions with participant counts
 // ──────────────────────────────────────────────────
 export async function GET(request: NextRequest) {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
     const admin = createAdminClient();
 
@@ -95,6 +97,7 @@ export async function GET(request: NextRequest) {
 // Body: { title, description?, session_type, price, room_id }
 // ──────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
+    const SYM = await getServerCurrencySymbol();
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -141,7 +144,7 @@ export async function POST(request: NextRequest) {
         if (isPrivate && cost_per_min !== undefined) {
             costPerMin = Number(cost_per_min) || 0;
             if (costPerMin < 4) {
-                return NextResponse.json({ error: "Cost per minute must be at least €4 for private sessions" }, { status: 400 });
+                return NextResponse.json({ error: "Cost per minute must be at least ${SYM}4 for private sessions" }, { status: 400 });
             }
         }
 

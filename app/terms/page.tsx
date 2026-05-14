@@ -4,6 +4,7 @@ import React from "react";
 import InfoPageLayout from "@/components/layout/InfoPageLayout";
 import DynamicPageContent from "@/components/common/DynamicPageContent";
 import { ShieldCheck, Gavel, Scale, AlertCircle, Coins, HeartHandshake } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 export default function TermsPage() {
   return (
@@ -114,7 +115,7 @@ export default function TermsPage() {
           <div className="space-y-8 relative">
             <div>
               <h3 className="text-lg font-semibold text-cyan-300 mb-3 italic">5.1 Currency & Wallet</h3>
-              <p className="text-gray-300">All transactions are processed in <strong>Euros (€)</strong>. Users must pre-fund a Wallet with a minimum of <strong>€25</strong> before making purchases. Wallet funds are non-refundable, except where required by law.</p>
+              <p className="text-gray-300">All transactions are processed in <strong>Euros ({cs()})</strong>. Users must pre-fund a Wallet with a minimum of <strong>{cs()}25</strong> before making purchases. Wallet funds are non-refundable, except where required by law.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

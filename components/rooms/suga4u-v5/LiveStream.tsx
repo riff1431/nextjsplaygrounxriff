@@ -1,3 +1,4 @@
+import { cs } from "@/utils/currency";
 const LiveStream = () => {
   const goalCurrent = 8450;
   const goalTotal = 10000;
@@ -22,7 +23,7 @@ const LiveStream = () => {
             <span className="section-title text-[11px]">Suga Goal</span>
           </div>
           <span className="text-sm font-bold">
-            <span className="text-pink">€{goalCurrent.toLocaleString()}</span>
+            <span className="text-pink">{cs()}{goalCurrent.toLocaleString()}</span>
             <span className="text-muted-foreground"> / ${goalTotal.toLocaleString()}</span>
           </span>
         </div>

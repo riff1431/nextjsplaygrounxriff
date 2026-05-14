@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import CreatorCard from "@/components/rooms/x-chat/CreatorCard";
 import ChatPanel from "@/components/rooms/x-chat/ChatPanel";
 import PaidReactions from "@/components/rooms/x-chat/PaidReactions";
+import { cs } from "@/utils/currency";
 
 const Index = () => {
     return (
@@ -47,7 +48,7 @@ const Index = () => {
                             <h2 className="font-display text-gold text-base mb-4">Live X Chat</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <CreatorCard username="BlueMuse" tier="Rising" />
-                                <CreatorCard username="EllaRose_XXX" tier="Popular" price="€2/min metered" />
+                                <CreatorCard username="EllaRose_XXX" tier="Popular" price="${cs()}2/min metered" />
                             </div>
                         </div>
 

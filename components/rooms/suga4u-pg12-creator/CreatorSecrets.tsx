@@ -2,16 +2,17 @@
 
 import { Heart, Plus, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cs } from "@/utils/currency";
 
 const secrets = [
-    { user: "Candy4U", text: "Deep kissing story", amount: "€400" },
-    { user: "JohnnyBlaze", text: "Spicy fantasy confession", amount: "€500" },
-    { user: "MidnightLover", text: "Private dance request", amount: "€300" },
-    { user: "SilkDream", text: "Whisper session ASMR", amount: "€250" },
-    { user: "GoldenKing", text: "Custom roleplay scenario", amount: "€600" },
-    { user: "VelvetTouch", text: "Poetry reading request", amount: "€150" },
-    { user: "CrystalGaze", text: "Truth or dare game", amount: "€350" },
-    { user: "RubyHeart", text: "Singing a love song", amount: "€200" },
+    { user: "Candy4U", text: "Deep kissing story", amount: "${cs()}400" },
+    { user: "JohnnyBlaze", text: "Spicy fantasy confession", amount: "${cs()}500" },
+    { user: "MidnightLover", text: "Private dance request", amount: "${cs()}300" },
+    { user: "SilkDream", text: "Whisper session ASMR", amount: "${cs()}250" },
+    { user: "GoldenKing", text: "Custom roleplay scenario", amount: "${cs()}600" },
+    { user: "VelvetTouch", text: "Poetry reading request", amount: "${cs()}150" },
+    { user: "CrystalGaze", text: "Truth or dare game", amount: "${cs()}350" },
+    { user: "RubyHeart", text: "Singing a love song", amount: "${cs()}200" },
 ];
 
 const CreatorSecrets = () => {

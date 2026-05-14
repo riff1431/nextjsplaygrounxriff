@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface BankSubmission {
     id: string;
@@ -215,7 +216,7 @@ export default function BankPaymentPendingScreen() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Amount</span>
-                                    <span className="text-white font-medium">€{submission.amount}</span>
+                                    <span className="text-white font-medium">{cs()}{submission.amount}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Submitted</span>

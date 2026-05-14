@@ -48,17 +48,7 @@ export default function UserBadgeDisplay({ userId, exclude = [] }: { userId: str
         
         if (exclude.some(ex => name.includes(ex.toLowerCase()))) return false;
 
-        if (badges.role === 'creator') {
-            // Creator: show suga baby badge AND tier levels (Rookie, Rising, etc)
-            if (type === 'account_type' && name.includes('baby')) return true;
-            if (type === 'level') return true;
-            return false;
-        } else {
-            // Fan: show tier badge and suga daddy/momma badge
-            if (type === 'level') return false;
-            if (type === 'account_type' && name.includes('baby')) return false;
-            return true;
-        }
+        return true;
     };
 
     return (

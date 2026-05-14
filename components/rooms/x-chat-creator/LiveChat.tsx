@@ -5,9 +5,12 @@ import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMsg {
     id: string;
+    sender_id?: string | null;
     sender_name: string;
     body: string;
     lane: string;
@@ -215,6 +218,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                         <span className="text-base shrink-0">👑</span>
                         <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
                             <span className="font-bold text-sm text-white">{activePinMessage.sender_name}</span>
+                            {activePinMessage.sender_id && <UserBadgeDisplay userId={activePinMessage.sender_id} />}
                             <span className="text-xs text-white/70 ml-1.5">is the life of the party!</span>
                         </div>
                     </div>
@@ -242,9 +246,10 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-baseline gap-2">
                                     <span className="font-semibold text-sm text-foreground">{m.sender_name}</span>
+                                    {m.sender_id && <UserBadgeDisplay userId={m.sender_id} />}
                                     {getLaneBadge(m)}
                                     {m.paid_amount > 0 && (
-                                        <span className="text-[10px] text-gold">€{m.paid_amount}</span>
+                                        <span className="text-[10px] text-gold">{cs()}{m.paid_amount}</span>
                                     )}
                                     <span className="text-xs text-muted-foreground">
                                         {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

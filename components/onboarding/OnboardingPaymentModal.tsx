@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { useRouter } from "next/navigation";
+import { cs } from "@/utils/currency";
 
 interface Props {
     amount: number;
@@ -140,7 +141,7 @@ export default function OnboardingPaymentModal({
                             </p>
                         </div>
                         <div className="text-right">
-                            <p className="text-2xl font-bold text-white">€{amount.toFixed(2)}</p>
+                            <p className="text-2xl font-bold text-white">{cs()}{amount.toFixed(2)}</p>
                             <p className="text-gray-500 text-xs">one-time</p>
                         </div>
                     </div>
@@ -163,7 +164,7 @@ export default function OnboardingPaymentModal({
                                 <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
                             ) : (
                                 <p className={`text-lg font-bold ${insufficient ? "text-red-400" : "text-emerald-400"}`}>
-                                    €{balance.toFixed(2)}
+                                    {cs()}{balance.toFixed(2)}
                                 </p>
                             )}
                         </div>
@@ -175,7 +176,7 @@ export default function OnboardingPaymentModal({
                     <div className="text-xs text-gray-500 text-center mb-4">
                         Remaining after purchase:{" "}
                         <span className="text-gray-300 font-medium">
-                            €{(balance - amount).toFixed(2)}
+                            {cs()}{(balance - amount).toFixed(2)}
                         </span>
                     </div>
                 )}
@@ -189,7 +190,7 @@ export default function OnboardingPaymentModal({
                                 Insufficient funds
                             </p>
                             <p className="text-xs text-red-300/70 mt-0.5">
-                                You need €{(amount - balance).toFixed(2)} more. Top up your wallet to continue.
+                                You need {cs()}{(amount - balance).toFixed(2)} more. Top up your wallet to continue.
                             </p>
                         </div>
                     </div>
@@ -228,7 +229,7 @@ export default function OnboardingPaymentModal({
                             ) : processing ? (
                                 <Loader2 size={16} className="animate-spin" />
                             ) : (
-                                `Pay €${amount.toFixed(2)}`
+                                `Pay ${cs()}${amount.toFixed(2)}`
                             )}
                         </button>
                     )}

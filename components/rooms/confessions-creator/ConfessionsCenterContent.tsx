@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import CreatorDeliveryModal from "./CreatorDeliveryModal";
+import { cs } from "@/utils/currency";
 
 interface RequestRow {
     id: string;
@@ -223,7 +224,7 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
                     filter: filterQuery,
                 }, (payload: any) => {
                     const newReq = payload.new;
-                    toast.info(`💜 New confession request: €${newReq.amount} — "${(newReq.topic || '').substring(0, 40)}"`);
+                    toast.info(`💜 New confession request: ${cs()}${newReq.amount} — "${(newReq.topic || '').substring(0, 40)}"`);
                     fetchRequests();
                 })
                 .on("postgres_changes", {

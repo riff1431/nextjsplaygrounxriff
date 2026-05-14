@@ -7,6 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import OnboardingPaymentModal from "@/components/onboarding/OnboardingPaymentModal";
+import { cs } from "@/utils/currency";
 
 interface MembershipPlan {
     id: string;
@@ -87,11 +88,7 @@ export default function MembershipPage() {
         if (error) {
             console.error("Error fetching account types:", error);
         } else {
-            // Only show Sugar Daddy and Sugar Mama to fan users (exclude Sugar Baby)
-            const fanTypes = (data || []).filter(
-                (t: AccountType) => !t.name.toLowerCase().includes("baby")
-            );
-            setAccountTypes(fanTypes);
+            setAccountTypes(data || []);
         }
     };
 
@@ -313,7 +310,7 @@ export default function MembershipPage() {
                                     ) : (
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-3xl font-bold text-white">
-                                                ${plan.price}
+                                                {cs()}{plan.price}
                                             </span>
                                             <span className="text-gray-400 text-sm">/month</span>
                                         </div>
@@ -362,7 +359,7 @@ export default function MembershipPage() {
                         ) : selectedPlan?.price && selectedPlan.price > 0 ? (
                             <span className="flex items-center justify-center gap-2">
                                 <CreditCard className="w-5 h-5" />
-                                Pay ${selectedPlan.price} & Upgrade
+                                Pay {cs()}{selectedPlan.price} & Upgrade
                             </span>
                         ) : selectedPlan ? (
                             "Switch Plan"
@@ -386,7 +383,7 @@ export default function MembershipPage() {
                             <p className="text-gray-400 text-sm mt-2">Express your style with a premium identity badge</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
                             {accountTypes.map((type) => {
                                 const isCurrent = currentAccountTypeId === type.id;
                                 const isSelected = selectedAccountType?.id === type.id;
@@ -462,7 +459,7 @@ export default function MembershipPage() {
                                                 <span className="text-4xl font-black text-green-400 drop-shadow-md">Free</span>
                                             ) : (
                                                 <div className="flex items-baseline gap-1 justify-center">
-                                                    <span className="text-5xl font-black text-white drop-shadow-md">€{type.price}</span>
+                                                    <span className="text-5xl font-black text-white drop-shadow-md">{cs()}{type.price}</span>
                                                     <span className="text-gray-400 text-base font-bold uppercase tracking-wider">/mo</span>
                                                 </div>
                                             )}
@@ -495,7 +492,7 @@ export default function MembershipPage() {
                                     ) : selectedAccountType.price > 0 ? (
                                         <span className="flex items-center justify-center gap-2">
                                             <CreditCard className="w-5 h-5" />
-                                            Pay ${selectedAccountType.price} & Activate
+                                            Pay {cs()}{selectedAccountType.price} & Activate
                                         </span>
                                     ) : (
                                         "Activate Badge"

@@ -24,6 +24,7 @@ import BrandLogo from "@/components/common/BrandLogo";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import TodInviteCreatorModal from "@/components/rooms/truth-or-dare-creator/TodInviteCreatorModal";
 import dynamic from "next/dynamic";
+import { cs } from "@/utils/currency";
 const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
 
 // ---------- Pricing / constants ----------
@@ -617,7 +618,7 @@ function TruthOrDareCreatorContent() {
                     const existing = prev[fanKey] || { name: fanName, total: 0 };
                     const newTotal = existing.total + amount;
 
-                    console.log(`💰 Fan spending updated: ${fanName} spent €${amount} (Total: €${newTotal})`);
+                    console.log(`💰 Fan spending updated: ${fanName} spent ${cs()}${amount} (Total: ${cs()}${newTotal})`);
 
                     return {
                         ...prev,
@@ -753,7 +754,7 @@ function TruthOrDareCreatorContent() {
     useEffect(() => {
         if (topSpender !== "—") {
             const topSpenderData = Object.values(fanSpending).sort((a, b) => b.total - a.total)[0];
-            console.log(`👑 Top Spender (Dare King): ${topSpender} with €${topSpenderData?.total.toFixed(2)}`);
+            console.log(`👑 Top Spender (Dare King): ${topSpender} with ${cs()}${topSpenderData?.total.toFixed(2)}`);
         }
     }, [topSpender, fanSpending]);
 
@@ -1317,7 +1318,7 @@ function TruthOrDareCreatorContent() {
                             {/* Fan Entry Price - Only shown for Private sessions */}
                             {sessionForm.isPrivate && (
                                 <div>
-                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Fan Entry Price (€)</label>
+                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Fan Entry Price ({cs()})</label>
                                     <input
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
@@ -1326,7 +1327,7 @@ function TruthOrDareCreatorContent() {
                                         onChange={(e) => setSessionForm({ ...sessionForm, price: Math.max(20, Number(e.target.value)) })}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum €20. Fans pay this to join your private session.
+                                        Minimum {cs()}20. Fans pay this to join your private session.
                                     </p>
                                 </div>
                             )}
@@ -1334,7 +1335,7 @@ function TruthOrDareCreatorContent() {
                             {/* Cost Per Min - Only shown for Private sessions */}
                             {sessionForm.isPrivate && (
                                 <div>
-                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Cost Per Min (€)</label>
+                                    <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Cost Per Min ({cs()})</label>
                                     <input
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
@@ -1343,7 +1344,7 @@ function TruthOrDareCreatorContent() {
                                         onChange={(e) => setSessionForm({ ...sessionForm, costPerMin: Math.max(4, Number(e.target.value)) })}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum €4. Fans are charged per minute in your private session.
+                                        Minimum {cs()}4. Fans are charged per minute in your private session.
                                     </p>
                                 </div>
                             )}
@@ -1413,7 +1414,7 @@ function TruthOrDareCreatorContent() {
                                                             )}
                                                         </div>
                                                         <div className="text-right shrink-0">
-                                                            <div className="text-sm font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
+                                                            <div className="text-sm font-bold text-green-400">{cs()}{(s.total_earnings || 0).toFixed(2)}</div>
                                                             <div className="text-[10px] text-white/40">earned</div>
                                                         </div>
                                                     </div>
@@ -1498,7 +1499,7 @@ function TruthOrDareCreatorContent() {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-xs font-bold text-green-400">€{(s.total_earnings || 0).toFixed(2)}</div>
+                                                        <div className="text-xs font-bold text-green-400">{cs()}{(s.total_earnings || 0).toFixed(2)}</div>
                                                         <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
                                                     </div>
                                                 </div>
@@ -1792,7 +1793,7 @@ function TruthOrDareCreatorContent() {
                         <div className="text-3xl font-black text-white mb-1 uppercase drop-shadow-lg">
                             {activeTip.message?.includes('reaction') ? 'New Reaction!' : 'New Tip!'}
                         </div>
-                        <div className={`text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r ${activeTip.message?.includes('reaction') ? 'from-purple-400 via-pink-300 to-purple-400' : 'from-green-400 via-emerald-300 to-green-400'}`}>€{activeTip.amount}</div>
+                        <div className={`text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r ${activeTip.message?.includes('reaction') ? 'from-purple-400 via-pink-300 to-purple-400' : 'from-green-400 via-emerald-300 to-green-400'}`}>{cs()}{activeTip.amount}</div>
                         <p className={`${activeTip.message?.includes('reaction') ? 'text-purple-200' : 'text-green-200'} mt-2`}>{activeTip.fanName}</p>
                         {activeTip.message && (
                             <p className="text-white/50 text-sm mt-1">{activeTip.message}</p>

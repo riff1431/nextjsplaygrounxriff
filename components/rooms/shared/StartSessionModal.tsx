@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRoomSession } from "@/hooks/useRoomSession";
 import { X, Lock, Globe, DollarSign, Euro } from "lucide-react";
+import { cs } from "@/utils/currency";
 
 interface StartSessionModalProps {
     roomType: string;
@@ -233,7 +234,7 @@ export default function StartSessionModal({
                     {sessionType === "private" && (
                         <div style={{ marginBottom: "16px" }}>
                             <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                                Entry Price (min €20)
+                                Entry Price (min {cs()}20)
                             </label>
                             <div style={{ position: "relative" }}>
                                 <Euro
@@ -272,7 +273,7 @@ export default function StartSessionModal({
                     {sessionType === "private" && (
                         <div style={{ marginBottom: "16px" }}>
                             <label style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 600, display: "block", marginBottom: "6px" }}>
-                                Cost Per Min (€)
+                                Cost Per Min ({cs()})
                             </label>
                             <div style={{ position: "relative" }}>
                                 <Euro
@@ -305,7 +306,7 @@ export default function StartSessionModal({
                                 />
                             </div>
                             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", marginTop: "4px", paddingLeft: "4px" }}>
-                                Minimum €2. Fans are charged per minute in your private session.
+                                Minimum {cs()}2. Fans are charged per minute in your private session.
                             </p>
                         </div>
                     )}
