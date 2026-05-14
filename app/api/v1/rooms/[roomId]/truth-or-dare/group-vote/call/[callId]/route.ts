@@ -32,7 +32,8 @@ export async function PATCH(
             .eq('creator_id', user.id);
 
         // 3. Broadcast end event to all connected clients
-        await supabase.channel(`room:${roomId}`).send({
+        // Uses isolated channel name to match the fan-side useGroupCall subscription.
+        await supabase.channel(`group-call:${roomId}`).send({
             type: 'broadcast',
             event: 'group_call_ended',
             payload: { callId, roomId }

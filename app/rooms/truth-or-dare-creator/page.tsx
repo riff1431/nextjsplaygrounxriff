@@ -1819,6 +1819,7 @@ function TruthOrDareCreatorContent() {
                 <GroupCallCreatorModal
                     callState={groupCall.callState}
                     userId={me.id}
+                    creatorName={`${me.name || "Creator"} (You)`}
                     onEndCall={groupCall.endCall}
                     onDismiss={groupCall.dismiss}
                 />

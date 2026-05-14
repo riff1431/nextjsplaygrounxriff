@@ -83,8 +83,10 @@ export async function POST(
         }
 
         // 7. Broadcast to all connected fans in this room
-        console.log(`[GroupCallAPI] Broadcasting group_call_started to room:${roomId}`);
-        await supabase.channel(`room:${roomId}`).send({
+        // Uses isolated channel name `group-call:${roomId}` to avoid collision with
+        // the fan page's gameChannel which also subscribes to `room:${roomId}`.
+        console.log(`[GroupCallAPI] Broadcasting group_call_started to group-call:${roomId}`);
+        await supabase.channel(`group-call:${roomId}`).send({
             type: 'broadcast',
             event: 'group_call_started',
             payload: {

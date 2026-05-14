@@ -1768,6 +1768,7 @@ function TruthOrDareContent() {
                 <GroupCallFanModal
                     callState={groupCall.callState}
                     userId={userId || ""}
+                    userName={userName || "You"}
                     onAcceptCall={groupCall.acceptCall}
                     onDeclineCall={groupCall.declineCall}
                     onDismiss={groupCall.dismiss}
