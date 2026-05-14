@@ -412,7 +412,7 @@ export default function RoomSessionsBrowse({
                     </div>
                 ) : (
                     /* ── Sessions Grid ── */
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))", gap: "12px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))", gap: "14px" }}>
                         {filteredSessions.map((session, i) => {
                             const isHovered = hoveredCard === session.id;
                             const price = Number(session.entry_fee) || 0;
