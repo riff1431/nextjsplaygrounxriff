@@ -558,21 +558,26 @@ function TruthOrDareContent() {
         const sessionStartedAt = currentSessionStartedAt || new Date().toISOString();
 
         const fetchChatMessages = async () => {
-            let query = supabase
+            const baseQuery = () => supabase
                 .from('chat_messages')
                 .select('id, room_id, user_id, username, message, created_at')
-                .eq('room_id', roomId);
+                .eq('room_id', roomId)
+                .order('created_at', { ascending: true })
+                .limit(100);
+
+            let data: any[] | null = null;
+            let error: any = null;
 
             // Session-scoped filtering: prefer session_id, fall back to timestamp
             if (activeSessionId) {
-                query = query.eq('session_id', activeSessionId);
+                ({ data, error } = await baseQuery().eq('session_id', activeSessionId));
+                // If session_id column doesn't exist, fallback to timestamp
+                if (error && error.message?.includes('session_id')) {
+                    ({ data, error } = await baseQuery().gte('created_at', sessionStartedAt));
+                }
             } else {
-                query = query.gte('created_at', sessionStartedAt);
+                ({ data, error } = await baseQuery().gte('created_at', sessionStartedAt));
             }
-
-            const { data, error } = await query
-                .order('created_at', { ascending: true })
-                .limit(100);
 
             if (data && !error) {
                 setChatMessages(data);
@@ -631,19 +636,30 @@ function TruthOrDareContent() {
                 }
 
                 // Fetch requests for this room, scoped to the current session
-                let reqQuery = supabase
+                const baseReqQuery = () => supabase
                     .from('truth_dare_requests')
                     .select('fan_id, fan_name, type, amount')
                     .eq('room_id', roomId);
 
+                let requests: any[] | null = null;
+                let error: any = null;
+
                 // Session-scoped: prefer session_id, fall back to timestamp
                 if (activeSessionId) {
-                    reqQuery = reqQuery.eq('session_id', activeSessionId);
+                    ({ data: requests, error } = await baseReqQuery().eq('session_id', activeSessionId));
+                    // If session_id column doesn't exist, fallback to timestamp
+                    if (error && error.message?.includes('session_id')) {
+                        if (sessionStartedAt) {
+                            ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
+                        } else {
+                            ({ data: requests, error } = await baseReqQuery());
+                        }
+                    }
                 } else if (sessionStartedAt) {
-                    reqQuery = reqQuery.gte('created_at', sessionStartedAt);
+                    ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
+                } else {
+                    ({ data: requests, error } = await baseReqQuery());
                 }
-
-                const { data: requests, error } = await reqQuery;
 
                 if (error || !requests || requests.length === 0) {
                     // No requests yet — reset to clean slate
@@ -737,7 +753,7 @@ function TruthOrDareContent() {
     useEffect(() => {
         if (!roomId || !userId) return;
         const fetchIncoming = async () => {
-            let query = supabase
+            const baseQuery = () => supabase
                 .from("truth_dare_requests")
                 .select("*")
                 .eq("room_id", roomId)
@@ -745,12 +761,19 @@ function TruthOrDareContent() {
                 .order("created_at", { ascending: false })
                 .limit(20);
 
+            let data: any[] | null = null;
+            let error: any = null;
+
             // Session-scoped: prefer session_id, fall back to no filter
             if (activeSessionId) {
-                query = query.eq("session_id", activeSessionId);
+                ({ data, error } = await baseQuery().eq("session_id", activeSessionId));
+                // If session_id column doesn't exist, fallback to unfiltered
+                if (error && error.message?.includes('session_id')) {
+                    ({ data } = await baseQuery());
+                }
+            } else {
+                ({ data } = await baseQuery());
             }
-            
-            const { data } = await query;
             if (data) setIncomingItems(data);
         };
         fetchIncoming();
@@ -824,13 +847,19 @@ function TruthOrDareContent() {
         if (!chatInput.trim() || !roomId || !userId || chatSending) return;
         setChatSending(true);
 
-        const { error } = await supabase.from('chat_messages').insert({
+        const chatPayload: Record<string, any> = {
             room_id: roomId,
             user_id: userId,
             username: userName,
             message: chatInput.trim(),
             session_id: activeSessionId || null,
-        });
+        };
+        let { error } = await supabase.from('chat_messages').insert(chatPayload);
+        // If session_id column doesn't exist yet, retry without it
+        if (error && error.message?.includes('session_id')) {
+            delete chatPayload.session_id;
+            ({ error } = await supabase.from('chat_messages').insert(chatPayload));
+        }
 
         if (error) {
             toast.error('Failed to send message');

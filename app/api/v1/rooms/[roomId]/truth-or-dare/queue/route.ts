@@ -13,27 +13,41 @@ export async function GET(
     // Find the current active/pending session to scope queue items
     const { data: activeSession } = await admin
         .from("truth_dare_sessions")
-        .select("id")
+        .select("id, started_at, created_at")
         .eq("room_id", roomId)
         .in("status", ["active", "pending"])
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-    let query = admin
-        .from("truth_dare_queue")
-        .select("*")
-        .eq("room_id", roomId)
-        .eq("is_served", false)
-        .order("created_at", { ascending: false })
-        .limit(50);
+    const buildQuery = (useSessionId: boolean) => {
+        let q = admin
+            .from("truth_dare_queue")
+            .select("*")
+            .eq("room_id", roomId)
+            .eq("is_served", false)
+            .order("created_at", { ascending: false })
+            .limit(50);
 
-    // Only return queue items from the current session (session_id-based isolation)
-    if (activeSession) {
-        query = query.eq("session_id", activeSession.id);
+        if (activeSession) {
+            if (useSessionId) {
+                q = q.eq("session_id", activeSession.id);
+            } else {
+                // Fallback: timestamp-based filtering
+                const sessionStart = activeSession.started_at || activeSession.created_at;
+                if (sessionStart) {
+                    q = q.gte("created_at", sessionStart);
+                }
+            }
+        }
+        return q;
+    };
+
+    // Try session_id filtering first, fallback to timestamp if column doesn't exist
+    let { data: queue, error } = await buildQuery(true);
+    if (error && error.message?.includes('session_id')) {
+        ({ data: queue, error } = await buildQuery(false));
     }
-
-    const { data: queue, error } = await query;
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

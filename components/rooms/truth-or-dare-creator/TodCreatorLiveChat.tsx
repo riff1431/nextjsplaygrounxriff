@@ -75,23 +75,34 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
     useEffect(() => {
         if (!roomId) return;
 
-        // Fetch past messages — scoped to current session by timestamp
+        // Fetch past messages — scoped to current session
         const fetchMessages = async () => {
-            let query = supabase
+            const baseQuery = () => supabase
                 .from("chat_messages")
                 .select("id, room_id, user_id, username, message, created_at")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(100);
 
+            let data: any[] | null = null;
+            let error: any = null;
+
             // Session-scoped filtering: prefer session_id, fall back to timestamp
             if (sessionId) {
-                query = query.eq("session_id", sessionId);
+                ({ data, error } = await baseQuery().eq("session_id", sessionId));
+                // If session_id column doesn't exist, fallback to timestamp
+                if (error && error.message?.includes('session_id')) {
+                    if (sessionStartedAt) {
+                        ({ data, error } = await baseQuery().gte("created_at", sessionStartedAt));
+                    } else {
+                        ({ data, error } = await baseQuery());
+                    }
+                }
             } else if (sessionStartedAt) {
-                query = query.gte("created_at", sessionStartedAt);
+                ({ data, error } = await baseQuery().gte("created_at", sessionStartedAt));
+            } else {
+                ({ data, error } = await baseQuery());
             }
-
-            const { data, error } = await query;
 
             if (data && !error) {
                 setMessages(data);
@@ -138,13 +149,19 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
         if (!msg.trim() || !roomId || !myProfile || sending) return;
         setSending(true);
 
-        const { error } = await supabase.from("chat_messages").insert({
+        const chatPayload: Record<string, any> = {
             room_id: roomId,
             user_id: myProfile.id,
             username: myProfile.name,
             message: msg.trim(),
             session_id: sessionId || null,
-        });
+        };
+        let { error } = await supabase.from("chat_messages").insert(chatPayload);
+        // If session_id column doesn't exist yet, retry without it
+        if (error && error.message?.includes('session_id')) {
+            delete chatPayload.session_id;
+            ({ error } = await supabase.from("chat_messages").insert(chatPayload));
+        }
 
         if (error) {
             toast.error("Failed to send message: " + error.message);

@@ -271,9 +271,7 @@ export async function POST(
         }
 
         // 5. Record Request (with session_id for session isolation)
-        const { data: newRequest, error: reqError } = await supabase
-            .from('truth_dare_requests')
-            .insert({
+        const requestPayload: Record<string, any> = {
                 room_id: roomId,
                 fan_id: user.id,
                 type,
@@ -283,9 +281,22 @@ export async function POST(
                 status: 'pending',
                 fan_name: fanName,
                 session_id: sessionId
-            })
+        };
+        let { data: newRequest, error: reqError } = await supabase
+            .from('truth_dare_requests')
+            .insert(requestPayload)
             .select()
             .single();
+
+        // If session_id column doesn't exist yet, retry without it
+        if (reqError && reqError.message?.includes('session_id')) {
+            delete requestPayload.session_id;
+            ({ data: newRequest, error: reqError } = await supabase
+                .from('truth_dare_requests')
+                .insert(requestPayload)
+                .select()
+                .single());
+        }
 
         if (reqError) throw reqError;
 
@@ -296,15 +307,20 @@ export async function POST(
                 ? `💰 ${fanName} sent a €${price} tip!`
                 : `✨ ${fanName} sent a ${tier || ''} reaction!`;
 
-            await supabase.from('chat_messages').insert({
+            const chatPayload: Record<string, any> = {
                 room_id: roomId,
                 user_id: user.id,
                 username: fanName,
                 message: chatMessage,
                 session_id: sessionId
-            }).then(({ error }) => {
-                if (error) console.error('Failed to insert tip/reaction chat message:', error);
-            });
+            };
+            let chatResult = await supabase.from('chat_messages').insert(chatPayload);
+            // If session_id column doesn't exist yet, retry without it
+            if (chatResult.error && chatResult.error.message?.includes('session_id')) {
+                delete chatPayload.session_id;
+                chatResult = await supabase.from('chat_messages').insert(chatPayload);
+            }
+            if (chatResult.error) console.error('Failed to insert tip/reaction chat message:', chatResult.error);
         }
 
         // 6. Add to Active Queue (Actionable Item for Creator)
@@ -319,9 +335,7 @@ export async function POST(
             else if (type === 'custom_dare') queueType = 'CUSTOM_DARE';
             else if (type === 'system_truth' || type === 'system_dare') queueType = 'TIER_PURCHASE';
 
-            const { error: queueError } = await supabase
-                .from('truth_dare_queue')
-                .insert({
+            const queuePayload: Record<string, any> = {
                     room_id: roomId,
                     fan_id: user.id,
                     fan_name: fanName,
@@ -331,10 +345,21 @@ export async function POST(
                     session_id: sessionId,
                     meta: {
                         tier: tier,
-                        text: finalContent, // The prompt
+                        text: finalContent,
                         request_id: newRequest.id
                     }
-                });
+            };
+            let { error: queueError } = await supabase
+                .from('truth_dare_queue')
+                .insert(queuePayload);
+
+            // If session_id column doesn't exist yet, retry without it
+            if (queueError && queueError.message?.includes('session_id')) {
+                delete queuePayload.session_id;
+                ({ error: queueError } = await supabase
+                    .from('truth_dare_queue')
+                    .insert(queuePayload));
+            }
 
             if (queueError) {
                 console.error("Failed to add to queue:", queueError);

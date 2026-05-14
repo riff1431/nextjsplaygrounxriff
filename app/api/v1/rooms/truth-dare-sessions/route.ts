@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         });
 
         // 7. Update/create game state row — CLEAN SLATE for new session
-        await supabase.from("truth_dare_games").upsert({
+        const gamePayload: Record<string, any> = {
             room_id,
             session_title: title,
             session_description: description,
@@ -198,7 +198,14 @@ export async function POST(request: NextRequest) {
             group_vote_state: null,
             session_id: session.id,
             updated_at: new Date().toISOString(),
-        }, { onConflict: "room_id" });
+        };
+        let { error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" });
+        // If session_id column doesn't exist yet, retry without it
+        if (gameError && gameError.message?.includes('session_id')) {
+            delete gamePayload.session_id;
+            ({ error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" }));
+        }
+        if (gameError) console.error("Game state upsert error:", gameError);
 
         // 8. Ensure room status is live
         await supabase.from("rooms").update({ status: "live" }).eq("id", room_id);

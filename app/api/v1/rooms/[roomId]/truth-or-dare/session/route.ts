@@ -76,9 +76,7 @@ export async function POST(
             const newSessionId = newSession?.id;
 
             // B. Update/Create Active Game State — CLEAN SLATE
-            const { error: updateError } = await admin
-                .from('truth_dare_games')
-                .upsert({
+            const gamePayload: Record<string, any> = {
                     room_id: roomId,
                     session_title: title,
                     session_description: description,
@@ -93,7 +91,18 @@ export async function POST(
                     group_vote_state: null,
                     session_id: newSessionId || null,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'room_id' });
+            };
+            let { error: updateError } = await admin
+                .from('truth_dare_games')
+                .upsert(gamePayload, { onConflict: 'room_id' });
+
+            // If session_id column doesn't exist yet, retry without it
+            if (updateError && updateError.message?.includes('session_id')) {
+                delete gamePayload.session_id;
+                ({ error: updateError } = await admin
+                    .from('truth_dare_games')
+                    .upsert(gamePayload, { onConflict: 'room_id' }));
+            }
 
             if (updateError) throw updateError;
 
@@ -226,12 +235,23 @@ export async function GET(
         const activeSession = history?.find((s: any) => s.status === 'active');
 
         if (activeSession) {
-            const { data: requests } = await admin
+            // Try session_id-based filter first, fallback to timestamp
+            let { data: requests, error: reqError } = await admin
                 .from('truth_dare_requests')
                 .select('amount, type, status, created_at')
                 .eq('room_id', roomId)
                 .eq('session_id', activeSession.id)
                 .eq('status', 'answered');
+
+            if (reqError && reqError.message?.includes('session_id')) {
+                // Fallback: timestamp-based
+                ({ data: requests } = await admin
+                    .from('truth_dare_requests')
+                    .select('amount, type, status, created_at')
+                    .eq('room_id', roomId)
+                    .eq('status', 'answered')
+                    .gte('created_at', activeSession.started_at));
+            }
 
             if (requests) {
                 requests.forEach((r: any) => {
