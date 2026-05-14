@@ -37,11 +37,29 @@ const TodCreatorRequestPanel = ({ title, accentColor, queue, activityItems, onSe
 
     // Helper to format item display
     const renderContent = (q: QueueItem) => {
+        let typePrefix = "";
+        if (q.meta && q.meta.originalType) {
+            const t = q.meta.originalType.replace("system_", "").replace("custom_", "");
+            typePrefix = t.charAt(0).toUpperCase() + t.slice(1);
+        } else {
+            // fallback
+            if (q.type.includes("TRUTH")) typePrefix = "Truth";
+            else if (q.type.includes("DARE")) typePrefix = "Dare";
+        }
+
         if (q.type === "TIER_PURCHASE") {
-            return `Tier: ${String(q.meta.tier).toUpperCase()}`;
+            const tierStr = q.meta.tier ? String(q.meta.tier).toUpperCase() : "";
+            if (typePrefix && tierStr) {
+                return `${typePrefix} - ${tierStr}`;
+            }
+            return `Tier: ${tierStr}`;
         }
         if (q.type === "CUSTOM_TRUTH" || q.type === "CUSTOM_DARE") {
-            return `"${String(q.meta.text || q.meta.content || "Custom Request")}"`;
+            const text = String(q.meta.text || q.meta.content || "Custom Request");
+            if (typePrefix) {
+                return `${typePrefix} - "${text}"`;
+            }
+            return `"${text}"`;
         }
         return q.type.replaceAll("_", " ");
     };

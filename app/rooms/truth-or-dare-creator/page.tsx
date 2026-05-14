@@ -1736,7 +1736,7 @@ function TruthOrDareCreatorContent() {
                                         createdAt: a.timestamp,
                                         fanName: a.fanName,
                                         amount: a.amount,
-                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request` }
+                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request`, originalType: a.type }
                                     }))
                             ] as any}
                                 // No longer passing tips/reactions to Request Panel

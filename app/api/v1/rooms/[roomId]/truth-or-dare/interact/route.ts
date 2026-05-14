@@ -348,7 +348,8 @@ export async function POST(
                     meta: {
                         tier: tier,
                         text: finalContent,
-                        request_id: newRequest.id
+                        request_id: newRequest.id,
+                        originalType: type
                     }
             };
             let { error: queueError } = await supabase

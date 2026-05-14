@@ -802,13 +802,13 @@ function PgxPage2Inner() {
                         <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                                 <Wine className="pg2-glow-pulse" style={{ width: "20px", height: "12px", color: PURPLE }} />
-                                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.25rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Buy a Drink</h2>
+                                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Buy a Drink</h2>
                             </div>
-                            <p style={{ color: MUTED, fontSize: "14px", margin: "0 0 0 0" }}>for {creatorName}</p>
+                            <p style={{ color: MUTED, fontSize: "12px", margin: "0 0 0 0" }}>for {creatorName}</p>
 
                             {/* Drink list */}
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "8px" }}>
-                                <h3 style={{ fontSize: "12px", fontWeight: 600, color: MUTED, marginBottom: "8px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 0 }}>Drink Menu</h3>
+                                <h3 style={{ fontSize: "11px", fontWeight: 600, color: MUTED, marginBottom: "6px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 0 }}>Drink Menu</h3>
                                 <div>
                                     {drinks.slice(0, 9).map((drink: any) => {
                                         const id = drink.id || drink.name;
@@ -821,8 +821,8 @@ function PgxPage2Inner() {
                                                 onClick={() => !buying && handleDrinkTip(drink)}
                                             >
                                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                    <span style={{ fontSize: "18px" }}>{drink.icon}</span>
-                                                    <span style={{ color: FG, fontWeight: 500, fontSize: "14px" }}>{drink.name}</span>
+                                                    <span style={{ fontSize: "15px" }}>{drink.icon}</span>
+                                                    <span style={{ color: FG, fontWeight: 500, fontSize: "12px" }}>{drink.name}</span>
                                                 </div>
                                                 {isThisBuying
                                                     ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
@@ -838,7 +838,7 @@ function PgxPage2Inner() {
 
                             {/* VIP section */}
                             <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
+                                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "15px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
 
                                 {/* ── VIP & Custom Request Unified Container ── */}
                                 <div style={{ ...glassPanel, padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", border: "1px solid hsla(42,90%,55%,0.3)" }}>
@@ -848,7 +848,7 @@ function PgxPage2Inner() {
                                         <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px", background: "hsla(140,40%,15%,0.2)", borderBottom: "1px solid hsla(42,90%,55%,0.3)" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                 <Crown style={{ width: "20px", height: "20px", color: GOLD }} />
-                                                <span style={{ fontWeight: 700, color: "hsl(140,70%,55%)", fontSize: "14px" }}>✓ VIP Access Granted</span>
+                                                <span style={{ fontWeight: 700, color: "hsl(140,70%,55%)", fontSize: "12px" }}>✓ VIP Access Granted</span>
                                             </div>
                                             <p style={{ fontSize: "12px", color: MUTED, margin: 0, marginLeft: "28px" }}>Enjoy your exclusive VIP perks!</p>
                                         </div>
@@ -856,7 +856,7 @@ function PgxPage2Inner() {
                                         <div style={{ ...glowGold, padding: "12px", display: "flex", flexDirection: "column", gap: "8px", opacity: 0.8, cursor: "default", borderBottom: "1px solid hsla(42,90%,55%,0.3)" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                 <Crown className="pg2-glow-pulse" style={{ width: "20px", height: "20px", color: GOLD }} />
-                                                <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold, fontSize: "14px" }}>VIP Request Pending...</span>
+                                                <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold, fontSize: "12px" }}>VIP Request Pending...</span>
                                                 <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "auto" }} />
                                             </div>
                                             <p style={{ fontSize: "12px", color: MUTED, margin: 0, marginLeft: "28px" }}>Waiting for creator approval</p>
@@ -865,7 +865,7 @@ function PgxPage2Inner() {
                                         <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px", background: "hsla(0,40%,15%,0.15)", borderBottom: "1px solid hsla(42,90%,55%,0.3)" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                                 <Crown style={{ width: "20px", height: "20px", color: MUTED }} />
-                                                <span style={{ fontWeight: 700, color: "hsl(0,70%,60%)", fontSize: "14px" }}>VIP Request Declined</span>
+                                                <span style={{ fontWeight: 700, color: "hsl(0,70%,60%)", fontSize: "12px" }}>VIP Request Declined</span>
                                             </div>
                                             <button onClick={() => { setVipRequestStatus('idle'); }} style={{ fontSize: "12px", color: GOLD, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0, marginLeft: "28px", textAlign: "left" }}>Try again?</button>
                                         </div>
@@ -880,7 +880,7 @@ function PgxPage2Inner() {
                                                     ? <Loader2 style={{ width: "16px", height: "16px", color: GOLD, animation: "spin 1s linear infinite" }} />
                                                     : <span style={{ fontWeight: 700, color: GOLD, ...glowTextGold }}>Upgrade to VIP - {cs()}{vipPrice}</span>}
                                             </div>
-                                            <ul style={{ fontSize: "14px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
+                                            <ul style={{ fontSize: "12px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
                                                 <li style={{ display: "flex", alignItems: "center", gap: "4px" }}><Sparkles style={{ width: "12px", height: "12px", color: PINK }} /> Exclusive Content</li>
                                             </ul>
 
@@ -895,7 +895,7 @@ function PgxPage2Inner() {
                                         }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                                                 <span style={{ fontSize: "18px" }}>📩</span>
-                                                <span style={{ fontWeight: 700, color: GOLD, fontSize: "14px", ...glowTextGold }}>Custom Request</span>
+                                                <span style={{ fontWeight: 700, color: GOLD, fontSize: "12px", ...glowTextGold }}>Custom Request</span>
                                                 <span style={{
                                                     marginLeft: "auto", fontSize: "10px", fontWeight: 600,
                                                     padding: "2px 8px", borderRadius: "9999px",
@@ -976,7 +976,7 @@ function PgxPage2Inner() {
                                             <div style={{ opacity: 0.3, pointerEvents: "none", userSelect: "none" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
                                                     <span style={{ fontSize: "18px", filter: "grayscale(1)" }}>📩</span>
-                                                    <span style={{ fontWeight: 700, color: MUTED, fontSize: "14px" }}>Custom Request</span>
+                                                    <span style={{ fontWeight: 700, color: MUTED, fontSize: "12px" }}>Custom Request</span>
                                                     <span style={{
                                                         marginLeft: "auto", fontSize: "10px", fontWeight: 600,
                                                         padding: "2px 8px", borderRadius: "9999px",
@@ -1004,7 +1004,7 @@ function PgxPage2Inner() {
                                                 zIndex: 10
                                             }}>
                                                 <Crown style={{ width: "24px", height: "24px", color: GOLD, marginBottom: "8px", ...glowTextGold }} className="pg2-glow-pulse" />
-                                                <span style={{ fontSize: "14px", fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "1px", ...glowTextGold }}>VIP Only</span>
+                                                <span style={{ fontSize: "12px", fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "1px", ...glowTextGold }}>VIP Only</span>
                                                 <p style={{ fontSize: "11px", color: "#fff", marginTop: "4px", fontWeight: 500, letterSpacing: "0.5px" }}>Purchase VIP to unlock</p>
                                             </div>
                                         </div>
@@ -1128,11 +1128,11 @@ function PgxPage2Inner() {
                                         <Phone style={{ width: "12px", height: "12px", color: PINK }} />
                                     </div>
                                     <div style={{ display: "flex", flexDirection: "column" }}>
-                                        <span style={{ fontWeight: 700, color: FG, fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
+                                        <span style={{ fontWeight: 700, color: FG, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Private 1-on-1</span>
                                         <span style={{ fontSize: "10px", color: MUTED }}>Direct video call</span>
                                     </div>
                                 </div>
-                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "14px" }}>{cs()}{PRIVATE_CALL_PRICE}</span>
+                                <span style={{ color: GOLD, fontWeight: 700, fontSize: "12px" }}>{cs()}{PRIVATE_CALL_PRICE}</span>
                             </div>
                         </div>
 
@@ -1143,7 +1143,7 @@ function PgxPage2Inner() {
                     {/* ═══ RIGHT: Lounge Chat ═══ */}
                     <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "hidden", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.25rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Lounge Chat</h2>
+                            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Lounge Chat</h2>
                             <span style={liveBadge}>
                                 <span className="pg2-glow-pulse" style={{ width: "8px", height: "8px", borderRadius: "9999px", background: "hsl(140,70%,55%)", display: "inline-block" }} />
                                 Live
@@ -1154,8 +1154,8 @@ function PgxPage2Inner() {
                         {activePinMessage && (
                             <div style={{ ...chatMsg, ...glowPink, marginBottom: "12px", border: `1px solid hsla(320,100%,65%,0.5)`, background: "hsla(320,60%,30%,0.15)", flexShrink: 0 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                                    <span style={{ fontSize: "14px" }}>📌</span>
-                                    <span style={{ fontWeight: 700, fontSize: "12px", color: PINK, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pinned to Top</span>
+                                    <span style={{ fontSize: "12px" }}>📌</span>
+                                    <span style={{ fontWeight: 700, fontSize: "11px", color: PINK, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pinned to Top</span>
                                     <span style={{ marginLeft: "auto", fontSize: "11px", color: MUTED, fontWeight: 600 }}>
                                         {Math.ceil((10 * 60 * 1000 - (currentTime - new Date(activePinMessage.created_at).getTime())) / 60000)}m left
                                     </span>
@@ -1163,8 +1163,8 @@ function PgxPage2Inner() {
                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                     <span style={{ fontSize: "16px", flexShrink: 0 }}>👑</span>
                                     <div style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                        <span style={{ fontWeight: 700, fontSize: "14px", color: "#fff" }}>{activePinMessage.handle}</span>
-                                        <span style={{ fontSize: "13px", color: "hsla(0,0%,100%,0.7)", marginLeft: "6px" }}>is the life of the party!</span>
+                                        <span style={{ fontWeight: 700, fontSize: "12px", color: "#fff" }}>{activePinMessage.handle}</span>
+                                        <span style={{ fontSize: "11px", color: "hsla(0,0%,100%,0.7)", marginLeft: "6px" }}>is the life of the party!</span>
                                     </div>
                                 </div>
                             </div>
@@ -1179,11 +1179,11 @@ function PgxPage2Inner() {
                                     <span style={{ fontSize: "18px", flexShrink: 0 }}>{msg.is_system ? "🔔" : "🧑"}</span>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                            <span style={{ fontWeight: 700, fontSize: "14px", color: FG }}>{msg.handle || "Anonymous"}</span>
+                                            <span style={{ fontWeight: 700, fontSize: "12px", color: FG }}>{msg.handle || "Anonymous"}</span>
                                             {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
                                             {msg.handle?.includes("VIP") && <Crown style={{ width: "12px", height: "12px", color: GOLD, display: "inline", marginBottom: "2px" }} />}
                                         </div>
-                                        <span style={{ fontSize: "14px", color: MUTED, display: "block", marginTop: "2px" }}>{msg.content}</span>
+                                        <span style={{ fontSize: "12px", color: MUTED, display: "block", marginTop: "2px" }}>{msg.content}</span>
                                     </div>
                                 </div>
                             ))}
@@ -1194,7 +1194,7 @@ function PgxPage2Inner() {
                         <div style={{ ...chatMsg, ...glowPink, display: "flex", alignItems: "center", gap: "8px", cursor: buying ? "not-allowed" : "pointer", marginBottom: "8px", opacity: buying ? 0.7 : 1 }}
                             onClick={() => !buying && doPurchase("pin", "Pin Name to Top", 25, "pin")}>
                             <span style={{ fontSize: "18px" }}>🔥</span>
-                            <span className="pg2-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: PINK }}>PIN NAME TO TOP 10 mins</span>
+                            <span className="pg2-neon-flicker" style={{ fontSize: "12px", fontWeight: 700, color: PINK }}>PIN NAME TO TOP 10 mins</span>
                             {buying === "pin"
                                 ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite", marginLeft: "auto" }} />
                                 : <span style={{ color: GOLD, fontWeight: 700, marginLeft: "auto" }}>+{cs()}25</span>}
@@ -1205,14 +1205,14 @@ function PgxPage2Inner() {
                             <input type="text" placeholder="Send a message..." value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                                style={{ flex: 1, borderRadius: "0.5rem", padding: "8px 12px", fontSize: "14px", background: "hsla(270,30%,18%,0.3)", border: "1px solid hsla(280,40%,30%,0.3)", color: FG, outline: "none", fontFamily: "'Montserrat', sans-serif" }}
+                                style={{ flex: 1, borderRadius: "0.5rem", padding: "8px 12px", fontSize: "12px", background: "hsla(270,30%,18%,0.3)", border: "1px solid hsla(280,40%,30%,0.3)", color: FG, outline: "none", fontFamily: "'Montserrat', sans-serif" }}
                             />
                             <EmojiPicker
                                 onEmojiSelect={(emoji) => setChatInput((prev) => prev + emoji)}
                                 accentColor={GOLD}
                                 position="top"
                             />
-                            <button className="pg2-btn-glow" style={{ ...btnGlow, padding: "8px 16px", fontSize: "14px", display: "flex", alignItems: "center", gap: "4px" }} onClick={handleSendChat}>
+                            <button className="pg2-btn-glow" style={{ ...btnGlow, padding: "8px 16px", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }} onClick={handleSendChat}>
                                 SEND
                             </button>
                         </div>
