@@ -44,14 +44,31 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
         async function fetchStats() {
             const uniqueFans = await fetchFanCount();
 
-            // Fetch all requests — scoped to session
-            let reqQuery = supabase
-                .from("bar_lounge_requests")
-                .select("type, amount")
-                .eq("room_id", roomId!);
-            if (sessionId) reqQuery = reqQuery.eq("session_id", sessionId);
+            // Fetch all requests — try session-scoped first, fall back to room-only
+            // The session_id column may not exist on bar_lounge_requests if the
+            // migration hasn't been applied yet; in that case .eq() returns an error.
+            let requests: any[] | null = null;
 
-            const { data: requests } = await reqQuery;
+            if (sessionId) {
+                const { data, error } = await supabase
+                    .from("bar_lounge_requests")
+                    .select("type, amount, session_id")
+                    .eq("room_id", roomId!)
+                    .eq("session_id", sessionId);
+
+                if (!error && data) {
+                    requests = data;
+                }
+            }
+
+            // Fallback: fetch all requests for the room (no session filter)
+            if (!requests) {
+                const { data } = await supabase
+                    .from("bar_lounge_requests")
+                    .select("type, amount")
+                    .eq("room_id", roomId!);
+                requests = data;
+            }
 
             // Drinks: only actual drink orders (drink, champagne, vip_bottle)
             const drinkCount = requests?.filter((r) => DRINK_TYPES.has(r.type)).length || 0;

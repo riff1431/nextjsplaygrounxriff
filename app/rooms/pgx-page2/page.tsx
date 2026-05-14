@@ -265,6 +265,35 @@ function PgxPage2Inner() {
         return () => { supabase.rpc("increment_viewer_count", { p_room_id: roomId, p_amount: -1 }); };
     }, [roomId]);
 
+    /* ── Room participant registration (for real-time fan count) ─── */
+    const participantJoinedRef = useRef(false);
+    useEffect(() => {
+        if (!roomId || !user) return;
+
+        const joinRoom = async () => {
+            if (participantJoinedRef.current) return;
+            const { error } = await supabase
+                .from("room_participants")
+                .insert({ room_id: roomId, user_id: user.id });
+            if (error && error.code !== "23505") { // Ignore duplicate key
+                console.error("Error joining room_participants:", error);
+            } else {
+                participantJoinedRef.current = true;
+            }
+        };
+
+        joinRoom();
+
+        return () => {
+            if (!participantJoinedRef.current) return;
+            supabase
+                .from("room_participants")
+                .delete()
+                .match({ room_id: roomId, user_id: user.id })
+                .then(() => { participantJoinedRef.current = false; });
+        };
+    }, [roomId, user]);
+
     /* ── Auto-scroll chat ─── */
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 

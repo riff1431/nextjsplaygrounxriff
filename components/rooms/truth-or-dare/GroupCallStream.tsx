@@ -49,8 +49,8 @@ function AvatarPlaceholder({ name, avatarUrl }: { name: string; avatarUrl?: stri
 }
 
 // ─── Single participant tile ───────────────────────────────────────────────────
-function Tile({ name, avatarUrl, isLocal, isSpeaking, children }: {
-    name: string; avatarUrl?: string | null; isLocal?: boolean; isSpeaking?: boolean; children: React.ReactNode;
+function Tile({ name, avatarUrl, isLocal, isSpeaking, roleBadge, children }: {
+    name: string; avatarUrl?: string | null; isLocal?: boolean; isSpeaking?: boolean; roleBadge?: 'creator' | 'fan'; children: React.ReactNode;
 }) {
     return (
         <div style={{
@@ -72,9 +72,22 @@ function Tile({ name, avatarUrl, isLocal, isSpeaking, children }: {
                 <div style={{ position: 'absolute', inset: 0, borderRadius: 12, border: '2px solid rgba(34,211,238,0.7)', pointerEvents: 'none', zIndex: 6, animation: 'pulse 1.2s ease-in-out infinite' }} />
             )}
 
-            {/* Name pill */}
-            <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.68)', backdropFilter: 'blur(8px)', padding: '3px 8px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.88)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+            {/* Name pill + role badge */}
+            <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ background: 'rgba(0,0,0,0.68)', backdropFilter: 'blur(8px)', padding: '3px 8px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.88)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                </div>
+                {roleBadge === 'creator' && (
+                    <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.85), rgba(217,119,6,0.85))', backdropFilter: 'blur(8px)', padding: '2px 7px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <span style={{ fontSize: 9 }}>👑</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: 'white', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Creator</span>
+                    </div>
+                )}
+                {roleBadge === 'fan' && (
+                    <div style={{ background: 'rgba(139,92,246,0.6)', backdropFilter: 'blur(8px)', padding: '2px 7px', borderRadius: 6 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Fan</span>
+                    </div>
+                )}
             </div>
 
             {/* You badge */}
@@ -129,6 +142,29 @@ function GroupCallStreamInner({
             .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [participantFanIds.join(','), creatorId]);
+
+    // ── Dynamic profile fetch for unknown remote UIDs ──────────────────────────
+    // Handles late-joiners or participants not in the initial participantFanIds list
+    const remoteUsers = useRemoteUsers();
+    useEffect(() => {
+        const remoteUids = remoteUsers.map(u => String(u.uid));
+        const missingIds = remoteUids.filter(uid => !profiles[uid]);
+        if (!missingIds.length) return;
+        createClient()
+            .from('profiles')
+            .select('id, full_name, username, avatar_url')
+            .in('id', missingIds)
+            .then(({ data }) => {
+                if (!data || !data.length) return;
+                setProfiles(prev => {
+                    const updated = { ...prev };
+                    data.forEach(p => { updated[p.id] = { name: p.full_name || p.username || 'User', avatarUrl: p.avatar_url || null }; });
+                    return updated;
+                });
+            })
+            .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [remoteUsers.length]);
 
     // ── Local tracks ───────────────────────────────────────────────────────────
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
@@ -191,12 +227,12 @@ function GroupCallStreamInner({
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(Boolean);
     usePublish(tracksToPublish as any, isReady && tracksToPublish.length > 0);
 
-    // ── Remote users ───────────────────────────────────────────────────────────
-    const remoteUsers = useRemoteUsers();
+    // ── Remote users (already declared above for dynamic profile fetch) ───────
+    // const remoteUsers = useRemoteUsers(); — moved up next to profile fetch
 
     // Debug log (dev only)
     useEffect(() => {
-        console.log(`[GroupCall] channel=${channelName} mode=rtc remoteUsers=${remoteUsers.length} uid=${stringUid}`);
+        console.log(`[GroupCall] channel=${channelName} mode=rtc remoteUsers=${remoteUsers.length} uid=${stringUid} remoteUids=${remoteUsers.map(u => String(u.uid).slice(0, 8)).join(',')}`);
     }, [remoteUsers.length, channelName, stringUid]);
 
     // ── Grid calculation ───────────────────────────────────────────────────────
@@ -204,17 +240,23 @@ function GroupCallStreamInner({
     const cols = total === 1 ? 1 : total === 2 ? 2 : total <= 4 ? 2 : total <= 9 ? 3 : 4;
     const rows = Math.ceil(total / cols);
 
-    // ── Name resolver for remote tiles ─────────────────────────────────────────
-    const getRemote = (idx: number): { name: string; avatarUrl: string | null } => {
-        // Fan view: first remote is likely the creator
-        if (role === 'fan' && idx === 0 && creatorId) {
+    // ── UID-based name resolver for remote tiles ──────────────────────────────
+    // Each participant joins Agora with their Supabase UUID as the string UID,
+    // so remoteUser.uid IS the Supabase user ID — we look up profiles directly.
+    const getRemoteProfile = (remoteUid: string | number): { name: string; avatarUrl: string | null; roleBadge: 'creator' | 'fan' } => {
+        const uidStr = String(remoteUid);
+        // Check if this is the creator
+        if (creatorId && uidStr === creatorId) {
             const p = profiles[creatorId];
-            return p ? { name: `${p.name} (Creator)`, avatarUrl: p.avatarUrl } : { name: 'Creator', avatarUrl: null };
+            return p
+                ? { name: p.name, avatarUrl: p.avatarUrl, roleBadge: 'creator' }
+                : { name: 'Creator', avatarUrl: null, roleBadge: 'creator' };
         }
-        const offset = role === 'fan' ? 1 : 0;
-        const fanId = participantFanIds[idx - offset];
-        if (fanId && profiles[fanId]) return { name: profiles[fanId].name, avatarUrl: profiles[fanId].avatarUrl };
-        return { name: role === 'fan' && idx === 0 ? 'Creator' : `Fan ${idx + 1}`, avatarUrl: null };
+        // Fan — look up by UID
+        if (profiles[uidStr]) {
+            return { name: profiles[uidStr].name, avatarUrl: profiles[uidStr].avatarUrl, roleBadge: 'fan' };
+        }
+        return { name: 'User', avatarUrl: null, roleBadge: 'fan' };
     };
 
     // ── Connecting state ───────────────────────────────────────────────────────
@@ -242,7 +284,7 @@ function GroupCallStreamInner({
             }}>
 
                 {/* Local tile — manual vidRef.play() (same as working PrivateCallStream) */}
-                <Tile name={localDisplayName} isLocal isSpeaking={speakingUids.has(stringUid)}>
+                <Tile name={localDisplayName} isLocal isSpeaking={speakingUids.has(stringUid)} roleBadge={role === 'creator' ? 'creator' : 'fan'}>
                     {/* vidRef div is always in DOM so track.play() target is stable */}
                     <div
                         ref={vidRef}
@@ -252,12 +294,12 @@ function GroupCallStreamInner({
                     {!camEnabled && <AvatarPlaceholder name={localDisplayName} />}
                 </Tile>
 
-                {/* Remote tiles — one per Agora remote user */}
-                {remoteUsers.map((user, idx) => {
-                    const { name, avatarUrl } = getRemote(idx);
+                {/* Remote tiles — one per Agora remote user, resolved by UID */}
+                {remoteUsers.map((user) => {
+                    const { name, avatarUrl, roleBadge } = getRemoteProfile(user.uid);
                     const camOff = !user.hasVideo;
                     return (
-                        <Tile key={user.uid} name={name} avatarUrl={avatarUrl} isSpeaking={speakingUids.has(user.uid)}>
+                        <Tile key={user.uid} name={name} avatarUrl={avatarUrl} isSpeaking={speakingUids.has(user.uid)} roleBadge={roleBadge}>
                             {camOff ? (
                                 <AvatarPlaceholder name={name} avatarUrl={avatarUrl} />
                             ) : (
