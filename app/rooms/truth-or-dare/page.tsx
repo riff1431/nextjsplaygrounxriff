@@ -146,6 +146,13 @@ function TruthOrDareContent() {
     // Group Call State
     const groupCall = useGroupCall(roomId, userId, "fan");
 
+    // Dismiss stale group call invitations when session changes
+    useEffect(() => {
+        if (activeSessionId && groupCall.callState) {
+            groupCall.dismiss();
+        }
+    }, [activeSessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Reactive toast: fires when hook transitions to 'invited' (avoids stale closure)
     // This replaces the old inline handler inside gameChannel that had a null userId bug.
     const prevCallStatus = useRef<string | null>(null);

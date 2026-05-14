@@ -106,6 +106,12 @@ export async function POST(
 
             if (updateError) throw updateError;
 
+            // End any active group calls from previous sessions
+            await admin.from('group_calls')
+                .update({ status: 'ended', ended_at: new Date().toISOString() })
+                .eq('room_id', roomId)
+                .eq('status', 'active');
+
             // Ensure room status is live
             await admin.from('rooms').update({ status: 'live' }).eq('id', roomId);
 
@@ -176,7 +182,13 @@ export async function POST(
 
             if (updateError) throw updateError;
 
-            // C. Set room status to 'ended' so it no longer appears as live
+            // C. End any active group calls for this room
+            await admin.from('group_calls')
+                .update({ status: 'ended', ended_at: new Date().toISOString() })
+                .eq('room_id', roomId)
+                .eq('status', 'active');
+
+            // D. Set room status to 'ended' so it no longer appears as live
             await admin.from('rooms').update({ status: 'ended' }).eq('id', roomId);
 
             // D. Broadcast session_ended to all connected fans for instant UI update

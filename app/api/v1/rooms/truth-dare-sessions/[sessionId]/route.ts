@@ -130,6 +130,13 @@ export async function PATCH(
                 .update({ status: "ended", updated_at: new Date().toISOString() })
                 .eq("room_id", session.room_id);
 
+            // End any active group calls for this room
+            await supabase
+                .from("group_calls")
+                .update({ status: "ended", ended_at: new Date().toISOString() })
+                .eq("room_id", session.room_id)
+                .eq("status", "active");
+
             await supabase
                 .from("rooms")
                 .update({ status: "ended" })

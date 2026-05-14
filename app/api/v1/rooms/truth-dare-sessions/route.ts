@@ -207,6 +207,12 @@ export async function POST(request: NextRequest) {
         }
         if (gameError) console.error("Game state upsert error:", gameError);
 
+        // 7b. End any active group calls from previous sessions
+        await supabase.from("group_calls")
+            .update({ status: 'ended', ended_at: new Date().toISOString() })
+            .eq("room_id", room_id)
+            .eq("status", "active");
+
         // 8. Ensure room status is live
         await supabase.from("rooms").update({ status: "live" }).eq("id", room_id);
 
