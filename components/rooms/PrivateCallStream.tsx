@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import AgoraProvider, { createAgoraClient } from '@/components/providers/AgoraProvider';
 import {
     useLocalCameraTrack,
@@ -68,12 +68,11 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
     // Local tracks
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
     const { localCameraTrack } = useLocalCameraTrack(true);
-    const vidRef = useRef<HTMLDivElement>(null);
 
-    // Play local track in PiP
-    useEffect(() => {
-        if (localCameraTrack && vidRef.current) {
-            localCameraTrack.play(vidRef.current);
+    // Play local track in PiP using callback ref to ensure it plays when DOM is ready
+    const vidRef = useCallback((node: HTMLDivElement | null) => {
+        if (node && localCameraTrack) {
+            localCameraTrack.play(node);
         }
     }, [localCameraTrack]);
 

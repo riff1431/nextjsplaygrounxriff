@@ -131,9 +131,7 @@ export default function WorldTruthDareList() {
                             </div>
 
                             <div className="text-sm text-gray-200 font-medium truncate mb-0.5">{session.session_title}</div>
-                            {session.session_description && (
-                                <div className="text-[11px] text-gray-500 truncate">{session.session_description}</div>
-                            )}
+
                         </div>
                     </div>
                 ))}

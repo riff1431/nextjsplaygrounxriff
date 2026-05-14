@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "./RoomEntryInfoModal";
+import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
 
 /* ─────────── Types ─────────── */
 interface Session {
@@ -469,11 +470,7 @@ export default function RoomSessionsBrowse({
                                         <h3 style={{ fontSize: "14px", fontWeight: 700, color: isHovered ? accentColor : "#fff", margin: "0 0 4px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                                             {session.title}
                                         </h3>
-                                        {session.description && (
-                                            <p style={{ fontSize: "11px", color: accentLight, margin: "0 0 8px", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as const }}>
-                                                {session.description}
-                                            </p>
-                                        )}
+
                                     </div>
 
                                     {/* Creator row */}
@@ -486,7 +483,13 @@ export default function RoomSessionsBrowse({
                                             )}
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{creatorName}</div>
+                                            <CreatorProfileHover
+                                                creatorId={session.creator_id}
+                                                creatorName={creatorName}
+                                                avatarUrl={session.creator?.avatar_url}
+                                            >
+                                                <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff" }}>{creatorName}</div>
+                                            </CreatorProfileHover>
                                             <div style={{ fontSize: "10px", color: accentLight, marginTop: "1px" }}>{timeAgo(session.started_at)}</div>
                                         </div>
                                         <Flame style={{ width: 13, height: 13, color: isHovered ? accentColor : `hsla(${accentHsl}, 0.3)`, transition: "all 0.3s ease" }} />

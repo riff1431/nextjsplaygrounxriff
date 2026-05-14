@@ -271,6 +271,23 @@ export async function POST(
 
         if (reqError) throw reqError;
 
+        // 5b. Insert a system chat message for tips/reactions so it appears in BOTH
+        // the fan's and creator's live chat feeds (not just creator's activity panel)
+        if (type === 'tip' || type === 'reaction') {
+            const chatMessage = type === 'tip'
+                ? `💰 ${fanName} sent a €${price} tip!`
+                : `✨ ${fanName} sent a ${tier || ''} reaction!`;
+
+            await supabase.from('chat_messages').insert({
+                room_id: roomId,
+                user_id: user.id,
+                username: fanName,
+                message: chatMessage,
+            }).then(({ error }) => {
+                if (error) console.error('Failed to insert tip/reaction chat message:', error);
+            });
+        }
+
         // 6. Add to Active Queue (Actionable Item for Creator)
         // Tips and reactions are NOT actionable — they skip the queue entirely
         // and only appear as activity notifications on the creator side via

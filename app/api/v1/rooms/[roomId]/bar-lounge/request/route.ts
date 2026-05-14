@@ -154,17 +154,20 @@ export async function POST(
                                             : "⚡";
 
     // For tip-like items, use "Sent" language; for custom requests, use "requested"
-    const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'requested' : 'bought'));
+    const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'bought' : 'bought'));
     const amountStr = amount > 0 ? ` (€${amount})` : '';
     
-    // Skip posting VIP and Custom requests to the chat feed.
+    // Skip posting Custom requests to the chat feed.
     // They will only appear in the Creator's Incoming notifications panel.
-    if (safeType !== 'vip' && safeType !== 'custom') {
+    // VIP shows just the title "VIP Access" (not the user's typed content).
+    if (safeType !== 'custom') {
+        // For VIP, always use the fixed title "VIP Access" — never the user's typed label
+        const chatLabel = safeType === 'vip' ? 'VIP Access' : (label || type);
         await supabase.from("bar_lounge_messages").insert({
             room_id: roomId,
             user_id: user.id,
             handle: profile?.username || "Fan",
-            content: `${emoji} ${profile?.username || "Fan"} ${verb} ${label || type}${amountStr}`,
+            content: `${emoji} ${profile?.username || "Fan"} ${verb} ${chatLabel}${amountStr}`,
             is_system: true,
             ...(sessionId ? { session_id: sessionId } : {}),
         });

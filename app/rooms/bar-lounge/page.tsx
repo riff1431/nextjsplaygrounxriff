@@ -18,6 +18,8 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
 import EmojiPicker from "@/components/common/EmojiPicker";
+import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -111,6 +113,7 @@ export default function BarLoungeRoom() {
                             const mapped = data.sessions.map((s: any) => ({
                                 id: s.room_id,
                                 title: s.title,
+                                description: s.description,
                                 status: 'live',
                                 host_id: s.creator_id,
                                 created_at: s.started_at,
@@ -418,6 +421,16 @@ export default function BarLoungeRoom() {
                                                 }}>
                                                     {session.title || "Premium Nightclub Experience"}
                                                 </h3>
+                                                {session.description && (
+                                                    <p style={{
+                                                        fontSize: "11px", color: "hsla(45,100%,95%,0.6)",
+                                                        margin: "0 0 8px", lineHeight: 1.4,
+                                                        overflow: "hidden", display: "-webkit-box",
+                                                        WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as const
+                                                    }}>
+                                                        {session.description}
+                                                    </p>
+                                                )}
                                             </div>
 
                                             {/* Creator row */}
@@ -447,14 +460,18 @@ export default function BarLoungeRoom() {
                                                     )}
                                                 </div>
                                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <div style={{
-                                                        fontSize: "12px", fontWeight: 600, color: "#fff",
-                                                        overflow: "hidden", textOverflow: "ellipsis",
-                                                        whiteSpace: "nowrap" as const,
-                                                        textShadow: `0 0 5px hsla(42,90%,55%,0.3)`,
-                                                    }}>
-                                                        {creatorName}
-                                                    </div>
+                                                    <CreatorProfileHover
+                                                        creatorId={session.host_id}
+                                                        creatorName={creatorName}
+                                                        avatarUrl={session.profiles?.avatar_url}
+                                                    >
+                                                        <div style={{
+                                                            fontSize: "12px", fontWeight: 600, color: "#fff",
+                                                            textShadow: `0 0 5px hsla(42,90%,55%,0.3)`,
+                                                        }}>
+                                                            {creatorName}
+                                                        </div>
+                                                    </CreatorProfileHover>
                                                     <div style={{
                                                         fontSize: "10px", color: "hsla(45,100%,95%,0.6)",
                                                         marginTop: "1px",
@@ -740,9 +757,12 @@ export default function BarLoungeRoom() {
                                 <div key={msg.id} style={chatMsgStyle} className="flex items-start gap-2">
                                     <span style={{ fontSize: "18px", flexShrink: 0 }}>{msg.is_system ? "🔔" : "🧑"}</span>
                                     <div className="flex-1 min-w-0">
-                                        <span style={{ fontWeight: 700, fontSize: "14px", color: C.fg }}>{msg.handle || "Anonymous"}</span>
-                                        {msg.handle && msg.handle.includes("VIP") && <Crown className="w-3 h-3 inline ml-1 mb-0.5" style={{ color: C.gold }} />}
-                                        <span style={{ fontSize: "14px", color: C.muted, marginLeft: "4px" }}>{msg.content}</span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                            <span style={{ fontWeight: 700, fontSize: "14px", color: C.fg }}>{msg.handle || "Anonymous"}</span>
+                                            {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
+                                            {msg.handle && msg.handle.includes("VIP") && <Crown className="w-3 h-3 inline" style={{ color: C.gold }} />}
+                                        </div>
+                                        <span style={{ fontSize: "14px", color: C.muted, display: "block", marginTop: "2px" }}>{msg.content}</span>
                                     </div>
                                 </div>
                             ))}

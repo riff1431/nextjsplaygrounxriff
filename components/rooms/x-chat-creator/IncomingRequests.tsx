@@ -25,6 +25,13 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
     const [isRecording, setIsRecording] = useState(false);
     const [mediaFile, setMediaFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [expandedReplies, setExpandedReplies] = useState<string[]>([]);
+
+    const toggleReply = (id: string) => {
+        setExpandedReplies(prev => 
+            prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+        );
+    };
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
@@ -266,10 +273,20 @@ const IncomingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?: 
                                 </div>
                             ) : (
                                 <div className="mt-1 flex flex-col gap-1">
-                                    <span className={`text-xs font-bold inline-block ${r.status === "accepted" ? "text-green-400" : "text-muted-foreground"}`}>
-                                        {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
-                                    </span>
-                                    {r.creator_reply && (
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-bold inline-block ${r.status === "accepted" ? "text-green-400" : "text-muted-foreground"}`}>
+                                            {r.status === "accepted" ? "✓ Accepted" : "✗ Declined"}
+                                        </span>
+                                        {r.status === "accepted" && r.creator_reply && (
+                                            <button 
+                                                onClick={() => toggleReply(r.id)}
+                                                className="text-[10px] uppercase font-bold bg-white/10 hover:bg-white/20 text-white/70 px-2 py-0.5 rounded transition-colors"
+                                            >
+                                                {expandedReplies.includes(r.id) ? "Close" : "Open"}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {r.creator_reply && expandedReplies.includes(r.id) && (
                                         <div className="text-xs bg-primary/10 border border-primary/20 text-primary px-2 py-1.5 rounded break-words flex flex-col gap-1">
                                             <span className="font-semibold">↳ Reply:</span>
                                             {r.creator_reply.split('\n').map((line, idx) => {

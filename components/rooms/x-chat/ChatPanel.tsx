@@ -8,7 +8,7 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
-import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { VoiceNotePlayer } from "@/components/common/VoiceNotePlayer";
 
@@ -217,7 +217,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId }: ChatPanelProps) => 
                 {filteredMessages.map((msg) => (
                     <div key={msg.id} className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span><UserBadgeDisplay userId={msg.sender_id || ""} exclude={["Sugar Daddy", "Silver"]} />
+                            <span className="text-primary font-medium text-sm">@{msg.sender_name}</span>
                             {getLaneBadge(msg)}
                             {msg.paid_amount > 0 && (
                                 <span className="text-[10px] text-gold font-semibold">€{msg.paid_amount}</span>

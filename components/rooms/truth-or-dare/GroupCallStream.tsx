@@ -99,7 +99,6 @@ function GroupCallStreamInner({
     const [speakingUids, setSpeakingUids] = useState<Set<string | number>>(new Set());
     const [profiles, setProfiles] = useState<ProfileMap>({});
 
-    const vidRef = useRef<HTMLDivElement>(null);
     // NOTE: No setClientRole needed — mode:"rtc" makes everyone a publisher by default
 
     // ── Speaking detection ─────────────────────────────────────────────────────
@@ -135,10 +134,10 @@ function GroupCallStreamInner({
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
     const { localCameraTrack } = useLocalCameraTrack(true);
 
-    // Play local camera in the ref div (proven pattern from PrivateCallStream)
-    useEffect(() => {
-        if (localCameraTrack && vidRef.current) {
-            localCameraTrack.play(vidRef.current);
+    // Play local camera in the ref div using a callback ref
+    const vidRef = useCallback((node: HTMLDivElement | null) => {
+        if (node && localCameraTrack) {
+            localCameraTrack.play(node);
         }
     }, [localCameraTrack]);
 

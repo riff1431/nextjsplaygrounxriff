@@ -13,7 +13,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { message, amount, session_id } = body;
+    const { message, request_label, amount, session_id } = body;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,7 +77,7 @@ export async function POST(
             room_id: roomId,
             sender_id: user.id,
             sender_name: fanName,
-            body: message || "Wants to chat",
+            body: request_label ? `Sent a ${request_label} request` : (message || "Wants to chat"),
             lane: amount >= 50 ? "Priority" : "Paid",
             paid_amount: amount,
             status: "Queued"

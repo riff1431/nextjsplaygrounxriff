@@ -53,6 +53,7 @@ const PaidReactions = ({ roomId }: PaidReactionsProps) => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ 
                         message: `${prefix}: ${inputText}`,
+                        request_label: pending.label,
                         amount: pending.price 
                     }),
                 });

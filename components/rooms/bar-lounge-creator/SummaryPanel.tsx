@@ -27,18 +27,22 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     useEffect(() => {
         if (!roomId) return;
 
-        async function fetchStats() {
-            // Count unique chatters (fans) — scoped to session
-            let fanQuery = supabase
-                .from("bar_lounge_messages")
+        async function fetchFanCount() {
+            // Count fans from room_participants — people who actually joined the room
+            const { data: participants } = await supabase
+                .from("room_participants")
                 .select("user_id")
-                .eq("room_id", roomId!)
-                .eq("is_system", false);
-            if (sessionId) fanQuery = fanQuery.eq("session_id", sessionId);
+                .eq("room_id", roomId!);
 
-            const { data: fansData } = await fanQuery;
-            const uniqueFans = new Set<string>(fansData?.filter(m => m.user_id).map(m => m.user_id as string) || []);
+            const uniqueFans = new Set<string>(
+                participants?.filter(p => p.user_id).map(p => p.user_id as string) || []
+            );
             setFanIds(uniqueFans);
+            return uniqueFans;
+        }
+
+        async function fetchStats() {
+            const uniqueFans = await fetchFanCount();
 
             // Fetch all requests — scoped to session
             let reqQuery = supabase
@@ -91,24 +95,17 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
                     requests: REQUEST_TYPES.has(type) ? prev.requests + 1 : prev.requests,
                 }));
             })
+            // Listen for participants joining/leaving the room (not messages)
             .on("postgres_changes", {
-                event: "INSERT",
+                event: "*",
                 schema: "public",
-                table: "bar_lounge_messages",
+                table: "room_participants",
                 filter: `room_id=eq.${roomId}`,
-            }, (payload) => {
-                const newMsg = payload.new as any;
-                // Ignore messages from other sessions
-                if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
-
-                if (!newMsg.is_system && newMsg.user_id) {
-                    setFanIds(prev => {
-                        const newSet = new Set(prev);
-                        newSet.add(newMsg.user_id);
-                        setStats(s => ({ ...s, fans: newSet.size }));
-                        return newSet;
-                    });
-                }
+            }, () => {
+                // Re-fetch the full participant list on any change (INSERT or DELETE)
+                fetchFanCount().then(updatedFans => {
+                    setStats(s => ({ ...s, fans: updatedFans.size }));
+                });
             })
             .subscribe();
 

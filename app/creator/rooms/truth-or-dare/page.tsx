@@ -492,10 +492,13 @@ export default function TruthOrDareCreatorRoom() {
                 // Determine type and tier
                 const isSystemPrompt = request.type?.startsWith('system_');
                 const isCustom = request.type?.startsWith('custom_');
+                const isGroupVote = request.type?.startsWith('group_vote_');
                 const isTip = request.type === 'tip';
 
                 const interactionType = isTip
                     ? 'tip'
+                    : isGroupVote
+                        ? request.type.split('_')[2] as 'truth' | 'dare'
                     : isSystemPrompt
                         ? request.type.split('_')[1] as 'truth' | 'dare'
                         : isCustom
@@ -522,6 +525,27 @@ export default function TruthOrDareCreatorRoom() {
                     setTimeout(() => {
                         setActiveTip(null);
                     }, 7000);
+                } else if (isGroupVote) {
+                    toast.custom((t) => (
+                        <div className="bg-gradient-to-r from-purple-900/90 to-blue-900/90 border border-blue-500/50 backdrop-blur-md rounded-xl p-4 shadow-[0_0_30px_rgba(59,130,246,0.3)] flex items-center gap-4 w-full max-w-md animate-in slide-in-from-top-full duration-500">
+                            <div className="p-3 rounded-full bg-blue-500/20 border border-blue-500/30">
+                                <Users className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-white text-lg leading-none mb-1">
+                                        Group Vote for {interactionType.toUpperCase()}!
+                                    </h4>
+                                    <span className="text-green-400 font-bold bg-green-900/30 px-2 py-0.5 rounded text-xs">
+                                        +${amount}
+                                    </span>
+                                </div>
+                                <p className="text-blue-200 text-sm opacity-90">
+                                    from <span className="font-bold text-white">{fanName}</span>
+                                </p>
+                            </div>
+                        </div>
+                    ), { duration: 6000, position: 'top-center' });
                 } else {
                     // Standard Toast for others
                     toast.custom((t) => (
@@ -555,10 +579,10 @@ export default function TruthOrDareCreatorRoom() {
                     id: request.id,
                     timestamp: new Date(request.created_at).getTime(),
                     fanName,
-                    type: isCustom ? `custom_${interactionType}` as any : interactionType as any,
+                    type: isGroupVote ? `group_vote_${interactionType}` as any : isCustom ? `custom_${interactionType}` as any : interactionType as any,
                     tier: isSystemPrompt ? tier : undefined,
                     amount,
-                    message: isCustom ? request.content : undefined
+                    message: isGroupVote ? `Voted for Group ${interactionType === 'truth' ? 'Truth' : 'Dare'}` : isCustom ? request.content : undefined
                 };
 
                 setActivityFeed(prev => {

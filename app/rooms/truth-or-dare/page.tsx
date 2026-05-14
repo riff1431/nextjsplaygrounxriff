@@ -232,11 +232,13 @@ function TruthOrDareContent() {
         success: boolean;
         message: string;
         type?: string;
+        content?: string;
     } | null>(null);
 
     const [overlayPrompt, setOverlayPrompt] = useState<OverlayPrompt | null>(null);
     const [showOverlay, setShowOverlay] = useState(false);
     const [showCountdown, setShowCountdown] = useState(false);
+    const [countdownRequest, setCountdownRequest] = useState<any>(null);
     const [answerNotification, setAnswerNotification] = useState<{
         fanName: string;
         type: string;
@@ -431,6 +433,16 @@ function TruthOrDareContent() {
                     console.log('⏱️ Countdown started for my request:', payload.payload);
                     // The showCountdown state is already triggered in processPayment
                     // This is a backup sync mechanism
+                    setCountdownRequest({
+                        id: payload.payload.requestId,
+                        type: payload.payload.type,
+                        tier: payload.payload.tier,
+                        content: payload.payload.content,
+                        amount: payload.payload.amount,
+                        created_at: new Date(payload.payload.startedAt).toISOString(),
+                        fan_id: payload.payload.fanId,
+                        fan_name: payload.payload.fanName
+                    });
                     setShowCountdown(true);
                 }
             })
@@ -907,22 +919,26 @@ function TruthOrDareContent() {
                 setLastAction("Request sent successfully!");
                 setConfirmModal(null);
 
-                // Update resultModal based on the new structure
-                setResultModal({
-                    isOpen: true,
-                    success: true,
-                    message: data.message || "Your request was sent successfully!",
-                    type: confirmModal.type
-                });
+                const isTruthDareRequest = ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(confirmModal.type);
+                
+                if (isTruthDareRequest && data.request) {
+                    // Only show countdown for truth/dare requests, suppress the result modal
+                    setCountdownRequest(data.request);
+                    setShowCountdown(true);
+                } else {
+                    // Show standard result modal for tips/reactions
+                    setResultModal({
+                        isOpen: true,
+                        success: true,
+                        message: data.message || "Your request was sent successfully!",
+                        type: confirmModal.type,
+                        content: data.request?.content
+                    });
+                }
 
                 setCustomText("");
                 setCustomType(null);
                 setSelectedTier(null);
-
-                // Show countdown for system truth/dare purchases
-                if (confirmModal.type === 'system_truth' || confirmModal.type === 'system_dare') {
-                    setShowCountdown(true);
-                }
 
                 // Broadcast tip event so all fans see it
                 if (confirmModal.type === 'tip' || confirmModal.type === 'reaction') {
@@ -942,7 +958,6 @@ function TruthOrDareContent() {
                 }
 
                 // Broadcast countdown_start event ONLY for truth/dare requests
-                const isTruthDareRequest = ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(confirmModal.type);
                 if (isTruthDareRequest && data.request) {
                     const reqChannel = supabase.channel(`room:${roomId}`);
                     reqChannel.send({
@@ -1703,6 +1718,19 @@ function TruthOrDareContent() {
                                         }
                                     </motion.h2>
 
+                                    {/* Preview Content */}
+                                    {resultModal.success && resultModal.content && ['system_truth', 'system_dare', 'custom_truth', 'custom_dare'].includes(resultModal.type || '') && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.3 }}
+                                            className="w-full bg-black/40 backdrop-blur-xl rounded-xl p-3 border border-white/10 mb-4 text-left"
+                                        >
+                                            <div className="text-[10px] text-white/50 uppercase tracking-wider mb-1">Preview (Sent to Creator)</div>
+                                            <p className="text-xs text-white/90 italic">"{resultModal.content}"</p>
+                                        </motion.div>
+                                    )}
+
                                     {/* Close Button */}
                                     <motion.button
                                         initial={{ opacity: 0, y: 5 }}
@@ -1731,11 +1759,15 @@ function TruthOrDareContent() {
 
             {/* Question Countdown & Reveal */}
             {
-                showCountdown && userId && roomId && (
+                showCountdown && userId && roomId && countdownRequest && (
                     <QuestionCountdown
                         roomId={roomId}
                         userId={userId}
-                        onClose={() => setShowCountdown(false)}
+                        initialRequest={countdownRequest}
+                        onClose={() => {
+                            setShowCountdown(false);
+                            setCountdownRequest(null);
+                        }}
                     />
                 )
             }

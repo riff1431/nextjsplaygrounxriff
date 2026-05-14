@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useSessionChat } from "@/hooks/useSessionChat";
 import { Send, MessageCircle } from "lucide-react";
-import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+
 
 interface SessionChatPanelProps {
     sessionId: string | null;
@@ -137,7 +137,7 @@ export default function SessionChatPanel({
                                     >
                                         {msg.username}
                                     </span>
-                                    <UserBadgeDisplay userId={msg.user_id} />
+
                                     <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px", wordBreak: "break-word" }}>
                                         {msg.message}
                                     </span>

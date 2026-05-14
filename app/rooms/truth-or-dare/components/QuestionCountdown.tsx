@@ -17,63 +17,22 @@ interface QuestionReveal {
 interface QuestionCountdownProps {
     roomId: string;
     userId: string;
+    initialRequest: any;
     onClose: () => void;
 }
 
-export default function QuestionCountdown({ roomId, userId, onClose }: QuestionCountdownProps) {
+export default function QuestionCountdown({ roomId, userId, initialRequest, onClose }: QuestionCountdownProps) {
     const supabase = createClient();
-    const [countdown, setCountdown] = useState(10);
+    const [countdown, setCountdown] = useState(3);
     const [revealed, setRevealed] = useState(false);
     const [questionData, setQuestionData] = useState<QuestionReveal | null>(null);
-    const [pendingRequest, setPendingRequest] = useState<any>(null);
-
-    // Listen for new requests from this user
-    useEffect(() => {
-        const channel = supabase.channel(`user_requests_${userId}`);
-
-        channel.on(
-            'postgres_changes',
-            {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'truth_dare_requests',
-                filter: `fan_id=eq.${userId}`
-            },
-            (payload) => {
-                const newReq = payload.new as any;
-                // Only show countdown for actual truth/dare requests, not tips or reactions
-                if (newReq.type === 'tip' || newReq.type === 'reaction') {
-                    console.log('Ignoring tip/reaction for countdown:', newReq.type);
-                    return;
-                }
-                console.log('New truth/dare request detected:', newReq);
-                setPendingRequest(newReq);
-            }
-        );
-
-        channel.subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [roomId, userId, supabase]);
+    const [pendingRequest, setPendingRequest] = useState<any>(initialRequest);
 
     // Start countdown when request is pending
     useEffect(() => {
         if (!pendingRequest) return;
 
-        const createdAt = new Date(pendingRequest.created_at).getTime();
-        const now = Date.now();
-        const elapsed = (now - createdAt) / 1000;
-        const remaining = Math.max(0, 10 - elapsed);
-
-        setCountdown(Math.ceil(remaining));
-
-        if (remaining <= 0) {
-            // Already past 10 seconds, show immediately
-            setRevealed(true);
-            return;
-        }
+        setCountdown(3);
 
         const interval = setInterval(() => {
             setCountdown((prev) => {
@@ -98,8 +57,8 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
         channel.on('broadcast', { event: 'question_revealed' }, (payload) => {
             console.log('Question revealed broadcast received:', payload);
 
-            // Check if this is for the current user
-            if (payload.payload.fanId === userId || payload.payload.requestId === pendingRequest?.id) {
+            // Check if this is for the current request
+            if (payload.payload.requestId === pendingRequest?.id) {
                 setQuestionData({
                     requestId: payload.payload.requestId,
                     fanId: payload.payload.fanId,
@@ -197,7 +156,7 @@ export default function QuestionCountdown({ roomId, userId, onClose }: QuestionC
                                     strokeWidth="8"
                                     fill="transparent"
                                     strokeDasharray={`${2 * Math.PI * 56}`}
-                                    strokeDashoffset={`${2 * Math.PI * 56 * (countdown / 10)}`}
+                                    strokeDashoffset={`${2 * Math.PI * 56 * (countdown / 3)}`}
                                     className={`text-${colors.primary} transition-all duration-1000`}
                                     strokeLinecap="round"
                                 />

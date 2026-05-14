@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import VipDeliveryModal from "@/components/rooms/pgx-page2/VipDeliveryModal";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock, Phone } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
@@ -806,7 +807,7 @@ function PgxPage2Inner() {
 
 
                             {/* VIP section */}
-                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
                                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
 
                                 {/* ── VIP & Custom Request Unified Container ── */}
@@ -852,7 +853,7 @@ function PgxPage2Inner() {
                                             <ul style={{ fontSize: "14px", color: MUTED, marginLeft: "28px", margin: "0", padding: 0, listStyle: "none" }}>
                                                 <li style={{ display: "flex", alignItems: "center", gap: "4px" }}><Sparkles style={{ width: "12px", height: "12px", color: PINK }} /> Exclusive Content</li>
                                             </ul>
-                                            <p style={{ fontSize: "11px", color: "hsla(42,90%,55%,0.6)", margin: "0 0 0 28px", fontStyle: "italic" }}>Requires creator approval</p>
+
                                         </div>
                                     )}
 
@@ -933,7 +934,7 @@ function PgxPage2Inner() {
                                                 ))}
                                             </div>
 
-                                            <p style={{ fontSize: "10px", color: MUTED, margin: "6px 0 0 0", fontStyle: "italic" }}>Requires creator approval • Private message</p>
+
                                         </div>
                                     ) : (
                                         <div style={{
@@ -1147,9 +1148,12 @@ function PgxPage2Inner() {
                                 <div key={msg.id ?? i} style={{ ...chatMsg, display: "flex", alignItems: "flex-start", gap: "8px" }}>
                                     <span style={{ fontSize: "18px", flexShrink: 0 }}>{msg.is_system ? "🔔" : "🧑"}</span>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <span style={{ fontWeight: 700, fontSize: "14px", color: FG }}>{msg.handle || "Anonymous"}</span>
-                                        {msg.handle?.includes("VIP") && <Crown style={{ width: "12px", height: "12px", color: GOLD, display: "inline", marginLeft: "4px", marginBottom: "2px" }} />}
-                                        <span style={{ fontSize: "14px", color: MUTED, marginLeft: "4px" }}>{msg.content}</span>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                            <span style={{ fontWeight: 700, fontSize: "14px", color: FG }}>{msg.handle || "Anonymous"}</span>
+                                            {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
+                                            {msg.handle?.includes("VIP") && <Crown style={{ width: "12px", height: "12px", color: GOLD, display: "inline", marginBottom: "2px" }} />}
+                                        </div>
+                                        <span style={{ fontSize: "14px", color: MUTED, display: "block", marginTop: "2px" }}>{msg.content}</span>
                                     </div>
                                 </div>
                             ))}
@@ -1217,6 +1221,15 @@ function PgxPage2Inner() {
                     const callResult = await privateCall.initiateCall(fanName);
                     if (callResult) {
                         showToast("👑 Private 1-on-1 requested! Waiting for creator...", "info");
+                        // Post system message to Lounge Chat (title only)
+                        await supabase.from("bar_lounge_messages").insert({
+                            room_id: roomId,
+                            user_id: user?.id ?? null,
+                            handle: fanName,
+                            content: `📞 ${fanName} bought 1 on 1 Video Call (€${PRIVATE_CALL_PRICE})`,
+                            is_system: true,
+                            ...(sessionId ? { session_id: sessionId } : {}),
+                        });
                     } else {
                         showToast("Failed to initiate video call", "error");
                     }

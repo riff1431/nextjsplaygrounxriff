@@ -165,11 +165,7 @@ export default function ActiveSessionsList({
                     <h4 style={{ color: "#fff", fontSize: "14px", fontWeight: 600, margin: "0 0 8px", lineHeight: 1.3 }}>
                         {session.title}
                     </h4>
-                    {session.description && (
-                        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", margin: "0 0 12px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                            {session.description}
-                        </p>
-                    )}
+
 
                     {/* Action button */}
                     {session.session_type === "public" ? (
