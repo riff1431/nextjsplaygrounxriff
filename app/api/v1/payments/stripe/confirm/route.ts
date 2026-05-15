@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getStripeSecretKey } from '@/utils/stripe/getStripeKeys';
 
 export async function POST(req: Request) {
     const supabase = await createClient();
@@ -14,18 +15,12 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { paymentIntentId, roomId } = body;
 
-        // Fetch Stripe Secret Key
-        const { data: settings } = await supabase
-            .from('payment_settings')
-            .select('secret_config')
-            .eq('provider', 'stripe')
-            .single();
-
-        const secretKey = settings?.secret_config?.secret_key || process.env.STRIPE_SECRET_KEY;
+        // Fetch Stripe Secret Key dynamically
+        const secretKey = await getStripeSecretKey();
 
         if (!secretKey) {
             console.error("Stripe Secret Key missing");
-            return NextResponse.json({ error: 'System config error' }, { status: 500 });
+            return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
         }
 
         const stripe = new Stripe(secretKey, {

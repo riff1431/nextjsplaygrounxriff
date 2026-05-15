@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getStripeSecretKey } from '@/utils/stripe/getStripeKeys';
 
 export async function POST(req: Request) {
     const supabase = await createClient();
@@ -14,24 +15,16 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { amount, currency = 'eur', roomId } = body;
 
-        // Fetch Stripe Secret Key from DB settings
-        // Ideally we check `payment_settings` first.
-        const { data: settings } = await supabase
-            .from('payment_settings')
-            .select('secret_config')
-            .eq('provider', 'stripe')
-            .single();
-
-        // Fallback to Env if DB not configured or empty
-        let secretKey = settings?.secret_config?.secret_key || process.env.STRIPE_SECRET_KEY;
+        // Fetch Stripe Secret Key from DB settings (dynamic) → env fallback
+        const secretKey = await getStripeSecretKey();
 
         if (!secretKey) {
             console.error("Stripe Secret Key missing");
-            return NextResponse.json({ error: 'System configuration error' }, { status: 500 });
+            return NextResponse.json({ error: 'Stripe is not configured. Admin needs to set up payment gateway.' }, { status: 500 });
         }
 
         const stripe = new Stripe(secretKey, {
-            apiVersion: '2024-12-18.acacia' as any, // Use latest or pinning
+            apiVersion: '2024-12-18.acacia' as any,
         });
 
         // Create PaymentIntent
