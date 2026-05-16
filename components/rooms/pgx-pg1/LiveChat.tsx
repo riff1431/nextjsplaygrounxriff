@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Loader2 } from "lucide-react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Send, Loader2 , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -18,6 +19,18 @@ interface LiveChatProps {
 }
 
 const LiveChat = ({ roomId }: LiveChatProps) => {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -157,7 +170,27 @@ const LiveChat = ({ roomId }: LiveChatProps) => {
             {/* Input */}
             <div className="p-2 border-t border-white/10 shrink-0">
                 <div className="flex gap-2">
-                    <input
+                    
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setNewMessage(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}

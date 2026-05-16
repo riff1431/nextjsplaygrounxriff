@@ -53,12 +53,14 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
         async function init() {
             if (!roomId) return;
 
-            // Fetch confessions list
-            const { data: confList } = await supabase
+            // Fetch confessions list — scoped to current session
+            let confListQuery = supabase
                 .from("confessions")
                 .select("id, title, teaser, content, media_url, type, tier, price, status, created_at")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false });
+            if (sessionId) confListQuery = confListQuery.eq("session_id", sessionId);
+            const { data: confList } = await confListQuery;
             if (confList) setConfessions(confList);
 
             // Get session start time if sessionId is provided
@@ -259,106 +261,113 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
     const refreshConfessions = async () => {
         if (!roomId) return;
         const supabase = createClient();
-        const { data } = await supabase
+        let refreshQuery = supabase
             .from("confessions")
             .select("id, title, teaser, content, media_url, type, tier, price, status, created_at")
             .eq("room_id", roomId)
             .order("created_at", { ascending: false });
+        if (sessionId) refreshQuery = refreshQuery.eq("session_id", sessionId);
+        const { data } = await refreshQuery;
         if (data) setConfessions(data);
     };
 
     return (
-        <div className="flex flex-col gap-4 shrink-0 overflow-y-auto pb-4" style={{ width: '360px' }}>
-            {/* Profile Card / Live Stream */}
-            <div className="conf-glass-card overflow-hidden relative shrink-0" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-                <div className="relative w-full h-full bg-black/40">
-                    {roomId && user ? (
-                        <LiveStreamWrapper
-                            role="host"
-                            appId={APP_ID}
-                            roomId={roomId}
-                            uid={user.id}
-                            hostId={user.id}
-                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                            hostName={user.user_metadata?.full_name || "Creator"}
-                        />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
-                            Connecting to stream...
+        <div className="flex flex-col shrink-0 h-full" style={{ width: '360px' }}>
+            {/* ── FIXED TOP: Video + Summary (never scrolls) ── */}
+            <div className="flex flex-col gap-4 shrink-0">
+                {/* Profile Card / Live Stream */}
+                <div className="conf-glass-card overflow-hidden relative shrink-0" style={{ width: '100%', aspectRatio: '1 / 1' }}>
+                    <div className="relative w-full h-full bg-black/40">
+                        {roomId && user ? (
+                            <LiveStreamWrapper
+                                role="host"
+                                appId={APP_ID}
+                                roomId={roomId}
+                                uid={user.id}
+                                hostId={user.id}
+                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                hostName={user.user_metadata?.full_name || "Creator"}
+                            />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+                                Connecting to stream...
+                            </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide pointer-events-none z-10">
+                            LIVE
                         </div>
-                    )}
-                    <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide pointer-events-none z-10">
-                        LIVE
+                        <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md pointer-events-none z-10">
+                            Fan:{viewerCount}
+                        </div>
                     </div>
-                    <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md pointer-events-none z-10">
-                        Fan:{viewerCount}
+                </div>
+
+                {/* Summary */}
+                <div className="conf-glass-card p-4">
+                    <h3 className="conf-font-cinzel text-white font-semibold text-lg mb-3 border-b border-white/20 pb-2">
+                        Summary
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-white/60">
+                            <User className="h-4 w-4 conf-text-gold" />
+                            <span>Fans: <span className="conf-text-gold font-semibold">{stats.fans.toLocaleString()}</span></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white/60">
+                            <MessageSquare className="h-4 w-4 conf-text-gold" />
+                            <span>Confessions: <span className="conf-text-gold font-semibold">{stats.confessions.toLocaleString()}</span></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white/60">
+                            <Heart className="h-4 w-4 conf-text-gold" />
+                            <span>Reaction Tips: <span className="conf-text-gold font-semibold">{cs()}{stats.tips.toLocaleString()}</span></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-white/60">
+                            <DollarSign className="h-4 w-4 conf-text-gold" />
+                            <span>Earned: <span className="conf-text-gold font-semibold">{cs()}{stats.earned.toLocaleString()}</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Summary */}
-            <div className="conf-glass-card p-4">
-                <h3 className="conf-font-cinzel text-white font-semibold text-lg mb-3 border-b border-white/20 pb-2">
-                    Summary
-                </h3>
-                <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-white/60">
-                        <User className="h-4 w-4 conf-text-gold" />
-                        <span>Fans: <span className="conf-text-gold font-semibold">{stats.fans.toLocaleString()}</span></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/60">
-                        <MessageSquare className="h-4 w-4 conf-text-gold" />
-                        <span>Confessions: <span className="conf-text-gold font-semibold">{stats.confessions.toLocaleString()}</span></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/60">
-                        <Heart className="h-4 w-4 conf-text-gold" />
-                        <span>Reaction Tips: <span className="conf-text-gold font-semibold">{cs()}{stats.tips.toLocaleString()}</span></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-white/60">
-                        <DollarSign className="h-4 w-4 conf-text-gold" />
-                        <span>Earned: <span className="conf-text-gold font-semibold">{cs()}{stats.earned.toLocaleString()}</span></span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Confession Wall & Random Request Combined */}
-            <div className="conf-glass-card p-4 flex-1 flex flex-col">
-                <div className="mb-6">
-                    <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
-                    <button 
-                        onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
-                        className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
-                    >
-                        <Plus className="h-5 w-5" />
-                    </button>
-                </div>
-
-                <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
-                <div className="flex flex-col gap-3 flex-1">
-                    <button
-                        onClick={() => { setEditConfessionTarget(null); setShowAddModal(true); }}
-                        className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
-                    >
-                        <Plus className="h-5 w-5" />
-                    </button>
-
-                    {/* List existing confessions */}
-                    {confessions.map((c) => (
-                        <div
-                            key={c.id}
-                            className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+            {/* ── SCROLLABLE BOTTOM: Random Request + Confession Wall ── */}
+            <div className="flex-1 min-h-0 overflow-y-auto mt-4 pb-4">
+                <div className="conf-glass-card p-4 flex flex-col">
+                    <div className="mb-6">
+                        <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
+                        <button 
+                            onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
+                            className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
                         >
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs text-white font-medium truncate">{c.title}</p>
-                                <p className="text-[10px] text-white/40">{c.tier} • {cs()}{c.price}</p>
+                            <Plus className="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => { setEditConfessionTarget(null); setShowAddModal(true); }}
+                            className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
+                        >
+                            <Plus className="h-5 w-5" />
+                        </button>
+
+                        {/* List existing confessions */}
+                        {confessions.map((c) => (
+                            <div
+                                key={c.id}
+                                className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs text-white font-medium truncate">{c.title}</p>
+                                    <p className="text-[10px] text-white/40">{c.tier} • {cs()}{c.price}</p>
+                                </div>
+                                <div className="flex items-center gap-2 text-white/40">
+                                    <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
+                                    <button onClick={() => handleDelete(c.id)} className="hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                                    <button onClick={() => setViewConfessionTarget(c)} className="hover:text-white transition-colors cursor-pointer"><Eye size={14} /></button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 text-white/40">
-                                <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
-                                <button onClick={() => handleDelete(c.id)} className="hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
-                                <button onClick={() => setViewConfessionTarget(c)} className="hover:text-white transition-colors cursor-pointer"><Eye size={14} /></button>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -368,6 +377,7 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                     isOpen={showAddModal}
                     onClose={() => { setShowAddModal(false); setEditConfessionTarget(null); }}
                     roomId={roomId}
+                    sessionId={sessionId}
                     onCreated={refreshConfessions}
                     editConfession={editConfessionTarget}
                 />

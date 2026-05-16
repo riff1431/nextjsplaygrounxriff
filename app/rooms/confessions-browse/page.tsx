@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import {
     ArrowLeft, Lock, Search, Heart, Flame, Sparkles, Eye, EyeOff,
     MessageSquareText, Mic, Video, RefreshCw, ChevronRight, User, X
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
@@ -174,15 +174,27 @@ function SkeletonCard() {
 
 /* ─── Main Page ─────────────────────────────────────────────── */
 export default function FanConfessionsBrowsePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0005] flex items-center justify-center text-rose-400 font-bold">Loading Confessions...</div>}>
+            <FanConfessionsBrowseInner />
+        </Suspense>
+    );
+}
+
+function FanConfessionsBrowseInner() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user } = useAuth();
     const { balance: walletBalance } = useWallet();
+
+    // Read ?creator= URL param for auto-filtering from profile pages
+    const creatorParam = searchParams?.get('creator') || '';
 
     const [confessions, setConfessions] = useState<ActiveConfession[]>([]);
     const [loading, setLoading] = useState(true);
     const [tier, setTier] = useState("All");
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchInput, setSearchInput] = useState("");
+    const [searchQuery, setSearchQuery] = useState(creatorParam);
+    const [searchInput, setSearchInput] = useState(creatorParam);
     const [myUnlocks, setMyUnlocks] = useState<Set<string>>(new Set());
     const [unlockTarget, setUnlockTarget] = useState<ActiveConfession | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);

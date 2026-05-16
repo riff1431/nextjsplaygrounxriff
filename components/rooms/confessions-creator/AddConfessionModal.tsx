@@ -8,6 +8,7 @@ interface AddConfessionModalProps {
     isOpen: boolean;
     onClose: () => void;
     roomId: string;
+    sessionId?: string | null;
     onCreated: () => void;
     editConfession?: any;
 }
@@ -26,7 +27,7 @@ const types = [
     { id: "Video", icon: Video, label: "Video" },
 ];
 
-export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated, editConfession }: AddConfessionModalProps) {
+export default function AddConfessionModal({ isOpen, onClose, roomId, sessionId, onCreated, editConfession }: AddConfessionModalProps) {
     const [title, setTitle] = useState(editConfession?.title || "");
     const [teaser, setTeaser] = useState(editConfession?.teaser || "");
     const [content, setContent] = useState(editConfession?.content || "");
@@ -70,6 +71,7 @@ export default function AddConfessionModal({ isOpen, onClose, roomId, onCreated,
                     tier,
                     price: Number(price) || 0,
                     status: "Published",
+                    sessionId: sessionId || null,
                 }),
             });
             const data = await res.json();

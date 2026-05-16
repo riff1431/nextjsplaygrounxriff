@@ -12,11 +12,32 @@ export async function GET(
     const { roomId } = params;
     const supabase = await createClient();
 
-    const { data: drops, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+
+    let query = supabase
         .from("flash_drops")
         .select("*")
         .eq("room_id", roomId)
         .order("created_at", { ascending: false });
+
+    // Session-scoped filtering
+    if (sessionId) {
+        query = query.eq("session_id", sessionId);
+    }
+
+    const { data: drops, error } = await query;
+
+    // Fallback if session_id column doesn't exist yet
+    if (error && error.message?.includes('session_id')) {
+        const { data: fallbackDrops, error: fallbackError } = await supabase
+            .from("flash_drops")
+            .select("*")
+            .eq("room_id", roomId)
+            .order("created_at", { ascending: false });
+        if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 500 });
+        return NextResponse.json({ drops: fallbackDrops });
+    }
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,24 +79,37 @@ export async function POST(
     const endsAt = new Date();
     endsAt.setMinutes(endsAt.getMinutes() + (endsInMin || 15));
 
-    const { data: newDrop, error } = await supabase
+    const insertPayload: any = {
+        room_id: roomId,
+        title,
+        kind: kind || 'Photo',
+        rarity: rarity || 'Common',
+        price: price || 0,
+        ends_at: endsAt.toISOString(),
+        status: status || 'Scheduled',
+        inventory_total: inventoryTotal || 100,
+        inventory_remaining: inventoryTotal || 100,
+        gross_preview: 0,
+        unlocks_preview: 0,
+        ...(media_url ? { media_url } : {}),
+    };
+    if (sessionId) insertPayload.session_id = sessionId;
+
+    let { data: newDrop, error } = await supabase
         .from("flash_drops")
-        .insert([{
-            room_id: roomId,
-            title,
-            kind: kind || 'Photo',
-            rarity: rarity || 'Common',
-            price: price || 0,
-            ends_at: endsAt.toISOString(),
-            status: status || 'Scheduled',
-            inventory_total: inventoryTotal || 100,
-            inventory_remaining: inventoryTotal || 100,
-            gross_preview: 0,
-            unlocks_preview: 0,
-            ...(media_url ? { media_url } : {}),
-        }])
+        .insert([insertPayload])
         .select()
         .single();
+
+    // Fallback if session_id column doesn't exist yet
+    if (error && error.message?.includes('session_id')) {
+        delete insertPayload.session_id;
+        ({ data: newDrop, error } = await supabase
+            .from("flash_drops")
+            .insert([insertPayload])
+            .select()
+            .single());
+    }
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

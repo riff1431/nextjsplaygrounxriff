@@ -97,9 +97,14 @@ function FlashdropCreatorStudio() {
                     {/* Left two columns */}
                     <div className="lg:col-span-2 flex flex-col gap-3 min-h-0 overflow-hidden">
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0 overflow-hidden">
+                            {/* Left: Summary + High Roller Packs */}
                             <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-                                {/* Live Stream */}
-                                <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "180px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                <SummaryBox roomId={roomId} sessionId={sessionId} />
+                                <HighRollerPacks roomId={roomId} sessionId={sessionId} />
+                            </div>
+                            {/* Right: Live Stream (bigger) + Drop Board */}
+                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
+                                <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "280px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                     {roomId && user ? (
                                         <LiveStreamWrapper
                                             role="host"
@@ -118,10 +123,6 @@ function FlashdropCreatorStudio() {
                                 </div>
                                 <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                             </div>
-                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-                                <SummaryBox roomId={roomId} />
-                                <HighRollerPacks roomId={roomId} />
-                            </div>
                         </div>
 
                     </div>
@@ -138,6 +139,7 @@ function FlashdropCreatorStudio() {
                                 <DropRequests
                                     className="h-full border-none rounded-none"
                                     roomId={roomId ?? undefined}
+                                    sessionId={sessionId}
                                 />
                             </div>
                         </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Smile } from 'lucide-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 const chatMessages = [
     { user: "User123", msg: "So sexy! 👄 🔥", avatar: "🙂" },
@@ -16,6 +18,18 @@ const chatMessages = [
 ];
 
 const LiveChat = () => {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const [message, setMessage] = useState("");
 
     return (
@@ -55,6 +69,26 @@ const LiveChat = () => {
 
                 <div className="p-2 border-t border-border">
                     <div className="flex gap-1.5">
+                        
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setMessage(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
                         <input
                             type="text"
                             placeholder="Type your message..."

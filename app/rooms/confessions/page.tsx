@@ -425,7 +425,7 @@ function ConfessionsRoom() {
     };
 
     const fetchRequests = async () => {
-        if (!urlSessionId) return;
+        if (!urlSessionId || !user) return;
         setLoadingRequests(true);
         try {
             const supabase = createClient();
@@ -433,6 +433,7 @@ function ConfessionsRoom() {
                 .from("confession_requests")
                 .select("*")
                 .eq("session_id", urlSessionId)
+                .eq("fan_id", user.id)
                 .order("created_at", { ascending: false });
             
             if (error) {
@@ -478,6 +479,7 @@ function ConfessionsRoom() {
                 const roomIds = rooms.map((r: any) => r.id);
                 let confQuery = supabase.from('confessions').select('*').in('room_id', roomIds).eq('status', 'Published').order('created_at', { ascending: false });
                 if (t && t !== 'All') confQuery = confQuery.eq('tier', t);
+                if (urlSessionId) confQuery = confQuery.eq('session_id', urlSessionId);
 
                 const { data: confData } = await confQuery;
                 const roomToCreator = new Map<string, any>();
@@ -489,18 +491,20 @@ function ConfessionsRoom() {
             } else if (t !== 'All') {
                 setIsSearchMode(true);
                 let confQuery = supabase.from('confessions').select('*').eq('status', 'Published').eq('tier', t).order('created_at', { ascending: false }).limit(50);
+                if (urlSessionId) confQuery = confQuery.eq('session_id', urlSessionId);
                 const { data: confData } = await confQuery;
                 confessionRows = confData || [];
             } else {
-                // Default 'All' view: Fetch global confessions (like other filters)
-                // Remove roomId restriction to show content initially
+                // Default 'All' view: Fetch confessions scoped to session when available
                 setIsSearchMode(true);
-                const { data } = await supabase
+                let defaultQuery = supabase
                     .from('confessions')
                     .select('*')
                     .eq('status', 'Published')
                     .order('created_at', { ascending: false })
                     .limit(50);
+                if (urlSessionId) defaultQuery = defaultQuery.eq('session_id', urlSessionId);
+                const { data } = await defaultQuery;
                 confessionRows = data || [];
             }
 
@@ -714,7 +718,7 @@ function ConfessionsRoom() {
 
     return (
         <ProtectRoute allowedRoles={["fan", "creator"]}>
-            <div className="min-h-screen relative text-foreground font-sans selection:bg-primary/30">
+            <div className="h-screen relative text-foreground font-sans selection:bg-primary/30 overflow-hidden">
                 {/* BACKGROUND — Vibrant pink flames */}
                 <div className="fixed inset-0 z-0 pointer-events-none">
                     <img src="/assets/bg-flames.png" alt="" className="w-full h-full object-cover" />
@@ -722,9 +726,9 @@ function ConfessionsRoom() {
                 </div>
                 <FloatingHearts />
 
-                <div className="relative z-10">
+                <div className="relative z-10 h-full flex flex-col overflow-hidden">
                     {/* Header */}
-                    <header className="sticky top-0 z-30 border-b border-border bg-background/60 backdrop-blur-xl">
+                    <header className="shrink-0 z-30 border-b border-border bg-background/60 backdrop-blur-xl">
                         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-3">
                             <button className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-secondary hover:bg-secondary/80 text-sm font-bold transition-all" onClick={() => router.push("/home")}>
                                 <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Back</span>
@@ -769,11 +773,11 @@ function ConfessionsRoom() {
                     </header>
 
                     {/* Main grid */}
-                    <main className="p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex flex-col lg:flex-row gap-4 xl:gap-6">
+                    <main className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="flex flex-col lg:flex-row gap-4 xl:gap-6 h-full">
 
                             {/* Left Column */}
-                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[90px] lg:h-[calc(100vh-110px)]">
+                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[480px] shrink-0 lg:h-full overflow-hidden">
                                 <CreatorSpotlight
                                     liveStreamNode={
                                         roomId && user && hostId ? (
@@ -810,8 +814,8 @@ function ConfessionsRoom() {
                                 <LiveChatBox roomId={roomId} sessionId={urlSessionId} className="flex-1 min-h-0 w-full" />
                             </div>
 
-                            {/* Center Column - wider */}
-                            <div className="flex-1 min-w-0 space-y-4 xl:space-y-6">
+                            {/* Center Column - wider, independently scrollable */}
+                            <div className="flex-1 min-w-0 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent">
                                 <ConfessionWall
                                     confessions={confessions}
                                     myUnlocks={myUnlocks}
@@ -825,7 +829,7 @@ function ConfessionsRoom() {
                             </div>
 
                             {/* Right Column */}
-                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0">
+                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0 lg:h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent">
                                 <RequestConfession
                                     reqType={reqType}
                                     setReqType={setReqType}
@@ -943,7 +947,10 @@ function ConfessionsRoom() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
                         <div className="w-full max-w-lg rounded-[32px] border border-rose-500/20 bg-[#120205] p-8 relative">
                             <button onClick={() => setReviewRequest(null)} className="absolute top-6 right-6 text-white/50 hover:text-white"><X className="w-5 h-5" /></button>
-                            <h3 className="text-xl font-black text-green-400 mb-6 flex items-center gap-2"><Check className="w-6 h-6" /> Review Delivery</h3>
+                            <h3 className="text-xl font-black text-green-400 mb-6 flex items-center gap-2">
+                                <Check className="w-6 h-6" />
+                                {reviewRequest.status === 'completed' ? 'Delivery Content' : 'Review Delivery'}
+                            </h3>
                             <div className="bg-black/30 rounded-2xl p-6 border border-white/5 mb-6 text-center">
                                 {reviewRequest.delivery_media_url && (
                                     <div className="mb-4 rounded-xl overflow-hidden border border-white/10 bg-black/50">
@@ -960,9 +967,15 @@ function ConfessionsRoom() {
                                 )}
                                 <p className="text-rose-100 text-lg">{reviewRequest.delivery_content}</p>
                             </div>
-                            <Btn variant="solid" onClick={() => handleApproveDelivery(reviewRequest.id)} className="w-full py-4 bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30 rounded-2xl font-black">
-                                Completed!
-                            </Btn>
+                            {reviewRequest.status === 'completed' ? (
+                                <Btn variant="solid" onClick={() => setReviewRequest(null)} className="w-full py-4 bg-white/5 text-white/70 border-white/10 hover:bg-white/10 rounded-2xl font-black">
+                                    Close
+                                </Btn>
+                            ) : (
+                                <Btn variant="solid" onClick={() => handleApproveDelivery(reviewRequest.id)} className="w-full py-4 bg-green-600/20 text-green-400 border-green-600/30 hover:bg-green-600/30 rounded-2xl font-black">
+                                    Completed!
+                                </Btn>
+                            )}
                         </div>
                     </div>
                 )}
@@ -977,20 +990,22 @@ function ConfessionsRoom() {
                             </h3>
                             
                             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                                {requests.filter(r => r.status === 'delivered').length === 0 ? (
+                                {requests.filter(r => r.status === 'delivered' || r.status === 'completed').length === 0 ? (
                                     <div className="text-center py-8 text-white/40 italic">
                                         No incoming deliveries right now.
                                     </div>
                                 ) : (
-                                    requests.filter(r => r.status === 'delivered').map((req, i) => (
-                                        <div key={req.id || i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-4">
+                                    requests.filter(r => r.status === 'delivered' || r.status === 'completed').map((req, i) => (
+                                        <div key={req.id || i} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border gap-4 ${req.status === 'completed' ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold border border-primary/30">
-                                                    💌
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border ${req.status === 'completed' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-primary/20 text-primary border-primary/30'}`}>
+                                                    {req.status === 'completed' ? '✅' : '💌'}
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-white mb-0.5">{req.topic}</p>
-                                                    <p className="text-xs text-primary">Delivered • {cs()}{req.amount}</p>
+                                                    <p className={`text-xs ${req.status === 'completed' ? 'text-green-400' : 'text-primary'}`}>
+                                                        {req.status === 'completed' ? 'Completed' : 'Delivered'} • {cs()}{req.amount}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <button
@@ -998,9 +1013,13 @@ function ConfessionsRoom() {
                                                     setReviewRequest(req);
                                                     setShowIncomingModal(false);
                                                 }}
-                                                className="w-full sm:w-auto px-4 py-2 rounded-lg gradient-pink text-sm font-bold text-white shadow-[0_0_15px_rgba(255,42,109,0.4)] hover:scale-105 transition-all"
+                                                className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-bold text-white hover:scale-105 transition-all ${
+                                                    req.status === 'completed'
+                                                        ? 'bg-green-600/20 border border-green-500/30 hover:bg-green-600/30'
+                                                        : 'gradient-pink shadow-[0_0_15px_rgba(255,42,109,0.4)]'
+                                                }`}
                                             >
-                                                Review
+                                                {req.status === 'completed' ? 'View Again' : 'Review'}
                                             </button>
                                         </div>
                                     ))

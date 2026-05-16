@@ -3,10 +3,10 @@ import { Zap, User, Mail } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 const impulseButtons = [
-  { label: "Quick Like", price: 5, icon: "⚡" },
-  { label: "Hype", price: 10, icon: "👤" },
-  { label: "Boost", price: 25, icon: "🚀" },
-  { label: "Flex", price: 50, icon: "✉️" },
+  { label: "Quick Like", price: 5, icon: "⚡", color: "from-yellow-400 to-orange-500", glow: "hsl(45, 100%, 50%)" },
+  { label: "Hype", price: 10, icon: "👤", color: "from-blue-400 to-indigo-500", glow: "hsl(210, 100%, 50%)" },
+  { label: "Boost", price: 25, icon: "🚀", color: "from-purple-500 to-fuchsia-500", glow: "hsl(280, 100%, 50%)" },
+  { label: "Flex", price: 50, icon: "✉️", color: "from-emerald-400 to-teal-500", glow: "hsl(150, 100%, 40%)" },
 ];
 
 const highRollerPacks = [
@@ -33,21 +33,25 @@ export default function ImpulsePanel() {
 
   return (
     <div className="flex flex-col gap-2 h-full overflow-hidden">
-      {/* Impulse Spend */}
+      {/* Reactions */}
       <div className="glass-panel neon-border-md rounded-xl p-2.5 shrink-0">
-        <h2 className="font-tech text-xl font-bold text-foreground mb-2">Impulse Spend</h2>
-        <div className="grid grid-cols-2 gap-1.5">
+        <h2 className="font-tech text-xl font-bold text-foreground mb-2">Reactions</h2>
+        <div className="grid grid-cols-2 gap-2">
           {impulseButtons.map((btn) => (
             <button
               key={btn.label}
-              className="py-1.5 px-2 rounded-lg border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all font-body font-semibold text-l text-foreground flex items-center justify-center gap-1.5 group"
-              style={{ boxShadow: "0 0 8px hsl(330 100% 55% / 0.2)" }}
+              className="relative overflow-hidden py-2 px-2.5 rounded-2xl border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-300 group flex items-center gap-2.5 backdrop-blur-sm hover:scale-[1.02] active:scale-95"
+              style={{ boxShadow: `0 4px 15px ${btn.glow.replace('hsl', 'hsla').replace(')', ', 0.15)')}, inset 0 1px 0 rgba(255,255,255,0.1)` }}
             >
-              <span className="text-l opacity-70">{btn.icon}</span>
-              <span>
-                <span className="neon-text-m italic text-l">{btn.label}:</span>{" "}
-                <span className="font-tech font-bold neon-text text-l">{cs()}{btn.price}</span>
-              </span>
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${btn.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/20`}>
+                  <span className="text-sm drop-shadow-md">{btn.icon}</span>
+              </div>
+              <div className="flex flex-col items-start leading-none gap-1">
+                  <span className="font-body font-bold text-[10px] text-white/70 group-hover:text-white uppercase tracking-wider transition-colors">{btn.label}</span>
+                  <span className="font-tech font-bold text-sm text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">{cs()}{btn.price}</span>
+              </div>
+              {/* Hover gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${btn.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`} />
             </button>
           ))}
         </div>

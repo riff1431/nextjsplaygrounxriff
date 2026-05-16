@@ -18,7 +18,7 @@ const CreatorSpotlight: React.FC<CreatorSpotlightProps> = ({ liveStreamNode }) =
                 </span>
             </div>
 
-            <div className="relative rounded-lg overflow-hidden aspect-[4/3]">
+            <div className="relative rounded-lg overflow-hidden aspect-[16/11]">
                 {liveStreamNode || (
                     <>
                         <img src="/confessions/creator-spotlight.jpg" alt="Creator" className="w-full h-full object-cover" />

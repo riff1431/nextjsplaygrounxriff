@@ -131,6 +131,17 @@ export async function POST(
         }
     }
 
+    // Resolve the fan's display name for public (non-anonymous) requests
+    let resolvedFanName = 'Anonymous';
+    if (!is_anonymous) {
+        const { data: fanProfile } = await supabase
+            .from('profiles')
+            .select('full_name, username')
+            .eq('id', user.id)
+            .single();
+        resolvedFanName = fanProfile?.full_name || fanProfile?.username || fan_name || 'Anonymous';
+    }
+
     // Create the request
     const { data: req, error: reqError } = await supabase
         .from("confession_requests")
@@ -142,7 +153,7 @@ export async function POST(
             type,
             topic,
             amount,
-            fan_name: is_anonymous ? 'Anonymous' : (fan_name || 'Anonymous'),
+            fan_name: resolvedFanName,
             is_anonymous: is_anonymous ?? true,
             confession_mode: mode,
             status: "pending_approval",

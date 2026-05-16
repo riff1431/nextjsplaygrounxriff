@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "./RoomEntryInfoModal";
 import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
 import { cs } from "@/utils/currency";
-import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+
 
 /* ─────────── Types ─────────── */
 interface Session {
@@ -497,7 +497,6 @@ export default function RoomSessionsBrowse({
                                             >
                                                 <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff", display: "flex", alignItems: "center", gap: "4px" }}>
                                                     {creatorName}
-                                                    <UserBadgeDisplay userId={session.creator_id} />
                                                 </div>
                                             </CreatorProfileHover>
                                             <div style={{ fontSize: "10px", color: accentLight, marginTop: "1px" }}>{timeAgo(session.started_at)}</div>

@@ -521,12 +521,12 @@ export default function ProfileView({ profile, isOwner, stats: initialStats, isF
                             {/* Get Confession Button — hidden for fan owners */}
                             {!(isOwner && profile.role !== 'creator') && (
                                 <Button
-                                    onClick={() => router.push(`/rooms/pgx-pg1?creator=${encodeURIComponent(profile.username || profile.full_name || profile.id)}`)}
+                                    onClick={() => router.push(`/rooms/confessions-browse?creator=${encodeURIComponent(profile.username || profile.full_name || profile.id)}`)}
                                     className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-full px-4 shadow-[0_0_18px_rgba(225,29,72,0.35)] border border-rose-400/20 font-semibold transition-all"
                                     title="See this creator's confessions"
                                 >
                                     <ScrollText className="w-4 h-4 mr-2" />
-                                    <span>Get Confession</span>
+                                    <span>Confessions</span>
                                 </Button>
                             )}
 

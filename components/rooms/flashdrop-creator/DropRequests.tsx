@@ -19,7 +19,7 @@ const statusConfig = {
     declined: { label: "Declined", icon: XCircle, color: "text-red-400", bg: "bg-red-400/10 border-red-400/30" },
 };
 
-const DropRequests = ({ className = "", roomId }: { className?: string; roomId?: string }) => {
+const DropRequests = ({ className = "", roomId, sessionId }: { className?: string; roomId?: string; sessionId?: string | null }) => {
     const supabase = createClient();
     const [requests, setRequests] = useState<DropRequest[]>([]);
     const [uploadingFor, setUploadingFor] = useState<string | null>(null);
@@ -28,29 +28,42 @@ const DropRequests = ({ className = "", roomId }: { className?: string; roomId?:
     useEffect(() => {
         if (!roomId) return;
         async function fetchRequests() {
-            const { data } = await supabase
+            let query = supabase
                 .from("flash_drop_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: false })
                 .limit(20);
+            if (sessionId) query = query.eq("session_id", sessionId);
+            let { data, error } = await query;
+            // Fallback if session_id column doesn't exist yet
+            if (error && error.message?.includes('session_id')) {
+                ({ data } = await supabase
+                    .from("flash_drop_requests")
+                    .select("*")
+                    .eq("room_id", roomId)
+                    .order("created_at", { ascending: false })
+                    .limit(20));
+            }
             // Filter out impulse spends and pack purchases — they are reactions/instant buys, not custom requests
             if (data) setRequests((data as DropRequest[]).filter(r => !r.content.includes('Impulse') && !r.content.includes('Purchased Pack')));
         }
         fetchRequests();
 
         const channel = supabase
-            .channel(`flash-drop-requests-${roomId}`)
+            .channel(`flash-drop-requests-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` },
                 (payload) => {
-                    const newReq = payload.new as DropRequest;
+                    const newReq = payload.new as DropRequest & { session_id?: string };
+                    // Session isolation: skip requests from other sessions
+                    if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
                     // Skip impulse spends and pack purchases — they are reactions/instant buys, not requests
                     if (newReq.content.includes('Impulse') || newReq.content.includes('Purchased Pack')) return;
                     setRequests(prev => [newReq, ...prev]);
                 })
             .subscribe();
         return () => { supabase.removeChannel(channel); };
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     const handleAction = async (id: string, action: "accepted" | "declined", mediaUrl?: string) => {
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: action } : r));

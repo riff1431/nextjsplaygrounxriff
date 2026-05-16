@@ -95,11 +95,21 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
     const fetchDrops = useCallback(async () => {
         if (!roomId) return;
-        const { data } = await supabase
+        let query = supabase
             .from("flash_drops")
             .select("*")
             .eq("room_id", roomId)
             .order("created_at", { ascending: false });
+        if (sessionId) query = query.eq("session_id", sessionId);
+        let { data, error } = await query;
+        // Fallback if session_id column doesn't exist yet
+        if (error && error.message?.includes('session_id')) {
+            ({ data } = await supabase
+                .from("flash_drops")
+                .select("*")
+                .eq("room_id", roomId)
+                .order("created_at", { ascending: false }));
+        }
         if (data) {
             const now = Date.now();
             // Auto-end any drops whose timer has expired but still marked "Live"
@@ -120,24 +130,29 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
             setDrops(data as FlashDrop[]);
         }
         setLoading(false);
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     useEffect(() => {
         if (!roomId) return;
         fetchDrops();
 
         const channel = supabase
-            .channel(`creator-drops-${roomId}`)
+            .channel(`creator-drops-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "*",
                 schema: "public",
                 table: "flash_drops",
                 filter: `room_id=eq.${roomId}`,
-            }, () => fetchDrops())
+            }, (payload) => {
+                // Session isolation: skip drops from other sessions
+                const newDrop = payload.new as any;
+                if (sessionId && newDrop?.session_id && newDrop.session_id !== sessionId) return;
+                fetchDrops();
+            })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, fetchDrops]);
+    }, [roomId, sessionId, fetchDrops]);
 
     const handleAddDrop = async (e: React.FormEvent) => {
         e.preventDefault();

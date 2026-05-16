@@ -185,15 +185,26 @@ export default function FlashDropsRoomPreview() {
     const fetchDrops = useCallback(async () => {
         if (!roomId) return;
         const supabase = createClient();
-        const { data } = await supabase
+        let query = supabase
             .from("flash_drops")
             .select("*")
             .eq("room_id", roomId)
             .eq("status", "Live")
             .order("created_at", { ascending: false });
+        if (urlSessionId) query = query.eq("session_id", urlSessionId);
+        let { data, error } = await query;
+        // Fallback if session_id column doesn't exist yet
+        if (error && error.message?.includes('session_id')) {
+            ({ data } = await supabase
+                .from("flash_drops")
+                .select("*")
+                .eq("room_id", roomId)
+                .eq("status", "Live")
+                .order("created_at", { ascending: false }));
+        }
         if (data) setDrops(data);
         setLoadingDrops(false);
-    }, [roomId]);
+    }, [roomId, urlSessionId]);
 
     // Realtime ticker + drop event feed
     useEffect(() => {
@@ -430,7 +441,7 @@ export default function FlashDropsRoomPreview() {
                                     </button>
                                 )}
                                 {roomId && user && (
-                                    <IncomingNotifications roomId={roomId} />
+                                    <IncomingNotifications roomId={roomId} sessionId={urlSessionId} />
                                 )}
                             </div>
                             {/* Left: Stream + Drop Board */}
@@ -465,7 +476,7 @@ export default function FlashDropsRoomPreview() {
 
                             {/* Right: Impulse Panel */}
                             <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden">
-                                <ImpulsePanel roomId={roomId} onSpend={requestSpend} />
+                                <ImpulsePanel roomId={roomId} sessionId={urlSessionId} onSpend={requestSpend} />
                             </div>
 
                         </div>

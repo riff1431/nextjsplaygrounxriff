@@ -21,7 +21,7 @@ interface FlashDropRequest {
     created_at: string;
 }
 
-export default function IncomingNotifications({ roomId }: { roomId: string | null }) {
+export default function IncomingNotifications({ roomId, sessionId }: { roomId: string | null; sessionId?: string | null }) {
     const { user } = useAuth();
     const supabase = createClient();
     const [notifications, setNotifications] = useState<FlashDropRequest[]>([]);
@@ -36,21 +36,32 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
         if (!user || !roomId) return;
 
         const fetchInitial = async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from("flash_drop_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .eq("fan_id", user.id)
                 .eq("status", "accepted")
                 .order("created_at", { ascending: false });
-
+            if (sessionId) query = query.eq("session_id", sessionId);
+            let { data, error } = await query;
+            // Fallback if session_id column doesn't exist yet
+            if (error && error.message?.includes('session_id')) {
+                ({ data } = await supabase
+                    .from("flash_drop_requests")
+                    .select("*")
+                    .eq("room_id", roomId)
+                    .eq("fan_id", user.id)
+                    .eq("status", "accepted")
+                    .order("created_at", { ascending: false }));
+            }
             if (data) setNotifications(data);
         };
 
         fetchInitial();
 
         const channel = supabase
-            .channel(`incoming-flashdrops-${roomId}-${user.id}`)
+            .channel(`incoming-flashdrops-${roomId}-${user.id}-${sessionId || 'all'}`)
             .on(
                 "postgres_changes",
                 {
@@ -60,7 +71,9 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
                     filter: `fan_id=eq.${user.id}`,
                 },
                 (payload) => {
-                    const updated = payload.new as FlashDropRequest;
+                    const updated = payload.new as FlashDropRequest & { session_id?: string };
+                    // Session isolation: skip notifications from other sessions
+                    if (sessionId && updated.session_id && updated.session_id !== sessionId) return;
                     if (updated.room_id === roomId && updated.status === "accepted") {
                         setNotifications((prev) => {
                             if (prev.some(r => r.id === updated.id)) {
@@ -83,7 +96,7 @@ export default function IncomingNotifications({ roomId }: { roomId: string | nul
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [user, roomId, isOpen]);
+    }, [user, roomId, sessionId, isOpen]);
 
     // Close on click outside
     useEffect(() => {

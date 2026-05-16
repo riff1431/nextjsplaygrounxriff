@@ -21,9 +21,10 @@ interface MediaPreview {
 
 interface HighRollerPacksProps {
     roomId: string | null;
+    sessionId?: string | null;
 }
 
-const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
+const HighRollerPacks = ({ roomId, sessionId }: HighRollerPacksProps) => {
     const [packs, setPacks] = useState<RollerPack[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [name, setName] = useState("");
@@ -35,10 +36,13 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
 
     const fetchPacks = useCallback(async () => {
         if (!roomId) return;
-        const res = await fetch(`/api/v1/rooms/${roomId}/roller-packs`);
+        const url = sessionId
+            ? `/api/v1/rooms/${roomId}/roller-packs?sessionId=${sessionId}`
+            : `/api/v1/rooms/${roomId}/roller-packs`;
+        const res = await fetch(url);
         const data = await res.json();
         if (data.packs) setPacks(data.packs);
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     useEffect(() => {
         fetchPacks();
@@ -122,7 +126,7 @@ const HighRollerPacks = ({ roomId }: HighRollerPacksProps) => {
             const res = await fetch(`/api/v1/rooms/${roomId}/roller-packs`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name.trim(), price: p, media_urls: mediaUrls }),
+                body: JSON.stringify({ name: name.trim(), price: p, media_urls: mediaUrls, sessionId }),
             });
             const data = await res.json();
             if (data.success) {

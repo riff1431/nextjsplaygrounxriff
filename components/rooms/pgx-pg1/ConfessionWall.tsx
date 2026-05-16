@@ -7,7 +7,7 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import UnlockedConfessionModal from "./UnlockedConfessionModal";
 import { toast } from "sonner";
-import { cs } from "@/utils/currency";
+import { cs, fp } from "@/utils/currency";
 
 interface Confession {
   id: string;
@@ -131,10 +131,10 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
   };
 
   const tierTips = [
-    { icon: "💋", label: "KISS", price: "${cs()}10" },
-    { icon: "❤️", label: "LOVE", price: "${cs()}20" },
-    { icon: "🔥", label: "SPICY", price: "${cs()}30" },
-    { icon: "💎", label: "DIAMONDS", price: "${cs()}40" },
+    { icon: "💋", label: "KISS", val: 10 },
+    { icon: "❤️", label: "LOVE", val: 20 },
+    { icon: "🔥", label: "SPICY", val: 30 },
+    { icon: "💎", label: "DIAMONDS", val: 40 },
   ];
 
   return (
@@ -155,7 +155,7 @@ const ConfessionWall = ({ roomId }: ConfessionWallProps) => {
             >
               <span className="text-xl mb-1">{tip.icon}</span>
               <span className="text-[10px] font-bold tracking-wider text-foreground">{tip.label}</span>
-              <span className="text-[10px] text-muted-foreground">{tip.price}</span>
+              <span className="text-[10px] text-muted-foreground">{fp(tip.val)}</span>
             </button>
           ))}
         </div>

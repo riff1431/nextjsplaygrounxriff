@@ -24,10 +24,25 @@ export async function GET(
     const { roomId } = params;
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+
+    let query = supabase
         .from("flash_drop_requests")
         .select("*").eq("room_id", roomId)
         .order("created_at", { ascending: false });
+
+    if (sessionId) query = query.eq("session_id", sessionId);
+
+    let { data, error } = await query;
+
+    // Fallback if session_id column doesn't exist yet
+    if (error && error.message?.includes('session_id')) {
+        ({ data, error } = await supabase
+            .from("flash_drop_requests")
+            .select("*").eq("room_id", roomId)
+            .order("created_at", { ascending: false }));
+    }
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ requests: data || [] });
@@ -78,10 +93,22 @@ export async function POST(
         finalContent = finalContent + ' |__MEDIA__|' + JSON.stringify(media_urls);
     }
 
-    const { data: req, error: reqError } = await supabase
+    const insertPayload: any = { room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content: finalContent, amount, status: (isImpulse || isPack) ? 'accepted' : 'pending' };
+    if (sessionId) insertPayload.session_id = sessionId;
+
+    let { data: req, error: reqError } = await supabase
         .from("flash_drop_requests")
-        .insert({ room_id: roomId, fan_id: user.id, fan_name: profile?.username || "Anonymous", content: finalContent, amount, status: (isImpulse || isPack) ? 'accepted' : 'pending' })
+        .insert(insertPayload)
         .select().single();
+
+    // Fallback if session_id column doesn't exist yet
+    if (reqError && reqError.message?.includes('session_id')) {
+        delete insertPayload.session_id;
+        ({ data: req, error: reqError } = await supabase
+            .from("flash_drop_requests")
+            .insert(insertPayload)
+            .select().single());
+    }
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
 

@@ -3,7 +3,7 @@ import { Heart, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
-import { cs } from "@/utils/currency";
+import { cs, fp } from "@/utils/currency";
 
 export interface CreatorInfo {
     id: string;
@@ -160,10 +160,10 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                 {/* Reaction buttons */}
                 <div className="flex gap-1.5">
                     {[
-                        { icon: "💋", label: "KISS", price: "${cs()}10", val: 10 },
-                        { icon: "❤️", label: "LOVE", price: "${cs()}20", val: 20 },
-                        { icon: "🔥", label: "SPICY", price: "${cs()}30", val: 30 },
-                        { icon: "💎", label: "DIAMOND", price: "${cs()}40", val: 40 },
+                        { icon: "💋", label: "KISS", val: 10 },
+                        { icon: "❤️", label: "LOVE", val: 20 },
+                        { icon: "🔥", label: "SPICY", val: 30 },
+                        { icon: "💎", label: "DIAMOND", val: 40 },
                     ].map((tip, i) => (
                         <button
                             key={i}
@@ -173,7 +173,7 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
                         >
                             <span className="text-base mb-0.5">{tip.icon}</span>
                             <span className="text-[9px] font-bold tracking-wider text-foreground/90">{tip.label}</span>
-                            <span className="text-[9px] text-muted-foreground">{tip.price}</span>
+                            <span className="text-[9px] text-muted-foreground">{fp(tip.val)}</span>
                         </button>
                     ))}
                 </div>

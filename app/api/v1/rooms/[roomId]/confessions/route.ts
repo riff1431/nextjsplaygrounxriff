@@ -8,6 +8,7 @@ export async function GET(
 ) {
     const params = await props.params;
     const { roomId } = params;
+    const sessionId = request.nextUrl.searchParams.get('sessionId');
     const supabase = await createClient();
 
     // Resolve Room ID (Slug vs UUID)
@@ -24,12 +25,19 @@ export async function GET(
     }
 
     // [FIX] Filter by Published status so fans only see public posts
-    const { data: confessions, error } = await supabase
+    let confQuery = supabase
         .from("confessions")
         .select("*")
         .eq("room_id", targetRoomId)
         .eq("status", "Published")
         .order("created_at", { ascending: false });
+
+    // Session-scope: only return confessions from the active session
+    if (sessionId) {
+        confQuery = confQuery.eq("session_id", sessionId);
+    }
+
+    const { data: confessions, error } = await confQuery;
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -90,7 +98,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { title, teaser, content, mediaUrl, type, tier, price, status } = body;
+    const { title, teaser, content, mediaUrl, type, tier, price, status, sessionId } = body;
 
     if (!title || !type || !tier || price === undefined) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -100,6 +108,7 @@ export async function POST(
         .from("confessions")
         .insert([{
             room_id: roomId,
+            session_id: sessionId || null,
             title,
             teaser: teaser || title.substring(0, 50) + "...",
             content,

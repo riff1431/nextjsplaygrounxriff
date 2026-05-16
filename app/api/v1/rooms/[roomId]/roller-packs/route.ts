@@ -15,17 +15,33 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 export async function GET(
-    _request: NextRequest,
+    request: NextRequest,
     props: { params: Promise<{ roomId: string }> }
 ) {
     const { roomId } = await props.params;
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+
+    let query = supabase
         .from("flash_drop_roller_packs")
         .select("*")
         .eq("room_id", roomId)
         .order("created_at", { ascending: true });
+
+    if (sessionId) query = query.eq("session_id", sessionId);
+
+    let { data, error } = await query;
+
+    // Fallback if session_id column doesn't exist yet
+    if (error && error.message?.includes('session_id')) {
+        ({ data, error } = await supabase
+            .from("flash_drop_roller_packs")
+            .select("*")
+            .eq("room_id", roomId)
+            .order("created_at", { ascending: true }));
+    }
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ packs: data || [] });
@@ -41,24 +57,37 @@ export async function POST(
     if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { name, price, description, media_urls } = body;
+    const { name, price, description, media_urls, sessionId } = body;
 
     if (!name || !price || price <= 0) {
         return NextResponse.json({ error: "Name and valid price required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const insertPayload: any = {
+        room_id: roomId,
+        creator_id: user.id,
+        name,
+        price,
+        description: description || null,
+        media_urls: Array.isArray(media_urls) ? media_urls : [],
+    };
+    if (sessionId) insertPayload.session_id = sessionId;
+
+    let { data, error } = await supabase
         .from("flash_drop_roller_packs")
-        .insert({
-            room_id: roomId,
-            creator_id: user.id,
-            name,
-            price,
-            description: description || null,
-            media_urls: Array.isArray(media_urls) ? media_urls : [],
-        })
+        .insert(insertPayload)
         .select()
         .single();
+
+    // Fallback if session_id column doesn't exist yet
+    if (error && error.message?.includes('session_id')) {
+        delete insertPayload.session_id;
+        ({ data, error } = await supabase
+            .from("flash_drop_roller_packs")
+            .insert(insertPayload)
+            .select()
+            .single());
+    }
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true, pack: data });

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { useSessionChat } from "@/hooks/useSessionChat";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle , Smile } from 'lucide-react';
 
 
 interface SessionChatPanelProps {
@@ -20,6 +21,18 @@ export default function SessionChatPanel({
     currentUserId,
     maxHeight = "400px",
 }: SessionChatPanelProps) {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const { messages, isLoading, isSending, sendMessage } = useSessionChat(sessionId);
     const [input, setInput] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -161,7 +174,27 @@ export default function SessionChatPanel({
                     flexShrink: 0,
                 }}
             >
-                <input
+                
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setInput(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}

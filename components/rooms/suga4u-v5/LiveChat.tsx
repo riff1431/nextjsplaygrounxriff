@@ -1,5 +1,9 @@
-import { Heart, Send } from "lucide-react";
+"use client";
+
+import { Heart, Send, Smile } from "lucide-react";
 import { cs } from "@/utils/currency";
+import { useState, useRef, useEffect } from "react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 const messages = [
     { user: "Jessica", emoji: "💖", text: "tipped ${cs()}50!", highlight: true },
@@ -22,7 +26,22 @@ const messages = [
     { user: "BigSpender", emoji: "💎", text: "Private show request! ${cs()}500", highlight: true },
 ];
 
-const LiveChat = () => (
+const LiveChat = () => {
+    const [msg, setMsg] = useState("");
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
     <div className="glass-panel flex flex-col h-[400px] md:h-[500px] bg-transparent border-gold/20 overflow-hidden">
         <div className="flex items-center justify-center p-3 border-b border-gold/20 shrink-0">
             <div className="h-px flex-1 bg-gold/30" />
@@ -46,9 +65,28 @@ const LiveChat = () => (
         </div>
 
         <div className="p-3 border-t border-gold/20 flex gap-2 shrink-0">
+            <div className="relative flex items-center">
+                <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                >
+                    <Smile className="w-5 h-5 text-white/70" />
+                </button>
+                {showEmojiPicker && (
+                    <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                        <EmojiPicker 
+                            onEmojiClick={(e) => setMsg(prev => prev + e.emoji)}
+                            theme={Theme.DARK}
+                        />
+                    </div>
+                )}
+            </div>
             <input
                 type="text"
                 placeholder="Type a message..."
+                value={msg}
+                onChange={(e) => setMsg(e.target.value)}
                 className="flex-1 bg-muted/30 rounded-full px-4 py-2 text-sm outline-none border border-gold/20 focus:border-pink/50 transition-colors"
             />
             <button className="btn-pink w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0">
@@ -56,6 +94,7 @@ const LiveChat = () => (
             </button>
         </div>
     </div>
-);
+    );
+};
 
 export default LiveChat;

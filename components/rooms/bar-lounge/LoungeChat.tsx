@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Zap } from "lucide-react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { MessageSquare, Send, Zap , Smile } from 'lucide-react';
 
 interface Message {
     id: string;
@@ -14,6 +15,18 @@ interface LoungeChatProps {
 }
 
 const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const [inputText, setInputText] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +86,27 @@ const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
                 </div>
 
                 <div className="relative group">
-                    <input
+                    
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setInputText(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input
                         type="text"
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}

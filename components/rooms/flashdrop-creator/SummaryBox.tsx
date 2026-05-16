@@ -14,6 +14,7 @@ interface SummaryStats {
 
 interface SummaryBoxProps {
     roomId: string | null;
+    sessionId?: string | null;
 }
 
 /** A compact neon-bordered stat tile */
@@ -55,7 +56,7 @@ function StatSpacer() {
     return <div className="w-2 shrink-0" />
 }
 
-const SummaryBox = ({ roomId }: SummaryBoxProps) => {
+const SummaryBox = ({ roomId, sessionId }: SummaryBoxProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState<SummaryStats>({
         fans: 0, drops: 0, packs: 0, pendingRequests: 0, tips: 0
@@ -65,47 +66,91 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
         if (!roomId) return;
 
         try {
-            const { count: dropsCount } = await supabase
+            let dropsQuery = supabase
                 .from("flash_drops")
                 .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId)
                 .eq("status", "Live");
+            if (sessionId) dropsQuery = dropsQuery.eq("session_id", sessionId);
+            let { count: dropsCount, error: dropsErr } = await dropsQuery;
+            // Fallback if session_id column doesn't exist
+            if (dropsErr && dropsErr.message?.includes('session_id')) {
+                ({ count: dropsCount } = await supabase
+                    .from("flash_drops")
+                    .select("*", { count: "exact", head: true })
+                    .eq("room_id", roomId)
+                    .eq("status", "Live"));
+            }
 
-            const { count: packsCount } = await supabase
+            let packsQuery = supabase
                 .from("flash_drop_roller_packs")
                 .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId);
+            if (sessionId) packsQuery = packsQuery.eq("session_id", sessionId);
+            let { count: packsCount, error: packsErr } = await packsQuery;
+            if (packsErr && packsErr.message?.includes('session_id')) {
+                ({ count: packsCount } = await supabase
+                    .from("flash_drop_roller_packs")
+                    .select("*", { count: "exact", head: true })
+                    .eq("room_id", roomId));
+            }
 
-            const { count: pendingCount } = await supabase
+            let pendingQuery = supabase
                 .from("flash_drop_requests")
                 .select("*", { count: "exact", head: true })
                 .eq("room_id", roomId)
                 .eq("status", "pending");
+            if (sessionId) pendingQuery = pendingQuery.eq("session_id", sessionId);
+            let { count: pendingCount, error: pendingErr } = await pendingQuery;
+            if (pendingErr && pendingErr.message?.includes('session_id')) {
+                ({ count: pendingCount } = await supabase
+                    .from("flash_drop_requests")
+                    .select("*", { count: "exact", head: true })
+                    .eq("room_id", roomId)
+                    .eq("status", "pending"));
+            }
 
-            const { data: fanData } = await supabase
+            let fanQuery = supabase
                 .from("flash_drop_requests")
                 .select("fan_id")
                 .eq("room_id", roomId);
+            if (sessionId) fanQuery = fanQuery.eq("session_id", sessionId);
+            let { data: fanData, error: fanErr } = await fanQuery;
+            if (fanErr && fanErr.message?.includes('session_id')) {
+                ({ data: fanData } = await supabase
+                    .from("flash_drop_requests")
+                    .select("fan_id")
+                    .eq("room_id", roomId));
+            }
 
             const uniqueFans = new Set(fanData?.map((r) => r.fan_id) ?? []).size;
 
             // Tips: sum from active session for this room
             let totalTips = 0;
-            const { data: activeSession } = await supabase
-                .from("room_sessions")
-                .select("id")
-                .eq("room_id", roomId)
-                .eq("status", "active")
-                .order("started_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-            if (activeSession) {
+            const targetSessionId = sessionId;
+            if (targetSessionId) {
                 const { data: tipRows } = await supabase
                     .from("room_session_tips")
                     .select("amount")
-                    .eq("session_id", activeSession.id);
+                    .eq("session_id", targetSessionId);
                 totalTips = (tipRows ?? []).reduce((sum, t) => sum + Number(t.amount), 0);
+            } else {
+                const { data: activeSession } = await supabase
+                    .from("room_sessions")
+                    .select("id")
+                    .eq("room_id", roomId)
+                    .eq("status", "active")
+                    .order("started_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (activeSession) {
+                    const { data: tipRows } = await supabase
+                        .from("room_session_tips")
+                        .select("amount")
+                        .eq("session_id", activeSession.id);
+                    totalTips = (tipRows ?? []).reduce((sum, t) => sum + Number(t.amount), 0);
+                }
             }
 
             setStats({
@@ -118,7 +163,7 @@ const SummaryBox = ({ roomId }: SummaryBoxProps) => {
         } catch (err) {
             console.error("[SummaryBox] Error fetching stats:", err);
         }
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     useEffect(() => {
         if (!roomId) return;

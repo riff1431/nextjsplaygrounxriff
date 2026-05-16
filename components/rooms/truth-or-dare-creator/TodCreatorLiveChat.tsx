@@ -1,7 +1,8 @@
 "use client";
 
-import { Heart, Send, Loader2 } from "lucide-react";
+import { Heart, Send, Loader2 , Smile } from 'lucide-react';
 import { useState, useEffect, useRef } from "react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
@@ -35,6 +36,18 @@ interface TodCreatorLiveChatProps {
 }
 
 const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount = 0, activityItems = [] }: TodCreatorLiveChatProps) => {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const supabase = createClient();
     const [msg, setMsg] = useState("");
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -285,7 +298,27 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
             </div>
 
             <div className="mt-3 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2 shrink-0">
-                <input
+                
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setMsg(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input
                     className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
                     placeholder={myProfile ? "Send a message..." : "Loading..."}
                     value={msg}

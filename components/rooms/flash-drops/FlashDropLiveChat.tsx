@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Send, MessageSquare, Crown, Zap } from "lucide-react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Send, MessageSquare, Crown, Zap , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
@@ -33,6 +34,18 @@ export default function FlashDropLiveChat({
     hostId,
     variant = "fan",
 }: FlashDropLiveChatProps) {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const { user } = useAuth();
     const supabase = createClient();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -385,6 +398,26 @@ export default function FlashDropLiveChat({
                     <p className="text-center text-[11px] text-white/25 font-mono py-1">Sign in to chat</p>
                 ) : (
                     <div className="flex gap-2 items-center">
+                        
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setInputText(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
                         <input
                             ref={inputRef}
                             type="text"

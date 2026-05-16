@@ -54,22 +54,96 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 4. Delete profile row first (and related data via cascades)
+        // ── Phase 1: Clean tables that reference auth.users(id) WITHOUT ON DELETE CASCADE ──
+        const authUserCleanup = [
+            { table: "followers", column: "follower_id" },
+            { table: "followers", column: "following_id" },
+            { table: "payment_transactions", column: "user_id" },
+            { table: "revenue_events", column: "fan_user_id" },
+            { table: "revenue_events", column: "creator_user_id" },
+            { table: "bar_lounge_messages", column: "user_id" },
+            { table: "transactions", column: "user_id" },
+            { table: "reports", column: "reporter_id" },
+        ];
+
+        for (const { table, column } of authUserCleanup) {
+            const { error } = await adminClient
+                .from(table)
+                .delete()
+                .eq(column, userId);
+            if (error) {
+                console.warn(`[DELETE] Cleanup ${table}.${column}:`, error.message);
+            }
+        }
+
+        // Nullify nullable FK references (preserve audit trail)
+        const authUserNullify = [
+            { table: "audit_logs", column: "actor_id" },
+            { table: "admin_settings", column: "updated_by" },
+        ];
+
+        for (const { table, column } of authUserNullify) {
+            const { error } = await adminClient
+                .from(table)
+                .update({ [column]: null })
+                .eq(column, userId);
+            if (error) {
+                console.warn(`[DELETE] Nullify ${table}.${column}:`, error.message);
+            }
+        }
+
+        // ── Phase 2: Clean tables that reference profiles(id) WITHOUT ON DELETE CASCADE ──
+        //    These must be cleaned BEFORE deleting the profile row.
+        const profileCleanup = [
+            { table: "wallets", column: "user_id" },
+            { table: "room_session_participants", column: "user_id" },
+            { table: "notifications", column: "actor_id" },
+            { table: "notifications", column: "user_id" },
+            { table: "payouts", column: "creator_id" },
+        ];
+
+        for (const { table, column } of profileCleanup) {
+            const { error } = await adminClient
+                .from(table)
+                .delete()
+                .eq(column, userId);
+            if (error) {
+                console.warn(`[DELETE] Profile-ref cleanup ${table}.${column}:`, error.message);
+            }
+        }
+
+        // Nullify nullable profile FK references
+        const profileNullify = [
+            { table: "kyc_submissions", column: "reviewed_by" },
+        ];
+
+        for (const { table, column } of profileNullify) {
+            const { error } = await adminClient
+                .from(table)
+                .update({ [column]: null })
+                .eq(column, userId);
+            if (error) {
+                console.warn(`[DELETE] Nullify profile-ref ${table}.${column}:`, error.message);
+            }
+        }
+
+        // ── Phase 3: Delete profile row (cascades will handle wallets, notifications.user_id, etc.) ──
         const { error: profileError } = await adminClient
             .from("profiles")
             .delete()
             .eq("id", userId);
 
         if (profileError) {
-            console.error("Profile delete error:", profileError);
+            console.error("[DELETE] Profile delete error:", profileError);
+            // Don't return early — try auth deletion anyway
         }
 
-        // 5. Delete from auth.users using admin API
+        // ── Phase 4: Delete from auth.users using admin API ──
         const { error: authError } =
             await adminClient.auth.admin.deleteUser(userId);
 
         if (authError) {
-            console.error("Auth delete error:", authError);
+            console.error("[DELETE] Auth delete error:", authError);
             return NextResponse.json(
                 { error: "Failed to delete auth user: " + authError.message },
                 { status: 500 }

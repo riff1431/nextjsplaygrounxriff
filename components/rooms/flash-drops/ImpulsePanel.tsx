@@ -10,10 +10,10 @@ import { X, Inbox } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 const impulseButtons = [
-    { label: "Kiss", price: 5, icon: "💋" },
-    { label: "Hug", price: 10, icon: "🤗" },
-    { label: "Heart", price: 25, icon: "❤️" },
-    { label: "Diamond", price: 50, icon: "💎" },
+    { label: "Kiss", price: 5, icon: "💋", color: "from-pink-500 to-rose-500", glow: "hsl(330, 100%, 55%)" },
+    { label: "Hug", price: 10, icon: "🤗", color: "from-blue-500 to-cyan-500", glow: "hsl(200, 100%, 50%)" },
+    { label: "Heart", price: 25, icon: "❤️", color: "from-red-500 to-red-600", glow: "hsl(0, 100%, 50%)" },
+    { label: "Diamond", price: 50, icon: "💎", color: "from-cyan-400 to-blue-500", glow: "hsl(180, 100%, 50%)" },
 ];
 
 interface RollerPack {
@@ -26,10 +26,11 @@ interface RollerPack {
 
 interface ImpulsePanelProps {
     roomId: string | null;
+    sessionId?: string | null;
     onSpend?: (amount: number, msg: string, mediaUrls?: string[]) => void;
 }
 
-export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
+export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePanelProps) {
     const { user } = useAuth();
     const supabase = createClient();
     const [description, setDescription] = useState("");
@@ -45,11 +46,14 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
     const fetchPacks = useCallback(async () => {
         if (!roomId) return;
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/roller-packs`);
+            const url = sessionId
+                ? `/api/v1/rooms/${roomId}/roller-packs?sessionId=${sessionId}`
+                : `/api/v1/rooms/${roomId}/roller-packs`;
+            const res = await fetch(url);
             const data = await res.json();
             if (data.packs) setRollerPacks(data.packs);
         } catch { /* ignore */ }
-    }, [roomId]);
+    }, [roomId, sessionId]);
 
     useEffect(() => {
         fetchPacks();
@@ -74,12 +78,23 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
     useEffect(() => {
         if (!roomId || !user) return;
         const fetchPurchases = async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from("flash_drop_requests")
                 .select("content")
                 .eq("room_id", roomId)
                 .eq("fan_id", user.id)
                 .like("content", "%💎 Purchased Pack:%");
+            if (sessionId) query = query.eq("session_id", sessionId);
+            let { data, error } = await query;
+            // Fallback if session_id column doesn't exist
+            if (error && error.message?.includes('session_id')) {
+                ({ data } = await supabase
+                    .from("flash_drop_requests")
+                    .select("content")
+                    .eq("room_id", roomId)
+                    .eq("fan_id", user.id)
+                    .like("content", "%💎 Purchased Pack:%"));
+            }
             
             if (data) {
                 const names = new Set<string>();
@@ -95,7 +110,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
         fetchPurchases();
 
         const channel = supabase
-            .channel(`fan-purchases-${roomId}`)
+            .channel(`fan-purchases-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",
@@ -103,6 +118,8 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const newReq = payload.new as any;
+                // Session isolation: skip purchases from other sessions
+                if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
                 if (newReq.fan_id === user.id && newReq.content.includes("💎 Purchased Pack:")) {
                     const match = newReq.content.match(/💎 Purchased Pack: (.*?) \(/);
                     if (match && match[1]) {
@@ -116,7 +133,7 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
             })
             .subscribe();
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, user]);
+    }, [roomId, sessionId, user]);
 
     // Listen for status updates on the fan's own request
     useEffect(() => {
@@ -188,22 +205,26 @@ export default function ImpulsePanel({ roomId, onSpend }: ImpulsePanelProps) {
 
     return (
         <div className="flex flex-col gap-2 h-full">
-            {/* Impulse Spend */}
+            {/* Reactions */}
             <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
-                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Impulse Spend</h2>
-                <div className="grid grid-cols-2 gap-2">
+                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Reactions</h2>
+                <div className="grid grid-cols-2 gap-2.5">
                     {impulseButtons.map((btn) => (
                         <button
                             key={btn.label}
-                            onClick={() => onSpend?.(btn.price, `⚡ Impulse ${btn.label}: ${cs()}${btn.price}`)}
-                            className="py-2 px-2.5 rounded-xl border border-primary/50 bg-primary/10 hover:bg-primary/20 hover:border-primary/80 transition-all fd-font-body font-bold text-xs text-foreground flex items-center justify-center gap-1.5 group"
-                            style={{ boxShadow: "0 0 8px hsl(330 100% 55% / 0.12)" }}
+                            onClick={() => onSpend?.(btn.price, `⚡ Reaction ${btn.label}: ${cs()}${btn.price}`)}
+                            className="relative overflow-hidden py-2 px-2.5 rounded-2xl border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-300 group flex items-center gap-2.5 backdrop-blur-sm hover:scale-[1.02] active:scale-95"
+                            style={{ boxShadow: `0 4px 15px ${btn.glow.replace('hsl', 'hsla').replace(')', ', 0.15)')}, inset 0 1px 0 rgba(255,255,255,0.1)` }}
                         >
-                            <span className="text-xs opacity-80">{btn.icon}</span>
-                            <span>
-                                <span className="fd-neon-text-sm italic tracking-tight">{btn.label}:</span>{" "}
-                                <span className="fd-font-tech font-black fd-neon-text text-base italic">{cs()}{btn.price}</span>
-                            </span>
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${btn.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/20`}>
+                                <span className="text-sm drop-shadow-md">{btn.icon}</span>
+                            </div>
+                            <div className="flex flex-col items-start leading-none gap-1">
+                                <span className="fd-font-body font-bold text-[10px] text-white/70 group-hover:text-white uppercase tracking-wider transition-colors">{btn.label}</span>
+                                <span className="fd-font-tech font-black text-sm text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">{cs()}{btn.price}</span>
+                            </div>
+                            {/* Hover gradient overlay */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${btn.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`} />
                         </button>
                     ))}
                 </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, Loader2 } from "lucide-react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Send, Loader2 , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
@@ -20,6 +21,18 @@ interface ConfessionsLiveChatProps {
 }
 
 const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) => {
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+    
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -179,8 +192,7 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                                     <span className={`text-sm font-medium truncate ${msg.sender_id === user?.id ? "text-[hsl(330,90%,65%)]" : "text-white"}`}>
                                         {msg.sender_name}
                                     </span>
-                                    <UserBadgeDisplay userId={msg.sender_id} />
-                                    <span className="text-xs">💜</span>
+                                    <UserBadgeDisplay userId={msg.sender_id} hideTypes={["level"]} />
                                     <span className="text-white/60 text-xs ml-auto shrink-0">
                                         {formatTime(msg.created_at)}
                                     </span>
@@ -195,7 +207,27 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
             {/* Input */}
             <div className="p-3 border-t border-white/20 shrink-0">
                 <div className="flex gap-2">
-                    <input
+                    
+                        <div className="relative flex items-center">
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                            >
+                                <Smile className="w-5 h-5 text-white/70" />
+                            </button>
+                            {showEmojiPicker && (
+                                <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
+                                    <EmojiPicker 
+                                        onEmojiClick={(e) => {
+                                            setNewMessage(prev => prev + e.emoji);
+                                        }}
+                                        theme={Theme.DARK}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
