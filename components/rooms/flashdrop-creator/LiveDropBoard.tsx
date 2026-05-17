@@ -271,62 +271,105 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
     });
 
     return (
-        <div className="glass-panel rounded-xl p-4 flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-3 shrink-0">
-                <div className="flex items-center gap-2">
-                    <h2 className="font-display text-lg font-bold neon-text tracking-wider">
-                        Live Drop Board
-                    </h2>
-                    {(["all", "photos", "videos"] as const).map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setKindFilter(tab)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all ${kindFilter === tab
-                                ? "border-primary bg-primary/20 text-primary"
-                                : "border-white/20 text-white/50 hover:border-primary/50"
-                                }`}
-                        >
-                            {tab === "all" ? "All" : tab === "photos" ? "Photos" : "Videos"}
-                        </button>
-                    ))}
+        <div className="glass-panel rounded-xl flex-1 flex flex-col min-h-0 overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(330 100% 55%), hsl(280 100% 60%))' }}>
+                            <Zap size={12} className="text-white" />
+                        </div>
+                        <h2 className="font-display text-sm font-black tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 12px hsl(330 100% 55% / 0.4)' }}>
+                            Live Drop Board
+                        </h2>
+                    </div>
+                    {/* Filter tabs */}
+                    <div className="flex items-center gap-1 ml-1 bg-white/[0.03] rounded-lg p-0.5 border border-white/[0.06]">
+                        {(["all", "photos", "videos"] as const).map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setKindFilter(tab)}
+                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${kindFilter === tab
+                                    ? "text-white shadow-sm"
+                                    : "text-white/35 hover:text-white/60"
+                                    }`}
+                                style={kindFilter === tab ? {
+                                    background: 'linear-gradient(135deg, hsl(330 100% 50% / 0.3), hsl(280 80% 50% / 0.2))',
+                                    boxShadow: '0 0 8px hsl(330 100% 55% / 0.2)',
+                                    border: '1px solid hsl(330 100% 55% / 0.25)',
+                                } : { border: '1px solid transparent' }}
+                            >
+                                {tab === "all" ? "All" : tab === "photos" ? "Photos" : "Videos"}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
                     disabled={!roomId}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold font-display tracking-wider text-primary border border-primary hover:bg-primary/20 hover:shadow-[0_0_15px_hsl(var(--neon-pink)/0.4)] transition-all disabled:opacity-40 disabled:cursor-not-allowed group relative"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:brightness-110 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                        background: 'linear-gradient(135deg, hsl(330 100% 50%), hsl(280 80% 55%))',
+                        boxShadow: '0 2px 8px hsl(330 100% 55% / 0.25), inset 0 1px 0 rgba(255,255,255,0.12)',
+                        color: '#fff',
+                    }}
                 >
-                    <Plus size={14} />
+                    <Plus size={11} strokeWidth={2.5} />
                     Add Drop
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0 px-4 py-3 flex flex-col gap-3">
+                {/* Connecting state */}
                 {!roomId && (
-                    <p className="text-muted-foreground text-xs text-center py-6">Connecting to session...</p>
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center animate-pulse" style={{ background: 'hsl(330 100% 55% / 0.1)', border: '1px solid hsl(330 100% 55% / 0.15)' }}>
+                            <Zap size={18} style={{ color: 'hsl(330 100% 65%)' }} />
+                        </div>
+                        <p className="text-[11px] font-medium text-white/30 tracking-wide">Connecting to session...</p>
+                    </div>
                 )}
+
+                {/* Loading state */}
                 {roomId && loading && (
-                    <p className="text-muted-foreground text-xs text-center py-6">Loading drops...</p>
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center animate-spin" style={{ background: 'hsl(330 100% 55% / 0.1)', border: '1.5px solid hsl(330 100% 55% / 0.2)', borderTopColor: 'hsl(330 100% 65%)' }} />
+                        <p className="text-[11px] font-medium text-white/30 tracking-wide">Loading drops...</p>
+                    </div>
                 )}
+
+                {/* Empty state */}
                 {roomId && !loading && activeDrops.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-6 gap-2">
-                        <Zap className="text-primary/40" size={28} />
-                        <p className="text-muted-foreground text-xs text-center">No active drops. Click &quot;Add Drop&quot; to go live!</p>
+                    <div className="flex flex-col items-center justify-center flex-1 gap-3 py-8">
+                        <div className="relative">
+                            <div className="absolute inset-0 rounded-full blur-xl animate-pulse" style={{ background: 'hsl(330 100% 55% / 0.15)', transform: 'scale(2)' }} />
+                            <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(330 100% 55% / 0.12), hsl(280 80% 50% / 0.08))', border: '1px solid hsl(330 100% 55% / 0.15)' }}>
+                                <Zap size={24} strokeWidth={1.5} style={{ color: 'hsl(330 100% 65% / 0.6)' }} />
+                            </div>
+                        </div>
+                        <div className="text-center space-y-1.5">
+                            <p className="text-[13px] font-bold text-white/50">No active drops</p>
+                            <p className="text-[11px] text-white/25 leading-relaxed max-w-[180px]">
+                                Hit <span className="text-white/50 font-semibold">"Add Drop"</span> to create your first live drop and start selling!
+                            </p>
+                        </div>
                     </div>
                 )}
 
                 {/* 3 across × 2 rows grid layout */}
                 {activeDrops.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2.5">
                         {activeDrops.slice(0, 6).map(drop => (
                             <div
                                 key={drop.id}
-                                className={`glass-card rounded-xl border p-3 flex flex-col gap-2 relative group hover:scale-[1.02] transition-all ${rarityColor[drop.rarity] || "border-border"}`}
+                                className={`rounded-xl border p-2.5 flex flex-col gap-1.5 relative group hover:scale-[1.02] transition-all duration-200 ${rarityColor[drop.rarity] || "border-border"}`}
+                                style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))', backdropFilter: 'blur(8px)' }}
                             >
                                 {/* Status dot + End button */}
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1.5">
                                         <span className={`w-2 h-2 rounded-full animate-pulse ${statusColor[drop.status] || "bg-gray-500"}`} />
-                                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${rarityColor[drop.rarity]?.split(" ")[0]}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-wider ${rarityColor[drop.rarity]?.split(" ")[0]}`}>
                                             {drop.rarity}
                                         </span>
                                     </div>
@@ -341,7 +384,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
                                 {/* Media thumbnail if available */}
                                 {drop.media_url && (
-                                    <div className="w-full h-16 rounded-lg overflow-hidden bg-black/40">
+                                    <div className="w-full h-14 rounded-lg overflow-hidden bg-black/40">
                                         {drop.kind === "Photo" ? (
                                             <img src={drop.media_url} alt={drop.title} className="w-full h-full object-cover" />
                                         ) : (
@@ -351,23 +394,23 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                                 )}
 
                                 {/* Title */}
-                                <span className="font-display font-bold text-xs text-foreground truncate leading-tight">
+                                <span className="font-display font-bold text-[11px] text-foreground/90 truncate leading-tight">
                                     {drop.title}
                                 </span>
 
                                 {/* Info row */}
                                 <div className="flex items-center gap-1 flex-wrap">
-                                    <span className="text-[10px] text-muted-foreground">{drop.kind}</span>
-                                    <span className="text-[10px] text-muted-foreground">·</span>
-                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                    <span className="text-[9px] text-white/40 font-medium">{drop.kind}</span>
+                                    <span className="text-[9px] text-white/15">·</span>
+                                    <span className="text-[9px] text-white/40 font-mono tabular-nums">
                                         {formatCountdown(drop.ends_at)}
                                     </span>
                                 </div>
 
                                 {/* Price + Stock */}
-                                <div className="flex items-center justify-between mt-auto pt-1 border-t border-white/5">
-                                    <span className="text-sm font-black neon-text font-display">{cs()}{drop.price}</span>
-                                    <span className="text-[10px] text-muted-foreground">
+                                <div className="flex items-center justify-between mt-auto pt-1.5 border-t border-white/[0.06]">
+                                    <span className="text-sm font-black font-display" style={{ color: 'hsl(330 100% 70%)', textShadow: '0 0 8px hsl(330 100% 55% / 0.3)' }}>{cs()}{drop.price}</span>
+                                    <span className="text-[9px] text-white/30 font-mono tabular-nums">
                                         {drop.inventory_remaining}/{drop.inventory_total}
                                     </span>
                                 </div>
@@ -378,19 +421,23 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
                 {/* Show overflow count if more than 6 active */}
                 {activeDrops.length > 6 && (
-                    <p className="text-[10px] text-muted-foreground text-center">
+                    <p className="text-[10px] text-white/25 text-center font-medium">
                         +{activeDrops.length - 6} more active drops
                     </p>
                 )}
 
                 {endedDrops.length > 0 && (
-                    <div className="mt-2">
-                        <span className="text-[10px] font-semibold neon-text tracking-wide uppercase opacity-50">Ended ({endedDrops.length})</span>
-                        <div className="grid grid-cols-3 gap-2 mt-1">
+                    <div className="mt-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/25">Ended</span>
+                            <span className="text-[9px] font-bold text-white/15 bg-white/[0.04] px-1.5 py-0.5 rounded">{endedDrops.length}</span>
+                            <div className="flex-1 h-px bg-white/[0.04]" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
                             {endedDrops.slice(0, 3).map(drop => (
-                                <div key={drop.id} className="glass-card rounded-lg border border-border/30 px-3 py-1.5 opacity-40">
-                                    <span className="font-display font-bold text-xs text-foreground/50 truncate block">{drop.title}</span>
-                                    <span className="text-xs text-muted-foreground">{cs()}{drop.price}</span>
+                                <div key={drop.id} className="rounded-lg border border-white/[0.04] px-2.5 py-1.5 opacity-35" style={{ background: 'rgba(255,255,255,0.015)' }}>
+                                    <span className="font-display font-bold text-[10px] text-white/50 truncate block">{drop.title}</span>
+                                    <span className="text-[10px] text-white/30 font-mono">{cs()}{drop.price}</span>
                                 </div>
                             ))}
                         </div>

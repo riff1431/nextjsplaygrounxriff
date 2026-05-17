@@ -1,12 +1,13 @@
 "use client";
 
 import { Heart, Send, Loader2 , Smile } from 'lucide-react';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMessage {
     id: string;
@@ -212,6 +213,9 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
         scrollToBottom();
     }, [allItems.length]);
 
+    const chatUserIds = useMemo(() => messages.map(m => m.user_id), [messages]);
+    const avatarMap = useAvatarMap(chatUserIds);
+
     return (
         <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             <div className="flex items-center justify-between mb-3 shrink-0">
@@ -272,8 +276,10 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                         const isMe = m.user_id === myProfile?.id;
                         return (
                             <div key={`chat-${m.id}`} className="flex items-start gap-2.5 group">
-                                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white border ${isMe ? 'bg-blue-600/30 border-blue-400' : 'bg-pink-600/30 border-pink-400'}`}>
-                                    {m.username?.charAt(0).toUpperCase() || '?'}
+                                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white border overflow-hidden ${isMe ? 'bg-blue-600/30 border-blue-400' : 'bg-pink-600/30 border-pink-400'}`}>
+                                    {avatarMap[m.user_id] ? (
+                                        <img src={avatarMap[m.user_id]} alt="" className="w-full h-full object-cover" />
+                                    ) : (m.username?.charAt(0).toUpperCase() || '?')}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-baseline gap-1.5">

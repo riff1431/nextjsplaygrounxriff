@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Heart, Send } from "lucide-react";
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { cs } from "@/utils/currency";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: string | null }) => {
     const { activity, sendMessage } = useSuga4U(roomId, sessionId);
@@ -41,6 +42,9 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
         return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(type);
     };
 
+    const fanIds = useMemo(() => activity.map(a => a.fanId).filter(Boolean) as string[], [activity]);
+    const avatarMap = useAvatarMap(fanIds);
+
     return (
         <div className="glass-panel flex flex-col h-full overflow-hidden bg-transparent border-gold/20 pgx-chat-wrapper">
             <div className="flex items-center justify-center p-3 border-b border-gold/20 shrink-0">
@@ -52,8 +56,12 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0 chat-scroll flex flex-col pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {[...activity].reverse().map((m) => (
                     <div key={m.id} className="flex items-start gap-2 text-sm">
-                        <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center">
-                            <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>
+                        <div className="w-6 h-6 rounded-full bg-muted/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                            {m.fanId && avatarMap[m.fanId] ? (
+                                <img src={avatarMap[m.fanId]} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>
+                            )}
                         </div>
                         <p className="leading-snug">
                             <span className={`font-bold ${isHighlight(m.type) ? "text-gold" : "text-pink-light"}`}>{m.fanName}:</span>{" "}

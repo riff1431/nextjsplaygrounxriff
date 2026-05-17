@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Send, Loader2 , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMsg {
     id: string;
@@ -164,6 +165,9 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
         return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
+    const senderIds = useMemo(() => messages.map(m => m.sender_id), [messages]);
+    const avatarMap = useAvatarMap(senderIds);
+
     return (
         <div className="conf-glass-card-strong flex flex-col w-[400px] shrink-0 h-full pb-2 pgx-chat-wrapper">
             {/* Header */}
@@ -184,8 +188,10 @@ const ConfessionsLiveChat = ({ roomId, sessionId }: ConfessionsLiveChatProps) =>
                 ) : (
                     messages.map((msg) => (
                         <div key={msg.id} className="flex gap-2">
-                            <div className="w-8 h-8 rounded-full bg-[hsl(320,50%,15%)] shrink-0 flex items-center justify-center text-xs text-white/60">
-                                {msg.sender_name?.charAt(0)?.toUpperCase() || "?"}
+                            <div className="w-8 h-8 rounded-full bg-[hsl(320,50%,15%)] shrink-0 flex items-center justify-center text-xs text-white/60 overflow-hidden">
+                                {avatarMap[msg.sender_id] ? (
+                                    <img src={avatarMap[msg.sender_id]} alt="" className="w-full h-full object-cover" />
+                                ) : (msg.sender_name?.charAt(0)?.toUpperCase() || "?")}
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">

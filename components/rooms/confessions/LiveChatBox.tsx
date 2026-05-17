@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Send, Loader2, MessageSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMsg {
     id: string;
@@ -154,6 +155,9 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
         return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
+    const senderIds = useMemo(() => messages.map(m => m.sender_id), [messages]);
+    const avatarMap = useAvatarMap(senderIds);
+
     return (
         <div className={`neon-glass-card flex flex-col ${className || ""}`}>
             {/* Header */}
@@ -186,8 +190,10 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
                             ) : (
                                 /* ── Regular User Message ── */
                                 <>
-                                    <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300">
-                                        {msg.sender_name?.charAt(0)?.toUpperCase() || "?"}
+                                    <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300 overflow-hidden">
+                                        {avatarMap[msg.sender_id] ? (
+                                            <img src={avatarMap[msg.sender_id]} alt="" className="w-full h-full object-cover" />
+                                        ) : (msg.sender_name?.charAt(0)?.toUpperCase() || "?")}
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-baseline gap-1.5">

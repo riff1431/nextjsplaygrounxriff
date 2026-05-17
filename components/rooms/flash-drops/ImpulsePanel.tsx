@@ -6,14 +6,14 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Inbox } from "lucide-react";
+import { X, Inbox, Heart, HandHeart, Sparkles, Gem, Zap, FolderOpen, Send, Loader2, PartyPopper, XCircle, MessageSquarePlus } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 const impulseButtons = [
-    { label: "Kiss", price: 5, icon: "💋", color: "from-pink-500 to-rose-500", glow: "hsl(330, 100%, 55%)" },
-    { label: "Hug", price: 10, icon: "🤗", color: "from-blue-500 to-cyan-500", glow: "hsl(200, 100%, 50%)" },
-    { label: "Heart", price: 25, icon: "❤️", color: "from-red-500 to-red-600", glow: "hsl(0, 100%, 50%)" },
-    { label: "Diamond", price: 50, icon: "💎", color: "from-cyan-400 to-blue-500", glow: "hsl(180, 100%, 50%)" },
+    { label: "Kiss", price: 5, icon: Heart, color: "from-pink-500 to-rose-400", glow: "hsl(340 90% 55%)", iconColor: "#fff" },
+    { label: "Hug", price: 10, icon: HandHeart, color: "from-sky-500 to-cyan-400", glow: "hsl(195 90% 50%)", iconColor: "#fff" },
+    { label: "Heart", price: 25, icon: Sparkles, color: "from-fuchsia-500 to-purple-500", glow: "hsl(290 90% 55%)", iconColor: "#fff" },
+    { label: "Diamond", price: 50, icon: Gem, color: "from-cyan-400 to-blue-500", glow: "hsl(200 90% 55%)", iconColor: "#fff" },
 ];
 
 interface RollerPack {
@@ -164,11 +164,11 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
         e.preventDefault();
         const reqAmount = parseFloat(amount.replace(/[^0-9.]/g, ""));
         if (isNaN(reqAmount) || reqAmount < 10) {
-            toast.error("Minimum offer is ${cs()}10");
+            toast.error(`Minimum offer is ${cs()}10`);
             return;
         }
         if (reqAmount > 1000) {
-            toast.error("Maximum offer is ${cs()}1000");
+            toast.error(`Maximum offer is ${cs()}1000`);
             return;
         }
         if (!description.trim()) {
@@ -204,71 +204,85 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
     };
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2.5 h-full overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(330 100% 55% / 0.3) transparent' }}>
             {/* Reactions */}
-            <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3">
-                <h2 className="fd-font-tech text-xl font-black text-foreground mb-2.5 tracking-tighter fd-neon-text">Reactions</h2>
-                <div className="grid grid-cols-2 gap-2.5">
-                    {impulseButtons.map((btn) => (
-                        <button
-                            key={btn.label}
-                            onClick={() => onSpend?.(btn.price, `⚡ Reaction ${btn.label}: ${cs()}${btn.price}`)}
-                            className="relative overflow-hidden py-2 px-2.5 rounded-2xl border border-white/10 bg-black/40 hover:bg-white/5 transition-all duration-300 group flex items-center gap-2.5 backdrop-blur-sm hover:scale-[1.02] active:scale-95"
-                            style={{ boxShadow: `0 4px 15px ${btn.glow.replace('hsl', 'hsla').replace(')', ', 0.15)')}, inset 0 1px 0 rgba(255,255,255,0.1)` }}
-                        >
-                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${btn.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 border border-white/20`}>
-                                <span className="text-sm drop-shadow-md">{btn.icon}</span>
-                            </div>
-                            <div className="flex flex-col items-start leading-none gap-1">
-                                <span className="fd-font-body font-bold text-[10px] text-white/70 group-hover:text-white uppercase tracking-wider transition-colors">{btn.label}</span>
-                                <span className="fd-font-tech font-black text-sm text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">{cs()}{btn.price}</span>
-                            </div>
-                            {/* Hover gradient overlay */}
-                            <div className={`absolute inset-0 bg-gradient-to-r ${btn.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none`} />
-                        </button>
-                    ))}
+            <div className="fd-glass-panel rounded-2xl p-4 border border-white/[0.08]" style={{ background: 'linear-gradient(135deg, hsl(270 50% 4% / 0.7), hsl(330 40% 6% / 0.5))', boxShadow: '0 8px 32px hsl(330 100% 55% / 0.08), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(330 100% 55%), hsl(300 100% 60%))' }}>
+                        <Zap size={10} className="text-white" />
+                    </div>
+                    <h2 className="fd-font-tech text-xs font-black text-white/90 uppercase tracking-[0.15em]">Reactions</h2>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    {impulseButtons.map((btn) => {
+                        const IconComponent = btn.icon;
+                        return (
+                            <button
+                                key={btn.label}
+                                onClick={() => onSpend?.(btn.price, `⚡ Reaction ${btn.label}: ${cs()}${btn.price}`)}
+                                className="relative overflow-hidden rounded-xl border border-white/[0.08] hover:border-white/20 transition-all duration-300 group active:scale-[0.96] backdrop-blur-sm"
+                                style={{ background: 'linear-gradient(145deg, hsl(270 30% 8% / 0.8), hsl(270 20% 5% / 0.9))' }}
+                            >
+                                <div className="flex flex-col items-center py-3 px-2 gap-1.5 relative z-10">
+                                    {/* Glow ring behind icon */}
+                                    <div className="relative">
+                                        <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" style={{ background: btn.glow, transform: 'scale(1.8)' }} />
+                                        <div className={`relative w-11 h-11 rounded-full bg-gradient-to-br ${btn.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-white/25`} style={{ boxShadow: `0 4px 16px ${btn.glow.replace('hsl', 'hsla').replace(')', ', 0.35)')}` }}>
+                                            <IconComponent size={20} color={btn.iconColor} strokeWidth={2.5} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                                        </div>
+                                    </div>
+                                    <span className="fd-font-body font-bold text-[10px] text-white/50 group-hover:text-white/80 uppercase tracking-[0.12em] transition-colors">{btn.label}</span>
+                                    <span className="fd-font-tech font-black text-xs text-white/90 group-hover:text-white transition-colors" style={{ textShadow: '0 0 8px rgba(255,255,255,0.15)' }}>{cs()}{btn.price}</span>
+                                </div>
+                                {/* Hover shimmer */}
+                                <div className={`absolute inset-0 bg-gradient-to-t ${btn.color} opacity-0 group-hover:opacity-[0.07] transition-opacity duration-500 pointer-events-none`} />
+                                <div className="absolute bottom-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: `linear-gradient(90deg, transparent, ${btn.glow}, transparent)` }} />
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* High Roller Packs */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-3">
-                <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-2 uppercase tracking-widest">High Roller Packs</h2>
+            <div className="fd-glass-panel rounded-2xl p-4 border border-white/[0.08]" style={{ background: 'linear-gradient(135deg, hsl(270 50% 4% / 0.7), hsl(330 40% 6% / 0.5))', boxShadow: '0 8px 32px hsl(330 100% 55% / 0.06), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center gap-2 mb-2.5">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(40 90% 50%), hsl(30 80% 45%))' }}>
+                        <Gem size={10} className="text-white" />
+                    </div>
+                    <h2 className="fd-font-tech text-[10px] font-black text-white/90 uppercase tracking-[0.15em]">High Roller Packs</h2>
+                </div>
                 {rollerPacks.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                         {[...rollerPacks].reverse().slice(0, 7).map((pack) => {
                             const mediaCount = pack.media_urls?.length || 0;
                             const isPurchased = purchasedPackNames.has(pack.name);
                             return (
                                 <div
                                     key={pack.id}
-                                    className="rounded-xl border border-primary/25 bg-black/30 hover:border-primary/60 hover:bg-primary/5 transition-all group"
-                                    style={{ boxShadow: "0 0 6px hsl(330 100% 55% / 0.05)" }}
+                                    className="rounded-xl border border-white/[0.06] hover:border-primary/40 transition-all group"
+                                    style={{ background: 'hsl(270 30% 6% / 0.6)' }}
                                 >
                                     <div className="flex items-center gap-2.5 px-3 py-2">
-                                        {/* Pack info */}
                                         <div className="flex-1 min-w-0">
                                             <p className="fd-font-body font-bold text-xs text-foreground/90 truncate group-hover:text-foreground transition-colors">
                                                 {pack.name}
                                             </p>
                                             {mediaCount > 0 && (
                                                 <p className="text-[9px] text-primary/70 font-semibold mt-0.5 flex items-center gap-1">
-                                                    <span>📁</span>
+                                                    <FolderOpen size={9} />
                                                     {mediaCount} {mediaCount === 1 ? 'file' : 'files'} included
                                                 </p>
                                             )}
                                         </div>
-
-                                        {/* Price + Buy */}
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             <span className="fd-font-tech font-black text-sm fd-neon-text">{cs()}{pack.price}</span>
                                             {isPurchased ? (
                                                 <button
                                                     onClick={() => setViewingPack(pack)}
-                                                    className="px-2.5 py-1 rounded-xl fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    className="px-3 py-1.5 rounded-lg fd-font-tech font-black text-[9px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                                                     style={{
                                                         background: "linear-gradient(135deg, hsl(160 100% 40%), hsl(160 100% 30%))",
                                                         boxShadow: "0 0 12px hsl(160 100% 45% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
-                                                        textShadow: "0 0 6px rgba(255,255,255,0.3)",
                                                     }}
                                                 >
                                                     View
@@ -276,11 +290,10 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                                             ) : (
                                                 <button
                                                     onClick={() => onSpend?.(pack.price, `💎 Purchased Pack: ${pack.name} (${cs()}${pack.price})`, pack.media_urls)}
-                                                    className="px-2.5 py-1 rounded-xl fd-font-tech font-black text-[10px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                                    className="px-3 py-1.5 rounded-lg fd-font-tech font-black text-[9px] text-white uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
                                                     style={{
                                                         background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(330 100% 65%))",
                                                         boxShadow: "0 0 12px hsl(330 100% 55% / 0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
-                                                        textShadow: "0 0 6px rgba(255,255,255,0.3)",
                                                     }}
                                                 >
                                                     Buy
@@ -293,65 +306,86 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                         })}
                     </div>
                 ) : (
-                    <p className="text-center text-foreground/30 text-[10px] py-2 fd-font-body">No packs available yet</p>
+                    <p className="text-center text-foreground/30 text-[10px] py-3 fd-font-body">No packs available yet</p>
                 )}
             </div>
 
             {/* Request A Drop */}
-            <div className="fd-glass-panel fd-neon-border rounded-xl p-3 flex-1 flex flex-col min-h-0">
-                <h2 className="fd-font-tech text-[11px] font-black fd-neon-text-sm mb-1.5 uppercase tracking-widest">Request A Drop</h2>
-                <div className="mb-1.5 flex items-center justify-between">
-                    <span className="fd-font-body font-bold text-[10px] text-foreground/70">Custom Request</span>
+            <div className="rounded-2xl p-4 flex-1 flex flex-col min-h-0 border border-white/[0.08]" style={{ background: 'linear-gradient(160deg, hsl(270 50% 4% / 0.7), hsl(330 50% 8% / 0.5))', boxShadow: '0 8px 32px hsl(330 100% 55% / 0.06), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55%), hsl(330 100% 55%))' }}>
+                        <MessageSquarePlus size={10} className="text-white" />
+                    </div>
+                    <h2 className="fd-font-tech text-[10px] font-black text-white/90 uppercase tracking-[0.15em]">Request A Drop</h2>
                 </div>
 
                 {requestStatus === "submitted" && (
-                    <div className="mb-2 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-[11px] text-yellow-400 text-center font-semibold">
-                        ⏳ Request pending — awaiting creator...
+                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-yellow-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'linear-gradient(135deg, hsl(45 80% 50% / 0.08), hsl(45 80% 50% / 0.04))', border: '1px solid hsl(45 80% 50% / 0.2)' }}>
+                        <Loader2 size={12} className="animate-spin" /> Request pending — awaiting creator...
                     </div>
                 )}
                 {requestStatus === "accepted" && (
-                    <div className="mb-2 p-2 rounded-xl bg-green-500/10 border border-green-500/30 text-[11px] text-green-400 text-center font-semibold">
-                        🎉 Your request was accepted!
+                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-green-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'hsl(140 60% 40% / 0.08)', border: '1px solid hsl(140 60% 40% / 0.2)' }}>
+                        <PartyPopper size={12} /> Your request was accepted!
                     </div>
                 )}
                 {requestStatus === "declined" && (
-                    <div className="mb-2 p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-[11px] text-red-400 text-center font-semibold">
-                        ❌ Request declined. Try a new one!
+                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-red-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'hsl(0 60% 40% / 0.08)', border: '1px solid hsl(0 60% 40% / 0.2)' }}>
+                        <XCircle size={12} /> Request declined. Try a new one!
                     </div>
                 )}
 
-                <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2 mt-1 flex-1 min-h-0">
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Describe what you'd like to see..."
-                        disabled={submitting || requestStatus === "submitted"}
-                        className="flex-1 min-h-0 w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all resize-none disabled:opacity-50"
-                    />
-                    <input
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="Offer Amount $..."
-                        disabled={submitting || requestStatus === "submitted"}
-                        className="shrink-0 w-full bg-black/40 border border-primary/40 rounded-xl px-3 py-3 text-sm text-white placeholder:text-foreground/30 fd-font-body focus:outline-none focus:border-primary/80 focus:shadow-[0_0_15px_hsl(330_100%_55%/0.25)] transition-all disabled:opacity-50"
-                    />
+                <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2.5 flex-1 min-h-0">
+                    <div className="flex-1 min-h-0 flex flex-col">
+                        <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5">What would you like?</label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Describe what you'd like to see..."
+                            disabled={submitting || requestStatus === "submitted"}
+                            className="flex-1 min-h-[70px] w-full rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-body focus:outline-none transition-all resize-none disabled:opacity-40"
+                            style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.15)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
+                            onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.5)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 20px hsl(330 100% 55% / 0.1)'; }}
+                            onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
+                        />
+                    </div>
+                    <div>
+                        <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">Your Offer</label>
+                        <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 fd-font-tech font-black text-sm text-primary/60 pointer-events-none">{cs()}</span>
+                            <input
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="10 - 1000"
+                                type="number"
+                                min="10"
+                                max="1000"
+                                disabled={submitting || requestStatus === "submitted"}
+                                className="w-full rounded-xl pl-8 pr-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-tech font-bold focus:outline-none transition-all disabled:opacity-40"
+                                style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.15)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
+                                onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.5)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 20px hsl(330 100% 55% / 0.1)'; }}
+                                onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
+                            />
+                        </div>
+                    </div>
                     <button
                         type="submit"
                         disabled={submitting || !roomId || requestStatus === "submitted"}
-                        className="w-full py-3 rounded-xl fd-font-tech font-black text-sm text-white transition-all uppercase tracking-[0.2em] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3 rounded-xl fd-font-tech font-black text-sm text-white transition-all uppercase tracking-[0.15em] disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98] relative overflow-hidden group"
                         style={{
-                            background: "linear-gradient(to right, #ff00ff, #ff2e92)",
-                            boxShadow: "0 0 20px #ff00ff60, 0 0 40px #ff00ff20, inset 0 1px 0 rgba(255,255,255,0.2)",
-                            textShadow: "0 0 8px rgba(255,255,255,0.4)"
+                            background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(300 100% 55%), hsl(330 100% 60%))",
+                            boxShadow: "0 4px 20px hsl(330 100% 55% / 0.35), 0 0 40px hsl(330 100% 55% / 0.1), inset 0 1px 0 rgba(255,255,255,0.2)",
+                            textShadow: "0 1px 3px rgba(0,0,0,0.3)"
                         }}
                     >
-                        {submitting ? "Submitting..." : requestStatus === "submitted" ? "⏳ Pending..." : "Submit Request"}
+                        <span className="relative z-10">{submitting ? "Submitting..." : requestStatus === "submitted" ? "⏳ Pending..." : "Submit Request"}</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                     </button>
                     {requestStatus !== "idle" && requestStatus !== "submitted" && (
                         <button
                             type="button"
                             onClick={() => { setRequestStatus("idle"); setMyRequestId(null); }}
-                            className="w-full py-1.5 rounded-xl fd-font-tech font-bold text-xs text-foreground/60 hover:text-foreground border border-border/40 transition-all"
+                            className="w-full py-2 rounded-xl fd-font-tech font-bold text-[10px] text-white/40 hover:text-white/70 border border-white/[0.06] hover:border-white/15 transition-all uppercase tracking-wider"
                         >
                             Make Another Request
                         </button>

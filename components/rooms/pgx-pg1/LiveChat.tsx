@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Send, Loader2 , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMsg {
     id: string;
@@ -127,6 +128,9 @@ const LiveChat = ({ roomId }: LiveChatProps) => {
         return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
+    const chatUserIds = useMemo(() => messages.map(m => m.user_id), [messages]);
+    const avatarMap = useAvatarMap(chatUserIds);
+
     return (
         <div className="glass-card flex flex-col flex-1 min-h-0">
             {/* Header */}
@@ -147,8 +151,10 @@ const LiveChat = ({ roomId }: LiveChatProps) => {
                 ) : (
                     messages.map((msg) => (
                         <div key={msg.id} className="flex gap-2">
-                            <div className="w-7 h-7 rounded-full bg-secondary/60 shrink-0 flex items-center justify-center text-[10px] text-muted-foreground">
-                                {msg.username.charAt(0).toUpperCase()}
+                            <div className="w-7 h-7 rounded-full bg-secondary/60 shrink-0 flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
+                                {avatarMap[msg.user_id] ? (
+                                    <img src={avatarMap[msg.user_id]} alt="" className="w-full h-full object-cover" />
+                                ) : msg.username.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">

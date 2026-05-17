@@ -92,72 +92,64 @@ function FlashdropCreatorStudio() {
                     </div>
                 </div>
 
-                {/* Main Grid */}
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 min-h-0 overflow-hidden">
-                    {/* Left two columns */}
-                    <div className="lg:col-span-2 flex flex-col gap-3 min-h-0 overflow-hidden">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0 overflow-hidden">
-                            {/* Left: Summary + High Roller Packs */}
-                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-                                <SummaryBox roomId={roomId} sessionId={sessionId} />
-                                <HighRollerPacks roomId={roomId} sessionId={sessionId} />
-                            </div>
-                            {/* Right: Live Stream (bigger) + Drop Board */}
-                            <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-                                <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "280px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                    {roomId && user ? (
-                                        <LiveStreamWrapper
-                                            role="host"
-                                            appId={APP_ID}
-                                            roomId={roomId}
-                                            uid={user.id}
-                                            hostId={user.id}
-                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                            hostName={user.user_metadata?.full_name || "Creator"}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
-                                            Connecting to stream...
-                                        </div>
-                                    )}
-                                </div>
-                                <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
-                            </div>
-                        </div>
-
+                {/* Main Grid — 4 equal columns */}
+                <div className="flex-1 flex gap-3 min-h-0 overflow-hidden">
+                    {/* 1st: Live Drop Board */}
+                    <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
+                        <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                     </div>
 
-                    {/* Right column — Drop Requests & Live Chat side by side */}
-                    <div className="lg:col-span-2 flex flex-row gap-4 min-h-0">
-                        {/* Drop Requests section */}
-                        <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
-                            <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
-                                <ClipboardList size={13} className="text-primary" />
-                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Custom Request Drops</span>
-                            </div>
-                            <div className="flex-1 min-h-0 overflow-hidden">
-                                <DropRequests
-                                    className="h-full border-none rounded-none"
-                                    roomId={roomId ?? undefined}
-                                    sessionId={sessionId}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Live Chat section */}
-                        <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
-                            <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
-                                <MessageSquare size={13} className="text-primary" />
-                                <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Live Chat</span>
-                            </div>
-                            <div className="flex-1 min-h-0 overflow-hidden">
-                                <FlashDropLiveChat
+                    {/* 2nd: Video + Summary + High Roller Packs */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
+                        <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                            {roomId && user ? (
+                                <LiveStreamWrapper
+                                    role="host"
+                                    appId={APP_ID}
                                     roomId={roomId}
-                                    hostId={user?.id}
-                                    variant="creator"
-                                    sessionId={sessionId}
+                                    uid={user.id}
+                                    hostId={user.id}
+                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                    hostName={user.user_metadata?.full_name || "Creator"}
                                 />
-                            </div>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
+                                    Connecting to stream...
+                                </div>
+                            )}
+                        </div>
+                        <SummaryBox roomId={roomId} sessionId={sessionId} />
+                        <HighRollerPacks roomId={roomId} sessionId={sessionId} />
+                    </div>
+
+                    {/* 3rd: Custom Request Drops */}
+                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
+                        <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
+                            <ClipboardList size={13} className="text-primary" />
+                            <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Custom Request Drops</span>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-hidden">
+                            <DropRequests
+                                className="h-full border-none rounded-none"
+                                roomId={roomId ?? undefined}
+                                sessionId={sessionId}
+                            />
+                        </div>
+                    </div>
+
+                    {/* 4th: Live Chat */}
+                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
+                        <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
+                            <MessageSquare size={13} className="text-primary" />
+                            <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Live Chat</span>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-hidden">
+                            <FlashDropLiveChat
+                                roomId={roomId}
+                                hostId={user?.id}
+                                variant="creator"
+                                sessionId={sessionId}
+                            />
                         </div>
                     </div>
                 </div>

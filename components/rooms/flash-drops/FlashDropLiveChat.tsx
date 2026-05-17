@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { Send, MessageSquare, Crown, Zap , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMessage {
     id: string;
@@ -201,6 +202,9 @@ export default function FlashDropLiveChat({
         return "normal";
     };
 
+    const senderIds = useMemo(() => messages.map(m => m.sender_id), [messages]);
+    const avatarMap = useAvatarMap(senderIds);
+
     const primaryColor = "hsl(330 100% 55%)";
     const primaryLight = "hsl(330 100% 80%)";
     const primaryDim = "hsl(330 100% 55% / 0.3)";
@@ -238,7 +242,7 @@ export default function FlashDropLiveChat({
             </div>
 
             {/* Messages area */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1.5 min-h-0 scrollbar-thin scrollbar-thumb-pink-900/40 pgx-chat-messages hide-scrollbar">
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0 scrollbar-thin scrollbar-thumb-pink-900/40 pgx-chat-messages hide-scrollbar">
                 {/* State: no room */}
                 {!roomId && (
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-center pgx-chat-wrapper">
@@ -269,13 +273,21 @@ export default function FlashDropLiveChat({
                     // System event messages
                     if (style === "system") {
                         return (
-                            <div key={m.id} className="flex items-center gap-2 py-0.5">
-                                <div className="flex-1 h-px bg-white/5" />
+                            <div key={m.id} className="flex items-center gap-2.5 py-1 my-1">
+                                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
                                 <span
-                                    className="text-[12px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                                    className="text-[11px] font-bold px-3 py-1 rounded-full shrink-0 backdrop-blur-sm"
                                     style={{
-                                        background: "rgba(255,255,255,0.04)",
-                                        border: "1px solid rgba(255,255,255,0.08)",
+                                        background: m.system_type === "drop_new"
+                                            ? "hsl(330 100% 50% / 0.1)"
+                                            : m.system_type === "drop_ended"
+                                                ? "rgba(255,255,255,0.03)"
+                                                : "hsl(45 100% 50% / 0.08)",
+                                        border: `1px solid ${m.system_type === "drop_new"
+                                            ? "hsl(330 100% 55% / 0.2)"
+                                            : m.system_type === "drop_ended"
+                                                ? "rgba(255,255,255,0.06)"
+                                                : "hsl(45 100% 55% / 0.15)"}`,
                                         color: m.system_type === "drop_new"
                                             ? "hsl(330 100% 70%)"
                                             : m.system_type === "drop_ended"
@@ -285,103 +297,116 @@ export default function FlashDropLiveChat({
                                 >
                                     {m.message}
                                 </span>
-                                <div className="flex-1 h-px bg-white/5" />
+                                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
                             </div>
                         );
                     }
 
                     const isMe = m.sender_id === user?.id;
                     const isHostMsg = style === "host";
+                    const isTip = m.is_tip;
+                    const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    // Color scheme per message type
+                    const nameColor = isHostMsg ? "hsl(280 100% 75%)" : isTip ? primaryLight : isMe ? "hsl(200 80% 70%)" : "hsl(330 80% 70%)";
+                    const avatarBg = isHostMsg
+                        ? "linear-gradient(135deg, hsl(280 100% 50%), hsl(330 100% 55%))"
+                        : isTip
+                            ? "linear-gradient(135deg, hsl(330 100% 45%), hsl(330 100% 60%))"
+                            : isMe
+                                ? "linear-gradient(135deg, hsl(200 80% 40%), hsl(200 80% 55%))"
+                                : "linear-gradient(135deg, hsl(270 30% 20%), hsl(330 30% 25%))";
+                    const ringColor = isHostMsg ? "hsl(280 100% 60% / 0.6)" : isTip ? "hsl(330 100% 55% / 0.5)" : isMe ? "hsl(200 80% 50% / 0.4)" : "rgba(255,255,255,0.08)";
+                    const bubbleBg = isMe
+                        ? "hsl(200 80% 40% / 0.2)"
+                        : isHostMsg
+                            ? "hsl(280 60% 30% / 0.15)"
+                            : isTip
+                                ? "hsl(330 80% 40% / 0.12)"
+                                : "rgba(255,255,255,0.04)";
+                    const bubbleBorder = isMe
+                        ? "1px solid hsl(200 80% 55% / 0.15)"
+                        : isHostMsg
+                            ? "1px solid hsl(280 100% 55% / 0.15)"
+                            : isTip
+                                ? "1px solid hsl(330 100% 55% / 0.15)"
+                                : "1px solid rgba(255,255,255,0.05)";
 
                     return (
                         <div
                             key={m.id}
-                            className={`flex items-start gap-2 group ${isMe ? "flex-row-reverse" : ""}`}
+                            className={`flex gap-2.5 group transition-all duration-200 ${isMe ? "flex-row-reverse" : ""}`}
                         >
                             {/* Avatar */}
-                            <div
-                                className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5"
-                                style={{
-                                    background: isHostMsg
-                                        ? "linear-gradient(135deg, hsl(280 100% 50%), hsl(330 100% 55%))"
-                                        : m.is_tip
-                                            ? "linear-gradient(135deg, hsl(330 100% 45%), hsl(330 100% 60%))"
-                                            : isMe
-                                                ? "linear-gradient(135deg, hsl(200 80% 40%), hsl(200 80% 55%))"
-                                                : "rgba(255,255,255,0.08)",
-                                    border: isHostMsg
-                                        ? "1px solid hsl(280 100% 65% / 0.5)"
-                                        : m.is_tip
-                                            ? "1px solid hsl(330 100% 60% / 0.5)"
-                                            : "1px solid rgba(255,255,255,0.1)",
-                                    color: "#fff",
-                                }}
-                            >
-                                {isHostMsg ? <Crown size={10} /> : m.sender_name[0]?.toUpperCase()}
+                            <div className="shrink-0 mt-0.5">
+                                <div
+                                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold overflow-hidden"
+                                    style={{
+                                        background: avatarBg,
+                                        boxShadow: `0 0 0 2px ${ringColor}, 0 2px 8px rgba(0,0,0,0.3)`,
+                                        color: "#fff",
+                                    }}
+                                >
+                                    {m.sender_id && avatarMap[m.sender_id] ? (
+                                        <img src={avatarMap[m.sender_id]} alt="" className="w-full h-full object-cover" />
+                                    ) : isHostMsg ? <Crown size={12} /> : m.sender_name[0]?.toUpperCase()}
+                                </div>
                             </div>
 
-                            {/* Message bubble */}
-                            <div className={`flex-1 min-w-0 ${isMe ? "items-end" : ""} flex flex-col`}>
-                                <div className={`flex items-baseline gap-1.5 flex-wrap ${isMe ? "flex-row-reverse" : ""}`}>
+                            {/* Content */}
+                            <div className={`flex-1 min-w-0 flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                                {/* Name row */}
+                                <div className={`flex items-center gap-1.5 mb-0.5 flex-wrap ${isMe ? "flex-row-reverse" : ""}`}>
                                     <span
-                                        className="text-[13px] font-bold leading-none shrink-0"
-                                        style={{
-                                            color: isHostMsg
-                                                ? "hsl(280 100% 75%)"
-                                                : m.is_tip
-                                                    ? primaryLight
-                                                    : isMe
-                                                        ? "hsl(200 80% 70%)"
-                                                        : "hsl(330 100% 65%)",
-                                            textShadow: isHostMsg ? "0 0 8px hsl(280 100% 65% / 0.5)" : "none",
-                                        }}
+                                        className="text-[12px] font-bold leading-none"
+                                        style={{ color: nameColor, textShadow: isHostMsg ? "0 0 8px hsl(280 100% 65% / 0.4)" : "none" }}
                                     >
                                         {m.sender_name}
-                                        {m.sender_id && <UserBadgeDisplay userId={m.sender_id} />}
-                                        {isHostMsg && (
-                                            <span
-                                                className="ml-1 text-[8px] font-black uppercase tracking-widest px-1 rounded"
-                                                style={{
-                                                    background: "hsl(280 100% 40% / 0.4)",
-                                                    border: "1px solid hsl(280 100% 60% / 0.4)",
-                                                    color: "hsl(280 100% 85%)",
-                                                }}
-                                            >
-                                                Creator
-                                            </span>
-                                        )}
                                     </span>
-                                    {m.is_tip && m.tip_amount && (
+                                    {m.sender_id && <UserBadgeDisplay userId={m.sender_id} />}
+                                    {isHostMsg && (
                                         <span
-                                            className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+                                            className="text-[7px] font-black uppercase tracking-[0.1em] px-1.5 py-px rounded-sm"
                                             style={{
-                                                background: "hsl(330 100% 40% / 0.4)",
-                                                border: "1px solid hsl(330 100% 55% / 0.4)",
-                                                color: "hsl(330 100% 85%)",
+                                                background: "linear-gradient(135deg, hsl(280 100% 40% / 0.5), hsl(330 100% 45% / 0.3))",
+                                                border: "1px solid hsl(280 100% 60% / 0.3)",
+                                                color: "hsl(280 100% 88%)",
+                                            }}
+                                        >
+                                            Creator
+                                        </span>
+                                    )}
+                                    {isTip && m.tip_amount && (
+                                        <span
+                                            className="text-[8px] font-black uppercase tracking-wider px-1.5 py-px rounded-full"
+                                            style={{
+                                                background: "linear-gradient(135deg, hsl(330 100% 40% / 0.4), hsl(350 100% 50% / 0.3))",
+                                                border: "1px solid hsl(330 100% 55% / 0.35)",
+                                                color: "hsl(330 100% 88%)",
                                             }}
                                         >
                                             💰 ${m.tip_amount}
                                         </span>
                                     )}
+                                    <span className="text-[9px] text-white/20 font-mono opacity-0 group-hover:opacity-100 transition-opacity ml-0.5">
+                                        {time}
+                                    </span>
                                 </div>
-                                <p
-                                    className={`text-[14px] leading-snug mt-0.5 break-words max-w-[90%] px-2.5 py-1.5 rounded-xl ${isMe ? "self-end" : "self-start"}`}
+
+                                {/* Message bubble */}
+                                <div
+                                    className="max-w-[88%] px-3 py-1.5 rounded-2xl text-[13px] leading-relaxed break-words"
                                     style={{
-                                        background: isMe
-                                            ? "hsl(200 80% 40% / 0.25)"
-                                            : isHostMsg
-                                                ? "hsl(280 100% 40% / 0.15)"
-                                                : "rgba(255,255,255,0.05)",
-                                        color: "rgba(255,255,255,0.82)",
-                                        border: isMe
-                                            ? "1px solid hsl(200 80% 55% / 0.2)"
-                                            : isHostMsg
-                                                ? "1px solid hsl(280 100% 55% / 0.2)"
-                                                : "1px solid rgba(255,255,255,0.06)",
+                                        background: bubbleBg,
+                                        border: bubbleBorder,
+                                        color: "rgba(255,255,255,0.85)",
+                                        borderTopLeftRadius: isMe ? "16px" : "4px",
+                                        borderTopRightRadius: isMe ? "4px" : "16px",
+                                        backdropFilter: "blur(4px)",
                                     }}
                                 >
                                     {m.message}
-                                </p>
+                                </div>
                             </div>
                         </div>
                     );

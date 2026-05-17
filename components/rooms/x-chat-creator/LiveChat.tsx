@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { createClient } from "@/utils/supabase/client";
 import { cs } from "@/utils/currency";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface ChatMsg {
     id: string;
@@ -171,6 +172,9 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
 
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
+    const senderIds = useMemo(() => messages.map(m => m.sender_id).filter(Boolean) as string[], [messages]);
+    const avatarMap = useAvatarMap(senderIds);
+
     return (
         <div className="panel-glass rounded-lg flex flex-col h-full overflow-hidden w-full pgx-chat-wrapper">
             {/* Header */}
@@ -240,9 +244,15 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                             transition={{ delay: Math.min(i * 0.02, 0.5) }}
                             className="flex items-start gap-2 py-1"
                         >
-                            <span className="text-lg flex-shrink-0">
-                                {icon}
-                            </span>
+                            {m.sender_id && avatarMap[m.sender_id] ? (
+                                <span className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden">
+                                    <img src={avatarMap[m.sender_id]} alt="" className="w-full h-full object-cover" />
+                                </span>
+                            ) : (
+                                <span className="text-lg flex-shrink-0">
+                                    {icon}
+                                </span>
+                            )}
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-baseline gap-2">
                                     <span className="font-semibold text-sm text-foreground">{m.sender_name}</span>

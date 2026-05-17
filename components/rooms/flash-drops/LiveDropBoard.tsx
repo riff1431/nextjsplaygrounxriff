@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Image, Video, Play, Lock, Unlock } from "lucide-react";
+import { Image, Video, Play, Lock, Unlock, X, Expand, Download } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface FlashDrop {
     id: string;
@@ -57,6 +58,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
     const [, setTick] = useState(0);
     const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
     const [unlockingId, setUnlockingId] = useState<string | null>(null);
+    const [viewingDrop, setViewingDrop] = useState<FlashDrop | null>(null);
 
     // Tick every second to update countdown display
     useEffect(() => {
@@ -131,6 +133,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
     });
 
     return (
+        <>
         <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3 flex flex-col">
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
@@ -180,12 +183,16 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                                 onClick={() => {
                                     if (isLocked) {
                                         handleUnlock(drop);
+                                    } else if (drop.media_url) {
+                                        setViewingDrop(drop);
                                     }
                                 }}
-                                disabled={isUnlocking || (!isLocked && isPaid)}
+                                disabled={isUnlocking}
                                 className={`text-left rounded-xl border bg-black/40 transition-all group overflow-hidden flex flex-col ${isLocked
                                     ? "border-primary/40 hover:border-primary/80 cursor-pointer hover:shadow-[0_0_20px_hsl(330_100%_55%/0.3)]"
-                                    : "border-primary/25 cursor-default"
+                                    : drop.media_url
+                                        ? "border-primary/25 cursor-pointer hover:border-primary/50 hover:shadow-[0_0_15px_hsl(330_100%_55%/0.15)]"
+                                        : "border-primary/25 cursor-default"
                                     }`}
                             >
                                 {/* Media thumbnail */}
@@ -303,5 +310,108 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                 </div>
             )}
         </div>
+
+            {/* Lightbox Modal */}
+            <AnimatePresence>
+                {viewingDrop && viewingDrop.media_url && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                        style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(16px)' }}
+                        onClick={() => setViewingDrop(null)}
+                        onKeyDown={(e) => e.key === 'Escape' && setViewingDrop(null)}
+                        tabIndex={0}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                            className="relative max-w-3xl w-full max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
+                            style={{
+                                background: 'linear-gradient(145deg, hsl(270 30% 8%), hsl(330 20% 6%))',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 40px hsl(330 100% 55% / 0.1)',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal header */}
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] shrink-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-black/50 ${rarityColor[viewingDrop.rarity]}`}>
+                                        {viewingDrop.rarity}
+                                    </span>
+                                    <span className="font-bold text-sm text-white/90 truncate">{viewingDrop.title}</span>
+                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.05] text-[10px] text-white/40 shrink-0">
+                                        {viewingDrop.kind === "Video" ? <Video size={10} /> : <Image size={10} />}
+                                        {viewingDrop.kind}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <a
+                                        href={viewingDrop.media_url}
+                                        download
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title="Download"
+                                    >
+                                        <Download size={15} />
+                                    </a>
+                                    <button
+                                        onClick={() => setViewingDrop(null)}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Media content */}
+                            <div className="flex-1 flex items-center justify-center min-h-0 p-2 bg-black/40">
+                                {viewingDrop.kind === "Video" ? (
+                                    <video
+                                        src={viewingDrop.media_url}
+                                        className="max-w-full max-h-[70vh] rounded-lg"
+                                        controls
+                                        autoPlay
+                                        playsInline
+                                    />
+                                ) : (
+                                    <img
+                                        src={viewingDrop.media_url}
+                                        alt={viewingDrop.title}
+                                        className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                                    />
+                                )}
+                            </div>
+
+                            {/* Modal footer */}
+                            <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/[0.06] shrink-0">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[11px] text-white/30">Ends in</span>
+                                    <span className="text-[11px] font-mono font-bold text-white/50 tabular-nums">{formatCountdown(viewingDrop.ends_at)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {viewingDrop.price > 0 && (
+                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500/15 text-green-400 border border-green-500/20">
+                                            <Unlock size={9} />
+                                            Unlocked
+                                        </span>
+                                    )}
+                                    <span className="text-[10px] text-white/25">
+                                        {viewingDrop.inventory_remaining}/{viewingDrop.inventory_total} left
+                                    </span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     );
 }
