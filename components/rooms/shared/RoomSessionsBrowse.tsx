@@ -411,8 +411,8 @@ export default function RoomSessionsBrowse({
                         )}
                     </div>
                 ) : (
-                    /* ── Sessions Grid ── */
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))", gap: "14px" }}>
+                    {/* ── Sessions Grid (Standardized 2x3x4 Layout) ── */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredSessions.map((session, i) => {
                             const isHovered = hoveredCard === session.id;
                             const price = Number(session.entry_fee) || 0;
@@ -472,16 +472,26 @@ export default function RoomSessionsBrowse({
                                         <h3 style={{ fontSize: "14px", fontWeight: 700, color: isHovered ? accentColor : "#fff", margin: "0 0 4px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                                             {session.title}
                                         </h3>
-                                        {session.description && (
-                                            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", margin: "0 0 2px", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
-                                                {session.description}
+                                        <div style={{ minHeight: "32px", marginBottom: "8px" }}>
+                                            <p style={{
+                                                fontSize: "11px",
+                                                color: "rgba(255,255,255,0.5)",
+                                                margin: 0,
+                                                lineHeight: 1.4,
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                display: "-webkit-box",
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: "vertical" as const
+                                            }}>
+                                                {session.description || " "}
                                             </p>
-                                        )}
+                                        </div>
 
                                     </div>
 
                                     {/* Creator row */}
-                                    <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: "8px", borderTop: `1px solid hsla(${accentHsl}, 0.1)`, borderBottom: `1px solid hsla(${accentHsl}, 0.1)`, background: `hsla(${accentHsl}, 0.02)` }}>
+                                    <div style={{ padding: "8px 14px", display: "flex", alignItems: "center", gap: "8px", borderTop: `1px solid hsla(${accentHsl}, 0.1)`, borderBottom: `1px solid hsla(${accentHsl}, 0.1)`, background: `hsla(${accentHsl}, 0.04)` }}>
                                         <div style={{ width: 28, height: 28, borderRadius: "8px", background: accentGradient, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, border: `2px solid ${accentBorder}` }}>
                                             {session.creator?.avatar_url ? (
                                                 <img src={session.creator.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

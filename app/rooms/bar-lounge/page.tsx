@@ -422,16 +422,16 @@ export default function BarLoungeRoom() {
                                                 }}>
                                                     {session.title || "Premium Nightclub Experience"}
                                                 </h3>
-                                                {session.description && (
+                                                <div style={{ minHeight: "16px", marginBottom: "8px" }}>
                                                     <p style={{
                                                         fontSize: "11px", color: "hsla(45,100%,95%,0.6)",
-                                                        margin: "0 0 8px", lineHeight: 1.4,
+                                                        margin: 0, lineHeight: 1.4,
                                                         overflow: "hidden", display: "-webkit-box",
                                                         WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as const
                                                     }}>
-                                                        {session.description}
+                                                        {session.description || " "}
                                                     </p>
-                                                )}
+                                                </div>
                                             </div>
 
                                             {/* Creator row */}

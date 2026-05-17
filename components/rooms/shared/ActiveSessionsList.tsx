@@ -90,7 +90,7 @@ export default function ActiveSessionsList({
 
     return (
         <>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {sessions.map((session) => (
                 <div
                     key={session.id}
@@ -162,9 +162,24 @@ export default function ActiveSessionsList({
                     </div>
 
                     {/* Title */}
-                    <h4 style={{ color: "#fff", fontSize: "14px", fontWeight: 600, margin: "0 0 8px", lineHeight: 1.3 }}>
+                    <h4 style={{ color: "#fff", fontSize: "14px", fontWeight: 600, margin: "0 0 4px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {session.title}
                     </h4>
+                    <div style={{ minHeight: "32px", marginBottom: "12px" }}>
+                        <p style={{
+                            fontSize: "11px",
+                            color: "rgba(255,255,255,0.4)",
+                            margin: 0,
+                            lineHeight: 1.4,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical" as const
+                        }}>
+                            {session.description || " "}
+                        </p>
+                    </div>
 
 
                     {/* Action button */}
