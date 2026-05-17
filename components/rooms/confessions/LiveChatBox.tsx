@@ -13,6 +13,7 @@ interface ChatMsg {
     sender_name: string;
     message: string;
     created_at: string;
+    is_system?: boolean;
 }
 
 interface LiveChatBoxProps {
@@ -42,7 +43,7 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
         async function fetchMessages() {
             let query = supabase
                 .from("room_chat_messages")
-                .select("id, sender_id, sender_name, message, created_at")
+                .select("id, sender_id, sender_name, message, created_at, is_system")
                 .eq("room_id", roomId)
                 .order("created_at", { ascending: true })
                 .limit(50);
@@ -174,22 +175,34 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
                     </div>
                 ) : (
                     messages.map((msg) => (
-                        <div key={msg.id} className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300">
-                                {msg.sender_name?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-baseline gap-1.5">
-                                    <span className={`text-xs font-bold truncate ${msg.sender_id === user?.id ? "text-rose-400" : "text-white/80"}`}>
-                                        {msg.sender_name}
-                                    </span>
-                                    <UserBadgeDisplay userId={msg.sender_id} />
-                                    <span className="text-white/20 text-[9px] ml-auto shrink-0">
-                                        {formatTime(msg.created_at)}
-                                    </span>
+                        <div key={msg.id} className={`flex gap-2 ${msg.is_system ? 'py-0.5' : ''}`}>
+                            {msg.is_system ? (
+                                /* ── System / Activity Message ── */
+                                <div className="w-full px-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/15">
+                                    <p className="text-[11px] font-semibold text-amber-300/90 leading-relaxed">
+                                        {msg.message}
+                                    </p>
                                 </div>
-                                <p className="text-white/50 text-xs leading-relaxed">{msg.message}</p>
-                            </div>
+                            ) : (
+                                /* ── Regular User Message ── */
+                                <>
+                                    <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300">
+                                        {msg.sender_name?.charAt(0)?.toUpperCase() || "?"}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className={`text-xs font-bold truncate ${msg.sender_id === user?.id ? "text-rose-400" : "text-white/80"}`}>
+                                                {msg.sender_name}
+                                            </span>
+                                            <UserBadgeDisplay userId={msg.sender_id} />
+                                            <span className="text-white/20 text-[9px] ml-auto shrink-0">
+                                                {formatTime(msg.created_at)}
+                                            </span>
+                                        </div>
+                                        <p className="text-white/50 text-xs leading-relaxed">{msg.message}</p>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))
                 )}

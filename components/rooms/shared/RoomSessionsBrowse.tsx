@@ -411,7 +411,7 @@ export default function RoomSessionsBrowse({
                         )}
                     </div>
                 ) : (
-                    {/* ── Sessions Grid (Standardized 2x3x4 Layout) ── */}
+                    /* ── Sessions Grid (Standardized 2x3x4 Layout) ── */
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredSessions.map((session, i) => {
                             const isHovered = hoveredCard === session.id;

@@ -606,7 +606,7 @@ function ConfessionsRoom() {
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/tip`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ confessionId, reactionType: label, amount })
+                body: JSON.stringify({ confessionId, reactionType: label, amount, sessionId: urlSessionId })
             });
             const data = await res.json();
             if (data.success) {

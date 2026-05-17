@@ -18,7 +18,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
-    const { confessionId, reactionType, amount } = body;
+    const { confessionId, reactionType, amount, sessionId } = body;
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -105,6 +105,34 @@ export async function POST(
             : `${fanName} sent a ${reactionType} reaction (${SYM}${amount}) in the room`,
         reference_id: confessionId ?? roomId,
     });
+
+    // Emoji map for reaction types
+    const reactionEmoji: Record<string, string> = {
+        KISS: "💋",
+        LOVE: "❤️",
+        SPICY: "🔥",
+        DIAMOND: "💎",
+    };
+    const emoji = reactionEmoji[reactionType] || "💰";
+    const systemMsg = `${emoji} ${fanName} sent a ${reactionType} reaction (${SYM}${amount})!`;
+
+    // Insert activity message into live chat
+    const chatPayload: any = {
+        room_id: roomId,
+        sender_id: user.id,
+        sender_name: "System",
+        message: systemMsg,
+        is_system: true,
+        system_type: "reaction_tip",
+    };
+    if (sessionId) chatPayload.session_id = sessionId;
+
+    const { error: chatErr } = await supabase.from("room_chat_messages").insert(chatPayload);
+    // Fallback: retry without session_id if FK constraint fails
+    if (chatErr && chatErr.code === "23503" && sessionId) {
+        delete chatPayload.session_id;
+        await supabase.from("room_chat_messages").insert(chatPayload);
+    }
 
     return NextResponse.json({ success: true });
 }
