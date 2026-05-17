@@ -41,6 +41,7 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
     const [rollerPacks, setRollerPacks] = useState<RollerPack[]>([]);
     const [purchasedPackNames, setPurchasedPackNames] = useState<Set<string>>(new Set());
     const [viewingPack, setViewingPack] = useState<RollerPack | null>(null);
+    const [deliveryMediaUrl, setDeliveryMediaUrl] = useState<string | null>(null);
 
     // Fetch dynamic roller packs
     const fetchPacks = useCallback(async () => {
@@ -135,9 +136,47 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
         return () => { supabase.removeChannel(channel); };
     }, [roomId, sessionId, user]);
 
-    // Listen for status updates on the fan's own request
+    // Fetch fan's latest pending request on mount (recover state after page reload)
+    useEffect(() => {
+        if (!roomId || !user) return;
+        const fetchMyPending = async () => {
+            try {
+                let query = supabase
+                    .from("flash_drop_requests")
+                    .select("id, status, content")
+                    .eq("room_id", roomId)
+                    .eq("fan_id", user.id)
+                    .eq("status", "pending")
+                    .order("created_at", { ascending: false })
+                    .limit(1);
+                if (sessionId) query = query.eq("session_id", sessionId);
+                let { data, error } = await query;
+                // Fallback if session_id column doesn't exist
+                if (error && error.message?.includes('session_id')) {
+                    ({ data } = await supabase
+                        .from("flash_drop_requests")
+                        .select("id, status, content")
+                        .eq("room_id", roomId)
+                        .eq("fan_id", user.id)
+                        .eq("status", "pending")
+                        .order("created_at", { ascending: false })
+                        .limit(1));
+                }
+                // Only recover if the request is a real custom request (not impulse/pack)
+                if (data && data.length > 0 && !data[0].content.includes('Impulse') && !data[0].content.includes('Purchased Pack')) {
+                    setMyRequestId(data[0].id);
+                    setRequestStatus("submitted");
+                }
+            } catch { /* ignore */ }
+        };
+        fetchMyPending();
+    }, [roomId, user, sessionId]);
+
+    // Listen for status updates on the fan's own request (realtime + polling fallback)
     useEffect(() => {
         if (!roomId || !myRequestId) return;
+
+        // Realtime listener
         const channel = supabase
             .channel(`my-request-${myRequestId}`)
             .on("postgres_changes", {
@@ -146,19 +185,49 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                 table: "flash_drop_requests",
                 filter: `id=eq.${myRequestId}`,
             }, (payload) => {
-                const newStatus = (payload.new as any).status;
-                if (newStatus === "accepted") {
+                const updated = payload.new as any;
+                if (updated.status === "accepted") {
                     setRequestStatus("accepted");
+                    // Store delivery content if creator attached media
+                    if (updated.content?.includes('|__MEDIA__|')) {
+                        setDeliveryMediaUrl(updated.content.split('|__MEDIA__|')[1] || null);
+                    }
                     toast.success("🎉 Your drop request was accepted!");
-                } else if (newStatus === "declined") {
+                } else if (updated.status === "declined") {
                     setRequestStatus("declined");
-                    toast.error("❌ Your drop request was declined.");
+                    toast.error("Your drop request was declined.");
                 }
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
-    }, [roomId, myRequestId]);
+        // Polling fallback — check every 5 seconds in case realtime misses
+        const pollInterval = setInterval(async () => {
+            try {
+                const { data } = await supabase
+                    .from("flash_drop_requests")
+                    .select("status, content")
+                    .eq("id", myRequestId)
+                    .single();
+                if (data) {
+                    if (data.status === "accepted" && requestStatus !== "accepted") {
+                        setRequestStatus("accepted");
+                        if (data.content?.includes('|__MEDIA__|')) {
+                            setDeliveryMediaUrl(data.content.split('|__MEDIA__|')[1] || null);
+                        }
+                        toast.success("🎉 Your drop request was accepted!");
+                    } else if (data.status === "declined" && requestStatus !== "declined") {
+                        setRequestStatus("declined");
+                        toast.error("Your drop request was declined.");
+                    }
+                }
+            } catch { /* ignore */ }
+        }, 5000);
+
+        return () => {
+            supabase.removeChannel(channel);
+            clearInterval(pollInterval);
+        };
+    }, [roomId, myRequestId, requestStatus]);
 
     const handleSubmitRequest = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -185,13 +254,13 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
             const res = await fetch(`/api/v1/rooms/${roomId}/flash-drops/request`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content: description.trim(), amount: reqAmount }),
+                body: JSON.stringify({ content: description.trim(), amount: reqAmount, sessionId }),
             });
             const data = await res.json();
             if (data.success) {
                 setMyRequestId(data.request?.id ?? null);
                 setRequestStatus("submitted");
-                toast.success("📩 Request submitted — waiting for creator!");
+                toast.success("Request submitted — waiting for creator!");
                 setDescription("");
                 setAmount("");
             } else {
@@ -319,78 +388,140 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                     <h2 className="fd-font-tech text-[10px] font-black text-white/90 uppercase tracking-[0.15em]">Request A Drop</h2>
                 </div>
 
+                {/* Status banners */}
                 {requestStatus === "submitted" && (
-                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-yellow-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'linear-gradient(135deg, hsl(45 80% 50% / 0.08), hsl(45 80% 50% / 0.04))', border: '1px solid hsl(45 80% 50% / 0.2)' }}>
-                        <Loader2 size={12} className="animate-spin" /> Request pending — awaiting creator...
+                    <div className="mb-2.5 p-3 rounded-xl flex flex-col gap-2" style={{ background: 'linear-gradient(135deg, hsl(45 80% 50% / 0.06), hsl(45 80% 50% / 0.03))', border: '1px solid hsl(45 80% 50% / 0.15)' }}>
+                        <div className="flex items-center justify-center gap-2 text-[11px] text-yellow-300 font-semibold">
+                            <Loader2 size={13} className="animate-spin" />
+                            <span>Request pending — awaiting creator...</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { setRequestStatus("idle"); setMyRequestId(null); setDeliveryMediaUrl(null); }}
+                            className="text-[9px] font-bold text-white/25 hover:text-white/50 uppercase tracking-wider transition-colors self-center"
+                        >
+                            Cancel & submit new
+                        </button>
                     </div>
                 )}
                 {requestStatus === "accepted" && (
-                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-green-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'hsl(140 60% 40% / 0.08)', border: '1px solid hsl(140 60% 40% / 0.2)' }}>
-                        <PartyPopper size={12} /> Your request was accepted!
+                    <div className="mb-2.5 p-3 rounded-xl flex flex-col gap-2.5" style={{ background: 'hsl(140 60% 40% / 0.06)', border: '1px solid hsl(140 60% 40% / 0.15)' }}>
+                        <div className="flex items-center justify-center gap-2 text-[11px] text-green-300 font-semibold">
+                            <PartyPopper size={13} />
+                            <span>Your request was accepted!</span>
+                        </div>
+                        {deliveryMediaUrl && (
+                            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid hsl(140 60% 40% / 0.2)' }}>
+                                {deliveryMediaUrl.match(/\.(mp4|ogg|webm|mov|avi)$/i) ? (
+                                    <video src={deliveryMediaUrl} controls className="w-full max-h-40 object-contain bg-black/60" />
+                                ) : (
+                                    <img src={deliveryMediaUrl} alt="Delivered content" className="w-full max-h-40 object-contain bg-black/60" />
+                                )}
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => { setRequestStatus("idle"); setMyRequestId(null); setDeliveryMediaUrl(null); }}
+                            className="w-full py-2 rounded-lg fd-font-tech font-bold text-[10px] text-white/40 hover:text-white/70 border border-white/[0.06] hover:border-white/15 transition-all uppercase tracking-wider"
+                        >
+                            Make Another Request
+                        </button>
                     </div>
                 )}
                 {requestStatus === "declined" && (
-                    <div className="mb-2.5 p-2.5 rounded-xl text-[11px] text-red-300 text-center font-semibold flex items-center justify-center gap-1.5" style={{ background: 'hsl(0 60% 40% / 0.08)', border: '1px solid hsl(0 60% 40% / 0.2)' }}>
-                        <XCircle size={12} /> Request declined. Try a new one!
+                    <div className="mb-2.5 p-3 rounded-xl flex flex-col gap-2.5" style={{ background: 'hsl(0 60% 40% / 0.06)', border: '1px solid hsl(0 60% 40% / 0.15)' }}>
+                        <div className="flex items-center justify-center gap-2 text-[11px] text-red-300 font-semibold">
+                            <XCircle size={13} />
+                            <span>Request declined — try a different one!</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { setRequestStatus("idle"); setMyRequestId(null); setDeliveryMediaUrl(null); }}
+                            className="w-full py-2 rounded-lg fd-font-tech font-bold text-[10px] text-white/40 hover:text-white/70 border border-white/[0.06] hover:border-white/15 transition-all uppercase tracking-wider"
+                        >
+                            Try Again
+                        </button>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2.5 flex-1 min-h-0">
-                    <div className="flex-1 min-h-0 flex flex-col">
-                        <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5">What would you like?</label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe what you'd like to see..."
-                            disabled={submitting || requestStatus === "submitted"}
-                            className="flex-1 min-h-[70px] w-full rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-body focus:outline-none transition-all resize-none disabled:opacity-40"
-                            style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.15)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
-                            onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.5)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 20px hsl(330 100% 55% / 0.1)'; }}
-                            onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
-                        />
-                    </div>
-                    <div>
-                        <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">Your Offer</label>
-                        <div className="relative">
-                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 fd-font-tech font-black text-sm text-primary/60 pointer-events-none">{cs()}</span>
-                            <input
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                placeholder="10 - 1000"
-                                type="number"
-                                min="10"
-                                max="1000"
-                                disabled={submitting || requestStatus === "submitted"}
-                                className="w-full rounded-xl pl-8 pr-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-tech font-bold focus:outline-none transition-all disabled:opacity-40"
+                {/* Request form — only show when idle or after reset */}
+                {(requestStatus === "idle" || requestStatus === "declined") && (
+                    <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2.5 flex-1 min-h-0">
+                        <div className="flex-1 min-h-0 flex flex-col">
+                            <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5">What would you like?</label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Describe what you'd like to see..."
+                                disabled={submitting}
+                                className="flex-1 min-h-[70px] w-full rounded-xl px-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-body focus:outline-none transition-all resize-none disabled:opacity-40"
                                 style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.15)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
                                 onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.5)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 20px hsl(330 100% 55% / 0.1)'; }}
                                 onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
                             />
                         </div>
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={submitting || !roomId || requestStatus === "submitted"}
-                        className="w-full py-3 rounded-xl fd-font-tech font-black text-sm text-white transition-all uppercase tracking-[0.15em] disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98] relative overflow-hidden group"
-                        style={{
-                            background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(300 100% 55%), hsl(330 100% 60%))",
-                            boxShadow: "0 4px 20px hsl(330 100% 55% / 0.35), 0 0 40px hsl(330 100% 55% / 0.1), inset 0 1px 0 rgba(255,255,255,0.2)",
-                            textShadow: "0 1px 3px rgba(0,0,0,0.3)"
-                        }}
-                    >
-                        <span className="relative z-10">{submitting ? "Submitting..." : requestStatus === "submitted" ? "⏳ Pending..." : "Submit Request"}</span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
-                    </button>
-                    {requestStatus !== "idle" && requestStatus !== "submitted" && (
+                        <div>
+                            <label className="fd-font-body font-bold text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">Your Offer</label>
+                            <div className="relative">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 fd-font-tech font-black text-sm text-primary/60 pointer-events-none">{cs()}</span>
+                                <input
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    placeholder="10 - 1000"
+                                    type="number"
+                                    min="10"
+                                    max="1000"
+                                    disabled={submitting}
+                                    className="w-full rounded-xl pl-8 pr-3.5 py-3 text-sm text-white placeholder:text-white/20 fd-font-tech font-bold focus:outline-none transition-all disabled:opacity-40"
+                                    style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.15)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)' }}
+                                    onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.5)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 20px hsl(330 100% 55% / 0.1)'; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
+                                />
+                            </div>
+                        </div>
                         <button
-                            type="button"
-                            onClick={() => { setRequestStatus("idle"); setMyRequestId(null); }}
-                            className="w-full py-2 rounded-xl fd-font-tech font-bold text-[10px] text-white/40 hover:text-white/70 border border-white/[0.06] hover:border-white/15 transition-all uppercase tracking-wider"
+                            type="submit"
+                            disabled={submitting || !roomId}
+                            className="w-full py-3 rounded-xl fd-font-tech font-black text-sm text-white transition-all uppercase tracking-[0.15em] disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98] relative overflow-hidden group flex items-center justify-center gap-2"
+                            style={{
+                                background: "linear-gradient(135deg, hsl(330 100% 50%), hsl(300 100% 55%), hsl(330 100% 60%))",
+                                boxShadow: "0 4px 20px hsl(330 100% 55% / 0.35), 0 0 40px hsl(330 100% 55% / 0.1), inset 0 1px 0 rgba(255,255,255,0.2)",
+                                textShadow: "0 1px 3px rgba(0,0,0,0.3)"
+                            }}
                         >
-                            Make Another Request
+                            <span className="relative z-10 flex items-center gap-2">
+                                {submitting ? (
+                                    <><Loader2 size={14} className="animate-spin" /> Submitting...</>
+                                ) : (
+                                    <><Send size={14} /> Submit Request</>
+                                )}
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none" />
                         </button>
-                    )}
-                </form>
+                    </form>
+                )}
+
+                {/* When submitted/pending, show a compact summary */}
+                {requestStatus === "submitted" && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="relative inline-flex">
+                                <div className="absolute inset-0 rounded-full blur-xl animate-pulse" style={{ background: 'hsl(45 80% 50% / 0.1)', transform: 'scale(2)' }} />
+                                <div className="relative w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'hsl(45 80% 50% / 0.06)', border: '1px solid hsl(45 80% 50% / 0.15)' }}>
+                                    <Send size={18} style={{ color: 'hsl(45 80% 60% / 0.5)' }} />
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-white/20 mt-3">Creator is reviewing your request</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* When accepted and viewing delivered content */}
+                {requestStatus === "accepted" && !deliveryMediaUrl && (
+                    <div className="flex-1 flex items-center justify-center">
+                        <p className="text-[10px] text-white/20 text-center">Accepted with no media attached.<br/>Submit another request below!</p>
+                    </div>
+                )}
             </div>
 
             {/* Modal for full view of purchased pack media */}

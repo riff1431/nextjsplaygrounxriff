@@ -123,10 +123,12 @@ function FlashdropCreatorStudio() {
                     </div>
 
                     {/* 3rd: Custom Request Drops */}
-                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
-                            <ClipboardList size={13} className="text-primary" />
-                            <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Custom Request Drops</span>
+                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                        <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
+                            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55%), hsl(330 100% 55%))' }}>
+                                <ClipboardList size={10} className="text-white" />
+                            </div>
+                            <span className="text-xs font-black font-display tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 10px hsl(330 100% 55% / 0.3)' }}>Custom Request Drops</span>
                         </div>
                         <div className="flex-1 min-h-0 overflow-hidden">
                             <DropRequests
@@ -138,10 +140,12 @@ function FlashdropCreatorStudio() {
                     </div>
 
                     {/* 4th: Live Chat */}
-                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-4 py-2.5 shrink-0 border-b border-border/50">
-                            <MessageSquare size={13} className="text-primary" />
-                            <span className="text-xs font-bold font-display tracking-wider text-primary neon-text">Live Chat</span>
+                    <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                        <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
+                            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(170 80% 45%))' }}>
+                                <MessageSquare size={10} className="text-white" />
+                            </div>
+                            <span className="text-xs font-black font-display tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 10px hsl(330 100% 55% / 0.3)' }}>Live Chat</span>
                         </div>
                         <div className="flex-1 min-h-0 overflow-hidden">
                             <FlashDropLiveChat

@@ -180,14 +180,19 @@ const SummaryBox = ({ roomId, sessionId }: SummaryBoxProps) => {
     }, [roomId, fetchStats]);
 
     return (
-        <div className="glass-panel rounded-xl px-3 py-3 flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Title */}
-            <h2 className="font-display text-sm font-bold neon-text mb-2 tracking-wider shrink-0">
-                Summary Box
-            </h2>
+        <div className="glass-panel rounded-xl flex-1 flex flex-col min-h-0 overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-3 py-2.5 shrink-0 border-b border-white/[0.06]">
+                <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(160 80% 45%), hsl(200 80% 50%))' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                </div>
+                <h2 className="font-display text-xs font-black tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 10px hsl(330 100% 55% / 0.3)' }}>
+                    Summary Box
+                </h2>
+            </div>
 
             {/* Stats grid — 2 rows of 3 */}
-            <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+            <div className="flex-1 flex flex-col gap-1.5 min-h-0 px-3 py-2.5">
                 {/* Row 1: FANS · DROPS · PACKS */}
                 <div className="flex items-end gap-1.5">
                     <div className="flex-1 min-w-0">
@@ -207,7 +212,7 @@ const SummaryBox = ({ roomId, sessionId }: SummaryBoxProps) => {
                         <StatTile label="Requests" value={stats.pendingRequests} roomId={roomId} />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <StatTile label="Tips (${cs()})" value={stats.tips} roomId={roomId} />
+                        <StatTile label={`Tips (${cs()})`} value={stats.tips} roomId={roomId} />
                     </div>
                 </div>
             </div>

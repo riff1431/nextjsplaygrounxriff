@@ -92,68 +92,80 @@ const DropRequests = ({ className = "", roomId, sessionId }: { className?: strin
     return (
         <div className={`flex flex-col min-h-0 ${className}`}>
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_1.4fr_auto] gap-2 px-3 py-1.5 border-b border-white/8">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Fan</span>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Request</span>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-white/30 text-center w-28">Action</span>
+            <div className="grid grid-cols-[0.8fr_1.2fr_auto] gap-3 px-4 py-2 border-b border-white/[0.06]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30">Fan</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30">Request</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30 text-center w-32">Action</span>
             </div>
 
             {/* Request rows */}
             <div className="flex-1 overflow-y-auto themed-scrollbar min-h-0">
                 {requests.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-white/20">
-                        <Clock size={22} className="opacity-30" />
-                        <span className="text-[11px]">No requests yet</span>
+                    <div className="flex flex-col items-center justify-center h-full gap-2.5 py-8">
+                        <div className="relative">
+                            <div className="absolute inset-0 rounded-full blur-xl animate-pulse" style={{ background: 'hsl(280 80% 55% / 0.08)', transform: 'scale(2.5)' }} />
+                            <div className="relative w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55% / 0.08), hsl(330 80% 50% / 0.05))', border: '1px solid hsl(280 80% 55% / 0.1)' }}>
+                                <Clock size={18} strokeWidth={1.5} style={{ color: 'hsl(280 80% 60% / 0.4)' }} />
+                            </div>
+                        </div>
+                        <p className="text-[11px] text-white/25 text-center">No requests yet</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col divide-y divide-white/5">
+                    <div className="flex flex-col divide-y divide-white/[0.04]">
                         {requests.map((req) => {
                             const cfg = statusConfig[req.status];
                             const StatusIcon = cfg.icon;
                             return (
                                 <div key={req.id}
-                                    className="grid grid-cols-[1fr_1.4fr_auto] gap-2 items-center px-3 py-2 hover:bg-white/3 transition-colors">
+                                    className="grid grid-cols-[0.8fr_1.2fr_auto] gap-3 items-center px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                                     {/* Fan name */}
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                            <User size={10} className="text-primary/70" />
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, hsl(330 100% 55% / 0.15), hsl(280 80% 50% / 0.1))', border: '1px solid hsl(330 100% 55% / 0.15)' }}>
+                                            <User size={11} style={{ color: 'hsl(330 100% 70%)' }} />
                                         </div>
-                                        <span className="text-[11px] font-semibold text-white/85 truncate">{req.fan_name}</span>
+                                        <span className="text-xs font-semibold text-white/80 truncate">{req.fan_name}</span>
                                     </div>
 
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-white/70 truncate leading-tight">{req.content.split(' |__MEDIA__|')[0]}</p>
-                                        <p className="text-[10px] font-bold neon-text">{cs()}{req.amount}</p>
+                                    {/* Request content + amount */}
+                                    <div className="min-w-0 flex flex-col gap-0.5">
+                                        <p className="text-[11px] text-white/60 truncate leading-tight">{req.content.split(' |__MEDIA__|')[0]}</p>
+                                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold w-fit px-1.5 py-0.5 rounded" style={{ color: 'hsl(330 100% 70%)', background: 'hsl(330 100% 55% / 0.08)', border: '1px solid hsl(330 100% 55% / 0.1)' }}>
+                                            {cs()}{req.amount}
+                                        </span>
                                     </div>
 
                                     {/* Action area */}
-                                    <div className="w-28 flex justify-center">
+                                    <div className="w-32 flex justify-center">
                                         {req.status === "pending" ? (
                                             uploadingFor === req.id ? (
                                                 <div className="flex items-center gap-1.5">
-                                                    <label className={`px-2 py-1 rounded-lg text-[10px] font-bold text-white cursor-pointer transition-all ${delivering ? "opacity-50" : "bg-primary/70 hover:bg-primary/90"}`}>
+                                                    <label className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white cursor-pointer transition-all ${delivering ? "opacity-50" : ""}`}
+                                                        style={{ background: 'linear-gradient(135deg, hsl(330 100% 50%), hsl(280 80% 55%))', boxShadow: '0 2px 8px hsl(330 100% 55% / 0.2)' }}>
                                                         {delivering ? "…" : "Attach"}
                                                         <input type="file" className="hidden" disabled={delivering}
                                                             onChange={e => { if (e.target.files?.[0]) handleDeliveryUpload(req.id, e.target.files[0]); }} />
                                                     </label>
                                                     <button onClick={() => setUploadingFor(null)} disabled={delivering}
-                                                        className="text-[10px] text-white/40 hover:text-white">✕</button>
+                                                        className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/[0.06] transition-all">
+                                                        <XCircle size={12} />
+                                                    </button>
                                                 </div>
                                             ) : (
                                                 <div className="flex gap-1.5">
                                                     <button onClick={() => setUploadingFor(req.id)}
-                                                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary border border-primary/60 hover:bg-primary/20 hover:shadow-[0_0_10px_hsl(var(--primary)/0.3)] transition-all">
-                                                        <Paperclip size={9} /> Accept
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all hover:brightness-110 active:scale-[0.97]"
+                                                        style={{ background: 'linear-gradient(135deg, hsl(160 80% 40%), hsl(160 60% 35%))', boxShadow: '0 2px 8px hsl(160 80% 40% / 0.2)' }}>
+                                                        <CheckCircle2 size={10} /> Accept
                                                     </button>
                                                     <button onClick={() => handleAction(req.id, "declined")}
-                                                        className="px-2 py-1 rounded-lg text-[10px] font-bold text-white/40 border border-white/10 hover:border-red-400/40 hover:text-red-400 transition-all">
+                                                        className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white/35 border border-white/[0.08] hover:border-red-400/30 hover:text-red-400 transition-all">
                                                         Decline
                                                     </button>
                                                 </div>
                                             )
                                         ) : (
-                                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.color}`}>
-                                                <StatusIcon size={9} />
+                                            <span className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${cfg.bg} ${cfg.color}`}>
+                                                <StatusIcon size={10} />
                                                 {cfg.label}
                                             </span>
                                         )}

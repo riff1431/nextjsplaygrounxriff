@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, X, Zap, Image, Video, Upload } from "lucide-react";
+import { Plus, X, Zap, Image, Video, Upload, Loader2, Rocket, ChevronDown } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
@@ -447,40 +447,69 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
             {/* Add Drop Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="glass-panel rounded-2xl p-6 w-full max-w-sm mx-4 border border-primary/30 shadow-[0_0_40px_hsl(var(--neon-pink)/0.2)]">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-display text-lg font-bold neon-text tracking-wider">⚡ New Drop</h3>
-                            <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground">
-                                <X size={18} />
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)' }}
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        style={{
+                            background: 'linear-gradient(145deg, hsl(270 30% 10%), hsl(330 20% 7%))',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 40px hsl(330 100% 55% / 0.08)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(330 100% 50%), hsl(280 80% 55%))' }}>
+                                    <Zap size={14} className="text-white" />
+                                </div>
+                                <h3 className="font-display text-sm font-black uppercase tracking-wider" style={{ color: 'hsl(330 100% 80%)', textShadow: '0 0 12px hsl(330 100% 55% / 0.3)' }}>New Drop</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.06] transition-all"
+                            >
+                                <X size={16} />
                             </button>
                         </div>
-                        <form onSubmit={handleAddDrop} className="flex flex-col gap-3">
+
+                        {/* Modal body — scrollable */}
+                        <form onSubmit={handleAddDrop} className="flex flex-col gap-4 px-5 py-4 overflow-y-auto themed-scrollbar">
+                            {/* Title */}
                             <div>
-                                <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Title *</label>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Title <span style={{ color: 'hsl(330 100% 60%)' }}>*</span></label>
                                 <input
                                     value={form.title}
                                     onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                                     placeholder="e.g. Vault Drop: Full Reel"
                                     required
-                                    className="w-full bg-black/40 border border-primary/30 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/70 transition-all"
+                                    className="w-full rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none transition-all"
+                                    style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.12)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}
+                                    onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; }}
+                                    onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.12)'; }}
                                 />
                             </div>
+
                             {/* Kind selector — Photo / Video */}
                             <div>
-                                <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1.5 block">Kind</label>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Kind</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {KINDS.map(k => (
                                         <button
                                             key={k}
                                             type="button"
                                             onClick={() => { setForm(f => ({ ...f, kind: k })); clearMediaFile(); }}
-                                            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm font-bold font-display tracking-wider transition-all ${form.kind === k
-                                                ? "border-primary bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--neon-pink)/0.3)]"
-                                                : "border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/40"
-                                                }`}
+                                            className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200"
+                                            style={form.kind === k
+                                                ? { background: 'hsl(330 100% 55% / 0.1)', border: '1px solid hsl(330 100% 55% / 0.35)', color: 'hsl(330 100% 75%)', boxShadow: '0 0 12px hsl(330 100% 55% / 0.15)' }
+                                                : { background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)' }
+                                            }
                                         >
-                                            {k === "Photo" ? <Image size={16} /> : <Video size={16} />}
+                                            {k === "Photo" ? <Image size={14} /> : <Video size={14} />}
                                             {k}
                                         </button>
                                     ))}
@@ -489,7 +518,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
 
                             {/* File upload area */}
                             <div>
-                                <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1.5 block">
+                                <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">
                                     {form.kind === "Photo" ? "Attach Photo" : "Attach Video"}
                                 </label>
                                 <input
@@ -503,95 +532,136 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                                 {!mediaPreview ? (
                                     <label
                                         htmlFor="drop-media-upload"
-                                        className="flex flex-col items-center justify-center gap-2 py-5 rounded-xl border-2 border-dashed border-primary/30 bg-black/30 cursor-pointer hover:border-primary/60 hover:bg-primary/5 transition-all"
+                                        className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl cursor-pointer transition-all"
+                                        style={{ background: 'hsl(270 30% 6% / 0.5)', border: '1.5px dashed hsl(330 100% 55% / 0.15)' }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; e.currentTarget.style.background = 'hsl(330 100% 55% / 0.04)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.15)'; e.currentTarget.style.background = 'hsl(270 30% 6% / 0.5)'; }}
                                     >
-                                        <Upload size={24} className="text-primary/60" />
-                                        <span className="text-xs text-muted-foreground">
+                                        <Upload size={20} style={{ color: 'hsl(330 100% 65% / 0.4)' }} />
+                                        <span className="text-[11px] text-white/30">
                                             Click to upload {form.kind === "Photo" ? "an image" : "a video"}
                                         </span>
                                     </label>
                                 ) : (
-                                    <div className="relative rounded-xl overflow-hidden border border-primary/30 bg-black/30">
+                                    <div className="relative rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
                                         {form.kind === "Photo" ? (
-                                            <img src={mediaPreview} alt="Preview" className="w-full h-28 object-cover" />
+                                            <img src={mediaPreview} alt="Preview" className="w-full h-32 object-cover" />
                                         ) : (
-                                            <video src={mediaPreview} className="w-full h-28 object-cover" controls />
+                                            <video src={mediaPreview} className="w-full h-32 object-cover" controls />
                                         )}
                                         <button
                                             type="button"
                                             onClick={clearMediaFile}
-                                            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-500/40 text-white transition-colors"
+                                            className="absolute top-2 right-2 w-6 h-6 rounded-md bg-black/60 backdrop-blur-sm hover:bg-red-500 text-white/60 hover:text-white flex items-center justify-center transition-all"
                                         >
-                                            <X size={14} />
+                                            <X size={12} />
                                         </button>
                                     </div>
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Rarity</label>
+                            {/* Rarity */}
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Rarity</label>
+                                <div className="relative">
                                     <select
                                         value={form.rarity}
                                         onChange={e => setForm(f => ({ ...f, rarity: e.target.value as any }))}
-                                        className="w-full bg-black/40 border border-primary/30 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:border-primary/70"
+                                        className="w-full rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none transition-all appearance-none cursor-pointer"
+                                        style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.12)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}
+                                        onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; }}
+                                        onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.12)'; }}
                                     >
                                         {RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
                                     </select>
+                                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2">
+
+                            {/* Price / Mins / Stock row */}
+                            <div className="grid grid-cols-3 gap-2.5">
                                 <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Price {cs()}</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="1"
-                                        value={form.price}
-                                        onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                                        placeholder="25"
-                                        className="w-full bg-black/40 border border-primary/30 rounded-lg px-2 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/70"
-                                    />
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Price ({cs()})</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-white/20 pointer-events-none">{cs()}</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={form.price}
+                                            onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                                            placeholder="25"
+                                            className="w-full rounded-lg pl-7 pr-2 py-2.5 text-sm text-white font-bold placeholder:text-white/20 focus:outline-none transition-all"
+                                            style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.12)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}
+                                            onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; }}
+                                            onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.12)'; }}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Mins</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="1440"
-                                        value={form.endsInMin}
-                                        onChange={e => setForm(f => ({ ...f, endsInMin: e.target.value }))}
-                                        className="w-full bg-black/40 border border-primary/30 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:border-primary/70"
-                                    />
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Duration</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="1440"
+                                            value={form.endsInMin}
+                                            onChange={e => setForm(f => ({ ...f, endsInMin: e.target.value }))}
+                                            className="w-full rounded-lg px-3 pr-9 py-2.5 text-sm text-white font-bold focus:outline-none transition-all"
+                                            style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.12)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}
+                                            onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; }}
+                                            onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.12)'; }}
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-white/20 pointer-events-none uppercase">min</span>
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold neon-text uppercase tracking-wider mb-1 block">Stock</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Stock</label>
                                     <input
                                         type="number"
                                         min="1"
                                         value={form.inventoryTotal}
                                         onChange={e => setForm(f => ({ ...f, inventoryTotal: e.target.value }))}
-                                        className="w-full bg-black/40 border border-primary/30 rounded-lg px-2 py-2 text-sm text-foreground focus:outline-none focus:border-primary/70"
+                                        className="w-full rounded-lg px-3 py-2.5 text-sm text-white font-bold focus:outline-none transition-all"
+                                        style={{ background: 'hsl(270 30% 6% / 0.8)', border: '1px solid hsl(330 100% 55% / 0.12)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}
+                                        onFocus={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.4)'; }}
+                                        onBlur={(e) => { e.currentTarget.style.borderColor = 'hsl(330 100% 55% / 0.12)'; }}
                                     />
                                 </div>
                             </div>
-                            <div className="flex gap-3 mt-1">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground text-sm font-bold font-display transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="flex-1 py-2 rounded-xl bg-primary text-white text-sm font-bold font-display tracking-wider hover:shadow-[0_0_20px_hsl(var(--neon-pink)/0.5)] transition-all disabled:opacity-60"
-                                >
-                                    {submitting ? "Adding..." : "🚀 Go Live"}
-                                </button>
-                            </div>
                         </form>
+
+                        {/* Modal footer */}
+                        <div className="flex gap-2.5 px-5 py-4 border-t border-white/[0.06] shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setShowModal(false)}
+                                className="flex-1 py-2.5 rounded-lg text-[11px] font-bold text-white/35 border border-white/[0.08] hover:text-white/60 hover:border-white/15 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddDrop}
+                                disabled={submitting}
+                                className="flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-wider text-white flex items-center justify-center gap-1.5 transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                                style={{
+                                    background: 'linear-gradient(135deg, hsl(330 100% 50%), hsl(280 80% 55%))',
+                                    boxShadow: '0 4px 15px hsl(330 100% 55% / 0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+                                }}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2 size={12} className="animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Rocket size={12} />
+                                        Go Live
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
