@@ -281,8 +281,8 @@ const Suga4URoom = () => {
 
                             {/* Secrets + Favorites side by side - takes ~40% height */}
                             <div className="flex-1 grid grid-cols-[1fr_1.5fr] gap-3 min-h-0">
-                                <CreatorSecrets roomId={roomId} hostId={hostId} />
-                                <CreatorFavorites roomId={roomId} hostId={hostId} />
+                                <CreatorSecrets roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                <CreatorFavorites roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                             </div>
                         </div>
 

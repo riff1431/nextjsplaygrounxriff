@@ -353,7 +353,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         if (!roomId) return;
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/secrets`, {
             method: 'POST',
-            body: JSON.stringify({ name, description, unlock_price, category, media_url, media_type })
+            body: JSON.stringify({ name, description, unlock_price, category, media_url, media_type, sessionId: sessionId || undefined })
         });
         const data = await res.json();
         if (data.secret) {
@@ -369,7 +369,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
             });
         }
         return data;
-    }, [roomId]);
+    }, [roomId, sessionId]);
     
     const deleteSecret = useCallback(async (id: string) => {
         if (!roomId) return;
@@ -382,7 +382,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         if (!roomId) return;
         const res = await fetch(`/api/v1/rooms/${roomId}/suga/favorites`, {
             method: 'POST',
-            body: JSON.stringify({ name, description, category, emoji, buy_price, reveal_price, link })
+            body: JSON.stringify({ name, description, category, emoji, buy_price, reveal_price, link, sessionId: sessionId || undefined })
         });
         const data = await res.json();
         if (data.favorite) {
@@ -398,7 +398,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
             });
         }
         return data;
-    }, [roomId]);
+    }, [roomId, sessionId]);
     
     const deleteFavorite = useCallback(async (id: string) => {
         if (!roomId) return;

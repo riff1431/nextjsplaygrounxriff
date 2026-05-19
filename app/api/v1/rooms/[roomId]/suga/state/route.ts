@@ -34,22 +34,26 @@ export async function GET(
         .eq('id', roomId)
         .single();
         
-    let secrets = [];
-    let favorites = [];
+    let secrets: any[] = [];
+    let favorites: any[] = [];
     
     if (room && room.host_id) {
-        const { data: sData } = await supabase
+        let secretsQuery = supabase
             .from("suga_creator_secrets")
             .select("*")
             .eq("creator_id", room.host_id)
             .order("created_at", { ascending: false });
+        if (sessionId) secretsQuery = secretsQuery.eq("session_id", sessionId);
+        const { data: sData } = await secretsQuery;
         secrets = sData || [];
 
-        const { data: fData } = await supabase
+        let favoritesQuery = supabase
             .from("suga_creator_favorites")
             .select("*")
             .eq("creator_id", room.host_id)
             .order("created_at", { ascending: false });
+        if (sessionId) favoritesQuery = favoritesQuery.eq("session_id", sessionId);
+        const { data: fData } = await favoritesQuery;
         favorites = fData || [];
     }
 

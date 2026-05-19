@@ -11,8 +11,8 @@ const categories = [
     { label: "DREAM", emoji: "👑" },
 ];
 
-const S4uCreatorSecrets = ({ roomId }: { roomId?: string }) => {
-    const { secrets, createSecret, deleteSecret } = useSuga4U(roomId || null);
+const S4uCreatorSecrets = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
+    const { secrets, createSecret, deleteSecret } = useSuga4U(roomId || null, sessionId || null);
     const [isAdding, setIsAdding] = useState(false);
     const [name, setName] = useState("");
     const [desc, setDesc] = useState("");

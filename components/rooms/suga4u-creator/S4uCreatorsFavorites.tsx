@@ -11,8 +11,8 @@ const categories = [
     { label: "DREAM", emoji: "👑" },
 ];
 
-const S4uCreatorsFavorites = ({ roomId }: { roomId?: string }) => {
-    const { favorites, createFavorite, deleteFavorite } = useSuga4U(roomId || null);
+const S4uCreatorsFavorites = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
+    const { favorites, createFavorite, deleteFavorite } = useSuga4U(roomId || null, sessionId || null);
     const [isAdding, setIsAdding] = useState(false);
     
     // Form state

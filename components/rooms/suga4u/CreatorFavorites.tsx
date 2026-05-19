@@ -13,8 +13,8 @@ const categories = [
     { label: "DREAM", emoji: "👑" },
 ];
 
-const CreatorFavorites = ({ roomId, hostId }: { roomId: string | null; hostId: string | null }) => {
-    const { favorites, sendGift } = useSuga4U(roomId);
+const CreatorFavorites = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
+    const { favorites, sendGift } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
     const [activeTab, setActiveTab] = React.useState("CUTE");

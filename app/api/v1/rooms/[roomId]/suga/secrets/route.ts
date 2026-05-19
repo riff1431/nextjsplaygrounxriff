@@ -10,7 +10,7 @@ export async function POST(
     
     try {
         const body = await request.json();
-        const { name, description, unlock_price, category, media_url, media_type } = body;
+        const { name, description, unlock_price, category, media_url, media_type, sessionId } = body;
         
         const supabase = await createClient();
         
@@ -29,17 +29,21 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden: Not room host" }, { status: 403 });
         }
 
-        const { data, error } = await supabase
-            .from("suga_creator_secrets")
-            .insert({
+        const insertPayload: any = {
                 creator_id: user.id,
                 name,
                 description: description || "",
                 unlock_price: Number(unlock_price),
                 category: category || "CUTE",
                 media_url: media_url || null,
-                media_type: media_type || null
-            })
+                media_type: media_type || null,
+                room_id: roomId,
+            };
+        if (sessionId) insertPayload.session_id = sessionId;
+
+        const { data, error } = await supabase
+            .from("suga_creator_secrets")
+            .insert(insertPayload)
             .select()
             .single();
 

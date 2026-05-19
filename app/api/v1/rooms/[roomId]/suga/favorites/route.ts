@@ -10,7 +10,7 @@ export async function POST(
     
     try {
         const body = await request.json();
-        const { name, description, category, emoji, buy_price, reveal_price } = body;
+        const { name, description, category, emoji, buy_price, reveal_price, link, sessionId } = body;
         
         const supabase = await createClient();
         
@@ -29,17 +29,22 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden: Not room host" }, { status: 403 });
         }
 
-        const { data, error } = await supabase
-            .from("suga_creator_favorites")
-            .insert({
+        const insertPayload: any = {
                 creator_id: user.id,
                 name,
                 description: description || "",
                 category: category || "CUTE",
                 emoji: emoji || "💖",
                 buy_price: Number(buy_price),
-                reveal_price: reveal_price ? Number(reveal_price) : null
-            })
+                reveal_price: reveal_price ? Number(reveal_price) : null,
+                link: link || null,
+                room_id: roomId,
+            };
+        if (sessionId) insertPayload.session_id = sessionId;
+
+        const { data, error } = await supabase
+            .from("suga_creator_favorites")
+            .insert(insertPayload)
             .select()
             .single();
 
