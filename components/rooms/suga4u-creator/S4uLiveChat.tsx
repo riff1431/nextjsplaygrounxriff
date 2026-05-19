@@ -1,10 +1,12 @@
 "use client";
 
 import { Heart, Smile } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -24,6 +26,10 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
     const { user } = useAuth();
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Collect sender IDs for avatar batch-fetching
+    const senderIds = useMemo(() => activity.map(m => m.fanId).filter(Boolean) as string[], [activity]);
+    const avatarMap = useAvatarMap(senderIds);
+
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         if (scrollRef.current) {
@@ -35,7 +41,7 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
         if (!input.trim() || !roomId) return;
         try {
             const senderName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Creator";
-            await sendMessage(input, senderName);
+            await sendMessage(input, senderName, user?.id);
             setInput("");
         } catch (err) {
             console.error("Failed to send message:", err);
@@ -62,12 +68,21 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
             <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 mb-3 space-y-3 min-h-0 chat-scroll flex flex-col pgx-chat-messages hide-scrollbar pgx-chat-messages hide-scrollbar">
                 {[...activity].reverse().map((msg, i) => (
                     <div key={msg.id || i} className="flex items-start gap-2">
-                        <span className="text-xl">{msg.type === "TIP" ? "💰" : "🌸"}</span>
+                        {/* User Avatar */}
+                        <div className="w-7 h-7 rounded-full bg-pink-500/15 border border-pink-500/25 shrink-0 flex items-center justify-center text-[10px] font-bold text-pink-300 overflow-hidden">
+                            {msg.fanId && avatarMap[msg.fanId] ? (
+                                <img src={avatarMap[msg.fanId]} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                msg.fanName?.charAt(0)?.toUpperCase() || "?"
+                            )}
+                        </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className={`text-sm font-semibold ${isHighlight(msg.type) ? "s4u-creator-text-gold" : "text-pink-400"}`}>
                                     {msg.fanName}
                                 </span>
+                                {/* User Badges (account type + membership pack) */}
+                                {msg.fanId && <UserBadgeDisplay userId={msg.fanId} />}
                                 {msg.amount > 0 && (
                                     <span className="text-xs bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full font-semibold border border-pink-500/30">
                                         ${msg.amount}

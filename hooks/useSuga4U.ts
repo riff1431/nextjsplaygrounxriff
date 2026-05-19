@@ -287,7 +287,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         return () => { supabase.removeChannel(channel); };
     }, [roomId, loadData]);
 
-    const sendMessage = useCallback(async (text: string, fanName: string) => {
+    const sendMessage = useCallback(async (text: string, fanName: string, fanId?: string) => {
         if (!roomId || !text.trim()) return;
         const insertPayload: any = {
             room_id: roomId,
@@ -296,6 +296,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
             label: text.trim(),
             amount: 0
         };
+        if (fanId) insertPayload.fan_id = fanId;
         if (sessionId) insertPayload.session_id = sessionId;
         const { data, error } = await supabase.from("suga_activity_events").insert(insertPayload).select().single();
         if (error) throw error;

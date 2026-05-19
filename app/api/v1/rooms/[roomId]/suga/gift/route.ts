@@ -51,6 +51,7 @@ export async function POST(
 
     await supabase.from("suga_activity_events").insert({
         room_id: roomId, type: "gift", fan_name: profile?.username || "Anonymous",
+        fan_id: user.id,
         label: `Sent ${giftType} Gift`, amount,
     });
 

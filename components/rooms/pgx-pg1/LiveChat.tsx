@@ -6,6 +6,7 @@ import { Send, Loader2 , Smile } from 'lucide-react';
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAvatarMap } from "@/hooks/useAvatarMap";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 interface ChatMsg {
     id: string;
@@ -161,7 +162,7 @@ const LiveChat = ({ roomId }: LiveChatProps) => {
                                     <span className={`text-xs font-medium truncate ${msg.user_id === user?.id ? "text-primary" : "text-foreground"}`}>
                                         {msg.username}
                                     </span>
-                                    <span className="text-[10px]">💜</span>
+                                    <UserBadgeDisplay userId={msg.user_id} />
                                     <span className="text-muted-foreground text-[10px] ml-auto shrink-0">
                                         {formatTime(msg.created_at)}
                                     </span>

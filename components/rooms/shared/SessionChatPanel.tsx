@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import { useSessionChat } from "@/hooks/useSessionChat";
 import { Send, MessageCircle , Smile } from 'lucide-react';
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 
 interface SessionChatPanelProps {
@@ -150,6 +151,7 @@ export default function SessionChatPanel({
                                     >
                                         {msg.username}
                                     </span>
+                                    {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
 
                                     <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px", wordBreak: "break-word" }}>
                                         {msg.message}

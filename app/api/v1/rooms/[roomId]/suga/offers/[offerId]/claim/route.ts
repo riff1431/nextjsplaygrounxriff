@@ -42,12 +42,15 @@ export async function POST(
     }
 
     // 3. Log Activity
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = user ? await supabase.from("profiles").select("username").eq("id", user.id).single() : { data: null };
     await supabase
         .from("suga_activity_events")
         .insert([{
             room_id: roomId,
             type: "OFFER_CLAIM",
-            fan_name: "Sim Fan",
+            fan_name: profile?.username || "Fan",
+            fan_id: user?.id || null,
             label: offer.title,
             amount: offer.price
         }]);

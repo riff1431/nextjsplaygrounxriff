@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Send } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import { useBarChat } from "@/hooks/useBarChat";
 import { useAuth } from "@/app/context/AuthContext";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
 
 interface LoungeChatProps {
     roomId?: string;
@@ -16,6 +17,10 @@ const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
     const { user } = useAuth();
     const { messages, sendMessage } = useBarChat(roomId ?? null, sessionId);
     const [message, setMessage] = useState("");
+
+    // Batch-fetch avatars for all senders
+    const senderIds = useMemo(() => messages.map(m => m.user_id).filter(Boolean) as string[], [messages]);
+    const avatarMap = useAvatarMap(senderIds);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -64,6 +69,16 @@ const LoungeChat = ({ roomId, sessionId }: LoungeChatProps) => {
                 )}
                 {messages.map((msg) => (
                     <div key={msg.id} className="flex items-start gap-2 text-sm">
+                        {/* User Avatar */}
+                        {!msg.is_system && (
+                            <div className="w-6 h-6 rounded-full bg-purple-500/15 border border-purple-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-purple-300 overflow-hidden mt-0.5">
+                                {msg.user_id && avatarMap[msg.user_id] ? (
+                                    <img src={avatarMap[msg.user_id]} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    (msg.handle?.charAt(0)?.toUpperCase() || "?")
+                                )}
+                            </div>
+                        )}
                         <div className="flex-1 min-w-0">
                             <span className={`font-medium ${getDisplayColor(msg)} text-xs`}>
                                 {msg.is_system ? "⚡ System" : (msg.handle || "Anonymous")}

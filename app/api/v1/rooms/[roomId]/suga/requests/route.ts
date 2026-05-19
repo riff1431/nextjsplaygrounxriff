@@ -38,6 +38,7 @@ export async function POST(
     const { roomId } = params;
     const supabase = await createClient();
     const body = await request.json();
+    const { data: { user } } = await supabase.auth.getUser();
 
     // Validate body...
     const { type, label, note, price, fanName, sessionId } = body;
@@ -68,6 +69,7 @@ export async function POST(
         room_id: roomId,
         type: "PAID_REQUEST",
         fan_name: fanName || "Anonymous",
+        fan_id: user?.id || null,
         label,
         amount: price
     };

@@ -24,7 +24,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
         if (!inputText.trim()) return;
         try {
             const senderName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
-            await sendMessage(inputText, senderName);
+            await sendMessage(inputText, senderName, user?.id);
             setInputText("");
         } catch (err) {
             console.error("Failed to send message:", err);
