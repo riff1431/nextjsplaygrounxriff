@@ -209,7 +209,7 @@ const Suga4UCreatorPage = () => {
                             <S4uCreatorsFavorites roomId={roomId || undefined} />
                         </div>
                         <div className="shrink-0">
-                            <S4uSessionSummary />
+                            <S4uSessionSummary roomId={roomId || undefined} sessionId={sessionId || undefined} />
                         </div>
                     </div>
 
