@@ -46,8 +46,8 @@ export async function GET() {
         let incoming = 0, outgoing = 0;
         (allTxs || []).forEach((tx: any) => {
             const amt = Number(tx.amount);
-            if (tx.type === 'deposit' || tx.type === 'credit') incoming += amt;
-            else if (tx.type === 'debit' || tx.type === 'withdrawal' || tx.type === 'transfer') outgoing += amt;
+            if (tx.type === 'deposit' || tx.type === 'credit' || tx.type === 'admin_credit') incoming += amt;
+            else if (tx.type === 'debit' || tx.type === 'withdrawal' || tx.type === 'transfer' || tx.type === 'admin_debit') outgoing += amt;
         });
         const correctBalance = Math.max(0, incoming - outgoing);
 

@@ -105,7 +105,7 @@ export default function WalletPage() {
                 wallet = newW;
             }
 
-            // 2. Transactions
+            // 2a. Transactions for display (limited)
             const { data: txs } = await supabase
                 .from("transactions")
                 .select("*")
@@ -113,60 +113,70 @@ export default function WalletPage() {
                 .order("created_at", { ascending: false })
                 .limit(200);
 
-            if (txs) {
-                setTransactions(txs);
+            if (txs) setTransactions(txs);
 
-                // Compute stats + available balance from the transaction ledger
+            // 2b. ALL completed transactions for accurate balance computation (no limit)
+            const { data: allCompletedTxs } = await supabase
+                .from("transactions")
+                .select("type, amount, status")
+                .eq("user_id", user.id)
+                .eq("status", "completed");
+
+            // Also fetch pending transactions for the pending stat
+            const { data: pendingTxs } = await supabase
+                .from("transactions")
+                .select("amount")
+                .eq("user_id", user.id)
+                .eq("status", "pending");
+
+            if (allCompletedTxs) {
                 let spent = 0;
                 let deposited = 0;
                 let credited = 0;
                 let adminCredits = 0;
                 let adminDebits = 0;
-                let pending = 0;
 
-                txs.forEach((tx: any) => {
-                    if (tx.status === "completed") {
-                        if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer" || tx.type === "admin_debit") {
-                            if (tx.type === "admin_debit") adminDebits += Number(tx.amount);
-                            else spent += Number(tx.amount);
-                        } else if (tx.type === "deposit") {
-                            deposited += Number(tx.amount);
-                        } else if (tx.type === "credit") {
-                            credited += Number(tx.amount);
-                        } else if (tx.type === "admin_credit") {
-                            adminCredits += Number(tx.amount);
-                        }
-                    }
-                    if (tx.status === "pending") {
-                        pending += Number(tx.amount);
+                allCompletedTxs.forEach((tx: any) => {
+                    const amt = Number(tx.amount);
+                    if (tx.type === "debit" || tx.type === "withdrawal" || tx.type === "transfer" || tx.type === "admin_debit") {
+                        if (tx.type === "admin_debit") adminDebits += amt;
+                        else spent += amt;
+                    } else if (tx.type === "deposit") {
+                        deposited += amt;
+                    } else if (tx.type === "credit") {
+                        credited += amt;
+                    } else if (tx.type === "admin_credit") {
+                        adminCredits += amt;
                     }
                 });
 
-                // True available balance = all money in − all money out
-                // Admin sets an absolute balance; trust the wallets table if an admin_credit/debit exists
-                const hasAdminAdjustment = txs.some((tx: any) =>
-                    (tx.type === "admin_credit" || tx.type === "admin_debit") && tx.status === "completed"
-                );
-
-                let computedBalance: number;
-                if (hasAdminAdjustment) {
-                    // Trust the wallet row — admin set it directly
-                    computedBalance = Number(wallet?.balance ?? 0);
-                } else {
-                    computedBalance = Math.max(0, deposited + credited - spent);
-                    // Sync wallets.balance if it drifted from reality
-                    if (wallet && Math.abs(Number(wallet.balance) - computedBalance) > 0.005) {
-                        await supabase
-                            .from("wallets")
-                            .update({ balance: computedBalance })
-                            .eq("id", wallet.id);
-                    }
-                }
+                let pending = 0;
+                (pendingTxs || []).forEach((tx: any) => {
+                    pending += Number(tx.amount);
+                });
 
                 setTotalSpent(spent + adminDebits);
                 setTotalDeposited(deposited + adminCredits);
                 setPendingAmount(pending);
-                setBalance(computedBalance);
+
+                // Compute correct balance from the FULL transaction ledger
+                const correctBalance = Math.max(0, deposited + credited + adminCredits - spent - adminDebits);
+                const dbBalance = Number(wallet?.balance ?? 0);
+
+                if (Math.abs(dbBalance - correctBalance) > 0.005) {
+                    // DB balance drifted — fix it silently
+                    console.warn(`Wallet balance drift detected: DB=${dbBalance}, Correct=${correctBalance}. Auto-fixing.`);
+                    if (wallet) {
+                        supabase
+                            .from("wallets")
+                            .update({ balance: correctBalance })
+                            .eq("id", wallet.id)
+                            .then(() => {});
+                    }
+                    setBalance(correctBalance);
+                } else {
+                    setBalance(dbBalance);
+                }
             } else {
                 // No transactions — trust wallets.balance
                 setBalance(Number(wallet?.balance ?? 0));
