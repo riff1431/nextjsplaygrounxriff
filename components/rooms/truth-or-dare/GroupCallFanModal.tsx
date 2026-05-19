@@ -41,6 +41,7 @@ export default function GroupCallFanModal({
     onDismiss,
 }: GroupCallFanModalProps) {
     const { status, type, agoraChannel, participantFanIds, creatorId } = callState;
+    const typeLabel = type === 'truth' ? 'Truth' : type === 'dare' ? 'Dare' : 'Sugar Goal';
 
     // ── Incoming invitation ────────────────────────────────────────────────────
     if (status === "invited") {
@@ -68,7 +69,7 @@ export default function GroupCallFanModal({
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 mb-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
                             <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">
-                                Live {type === 'truth' ? 'Truth' : 'Dare'} Campaign
+                                Live {typeLabel} Campaign
                             </span>
                         </div>
 
@@ -130,7 +131,7 @@ export default function GroupCallFanModal({
                         </div>
 
                         <span className="text-sm font-bold text-white tracking-wide">
-                            Group {type === 'truth' ? 'Truth' : 'Dare'} Call
+                            Group {typeLabel} Call
                         </span>
                     </div>
 

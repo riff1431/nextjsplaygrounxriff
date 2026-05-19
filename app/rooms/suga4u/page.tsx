@@ -19,6 +19,8 @@ import InvitationPopup from "@/components/rooms/InvitationPopup";
 import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import { toast } from "sonner";
+import { useGroupCall } from "@/hooks/useGroupCall";
+import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 
 import { createClient } from "@/utils/supabase/client";
 
@@ -40,6 +42,9 @@ const Suga4URoom = () => {
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
+
+    // Group call (after vote campaign goal reached)
+    const groupCall = useGroupCall(roomId, user?.id || null, "fan", "suga/group-vote");
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
@@ -329,6 +334,18 @@ const Suga4URoom = () => {
                         onDismiss={privateCall.dismiss}
                         hostAvatarUrl={hostAvatar || undefined}
                         hostName={hostName}
+                    />
+                )}
+
+                {/* Group Call Fan Modal */}
+                {groupCall.callState && user && (
+                    <GroupCallFanModal
+                        callState={groupCall.callState}
+                        userId={user.id}
+                        userName={user.user_metadata?.full_name || user.email?.split('@')[0] || "Fan"}
+                        onAcceptCall={groupCall.acceptCall}
+                        onDeclineCall={groupCall.declineCall}
+                        onDismiss={groupCall.dismiss}
                     />
                 )}
 

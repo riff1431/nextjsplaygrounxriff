@@ -57,7 +57,7 @@ export default function GroupCallCreatorModal({
 
                         {/* Call type */}
                         <span className="text-sm font-bold text-white tracking-wide">
-                            Group {type === 'truth' ? 'Truth' : 'Dare'} Call
+                            Group {type === 'truth' ? 'Truth' : type === 'dare' ? 'Dare' : 'Sugar Goal'} Call
                         </span>
 
                         {/* Host badge */}

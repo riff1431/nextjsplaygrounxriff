@@ -159,24 +159,11 @@ export default function WalletPage() {
                 setTotalDeposited(deposited + adminCredits);
                 setPendingAmount(pending);
 
-                // Compute correct balance from the FULL transaction ledger
-                const correctBalance = Math.max(0, deposited + credited + adminCredits - spent - adminDebits);
+                // Trust the database balance as the absolute source of truth.
+                // We do NOT recalculate and overwrite it from the ledger, as the ledger
+                // may contain seeded mock entries or history that doesn't match the current balance.
                 const dbBalance = Number(wallet?.balance ?? 0);
-
-                if (Math.abs(dbBalance - correctBalance) > 0.005) {
-                    // DB balance drifted — fix it silently
-                    console.warn(`Wallet balance drift detected: DB=${dbBalance}, Correct=${correctBalance}. Auto-fixing.`);
-                    if (wallet) {
-                        supabase
-                            .from("wallets")
-                            .update({ balance: correctBalance })
-                            .eq("id", wallet.id)
-                            .then(() => {});
-                    }
-                    setBalance(correctBalance);
-                } else {
-                    setBalance(dbBalance);
-                }
+                setBalance(dbBalance);
             } else {
                 // No transactions — trust wallets.balance
                 setBalance(Number(wallet?.balance ?? 0));

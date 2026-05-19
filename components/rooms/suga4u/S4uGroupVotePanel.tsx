@@ -24,8 +24,6 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
     const supabase = createClient();
     const [state, setState] = useState<CampaignState | null>(null);
     const [loadingVote, setLoadingVote] = useState(false);
-    const [completed, setCompleted] = useState(false);
-    const [hidden, setHidden] = useState(false);
 
     useEffect(() => {
         if (!roomId) return;
@@ -35,10 +33,6 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
             if (data?.group_vote_state) {
                 const s = data.group_vote_state as CampaignState;
                 setState(s);
-                if (s.isActive && s.current >= s.target) {
-                    setCompleted(true);
-                    setTimeout(() => setHidden(true), 10000);
-                }
             }
         };
         fetchInitialState();
@@ -50,15 +44,6 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
                 if (newData.group_vote_state) {
                     const s = newData.group_vote_state as CampaignState;
                     setState(s);
-                    // Check completion
-                    if (s.isActive && s.current >= s.target && !completed) {
-                        setCompleted(true);
-                        setTimeout(() => setHidden(true), 10000);
-                    } else if (!s.isActive) {
-                        // Reset if creator stops or restarts
-                        setCompleted(false);
-                        setHidden(false);
-                    }
                 }
             })
             .subscribe();
@@ -72,12 +57,10 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
                     return newState as CampaignState;
                 });
                 
-                if (updatedState.isActive && updatedState.current >= updatedState.target && !completed) {
-                    setCompleted(true);
-                    setTimeout(() => setHidden(true), 10000);
+                if (updatedState.isActive && updatedState.current >= updatedState.target) {
+                    // Goal reached — state persists, no hide
                 } else if (!updatedState.isActive) {
-                    setCompleted(false);
-                    setHidden(false);
+                    // Campaign stopped or reset
                 }
             })
             .subscribe();
@@ -86,7 +69,7 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
             supabase.removeChannel(dbChannel);
             supabase.removeChannel(broadcastChannel);
         };
-    }, [roomId, supabase, completed]);
+    }, [roomId, supabase]);
 
     const handleVote = async () => {
         if (loadingVote || !roomId || !state) return;
@@ -123,7 +106,7 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
         }
     };
 
-    if (!state || (!state.isActive && !state.label) || hidden) {
+    if (!state || (!state.isActive && !state.label)) {
         return (
             <div className="glass-panel p-3 bg-transparent border-gold/20 flex flex-col h-full items-center justify-center">
                 <div className="flex items-center justify-center mb-3 w-full">
@@ -175,6 +158,9 @@ export default function S4uGroupVotePanel({ roomId }: S4uGroupVotePanelProps) {
                         </p>
                         {!isDone && state.description && (
                             <p className="text-[10px] text-white/60 mt-0.5 line-clamp-1">{state.description}</p>
+                        )}
+                        {isDone && (
+                            <p className="text-[10px] text-green-400/70 mt-1 italic">Creator may start a group call soon!</p>
                         )}
                     </div>
                 </div>

@@ -10,11 +10,16 @@ export interface GroupCallState {
     creatorId: string;
     agoraChannel: string;
     participantFanIds: string[];
-    type: 'truth' | 'dare';
+    type: 'truth' | 'dare' | 'sugar';
     status: "invited" | "active" | "ended";
 }
 
-export function useGroupCall(roomId: string | null, userId: string | null, role: "fan" | "creator") {
+export function useGroupCall(
+    roomId: string | null,
+    userId: string | null,
+    role: "fan" | "creator",
+    apiBasePath: string = "truth-or-dare/group-vote"
+) {
     const [callState, setCallState] = useState<GroupCallState | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const supabaseRef = useRef(createClient());
@@ -116,7 +121,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
 
         async function hydrateFromDB() {
             try {
-                const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/active`);
+                const res = await fetch(`/api/v1/rooms/${roomId}/${apiBasePath}/call/active`);
                 if (!res.ok) return;
                 const { call } = await res.json();
                 if (!call) return;
@@ -146,10 +151,10 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         }
 
         hydrateFromDB();
-    }, [roomId, userId, role]);
+    }, [roomId, userId, role, apiBasePath]);
 
     // ─── Creator: Initiate Call ────────────────────────────────────────────────
-    const initiateCall = useCallback(async (type: 'truth' | 'dare') => {
+    const initiateCall = useCallback(async (type: 'truth' | 'dare' | 'sugar') => {
         if (!roomId) return null;
         // Guard: prevent double-initiation
         if (callState && callState.status === "active") {
@@ -158,7 +163,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         }
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call`, {
+            const res = await fetch(`/api/v1/rooms/${roomId}/${apiBasePath}/call`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ type }),
@@ -212,7 +217,7 @@ export function useGroupCall(roomId: string | null, userId: string | null, role:
         setCallState(prev => prev ? { ...prev, status: "ended" } : null);
         setTimeout(() => setCallState(null), 4000);
         try {
-            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/group-vote/call/${callState.callId}`, {
+            const res = await fetch(`/api/v1/rooms/${roomId}/${apiBasePath}/call/${callState.callId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "end" }),

@@ -22,6 +22,8 @@ import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncoming
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import { cs } from "@/utils/currency";
+import { useGroupCall } from "@/hooks/useGroupCall";
+import GroupCallCreatorModal from "@/components/rooms/truth-or-dare-creator/GroupCallCreatorModal";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -38,6 +40,9 @@ const Suga4UCreatorPage = () => {
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
+
+    // Group call after vote goal reached
+    const groupCall = useGroupCall(roomId, user?.id || null, "creator", "suga/group-vote");
 
     useEffect(() => {
         if (!roomId) return;
@@ -199,7 +204,10 @@ const Suga4UCreatorPage = () => {
                             <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
                         </div>
                         <div className="shrink-0 flex flex-col">
-                            <S4uCreatorGroupVote roomId={roomId || undefined} />
+                            <S4uCreatorGroupVote
+                                roomId={roomId || undefined}
+                                onStartCall={() => groupCall.initiateCall('sugar')}
+                            />
                         </div>
                     </div>
 
@@ -278,6 +286,17 @@ const Suga4UCreatorPage = () => {
                 roomName="Suga4U"
                 accentHsl="340, 75%, 55%"
             />
+
+            {/* Group Call Creator Modal */}
+            {groupCall.callState && user && (
+                <GroupCallCreatorModal
+                    callState={groupCall.callState}
+                    userId={user.id}
+                    creatorName={`${user.user_metadata?.full_name || "Creator"} (You)`}
+                    onEndCall={groupCall.endCall}
+                    onDismiss={groupCall.dismiss}
+                />
+            )}
         </div>
     );
 };

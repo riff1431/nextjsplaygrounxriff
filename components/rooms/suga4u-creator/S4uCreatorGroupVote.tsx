@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Flame } from "lucide-react";
+import { Flame, Video } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 interface CampaignState {
@@ -21,9 +21,10 @@ const DEFAULT_STATE: CampaignState = {
 
 interface S4uCreatorGroupVoteProps {
     roomId?: string | null;
+    onStartCall?: () => void;
 }
 
-const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
+const S4uCreatorGroupVote = ({ roomId, onStartCall }: S4uCreatorGroupVoteProps) => {
     const supabase = createClient();
     const [state, setState] = useState<CampaignState>(DEFAULT_STATE);
     const [loading, setLoading] = useState(false);
@@ -183,14 +184,23 @@ const S4uCreatorGroupVote = ({ roomId }: S4uCreatorGroupVoteProps) => {
                             </div>
                         </div>
                         
-                        <div className="mt-auto pt-2">
+                        <div className="mt-auto pt-2 flex gap-2">
                             <button
                                 onClick={() => handleAction("STOP")}
                                 disabled={loading}
-                                className="w-full py-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-xs transition-all disabled:opacity-50"
+                                className="flex-1 py-2 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-bold text-xs transition-all disabled:opacity-50"
                             >
-                                {loading ? "Stopping..." : "⏹ Stop Campaign"}
+                                {loading ? "Stopping..." : "⏹ Stop"}
                             </button>
+                            {isCompleted && onStartCall && (
+                                <button
+                                    onClick={onStartCall}
+                                    disabled={loading}
+                                    className="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-1 disabled:opacity-50"
+                                >
+                                    <Video className="w-3.5 h-3.5" /> Call Fans
+                                </button>
+                            )}
                         </div>
                     </div>
                 ) : (
