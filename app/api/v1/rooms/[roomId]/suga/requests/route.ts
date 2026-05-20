@@ -41,7 +41,7 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
 
     // Validate body...
-    const { type, label, note, price, fanName, sessionId } = body;
+    const { type, label, note, price, fanName, sessionId, customText } = body;
 
     const insertPayload: any = {
         room_id: roomId,
@@ -53,6 +53,7 @@ export async function POST(
         status: "pending"
     };
     if (sessionId) insertPayload.session_id = sessionId;
+    if (customText) insertPayload.custom_text = customText;
 
     const { data: newRequest, error } = await supabase
         .from("suga_paid_requests")
@@ -91,11 +92,15 @@ export async function PATCH(
     const supabase = await createClient();
     const body = await request.json();
 
-    const { requestId, status } = body;
+    const { requestId, status, responseText, responseMediaUrl } = body;
+
+    const updatePayload: any = { status };
+    if (responseText !== undefined) updatePayload.response_text = responseText;
+    if (responseMediaUrl !== undefined) updatePayload.response_media_url = responseMediaUrl;
 
     const { data: updatedRequest, error } = await supabase
         .from("suga_paid_requests")
-        .update({ status })
+        .update(updatePayload)
         .eq("id", requestId)
         .eq("room_id", roomId)
         .select()

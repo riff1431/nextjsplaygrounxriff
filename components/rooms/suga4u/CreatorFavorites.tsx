@@ -146,8 +146,8 @@ const CreatorFavorites = ({ roomId, hostId, sessionId }: { roomId: string | null
                                         </>
                                     ) : (
                                         <>
-                                            <p className="font-bold text-sm tracking-tight truncate text-white/50 flex items-center gap-1">
-                                                <EyeOff className="w-3.5 h-3.5 inline" /> Hidden Favorite
+                                            <p className="font-bold text-sm tracking-tight truncate text-white/80 flex items-center gap-1">
+                                                {item.emoji} {item.name}
                                             </p>
                                             <p className="text-gold font-bold text-xs">{cs()}{item.buy_price.toLocaleString()}</p>
                                         </>

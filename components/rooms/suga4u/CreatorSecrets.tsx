@@ -126,6 +126,9 @@ const CreatorSecrets = ({ roomId, hostId, sessionId }: { roomId: string | null; 
                                             
                                             {!isUnlocked && <Lock className="w-4 h-4 mx-auto mb-1 text-gold" />}
                                             <p className="text-[10px] font-semibold mb-1 leading-tight line-clamp-2 drop-shadow-md text-white">{s.name}</p>
+                                            {s.description && (
+                                                <p className="text-[9px] text-white/60 line-clamp-2 leading-snug mt-0.5 pointer-events-none">{s.description}</p>
+                                            )}
                                         </div>
                                         
                                         {!isUnlocked && (
@@ -139,9 +142,6 @@ const CreatorSecrets = ({ roomId, hostId, sessionId }: { roomId: string | null; 
                                             >
                                                 ${s.unlock_price} UNLOCK
                                             </button>
-                                        )}
-                                        {isUnlocked && s.description && (
-                                            <p className="text-[9px] text-white/80 line-clamp-3 mt-auto mb-1 pointer-events-none">{s.description}</p>
                                         )}
                                     </div>
                                 </div>

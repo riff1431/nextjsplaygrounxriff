@@ -31,7 +31,7 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
 
             // Deduct from wallet
-            const payment = await pay(hostId, g.amount, `Sugar Gift: ${g.name}`, roomId, 'suga_gift');
+            const payment = await pay(hostId, g.amount, `Suga Gift: ${g.name}`, roomId, 'suga_gift');
             if (!payment.success) {
                 toast.error(payment.error || "Payment failed");
                 return;
@@ -53,7 +53,7 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
         <div className="glass-panel p-3 bg-transparent border-gold/20">
             <div className="flex items-center justify-center mb-3">
                 <div className="h-px flex-1 bg-gold/30" />
-                <span className="section-title px-3">Send Sugar Gifts</span>
+                <span className="section-title px-3">Send Suga Gifts</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
             <div className="grid grid-cols-4 gap-2 mb-2">

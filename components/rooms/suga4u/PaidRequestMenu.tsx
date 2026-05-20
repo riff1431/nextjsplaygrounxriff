@@ -3,14 +3,15 @@ import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
+import CustomRequestModal from "@/components/rooms/suga4u/CustomRequestModal";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
 
 const quickRequests = [
-    { type: "POSE", name: "Pose", price: 15, emoji: "📸" },
-    { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️" },
-    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋" },
-    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧" },
+    { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
+    { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
+    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋", isCustomRequest: true },
+    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧", isCustomRequest: true },
 ];
 
 const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
@@ -18,10 +19,15 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
     const { user } = useAuth();
     const { balance, pay } = useWallet();
     const [confirmReq, setConfirmReq] = React.useState<typeof quickRequests[0] | null>(null);
+    const [customReq, setCustomReq] = React.useState<typeof quickRequests[0] | null>(null);
 
     const handleRequestClick = (r: typeof quickRequests[0]) => {
         if (!roomId || !hostId) return;
-        setConfirmReq(r);
+        if (r.isCustomRequest) {
+            setCustomReq(r);
+        } else {
+            setConfirmReq(r);
+        }
     };
 
     const handleConfirmRequest = async () => {
@@ -48,6 +54,43 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
         }
     };
 
+    const handleCustomRequest = async (customText: string) => {
+        if (!roomId || !hostId || !customReq) return;
+        const r = customReq;
+        try {
+            const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+            
+            // Deduct from wallet
+            const payment = await pay(hostId, r.price, `Custom Request: ${r.name}`, roomId, 'suga_request');
+            if (!payment.success) {
+                toast.error(payment.error || "Payment failed");
+                return;
+            }
+
+            // Create Request with custom text
+            const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: r.type,
+                    label: r.name,
+                    note: customText,
+                    price: r.price,
+                    fanName,
+                    sessionId: sessionId || undefined,
+                    customText,
+                }),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || "Failed");
+
+            toast.success(`${r.emoji} Custom request sent: ${r.name}`, { description: `${cs()}${r.price} — your message was delivered` });
+        } catch (err) {
+            console.error("Failed to send custom request:", err);
+            toast.error("Failed to send custom request");
+        }
+    };
+
     return (
         <div className="glass-panel p-3 bg-transparent border-gold/20">
             <div className="flex items-center justify-center mb-3">
@@ -69,7 +112,7 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                 ))}
             </div>
 
-            {/* Spend Confirmation Modal */}
+            {/* Standard Spend Confirmation Modal (Pose, Shoutout) */}
             {confirmReq && (
                 <SpendConfirmModal
                     isOpen={true}
@@ -81,6 +124,19 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                     walletBalance={balance}
                     description={`Pay ${cs()}${confirmReq.price} to request ${confirmReq.name}?`}
                     confirmLabel="Pay & Request"
+                />
+            )}
+
+            {/* Custom Request Modal (Quick Tease, Custom Clip) */}
+            {customReq && (
+                <CustomRequestModal
+                    isOpen={true}
+                    onClose={() => setCustomReq(null)}
+                    onConfirm={handleCustomRequest}
+                    requestName={customReq.name}
+                    requestEmoji={customReq.emoji}
+                    amount={customReq.price}
+                    walletBalance={balance}
                 />
             )}
         </div>

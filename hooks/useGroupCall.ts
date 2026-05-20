@@ -187,7 +187,8 @@ export function useGroupCall(
                     type,
                     status: "active"
                 });
-                toast.success(`Group ${type} call started! ${data.participantFanIds.length} fans invited.`);
+                const typeLabel = type === 'truth' ? 'Truth' : type === 'dare' ? 'Dare' : 'Suga';
+                toast.success(`Group ${typeLabel} call started! ${data.participantFanIds.length} fans invited.`);
                 return data;
             }
             return null;

@@ -47,6 +47,7 @@ const Suga4URoom = () => {
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
     const [incomingItems, setIncomingItems] = useState<any[]>([]);
     const [unseenCount, setUnseenCount] = useState(0);
+    const [previewMedia, setPreviewMedia] = useState<{ url: string; label: string } | null>(null);
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
@@ -287,7 +288,7 @@ const Suga4URoom = () => {
                 <div className="relative z-10 flex flex-col items-center">
                     <div className="w-16 h-16 border-4 border-gold/20 border-t-gold rounded-full animate-spin mb-8 shadow-[0_0_30px_hsl(42_90%_55%/0.4)]" />
                     <h1 className="text-2xl md:text-4xl font-black text-gold uppercase tracking-[0.2em] mb-3 text-center px-4 fd-font-tech" style={{ textShadow: '0 0 20px hsla(42, 90%, 55%, 0.5)' }}>
-                        Waiting for Sugar
+                        Waiting for Suga
                     </h1>
                     <p className="text-white/60 text-sm font-medium tracking-wide">
                         The session will begin shortly.
@@ -419,40 +420,88 @@ const Suga4URoom = () => {
                                                             return (
                                                                 <div
                                                                     key={item.id}
-                                                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                                    className="flex flex-col gap-1.5 p-3 rounded-xl hover:bg-white/5 transition-all group"
                                                                     style={{
                                                                         background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
                                                                         border: `1px solid ${sc.border}`
                                                                     }}
                                                                 >
-                                                                    <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                                                                            <span className="text-xs font-bold text-white truncate">
-                                                                                {item.label || item.type || 'Request'}
-                                                                            </span>
-                                                                            <span className="text-[10px] font-black text-pink-400">{cs()}{item.price || item.amount || 0}</span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                                <span className="text-xs font-bold text-white truncate">
+                                                                                    {item.label || item.type || 'Request'}
+                                                                                </span>
+                                                                                <span className="text-[10px] font-black text-pink-400">{cs()}{item.price || item.amount || 0}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span
+                                                                                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
+                                                                                    style={{
+                                                                                        borderColor: sc.border,
+                                                                                        color: sc.text,
+                                                                                        background: `${sc.border}10`
+                                                                                    }}
+                                                                                >
+                                                                                    {item.status}
+                                                                                </span>
+                                                                                <span className="text-[9px] text-white/30 flex items-center gap-1">
+                                                                                    <Clock className="w-2.5 h-2.5" />
+                                                                                    {formatTimeAgo(item.created_at)}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span
-                                                                                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
-                                                                                style={{
-                                                                                    borderColor: sc.border,
-                                                                                    color: sc.text,
-                                                                                    background: `${sc.border}10`
-                                                                                }}
-                                                                            >
-                                                                                {item.status}
-                                                                            </span>
-                                                                            <span className="text-[9px] text-white/30 flex items-center gap-1">
-                                                                                <Clock className="w-2.5 h-2.5" />
-                                                                                {formatTimeAgo(item.created_at)}
-                                                                            </span>
-                                                                        </div>
-                                                                        {item.note && (
-                                                                            <p className="text-[10px] text-white/40 mt-1 italic truncate">"{item.note}"</p>
-                                                                        )}
                                                                     </div>
+
+                                                                    {/* Fan's original custom text */}
+                                                                    {item.custom_text && (
+                                                                        <div className="ml-8 bg-black/20 rounded-lg px-2.5 py-1.5 border-l-2 border-pink-500/30">
+                                                                            <p className="text-[9px] text-pink-400/50 uppercase tracking-wider mb-0.5">Your Request</p>
+                                                                            <p className="text-[10px] text-white/50 italic truncate">&quot;{item.custom_text}&quot;</p>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Creator's response */}
+                                                                    {item.status === 'accepted' && (item.response_text || item.response_media_url) && (
+                                                                        <div className="ml-8 bg-emerald-500/5 rounded-lg px-2.5 py-1.5 border-l-2 border-emerald-500/30">
+                                                                            <p className="text-[9px] text-emerald-400/60 uppercase tracking-wider mb-0.5">Creator Response</p>
+                                                                            {item.response_text && (
+                                                                                <p className="text-[10px] text-white/60">{item.response_text}</p>
+                                                                            )}
+                                                                            {item.response_media_url && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setPreviewMedia({ url: item.response_media_url, label: item.label || 'Response' });
+                                                                                    }}
+                                                                                    className="mt-1.5 w-full rounded-lg overflow-hidden border border-emerald-500/20 hover:border-emerald-400/40 transition-all cursor-pointer bg-transparent p-0 text-left group/media"
+                                                                                >
+                                                                                    {/* Thumbnail preview */}
+                                                                                    {item.response_media_url.match(/\.(mp4|webm|mov|avi)$/i) || item.response_media_url.includes('video') ? (
+                                                                                        <div className="w-full h-20 bg-black/40 flex items-center justify-center relative">
+                                                                                            <span className="text-2xl">▶️</span>
+                                                                                            <span className="absolute bottom-1 right-1.5 text-[8px] bg-black/60 text-white/60 px-1.5 py-0.5 rounded">VIDEO</span>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <img
+                                                                                            src={item.response_media_url}
+                                                                                            alt="Creator media"
+                                                                                            className="w-full h-20 object-cover group-hover/media:brightness-110 transition-all"
+                                                                                        />
+                                                                                    )}
+                                                                                    <div className="px-2 py-1 bg-emerald-500/10 flex items-center gap-1">
+                                                                                        <span className="text-[9px] text-emerald-400 font-medium">📎 Tap to view</span>
+                                                                                    </div>
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Fallback: show note if no custom_text */}
+                                                                    {!item.custom_text && item.note && (
+                                                                        <p className="text-[10px] text-white/40 ml-8 italic truncate">&quot;{item.note}&quot;</p>
+                                                                    )}
                                                                 </div>
                                                             );
                                                         })}
@@ -579,6 +628,83 @@ const Suga4URoom = () => {
                         onDismiss={groupCall.dismiss}
                     />
                 )}
+
+                {/* Media Preview Modal */}
+                <AnimatePresence>
+                    {previewMedia && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[9999] flex items-center justify-center"
+                        >
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                                onClick={() => setPreviewMedia(null)}
+                            />
+
+                            {/* Modal Content */}
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="relative z-10 w-full max-w-2xl mx-4 rounded-2xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                            <span className="text-sm">📎</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white">{previewMedia.label}</h3>
+                                            <p className="text-[10px] text-white/40 uppercase tracking-wider">Creator Response Media</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setPreviewMedia(null)}
+                                        className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {/* Media */}
+                                <div className="p-4 flex items-center justify-center bg-black/30 max-h-[70vh]">
+                                    {previewMedia.url.match(/\.(mp4|webm|mov|avi)$/i) ||
+                                     previewMedia.url.includes('video') ? (
+                                        <video
+                                            src={previewMedia.url}
+                                            controls
+                                            autoPlay
+                                            className="max-w-full max-h-[65vh] rounded-lg"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={previewMedia.url}
+                                            alt="Creator response"
+                                            className="max-w-full max-h-[65vh] rounded-lg object-contain"
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="px-5 py-3 border-t border-white/5 flex items-center justify-between">
+                                    <p className="text-[10px] text-white/30">Delivered by creator</p>
+                                    <a
+                                        href={previewMedia.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                                    >
+                                        Open in new tab ↗
+                                    </a>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
             </div>
         </ProtectRoute>

@@ -41,7 +41,7 @@ export default function GroupCallFanModal({
     onDismiss,
 }: GroupCallFanModalProps) {
     const { status, type, agoraChannel, participantFanIds, creatorId } = callState;
-    const typeLabel = type === 'truth' ? 'Truth' : type === 'dare' ? 'Dare' : 'Sugar Goal';
+    const typeLabel = type === 'truth' ? 'Truth' : type === 'dare' ? 'Dare' : 'Suga Goal';
 
     // ── Incoming invitation ────────────────────────────────────────────────────
     if (status === "invited") {

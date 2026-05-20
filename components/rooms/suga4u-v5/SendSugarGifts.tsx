@@ -10,7 +10,7 @@ const SendSugarGifts = () => (
     <div className="glass-panel p-3">
         <div className="flex items-center justify-center mb-3">
             <div className="h-px flex-1 bg-gold/30" />
-            <span className="section-title px-3">Send Sugar Gifts</span>
+            <span className="section-title px-3">Send Suga Gifts</span>
             <div className="h-px flex-1 bg-gold/30" />
         </div>
         <div className="grid grid-cols-4 gap-2 mb-2">

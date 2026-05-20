@@ -2,16 +2,17 @@ import React from "react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useWallet } from "@/hooks/useWallet";
+import CustomRequestModal from "@/components/rooms/suga4u/CustomRequestModal";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
 
 const actions = [
-    { name: "Say My Name", price: 20, emoji: "💋" },
-    { name: "Sponsor Room", price: 100, emoji: "💎" },
-    { name: "Voice Note", price: 35, emoji: "🎙️" },
-    { name: "Photo Drop", price: 45, emoji: "📸" },
-    { name: "Private 1-on-1", price: 500, emoji: "👑", full: true, isPrivateCall: true },
+    { name: "Say My Name", price: 20, emoji: "💋", isCustomRequest: true },
+    { name: "Sponsor Room", price: 100, emoji: "💎", isCustomRequest: true },
+    { name: "Voice Note", price: 35, emoji: "🎙️", isCustomRequest: true },
+    { name: "Photo Drop", price: 45, emoji: "📸", isCustomRequest: true },
+    { name: "Private 1-on-1", price: 500, emoji: "👑", full: true, isPrivateCall: true, isCustomRequest: false },
 ];
 
 interface QuickPaidActionsProps {
@@ -26,11 +27,53 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
     const { createRequest } = useSuga4U(roomId, sessionId);
     const { user } = useAuth();
     const { balance, pay } = useWallet();
+    const [customAction, setCustomAction] = React.useState<typeof actions[0] | null>(null);
     const [confirmAction, setConfirmAction] = React.useState<typeof actions[0] | null>(null);
 
     const handleActionClick = (a: typeof actions[0]) => {
         if (!roomId || !hostId) return;
-        setConfirmAction(a);
+        if (a.isCustomRequest) {
+            setCustomAction(a);
+        } else {
+            setConfirmAction(a);
+        }
+    };
+
+    const handleCustomAction = async (customText: string) => {
+        if (!roomId || !hostId || !customAction) return;
+        const a = customAction;
+        try {
+            const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
+            
+            // Deduct from wallet
+            const payment = await pay(hostId, a.price, `Custom Request: ${a.name}`, roomId, 'suga_action');
+            if (!payment.success) {
+                toast.error(payment.error || "Payment failed");
+                return;
+            }
+
+            // Create Request with custom text
+            const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: "ACTION",
+                    label: a.name,
+                    note: customText,
+                    price: a.price,
+                    fanName,
+                    sessionId: sessionId || undefined,
+                    customText,
+                }),
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || "Failed");
+
+            toast.success(`${a.emoji} Custom request sent: ${a.name}`, { description: `${cs()}${a.price} — your message was delivered` });
+        } catch (err) {
+            console.error("Failed to send custom request:", err);
+            toast.error("Failed to send custom request");
+        }
     };
 
     const handleConfirmAction = async () => {
@@ -101,7 +144,20 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                 </button>
             ))}
             
-            {/* Spend Confirmation Modal */}
+            {/* Custom Request Modal (Say My Name, Sponsor Room, Voice Note, Photo Drop) */}
+            {customAction && (
+                <CustomRequestModal
+                    isOpen={true}
+                    onClose={() => setCustomAction(null)}
+                    onConfirm={handleCustomAction}
+                    requestName={customAction.name}
+                    requestEmoji={customAction.emoji}
+                    amount={customAction.price}
+                    walletBalance={balance}
+                />
+            )}
+
+            {/* Spend Confirmation Modal (Private 1-on-1 only) */}
             {confirmAction && (
                 <SpendConfirmModal
                     isOpen={true}

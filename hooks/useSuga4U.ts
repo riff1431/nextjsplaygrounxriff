@@ -42,6 +42,9 @@ export type PaidRequest = {
     price: number;
     status: string;
     createdAt: number;
+    customText?: string | null;
+    responseText?: string | null;
+    responseMediaUrl?: string | null;
 };
 
 export type CreatorSecret = {
@@ -145,7 +148,10 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
                     note: r.note,
                     price: Number(r.price),
                     status: r.status,
-                    createdAt: new Date(r.created_at).getTime()
+                    createdAt: new Date(r.created_at).getTime(),
+                    customText: r.custom_text || null,
+                    responseText: r.response_text || null,
+                    responseMediaUrl: r.response_media_url || null,
                 })));
             }
         } catch (err) {
@@ -189,13 +195,21 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
                         note: r.note,
                         price: Number(r.price),
                         status: r.status,
-                        createdAt: new Date(r.created_at).getTime()
+                        createdAt: new Date(r.created_at).getTime(),
+                        customText: r.custom_text || null,
+                        responseText: r.response_text || null,
+                        responseMediaUrl: r.response_media_url || null,
                     }, ...prev];
                 });
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_paid_requests', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const u = payload.new;
-                setRequests(prev => prev.map(r => r.id === u.id ? { ...r, status: u.status } : r));
+                setRequests(prev => prev.map(r => r.id === u.id ? {
+                    ...r,
+                    status: u.status,
+                    responseText: u.response_text || null,
+                    responseMediaUrl: u.response_media_url || null,
+                } : r));
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'suga_offer_drops', filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const u = payload.new;
@@ -418,6 +432,18 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         return await res.json();
     }, [roomId]);
 
+    const respondToRequest = useCallback(async (requestId: string, responseText: string, responseMediaUrl: string | null) => {
+        if (!roomId) return;
+        // Optimistic UI update
+        setRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'accepted', responseText, responseMediaUrl } : r));
+        const res = await fetch(`/api/v1/rooms/${roomId}/suga/requests/${requestId}/respond`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ responseText, responseMediaUrl })
+        });
+        return await res.json();
+    }, [roomId]);
+
     return {
         activity,
         offers,
@@ -433,6 +459,7 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         deleteSecret,
         createFavorite,
         deleteFavorite,
-        updateRequestStatus
+        updateRequestStatus,
+        respondToRequest
     };
 }

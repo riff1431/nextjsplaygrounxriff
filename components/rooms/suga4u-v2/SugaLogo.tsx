@@ -13,7 +13,7 @@ const SugaLogo = () => (
                 <span className="text-pink glow-text-pink">4</span>
                 <span className="text-gold glow-text-gold">U</span>
             </h1>
-            <p className="text-[10px] tracking-[0.25em] text-gold-light uppercase">Premium Sugar Experience</p>
+            <p className="text-[10px] tracking-[0.25em] text-gold-light uppercase">Premium Suga Experience</p>
         </div>
     </div>
 );
