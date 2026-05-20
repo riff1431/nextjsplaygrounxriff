@@ -1,9 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // ──────────────────────────────────────────────────
 // POST /api/v1/rooms/sessions/[sessionId]/end
-// Creator ends a session
+// Creator or Admin ends a session
 // ──────────────────────────────────────────────────
 export async function POST(
     request: NextRequest,
@@ -18,14 +19,33 @@ export async function POST(
     }
 
     try {
-        // Verify creator
-        const { data: session } = await supabase
+        // Use admin client to bypass RLS for reads & writes
+        const adminDb = createAdminClient();
+
+        // Fetch session
+        const { data: session, error: fetchError } = await adminDb
             .from("room_sessions")
             .select("id, creator_id, room_id, title, status")
             .eq("id", sessionId)
             .single();
 
-        if (!session || session.creator_id !== user.id) {
+        if (fetchError || !session) {
+            return NextResponse.json({ error: "Session not found" }, { status: 404 });
+        }
+
+        // Authorize: creator OR admin
+        const isCreator = session.creator_id === user.id;
+        let isAdmin = false;
+        if (!isCreator) {
+            const { data: profile } = await adminDb
+                .from("profiles")
+                .select("role")
+                .eq("id", user.id)
+                .single();
+            isAdmin = profile?.role === "admin";
+        }
+
+        if (!isCreator && !isAdmin) {
             return NextResponse.json({ error: "Not authorized" }, { status: 403 });
         }
 
@@ -33,8 +53,8 @@ export async function POST(
             return NextResponse.json({ success: true, message: "Session already ended" });
         }
 
-        // End session
-        const { error: updateError } = await supabase
+        // End session (using admin client to bypass RLS)
+        const { error: updateError } = await adminDb
             .from("room_sessions")
             .update({
                 status: "ended",
@@ -45,7 +65,7 @@ export async function POST(
         if (updateError) throw updateError;
 
         // Set room status to offline (if no other active sessions)
-        const { data: otherActive } = await supabase
+        const { data: otherActive } = await adminDb
             .from("room_sessions")
             .select("id")
             .eq("room_id", session.room_id)
@@ -54,15 +74,17 @@ export async function POST(
             .limit(1);
 
         if (!otherActive || otherActive.length === 0) {
-            await supabase.from("rooms").update({ status: "offline" }).eq("id", session.room_id);
+            await adminDb.from("rooms").update({ status: "offline" }).eq("id", session.room_id);
         }
 
         // System message in chat
-        await supabase.from("room_session_messages").insert({
+        await adminDb.from("room_session_messages").insert({
             session_id: sessionId,
             user_id: user.id,
             username: "System",
-            message: "Session has ended. Thanks for watching! 🎬",
+            message: isAdmin
+                ? "Session has been ended by an administrator. 🛑"
+                : "Session has ended. Thanks for watching! 🎬",
             is_system: true,
         });
 
