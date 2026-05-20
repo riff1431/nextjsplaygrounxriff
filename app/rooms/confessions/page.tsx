@@ -180,7 +180,7 @@ function ConfessionsRoom() {
 
     // URL params (set when coming from confessions-sessions browse)
     const urlRoomId = searchParams?.get('roomId');
-    const urlSessionId = searchParams?.get('sessionId');
+    const urlSessionId = searchParams?.get('sessionId') || null; // treat empty string as null
 
     // Dynamic room discovery
     const [roomId, setRoomId] = useState<string | null>(null);
@@ -468,6 +468,7 @@ function ConfessionsRoom() {
             let confessionRows: any[] = [];
 
             if (q) {
+                // Creator search mode: cross-room query via Supabase
                 setIsSearchMode(true);
                 const { data: matchedProfiles } = await supabase.from('profiles').select('id, full_name, username, avatar_url').or(`full_name.ilike.%${q}%,username.ilike.%${q}%`).limit(20);
                 if (!matchedProfiles || matchedProfiles.length === 0) { setConfessions([]); return; }
@@ -488,24 +489,32 @@ function ConfessionsRoom() {
                     if (profile) roomToCreator.set(room.id, profile);
                 }
                 confessionRows = (confData || []).map((c: any) => ({ ...c, creator: roomToCreator.get(c.room_id) || null }));
-            } else if (t !== 'All') {
+            } else if (roomId) {
+                // Default + tier filter: use server API endpoint (bypasses client RLS issues)
                 setIsSearchMode(true);
-                let confQuery = supabase.from('confessions').select('*').eq('status', 'Published').eq('tier', t).order('created_at', { ascending: false }).limit(50);
-                if (urlSessionId) confQuery = confQuery.eq('session_id', urlSessionId);
-                const { data: confData } = await confQuery;
-                confessionRows = confData || [];
-            } else {
-                // Default 'All' view: Fetch confessions scoped to session when available
-                setIsSearchMode(true);
-                let defaultQuery = supabase
-                    .from('confessions')
-                    .select('*')
-                    .eq('status', 'Published')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-                if (urlSessionId) defaultQuery = defaultQuery.eq('session_id', urlSessionId);
-                const { data } = await defaultQuery;
-                confessionRows = data || [];
+                const params = new URLSearchParams();
+                if (urlSessionId) params.set('sessionId', urlSessionId);
+                const apiUrl = `/api/v1/rooms/${roomId}/confessions${params.toString() ? '?' + params.toString() : ''}`;
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                
+                if (data.confessions) {
+                    let rows = data.confessions;
+                    // Apply tier filter client-side (API doesn't support tier param)
+                    if (t && t !== 'All') {
+                        rows = rows.filter((c: any) => c.tier === t);
+                    }
+                    // Update unlocks from API response
+                    if (user) {
+                        const unlockedIds = new Set(rows.filter((c: any) => c.is_unlocked).map((c: any) => c.id));
+                        setMyUnlocks(prev => {
+                            const merged = new Set(prev);
+                            unlockedIds.forEach((id: string) => merged.add(id));
+                            return merged;
+                        });
+                    }
+                    confessionRows = rows;
+                }
             }
 
             const mapped = confessionRows.map((c: any) => ({
