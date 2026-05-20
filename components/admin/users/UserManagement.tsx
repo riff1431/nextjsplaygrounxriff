@@ -75,7 +75,9 @@ export default function UserManagement() {
 
             if (query.trim()) {
                 const term = query.trim();
-                q = q.or(`username.ilike.%${term}%,full_name.ilike.%${term}%,id.eq.${term}`);
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
+                const filters = `username.ilike.%${term}%,full_name.ilike.%${term}%${isUUID ? `,id.eq.${term}` : ''}`;
+                q = q.or(filters);
             }
 
             const { data, error } = await q;
