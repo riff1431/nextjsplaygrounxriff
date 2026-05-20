@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { UserPlus, ArrowLeft } from "lucide-react";
+import { UserPlus, ArrowLeft, Bell, Clock, Zap, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
@@ -16,6 +17,7 @@ import SendSugarGifts from "@/components/rooms/suga4u/SendSugarGifts";
 import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import WalletPill from "@/components/common/WalletPill";
 import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import { toast } from "sonner";
@@ -23,6 +25,7 @@ import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 
 import { createClient } from "@/utils/supabase/client";
+import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -39,6 +42,11 @@ const Suga4URoom = () => {
     const [hostAvatar, setHostAvatar] = React.useState<string | null>(null);
     const [hostName, setHostName] = React.useState("Alexis Rose");
     const [showInviteModal, setShowInviteModal] = useState(false);
+
+    // Incoming activity state
+    const [showIncomingPanel, setShowIncomingPanel] = useState(false);
+    const [incomingItems, setIncomingItems] = useState<any[]>([]);
+    const [unseenCount, setUnseenCount] = useState(0);
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
@@ -158,6 +166,112 @@ const Suga4URoom = () => {
         fetchRoom();
     }, [supabase, urlRoomId, urlSessionId]);
 
+    // ── Incoming Activity Tracking ──────────────────────────────────────────
+    useEffect(() => {
+        if (!roomId || !user) return;
+
+        const fetchIncoming = async () => {
+            // Fetch paid requests for this fan
+            let query = supabase
+                .from('suga_paid_requests')
+                .select('*')
+                .eq('room_id', roomId)
+                .eq('fan_name', user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (urlSessionId) {
+                const { data, error } = await query.eq('session_id', urlSessionId);
+                if (error && error.message?.includes('session_id')) {
+                    const { data: fallback } = await supabase
+                        .from('suga_paid_requests')
+                        .select('*')
+                        .eq('room_id', roomId)
+                        .eq('fan_name', user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan')
+                        .order('created_at', { ascending: false })
+                        .limit(20);
+                    if (fallback) setIncomingItems(fallback);
+                } else if (data) {
+                    setIncomingItems(data);
+                }
+            } else {
+                const { data } = await query;
+                if (data) setIncomingItems(data);
+            }
+        };
+        fetchIncoming();
+
+        // Real-time subscription for new/updated requests
+        const channel = supabase
+            .channel(`suga-fan-incoming-${roomId}-${user.id}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'suga_paid_requests',
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const item = payload.new as any;
+                const fanName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan';
+                if (item.fan_name !== fanName) return;
+                setIncomingItems(prev => [item, ...prev].slice(0, 20));
+                if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'suga_paid_requests',
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const updated = payload.new as any;
+                const fanName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan';
+                if (updated.fan_name !== fanName) return;
+                setIncomingItems(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
+                if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, user, supabase, showIncomingPanel, urlSessionId]);
+
+    const toggleIncomingPanel = useCallback(() => {
+        setShowIncomingPanel(prev => !prev);
+        if (!showIncomingPanel) setUnseenCount(0);
+    }, [showIncomingPanel]);
+
+    // Helper functions for incoming panel
+    const incomingTypeEmoji = (type: string) => {
+        switch (type) {
+            case 'shoutout': return '📢';
+            case 'quick_tease': return '😘';
+            case 'custom_clip': return '🎬';
+            case 'say_my_name': return '💬';
+            case 'voice_note': return '🎙️';
+            case 'photo_drop': return '📸';
+            case 'sponsor_room': return '💎';
+            case 'private_1on1': return '🔒';
+            case 'group_vote': return '🔥';
+            case 'gift': return '🎁';
+            default: return '⚡';
+        }
+    };
+
+    const incomingStatusColor = (status: string) => {
+        switch (status) {
+            case 'accepted': case 'completed': return { bg: 'hsla(140,60%,20%,0.3)', border: 'hsla(140,70%,45%,0.4)', text: 'hsl(140,70%,55%)' };
+            case 'declined': case 'rejected': return { bg: 'hsla(0,60%,20%,0.3)', border: 'hsla(0,70%,55%,0.4)', text: 'hsl(0,70%,60%)' };
+            case 'pending': return { bg: 'hsla(42,60%,20%,0.3)', border: 'hsla(42,90%,55%,0.4)', text: 'hsl(42,90%,55%)' };
+            default: return { bg: 'hsla(340,40%,20%,0.2)', border: 'hsla(340,60%,45%,0.25)', text: 'hsl(340,20%,65%)' };
+        }
+    };
+
+    const formatTimeAgo = (dateStr?: string) => {
+        if (!dateStr) return '';
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        return `${Math.floor(diff / 3600)}h ago`;
+    };
+
     if (sessionStatus === 'pending') {
         return (
             <div className="h-screen w-full flex flex-col items-center justify-center bg-background text-foreground relative fd-suga4u-theme">
@@ -240,7 +354,124 @@ const Suga4URoom = () => {
                                 Invite
                             </button>
                         </div>
-                        <UserProfile name={hostName} avatarUrl={hostAvatar} />
+                        <div className="flex items-center gap-2">
+                            {/* Incoming Activity Button */}
+                            <div className="relative">
+                                <button
+                                    onClick={toggleIncomingPanel}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 backdrop-blur-md ${
+                                        showIncomingPanel
+                                            ? 'bg-pink-500/30 border border-pink-400 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
+                                            : 'bg-pink-500/15 border border-pink-500/30 hover:bg-pink-500/25 text-pink-300'
+                                    }`}
+                                >
+                                    <Bell className={`w-3.5 h-3.5 ${unseenCount > 0 ? 'animate-bounce' : ''}`} />
+                                    <span className="hidden sm:inline">Incoming</span>
+                                    {unseenCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-pink-500 text-white text-[10px] font-black px-1 shadow-[0_0_10px_rgba(236,72,153,0.5)]">
+                                            {unseenCount}
+                                        </span>
+                                    )}
+                                </button>
+
+                                <AnimatePresence>
+                                    {showIncomingPanel && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute top-full right-0 mt-3 w-80 bg-[#16161e]/95 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-[60]"
+                                        >
+                                            {/* Panel Header */}
+                                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center">
+                                                        <Bell className="w-4 h-4 text-pink-400" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-sm font-bold text-white">My Activity</h3>
+                                                        <p className="text-[10px] text-white/40 uppercase tracking-wider">Latest Requests</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowIncomingPanel(false)}
+                                                    className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            {/* Panel Body */}
+                                            <div className="max-h-[360px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10">
+                                                {incomingItems.length === 0 ? (
+                                                    <div className="py-12 px-4 text-center">
+                                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                                                            <Zap className="w-6 h-6 text-white/10" />
+                                                        </div>
+                                                        <p className="text-sm text-white/40">No recent activity</p>
+                                                        <p className="text-[10px] text-white/25 mt-1">Your paid requests will appear here</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-1">
+                                                        {incomingItems.map((item) => {
+                                                            const emoji = incomingTypeEmoji(item.type);
+                                                            const sc = incomingStatusColor(item.status);
+                                                            return (
+                                                                <div
+                                                                    key={item.id}
+                                                                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                                    style={{
+                                                                        background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
+                                                                        border: `1px solid ${sc.border}`
+                                                                    }}
+                                                                >
+                                                                    <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                            <span className="text-xs font-bold text-white truncate">
+                                                                                {item.label || item.type || 'Request'}
+                                                                            </span>
+                                                                            <span className="text-[10px] font-black text-pink-400">{cs()}{item.price || item.amount || 0}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span
+                                                                                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
+                                                                                style={{
+                                                                                    borderColor: sc.border,
+                                                                                    color: sc.text,
+                                                                                    background: `${sc.border}10`
+                                                                                }}
+                                                                            >
+                                                                                {item.status}
+                                                                            </span>
+                                                                            <span className="text-[9px] text-white/30 flex items-center gap-1">
+                                                                                <Clock className="w-2.5 h-2.5" />
+                                                                                {formatTimeAgo(item.created_at)}
+                                                                            </span>
+                                                                        </div>
+                                                                        {item.note && (
+                                                                            <p className="text-[10px] text-white/40 mt-1 italic truncate">"{item.note}"</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Panel Footer */}
+                                            <div className="p-3 bg-white/5 border-t border-white/5 text-center">
+                                                <p className="text-[9px] text-white/30 uppercase tracking-widest">Powered by PlaygroundX</p>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            <WalletPill />
+                            <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
+                        </div>
                     </header>
 
                     {/* Main Layout matching wireframe */}

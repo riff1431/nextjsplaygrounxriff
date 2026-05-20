@@ -45,12 +45,12 @@ export async function POST(
             .limit(1)
             .single();
 
-        // 5. Query suga4u_requests for fans who voted in this session
+        // 5. Query suga_activity_events for fans who voted in this session
         let reqQuery = supabase
-            .from('suga4u_requests')
+            .from('suga_activity_events')
             .select('fan_id')
             .eq('room_id', roomId)
-            .eq('request_type', 'group_vote');
+            .eq('type', 'group_vote');
 
         // Scope to current session by time
         const sessionStart = activeSession?.started_at || activeSession?.created_at;

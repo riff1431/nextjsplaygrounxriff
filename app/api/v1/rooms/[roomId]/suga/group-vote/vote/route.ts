@@ -101,15 +101,14 @@ export async function POST(
 
     const currentCount = newCount as number;
 
-    // 5. Record the Transaction in suga4u_requests
-    await supabase.from('suga4u_requests').insert({
+    // 5. Record the Transaction in suga_activity_events
+    await supabase.from('suga_activity_events').insert({
         room_id: roomId,
+        type: 'group_vote',
         fan_id: user.id,
-        request_type: `group_vote`,
-        content: `Contributed to Group Goal: ${state.label}`,
+        fan_name: user.user_metadata?.full_name || 'Fan',
+        label: `Voted for: ${state.label}`,
         amount: price,
-        status: 'completed',
-        fan_name: user.user_metadata?.full_name || 'Fan'
     });
 
     // 6. Broadcast
