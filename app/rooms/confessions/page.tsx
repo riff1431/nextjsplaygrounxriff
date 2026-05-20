@@ -598,15 +598,11 @@ function ConfessionsRoom() {
 
     const handleReaction = async (label: string, amount: number, confessionId?: string) => {
         if (!roomId) return;
-        if (!confessionId) {
-            showToast("Cannot tip: No confession found to tip.", 'error');
-            return;
-        }
 
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/confessions/tip`, {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ confessionId, reactionType: label, amount, sessionId: urlSessionId })
+                body: JSON.stringify({ confessionId: confessionId || null, reactionType: label, amount, sessionId: urlSessionId })
             });
             const data = await res.json();
             if (data.success) {

@@ -134,12 +134,11 @@ const ConfessionWall: React.FC<ConfessionWallProps> = ({
     handleReaction
 }) => {
     const { balance } = useWallet();
-    const [pendingReaction, setPendingReaction] = useState<{ label: string; icon: string; val: number; confessionId: string } | null>(null);
+    const [pendingReaction, setPendingReaction] = useState<{ label: string; icon: string; val: number; confessionId?: string } | null>(null);
 
     const handleReactionClick = (icon: string, label: string, val: number) => {
-        // Find the first visible confession to tip
+        // Use first confession if available, otherwise send as room-level tip
         const targetId = confessions[0]?.id;
-        if (!targetId) return;
         setPendingReaction({ label, icon, val, confessionId: targetId });
     };
 
