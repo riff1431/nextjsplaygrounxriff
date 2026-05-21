@@ -310,14 +310,16 @@ export async function POST(request: NextRequest) {
                     const { data: lastDrops } = await supabase
                         .from("flash_drops")
                         .select("*")
-                        .eq("session_id", lastSession.id);
+                        .eq("session_id", lastSession.id)
+                        .neq("status", "Ended");
                     if (lastDrops) dropsToClone.push(...lastDrops);
                 }
                 const { data: offlineDrops } = await supabase
                     .from("flash_drops")
                     .select("*")
                     .eq("room_id", roomId)
-                    .is("session_id", null);
+                    .is("session_id", null)
+                    .neq("status", "Ended");
                 if (offlineDrops) dropsToClone.push(...offlineDrops);
 
                 if (dropsToClone.length > 0) {
