@@ -21,6 +21,16 @@ export interface PaymentConfig {
         routingNumber: string;
         instructions: string;
     };
+    riskpaygo: {
+        enabled: boolean;
+        apiUrl: string;
+        merchantId: string;
+        apiToken: string;
+        webhookSecret: string;
+        returnUrl: string;
+        cancelUrl: string;
+        mode: 'test' | 'live';
+    };
 }
 
 const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -34,6 +44,16 @@ const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
         routingNumber: "987654321",
         instructions: "Please include your username in the reference."
     },
+    riskpaygo: {
+        enabled: false,
+        apiUrl: "https://riskpaygo.com/portal/api/plugin",
+        merchantId: "",
+        apiToken: "",
+        webhookSecret: "",
+        returnUrl: "",
+        cancelUrl: "",
+        mode: "test"
+    }
 };
 
 interface PaymentContextType {
@@ -68,6 +88,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                     stripe: { ...prev.stripe, ...data.value.stripe },
                     paypal: { ...prev.paypal, ...data.value.paypal },
                     bank: { ...prev.bank, ...data.value.bank },
+                    riskpaygo: { ...prev.riskpaygo, ...data.value.riskpaygo },
                 }));
             }
         } catch (error) {

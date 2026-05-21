@@ -201,6 +201,23 @@ export default function WalletPage() {
 
     useEffect(() => { fetchWalletData(); }, [fetchWalletData]);
 
+    // Handle payment status redirections (e.g. RiskPayGo checkout outcome)
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const status = params.get("status");
+            const method = params.get("method");
+            if (status === "success" && method === "riskpaygo") {
+                toast.success("Wallet top-up successful! Your balance has been updated.");
+                // Clean the URL query params
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (status === "cancelled" && method === "riskpaygo") {
+                toast.error("Payment cancelled. No funds were added.");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    }, []);
+
     // Active real-time sync for wallet and earnings
     useEffect(() => {
         const channel = supabase

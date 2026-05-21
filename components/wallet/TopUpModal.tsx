@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, CreditCard, Banknote, Landmark, ChevronRight, Check, Wallet, Loader2, Upload } from "lucide-react";
+import { X, CreditCard, Banknote, Landmark, ChevronRight, Check, Wallet, Loader2, Upload, Shield } from "lucide-react";
 import { usePayment } from "../../app/context/PaymentContext";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -21,14 +21,21 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
     const [step, setStep] = useState<1 | 2>(1);
     const [amount, setAmount] = useState<number>(0);
     const [customAmount, setCustomAmount] = useState("");
-    const [method, setMethod] = useState<"card" | "paypal" | "bank" | "">("");
+    const [method, setMethod] = useState<"card" | "paypal" | "bank" | "riskpaygo" | "">("");
     const [loading, setLoading] = useState(false);
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [showStripeModal, setShowStripeModal] = useState(false);
 
     useEffect(() => {
-        // Any side effects related to modal open/close or state changes can go here
-    }, []);
+        // Reset states when modal is opened
+        if (isOpen) {
+            setStep(1);
+            setAmount(0);
+            setCustomAmount("");
+            setMethod("");
+            setProofFile(null);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -63,6 +70,31 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
             // Open Stripe Modal
             setShowStripeModal(true);
             return; // Stop here, wait for Stripe success
+        }
+
+        if (method === 'riskpaygo') {
+            setLoading(true);
+            try {
+                const res = await fetch('/api/v1/payments/riskpaygo/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+                const data = await res.json();
+                if (data.success && data.checkoutUrl) {
+                    // Redirect directly to checkout
+                    window.location.href = data.checkoutUrl;
+                    return; // Retain loader state while browser redirects
+                } else {
+                    alert(data.error || "Failed to initiate RiskPayGo checkout.");
+                }
+            } catch (err) {
+                console.error("RiskPayGo creation error:", err);
+                alert("An error occurred trying to connect to RiskPayGo.");
+            } finally {
+                setLoading(false);
+            }
+            return;
         }
 
         setLoading(true);
@@ -187,7 +219,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                 <div className="space-y-3">
                                     <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Select Payment Method</div>
 
-                                    {/* Card */}
+                                    {/* Stripe Card */}
                                     {config.stripe.enabled && (
                                         <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'card' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
                                             <input type="radio" name="method" className="hidden" onChange={() => setMethod('card')} />
@@ -199,6 +231,21 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                                 <div className="text-xs text-gray-400">Instant | Visa, Mastercard</div>
                                             </div>
                                             {method === 'card' && <Check className="w-5 h-5 text-pink-500" />}
+                                        </label>
+                                    )}
+
+                                    {/* RiskPayGo Checkout */}
+                                    {config.riskpaygo?.enabled && (
+                                        <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'riskpaygo' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                            <input type="radio" name="method" className="hidden" onChange={() => setMethod('riskpaygo')} />
+                                            <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400">
+                                                <Shield className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="font-semibold text-white">RiskPayGo Checkout</div>
+                                                <div className="text-xs text-gray-400">Secure Direct Checkout (Global)</div>
+                                            </div>
+                                            {method === 'riskpaygo' && <Check className="w-5 h-5 text-pink-500" />}
                                         </label>
                                     )}
 
@@ -232,13 +279,13 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         </label>
                                     )}
 
-                                    {!config.stripe.enabled && !config.paypal.enabled && !config.bank.enabled && (
+                                    {!config.stripe.enabled && !config.riskpaygo?.enabled && !config.paypal.enabled && !config.bank.enabled && (
                                         <div className="text-center text-red-400 text-sm py-4">
                                             No payment methods available.
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 <div className="text-xs text-gray-500/80 leading-relaxed text-center px-4 py-2 border border-white/5 rounded-xl bg-white/5">
                                     All purchases are final. No refunds once access is granted. Please review our <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">Refund Policy</a>.
                                 </div>

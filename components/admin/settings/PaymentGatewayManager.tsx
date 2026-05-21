@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, Banknote, Landmark, Save, Eye, EyeOff, Zap, CheckCircle2, XCircle, Loader2, AlertTriangle, ExternalLink, ShieldCheck, Info } from "lucide-react";
+import { CreditCard, Banknote, Landmark, Save, Eye, EyeOff, Zap, CheckCircle2, XCircle, Loader2, AlertTriangle, ExternalLink, ShieldCheck, Info, FileText, Activity, ShieldAlert, Shield } from "lucide-react";
 import { usePayment } from "../../../app/context/PaymentContext";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
@@ -16,24 +16,60 @@ interface StripeTestResult {
     error?: string;
 }
 
+interface RiskTestResult {
+    success: boolean;
+    warning?: boolean;
+    message?: string;
+    error?: string;
+    details?: any;
+}
+
 export default function PaymentGatewayManager() {
     const { config, updateConfig, loading } = usePayment();
     const [formData, setFormData] = useState(config);
     const [saving, setSaving] = useState(false);
+    
+    // Stripe states
     const [showSecrets, setShowSecrets] = useState(false);
     const [testingStripe, setTestingStripe] = useState(false);
     const [stripeTestResult, setStripeTestResult] = useState<StripeTestResult | null>(null);
     const [stripeConnectionStatus, setStripeConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
 
+    // RiskPayGo states
+    const [showRiskSecrets, setShowRiskSecrets] = useState(false);
+    const [testingRisk, setTestingRisk] = useState(false);
+    const [riskTestResult, setRiskTestResult] = useState<RiskTestResult | null>(null);
+    const [riskConnectionStatus, setRiskConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
+    const [generatingTestPayment, setGeneratingTestPayment] = useState(false);
+    
+    // Log drawer states
+    const [logs, setLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [showLogsDrawer, setShowLogsDrawer] = useState(false);
+
     // Sync local state when config loads
     useEffect(() => {
         setFormData(config);
+        // Pre-populate masked secrets for RiskPayGo if values are already saved in context (or default)
+        if (config?.riskpaygo) {
+            setFormData(prev => ({
+                ...prev,
+                riskpaygo: {
+                    ...prev.riskpaygo,
+                    apiToken: config.riskpaygo.apiToken ? "••••••••••••••••" : "",
+                    webhookSecret: config.riskpaygo.webhookSecret ? "••••••••••••••••" : ""
+                }
+            }));
+        }
     }, [config]);
 
     // Auto-check Stripe connection status on load
     useEffect(() => {
         if (!loading && config.stripe.enabled && config.stripe.publicKey && config.stripe.secretKey) {
             checkStripeConnection(config.stripe.secretKey, config.stripe.publicKey, true);
+        }
+        if (!loading && config.riskpaygo?.enabled && config.riskpaygo?.apiUrl && config.riskpaygo?.merchantId) {
+            // For RiskPayGo we can check on click to avoid hitting APIs unnecessarily on every load
         }
     }, [loading]);
 
@@ -67,6 +103,82 @@ export default function PaymentGatewayManager() {
         }
     };
 
+    const handleTestRiskConnection = async () => {
+        setTestingRisk(true);
+        setRiskTestResult(null);
+        try {
+            // Read unmasked settings (or placeholders which backend will substitute)
+            const res = await fetch('/api/v1/payments/riskpaygo/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiUrl: formData.riskpaygo.apiUrl,
+                    merchantId: formData.riskpaygo.merchantId,
+                    apiToken: formData.riskpaygo.apiToken,
+                    webhookSecret: formData.riskpaygo.webhookSecret,
+                    mode: formData.riskpaygo.mode
+                })
+            });
+            const data: RiskTestResult = await res.json();
+            setRiskTestResult(data);
+            setRiskConnectionStatus(data.success ? 'connected' : 'disconnected');
+            
+            if (data.success) {
+                if (data.warning) {
+                    toast.warning(data.error || "Credentials verified with projects warning.");
+                } else {
+                    toast.success(data.message || "RiskPayGo connection successful!");
+                }
+            } else {
+                toast.error(data.error || "Connection test failed");
+            }
+        } catch (err) {
+            setRiskConnectionStatus('disconnected');
+            toast.error("Failed to run RiskPayGo connection test");
+        } finally {
+            setTestingRisk(false);
+        }
+    };
+
+    const handleGenerateTestPayment = async () => {
+        setGeneratingTestPayment(true);
+        try {
+            const res = await fetch('/api/v1/payments/riskpaygo/test-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (data.success && data.checkoutUrl) {
+                toast.success("Test checkout generated successfully!");
+                window.open(data.checkoutUrl, '_blank');
+            } else {
+                toast.error(data.error || "Failed to generate test checkout");
+            }
+        } catch (err) {
+            toast.error("Fatal error generating test payment");
+        } finally {
+            setGeneratingTestPayment(false);
+        }
+    };
+
+    const fetchLogs = async () => {
+        setLoadingLogs(true);
+        try {
+            const res = await fetch('/api/admin/payments/riskpaygo/logs');
+            const data = await res.json();
+            if (data.logs) {
+                setLogs(data.logs);
+            }
+            if (data.warning) {
+                toast.warning(data.warning);
+            }
+        } catch (err) {
+            toast.error("Failed to load gateway logs");
+        } finally {
+            setLoadingLogs(false);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -84,7 +196,7 @@ export default function PaymentGatewayManager() {
         }
     };
 
-    // Sync to payment_settings table for Stripe API routes
+    // Sync to payment_settings table for Stripe & RiskPayGo API routes
     const syncToPaymentSettings = async (data: typeof formData) => {
         const supabase = (await import("@/utils/supabase/client")).createClient();
 
@@ -126,17 +238,58 @@ export default function PaymentGatewayManager() {
                 secret_config: {},
                 updated_at: new Date().toISOString()
             }, { onConflict: 'provider' });
+
+        // Sync RiskPayGo securely, preventing placeholder overwrite
+        const { data: existingRiskSettings } = await supabase
+            .from('payment_settings')
+            .select('secret_config')
+            .eq('provider', 'riskpaygo')
+            .single();
+
+        const existingSecrets = existingRiskSettings?.secret_config || {};
+
+        const finalApiToken = (data.riskpaygo.apiToken && !data.riskpaygo.apiToken.includes('••'))
+            ? data.riskpaygo.apiToken
+            : existingSecrets.api_token || "";
+
+        const finalWebhookSecret = (data.riskpaygo.webhookSecret && !data.riskpaygo.webhookSecret.includes('••'))
+            ? data.riskpaygo.webhookSecret
+            : existingSecrets.webhook_secret || "";
+
+        const finalMerchantId = data.riskpaygo.merchantId || existingSecrets.merchant_id || "";
+
+        await supabase
+            .from('payment_settings')
+            .upsert({
+                provider: 'riskpaygo',
+                is_enabled: data.riskpaygo.enabled,
+                config: {
+                    api_url: data.riskpaygo.apiUrl,
+                    return_url: data.riskpaygo.returnUrl,
+                    cancel_url: data.riskpaygo.cancelUrl,
+                    mode: data.riskpaygo.mode
+                },
+                secret_config: {
+                    merchant_id: finalMerchantId,
+                    api_token: finalApiToken,
+                    webhook_secret: finalWebhookSecret
+                },
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'provider' });
     };
 
-    const toggleGateway = (gateway: 'stripe' | 'paypal' | 'bank') => {
+    const toggleGateway = (gateway: 'stripe' | 'paypal' | 'bank' | 'riskpaygo') => {
         setFormData(prev => ({
             ...prev,
             [gateway]: { ...prev[gateway], enabled: !prev[gateway].enabled }
         }));
-        // Reset test results when toggling stripe
+        // Reset test results when toggling
         if (gateway === 'stripe') {
             setStripeTestResult(null);
             setStripeConnectionStatus('unknown');
+        } else if (gateway === 'riskpaygo') {
+            setRiskTestResult(null);
+            setRiskConnectionStatus('unknown');
         }
     };
 
@@ -337,6 +490,247 @@ export default function PaymentGatewayManager() {
                     </div>
                 </div>
 
+                {/* RiskPayGo Gateway */}
+                <div className={`rounded-2xl border transition-all overflow-hidden ${formData.riskpaygo?.enabled ? 'bg-pink-500/5 border-pink-500/20' : 'bg-black/40 border-white/5 opacity-70'}`}>
+                    <div className="p-5">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                                    riskConnectionStatus === 'connected' ? 'bg-green-500/20 text-green-400' :
+                                    riskConnectionStatus === 'disconnected' ? 'bg-red-500/20 text-red-400' :
+                                    'bg-pink-500/20 text-pink-400'
+                                }`}>
+                                    <Shield className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-sm font-bold text-white">RiskPayGo Checkout</div>
+                                        {riskConnectionStatus === 'connected' && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                                                <CheckCircle2 className="w-3 h-3" /> CONNECTED
+                                            </span>
+                                        )}
+                                        {riskConnectionStatus === 'disconnected' && formData.riskpaygo?.enabled && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                                                <XCircle className="w-3 h-3" /> FAILED
+                                            </span>
+                                        )}
+                                        {formData.riskpaygo?.enabled && (
+                                            <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border ${
+                                                formData.riskpaygo.mode === 'live'
+                                                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                                                    : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                                            }`}>
+                                                {formData.riskpaygo.mode?.toUpperCase()} MODE
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">High-Risk Processing Solution • Global Checkout Routing</div>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={formData.riskpaygo?.enabled} onChange={() => toggleGateway('riskpaygo')} />
+                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                            </label>
+                        </div>
+
+                        {formData.riskpaygo?.enabled && (
+                            <div className="mt-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                {/* Instructions */}
+                                <div className="p-3 rounded-xl bg-pink-500/5 border border-pink-500/10">
+                                    <div className="flex items-start gap-2">
+                                        <Info className="w-4 h-4 text-pink-400 mt-0.5 shrink-0" />
+                                        <div className="text-xs text-pink-300/80 leading-relaxed">
+                                            <span className="font-semibold text-pink-300 font-bold">API Requirements:</span> Base URL must be `<span className="font-mono">https://riskpaygo.com/portal/api/plugin</span>`. Enter your private Merchant credentials. The callback URL for webhooks is automatically structured on submission.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Form Fields */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">API Base URL</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                            value={formData.riskpaygo.apiUrl}
+                                            onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, apiUrl: e.target.value } })}
+                                            placeholder="https://riskpaygo.com/portal/api/plugin"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Merchant ID</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                            value={formData.riskpaygo.merchantId}
+                                            onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, merchantId: e.target.value } })}
+                                            placeholder="Enter Merchant ID"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Gateway Environment Mode</label>
+                                        <select
+                                            className="w-full bg-black/80 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                            value={formData.riskpaygo.mode}
+                                            onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, mode: e.target.value as 'test' | 'live' } })}
+                                        >
+                                            <option value="test">Sandbox (Test Mode)</option>
+                                            <option value="live">Production (Live Mode)</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">API Private Token</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showRiskSecrets ? "text" : "password"}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono pr-10 focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                                value={formData.riskpaygo.apiToken}
+                                                onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, apiToken: e.target.value } })}
+                                                placeholder="Enter Private token key"
+                                            />
+                                            <button
+                                                onClick={() => setShowRiskSecrets(!showRiskSecrets)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                                                type="button"
+                                            >
+                                                {showRiskSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Webhook Secret</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showRiskSecrets ? "text" : "password"}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono pr-10 focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                                value={formData.riskpaygo.webhookSecret}
+                                                onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, webhookSecret: e.target.value } })}
+                                                placeholder="Enter Webhook Signature Key"
+                                            />
+                                            <button
+                                                onClick={() => setShowRiskSecrets(!showRiskSecrets)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                                                type="button"
+                                            >
+                                                {showRiskSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Return URL (Redirect after payment)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                            value={formData.riskpaygo.returnUrl}
+                                            onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, returnUrl: e.target.value } })}
+                                            placeholder="https://your-domain.com/account/wallet?status=success"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Cancel URL (Redirect on cancellation)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/20 focus:outline-none transition"
+                                            value={formData.riskpaygo.cancelUrl}
+                                            onChange={(e) => setFormData({ ...formData, riskpaygo: { ...formData.riskpaygo, cancelUrl: e.target.value } })}
+                                            placeholder="https://your-domain.com/account/wallet?status=cancelled"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Actions Panels */}
+                                <div className="flex flex-wrap items-center gap-3 pt-2">
+                                    <button
+                                        onClick={handleTestRiskConnection}
+                                        disabled={testingRisk || !formData.riskpaygo.apiUrl || !formData.riskpaygo.merchantId || !formData.riskpaygo.apiToken}
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 bg-pink-600/20 hover:bg-pink-600/30 text-pink-400 border border-pink-500/30 hover:border-pink-500/50"
+                                    >
+                                        {testingRisk ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Verifying Connection...</>
+                                        ) : (
+                                            <><Zap className="w-4 h-4" /> Run Connection Test</>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        onClick={handleGenerateTestPayment}
+                                        disabled={generatingTestPayment || !config.riskpaygo?.enabled}
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20"
+                                    >
+                                        {generatingTestPayment ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Spawning Checkout...</>
+                                        ) : (
+                                            <><Activity className="w-4 h-4" /> Run Payment Test (€1.00)</>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowLogsDrawer(true);
+                                            fetchLogs();
+                                        }}
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10"
+                                    >
+                                        <FileText className="w-4 h-4" /> View Gateway Event Logs
+                                    </button>
+                                </div>
+
+                                {/* Test Result Display */}
+                                {riskTestResult && (
+                                    <div className={`p-4 rounded-xl border animate-in fade-in slide-in-from-top-1 ${
+                                        riskTestResult.success 
+                                            ? riskTestResult.warning 
+                                                ? 'bg-orange-500/5 border-orange-500/20' 
+                                                : 'bg-green-500/5 border-green-500/20'
+                                            : 'bg-red-500/5 border-red-500/20'
+                                    }`}>
+                                        {riskTestResult.success ? (
+                                            <div className="flex items-start gap-2.5">
+                                                {riskTestResult.warning ? (
+                                                    <ShieldAlert className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+                                                ) : (
+                                                    <ShieldCheck className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                                                )}
+                                                <div>
+                                                    <p className={`text-sm font-bold ${riskTestResult.warning ? 'text-orange-400' : 'text-green-400'}`}>
+                                                        {riskTestResult.warning ? 'Connection OK — Domain Action Required' : 'Credentials & Connection Verified'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-300/90 mt-1 leading-relaxed">
+                                                        {riskTestResult.message || riskTestResult.error}
+                                                    </p>
+                                                    {riskTestResult.details && (
+                                                        <div className="mt-2 text-[10px] font-mono bg-black/50 p-2 rounded border border-white/5 text-gray-400 max-h-24 overflow-y-auto">
+                                                            {JSON.stringify(riskTestResult.details, null, 2)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start gap-2.5">
+                                                <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm font-bold text-red-400">Connection Terminated</p>
+                                                    <p className="text-xs text-red-300/80 mt-1 leading-relaxed">
+                                                        {riskTestResult.error}
+                                                    </p>
+                                                    {riskTestResult.details && (
+                                                        <p className="text-[10px] font-mono text-red-400/70 mt-1">
+                                                            Gateway response code: {riskTestResult.status || 500}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* PayPal */}
                 <div className={`p-5 rounded-2xl border transition-all ${formData.paypal.enabled ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-black/40 border-white/5 opacity-70'}`}>
                     <div className="flex items-center justify-between mb-4">
@@ -363,7 +757,7 @@ export default function PaymentGatewayManager() {
                                     className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white font-mono"
                                     value={formData.paypal.clientId}
                                     onChange={(e) => setFormData({ ...formData, paypal: { ...formData.paypal, clientId: e.target.value } })}
-                                    placeholder="Ad..."
+                                    placeholder="Enter PayPal Client ID"
                                 />
                             </div>
                         </div>
@@ -434,6 +828,101 @@ export default function PaymentGatewayManager() {
                     )}
                 </div>
             </div>
+
+            {/* Audit Logs Slide-over / Drawer */}
+            {showLogsDrawer && (
+                <div className="fixed inset-0 z-50 overflow-hidden bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="absolute inset-0 overflow-hidden">
+                        <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                            <div className="pointer-events-auto w-screen max-w-2xl transform bg-[#0B0B0C] border-l border-white/10 p-6 shadow-2xl transition-transform duration-300 animate-in slide-in-from-right">
+                                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <Activity className="w-5 h-5 text-pink-500" />
+                                        <h3 className="text-lg font-bold text-white">RiskPayGo Gateway Activity Logs</h3>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={fetchLogs} 
+                                            className="px-3 py-1 rounded bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 transition"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowLogsDrawer(false)}
+                                            className="text-gray-400 hover:text-white text-sm font-semibold"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="h-[calc(100vh-140px)] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                                    {loadingLogs ? (
+                                        <div className="flex flex-col items-center justify-center h-48 gap-2 text-gray-400">
+                                            <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
+                                            <span className="text-xs">Fetching event records...</span>
+                                        </div>
+                                    ) : logs.length === 0 ? (
+                                        <div className="text-center py-16 text-gray-500 border border-white/5 bg-white/5 rounded-xl border-dashed">
+                                            <FileText className="w-12 h-12 mx-auto mb-2 opacity-30 text-gray-400" />
+                                            <p className="text-sm">No transaction or webhook log records found.</p>
+                                            <p className="text-xs text-gray-600 mt-1">Run connection/payment tests to populate activity logs.</p>
+                                        </div>
+                                    ) : (
+                                        logs.map((log) => (
+                                            <div key={log.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.02] space-y-2.5 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`px-2 py-0.5 rounded-full font-semibold text-[10px] uppercase ${
+                                                        log.status === 'success' || log.status === 'paid' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                                                        log.status === 'ignored' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                                        'bg-red-500/20 text-red-400 border border-red-500/30'
+                                                    }`}>
+                                                        {log.status}
+                                                    </span>
+                                                    <span className="text-gray-500 font-mono">
+                                                        {new Date(log.created_at).toLocaleString()}
+                                                    </span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-black/40 p-2.5 rounded-lg border border-white/5 font-mono">
+                                                    <div>Event: <span className="text-pink-300 font-semibold">{log.event_type}</span></div>
+                                                    <div>Ref: <span className="text-white">{log.order_id || 'N/A'}</span></div>
+                                                    <div>Status Code: <span className={log.status_code >= 400 ? "text-red-400 font-bold" : "text-green-400"}>{log.status_code || 'N/A'}</span></div>
+                                                    <div>Gateway Ref: <span className="text-gray-300">{log.payment_ref || 'N/A'}</span></div>
+                                                </div>
+
+                                                {log.request_payload && (
+                                                    <details className="cursor-pointer group">
+                                                        <summary className="text-xs text-gray-400 font-medium hover:text-white transition py-1 select-none flex items-center gap-1">
+                                                            <span>Request Parameters</span>
+                                                            <span className="text-[10px] text-gray-600 group-open:rotate-90 transition-transform">▶</span>
+                                                        </summary>
+                                                        <pre className="mt-1 p-2 bg-black/80 rounded border border-white/5 text-[10px] text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap max-h-48">
+                                                            {JSON.stringify(log.request_payload, null, 2)}
+                                                        </pre>
+                                                    </details>
+                                                )}
+
+                                                {log.response_payload && (
+                                                    <details className="cursor-pointer group">
+                                                        <summary className="text-xs text-gray-400 font-medium hover:text-white transition py-1 select-none flex items-center gap-1">
+                                                            <span>Gateway Response Details</span>
+                                                            <span className="text-[10px] text-gray-600 group-open:rotate-90 transition-transform">▶</span>
+                                                        </summary>
+                                                        <pre className="mt-1 p-2 bg-black/80 rounded border border-white/5 text-[10px] text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap max-h-48">
+                                                            {JSON.stringify(log.response_payload, null, 2)}
+                                                        </pre>
+                                                    </details>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </NeonCard>
     );
 }
