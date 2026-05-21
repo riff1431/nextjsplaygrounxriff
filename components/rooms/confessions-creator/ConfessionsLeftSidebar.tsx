@@ -333,12 +333,32 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                 <div className="conf-glass-card p-4 flex flex-col">
                     <div className="mb-6">
                         <h3 className="conf-font-cinzel text-white font-semibold mb-3">Random Request</h3>
-                        <button 
-                            onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
-                            className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
-                        >
-                            <Plus className="h-5 w-5" />
-                        </button>
+                        <div className="flex flex-col gap-3">
+                            <button 
+                                onClick={() => { setEditConfessionTarget({ title: "Random Request", tier: "Spicy", price: 10, type: "Text" } as any); setShowAddModal(true); }}
+                                className="w-full flex items-center justify-center gap-2 py-3 border border-white/20 rounded-lg conf-text-gold hover:bg-white/5 transition-colors"
+                            >
+                                <Plus className="h-5 w-5" />
+                            </button>
+
+                            {/* List existing Random Requests */}
+                            {confessions.filter(c => c.title === "Random Request").map((c) => (
+                                <div
+                                    key={c.id}
+                                    className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs text-white font-medium truncate">{c.title}</p>
+                                        <p className="text-[10px] text-white/40">{c.tier} • {cs()}{c.price}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-white/40">
+                                        <button onClick={() => { setEditConfessionTarget(c); setShowAddModal(true); }} className="hover:text-white transition-colors"><Edit3 size={14} /></button>
+                                        <button onClick={() => handleDelete(c.id)} className="hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                                        <button onClick={() => setViewConfessionTarget(c)} className="hover:text-white transition-colors cursor-pointer"><Eye size={14} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <h3 className="conf-font-cinzel text-white font-semibold mb-3">Confession Wall</h3>
@@ -350,8 +370,8 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
                             <Plus className="h-5 w-5" />
                         </button>
 
-                        {/* List existing confessions */}
-                        {confessions.map((c) => (
+                        {/* List existing confessions that are NOT Random Requests */}
+                        {confessions.filter(c => c.title !== "Random Request").map((c) => (
                             <div
                                 key={c.id}
                                 className="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"

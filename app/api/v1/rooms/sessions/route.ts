@@ -173,6 +173,241 @@ export async function POST(request: NextRequest) {
 
         if (sessionError) throw sessionError;
 
+        // 5b. For suga-4-u, keep (clone) favorites and secrets from the creator's last suga-4-u session
+        if (room_type === "suga-4-u") {
+            try {
+                const { data: lastSession } = await supabase
+                    .from("room_sessions")
+                    .select("id")
+                    .eq("creator_id", user.id)
+                    .eq("room_type", "suga-4-u")
+                    .neq("id", session.id)
+                    .order("started_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (lastSession) {
+                    // Fetch and clone favorites
+                    const { data: lastFavorites } = await supabase
+                        .from("suga_creator_favorites")
+                        .select("*")
+                        .eq("session_id", lastSession.id);
+
+                    if (lastFavorites && lastFavorites.length > 0) {
+                        const favoritesToInsert = lastFavorites.map((fav: any) => ({
+                            creator_id: user.id,
+                            room_id: roomId,
+                            session_id: session.id,
+                            category: fav.category,
+                            emoji: fav.emoji,
+                            name: fav.name,
+                            description: fav.description,
+                            buy_price: fav.buy_price,
+                            reveal_price: fav.reveal_price,
+                            link: fav.link
+                        }));
+                        const { error: favError } = await supabase
+                            .from("suga_creator_favorites")
+                            .insert(favoritesToInsert);
+                        if (favError) {
+                            console.error("Error cloning favorites from last session:", favError);
+                        }
+                    }
+
+                    // Fetch and clone secrets
+                    const { data: lastSecrets } = await supabase
+                        .from("suga_creator_secrets")
+                        .select("*")
+                        .eq("session_id", lastSession.id);
+
+                    if (lastSecrets && lastSecrets.length > 0) {
+                        const secretsToInsert = lastSecrets.map((sec: any) => ({
+                            creator_id: user.id,
+                            room_id: roomId,
+                            session_id: session.id,
+                            name: sec.name,
+                            description: sec.description,
+                            unlock_price: sec.unlock_price,
+                            category: sec.category,
+                            media_url: sec.media_url,
+                            media_type: sec.media_type
+                        }));
+                        const { error: secError } = await supabase
+                            .from("suga_creator_secrets")
+                            .insert(secretsToInsert);
+                        if (secError) {
+                            console.error("Error cloning secrets from last session:", secError);
+                        }
+                    }
+                }
+            } catch (cloneErr) {
+                console.error("Failed to clone suga creator items from last session:", cloneErr);
+            }
+        }
+
+        // 5c. For confessions, keep (clone) confessions from the creator's last confessions session
+        if (room_type === "confessions") {
+            try {
+                const { data: lastSession } = await supabase
+                    .from("room_sessions")
+                    .select("id")
+                    .eq("creator_id", user.id)
+                    .eq("room_type", "confessions")
+                    .neq("id", session.id)
+                    .order("started_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (lastSession) {
+                    // Fetch and clone confessions
+                    const { data: lastConfessions } = await supabase
+                        .from("confessions")
+                        .select("*")
+                        .eq("session_id", lastSession.id);
+
+                    if (lastConfessions && lastConfessions.length > 0) {
+                        const confessionsToInsert = lastConfessions.map((c: any) => ({
+                            room_id: roomId,
+                            session_id: session.id,
+                            title: c.title,
+                            teaser: c.teaser,
+                            content: c.content,
+                            media_url: c.media_url,
+                            type: c.type,
+                            tier: c.tier,
+                            price: c.price,
+                            status: c.status || 'Published',
+                        }));
+                        const { error: confError } = await supabase
+                            .from("confessions")
+                            .insert(confessionsToInsert);
+                        if (confError) {
+                            console.error("Error cloning confessions from last session:", confError);
+                        }
+                    }
+                }
+            } catch (cloneErr) {
+                console.error("Failed to clone confessions from last session:", cloneErr);
+            }
+        }
+
+        // 5d. For flash-drop, keep (clone) drops and roller packs from the creator's last session or offline setup
+        if (room_type === "flash-drop") {
+            try {
+                const { data: lastSession } = await supabase
+                    .from("room_sessions")
+                    .select("id")
+                    .eq("creator_id", user.id)
+                    .eq("room_type", "flash-drop")
+                    .neq("id", session.id)
+                    .order("started_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                // Fetch drops to clone
+                let dropsToClone: any[] = [];
+                if (lastSession) {
+                    const { data: lastDrops } = await supabase
+                        .from("flash_drops")
+                        .select("*")
+                        .eq("session_id", lastSession.id);
+                    if (lastDrops) dropsToClone.push(...lastDrops);
+                }
+                const { data: offlineDrops } = await supabase
+                    .from("flash_drops")
+                    .select("*")
+                    .eq("room_id", roomId)
+                    .is("session_id", null);
+                if (offlineDrops) dropsToClone.push(...offlineDrops);
+
+                if (dropsToClone.length > 0) {
+                    const now = Date.now();
+                    const dropsPayload = dropsToClone.map((d: any) => {
+                        let durationMs = 15 * 60 * 1000; // 15 mins default
+                        if (d.ends_at && d.created_at) {
+                            const diff = new Date(d.ends_at).getTime() - new Date(d.created_at).getTime();
+                            if (diff > 0) durationMs = diff;
+                        }
+                        const newEndsAt = new Date(now + durationMs);
+
+                        return {
+                            room_id: roomId,
+                            session_id: session.id,
+                            title: d.title,
+                            kind: d.kind,
+                            rarity: d.rarity,
+                            price: d.price,
+                            ends_at: newEndsAt.toISOString(),
+                            status: d.status === 'Ended' ? 'Live' : d.status,
+                            inventory_total: d.inventory_total,
+                            inventory_remaining: d.inventory_total, // Reset stock to total
+                            gross_preview: 0,
+                            unlocks_preview: 0,
+                            media_url: d.media_url || null
+                        };
+                    });
+
+                    const { error: dropErr } = await supabase
+                        .from("flash_drops")
+                        .insert(dropsPayload);
+                    if (dropErr) {
+                        console.error("Error cloning flash drops:", dropErr);
+                    } else {
+                        // Delete offline drops so they don't linger
+                        await supabase
+                            .from("flash_drops")
+                            .delete()
+                            .eq("room_id", roomId)
+                            .is("session_id", null);
+                    }
+                }
+
+                // Fetch roller packs to clone
+                let packsToClone: any[] = [];
+                if (lastSession) {
+                    const { data: lastPacks } = await supabase
+                        .from("flash_drop_roller_packs")
+                        .select("*")
+                        .eq("session_id", lastSession.id);
+                    if (lastPacks) packsToClone.push(...lastPacks);
+                }
+                const { data: offlinePacks } = await supabase
+                    .from("flash_drop_roller_packs")
+                    .select("*")
+                    .eq("room_id", roomId)
+                    .is("session_id", null);
+                if (offlinePacks) packsToClone.push(...offlinePacks);
+
+                if (packsToClone.length > 0) {
+                    const packsPayload = packsToClone.map((p: any) => ({
+                        room_id: roomId,
+                        creator_id: user.id,
+                        session_id: session.id,
+                        name: p.name,
+                        price: p.price,
+                        description: p.description || null,
+                        media_urls: p.media_urls || []
+                    }));
+
+                    const { error: packErr } = await supabase
+                        .from("flash_drop_roller_packs")
+                        .insert(packsPayload);
+                    if (packErr) {
+                        console.error("Error cloning roller packs:", packErr);
+                    } else {
+                        // Delete offline packs so they don't linger
+                        await supabase
+                            .from("flash_drop_roller_packs")
+                            .delete()
+                            .eq("room_id", roomId)
+                            .is("session_id", null);
+                    }
+                }
+            } catch (cloneErr) {
+                console.error("Failed to clone flash drop items from last session:", cloneErr);
+            }
+        }
+
         // 6. Add creator as participant
         await supabase.from("room_session_participants").insert({
             session_id: session.id,
