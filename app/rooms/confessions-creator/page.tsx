@@ -96,9 +96,6 @@ const ConfessionsCreatorPage = () => {
                                 <span>⚠️</span> WRONG ACCOUNT (RLS BLOCKED)
                             </div>
                         )}
-                        <div className="text-xs text-white/50 bg-black/50 px-2 py-1 rounded">
-                            Room: {roomId || "loading..."}
-                        </div>
                         <SessionLiveControls
                             sessionId={sessionId!}
                             onEnd={() => router.push("/rooms/confessions-creator")}

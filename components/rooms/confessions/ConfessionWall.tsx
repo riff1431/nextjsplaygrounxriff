@@ -46,10 +46,15 @@ const LockedConfessionCard = ({
 }) => {
     return (
         <div className="confession-wall-card group">
-            {/* Teaser text */}
-            <p className="text-xs text-foreground/60 leading-relaxed line-clamp-2 text-center px-2 pt-1">
-                {confession.teaser || confession.title}
-            </p>
+            {/* Title & Teaser */}
+            <div className="w-full text-center px-2 pt-1 space-y-1">
+                <h4 className="text-xs font-bold text-white tracking-wide line-clamp-1">
+                    {confession.title}
+                </h4>
+                <p className="text-[10px] text-foreground/60 leading-relaxed line-clamp-2">
+                    {confession.teaser || "A blurred preview hint..."}
+                </p>
+            </div>
 
             {/* Lock icon */}
             <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center my-2 group-hover:scale-110 group-hover:border-primary/40 transition-all duration-300">
@@ -110,9 +115,14 @@ const UnlockedConfessionCard = ({
             )}
             
             <div className="px-3 pb-3 pt-2 flex-1 flex flex-col justify-between">
-                <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3 text-center flex-1 flex items-center justify-center">
-                    {confession.content || confession.teaser}
-                </p>
+                <div className="w-full text-center flex-1 flex flex-col justify-center space-y-1">
+                    <h4 className="text-xs font-bold text-white tracking-wide line-clamp-1">
+                        {confession.title}
+                    </h4>
+                    <p className="text-[10px] text-foreground/80 leading-relaxed line-clamp-2">
+                        {confession.content || confession.teaser}
+                    </p>
+                </div>
                 <div className="flex items-center justify-center gap-1.5 mt-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 w-max mx-auto">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="text-[10px] font-semibold text-emerald-400">Unlocked</span>

@@ -769,10 +769,6 @@ function ConfessionsRoom() {
                                         </button>
                                     );
                                 })()}
-
-                                <button className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-transparent hover:bg-secondary/80 transition-all text-foreground/80 hover:text-foreground">
-                                    <Menu className="h-5 w-5" />
-                                </button>
                             </div>
                         </div>
                     </header>

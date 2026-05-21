@@ -34,7 +34,14 @@ const LockedConfessionCard = ({
 }) => {
   return (
     <div className="glass-card p-3 space-y-2 flex flex-col items-center text-center">
-      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{confession.teaser || confession.title}</p>
+      <div className="w-full text-center space-y-1">
+        <h4 className="text-xs font-bold text-white tracking-wide line-clamp-1">
+          {confession.title}
+        </h4>
+        <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">
+          {confession.teaser || "A blurred preview hint..."}
+        </p>
+      </div>
       <div className="w-14 h-14 rounded-full bg-secondary/60 border border-primary/30 flex items-center justify-center">
         <Lock className="w-7 h-7 text-primary/70" />
       </div>
@@ -60,7 +67,14 @@ const UnlockedConfessionCard = ({
       onClick={() => onClick(confession)}
       className="glass-card p-3 space-y-2 flex flex-col items-center text-center cursor-pointer hover:border-primary/40 transition-colors"
     >
-      <p className="text-xs text-foreground leading-relaxed line-clamp-3">{confession.content || confession.teaser}</p>
+      <div className="w-full text-center space-y-1">
+        <h4 className="text-xs font-bold text-white tracking-wide line-clamp-1">
+          {confession.title}
+        </h4>
+        <p className="text-[10px] text-foreground leading-relaxed line-clamp-2">
+          {confession.content || confession.teaser}
+        </p>
+      </div>
       <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1">
         ✓ Unlocked
       </span>

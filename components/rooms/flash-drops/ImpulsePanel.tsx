@@ -9,50 +9,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Inbox, Zap, FolderOpen, Send, Loader2, PartyPopper, XCircle, MessageSquarePlus, Gem } from "lucide-react";
 import { cs } from "@/utils/currency";
 
-/* ── Flaticon-style filled SVG reaction icons ── */
-interface RIconProps { size?: number; color?: string; [k: string]: any; }
-
-/* Kiss — Lips icon (source: svgrepo.com/svg/501916/kiss, CC0) */
-const KissIcon = ({ size = 24, color = "#fff", ...props }: RIconProps) => (
-    <svg width={size} height={size} viewBox="0 0 1024 1024" fill={color} {...props}>
-        <path d="M658.432 312.661c-80.441 0-125.042 46.194-140.061 65.422-2.844 3.527-8.192 3.527-10.923 0-15.019-19.228-59.62-65.422-140.061-65.422-82.603 0-258.845 136.875-326.542 186.027-7.737 5.689-17.408 9.102-25.031 11.037-5.348 1.365-7.054 8.078-2.958 11.833 36.75 33.792 167.481 150.869 281.259 209.579 103.538 53.476 218.795 54.727 218.795 54.727s115.257-1.251 218.795-54.727c112.754-58.254 242.347-173.853 280.349-208.782 3.982-3.641 2.503-10.24-2.731-11.833-6.258-1.82-14.336-5.348-24.121-12.288-76.345-54.727-248.946-185.571-326.77-185.571z"/>
-        <path d="M312.206 543.289c-3.982-1.82-3.072-7.623 1.252-8.078 31.175-3.755 108.999-11.833 198.77-9.444 88.747 2.276 167.481 10.695 200.021 14.564 4.437.569 5.234 6.599 1.024 8.192-32.313 12.857-112.413 41.188-194.674 43.236-84.423 2.048-173.397-33.678-206.393-48.469z"/>
-    </svg>
-);
-
-/* Hug — Heart with embracing hands (source: flaticon style) */
-const HugIcon = ({ size = 24, color = "#fff", ...props }: RIconProps) => (
-    <svg width={size} height={size} viewBox="0 0 512 512" fill={color} {...props}>
-        <path d="M256 474c-4.3 0-8.5-1.6-11.8-4.5C230 457 88 328 88 210c0-63.7 46.3-114 106-114 32.6 0 62 16.7 62 16.7S286.6 96 319.2 96c59.7 0 104.8 50.3 104.8 114 0 118-142 247-156.2 259.5-3.3 2.9-7.5 4.5-11.8 4.5z"/>
-        <path d="M66 248c-18-8-38-28-38-60 0-28 20-52 46-52 14 0 26 6 34 16" fill="none" stroke={color} strokeWidth="32" strokeLinecap="round"/>
-        <path d="M446 248c18-8 38-28 38-60 0-28-20-52-46-52-14 0-26 6-34 16" fill="none" stroke={color} strokeWidth="32" strokeLinecap="round"/>
-    </svg>
-);
-
-/* Heart — Classic filled heart (Material Design, public domain) */
-const HeartIcon = ({ size = 24, color = "#fff", ...props }: RIconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} {...props}>
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-    </svg>
-);
-
-/* Diamond — Faceted gem (source: flaticon style) */
-const DiamondIcon = ({ size = 24, color = "#fff", ...props }: RIconProps) => (
-    <svg width={size} height={size} viewBox="0 0 512 512" fill={color} {...props}>
-        <path d="M116.3 45L16 197h140.4L116.3 45z" opacity=".7"/>
-        <path d="M395.7 45l40.1 152H496L395.7 45z" opacity=".7"/>
-        <path d="M372.8 45H139.2l40.1 152h153.4L372.8 45z"/>
-        <path d="M179.3 197L16 197l240 270L179.3 197z" opacity=".85"/>
-        <path d="M332.7 197H496L256 467 332.7 197z" opacity=".85"/>
-        <path d="M179.3 197h153.4L256 467 179.3 197z"/>
-    </svg>
-);
-
 const impulseButtons = [
-    { label: "Kiss", price: 5, icon: KissIcon, color: "from-pink-500 to-rose-400", glow: "hsl(340 90% 55%)", iconColor: "#fff" },
-    { label: "Hug", price: 10, icon: HugIcon, color: "from-sky-500 to-cyan-400", glow: "hsl(195 90% 50%)", iconColor: "#fff" },
-    { label: "Heart", price: 25, icon: HeartIcon, color: "from-fuchsia-500 to-purple-500", glow: "hsl(290 90% 55%)", iconColor: "#fff" },
-    { label: "Diamond", price: 50, icon: DiamondIcon, color: "from-cyan-400 to-blue-500", glow: "hsl(200 90% 55%)", iconColor: "#fff" },
+    { label: "Kiss", price: 5, icon: "💋", color: "from-pink-500 to-rose-400", glow: "hsl(340 90% 55%)" },
+    { label: "Hug", price: 10, icon: "🤗", color: "from-sky-500 to-cyan-400", glow: "hsl(195 90% 50%)" },
+    { label: "Heart", price: 25, icon: "💖", color: "from-fuchsia-500 to-purple-500", glow: "hsl(290 90% 55%)" },
+    { label: "Diamond", price: 50, icon: "💎", color: "from-cyan-400 to-blue-500", glow: "hsl(200 90% 55%)" },
 ];
 
 interface RollerPack {
@@ -323,7 +284,6 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     {impulseButtons.map((btn) => {
-                        const IconComponent = btn.icon;
                         return (
                             <button
                                 key={btn.label}
@@ -336,7 +296,7 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                                     <div className="relative">
                                         <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md" style={{ background: btn.glow, transform: 'scale(1.8)' }} />
                                         <div className={`relative w-11 h-11 rounded-full bg-gradient-to-br ${btn.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-white/25`} style={{ boxShadow: `0 4px 16px ${btn.glow.replace('hsl', 'hsla').replace(')', ', 0.35)')}` }}>
-                                            <IconComponent size={20} color={btn.iconColor} strokeWidth={2.5} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                                            <span className="text-2xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">{btn.icon}</span>
                                         </div>
                                     </div>
                                     <span className="fd-font-body font-bold text-[10px] text-white/50 group-hover:text-white/80 uppercase tracking-[0.12em] transition-colors">{btn.label}</span>

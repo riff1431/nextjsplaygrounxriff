@@ -136,22 +136,22 @@ export default function FanDeliveryModal({ isOpen, onClose, request, onAction }:
 
                 {/* Actions */}
                 {request.status === "delivered" && (
-                    <div className="px-5 pb-5 pt-2 flex gap-3 border-t border-white/10">
-                        <button
-                            onClick={() => handleAction("rejected")}
-                            disabled={loading}
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            <XCircle size={16} />
-                            Decline
-                        </button>
+                    <div className="px-5 pb-5 pt-2 flex flex-col gap-3 border-t border-white/10">
                         <button
                             onClick={() => handleAction("completed")}
                             disabled={loading}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-pink-900/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-sm font-bold hover:brightness-110 transition-all shadow-lg shadow-pink-900/30 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                             Accept Delivery
+                        </button>
+                        <button
+                            onClick={() => handleAction("rejected")}
+                            disabled={loading}
+                            className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white/70 text-sm font-medium hover:bg-white/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            <XCircle size={16} />
+                            Decline
                         </button>
                     </div>
                 )}

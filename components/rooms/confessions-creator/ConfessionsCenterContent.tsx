@@ -84,16 +84,16 @@ const RequestTable = ({
                                     ) : decisions[row.id] === "rejected" || row.status === "rejected" ? (
                                         <span className="text-[hsl(0,70%,50%)] font-medium">Declined</span>
                                     ) : (
-                                        <div className="flex items-center justify-center gap-2">
+                                        <div className="flex flex-col gap-1.5 items-stretch justify-center w-max mx-auto">
                                             <button
                                                 onClick={() => onAcceptAndDeliver?.(row)}
-                                                className="bg-[hsl(40,80%,55%)]/90 hover:bg-[hsl(40,80%,55%)] text-black font-bold text-xs px-4 py-1.5 rounded transition-colors"
+                                                className="bg-[hsl(40,80%,55%)]/90 hover:bg-[hsl(40,80%,55%)] text-black font-bold text-xs px-4 py-1.5 rounded transition-colors text-center whitespace-nowrap"
                                             >
                                                 ACCEPT
                                             </button>
                                             <button
                                                 onClick={() => handleReject(row.id)}
-                                                className="border border-white/30 hover:border-white text-white font-bold text-xs px-4 py-1.5 rounded transition-colors"
+                                                className="border border-white/30 hover:border-white text-white font-bold text-xs px-4 py-1.5 rounded transition-colors text-center whitespace-nowrap"
                                             >
                                                 DECLINE
                                             </button>
