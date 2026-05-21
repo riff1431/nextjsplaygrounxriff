@@ -68,8 +68,7 @@ export async function POST(req: Request) {
             // Safe upsert
             const { error: walletCreateErr } = await supabase
                 .from('wallets')
-                .insert({ user_id: user.id, balance: 0 })
-                .onConflict('user_id');
+                .upsert({ user_id: user.id, balance: 0 }, { onConflict: 'user_id', ignoreDuplicates: true });
 
             if (walletCreateErr) throw walletCreateErr;
 

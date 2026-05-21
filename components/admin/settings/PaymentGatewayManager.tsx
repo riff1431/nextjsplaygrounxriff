@@ -22,6 +22,7 @@ interface RiskTestResult {
     message?: string;
     error?: string;
     details?: any;
+    status?: number;
 }
 
 export default function PaymentGatewayManager() {
