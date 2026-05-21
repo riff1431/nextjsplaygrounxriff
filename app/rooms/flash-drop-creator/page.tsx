@@ -94,12 +94,13 @@ function FlashdropCreatorStudio() {
 
                 {/* Main Grid — 4 equal columns */}
                 <div className="flex-1 flex gap-3 min-h-0 overflow-hidden">
-                    {/* 1st: Live Drop Board */}
-                    <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
+                    {/* 1st: Summary Box + Live Drop Board */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden">
+                        <SummaryBox roomId={roomId} sessionId={sessionId} />
                         <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                     </div>
 
-                    {/* 2nd: Video + Summary + High Roller Packs */}
+                    {/* 2nd: Video + High Roller Packs */}
                     <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
                         <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
                             {roomId && user ? (
@@ -118,7 +119,6 @@ function FlashdropCreatorStudio() {
                                 </div>
                             )}
                         </div>
-                        <SummaryBox roomId={roomId} sessionId={sessionId} />
                         <HighRollerPacks roomId={roomId} sessionId={sessionId} />
                     </div>
 

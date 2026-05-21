@@ -15,6 +15,7 @@ interface SummaryStats {
 interface SummaryBoxProps {
     roomId: string | null;
     sessionId?: string | null;
+    className?: string;
 }
 
 /** A compact neon-bordered stat tile */
@@ -56,7 +57,7 @@ function StatSpacer() {
     return <div className="w-2 shrink-0" />
 }
 
-const SummaryBox = ({ roomId, sessionId }: SummaryBoxProps) => {
+const SummaryBox = ({ roomId, sessionId, className }: SummaryBoxProps) => {
     const supabase = createClient();
     const [stats, setStats] = useState<SummaryStats>({
         fans: 0, drops: 0, packs: 0, pendingRequests: 0, tips: 0
@@ -180,7 +181,7 @@ const SummaryBox = ({ roomId, sessionId }: SummaryBoxProps) => {
     }, [roomId, fetchStats]);
 
     return (
-        <div className="glass-panel rounded-xl flex-1 flex flex-col min-h-0 overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+        <div className={`glass-panel rounded-xl flex flex-col shrink-0 overflow-hidden ${className || ""}`} style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
             {/* Header */}
             <div className="flex items-center gap-2 px-3 py-2.5 shrink-0 border-b border-white/[0.06]">
                 <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(160 80% 45%), hsl(200 80% 50%))' }}>

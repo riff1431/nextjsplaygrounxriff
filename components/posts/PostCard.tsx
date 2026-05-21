@@ -17,8 +17,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Trash, Flag, AlertCircle, Lock, Unlock } from "lucide-react";
+import { Trash, Flag, AlertCircle, Lock, Unlock, Edit } from "lucide-react";
 import { cs } from "@/utils/currency";
+import EditPostModal from "./EditPostModal";
 
 export interface Post {
     id: string;
@@ -36,7 +37,14 @@ export interface Post {
     user_has_liked?: boolean; // We'll need to fetch this
 }
 
-export default function PostCard({ post, user, currentUserId, onPostDeleted, isSubscribed }: { post: Post, user: Profile, currentUserId: string | null, onPostDeleted?: () => void, isSubscribed?: boolean }) {
+export default function PostCard({ post: initialPost, user, currentUserId, onPostDeleted, isSubscribed }: { post: Post, user: Profile, currentUserId: string | null, onPostDeleted?: () => void, isSubscribed?: boolean }) {
+    const [post, setPost] = useState<Post>(initialPost);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    useEffect(() => {
+        setPost(initialPost);
+    }, [initialPost]);
+
     const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
     const [liked, setLiked] = useState(false); // Initial state should be passed or fetched
     const [likeCount, setLikeCount] = useState(0);
@@ -229,6 +237,14 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                 currentUserId={currentUserId}
                 onUnlockSuccess={() => setIsUnlocked(true)}
             />
+            <EditPostModal
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                post={post}
+                onPostUpdated={(updatedPost) => {
+                    setPost(updatedPost);
+                }}
+            />
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <Link href={`/profile/${user.id || post.user_id}`} className="flex items-center gap-3 hover:opacity-80 transition py-1">
@@ -257,13 +273,22 @@ export default function PostCard({ post, user, currentUserId, onPostDeleted, isS
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-200">
                         {isOwner ? (
-                            <DropdownMenuItem
-                                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
-                                onClick={handleDelete}
-                            >
-                                <Trash className="w-4 h-4 mr-2" />
-                                Delete Post
-                            </DropdownMenuItem>
+                            <>
+                                <DropdownMenuItem
+                                    className="focus:bg-zinc-800 cursor-pointer"
+                                    onClick={() => setIsEditOpen(true)}
+                                >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit Post
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
+                                    onClick={handleDelete}
+                                >
+                                    <Trash className="w-4 h-4 mr-2" />
+                                    Delete Post
+                                </DropdownMenuItem>
+                            </>
                         ) : (
                             <DropdownMenuItem
                                 className="focus:bg-zinc-800 cursor-pointer"
