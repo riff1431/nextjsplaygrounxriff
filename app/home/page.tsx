@@ -339,26 +339,27 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             {/* Body at the bottom */}
             <div className="relative p-3 flex flex-col z-10">
                 {/* Row: Avatar + name + level */}
-                <div className="flex items-center justify-between gap-2 min-h-[22px]">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        {creator.avatar_url ? (
-                            <img src={creator.avatar_url} alt="" className="w-16 h-16 rounded-full border-2 border-white/30 object-cover shrink-0" />
-                        ) : (
-                            <div className="w-16 h-16 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
-                                <User className="w-8 h-8 text-pink-300" />
-                            </div>
-                        )}
-                        <div className="flex items-center gap-1 overflow-hidden">
-                            <div className="text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
-                                {creator.name}
-                            </div>
+                <div className="flex items-center gap-2.5 w-full min-h-[44px]">
+                    {creator.avatar_url ? (
+                        <img src={creator.avatar_url} alt="" className="w-11 h-11 rounded-full border-2 border-white/30 object-cover shrink-0" />
+                    ) : (
+                        <div className="w-11 h-11 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
+                            <User className="w-5 h-5 text-pink-300" />
+                        </div>
+                    )}
+
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="text-xs sm:text-sm text-fuchsia-300 font-semibold truncate drop-shadow-[0_0_42px_rgba(255,0,200,1)]">
+                            {creator.name}
+                        </div>
+
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap min-h-[16px]">
+                            <span className="shrink-0 text-[8px] sm:text-[9px] px-1.5 py-[1px] rounded-full border border-blue-500/25 text-blue-200 bg-black/50 backdrop-blur-sm">
+                                {creator.level}
+                            </span>
                             {creator.userId && <UserBadgeDisplay userId={creator.userId} />}
                         </div>
                     </div>
-
-                    <span className="shrink-0 text-[10px] px-2 py-[2px] rounded-full border border-blue-500/25 text-blue-200 bg-black/50 backdrop-blur-sm">
-                        {creator.level}
-                    </span>
                 </div>
 
                 {/* Row: tags */}

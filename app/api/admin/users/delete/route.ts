@@ -118,6 +118,28 @@ export async function POST(req: NextRequest) {
 
         // ── Phase 2: Clean tables that reference profiles(id) WITHOUT ON DELETE CASCADE ──
         //    These must be cleaned BEFORE deleting the profile row.
+
+        // Pre-clean payment_transactions room references (since payment_transactions.room_id is NOT ON DELETE CASCADE)
+        try {
+            const { data: userRooms, error: roomsFetchErr } = await adminClient
+                .from("rooms")
+                .select("id")
+                .eq("host_id", userId);
+
+            if (!roomsFetchErr && userRooms && userRooms.length > 0) {
+                const roomIds = userRooms.map((r: any) => r.id);
+                const { error: payTxErr } = await adminClient
+                    .from("payment_transactions")
+                    .delete()
+                    .in("room_id", roomIds);
+                if (payTxErr) {
+                    console.warn(`[DELETE] Cleanup payment_transactions for rooms:`, payTxErr.message);
+                }
+            }
+        } catch (roomErr: any) {
+            console.warn(`[DELETE] Pre-cleanup rooms error:`, roomErr.message);
+        }
+
         const profileCleanup = [
             { table: "wallets", column: "user_id" },
             { table: "room_session_participants", column: "user_id" },
@@ -125,6 +147,15 @@ export async function POST(req: NextRequest) {
             { table: "notifications", column: "actor_id" },
             { table: "notifications", column: "user_id" },
             { table: "payouts", column: "creator_id" },
+            { table: "flash_drop_unlocks", column: "user_id" },
+            { table: "x_chat_messages", column: "sender_id" },
+            { table: "x_chat_sessions", column: "fan_id" },
+            { table: "x_chat_sessions", column: "creator_id" },
+            { table: "x_chat_requests", column: "fan_id" },
+            { table: "x_chat_reactions", column: "fan_id" },
+            { table: "competition_participants", column: "user_id" },
+            { table: "competition_votes", column: "voter_user_id" },
+            { table: "competition_tips", column: "tipper_user_id" },
         ];
 
         for (const { table, column } of profileCleanup) {
