@@ -36,6 +36,7 @@ export default function UserManagement() {
     const supabase = createClient();
     const { logAction } = useAdmin();
     const [query, setQuery] = useState("");
+    const [selectedRole, setSelectedRole] = useState<string>("");
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -73,6 +74,10 @@ export default function UserManagement() {
             setLoading(true);
             let q = supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50);
 
+            if (selectedRole) {
+                q = q.eq('role', selectedRole);
+            }
+
             if (query.trim()) {
                 const term = query.trim();
                 const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(term);
@@ -91,7 +96,7 @@ export default function UserManagement() {
 
         const timer = setTimeout(fetchUsers, 500);
         return () => clearTimeout(timer);
-    }, [query, supabase]);
+    }, [query, selectedRole, supabase]);
 
     const toggleStatus = async (userId: string, currentStatus: string | null) => {
         const newStatus = currentStatus === "Restricted" ? "Active" : "Restricted";
@@ -213,14 +218,35 @@ export default function UserManagement() {
                 sub="Search and edit user details, wallets, and badges."
             />
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search by id, name, username..."
-                    className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors"
+                    className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3.5 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors"
                 />
-                <NeonButton variant="ghost" onClick={() => setQuery("")}>Clear</NeonButton>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="rounded-xl border border-white/10 bg-black/40 px-3.5 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors cursor-pointer min-w-[130px] h-[38px] appearance-none text-left font-medium"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 10px center',
+                            backgroundSize: '16px',
+                            paddingRight: '32px'
+                        }}
+                    >
+                        <option value="" className="bg-[#111] text-white">All Roles</option>
+                        <option value="fan" className="bg-[#111] text-cyan-400">Fan</option>
+                        <option value="creator" className="bg-[#111] text-pink-400">Creator</option>
+                        <option value="admin" className="bg-[#111] text-amber-400">Admin</option>
+                    </select>
+                    <NeonButton variant="ghost" onClick={() => { setQuery(""); setSelectedRole(""); }} className="h-[38px]">
+                        Clear
+                    </NeonButton>
+                </div>
             </div>
 
             <div className="mt-4">

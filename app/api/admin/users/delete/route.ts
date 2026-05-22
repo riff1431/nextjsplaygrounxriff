@@ -54,6 +54,28 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // ── Pre-Cleanup Phase: Clean transitive relations that lack ON DELETE CASCADE ──
+        // Delete refunds first because they reference transactions
+        try {
+            const { data: userTxIds, error: txFetchErr } = await adminClient
+                .from("transactions")
+                .select("id")
+                .eq("user_id", userId);
+
+            if (!txFetchErr && userTxIds && userTxIds.length > 0) {
+                const txIds = userTxIds.map((t: any) => t.id);
+                const { error: refundErr } = await adminClient
+                    .from("refunds")
+                    .delete()
+                    .in("transaction_id", txIds);
+                if (refundErr) {
+                    console.warn(`[DELETE] Cleanup refunds:`, refundErr.message);
+                }
+            }
+        } catch (txErr: any) {
+            console.warn(`[DELETE] Pre-cleanup refunds error:`, txErr.message);
+        }
+
         // ── Phase 1: Clean tables that reference auth.users(id) WITHOUT ON DELETE CASCADE ──
         const authUserCleanup = [
             { table: "followers", column: "follower_id" },
@@ -61,7 +83,9 @@ export async function POST(req: NextRequest) {
             { table: "payment_transactions", column: "user_id" },
             { table: "revenue_events", column: "fan_user_id" },
             { table: "revenue_events", column: "creator_user_id" },
+            { table: "revenue_events", column: "sender_id" },
             { table: "bar_lounge_messages", column: "user_id" },
+            { table: "bar_lounge_requests", column: "fan_id" },
             { table: "transactions", column: "user_id" },
             { table: "reports", column: "reporter_id" },
         ];
@@ -97,6 +121,7 @@ export async function POST(req: NextRequest) {
         const profileCleanup = [
             { table: "wallets", column: "user_id" },
             { table: "room_session_participants", column: "user_id" },
+            { table: "room_sessions", column: "creator_id" },
             { table: "notifications", column: "actor_id" },
             { table: "notifications", column: "user_id" },
             { table: "payouts", column: "creator_id" },
