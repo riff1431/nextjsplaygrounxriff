@@ -10,7 +10,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { userId, walletBalance, accountTypeId, creatorLevelId, kycStatus } = body;
+        const { userId, walletBalance, accountTypeId, creatorLevelId, kycStatus, status } = body;
 
         if (!userId || typeof userId !== "string") {
             return NextResponse.json({ error: "Missing userId" }, { status: 400 });
@@ -106,6 +106,9 @@ export async function POST(req: NextRequest) {
         }
         if (kycStatus !== undefined && kycStatus !== "") {
             profileUpdate.kyc_status = kycStatus;
+        }
+        if (status !== undefined) {
+            profileUpdate.status = status;
         }
 
         if (Object.keys(profileUpdate).length > 1) {

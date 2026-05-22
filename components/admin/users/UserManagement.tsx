@@ -100,16 +100,26 @@ export default function UserManagement() {
 
     const toggleStatus = async (userId: string, currentStatus: string | null) => {
         const newStatus = currentStatus === "Restricted" ? "Active" : "Restricted";
-        const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', userId);
+        
+        try {
+            const res = await fetch('/api/admin/users/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    status: newStatus
+                }),
+            });
 
-        if (error) {
-            toast.error("Update failed");
-            return;
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || 'Update failed');
+
+            toast.success(`User ${newStatus === 'Restricted' ? 'restricted' : 'activated'}`);
+            await logAction('UPDATE_USER_STATUS', userId, { from: currentStatus, to: newStatus });
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+        } catch (err: any) {
+            toast.error("Update failed: " + err.message);
         }
-
-        toast.success(`User ${newStatus === 'Restricted' ? 'restricted' : 'activated'}`);
-        await logAction('UPDATE_USER_STATUS', userId, { from: currentStatus, to: newStatus });
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
     };
 
     const deleteUser = async (user: UserProfile) => {

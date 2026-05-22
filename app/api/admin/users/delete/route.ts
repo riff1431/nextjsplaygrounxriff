@@ -148,6 +148,8 @@ export async function POST(req: NextRequest) {
             { table: "notifications", column: "user_id" },
             { table: "payouts", column: "creator_id" },
             { table: "flash_drop_unlocks", column: "user_id" },
+            { table: "flash_drop_roller_packs", column: "creator_id" },
+            { table: "flash_drop_requests", column: "fan_id" },
             { table: "x_chat_messages", column: "sender_id" },
             { table: "x_chat_sessions", column: "fan_id" },
             { table: "x_chat_sessions", column: "creator_id" },
