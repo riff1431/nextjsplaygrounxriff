@@ -20,9 +20,13 @@ function VerificationCallbackContent() {
         setStatus(currentStatus);
 
         if (currentStatus === 'Approved' || currentStatus === 'approved') {
-            // Auto-redirect to dashboard after a short delay
+            // Auto-redirect after a short delay. If opened in a new tab,
+            // close it (the original tab's realtime subscription handles the flow)
             const timer = setTimeout(() => {
-                router.push('/creator/dashboard');
+                // Try to close the tab (works if opened via window.open)
+                window.close();
+                // Fallback: redirect to onboarding which will detect approved status
+                router.push('/onboarding');
             }, 2000);
             return () => clearTimeout(timer);
         }
@@ -65,7 +69,10 @@ function VerificationCallbackContent() {
                 {!isApproved && (
                     <CardFooter className="flex justify-center">
                         <Button
-                            onClick={() => router.push('/onboarding')}
+                            onClick={() => {
+                                window.close();
+                                router.push('/onboarding');
+                            }}
                             className="w-full sm:w-auto"
                         >
                             Try Again

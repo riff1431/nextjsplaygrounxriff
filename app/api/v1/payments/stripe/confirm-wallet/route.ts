@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getStripeSecretKey } from '@/utils/stripe/getStripeKeys';
+import { sendEmailToUser } from '@/app/api/v1/email/send/route';
 
 export async function POST(req: Request) {
     const supabase = await createClient();
@@ -88,6 +89,14 @@ export async function POST(req: Request) {
             .eq('id', wallet.id);
 
         if (updateError) throw updateError;
+
+        // Send deposit confirmation email (non-blocking)
+        sendEmailToUser("wallet-deposit-success", user.id, {
+            amount,
+            newBalance: wallet.balance + amount,
+            paymentMethod: "Stripe",
+            transactionId: paymentIntentId,
+        }).catch(() => {});
 
         return NextResponse.json({ success: true, newBalance: wallet.balance + amount });
 

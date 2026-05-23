@@ -31,6 +31,9 @@ import {
     type EarningsCategory,
 } from './splitConfig';
 
+const LOW_BALANCE_THRESHOLD = 5.00; // $5.00
+const LOW_BALANCE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 export interface SplitResult {
     success: boolean;
     error?: string;
@@ -308,6 +311,39 @@ export async function applyRevenueSplit(
                     // Non-critical — log but don't fail the transaction
                     console.error('Earnings ledger update failed:', ledgerErr);
                 }
+            }
+        }
+
+        // ─── Step 5: Check for low balance email ──────────────────
+        if (newBalance !== undefined && newBalance < LOW_BALANCE_THRESHOLD && newBalance >= 0) {
+            try {
+                const adminClient2 = createAdminClient();
+                const { data: walletRow } = await adminClient2
+                    .from('wallets')
+                    .select('low_balance_email_sent_at')
+                    .eq('user_id', fanUserId)
+                    .single();
+
+                const lastSent = walletRow?.low_balance_email_sent_at
+                    ? new Date(walletRow.low_balance_email_sent_at).getTime()
+                    : 0;
+                const now = Date.now();
+
+                if (now - lastSent > LOW_BALANCE_COOLDOWN_MS) {
+                    // Dynamically import to avoid circular dependency
+                    const { sendEmailToUser } = await import('@/app/api/v1/email/send/route');
+                    sendEmailToUser('wallet-low-balance', fanUserId, {
+                        currentBalance: newBalance,
+                    }).catch(() => {});
+
+                    // Update throttle timestamp
+                    await adminClient2
+                        .from('wallets')
+                        .update({ low_balance_email_sent_at: new Date().toISOString() })
+                        .eq('user_id', fanUserId);
+                }
+            } catch (lowBalErr) {
+                console.error('[applyRevenueSplit] Low balance email check failed:', lowBalErr);
             }
         }
 

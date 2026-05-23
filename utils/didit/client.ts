@@ -31,7 +31,8 @@ export class DiditClient {
                     workflow_id: workflowId,
                     vendor_data: userId,
                     callback: callbackUrl,
-                    vendor_internal_id: userId
+                    vendor_internal_id: userId,
+                    callback_method: "both"
                 })
             });
 

@@ -117,6 +117,17 @@ export default function UserManagement() {
             toast.success(`User ${newStatus === 'Restricted' ? 'restricted' : 'activated'}`);
             await logAction('UPDATE_USER_STATUS', userId, { from: currentStatus, to: newStatus });
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+
+            // Send email notification (fire-and-forget)
+            fetch('/api/v1/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: newStatus === 'Restricted' ? 'account-suspended' : 'account-reinstated',
+                    recipientUserId: userId,
+                    data: {},
+                }),
+            }).catch(() => {});
         } catch (err: any) {
             toast.error("Update failed: " + err.message);
         }
@@ -136,6 +147,18 @@ export default function UserManagement() {
 
             toast.success(`User "${user.full_name || user.username}" deleted`);
             await logAction('DELETE_USER', user.id, { name: user.full_name, username: user.username });
+
+            // Send ban email before removing from UI (fire-and-forget)
+            fetch('/api/v1/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: 'account-banned',
+                    recipientUserId: user.id,
+                    data: { reason: 'Account permanently terminated by admin' },
+                }),
+            }).catch(() => {});
+
             setUsers(prev => prev.filter(u => u.id !== user.id));
             setConfirmDeleteUser(null);
         } catch (err: any) {

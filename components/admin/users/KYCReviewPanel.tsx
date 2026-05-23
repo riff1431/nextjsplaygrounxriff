@@ -155,6 +155,18 @@ export default function KYCReviewPanel() {
             });
 
             toast.success("KYC approved successfully");
+
+            // Send KYC approved email (fire-and-forget)
+            fetch('/api/v1/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: 'kyc-approved',
+                    recipientUserId: submission.user_id,
+                    data: {},
+                }),
+            }).catch(() => {});
+
             closeDetailModal();
             await fetchSubmissions();
         }
@@ -218,6 +230,18 @@ export default function KYCReviewPanel() {
             });
 
             toast.success("KYC rejected");
+
+            // Send KYC rejected email (fire-and-forget)
+            fetch('/api/v1/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateId: 'kyc-rejected',
+                    recipientUserId: selectedSubmission.user_id,
+                    data: { reason: rejectionReason },
+                }),
+            }).catch(() => {});
+
             closeRejectModal();
             closeDetailModal();
             await fetchSubmissions();

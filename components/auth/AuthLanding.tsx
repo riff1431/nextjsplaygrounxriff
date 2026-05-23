@@ -105,11 +105,38 @@ export default function AuthLanding() {
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [agreePrivacy, setAgreePrivacy] = useState(false);
     const [agreeAgeVerified, setAgreeAgeVerified] = useState(false);
+
+    // Forgot Password
+    const [showForgotPw, setShowForgotPw] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotSent, setForgotSent] = useState(false);
     
     // Creator Checkboxes
     const [agreeCreatorOnboarding, setAgreeCreatorOnboarding] = useState(false);
     const [agreeCreatorGuidelines, setAgreeCreatorGuidelines] = useState(false);
     const [agreePayoutTerms, setAgreePayoutTerms] = useState(false);
+
+    // Forgot Password Handler
+    const handleForgotPassword = async () => {
+        if (!forgotEmail.trim()) {
+            toast.error("Please enter your email address");
+            return;
+        }
+        setForgotLoading(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+                redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+            });
+            if (error) throw error;
+            setForgotSent(true);
+            toast.success("Password reset link sent! Check your email.");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to send reset email");
+        } finally {
+            setForgotLoading(false);
+        }
+    };
 
     // Sign In Handler
     const handleLogin = async (e?: React.FormEvent) => {
@@ -163,9 +190,33 @@ export default function AuthLanding() {
 
             if (data.session) {
                 toast.success("Account created! Redirecting...", { id: toastId });
+
+                // Fire welcome email (non-blocking)
+                fetch("/api/v1/email/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        templateId: "welcome",
+                        recipientUserId: data.user?.id,
+                        data: { firstName: createFirst || fullName, role: createRole },
+                    }),
+                }).catch(() => {}); // fire-and-forget
+
                 router.refresh();
                 router.push('/onboarding'); // All new users go to onboarding
             } else {
+                // Email confirmation required — still send welcome email
+                if (data.user?.id) {
+                    fetch("/api/v1/email/send", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            templateId: "welcome",
+                            recipientUserId: data.user.id,
+                            data: { firstName: createFirst || fullName, role: createRole },
+                        }),
+                    }).catch(() => {});
+                }
                 toast.success("Account created! Check your email to confirm.", { id: toastId, duration: 5000 });
                 setLoading(false);
             }
@@ -592,7 +643,12 @@ export default function AuthLanding() {
                                                         Remember me
                                                     </Label>
                                                 </div>
-                                                <Button variant="link" className="h-auto p-0 text-sm text-gray-200/80 hover:text-gray-50">
+                                                <Button
+                                                    variant="link"
+                                                    type="button"
+                                                    className="h-auto p-0 text-sm text-gray-200/80 hover:text-gray-50"
+                                                    onClick={() => { setForgotEmail(email); setShowForgotPw(true); setForgotSent(false); }}
+                                                >
                                                     Forgot password?
                                                 </Button>
                                             </div>
@@ -752,6 +808,97 @@ export default function AuthLanding() {
             </div>
             
             <SiteFooter />
+
+            {/* Forgot Password Modal */}
+            {showForgotPw && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative w-full max-w-md rounded-2xl bg-neutral-900 border border-white/10 p-6 shadow-2xl"
+                    >
+                        <button
+                            onClick={() => setShowForgotPw(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl transition"
+                        >
+                            ×
+                        </button>
+
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center mx-auto mb-3">
+                                <Lock className="w-5 h-5 text-pink-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-white">Reset Your Password</h2>
+                            <p className="text-sm text-gray-400 mt-1">
+                                {forgotSent
+                                    ? "Check your email for the reset link"
+                                    : "Enter your email and we'll send you a reset link"}
+                            </p>
+                        </div>
+
+                        {forgotSent ? (
+                            <div className="text-center">
+                                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 mb-4">
+                                    <p className="text-green-400 text-sm">
+                                        ✅ Reset link sent to <strong>{forgotEmail}</strong>
+                                    </p>
+                                    <p className="text-gray-400 text-xs mt-2">
+                                        Didn't get it? Check your spam folder or try again.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 rounded-xl border-white/10 text-gray-300 hover:bg-white/5"
+                                        onClick={() => setShowForgotPw(false)}
+                                    >
+                                        Back to Login
+                                    </Button>
+                                    <Button
+                                        className="flex-1 rounded-xl bg-pink-600 hover:bg-pink-700"
+                                        onClick={() => { setForgotSent(false); }}
+                                    >
+                                        Resend Link
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="forgot-email" className="text-gray-200">Email Address</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                        <Input
+                                            id="forgot-email"
+                                            type="email"
+                                            value={forgotEmail}
+                                            onChange={(e) => setForgotEmail(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleForgotPassword()}
+                                            placeholder="you@example.com"
+                                            className="h-11 rounded-xl pl-10 bg-black/40 border-white/10 text-gray-100 placeholder:text-gray-500"
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={handleForgotPassword}
+                                    disabled={forgotLoading || !forgotEmail.trim()}
+                                    className="w-full h-11 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-50"
+                                >
+                                    {forgotLoading ? "Sending..." : "Send Reset Link"}
+                                </Button>
+                                <Button
+                                    variant="link"
+                                    className="w-full text-sm text-gray-400 hover:text-gray-200"
+                                    onClick={() => setShowForgotPw(false)}
+                                >
+                                    ← Back to Sign In
+                                </Button>
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

@@ -14,10 +14,6 @@ export async function POST(request: Request) {
         const diditClient = new DiditClient();
         const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verification/callback`;
 
-        // redirect_url is where the USER is sent after finishing on Didit side
-        // we send them back to onboarding or a success page
-        const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?verified=true`;
-
         // Create session
         // Note: We need to check exact Didit API payload structure.
         // Usually creation returns a session_id and a url.
