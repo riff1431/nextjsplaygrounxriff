@@ -66,27 +66,41 @@ export async function POST(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
-    // Payment with revenue split (85% creator / 15% platform)
-    const splitResult = await applyRevenueSplit({
-        supabase,
-        fanUserId: user.id,
-        creatorUserId: room.host_id,
-        grossAmount: amount,
-        splitType: 'GLOBAL',
-        description: finalContent,
-        roomId,
-        relatedType: 'flash_drop_request',
-        relatedId: null,
-        earningsCategory: 'custom_requests',
-    });
-
-    if (!splitResult.success) return NextResponse.json({ error: splitResult.error }, { status: 400 });
-
-    const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
-
     // Impulse spends and Pack purchases are instant reactions — auto-accept
-    const isImpulse = finalContent.includes('Impulse');
+    const isImpulse = finalContent.includes('Impulse') || finalContent.includes('Reaction');
     const isPack = finalContent.includes('Pack');
+
+    // Payment with revenue split (85% creator / 15% platform)
+    let splitResult: { success: boolean; newBalance?: number; error?: string } = { success: true };
+    if (amount > 0 && (isImpulse || isPack)) {
+        const res = await applyRevenueSplit({
+            supabase,
+            fanUserId: user.id,
+            creatorUserId: room.host_id,
+            grossAmount: amount,
+            splitType: 'GLOBAL',
+            description: finalContent,
+            roomId,
+            relatedType: 'flash_drop_request',
+            relatedId: null,
+            earningsCategory: 'custom_requests',
+        });
+        if (!res.success) return NextResponse.json({ error: res.error }, { status: 400 });
+        splitResult = res;
+    } else if (amount > 0 && !(isImpulse || isPack)) {
+        // Just verify balance exists without deducting
+        const { data: wallet } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", user.id)
+            .single();
+
+        if (!wallet || wallet.balance < amount) {
+            return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
+        }
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("username, full_name").eq("id", user.id).single();
 
     // For pack purchases, encode media URLs into content for the incoming notifications
     if (isPack && Array.isArray(media_urls) && media_urls.length > 0) {
@@ -112,11 +126,28 @@ export async function POST(
 
     if (reqError) return NextResponse.json({ error: reqError.message }, { status: 500 });
 
-    const systemMsg = finalContent.includes('Pack') || finalContent.includes('Bundle')
-        ? `🎁 ${profile?.username || "Anonymous"} ${finalContent.replace('🎁 ', '')}`
-        : finalContent.includes('Impulse')
-            ? `⚡ ${profile?.username || "Anonymous"} sent ${SYM}${amount} for ${finalContent.replace('⚡ Impulse ', '').split(':')[0]}!`
-            : `💰 ${profile?.username || "Anonymous"} submitted a ${SYM}${amount} custom drop request!`;
+    let systemMsg = "";
+    if (finalContent.includes('Pack') || finalContent.includes('Bundle')) {
+        let packName = "High Roller";
+        const matchPurchased = finalContent.match(/Purchased Pack:\s*(.*?)\s*($|\(|\|__MEDIA__)/);
+        const matchUnlocked = finalContent.match(/Pack Unlocked:\s*(.*?)\s*($|\(|\|__MEDIA__)/);
+        
+        if (matchPurchased && matchPurchased[1]) {
+            packName = matchPurchased[1].trim();
+        } else if (matchUnlocked && matchUnlocked[1]) {
+            packName = matchUnlocked[1].trim();
+        } else {
+            packName = finalContent.replace(/[💎🎁]/g, '').replace('Purchased Pack:', '').replace('Pack Unlocked:', '').split('|__MEDIA__|')[0].split('(')[0].trim();
+        }
+        
+        const capitalizedPackName = packName.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const displayName = profile?.full_name || profile?.username || "Anonymous";
+        systemMsg = `${displayName} purchased a ${capitalizedPackName} Pack!`;
+    } else if (isImpulse) {
+        systemMsg = `⚡ ${profile?.username || "Anonymous"} sent ${SYM}${amount} for ${finalContent.replace('⚡ Impulse ', '').replace('⚡ Reaction ', '').split(':')[0]}!`;
+    } else {
+        systemMsg = `💰 ${profile?.username || "Anonymous"} submitted a ${SYM}${amount} custom drop request!`;
+    }
 
     // Insert System Message into Chat (Server-side to avoid duplication)
     let query = supabase
@@ -172,7 +203,26 @@ export async function PATCH(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room || room.host_id !== user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
-    const { data: requestToUpdate } = await supabase.from("flash_drop_requests").select("content").eq("id", requestId).single();
+    const { data: requestToUpdate } = await supabase.from("flash_drop_requests").select("*").eq("id", requestId).single();
+
+    if (status === "accepted" && requestToUpdate && requestToUpdate.status !== "accepted" && Number(requestToUpdate.amount) > 0) {
+        const splitResult = await applyRevenueSplit({
+            supabase,
+            fanUserId: requestToUpdate.fan_id,
+            creatorUserId: room.host_id,
+            grossAmount: Number(requestToUpdate.amount),
+            splitType: 'GLOBAL',
+            description: requestToUpdate.content,
+            roomId,
+            relatedType: 'flash_drop_request',
+            relatedId: requestToUpdate.id,
+            earningsCategory: 'custom_requests',
+        });
+
+        if (!splitResult.success) {
+            return NextResponse.json({ error: splitResult.error || "Payment failed (Insufficient balance)" }, { status: 400 });
+        }
+    }
 
     const updatePayload: any = { status };
     if (mediaUrl !== undefined && requestToUpdate) {

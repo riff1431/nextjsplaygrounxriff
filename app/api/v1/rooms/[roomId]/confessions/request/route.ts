@@ -93,42 +93,18 @@ export async function POST(
 
     const creatorId = room.host_id;
 
-    // For 1on1: transfer funds immediately to the creator with split
-    // For global: hold funds (no transfer yet — funds move when a creator accepts)
-    if (mode === '1on1') {
-        const splitResult = await applyRevenueSplit({
-            supabase,
-            fanUserId: user.id,
-            creatorUserId: creatorId,
-            grossAmount: amount,
-            splitType: 'GLOBAL',
-            description: `Confession request: ${type} - ${topic}`,
-            roomId,
-            relatedType: 'confession_request',
-            relatedId: null,
-            earningsCategory: 'custom_requests',
-        });
+    // Verify the fan has enough balance for both 1on1 and global confession requests
+    const { data: wallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", user.id)
+        .single();
 
-        if (!splitResult.success) {
-            return NextResponse.json(
-                { error: splitResult.error || "Payment failed" },
-                { status: 400 }
-            );
-        }
-    } else {
-        // Global: verify the fan has enough balance
-        const { data: wallet } = await supabase
-            .from("wallets")
-            .select("balance")
-            .eq("user_id", user.id)
-            .single();
-
-        if (!wallet || wallet.balance < amount) {
-            return NextResponse.json(
-                { error: "Insufficient balance" },
-                { status: 400 }
-            );
-        }
+    if (!wallet || wallet.balance < amount) {
+        return NextResponse.json(
+            { error: "Insufficient balance" },
+            { status: 400 }
+        );
     }
 
     // Resolve the fan's display name for public (non-anonymous) requests

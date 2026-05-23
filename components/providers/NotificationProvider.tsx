@@ -85,7 +85,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
                     const isConfession = (newNotif.type === 'confession_tip' || newNotif.type === 'confession_request' || newNotif.type === 'confession_request_update') && pathname.includes('/rooms/confessions');
                     const isBarLounge = newNotif.type === 'bar_request' && pathname.includes('/rooms/bar-lounge');
-                    const skipToast = isConfession || isBarLounge;
+                    const isSessionCreated = newNotif.type === 'session_created' || newNotif.type === 'truth_dare_session_created';
+                    const skipToast = isConfession || isBarLounge || isSessionCreated;
 
                     if (!skipToast) {
                         // Toast — enhanced for room invitations

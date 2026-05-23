@@ -53,6 +53,7 @@ import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 import dynamic from 'next/dynamic';
 import { cs } from "@/utils/currency";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 const LiveStreamWrapper = dynamic<any>(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 const QuestionCountdown = dynamic<any>(() => import('./components/QuestionCountdown'), { ssr: false });
 const FanAnswerModal = dynamic<any>(() => import('./components/FanAnswerModal'), { ssr: false });
@@ -835,8 +836,10 @@ function TruthOrDareContent() {
 
     const incomingStatusColor = (status: string) => {
         switch (status) {
-            case "completed": return { bg: "hsla(140,60%,20%,0.3)", border: "hsla(140,70%,45%,0.4)", text: "hsl(140,70%,55%)" };
-            case "rejected": return { bg: "hsla(0,60%,20%,0.3)", border: "hsla(0,70%,55%,0.4)", text: "hsl(0,70%,60%)" };
+            case "completed":
+            case "answered": return { bg: "hsla(140,60%,20%,0.3)", border: "hsla(140,70%,45%,0.4)", text: "hsl(140,70%,55%)" };
+            case "rejected":
+            case "declined": return { bg: "hsla(0,60%,20%,0.3)", border: "hsla(0,70%,55%,0.4)", text: "hsl(0,70%,60%)" };
             case "pending": return { bg: "hsla(42,60%,20%,0.3)", border: "hsla(42,90%,55%,0.4)", text: "hsl(42,90%,55%)" };
             case "calling": return { bg: "hsla(180,60%,20%,0.3)", border: "hsla(180,90%,55%,0.4)", text: "hsl(180,90%,55%)" };
             default: return { bg: "hsla(280,40%,20%,0.2)", border: "hsla(280,60%,45%,0.25)", text: "hsl(280,20%,65%)" };
@@ -982,8 +985,11 @@ function TruthOrDareContent() {
                     // Only show countdown for truth/dare requests, suppress the result modal
                     setCountdownRequest(data.request);
                     setShowCountdown(true);
+                } else if (confirmModal.type === 'reaction' || confirmModal.type === 'tip') {
+                    // Just show a success toast for reactions and tips and don't open the result modal
+                    toast.success(confirmModal.type === 'reaction' ? "Reaction sent!" : "Tip sent successfully!");
                 } else {
-                    // Show standard result modal for tips/reactions
+                    // Show standard result modal for other interaction types
                     setResultModal({
                         isOpen: true,
                         success: true,
@@ -1034,19 +1040,27 @@ function TruthOrDareContent() {
                 }
             } else {
                 setLastAction(`Error: ${data.error || "Failed to send"}`);
-                setResultModal({
-                    isOpen: true,
-                    success: false,
-                    message: data.error || "Failed to send your request."
-                });
+                if (confirmModal.type === 'reaction' || confirmModal.type === 'tip') {
+                    toast.error(data.error || `Failed to send ${confirmModal.type}`);
+                } else {
+                    setResultModal({
+                        isOpen: true,
+                        success: false,
+                        message: data.error || "Failed to send your request."
+                    });
+                }
             }
         } catch (e) {
             setLastAction("Network error. Please try again.");
-            setResultModal({
-                isOpen: true,
-                success: false,
-                message: "Network error. Please try again."
-            });
+            if (confirmModal?.type === 'reaction' || confirmModal?.type === 'tip') {
+                toast.error("Network error. Please try again.");
+            } else {
+                setResultModal({
+                    isOpen: true,
+                    success: false,
+                    message: "Network error. Please try again."
+                });
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -1191,13 +1205,28 @@ function TruthOrDareContent() {
                                                 {incomingItems.map((item) => {
                                                     const emoji = incomingTypeEmoji(item.type);
                                                     const sc = incomingStatusColor(item.status);
+                                                    const isAnswered = item.status === 'answered' || item.status === 'completed' || !!item.creator_response;
                                                     return (
                                                         <div 
                                                             key={item.id}
-                                                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                            className={`flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group ${
+                                                                isAnswered ? 'cursor-pointer hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]' : ''
+                                                            }`}
                                                             style={{ 
                                                                 background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
                                                                 border: `1px solid ${sc.border}`
+                                                            }}
+                                                            onClick={() => {
+                                                                if (isAnswered) {
+                                                                    setAnswerNotification({
+                                                                        fanName: item.fan_name || "You",
+                                                                        type: item.type,
+                                                                        tier: item.tier || "bronze",
+                                                                        content: item.content,
+                                                                        creatorResponse: item.creator_response || ""
+                                                                    });
+                                                                    setShowIncomingPanel(false);
+                                                                }
                                                             }}
                                                         >
                                                             <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
@@ -1224,6 +1253,12 @@ function TruthOrDareContent() {
                                                                         {formatTimeAgo(item.created_at)}
                                                                     </span>
                                                                 </div>
+                                                                {isAnswered && (
+                                                                    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-400/20 px-2 py-0.5 rounded-md w-max">
+                                                                        <span>💬</span>
+                                                                        <span className="animate-pulse">Tap to view response</span>
+                                                                    </div>
+                                                                )}
                                                                 {item.type === "group_call" && item.status === "calling" && (
                                                                     <button 
                                                                         onClick={(e) => {
@@ -1864,6 +1899,13 @@ function TruthOrDareContent() {
                     onDismiss={groupCall.dismiss}
                 />
             )}
+
+            {/* Per-minute billing overlay */}
+            <BillingOverlay
+                sessionId={sessionId}
+                accentHsl="280, 80%, 60%"
+                exitRoute="/home"
+            />
 
         </div >
     );

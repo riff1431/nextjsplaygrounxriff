@@ -45,10 +45,9 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             
-            // Deduct from wallet
-            const payment = await pay(hostId, a.price, `Custom Request: ${a.name}`, roomId, 'suga_action');
-            if (!payment.success) {
-                toast.error(payment.error || "Payment failed");
+            // Check balance instead of immediate pay
+            if (balance < a.price) {
+                toast.error("Insufficient balance");
                 return;
             }
 
@@ -69,7 +68,7 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
             const data = await res.json();
             if (!data.success) throw new Error(data.error || "Failed");
 
-            toast.success(`${a.emoji} Custom request sent: ${a.name}`, { description: `${cs()}${a.price} — your message was delivered` });
+            toast.success(`${a.emoji} Custom request sent: ${a.name}`, { description: "Waiting for creator to accept request..." });
         } catch (err) {
             console.error("Failed to send custom request:", err);
             toast.error("Failed to send custom request");
@@ -82,10 +81,9 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
         try {
             const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
             
-            // Deduct from wallet
-            const payment = await pay(hostId, a.price, `Activated: ${a.name}`, roomId, 'suga_action');
-            if (!payment.success) {
-                toast.error(payment.error || "Payment failed");
+            // Check balance instead of immediate pay
+            if (balance < a.price) {
+                toast.error("Insufficient balance");
                 return;
             }
 
@@ -108,7 +106,7 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                     toast.error("Failed to initiate video call");
                 }
             } else {
-                toast.success(`${a.emoji} ${a.name} activated!`, { description: `${cs()}${a.price} sent to creator` });
+                toast.success(`${a.emoji} ${a.name} requested!`, { description: "Waiting for creator to accept..." });
             }
         } catch (err) {
             console.error("Failed to trigger action:", err);
@@ -169,10 +167,10 @@ const QuickPaidActions = ({ roomId, hostId, sessionId, onPrivateCallInitiated, i
                     walletBalance={balance}
                     description={
                         confirmAction.isPrivateCall
-                            ? `Pay ${cs()}${confirmAction.price} for a Private 1-on-1 video call with the creator?`
-                            : `Pay ${cs()}${confirmAction.price} to trigger ${confirmAction.name}?`
+                            ? `Request a Private 1-on-1 video call with the creator for ${cs()}${confirmAction.price}?`
+                            : `Request ${confirmAction.name} for ${cs()}${confirmAction.price}?`
                     }
-                    confirmLabel={confirmAction.isPrivateCall ? "Pay & Request Call" : "Pay Now"}
+                    confirmLabel={confirmAction.isPrivateCall ? "Request Call" : "Submit Request"}
                 />
             )}
         </div>

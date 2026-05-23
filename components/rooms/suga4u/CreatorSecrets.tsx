@@ -38,7 +38,7 @@ const CreatorSecrets = ({ roomId, hostId, sessionId }: { roomId: string | null; 
             const result = await pay(hostId, confirmSecret.unlock_price, `Unlocked Secret: ${confirmSecret.name}`, roomId, 'suga_secret', confirmSecret.id);
             if (!result.success) throw new Error(result.error);
 
-            await sendGift(confirmSecret.unlock_price, fanName, `Unlocked Secret: ${confirmSecret.name}`);
+            await sendGift(confirmSecret.unlock_price, fanName, `Unlocked Secret: ${confirmSecret.name}`, 'SECRET_UNLOCK', user?.id);
             
             // Mark as unlocked locally
             setUnlockedIds(prev => new Set(prev).add(confirmSecret.id));

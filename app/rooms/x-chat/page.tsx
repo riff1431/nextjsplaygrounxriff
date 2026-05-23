@@ -14,6 +14,7 @@ import IncomingReplies from "@/components/rooms/x-chat/IncomingReplies";
 import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(
@@ -568,6 +569,13 @@ const XChatRoom = () => {
 
                 <InviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} roomId={roomId} />
                 <InvitationPopup />
+
+                {/* Per-minute billing overlay */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="45, 100%, 50%"
+                    exitRoute="/home"
+                />
 
             </div>
         </ProtectRoute>

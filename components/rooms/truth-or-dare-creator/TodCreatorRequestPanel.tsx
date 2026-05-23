@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Play, Pause } from "lucide-react";
+import { Zap, Check, X } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 interface QueueItem {
@@ -109,13 +109,13 @@ const TodCreatorRequestPanel = ({ title, accentColor, queue, activityItems, onSe
                                 onClick={() => onServe(q)}
                                 className={`px-2.5 py-1.5 text-[10px] rounded flex items-center gap-1 font-bold tracking-wider uppercase text-black transition-opacity hover:opacity-80 ${accentColor === 'pink' ? 'bg-pink-500' : 'bg-blue-400'}`}
                             >
-                                <Play className="w-3 h-3" /> Serve
+                                <Check className="w-3 h-3" /> Completed
                             </button>
                             <button
                                 onClick={() => onDismiss(q)}
                                 className="px-2.5 py-1 text-[10px] rounded border border-white/20 text-white/60 hover:text-white flex items-center gap-1 font-bold tracking-wider uppercase transition-colors"
                             >
-                                <Pause className="w-3 h-3" /> Dismiss
+                                <X className="w-3 h-3" /> Dismiss
                             </button>
                         </div>
                     </div>

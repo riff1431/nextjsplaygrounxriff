@@ -26,6 +26,7 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
     const supabase = createClient();
     const [replies, setReplies] = useState<XChatRequest[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [selectedReply, setSelectedReply] = useState<XChatRequest | null>(null);
     const [lastOpenedAt, setLastOpenedAt] = useState<number>(() => {
         if (typeof window !== "undefined") {
             return parseInt(localStorage.getItem(`xchat_incoming_last_opened_${roomId}`) || "0");
@@ -148,6 +149,54 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
             return <p key={idx} className="text-sm text-white/90 leading-relaxed mt-1">{line}</p>;
         });
 
+    const renderModalReplyContent = (content: string) =>
+        content.split('\n').map((line, idx) => {
+            const isLink = line.startsWith('http') || line.startsWith('/api/');
+            if (isLink) {
+                if (line.match(/\.(webm|mp3|wav|m4a)$/i)) {
+                    return (
+                        <div key={idx} className="w-full flex justify-center py-4 bg-black/20 rounded-2xl border border-white/5 my-3">
+                            <VoiceNotePlayer src={line} />
+                        </div>
+                    );
+                }
+                if (line.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                    return (
+                        <div key={idx} className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-[0_0_30px_rgba(255,215,0,0.15)] mt-4 bg-black/20 flex justify-center">
+                            <img
+                                src={line}
+                                alt="reply media"
+                                className="w-full max-h-[400px] object-contain rounded-2xl transition-all duration-500 group-hover:scale-[1.02]"
+                            />
+                        </div>
+                    );
+                }
+                if (line.match(/\.(mp4|ogg)$/i)) {
+                    return (
+                        <div key={idx} className="relative rounded-2xl border border-white/10 overflow-hidden shadow-[0_0_30px_rgba(255,215,0,0.15)] mt-4 bg-black flex justify-center">
+                            <video
+                                src={line}
+                                controls
+                                className="w-full max-h-[400px] object-contain rounded-2xl"
+                            />
+                        </div>
+                    );
+                }
+                return (
+                    <a
+                        key={idx}
+                        href={line}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-gold hover:text-gold/80 mt-2 block truncate text-sm transition-colors duration-200"
+                    >
+                        {line}
+                    </a>
+                );
+            }
+            return <p key={idx} className="text-base md:text-lg text-white/90 leading-relaxed font-light mt-2 whitespace-pre-wrap">{line}</p>;
+        });
+
     return (
         <div className="relative">
             {/* Trigger button */}
@@ -219,7 +268,11 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
                                     replies.map((r) => (
                                         <div
                                             key={r.id}
-                                            className="group p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-gold/5 transition-all duration-300"
+                                            onClick={() => {
+                                                setSelectedReply(r);
+                                                setIsOpen(false);
+                                            }}
+                                            className="group p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98] cursor-pointer transition-all duration-300"
                                         >
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-[10px] font-bold uppercase tracking-wider text-gold/60">
@@ -237,6 +290,79 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
                                 )}
                             </div>
                         </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
+
+            {/* Premium Glassmorphic Detailed Modal */}
+            {typeof window !== "undefined" && createPortal(
+                <AnimatePresence>
+                    {selectedReply && (
+                        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                                className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-b from-[#1a1a2e] to-[#0c0c16] shadow-[0_0_50px_rgba(255,215,0,0.15)] flex flex-col max-h-[90vh]"
+                            >
+                                {/* Decorative top glowing line */}
+                                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-gold to-transparent" />
+
+                                {/* Modal Header */}
+                                <div className="flex items-center justify-between border-b border-white/5 px-6 py-4 bg-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">💛</span>
+                                        <h3 className="text-lg font-black tracking-wider text-gold uppercase" style={{ textShadow: "0 0 10px rgba(255,215,0,0.3)" }}>
+                                            Reply from Creator
+                                        </h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedReply(null)}
+                                        className="rounded-full w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/15 border border-white/10 hover:border-gold/40 text-white/60 hover:text-white transition-all duration-300"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+
+                                {/* Modal Scrollable Body */}
+                                <div className="overflow-y-auto p-6 md:p-8 space-y-6 scrollbar-thin">
+                                    {/* Original Request Info Box */}
+                                    <div className="rounded-2xl bg-white/5 border border-white/5 p-4 flex flex-col gap-1.5 bg-gradient-to-r from-white/5 to-transparent">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gold/60">
+                                            Original Request
+                                        </span>
+                                        <p className="text-sm md:text-base text-white/70 italic font-light">
+                                            "{selectedReply.message}"
+                                        </p>
+                                        <span className="text-[9px] text-white/30 self-end mt-1">
+                                            {new Date(selectedReply.updated_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                                        </span>
+                                    </div>
+
+                                    {/* Main Creator Reply Area */}
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gold">
+                                            Creator Response
+                                        </span>
+                                        <div className="bg-black/40 rounded-2xl p-6 border border-gold/10 backdrop-blur-md shadow-[inset_0_2px_10px_rgba(0,0,0,0.4)]">
+                                            {selectedReply.creator_reply && renderModalReplyContent(selectedReply.creator_reply)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Modal Footer */}
+                                <div className="flex items-center justify-end border-t border-white/5 px-6 py-4 bg-white/5">
+                                    <button
+                                        onClick={() => setSelectedReply(null)}
+                                        className="px-6 py-2.5 rounded-full bg-gradient-to-r from-[#FFD700] to-[#E3A813] text-black font-bold tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all text-xs shadow-[0_4px_20px_rgba(255,215,0,0.25)]"
+                                    >
+                                        Close Reply
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>,
                 document.body

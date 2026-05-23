@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Diamond, MessageSquare } from "lucide-react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import CreatorRespondModal from "@/components/rooms/suga4u-creator/CreatorRespondModal";
+import { cs } from "@/utils/currency";
 
 const CUSTOM_REQUEST_TYPES = ["POSE", "SHOUTOUT", "QUICK_TEASE", "CUSTOM_CLIP", "ACTION"];
 const REACTION_TYPES = ["GIFT"];
@@ -54,7 +55,7 @@ const S4uPendingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?
                                     
                                     <div className="flex items-center gap-1.5 shrink-0">
                                         <span className="text-[11px] font-bold s4u-creator-text-gold flex items-center gap-0.5 shrink-0">
-                                            ${req.price} <Diamond className="w-2.5 h-2.5" />
+                                            {cs()}{req.price} <Diamond className="w-2.5 h-2.5" />
                                         </span>
                                         
                                         {req.status === "pending" ? (

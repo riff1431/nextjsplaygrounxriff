@@ -45,8 +45,8 @@ const DropRequests = ({ className = "", roomId, sessionId }: { className?: strin
                     .order("created_at", { ascending: false })
                     .limit(20));
             }
-            // Filter out impulse spends and pack purchases — they are reactions/instant buys, not custom requests
-            if (data) setRequests((data as DropRequest[]).filter(r => !r.content.includes('Impulse') && !r.content.includes('Purchased Pack')));
+            // Filter out impulse spends, reactions, and pack purchases — they are reactions/instant buys, not custom requests
+            if (data) setRequests((data as DropRequest[]).filter(r => !r.content.includes('Impulse') && !r.content.includes('Reaction') && !r.content.includes('Purchased Pack')));
         }
         fetchRequests();
 
@@ -57,8 +57,8 @@ const DropRequests = ({ className = "", roomId, sessionId }: { className?: strin
                     const newReq = payload.new as DropRequest & { session_id?: string };
                     // Session isolation: skip requests from other sessions
                     if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
-                    // Skip impulse spends and pack purchases — they are reactions/instant buys, not requests
-                    if (newReq.content.includes('Impulse') || newReq.content.includes('Purchased Pack')) return;
+                    // Skip impulse spends, reactions, and pack purchases — they are reactions/instant buys, not requests
+                    if (newReq.content.includes('Impulse') || newReq.content.includes('Reaction') || newReq.content.includes('Purchased Pack')) return;
                     setRequests(prev => [newReq, ...prev]);
                 })
             .subscribe();

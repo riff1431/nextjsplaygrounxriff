@@ -348,18 +348,18 @@ export function useSuga4U(roomId: string | null, sessionId?: string | null) {
         return await res.json();
     }, [roomId]);
 
-    const sendGift = useCallback(async (amount: number, fanName: string, label: string = "Gift") => {
+    const sendGift = useCallback(async (amount: number, fanName: string, label: string = "Gift", type: ActivityEventType = "TIP", fanId?: string) => {
         if (!roomId) return;
         const insertPayload: any = {
             room_id: roomId,
-            type: "TIP",
+            type: type,
             fan_name: fanName,
             label: label,
             amount: amount
         };
+        if (fanId) insertPayload.fan_id = fanId;
         if (sessionId) insertPayload.session_id = sessionId;
-        const { error } = await supabase.from("suga_activity_events").insert(insertPayload
-        );
+        const { error } = await supabase.from("suga_activity_events").insert(insertPayload);
         if (error) throw error;
     }, [roomId, sessionId, supabase]);
     

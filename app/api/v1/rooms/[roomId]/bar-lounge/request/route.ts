@@ -94,15 +94,15 @@ export async function POST(
 
     // Determine earnings category: drinks & tips are 'tips', VIP/booth/pin are 'custom_requests'
     const isTipLike = ['drink', 'tip', 'champagne', 'vip_bottle'].includes(safeType);
-    const isCustom = safeType === 'custom';
+    const isApprovalRequiredRequest = ['vip', 'booth', 'custom'].includes(safeType);
     const earningsCategory = isTipLike ? 'tips' : 'custom_requests';
     const relatedType = isTipLike ? 'tip' : 'bar_request';
-    // Custom requests start as 'pending' and require creator approval
-    const initialStatus = isCustom ? 'pending' : undefined;
+    // Approval required requests start as 'pending' and require creator approval
+    const initialStatus = isApprovalRequiredRequest ? 'pending' : undefined;
 
-    // Payment with revenue split (85% creator / 15% platform) (Skip if free/0)
+    // Payment with revenue split (85% creator / 15% platform) (Skip if free/0 or delayed approval)
     let splitResult: { success: boolean; newBalance?: number; error?: string } = { success: true };
-    if (amount > 0) {
+    if (amount > 0 && !isApprovalRequiredRequest) {
         const res = await applyRevenueSplit({
             supabase,
             fanUserId: user.id,
@@ -117,6 +117,17 @@ export async function POST(
         });
         if (!res.success) return NextResponse.json({ error: res.error || "Payment failed" }, { status: 400 });
         splitResult = res;
+    } else if (amount > 0 && isApprovalRequiredRequest) {
+        // Just verify balance exists without deducting
+        const { data: wallet, error: walletError } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", user.id)
+            .single();
+
+        if (walletError || !wallet || wallet.balance < amount) {
+            return NextResponse.json({ error: "Insufficient balance" }, { status: 400 });
+        }
     }
 
     // Insert request with safe type
@@ -160,10 +171,9 @@ export async function POST(
     const verb = isTipLike ? 'Sent' : (safeType === 'custom' ? 'sent a custom request' : (safeType === 'vip' ? 'bought' : 'bought'));
     const amountStr = amount > 0 ? ` (${SYM}${amount})` : '';
     
-    // Skip posting Custom requests to the chat feed.
-    // They will only appear in the Creator's Incoming notifications panel.
-    // VIP shows just the title "VIP Access" (not the user's typed content).
-    if (safeType !== 'custom') {
+    // Skip posting Custom/VIP/Booth requests to the chat feed during pending state.
+    // They will only appear in the Creator's Incoming notifications panel and get posted in PATCH when accepted.
+    if (safeType !== 'custom' && !isApprovalRequiredRequest) {
         // For VIP, always use the fixed title "VIP Access" — never the user's typed label
         const chatLabel = safeType === 'vip' ? 'VIP Access' : (label || type);
         await supabase.from("bar_lounge_messages").insert({
@@ -200,6 +210,40 @@ export async function PATCH(
     const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
     if (!room || room.host_id !== user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 });
 
+    // Fetch existing request to check current status, amount, and type
+    const { data: existingRequest, error: fetchReqError } = await supabase
+        .from("bar_lounge_requests")
+        .select("*")
+        .eq("id", requestId)
+        .single();
+    
+    if (fetchReqError || !existingRequest) {
+        return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // Process delayed payment for approval-required requests on transition to accepted
+    if (status === 'accepted' && existingRequest.status !== 'accepted' && ['vip', 'booth', 'custom'].includes(existingRequest.type) && existingRequest.amount > 0) {
+        const { createAdminClient } = await import("@/utils/supabase/admin");
+        const adminClient = createAdminClient();
+        
+        const res = await applyRevenueSplit({
+            supabase: adminClient,
+            fanUserId: existingRequest.fan_id,
+            creatorUserId: room.host_id,
+            grossAmount: existingRequest.amount,
+            splitType: 'GLOBAL',
+            description: `Bar Lounge: ${existingRequest.label || existingRequest.type}`,
+            roomId,
+            relatedType: 'bar_request',
+            relatedId: existingRequest.id,
+            earningsCategory: 'custom_requests',
+        });
+
+        if (!res.success) {
+            return NextResponse.json({ error: res.error || "Payment failed (Insufficient balance)" }, { status: 400 });
+        }
+    }
+
     const updatePayload: any = { status };
     if (creatorReply !== undefined) {
         updatePayload.creator_reply = creatorReply;
@@ -213,5 +257,32 @@ export async function PATCH(
         .select().single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Post system message to the chat feed on successful acceptance/charge
+    if (status === 'accepted' && existingRequest.status !== 'accepted' && ['vip', 'booth', 'custom'].includes(existingRequest.type)) {
+        const emoji =
+            existingRequest.type === "vip" ? "👑"
+                : existingRequest.type === "booth" ? "🛋️"
+                    : existingRequest.type === "custom" ? "📩"
+                        : "⚡";
+        
+        const verb = existingRequest.type === 'vip' ? 'upgraded to' : (existingRequest.type === 'booth' ? 'reserved a' : 'purchased');
+        const chatLabel = existingRequest.type === 'vip' ? 'VIP Access' : (existingRequest.type === 'booth' ? 'VIP Booth' : (existingRequest.label || existingRequest.type));
+        const amountStr = existingRequest.amount > 0 ? ` (${SYM}${existingRequest.amount})` : '';
+
+        // Fetch fan profile name for message
+        const { data: fanProfile } = await supabase.from("profiles").select("username").eq("id", existingRequest.fan_id).single();
+        const fanName = fanProfile?.username || existingRequest.fan_name || "Fan";
+
+        await supabase.from("bar_lounge_messages").insert({
+            room_id: roomId,
+            user_id: existingRequest.fan_id,
+            handle: fanName,
+            content: `${emoji} ${fanName} ${verb} ${chatLabel}${amountStr}`,
+            is_system: true,
+            ...(existingRequest.session_id ? { session_id: existingRequest.session_id } : {}),
+        });
+    }
+
     return NextResponse.json({ success: true, request: updated });
 }

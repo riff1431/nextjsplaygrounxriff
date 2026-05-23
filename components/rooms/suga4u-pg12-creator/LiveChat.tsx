@@ -90,7 +90,6 @@ const LiveChat = () => {
                         placeholder="Enter message"
                         className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
                     />
-                    <Smile className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
                 </div>
                 <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/80 transition-colors">
                     Send

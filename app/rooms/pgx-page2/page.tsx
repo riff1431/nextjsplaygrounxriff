@@ -15,6 +15,7 @@ import VipDeliveryModal from "@/components/rooms/pgx-page2/VipDeliveryModal";
 import { Heart, Wine, Crown, Sparkles, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle, UserPlus, Bell, X, Clock, Phone } from "lucide-react";
 import EmojiPicker from "@/components/common/EmojiPicker";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -1221,6 +1222,13 @@ function PgxPage2Inner() {
                 </div>
             </div>
 
+            {/* Per-minute billing overlay */}
+            <BillingOverlay
+                sessionId={sessionId}
+                accentHsl="280, 100%, 70%"
+                exitRoute="/rooms/bar-lounge"
+            />
+
             {/* Invite Modal */}
             <InviteModal
                 isOpen={showInviteModal}
@@ -1236,34 +1244,23 @@ function PgxPage2Inner() {
                 itemLabel="👑 Private 1-on-1 Session"
                 amount={PRIVATE_CALL_PRICE}
                 walletBalance={balance}
-                description={`Pay ${cs()}${PRIVATE_CALL_PRICE} for a Private 1-on-1 video call with ${hostProfile?.full_name || hostProfile?.username || 'the creator'}?`}
-                confirmLabel="Pay & Request Call"
+                description={`Request a Private 1-on-1 video call with ${hostProfile?.full_name || hostProfile?.username || 'the creator'} for ${cs()}${PRIVATE_CALL_PRICE}? You will only be charged when the creator accepts.`}
+                confirmLabel="Request Call"
                 onConfirm={async () => {
                     if (!roomId || !hostId) return;
                     const fanName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Fan";
-                    // Deduct from wallet
-                    const payment = await pay(hostId, PRIVATE_CALL_PRICE, "Private 1-on-1 Video Call", roomId, 'private_1on1');
-                    if (!payment.success) {
-                        showToast(payment.error || "Payment failed", "error");
+                    // Balance check only — actual payment happens when creator accepts
+                    if (balance < PRIVATE_CALL_PRICE) {
+                        showToast("Insufficient balance", "error");
                         return;
                     }
                     // Initiate the private call
                     const callResult = await privateCall.initiateCall(fanName);
                     if (callResult) {
                         showToast("👑 Private 1-on-1 requested! Waiting for creator...", "info");
-                        // Post system message to Lounge Chat (title only)
-                        await supabase.from("bar_lounge_messages").insert({
-                            room_id: roomId,
-                            user_id: user?.id ?? null,
-                            handle: fanName,
-                            content: `📞 ${fanName} bought 1 on 1 Video Call (${cs()}${PRIVATE_CALL_PRICE})`,
-                            is_system: true,
-                            ...(sessionId ? { session_id: sessionId } : {}),
-                        });
                     } else {
                         showToast("Failed to initiate video call", "error");
                     }
-                    await refreshWallet();
                     setShowPrivateCallConfirm(false);
                 }}
             />

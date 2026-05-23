@@ -244,7 +244,7 @@ export async function GET(
 
         // Calculate current session earnings
         let currentEarnings = { total: 0, tips: 0, truths: 0, dares: 0, custom: 0 };
-        const activeSession = history?.find((s: any) => s.status === 'active');
+        const activeSession = history?.find((s: any) => s.status === 'active' || s.status === 'pending');
 
         if (activeSession) {
             // Try session_id-based filter first, fallback to timestamp
@@ -252,8 +252,7 @@ export async function GET(
                 .from('truth_dare_requests')
                 .select('amount, type, status, created_at')
                 .eq('room_id', roomId)
-                .eq('session_id', activeSession.id)
-                .eq('status', 'answered');
+                .eq('session_id', activeSession.id);
 
             if (reqError && reqError.message?.includes('session_id')) {
                 // Fallback: timestamp-based
@@ -261,8 +260,7 @@ export async function GET(
                     .from('truth_dare_requests')
                     .select('amount, type, status, created_at')
                     .eq('room_id', roomId)
-                    .eq('status', 'answered')
-                    .gte('created_at', activeSession.started_at));
+                    .gte('created_at', activeSession.started_at || activeSession.created_at));
             }
 
             if (requests) {

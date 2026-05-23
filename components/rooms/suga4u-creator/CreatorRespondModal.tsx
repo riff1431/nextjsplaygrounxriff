@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Upload, Loader2, CheckCircle2, Send, Image, FileVideo, Paperclip, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { cs } from "@/utils/currency";
 
 interface CreatorRespondModalProps {
     isOpen: boolean;
@@ -163,7 +164,7 @@ export default function CreatorRespondModal({
                     <div className="rounded-xl border border-white/5 bg-white/5 p-3.5">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-xs text-white/50 font-medium">From: <span className="text-pink-400 font-semibold">{fanName}</span></span>
-                            <span className="text-xs font-bold text-emerald-400">${price}</span>
+                            <span className="text-xs font-bold text-emerald-400">{cs()}{price}</span>
                         </div>
                         <p className="text-sm text-white/80 font-medium mb-1">{requestLabel}</p>
                         {customText && (

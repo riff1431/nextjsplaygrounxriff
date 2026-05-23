@@ -88,7 +88,11 @@ export default function MembershipPage() {
         if (error) {
             console.error("Error fetching account types:", error);
         } else {
-            setAccountTypes(data || []);
+            // Only show Sugar Daddy and Sugar Mama to fan users (exclude Sugar Baby)
+            const fanTypes = (data || []).filter(
+                (t: AccountType) => !t.name.toLowerCase().includes("baby")
+            );
+            setAccountTypes(fanTypes);
         }
     };
 

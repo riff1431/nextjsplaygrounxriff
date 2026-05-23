@@ -28,7 +28,7 @@ interface Props {
 
 export default function AccountTypeStep({ onComplete, onBack }: Props) {
     const supabase = createClient();
-    const { user } = useAuth();
+    const { user, role } = useAuth();
     const [accountTypes, setAccountTypes] = useState<AccountType[]>([]);
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -51,11 +51,19 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
             toast.error("Failed to load account types");
             console.error(error);
         } else {
-            // Only show Sugar Daddy and Sugar Mama to fan users (exclude Sugar Baby)
-            const fanTypes = (data || []).filter(
-                (t: AccountType) => !t.name.toLowerCase().includes("baby")
-            );
-            setAccountTypes(fanTypes);
+            if (role === "creator") {
+                // Only show Sugar Baby to creators
+                const creatorTypes = (data || []).filter(
+                    (t: AccountType) => t.name.toLowerCase().includes("baby")
+                );
+                setAccountTypes(creatorTypes);
+            } else {
+                // Only show Sugar Daddy and Sugar Mama to fan users
+                const fanTypes = (data || []).filter(
+                    (t: AccountType) => !t.name.toLowerCase().includes("baby")
+                );
+                setAccountTypes(fanTypes);
+            }
         }
         setLoading(false);
     };
@@ -181,7 +189,9 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-2">Choose Your Identity</h2>
                     <p className="text-gray-400">
-                        Become a Sugar Daddy or Sugar Mommy for premium perks, or skip to continue as a regular fan
+                        {role === "creator"
+                            ? "Become a Sugar Baby for premium perks, or skip to continue as a regular creator"
+                            : "Become a Sugar Daddy or Sugar Mommy for premium perks, or skip to continue as a regular fan"}
                     </p>
                 </div>
 
@@ -302,7 +312,9 @@ export default function AccountTypeStep({ onComplete, onBack }: Props) {
                         disabled={saving}
                         className="text-gray-500 hover:text-gray-300 text-sm underline underline-offset-4 transition-colors"
                     >
-                        Skip for now (continue as regular fan)
+                        {role === "creator"
+                            ? "Skip for now (continue as regular creator)"
+                            : "Skip for now (continue as regular fan)"}
                     </button>
                 </div>
             </div>

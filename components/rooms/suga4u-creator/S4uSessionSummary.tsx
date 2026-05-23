@@ -35,7 +35,7 @@ const S4uSessionSummary = ({ roomId, sessionId }: S4uSessionSummaryProps) => {
         })();
     }, [sessionId]);
 
-    // Poll participant count (viewers) every 15s
+    // Poll and subscribe to participant count (viewers) for real-time updates
     useEffect(() => {
         if (!sessionId) return;
         const supabase = createClient();
@@ -54,8 +54,31 @@ const S4uSessionSummary = ({ roomId, sessionId }: S4uSessionSummaryProps) => {
         };
 
         fetchCount();
+
+        // Subscribe to changes in room_session_participants for this session
+        const channel = supabase
+            .channel(`s4u-viewers-${sessionId}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "room_session_participants",
+                    filter: `session_id=eq.${sessionId}`,
+                },
+                () => {
+                    fetchCount();
+                }
+            )
+            .subscribe();
+
+        // Keep 15s fallback poll just in case of connection drop
         const interval = setInterval(fetchCount, 15000);
-        return () => clearInterval(interval);
+
+        return () => {
+            supabase.removeChannel(channel);
+            clearInterval(interval);
+        };
     }, [sessionId]);
 
     // Live duration timer

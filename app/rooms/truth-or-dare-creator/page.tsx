@@ -810,13 +810,22 @@ function TruthOrDareCreatorContent() {
                 return; // Only serve actual prompts
             }
 
-            // 2. Mark item as served in DB
-            await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/serve`, {
+            // 2. Mark item as served in DB (this now also processes deferred payment)
+            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/serve`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ queueItemId: item.id })
             });
 
-            // 3. Update local state
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Payment or processing failed — show error, keep item in queue
+                toast.error(data.error || "Failed to complete this request");
+                return;
+            }
+
+            // 3. Update local state (only after successful API call)
             setCurrentPrompt({
                 id: item.id,
                 label: pText,
@@ -830,14 +839,6 @@ function TruthOrDareCreatorContent() {
 
             // 4. Broadcast Realtime Event
             if (roomId) {
-                // The serve API already updates the game table state.
-                // We just need to broadcast the event for instant UI animation on the fan side.
-
-                // Broadcast Event (Instant Animation)
-                // We'll use the existing channel or a new one. Let's use the 'room:ID' channel if possible, 
-                // but since we might not have a dedicated channel ref here, let's send it via a new temporary channel call 
-                // or assume the main listener will pick it up if we update the table.
-                // BETTER: Explicit broadcast for animation sync.
                 await supabase.channel(`room:${roomId}`)
                     .send({
                         type: 'broadcast',
@@ -873,7 +874,7 @@ function TruthOrDareCreatorContent() {
 
         } catch (err) {
             console.error("Error serving item:", err);
-            // toast.error("Failed to serve item");
+            toast.error("Failed to complete request. Please try again.");
         }
     }
 
@@ -1741,9 +1742,24 @@ function TruthOrDareCreatorContent() {
                             ] as any}
                                 // No longer passing tips/reactions to Request Panel
                             onServe={serveQueueItem as any}
-                            onDismiss={(q: any) => {
-                                setQueue(qq => qq.filter(x => x.id !== q.id));
-                                setActivityFeed(af => af.filter(x => x.id !== q.id));
+                            onDismiss={async (q: any) => {
+                                try {
+                                    const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/dismiss`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ queueItemId: q.id })
+                                    });
+                                    if (!res.ok) {
+                                        const data = await res.json();
+                                        toast.error(data.error || "Failed to dismiss");
+                                        return;
+                                    }
+                                    setQueue(qq => qq.filter(x => x.id !== q.id));
+                                    setActivityFeed(af => af.filter(x => x.id !== q.id));
+                                } catch (err) {
+                                    console.error("Dismiss error:", err);
+                                    toast.error("Failed to dismiss request");
+                                }
                             }}
                         />
                     </div>

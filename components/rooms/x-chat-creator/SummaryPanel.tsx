@@ -96,42 +96,26 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
         // Subscribe to changes for live updates
         const channel = supabase
             .channel(`summary-${roomId}-${sessionId || 'all'}`)
-            .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_messages", filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const msg = payload.new;
-                if (sessionId && msg.session_id !== sessionId) return;
-                if (msg.paid_amount > 0) {
-                    toast.success(`🎉 New Tip: ${cs()}${msg.paid_amount} from ${msg.sender_name}!`);
+                if (sessionId && msg && msg.session_id !== sessionId) return;
+
+                if (payload.eventType === "INSERT") {
+                    if (msg && msg.paid_amount > 0) {
+                        toast.success(`🎉 Paid Message: ${cs()}${msg.paid_amount} from ${msg.sender_name}!`);
+                    }
                 }
-                if (msg.sender_id) {
-                    setFanIds(prev => {
-                        const newSet = new Set(prev);
-                        newSet.add(msg.sender_id);
-                        setStats(s => ({ ...s, fans: newSet.size }));
-                        return newSet;
-                    });
-                }
-                setStats(prev => ({
-                    ...prev,
-                    totalMessages: prev.totalMessages + 1,
-                    totalTips: prev.totalTips + (Number(msg.paid_amount) || 0),
-                    queuedMessages: msg.status === "Queued" ? prev.queuedMessages + 1 : prev.queuedMessages,
-                }));
+                fetchStats();
             })
-            .on("postgres_changes", { event: "INSERT", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, (payload: any) => {
+            .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` }, (payload: any) => {
                 const rxn = payload.new;
-                if (sessionId && rxn.session_id !== sessionId) return;
-                const isSticker = rxn.reaction_type?.startsWith("sticker_");
-                setStats(prev => ({
-                    ...prev,
-                    totalReactions: isSticker ? prev.totalReactions : prev.totalReactions + 1,
-                    totalStickers: isSticker ? prev.totalStickers + 1 : prev.totalStickers,
-                }));
+                if (sessionId && rxn && rxn.session_id !== sessionId) return;
+                fetchStats();
             })
             .on("postgres_changes", { event: "*", schema: "public", table: "x_chat_requests", filter: `room_id=eq.${roomId}` }, (payload: any) => {
-                if (payload.eventType === "INSERT") {
-                    if (sessionId && (payload.new as any)?.session_id !== sessionId) return;
-                    setStats(prev => ({ ...prev, totalRequests: prev.totalRequests + 1 }));
-                }
+                const req = payload.new;
+                if (sessionId && req && req.session_id !== sessionId) return;
+                fetchStats();
             })
             .subscribe();
 
@@ -141,7 +125,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
         { icon: "🎭", label: "STICKERS", value: stats.totalStickers.toLocaleString() },
-        { icon: "💰", label: "TIPS (EUR)", value: `${cs()}${stats.totalTips.toLocaleString()}` },
+        { icon: "💰", label: "PAID MESSAGES (EUR)", value: `${cs()}${stats.totalTips.toLocaleString()}` },
         { icon: "👥", label: "FANS", value: stats.fans.toLocaleString() },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];

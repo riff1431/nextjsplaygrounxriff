@@ -61,6 +61,27 @@ export async function PATCH(
         if (!["in_progress", "rejected", "delivered"].includes(status)) {
             return NextResponse.json({ error: "Invalid status for creator" }, { status: 400 });
         }
+
+        // Apply revenue split split deduction on acceptance for 1on1 confessions
+        if (status === "in_progress" && existingReq.status !== "in_progress" && existingReq.confession_mode === "1on1" && Number(existingReq.amount) > 0) {
+            const { applyRevenueSplit } = await import("@/utils/finance/applyRevenueSplit");
+            const splitResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: existingReq.fan_id,
+                creatorUserId: existingReq.creator_id,
+                grossAmount: Number(existingReq.amount),
+                splitType: 'GLOBAL',
+                description: `Confession request: ${existingReq.type} - ${existingReq.topic}`,
+                roomId: existingReq.room_id,
+                relatedType: 'confession_request',
+                relatedId: existingReq.id,
+                earningsCategory: 'custom_requests',
+            });
+
+            if (!splitResult.success) {
+                return NextResponse.json({ error: splitResult.error || "Payment failed (Insufficient balance)" }, { status: 400 });
+            }
+        }
     }
 
     const updates: any = { status, updated_at: new Date().toISOString() };

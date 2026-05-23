@@ -170,6 +170,14 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
         return { icon, text };
     };
 
+    const paidUnreadCount = useMemo(() => {
+        return messages.filter(m => m.lane === "Paid" && m.status === "Queued").length;
+    }, [messages]);
+
+    const priorityUnreadCount = useMemo(() => {
+        return messages.filter(m => m.lane === "Priority" && m.status === "Queued").length;
+    }, [messages]);
+
     const filteredMessages = messages.filter(m => activeFilter === "All" || m.lane === activeFilter);
 
     const senderIds = useMemo(() => messages.map(m => m.sender_id).filter(Boolean) as string[], [messages]);
@@ -194,7 +202,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                         <button
                             key={tab}
                             onClick={() => setActiveFilter(tab)}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
                                 activeFilter === tab
                                     ? tab === "Priority" ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
                                     : tab === "Paid" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
@@ -202,7 +210,27 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                                 : "text-muted-foreground hover:bg-muted/50 border border-transparent"
                             }`}
                         >
-                            {tab === "Priority" ? "👑 Priority" : tab === "Paid" ? "💰 Paid" : "All"}
+                            {tab === "Priority" ? (
+                                <>
+                                    <span>👑 Priority</span>
+                                    {priorityUnreadCount > 0 && (
+                                        <span className="bg-yellow-400 text-black rounded-full text-[9px] font-extrabold px-1 py-0.5 leading-none flex items-center justify-center min-w-[14px] h-[14px] shadow-[0_0_10px_rgba(250,204,21,0.5)] animate-pulse">
+                                            {priorityUnreadCount}
+                                        </span>
+                                    )}
+                                </>
+                            ) : tab === "Paid" ? (
+                                <>
+                                    <span>💰 Paid</span>
+                                    {paidUnreadCount > 0 && (
+                                        <span className="bg-cyan-400 text-black rounded-full text-[9px] font-extrabold px-1 py-0.5 leading-none flex items-center justify-center min-w-[14px] h-[14px] shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-pulse">
+                                            {paidUnreadCount}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                "All"
+                            )}
                         </button>
                     ))}
                 </div>

@@ -22,7 +22,7 @@ export async function PATCH(
         // Verify creator owns this session
         const { data: session } = await supabase
             .from("room_sessions")
-            .select("id, creator_id, status, live_started_at")
+            .select("id, creator_id, status, live_started_at, room_type")
             .eq("id", sessionId)
             .single();
 
@@ -51,6 +51,40 @@ export async function PATCH(
             .eq("id", sessionId);
 
         if (updateError) throw updateError;
+
+        // Restart timers for all active flash drops when going live
+        if (session.room_type === "flash-drop") {
+            try {
+                const { data: drops } = await supabase
+                    .from("flash_drops")
+                    .select("id, created_at, ends_at, status")
+                    .eq("session_id", sessionId)
+                    .neq("status", "Ended");
+
+                if (drops && drops.length > 0) {
+                    const nowMs = new Date(now).getTime();
+                    for (const drop of drops) {
+                        let durationMs = 15 * 60 * 1000; // 15 mins default
+                        if (drop.ends_at && drop.created_at) {
+                            const diff = new Date(drop.ends_at).getTime() - new Date(drop.created_at).getTime();
+                            if (diff > 0) {
+                                durationMs = diff;
+                            }
+                        }
+                        const newEndsAt = new Date(nowMs + durationMs).toISOString();
+                        await supabase
+                            .from("flash_drops")
+                            .update({
+                                ends_at: newEndsAt,
+                                status: "Live"
+                            })
+                            .eq("id", drop.id);
+                    }
+                }
+            } catch (dropErr) {
+                console.error("Failed to restart flash drop timers on go-live:", dropErr);
+            }
+        }
 
         return NextResponse.json({
             success: true,

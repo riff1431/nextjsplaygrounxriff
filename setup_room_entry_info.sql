@@ -159,7 +159,7 @@ UPDATE room_settings SET
     ]
   }'::jsonb,
   entry_info_pro_tip = 'Top spenders get priority access and exclusive perks from creators!'
-WHERE room_type = 'suga4u';
+WHERE room_type IN ('suga4u', 'suga-4-u');
 
 -- ── Flash Drops ──
 UPDATE room_settings SET
@@ -189,4 +189,4 @@ UPDATE room_settings SET
     ]
   }'::jsonb,
   entry_info_pro_tip = 'Set notifications ON to never miss a drop – they sell out fast!'
-WHERE room_type = 'flash-drops';
+WHERE room_type IN ('flash-drops', 'flash-drop');

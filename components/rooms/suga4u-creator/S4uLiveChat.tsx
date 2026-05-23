@@ -50,13 +50,16 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
 
     const formatActivityText = (a: ActivityEvent) => {
         if (a.type === 'TIP') return "tipped you!";
+        if (a.type === 'LINK_REVEAL') return "revealed a favourite!";
+        if (a.type === 'BUY_FOR_HER') return "purchased a favourite!";
+        if (a.type === 'SECRET_UNLOCK') return "revealed a secret!";
         if (a.type === 'PAID_REQUEST') return `requested: ${a.label}`;
         if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
         return a.label;
     };
 
     const isHighlight = (type: string) => {
-        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(type);
+        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK', 'LINK_REVEAL', 'BUY_FOR_HER'].includes(type);
     };
 
     return (
@@ -123,7 +126,6 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
                         placeholder="Enter message"
                         className="flex-1 bg-transparent text-sm text-white placeholder:text-white/40 outline-none"
                     />
-                    <Smile className="w-4 h-4 text-white/40 cursor-pointer hover:s4u-creator-text-primary transition-colors" />
                 </div>
                 <button
                     onClick={handleSend}

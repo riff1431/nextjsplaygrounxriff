@@ -187,7 +187,7 @@ const RequestConfession = ({ roomId, creatorId }: RequestConfessionProps) => {
         </div>
 
         <div className="text-xs text-muted-foreground text-right">
-          ${parsedAmount} {isAnonymous ? "Anonymous" : "Public"} · {confessionMode === "1on1" ? "1 on 1" : "Global"}
+          {cs()}{parsedAmount} {isAnonymous ? "Anonymous" : "Public"} · {confessionMode === "1on1" ? "1 on 1" : "Global"}
         </div>
 
         {/* Submit */}

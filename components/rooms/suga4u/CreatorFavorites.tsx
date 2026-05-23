@@ -61,7 +61,7 @@ const CreatorFavorites = ({ roomId, hostId, sessionId }: { roomId: string | null
         }
 
         // Log activity event
-        await sendGift(amount, fanName, description);
+        await sendGift(amount, fanName, description, type === 'BUY' ? 'BUY_FOR_HER' : 'LINK_REVEAL', user?.id);
 
         // If REVEAL or BUY, mark as revealed locally for this user
         setRevealedIds(prev => {

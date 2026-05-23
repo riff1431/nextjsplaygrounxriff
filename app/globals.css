@@ -2414,3 +2414,18 @@ body {
   .xchat-canvas  { max-height: 42vh; }
 }
 
+/* Move Sonner Toaster below the header so it doesn't block the Go Live button */
+[data-sonner-toaster] {
+  top: 85px !important;
+  right: 20px !important;
+}
+
+/* Remove default shadow and extension layers of stacked toasts */
+[data-sonner-toaster] [data-shadow="true"] {
+  box-shadow: none !important;
+}
+
+[data-sonner-toaster] [data-toast] {
+  box-shadow: none !important;
+}
+

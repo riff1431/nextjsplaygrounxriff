@@ -25,7 +25,7 @@ const TipsSection: React.FC<TipsSectionProps> = ({ onSendTip }) => {
                             onClick={() => onSendTip(amount)}
                             className="tip-circle text-white/80 border-white/10 hover:bg-gold/10"
                         >
-                            ${amount}
+                            {cs()}{amount}
                         </button>
                     ))}
                 </div>

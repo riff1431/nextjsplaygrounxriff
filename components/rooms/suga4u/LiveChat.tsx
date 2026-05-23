@@ -33,13 +33,16 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
 
     const formatActivity = (a: ActivityEvent) => {
         if (a.type === 'TIP') return <span>tipped <span className="text-gold font-bold">{cs()}{a.amount}</span>!</span>;
+        if (a.type === 'LINK_REVEAL') return <span>revealed a favourite!</span>;
+        if (a.type === 'BUY_FOR_HER') return <span>purchased a favourite!</span>;
+        if (a.type === 'SECRET_UNLOCK') return <span>revealed a secret!</span>;
         if (a.type === 'PAID_REQUEST') return <span>requested: {a.label} (${a.amount})</span>;
         if (a.type === 'OFFER_CLAIM') return <span>claimed offer: {a.label}</span>;
         return <span>{a.label}</span>;
     };
 
     const isHighlight = (type: string) => {
-        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK'].includes(type);
+        return ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK', 'LINK_REVEAL', 'BUY_FOR_HER'].includes(type);
     };
 
     const fanIds = useMemo(() => activity.map(a => a.fanId).filter(Boolean) as string[], [activity]);
@@ -60,7 +63,7 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
                             {m.fanId && avatarMap[m.fanId] ? (
                                 <img src={avatarMap[m.fanId]} alt="" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-xs">{m.type === 'TIP' ? "💰" : "👤"}</span>
+                                <span className="text-xs">{['TIP', 'LINK_REVEAL', 'BUY_FOR_HER', 'SECRET_UNLOCK'].includes(m.type) ? "💰" : "👤"}</span>
                             )}
                         </div>
                         <p className="leading-snug">

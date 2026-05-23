@@ -149,9 +149,13 @@ export async function POST(
         if (!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
         const hostId = room.host_id;
 
-        // 4. Process Payment (Transfer Fan -> Creator)
+        // 4. Process Payment
+        // For tips and reactions: charge immediately (they skip the queue).
+        // For truths/dares (actionable requests): only VERIFY balance now,
+        // actual deduction happens when the creator clicks "Completed" (serve route).
+        const isImmediateCharge = (type === 'tip' || type === 'reaction');
 
-        // A. Check Fan Balance
+        // A. Check Fan Balance (always required)
         const { data: fanWallet } = await supabase
             .from('wallets')
             .select('balance, id')
@@ -164,113 +168,97 @@ export async function POST(
             return NextResponse.json({ error: "Insufficient balance" }, { status: 402 });
         }
 
-        // B. Get Creator Wallet
-        const { data: creatorWallet } = await supabase
-            .from('wallets')
-            .select('balance, id')
-            .eq('user_id', hostId)
-            .single();
-
-        // If creator has no wallet, we technically can't pay them. 
-        // In a real app we'd handle this gracefully (queueing funds), but for now fail fast.
-        // If creator has no wallet, lazily create one
-        let creatorBalance = 0;
-
-        if (!creatorWallet) {
-            console.log("Creator wallet not visible to fan, using Admin client...");
-
-            // USE SERVICE ROLE to bypass RLS
-            const adminSupabase = createAdminClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.SUPABASE_SERVICE_ROLE_KEY!
-            );
-
-            // 1. Try to GET wallet again as Admin (in case it exists but RLS hid it)
-            const { data: existingWallet } = await adminSupabase
+        // B. Only execute the transfer for tips/reactions (immediate charge)
+        if (isImmediateCharge) {
+            // Get Creator Wallet
+            const { data: creatorWallet } = await supabase
                 .from('wallets')
                 .select('balance, id')
                 .eq('user_id', hostId)
                 .single();
 
-            if (existingWallet) {
-                creatorBalance = Number(existingWallet.balance || 0);
-            } else {
-                // Wallet TRULY doesn't exist. Create it.
+            let creatorBalance = 0;
 
-                // A. Ensure Profile Exists
-                const { data: profile } = await adminSupabase
-                    .from('profiles')
-                    .select('id')
-                    .eq('id', hostId)
-                    .single();
+            if (!creatorWallet) {
+                console.log("Creator wallet not visible to fan, using Admin client...");
 
-                if (!profile) {
-                    console.log("Creator profile missing, creating placeholder...");
-                    const { data: hostUser } = await adminSupabase.auth.admin.getUserById(hostId);
-                    const username = hostUser.user?.user_metadata?.full_name || hostUser.user?.email?.split('@')[0] || "Creator";
+                const adminSupabase = createAdminClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.SUPABASE_SERVICE_ROLE_KEY!
+                );
 
-                    const { error: profileError } = await adminSupabase
-                        .from('profiles')
-                        .insert({
-                            id: hostId,
-                            username: username,
-                            full_name: username
-                        });
-
-                    // Ignore duplicate key error on profile (race condition safe)
-                    if (profileError && profileError.code !== '23505') {
-                        console.error("Failed to create creator profile", profileError);
-                        return NextResponse.json({ error: "System Error: Failed to init creator profile: " + profileError.message }, { status: 500 });
-                    }
-                }
-
-                // B. Create Wallet
-                const { data: newWallet, error: createError } = await adminSupabase
+                const { data: existingWallet } = await adminSupabase
                     .from('wallets')
-                    .insert({ user_id: hostId, balance: 0 })
-                    .select()
+                    .select('balance, id')
+                    .eq('user_id', hostId)
                     .single();
 
-                if (createError) {
-                    // One last check for race condition
-                    if (createError.code === '23505') {
-                        // It was created in parallel, just fetch it (or assume 0 for now to proceed)
-                        const { data: retryWallet } = await adminSupabase.from('wallets').select('balance').eq('user_id', hostId).single();
-                        creatorBalance = Number(retryWallet?.balance || 0);
-                    } else {
-                        console.error("Failed to create creator wallet", createError);
-                        return NextResponse.json({ error: "System Error: Failed to init creator wallet: " + createError.message }, { status: 500 });
-                    }
+                if (existingWallet) {
+                    creatorBalance = Number(existingWallet.balance || 0);
                 } else {
-                    creatorBalance = 0;
+                    // Wallet doesn't exist — lazily create it
+                    const { data: creatorProfile } = await adminSupabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('id', hostId)
+                        .single();
+
+                    if (!creatorProfile) {
+                        console.log("Creator profile missing, creating placeholder...");
+                        const { data: hostUser } = await adminSupabase.auth.admin.getUserById(hostId);
+                        const username = hostUser.user?.user_metadata?.full_name || hostUser.user?.email?.split('@')[0] || "Creator";
+
+                        const { error: profileError } = await adminSupabase
+                            .from('profiles')
+                            .insert({ id: hostId, username: username, full_name: username });
+
+                        if (profileError && profileError.code !== '23505') {
+                            console.error("Failed to create creator profile", profileError);
+                            return NextResponse.json({ error: "System Error: Failed to init creator profile: " + profileError.message }, { status: 500 });
+                        }
+                    }
+
+                    const { data: newWallet, error: createError } = await adminSupabase
+                        .from('wallets')
+                        .insert({ user_id: hostId, balance: 0 })
+                        .select()
+                        .single();
+
+                    if (createError) {
+                        if (createError.code === '23505') {
+                            const { data: retryWallet } = await adminSupabase.from('wallets').select('balance').eq('user_id', hostId).single();
+                            creatorBalance = Number(retryWallet?.balance || 0);
+                        } else {
+                            console.error("Failed to create creator wallet", createError);
+                            return NextResponse.json({ error: "System Error: Failed to init creator wallet: " + createError.message }, { status: 500 });
+                        }
+                    } else {
+                        creatorBalance = 0;
+                    }
                 }
+            } else {
+                creatorBalance = Number(creatorWallet.balance || 0);
             }
-        } else {
-            creatorBalance = Number(creatorWallet.balance || 0);
+
+            // Execute Transfer
+            const { error: deductError } = await supabase
+                .from('wallets')
+                .update({ balance: fanBalance - price })
+                .eq('user_id', user.id);
+
+            if (deductError) throw deductError;
+
+            const { error: addError } = await supabase
+                .from('wallets')
+                .update({ balance: creatorBalance + price })
+                .eq('user_id', hostId);
+
+            if (addError) {
+                console.error("CRITICAL: Money deducted but not added to creator!", { fan: user.id, host: hostId, amount: price });
+            }
         }
-
-        // C. Execute Transfer (Ideally in a Transaction/RPC, doing sequentially for MVP)
-        // Deduct from Fan
-        const { error: deductError } = await supabase
-            .from('wallets')
-            .update({ balance: fanBalance - price })
-            .eq('user_id', user.id);
-
-        if (deductError) throw deductError;
-
-        // Add to Creator
-        // creatorBalance is already set above
-
-        const { error: addError } = await supabase
-            .from('wallets')
-            .update({ balance: creatorBalance + price })
-            .eq('user_id', hostId);
-
-        if (addError) {
-            // CRITICAL: Failed to add funds after deduction. 
-            // In prod, refund user or log critical alert. 
-            console.error("CRITICAL: Money deducted but not added to creator!", { fan: user.id, host: hostId, amount: price });
-        }
+        // For truths/dares: balance was verified above, but NO deduction yet.
+        // Payment will be processed when the creator clicks "Completed" via the serve route.
 
         // 5. Record Request (with session_id for session isolation)
         const requestPayload: Record<string, any> = {

@@ -8,13 +8,16 @@ export default function ToasterProvider() {
             theme="dark"
             position="top-right"
             richColors
+            visibleToasts={1}
+            expand={false}
             toastOptions={{
                 style: {
                     background: "rgba(10, 5, 20, 0.95)",
                     border: "1px solid rgba(236, 72, 153, 0.25)",
                     backdropFilter: "blur(12px)",
+                    boxShadow: "none",
                 },
-                className: "!shadow-[0_0_30px_rgba(236,72,153,0.15)]",
+                className: "!shadow-none",
             }}
         />
     );

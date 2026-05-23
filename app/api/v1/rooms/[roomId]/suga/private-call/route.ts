@@ -73,6 +73,7 @@ export async function POST(
             fanName: fanName || "Fan",
             duration,
             agoraChannel,
+            price: 500,
         },
     });
 
@@ -113,6 +114,40 @@ export async function PATCH(
     }
 
     if (action === "accept") {
+        // Fetch associated request price
+        let callPrice = 500; // fallback default
+        if (call.request_id) {
+            const { data: requestRecord } = await supabase
+                .from("suga_paid_requests")
+                .select("price")
+                .eq("id", call.request_id)
+                .single();
+            if (requestRecord) {
+                callPrice = Number(requestRecord.price);
+            }
+        }
+
+        // Apply revenue split split deduction on acceptance
+        if (callPrice > 0) {
+            const { applyRevenueSplit } = await import("@/utils/finance/applyRevenueSplit");
+            const paymentResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: call.fan_id,
+                creatorUserId: call.creator_id,
+                grossAmount: callPrice,
+                splitType: 'GLOBAL',
+                description: `Private 1-on-1 Call: ${call.fan_name || 'Fan'} with creator`,
+                roomId,
+                relatedType: 'private_call',
+                relatedId: call.id,
+                earningsCategory: 'custom_requests',
+            });
+
+            if (!paymentResult.success) {
+                return NextResponse.json({ error: paymentResult.error || "Payment failed (Insufficient balance)" }, { status: 400 });
+            }
+        }
+
         // Update status to ringing (waiting for fan to accept video)
         await supabase
             .from("suga_private_calls")

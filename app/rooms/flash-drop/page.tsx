@@ -16,6 +16,7 @@ import { toast as sonnerToast } from "sonner";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifications";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -241,7 +242,14 @@ export default function FlashDropsRoomPreview() {
             }, (payload) => {
                 const req = payload.new as any;
                 if (req.fan_name) {
-                    addTickerItem(`💰 ${req.fan_name} submitted a ${cs()}${req.amount} drop request!`);
+                    if (req.content.includes('Reaction') || req.content.includes('Impulse')) {
+                        const item = req.content.replace('⚡ Impulse ', '').replace('⚡ Reaction ', '').split(':')[0];
+                        addTickerItem(`⚡ ${req.fan_name} sent ${cs()}${req.amount} for ${item}!`);
+                    } else if (req.content.includes('Pack')) {
+                        addTickerItem(`🎁 ${req.fan_name} purchased Pack!`);
+                    } else {
+                        addTickerItem(`💰 ${req.fan_name} submitted a ${cs()}${req.amount} drop request!`);
+                    }
                 }
             })
             .subscribe((status) => {
@@ -540,6 +548,13 @@ export default function FlashDropsRoomPreview() {
 
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
+
+                {/* Per-minute billing overlay */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="330, 100%, 55%"
+                    exitRoute="/home"
+                />
 
             </div>
         </ProtectRoute>

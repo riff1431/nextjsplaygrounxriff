@@ -167,6 +167,14 @@ export default function XChatCreatorView() {
         return { queued, answered, gross, pendingGross };
     }, [msgs]);
 
+    const paidUnreadCount = useMemo(() => {
+        return msgs.filter(m => m.lane === "Paid" && m.status === "Queued").length;
+    }, [msgs]);
+
+    const priorityUnreadCount = useMemo(() => {
+        return msgs.filter(m => m.lane === "Priority" && m.status === "Queued").length;
+    }, [msgs]);
+
     const performAction = async (id: string, action: 'answer' | 'refund' | 'pin', replyText?: string) => {
         if (!roomId) return;
         try {
@@ -288,7 +296,7 @@ export default function XChatCreatorView() {
                             
                             <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 vip-glow shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                                 <div className="text-[10px] text-emerald-200">
-                                    Total Tips (EUR)
+                                    Total Paid Messages (EUR)
                                 </div>
                                 <div className="text-sm text-emerald-100 font-semibold flex items-center gap-1">
                                     <span className="text-lg leading-none">💰</span> {cs()}{(stats.gross + stats.pendingGross).toLocaleString()}
@@ -320,13 +328,23 @@ export default function XChatCreatorView() {
                                                 setReply("");
                                             }}
                                             className={cx(
-                                                "rounded-xl border px-3 py-2 text-sm",
+                                                "rounded-xl border px-3 py-2 text-sm flex items-center gap-1.5",
                                                 lane === l
                                                     ? "border-lime-200/30 bg-lime-600/15"
                                                     : "border-white/10 bg-black/20 hover:bg-white/5"
                                             )}
                                         >
-                                            {l}
+                                            <span>{l}</span>
+                                            {l === "Priority" && priorityUnreadCount > 0 && (
+                                                <span className="bg-yellow-400 text-black rounded-full text-[9px] font-extrabold px-1.5 py-0.5 leading-none flex items-center justify-center min-w-[14px] h-[14px] shadow-[0_0_10px_rgba(250,204,21,0.5)] animate-pulse">
+                                                    {priorityUnreadCount}
+                                                </span>
+                                            )}
+                                            {l === "Paid" && paidUnreadCount > 0 && (
+                                                <span className="bg-cyan-400 text-black rounded-full text-[9px] font-extrabold px-1.5 py-0.5 leading-none flex items-center justify-center min-w-[14px] h-[14px] shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-pulse">
+                                                    {paidUnreadCount}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

@@ -111,7 +111,7 @@ export default function CreatorDashboard() {
             'flash-drop': '/rooms/flash-drop-creator',
             'bar-lounge': '/rooms/bar-lounge-creator',
             'truth-or-dare': '/creator/rooms/truth-or-dare',
-            suga4u: '/rooms/suga4u-pg12-creator',
+            suga4u: '/rooms/suga4u-creator',
         };
 
         try {

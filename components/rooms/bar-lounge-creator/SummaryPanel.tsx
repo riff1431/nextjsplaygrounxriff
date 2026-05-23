@@ -94,24 +94,15 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
         const channel = supabase
             .channel(`bar-summary-${roomId}-${sessionId || 'all'}`)
             .on("postgres_changes", {
-                event: "INSERT",
+                event: "*",
                 schema: "public",
                 table: "bar_lounge_requests",
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const newReq = payload.new as any;
                 // Ignore requests from other sessions
-                if (sessionId && newReq.session_id && newReq.session_id !== sessionId) return;
-
-                const type = newReq.type as string;
-                const amount = newReq.amount || 0;
-
-                setStats((prev) => ({
-                    ...prev,
-                    drinks: DRINK_TYPES.has(type) ? prev.drinks + 1 : prev.drinks,
-                    tips: TIP_LIKE_TYPES.has(type) ? prev.tips + amount : prev.tips,
-                    requests: REQUEST_TYPES.has(type) ? prev.requests + 1 : prev.requests,
-                }));
+                if (sessionId && newReq && newReq.session_id && newReq.session_id !== sessionId) return;
+                fetchStats();
             })
             // Listen for participants joining/leaving the room (not messages)
             .on("postgres_changes", {

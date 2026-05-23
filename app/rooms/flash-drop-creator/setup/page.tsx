@@ -38,7 +38,7 @@ export default function FlashDropSetupPage() {
         <ProtectRoute allowedRoles={["creator"]}>
             <div
                 className="flashdrop-creator-theme min-h-screen bg-background bg-cover bg-center bg-no-repeat relative flex flex-col"
-                style={{ backgroundImage: "url('/images/bg-flashdrop.jpeg')" }}
+                style={{ backgroundImage: "url('/flash-drops/nightclub-bg.png')" }}
             >
                 {/* Overlay for readability */}
                 <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />

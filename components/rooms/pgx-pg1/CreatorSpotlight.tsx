@@ -39,7 +39,7 @@ const CreatorSpotlight = () => {
             key={amount}
             className="flex-1 py-2 rounded-lg bg-secondary hover:bg-secondary/80 text-sm font-semibold transition-colors border border-border hover:border-primary/50"
           >
-            <span className="gold-text">+${amount}</span>
+            <span className="gold-text">+{cs()}{amount}</span>
           </button>
         ))}
       </div>

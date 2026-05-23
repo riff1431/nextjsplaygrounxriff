@@ -65,7 +65,7 @@ function FlashdropCreatorStudio() {
     return (
         <div
             className="flashdrop-creator-theme h-screen overflow-hidden bg-background bg-cover bg-center bg-no-repeat relative"
-            style={{ backgroundImage: "url('/images/bg-flashdrop.jpeg')" }}
+            style={{ backgroundImage: "url('/flash-drops/nightclub-bg.png')" }}
         >
             {/* Overlay for readability */}
             <div className="absolute inset-0 bg-background/40" />
@@ -189,7 +189,7 @@ const FlashdropCreatorRoom = () => {
                 creatorPageRoute="/rooms/flash-drop-creator"
                 accentHsl="170, 80%, 50%"
                 accentHslSecondary="150, 70%, 45%"
-                backgroundImage="/images/bg-flashdrop.jpeg"
+                backgroundImage="/flash-drops/nightclub-bg.png"
 
             />
         );

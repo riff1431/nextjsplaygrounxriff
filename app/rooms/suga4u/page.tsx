@@ -13,6 +13,7 @@ import CreatorSecrets from "@/components/rooms/suga4u/CreatorSecrets";
 import LiveChat from "@/components/rooms/suga4u/LiveChat";
 import CreatorFavorites from "@/components/rooms/suga4u/CreatorFavorites";
 import PaidRequestMenu from "@/components/rooms/suga4u/PaidRequestMenu";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import SendSugarGifts from "@/components/rooms/suga4u/SendSugarGifts";
 import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
 import InviteModal from "@/components/rooms/InviteModal";
@@ -705,6 +706,13 @@ const Suga4URoom = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Per-minute billing overlay */}
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="42, 90%, 55%"
+                    exitRoute="/home"
+                />
 
             </div>
         </ProtectRoute>

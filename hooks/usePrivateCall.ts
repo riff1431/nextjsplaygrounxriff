@@ -52,6 +52,42 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
         }
     }, [callState?.status, callState?.startedAt, callState?.durationSeconds]);
 
+    // Creator: hydrate pending calls from DB on mount (in case broadcasts were missed)
+    useEffect(() => {
+        if (role !== "creator" || !roomId || !userId) return;
+        const fetchPending = async () => {
+            const { data } = await supabase
+                .from("suga_private_calls")
+                .select("*")
+                .eq("room_id", roomId)
+                .eq("creator_id", userId)
+                .eq("status", "pending")
+                .order("created_at", { ascending: true });
+            if (data && data.length > 0) {
+                const mapped: PrivateCallState[] = data.map((c: any) => ({
+                    callId: c.id,
+                    roomId: c.room_id,
+                    fanId: c.fan_id,
+                    creatorId: c.creator_id,
+                    fanName: c.fan_name,
+                    status: "pending" as const,
+                    agoraChannel: c.agora_channel,
+                    durationSeconds: c.duration_seconds,
+                    startedAt: c.started_at,
+                }));
+                setPendingCalls(prev => {
+                    // Merge: add any DB calls not already in state
+                    const existingIds = new Set(prev.map(c => c.callId));
+                    const newCalls = mapped.filter(c => !existingIds.has(c.callId));
+                    return newCalls.length > 0 ? [...prev, ...newCalls] : prev;
+                });
+                // Set first pending as callState if nothing active
+                setCallState(prev => prev ? prev : mapped[0]);
+            }
+        };
+        fetchPending();
+    }, [roomId, userId, role]);
+
     // Listen for realtime broadcast events
     // FIX: subscribe to `room:${roomId}` to match the API broadcast target
     useEffect(() => {

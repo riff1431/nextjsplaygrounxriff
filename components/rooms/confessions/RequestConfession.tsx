@@ -138,7 +138,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
             </div>
 
             <div className="text-[10px] font-medium text-muted-foreground text-right px-1 pb-1">
-                ${reqAmount} {isAnon ? "Anonymous" : "Public"} · {confessionMode === "1on1" ? "1 on 1" : "🌐 Global"}
+                {cs()}{reqAmount} {isAnon ? "Anonymous" : "Public"} · {confessionMode === "1on1" ? "1 on 1" : "🌐 Global"}
             </div>
 
             {/* Submit */}

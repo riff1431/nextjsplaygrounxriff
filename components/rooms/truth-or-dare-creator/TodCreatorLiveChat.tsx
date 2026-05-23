@@ -196,11 +196,32 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
     type ActItem = ActivityItem & { isActivity: true; timestamp: number };
 
     const allItems: (ChatItem | ActItem)[] = [
-        ...messages.map((m): ChatItem => ({
-            ...m,
-            isActivity: false,
-            timestamp: new Date(m.created_at).getTime()
-        })),
+        ...messages
+            .filter(m => {
+                // To avoid duplicate rendering, we filter out system chat messages for tips/reactions
+                // ONLY if they are already present in activityItems as a live event.
+                const isSystemReaction = m.message.startsWith('✨') && m.message.includes('sent a') && m.message.includes('reaction!');
+                const isSystemTip = m.message.startsWith('💰') && m.message.includes('sent a') && m.message.includes('tip!');
+                
+                if (isSystemReaction || isSystemTip) {
+                    // Check if there is a matching live item in activityItems
+                    const hasLiveMatchingActivity = (activityItems || []).some(a => {
+                        const sameUser = a.fanName === m.username;
+                        const sameType = isSystemReaction ? a.type === 'reaction' : a.type === 'tip';
+                        const timeDiff = Math.abs(a.timestamp - new Date(m.created_at).getTime());
+                        return sameUser && sameType && timeDiff < 10000; // within 10 seconds
+                    });
+                    if (hasLiveMatchingActivity) {
+                        return false; // Filter out duplicate system message!
+                    }
+                }
+                return true;
+            })
+            .map((m): ChatItem => ({
+                ...m,
+                isActivity: false,
+                timestamp: new Date(m.created_at).getTime()
+            })),
         ...(activityItems || []).map((a): ActItem => ({
             ...a,
             isActivity: true,
