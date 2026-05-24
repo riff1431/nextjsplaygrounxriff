@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
 import { toast } from "sonner";
+import { PAGE_DEFAULTS } from "./pageDefaults";
 
 export default function PolicyEditor() {
     const supabase = createClient();
@@ -24,8 +25,13 @@ export default function PolicyEditor() {
         if (data) {
             const t = data.find(item => item.key === "terms_and_conditions");
             const p = data.find(item => item.key === "privacy_policy");
-            if (t) setTerms(t.value || "");
-            if (p) setPolicy(p.value || "");
+            // Use DB value if exists, otherwise fall back to default static content
+            setTerms(t?.value?.trim() ? t.value : (PAGE_DEFAULTS["terms_and_conditions"] || ""));
+            setPolicy(p?.value?.trim() ? p.value : (PAGE_DEFAULTS["privacy_policy"] || ""));
+        } else {
+            // No DB rows at all — use defaults
+            setTerms(PAGE_DEFAULTS["terms_and_conditions"] || "");
+            setPolicy(PAGE_DEFAULTS["privacy_policy"] || "");
         }
         setLoading(false);
     };

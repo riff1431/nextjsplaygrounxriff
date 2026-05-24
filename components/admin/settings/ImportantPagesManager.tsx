@@ -23,6 +23,7 @@ import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { PAGE_DEFAULTS } from "./pageDefaults";
 
 /* ────── Config ────── */
 interface PageConfig {
@@ -124,13 +125,23 @@ export default function ImportantPagesManager() {
             .in("key", keys);
 
         const map: Record<string, string> = {};
+        const dbKeys = new Set<string>();
         if (data) {
             data.forEach((row) => {
-                map[row.key] = row.value || "";
+                if (row.value && row.value.trim()) {
+                    map[row.key] = row.value;
+                    dbKeys.add(row.key);
+                }
             });
         }
+        // Fill in defaults for any pages without DB content
+        PAGES.forEach((p) => {
+            if (!map[p.key] || !map[p.key].trim()) {
+                map[p.key] = PAGE_DEFAULTS[p.key] || "";
+            }
+        });
         setContents(map);
-        setSavedKeys(new Set(data?.map((d) => d.key) || []));
+        setSavedKeys(dbKeys);
         setLoading(false);
     }, []);
 

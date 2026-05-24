@@ -20,7 +20,7 @@ export default function CreatorOnboardingAgreementPage() {
             This Creator Onboarding Agreement (“Agreement”) is entered into between PlayGroundX (“Platform”, “we”, “us”) and You (“Creator”). By completing onboarding and verifying your identity, you agree to be legally bound by this Agreement and all related policies.
           </p>
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-[11px] font-mono text-gray-500">
-            PlayGroundX Digital Ltd, ONEWORLD PARKVIEW HOUSE, Floor 4, 2063, Nicosia, Cyprus.
+            PlayGroundX Digital Ltd, 161 Westney Rd S, Ajax, ON, Canada, L0B1A0.
           </div>
         </section>
 
@@ -113,7 +113,7 @@ export default function CreatorOnboardingAgreementPage() {
                We may terminate or suspend your account immediately and without prior notice if you violate this Agreement or any policy. Decisions are at our sole discretion.
             </p>
             <div className="mt-6 pt-6 border-t border-white/5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Governing Law: Republic of Cyprus</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Governing Law: Province of Ontario, Canada</span>
             </div>
           </div>
         </section>
@@ -124,7 +124,7 @@ export default function CreatorOnboardingAgreementPage() {
              Legal Compliance Agreement
           </div>
           <p className="mt-2 text-[9px] text-gray-500 uppercase tracking-tighter">
-            PlayGroundX Digital Ltd | Nicosia, Cyprus
+            PlayGroundX Digital Ltd | Ajax, ON, Canada
           </p>
         </section>
       </div>

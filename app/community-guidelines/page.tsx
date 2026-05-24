@@ -20,7 +20,7 @@ export default function CommunityGuidelinesPage() {
             These Community Guidelines (Fan & User Rules) are issued by PlayGroundX Digital Ltd to ensure a respectful and safe environment for all participants. By using the platform, you agree to these rules.
           </p>
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-[11px] font-mono text-gray-500">
-            PlayGroundX Digital Ltd, ONEWORLD PARKVIEW HOUSE, Floor 4, 2063, Nicosia, Cyprus.
+            PlayGroundX Digital Ltd, 161 Westney Rd S, Ajax, ON, Canada, L0B1A0.
           </div>
         </section>
 
@@ -95,7 +95,7 @@ export default function CommunityGuidelinesPage() {
 
         <section className="pt-8 border-t border-white/5 text-center">
           <p className="mt-2 text-[9px] text-gray-500 uppercase tracking-tighter">
-            PlayGroundX Digital Ltd | Nicosia, Cyprus
+            PlayGroundX Digital Ltd | Ajax, ON, Canada
           </p>
         </section>
       </div>

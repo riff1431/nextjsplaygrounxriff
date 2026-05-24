@@ -19,8 +19,8 @@ function StaticPrivacyContent() {
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-sm font-mono text-gray-400">
             PlayGroundX Digital Ltd<br />
             Operating as: PlayGroundX<br />
-            75 Prodromou, ONEWORLD PARKVIEW HOUSE, Floor 4,<br />
-            2063, Nicosia, Cyprus.
+            161 Westney Rd S, Ajax,<br />
+            ON, Canada, L0B1A0.
           </div>
           <p className="mt-4 text-xs text-pink-400 font-bold uppercase tracking-widest">
             📧 Privacy Contact: privacy@playgroundx.vip
@@ -34,7 +34,7 @@ function StaticPrivacyContent() {
           </h2>
           <div className="mt-4 space-y-4 text-gray-300 leading-relaxed">
             <p>
-              This Privacy Policy explains how PlayGroundX Digital Ltd ("PlayGroundX", "we", "us", "our") collects, uses, and protects personal data in accordance with the **EU General Data Protection Regulation (GDPR) (EU) 2016/679** and Cyprus data protection laws.
+              This Privacy Policy explains how PlayGroundX Digital Ltd ("PlayGroundX", "we", "us", "our") collects, uses, and protects personal data in accordance with the **Personal Information Protection and Electronic Documents Act (PIPEDA)** and applicable Canadian privacy laws.
             </p>
             <p>
               By using PlayGroundX, you acknowledge this Policy.
@@ -157,7 +157,7 @@ function StaticPrivacyContent() {
 
         <section className="pt-8 border-t border-white/5 text-center">
           <p className="text-xs text-gray-500 italic max-w-lg mx-auto">
-            You have the right to lodge a complaint with the **Office of the Commissioner for Personal Data Protection (Cyprus DPA)** at dataprotection.gov.cy.
+            You have the right to lodge a complaint with the **Office of the Privacy Commissioner of Canada (OPC)** at priv.gc.ca.
           </p>
           <div className="mt-8 flex justify-center gap-6">
               <div className="flex items-center gap-2 text-[10px] text-gray-600 font-bold tracking-widest uppercase">
@@ -166,7 +166,7 @@ function StaticPrivacyContent() {
               </div>
               <div className="flex items-center gap-2 text-[10px] text-gray-600 font-bold tracking-widest uppercase">
                   <Globe className="w-3 h-3" />
-                  Cyprus (EU) Region
+                  Ontario, Canada
               </div>
           </div>
         </section>

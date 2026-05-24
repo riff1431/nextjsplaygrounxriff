@@ -226,7 +226,7 @@ export default function ResetPasswordPage() {
 
                 {/* Footer */}
                 <p className="text-center text-[10px] text-gray-600 mt-6 uppercase tracking-widest">
-                    PlayGroundX Digital Ltd · Nicosia, Cyprus
+                    PlayGroundX Digital Ltd · Ajax, ON, Canada
                 </p>
             </motion.div>
         </div>

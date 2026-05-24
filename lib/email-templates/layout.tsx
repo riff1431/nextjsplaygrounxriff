@@ -56,7 +56,7 @@ export default function EmailLayout({ preview, children }: EmailLayoutProps) {
                     <Section style={footer}>
                         <Hr style={divider} />
                         <Text style={footerText}>
-                            PlayGroundX Digital Ltd · Nicosia, Cyprus
+                            PlayGroundX Digital Ltd · Ajax, ON, Canada
                         </Text>
                         <Text style={footerText}>
                             <Link href="mailto:support@playgroundx.vip" style={footerLink}>

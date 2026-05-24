@@ -20,7 +20,7 @@ export default function ComplaintsPolicyPage() {
             This Complaints Policy is issued by PlayGroundX Digital Ltd to ensure all user concerns are handled fairly and transparently. We are committed to maintaining a high-quality experience for both Fans and Creators.
           </p>
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-[11px] font-mono text-gray-500">
-            PlayGroundX Digital Ltd, ONEWORLD PARKVIEW HOUSE, Floor 4, 2063, Nicosia, Cyprus.
+            PlayGroundX Digital Ltd, 161 Westney Rd S, Ajax, ON, Canada, L0B1A0.
           </div>
         </section>
 
@@ -101,7 +101,7 @@ export default function ComplaintsPolicyPage() {
              User Support Integrity Policy
           </div>
           <p className="mt-2 text-[9px] text-gray-500 uppercase tracking-tighter">
-            PlayGroundX Digital Ltd | Nicosia, Cyprus
+            PlayGroundX Digital Ltd | Ajax, ON, Canada
           </p>
         </section>
       </div>

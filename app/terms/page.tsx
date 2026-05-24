@@ -20,13 +20,12 @@ export default function TermsPage() {
             Operator Information
           </h2>
           <p className="text-sm leading-relaxed text-gray-300">
-            This terms and conditions is issued by <strong>PlayGroundX Digital Ltd</strong> (operating as PlayGroundX), a company registered in the Republic of Cyprus.
+            This terms and conditions is issued by <strong>PlayGroundX Digital Ltd</strong> (operating as PlayGroundX), a company registered in Canada.
           </p>
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-sm font-mono text-gray-400">
             PlayGroundX Digital Ltd<br />
-            75 Prodromou,<br />
-            ONEWORLD PARKVIEW HOUSE, Floor 4,<br />
-            2063, Nicosia, Cyprus.
+            161 Westney Rd S, Ajax,<br />
+            ON, Canada, L0B1A0.
           </div>
         </section>
 
@@ -199,7 +198,7 @@ export default function TermsPage() {
               PlayGroundX is not responsible for Creator behavior, content accuracy, earnings outcomes, or technical interruptions.
             </p>
             <p>
-              These Terms are governed by the laws of the **Republic of Cyprus**. Disputes may be resolved in Cyprus courts or as required by EU law. In the event of conflict, these Terms of Service prevail.
+              These Terms are governed by the laws of the **Province of Ontario, Canada**. Disputes may be resolved in Ontario courts or as required by Canadian law. In the event of conflict, these Terms of Service prevail.
             </p>
           </div>
         </section>
@@ -210,7 +209,7 @@ export default function TermsPage() {
             PlayGroundX Digital Ltd
           </div>
           <p className="mt-2 text-[9px] text-gray-500 uppercase tracking-tighter">
-            Oneworld Parkview House, Floor 4, 2063, Nicosia, Cyprus
+            161 Westney Rd S, Ajax, ON, Canada, L0B1A0
           </p>
         </section>
       </div>

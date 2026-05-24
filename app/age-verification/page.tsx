@@ -21,7 +21,7 @@ export default function AgeVerificationPage() {
           </p>
           <div className="mt-4 p-4 rounded-xl bg-black/40 border border-white/5 text-sm font-mono text-gray-400">
             Operator: PlayGroundX Digital Ltd<br />
-            75 Prodromou, ONEWORLD PARKVIEW HOUSE, Floor 4, 2063, Nicosia, Cyprus.
+            161 Westney Rd S, Ajax, ON, Canada, L0B1A0.
           </div>
         </section>
 
@@ -114,7 +114,7 @@ export default function AgeVerificationPage() {
             Age Verified Platform
           </div>
           <p className="mt-2 text-[9px] text-gray-500 uppercase tracking-tighter">
-            PlayGroundX Digital Ltd | Nicosia, Cyprus
+            PlayGroundX Digital Ltd | Ajax, ON, Canada
           </p>
         </section>
       </div>
