@@ -216,6 +216,42 @@ export default function NewsFeedPage() {
     // Debounce
     const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const feedRef = useRef<HTMLDivElement>(null);
+    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data, error } = await supabase
+                .from("room_settings")
+                .select("room_type, is_active");
+            if (!error && data) {
+                const mapped = data.reduce((acc, s) => {
+                    acc[s.room_type] = s.is_active;
+                    return acc;
+                }, {} as Record<string, boolean>);
+                setActiveStatuses(mapped);
+            }
+        };
+
+        fetchSettings();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("realtime-room-settings-fan-newsfeed")
+            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
+                const updated = payload.new as { room_type: string; is_active: boolean };
+                if (updated && updated.room_type) {
+                    setActiveStatuses((prev) => ({
+                        ...prev,
+                        [updated.room_type]: updated.is_active,
+                    }));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase]);
 
     // Redirect creators
     useEffect(() => {
@@ -374,12 +410,12 @@ export default function NewsFeedPage() {
     ];
 
     const ROOM_LINKS = [
-        { label: "Flash Drops", icon: <Sparkles className="w-4 h-4" />, route: "/rooms/flash-drop-sessions", color: "text-cyan-300", border: "border-cyan-300/90", glow: "shadow-[0_0_18px_rgba(0,230,255,0.85)]", hover: "hover:bg-cyan-500/8" },
-        { label: "Confessions", icon: <Lock className="w-4 h-4" />, route: "/rooms/confessions-browse", color: "text-rose-400", border: "border-rose-400/90", glow: "shadow-[0_0_18px_rgba(255,55,95,0.85)]", hover: "hover:bg-rose-500/8" },
-        { label: "X Chat", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/x-chat-sessions", color: "text-lime-300", border: "border-lime-300/90", glow: "shadow-[0_0_18px_rgba(200,255,0,0.85)]", hover: "hover:bg-lime-500/8" },
-        { label: "Bar Lounge", icon: <BarDrinkIcon className="w-4 h-4" />, route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8" },
-        { label: "Truth or Dare", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8" },
-        { label: "Suga 4 U", icon: <Crown className="w-4 h-4" />, route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8" },
+        { label: "Flash Drops", icon: <Sparkles className="w-4 h-4" />, route: "/rooms/flash-drop-sessions", color: "text-cyan-300", border: "border-cyan-300/90", glow: "shadow-[0_0_18px_rgba(0,230,255,0.85)]", hover: "hover:bg-cyan-500/8", roomType: "flash-drop" },
+        { label: "Confessions", icon: <Lock className="w-4 h-4" />, route: "/rooms/confessions-browse", color: "text-rose-400", border: "border-rose-400/90", glow: "shadow-[0_0_18px_rgba(255,55,95,0.85)]", hover: "hover:bg-rose-500/8", roomType: "confessions" },
+        { label: "X Chat", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/x-chat-sessions", color: "text-lime-300", border: "border-lime-300/90", glow: "shadow-[0_0_18px_rgba(200,255,0,0.85)]", hover: "hover:bg-lime-500/8", roomType: "x-chat" },
+        { label: "Bar Lounge", icon: <BarDrinkIcon className="w-4 h-4" />, route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8", roomType: "bar-lounge" },
+        { label: "Truth or Dare", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8", roomType: "truth-or-dare" },
+        { label: "Suga 4 U", icon: <Crown className="w-4 h-4" />, route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8", roomType: "suga-4-u" },
     ];
 
     return (
@@ -474,21 +510,35 @@ export default function NewsFeedPage() {
                                     <div className="relative">
                                         <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
                                         <div className="space-y-2">
-                                            {ROOM_LINKS.map((room) => (
-                                                <button
-                                                    key={room.label}
-                                                    onClick={() => router.push(room.route)}
-                                                    className={cn(
-                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
-                                                        room.border, room.glow, room.hover
-                                                    )}
-                                                >
-                                                    <span className={cn("inline-flex items-center gap-2 neon-flicker", room.color)}>
-                                                        {room.icon}
-                                                        <span className="truncate neon-deep">{room.label}</span>
-                                                    </span>
-                                                </button>
-                                            ))}
+                                            {ROOM_LINKS.map((room) => {
+                                                const isInactive = activeStatuses[room.roomType] === false;
+                                                return (
+                                                    <button
+                                                        key={room.label}
+                                                        disabled={isInactive}
+                                                        onClick={() => {
+                                                            if (isInactive) return;
+                                                            router.push(room.route);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition",
+                                                            isInactive
+                                                                ? "bg-zinc-955/30 border-zinc-900 text-zinc-655 opacity-25 cursor-not-allowed pointer-events-none"
+                                                                : "bg-black/55 " + room.border + " " + room.glow + " " + room.hover
+                                                        )}
+                                                    >
+                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between", isInactive ? "text-zinc-655" : "neon-flicker " + room.color)}>
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <span className={isInactive ? "text-zinc-700" : ""}>{room.icon}</span>
+                                                                <span className="truncate neon-deep">{room.label}</span>
+                                                            </span>
+                                                            {isInactive && (
+                                                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-500 uppercase tracking-wide">Off</span>
+                                                            )}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
 
                                         {/* Quick Links */}

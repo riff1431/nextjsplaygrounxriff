@@ -396,6 +396,7 @@ function HomeScreen({
     posts, // New prop
     userId,
     subscribedCreatorIds,
+    activeStatuses,
 }: {
     onEnterSuga4U: () => void;
     query: string;
@@ -404,6 +405,7 @@ function HomeScreen({
     posts: Post[];
     userId?: string;
     subscribedCreatorIds: Set<string>;
+    activeStatuses: Record<string, boolean>;
 }) {
     const router = useRouter();
     const [activeCat, setActiveCat] = useState("all");
@@ -448,13 +450,14 @@ function HomeScreen({
         primary?: boolean;
         route: string;
         comingSoon?: boolean;
+        roomType: string;
     }> = [
-            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions" },
-            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse" },
-            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions" },
-            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge" },
-            { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions" },
+            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
+            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
+            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
+            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
+            { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
+            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
         ];
 
     return (
@@ -477,34 +480,40 @@ function HomeScreen({
                                 {CATS.map((cat) => {
                                     const t = toneClasses(cat.tone);
                                     const isPrimary = !!cat.primary;
+                                    const isInactive = activeStatuses[cat.roomType] === false;
                                     return (
                                         <button
                                             key={cat.key}
+                                            disabled={isInactive}
                                             onClick={() => {
+                                                if (isInactive) return;
                                                 setActiveCat(cat.key);
                                                 router.push(cat.route);
                                             }}
                                             className={cx(
                                                 "w-full text-left px-3 py-2 rounded-xl border text-sm transition",
-                                                "bg-black/55",
-                                                t.border,
-                                                t.glow,
-                                                t.hover,
-                                                isPrimary && "ring-1 ring-cyan-300/35",
-                                                activeCat === cat.key && "neon-pulse"
+                                                isInactive 
+                                                    ? "bg-zinc-955/30 border-zinc-900 text-zinc-600 opacity-25 cursor-not-allowed pointer-events-none" 
+                                                    : "bg-black/55 " + t.border + " " + t.glow + " " + t.hover,
+                                                !isInactive && isPrimary && "ring-1 ring-cyan-300/35",
+                                                !isInactive && activeCat === cat.key && "neon-pulse"
                                             )}
                                         >
                                             <span
                                                 className={cx(
-                                                    "inline-flex items-center gap-2",
-                                                    t.text,
-                                                    "neon-flicker",
-                                                    isPrimary && "animate-pulse"
+                                                    "inline-flex items-center gap-2 w-full justify-between",
+                                                    isInactive ? "text-zinc-650" : t.text + " neon-flicker",
+                                                    !isInactive && isPrimary && "animate-pulse"
                                                 )}
                                             >
-                                                <span className={t.icon}>{cat.icon}</span>
-                                                <span className="truncate neon-deep">{cat.label}</span>
-                                                {cat.comingSoon && (
+                                                <span className="inline-flex items-center gap-2">
+                                                    <span className={isInactive ? "text-zinc-700" : t.icon}>{cat.icon}</span>
+                                                    <span className="truncate neon-deep">{cat.label}</span>
+                                                </span>
+                                                {isInactive && (
+                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-500 uppercase tracking-wide">Off</span>
+                                                )}
+                                                {!isInactive && cat.comingSoon && (
                                                     <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
                                                 )}
 
@@ -516,27 +525,36 @@ function HomeScreen({
                         </div>
 
 
-                        <div className="mt-8 mb-4">
-                            <button
-                                onClick={() => router.push("/coming-soon")}
-                                className={cx(
-                                    "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group flex items-center justify-between",
-                                    "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10",
-                                    "shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
-                                )}
-                            >
-                                <span className="relative z-10 inline-flex items-center gap-2 text-yellow-300 font-semibold tracking-wide group-hover:text-yellow-200 transition-colors">
-                                    <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
-                                    Competition
-                                </span>
-                                <span className="relative z-10 text-[8px] px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-400/40 text-yellow-300 font-bold uppercase tracking-wider animate-pulse drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]">
-                                    Coming Soon
-                                </span>
+                        {(() => {
+                            const isCompetitionInactive = activeStatuses["competition"] === false;
+                            return (
+                                <div className="mt-8 mb-4">
+                                    <button
+                                        disabled={isCompetitionInactive}
+                                        onClick={() => !isCompetitionInactive && router.push("/coming-soon")}
+                                        className={cx(
+                                            "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group flex items-center justify-between",
+                                            isCompetitionInactive
+                                                ? "bg-zinc-955/30 border-zinc-900 opacity-25 cursor-not-allowed pointer-events-none"
+                                                : "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10 shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
+                                        )}
+                                    >
+                                        <span className={cx("relative z-10 inline-flex items-center gap-2 font-semibold tracking-wide transition-colors", isCompetitionInactive ? "text-zinc-650" : "text-yellow-300 group-hover:text-yellow-200")}>
+                                            <Trophy className={cx("w-4 h-4", isCompetitionInactive ? "text-zinc-700" : "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]")} />
+                                            Competition
+                                        </span>
+                                        <span className="relative z-10 text-[8px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
+                                            {isCompetitionInactive ? "Off" : "Coming Soon"}
+                                        </span>
 
-                                {/* Subtle internal glow */}
-                                <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
-                            </button>
-                        </div>
+                                        {/* Subtle internal glow */}
+                                        {!isCompetitionInactive && (
+                                            <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
+                                        )}
+                                    </button>
+                                </div>
+                            );
+                        })()}
 
 
                         <div className="mt-2 space-y-3">
@@ -584,15 +602,15 @@ function HomeScreen({
                                 <select
                                     value={tagFilter}
                                     onChange={(e) => setTagFilter(e.target.value)}
-                                    className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm"
+                                    className="w-full bg-black/40 border border-blue-500/25 rounded-xl px-3 py-2 text-sm text-gray-200"
                                 >
                                     <option value="All">All Types</option>
-                                    <option value="Flash Drops">Flash Drops</option>
-                                    <option value="Confessions">Confessions</option>
-                                    <option value="Bar Lounge">Bar Lounge</option>
-                                    <option value="Truth or Dare">Truth or Dare</option>
-                                    <option value="Suga 4 U">Suga 4 U</option>
-                                    <option value="X Chat">X Chat</option>
+                                    {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
+                                    {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
+                                    {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
+                                    {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
+                                    {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
+                                    {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
                                 </select>
                             </div>
 
@@ -898,6 +916,42 @@ export default function Home() {
     const [homeQuery, setHomeQuery] = useState("");
     const [levelFilter, setLevelFilter] = useState<string | "All">("All");
     const [tagFilter, setTagFilter] = useState<string | "All">("All"); // Renamed for clarity in UI
+    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data, error } = await supabase
+                .from("room_settings")
+                .select("room_type, is_active");
+            if (!error && data) {
+                const mapped = data.reduce((acc, s) => {
+                    acc[s.room_type] = s.is_active;
+                    return acc;
+                }, {} as Record<string, boolean>);
+                setActiveStatuses(mapped);
+            }
+        };
+
+        fetchSettings();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("realtime-room-settings-fan-home")
+            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
+                const updated = payload.new as { room_type: string; is_active: boolean };
+                if (updated && updated.room_type) {
+                    setActiveStatuses((prev) => ({
+                        ...prev,
+                        [updated.room_type]: updated.is_active,
+                    }));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase]);
 
     // NOTE: no fan-tier selector on Home per requirements; retained for Suga4U preview behavior.
     const [fanTier, setFanTier] = useState<BadgeTier>("Bronze");
@@ -1132,6 +1186,7 @@ export default function Home() {
                 posts={posts}
                 userId={user?.id}
                 subscribedCreatorIds={subscribedCreatorIds}
+                activeStatuses={activeStatuses}
             />
         </div>
     );

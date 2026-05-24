@@ -27,6 +27,42 @@ export default function CreatorDashboard() {
     const [user, setUser] = useState<any>(null);
     const [creatorProfile, setCreatorProfile] = useState<any>(null);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            const { data, error } = await supabase
+                .from("room_settings")
+                .select("room_type, is_active");
+            if (!error && data) {
+                const mapped = data.reduce((acc, s) => {
+                    acc[s.room_type] = s.is_active;
+                    return acc;
+                }, {} as Record<string, boolean>);
+                setActiveStatuses(mapped);
+            }
+        };
+
+        fetchSettings();
+
+        // Realtime subscription
+        const channel = supabase
+            .channel("realtime-room-settings-legacy-dashboard")
+            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
+                const updated = payload.new as { room_type: string; is_active: boolean };
+                if (updated && updated.room_type) {
+                    setActiveStatuses((prev) => ({
+                        ...prev,
+                        [updated.room_type]: updated.is_active,
+                    }));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase]);
 
     const signOut = async () => {
         await supabase.auth.signOut();
@@ -265,80 +301,153 @@ export default function CreatorDashboard() {
                         />
 
                         {/* 1. Confessions Studio */}
-                        <button onClick={() => router.push('/rooms/confessions-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Lock className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
-                            <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
-                                <Lock className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Confessions Studio</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage backlog, publish text/voice/video confessions.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['confessions'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/confessions-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Lock className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">
+                                        {isInactive ? "Disabled" : "Very New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'}`}>
+                                        <Lock className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Confessions Studio</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage backlog, publish text/voice/video confessions.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 2. X Chat Console */}
-                        <button onClick={() => router.push('/rooms/x-chat-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-yellow-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><MessageSquare className="w-12 h-12 text-gray-800 group-hover:text-yellow-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">New</span>
-                            <div className="p-3 w-fit rounded-xl bg-yellow-500/20 text-yellow-400 mb-4 group-hover:bg-yellow-500 group-hover:text-white transition">
-                                <MessageSquare className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">X Chat Console</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Moderate live chat, set slow mode, answer priority DMs.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['x-chat'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/x-chat-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-yellow-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><MessageSquare className="w-12 h-12 text-gray-800 group-hover:text-yellow-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">
+                                        {isInactive ? "Disabled" : "New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white'}`}>
+                                        <MessageSquare className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">X Chat Console</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Moderate live chat, set slow mode, answer priority DMs.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 3. Flash Drops */}
-                        <button onClick={() => router.push('/rooms/flash-drop-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-blue-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Zap className="w-12 h-12 text-gray-800 group-hover:text-blue-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold uppercase tracking-wide border border-blue-500/30">New</span>
-                            <div className="p-3 w-fit rounded-xl bg-blue-500/20 text-blue-400 mb-4 group-hover:bg-blue-500 group-hover:text-white transition">
-                                <Zap className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Flash Drops</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Schedule limited-time drops and monitor sales.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['flash-drop'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/flash-drop-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-blue-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Zap className="w-12 h-12 text-gray-800 group-hover:text-blue-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold uppercase tracking-wide border border-blue-500/30">
+                                        {isInactive ? "Disabled" : "New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white'}`}>
+                                        <Zap className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Flash Drops</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Schedule limited-time drops and monitor sales.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 4. Bar Lounge */}
-                        <button onClick={() => router.push('/rooms/bar-lounge-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Wine className="w-12 h-12 text-gray-800 group-hover:text-purple-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">New</span>
-                            <div className="p-3 w-fit rounded-xl bg-purple-500/20 text-purple-400 mb-4 group-hover:bg-purple-500 group-hover:text-white transition">
-                                <Wine className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Bar Lounge (Host)</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage VIP tables and drink menu.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['bar-lounge'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/bar-lounge-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Wine className="w-12 h-12 text-gray-800 group-hover:text-purple-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">
+                                        {isInactive ? "Disabled" : "New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white'}`}>
+                                        <Wine className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Bar Lounge (Host)</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage VIP tables and drink menu.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 5. Truth or Dare */}
-                        <button onClick={() => router.push('/creator/rooms/truth-or-dare')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-green-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Video className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
-                            <div className="p-3 w-fit rounded-xl bg-green-500/20 text-green-400 mb-4 group-hover:bg-green-500 group-hover:text-white transition">
-                                <Video className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Truth or Dare</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Control camera slots and prompt queue.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['truth-or-dare'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/creator/rooms/truth-or-dare')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-green-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Video className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
+                                    {isInactive && (
+                                        <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-red-950/40 border border-red-900/30 text-red-400 font-bold uppercase tracking-wide">
+                                            Disabled
+                                        </span>
+                                    )}
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white'}`}>
+                                        <Video className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Truth or Dare</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Control camera slots and prompt queue.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 6. Suga 4 U */}
-                        <button onClick={() => router.push('/rooms/suga4u-pg12-creator')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60 transition relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold uppercase tracking-wide border border-pink-500/30">New</span>
-                            <div className="p-3 w-fit rounded-xl bg-pink-500/20 text-pink-400 mb-4 group-hover:bg-pink-500 group-hover:text-white transition">
-                                <Crown className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Suga 4 U</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage sponsorships and badge tiers.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['suga-4-u'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/suga4u-pg12-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold uppercase tracking-wide border border-pink-500/30">
+                                        {isInactive ? "Disabled" : "New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'}`}>
+                                        <Crown className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Suga 4 U</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage sponsorships and badge tiers.</p>
+                                </button>
+                            );
+                        })()}
 
                         {/* 7. Competition Manager */}
-                        <button onClick={() => router.push('/rooms/fans-competitions')} className="group text-left p-6 rounded-3xl bg-gray-900/40 border border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60 transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2">
-                            <div className="absolute top-0 right-0 p-4 opacity-50"><Trophy className="w-12 h-12 text-gray-800 group-hover:text-orange-900/50 transition transform group-hover:scale-110" /></div>
-                            <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
-                            <div className="p-3 w-fit rounded-xl bg-orange-500/20 text-orange-400 mb-4 group-hover:bg-orange-500 group-hover:text-white transition">
-                                <Trophy className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-100 mb-1">Competition Manager</h3>
-                            <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Create battles, manage brackets & prizes.</p>
-                        </button>
+                        {(() => {
+                            const isInactive = activeStatuses['competition'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/fans-competitions')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2 ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Trophy className="w-12 h-12 text-gray-800 group-hover:text-orange-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">
+                                        {isInactive ? "Disabled" : "Very New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white'}`}>
+                                        <Trophy className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Competition Manager</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Create battles, manage brackets & prizes.</p>
+                                </button>
+                            );
+                        })()}
                     </div>
                 </div>
 
