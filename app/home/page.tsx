@@ -30,6 +30,7 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { createClient } from "@/utils/supabase/client";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard from "@/components/posts/PostCard";
@@ -898,42 +899,7 @@ export default function Home() {
     const [homeQuery, setHomeQuery] = useState("");
     const [levelFilter, setLevelFilter] = useState<string | "All">("All");
     const [tagFilter, setTagFilter] = useState<string | "All">("All"); // Renamed for clarity in UI
-    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            const { data, error } = await supabase
-                .from("room_settings")
-                .select("room_type, is_active");
-            if (!error && data) {
-                const mapped = data.reduce((acc, s) => {
-                    acc[s.room_type] = s.is_active;
-                    return acc;
-                }, {} as Record<string, boolean>);
-                setActiveStatuses(mapped);
-            }
-        };
-
-        fetchSettings();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel("realtime-room-settings-fan-home")
-            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
-                const updated = payload.new as { room_type: string; is_active: boolean };
-                if (updated && updated.room_type) {
-                    setActiveStatuses((prev) => ({
-                        ...prev,
-                        [updated.room_type]: updated.is_active,
-                    }));
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase]);
+    const { roomSettings: activeStatuses } = useTheme();
 
     // NOTE: no fan-tier selector on Home per requirements; retained for Suga4U preview behavior.
     const [fanTier, setFanTier] = useState<BadgeTier>("Bronze");

@@ -11,6 +11,7 @@ import ProfileMenu from "@/components/navigation/ProfileMenu";
 import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { cs } from "@/utils/currency";
+import { useTheme } from "../../context/ThemeContext";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -27,42 +28,7 @@ export default function CreatorDashboard() {
     const [user, setUser] = useState<any>(null);
     const [creatorProfile, setCreatorProfile] = useState<any>(null);
     const [profileOpen, setProfileOpen] = useState(false);
-    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            const { data, error } = await supabase
-                .from("room_settings")
-                .select("room_type, is_active");
-            if (!error && data) {
-                const mapped = data.reduce((acc, s) => {
-                    acc[s.room_type] = s.is_active;
-                    return acc;
-                }, {} as Record<string, boolean>);
-                setActiveStatuses(mapped);
-            }
-        };
-
-        fetchSettings();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel("realtime-room-settings-legacy-dashboard")
-            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
-                const updated = payload.new as { room_type: string; is_active: boolean };
-                if (updated && updated.room_type) {
-                    setActiveStatuses((prev) => ({
-                        ...prev,
-                        [updated.room_type]: updated.is_active,
-                    }));
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase]);
+    const { roomSettings: activeStatuses } = useTheme();
 
     const signOut = async () => {
         await supabase.auth.signOut();

@@ -23,12 +23,22 @@ interface ThemeContextType {
     theme: ThemeSettings;
     updateTheme: (newSettings: Partial<ThemeSettings>) => Promise<void>;
     loading: boolean;
+    roomSettings: Record<string, boolean>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ 
+    children,
+    initialTheme,
+    initialRoomSettings
+}: { 
+    children: React.ReactNode;
+    initialTheme?: ThemeSettings;
+    initialRoomSettings?: Record<string, boolean>;
+}) {
     const [theme, setTheme] = useState<ThemeSettings>(() => {
+        if (initialTheme) return initialTheme;
         if (typeof window !== "undefined") {
             const cached = localStorage.getItem("theme_config");
             if (cached) {
@@ -39,11 +49,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
         return DEFAULT_THEME;
     });
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialTheme);
+    const [roomSettings, setRoomSettings] = useState<Record<string, boolean>>(() => {
+        return initialRoomSettings || {};
+    });
     const supabase = createClient();
 
     useEffect(() => {
-        fetchTheme();
+        if (!initialTheme) {
+            fetchTheme();
+        }
 
         // Realtime Subscription (Broadcast)
         // We use Broadcast because it bypasses RLS for the events
@@ -74,10 +89,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             )
             .subscribe();
 
+        // Realtime Subscription for room settings
+        const settingsChannel = supabase.channel('global_room_settings')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'room_settings' },
+                (payload) => {
+                    const updated = payload.new as { room_type: string; is_active: boolean };
+                    if (updated && updated.room_type) {
+                        setRoomSettings(prev => ({
+                            ...prev,
+                            [updated.room_type]: updated.is_active
+                        }));
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(channel);
+            supabase.removeChannel(settingsChannel);
         };
-    }, []);
+    }, [initialTheme]);
 
     const fetchTheme = async () => {
         try {
@@ -143,7 +176,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, updateTheme, loading }}>
+        <ThemeContext.Provider value={{ theme, updateTheme, loading, roomSettings }}>
             {children}
         </ThemeContext.Provider>
     );

@@ -6,23 +6,9 @@ import { useTheme } from "@/app/context/ThemeContext";
 
 export default function BrandLogo({ className, showBadge = true }: { className?: string, showBadge?: boolean }) {
     const { theme } = useTheme();
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     const logoSrc = theme?.logoUrl || "/logo.png";
     const logoHeight = theme?.logoSize ? theme.logoSize * 2 : 72; // Force 200% size
-
-    if (!mounted) {
-        return (
-            <div 
-                className={cn("flex items-center gap-3 select-none", className)}
-                style={{ height: `${logoHeight}px`, minWidth: `${logoHeight}px` }}
-            />
-        );
-    }
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>
@@ -32,12 +18,6 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
                 className="w-auto object-contain flex-shrink-0"
                 style={{ height: `${logoHeight}px`, minWidth: `${logoHeight}px` }}
             />
-
-            {/* {showBadge && (
-                <span className="ml-1 text-[10px] px-2 py-[2px] rounded-full border border-pink-500/40 text-pink-200 bg-black/40">
-                    Alpha
-                </span>
-            )} */}
         </div>
     );
 }

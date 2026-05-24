@@ -42,16 +42,44 @@ export async function generateMetadata() {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  
+  // 1. Fetch theme settings
+  const { data: themeData } = await supabase
+    .from("admin_settings")
+    .select("value")
+    .eq("key", "theme_config")
+    .single();
+
+  const val = themeData?.value || {};
+  const initialTheme = {
+    siteName: val.siteName || val.site_name || "PlayGroundX",
+    logoUrl: val.logoUrl || val.logo_url || null,
+    faviconUrl: val.faviconUrl || val.favicon_url || null,
+    primaryColor: val.primaryColor || val.primary_color || "#ec4899",
+    logoSize: val.logoSize || val.logo_size || 36,
+  };
+
+  // 2. Fetch room settings
+  const { data: settingsData } = await supabase
+    .from("room_settings")
+    .select("room_type, is_active");
+
+  const initialRoomSettings = settingsData ? settingsData.reduce((acc: any, s: any) => {
+    acc[s.room_type] = s.is_active;
+    return acc;
+  }, {} as Record<string, boolean>) : {};
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${outfit.variable} antialiased bg-black text-white min-h-screen selection:bg-pink-500 selection:text-white`} suppressHydrationWarning>
         <AuthProvider>
-          <ThemeProvider>
+          <ThemeProvider initialTheme={initialTheme} initialRoomSettings={initialRoomSettings}>
             <PaymentProvider>
               <CurrencyProvider>
                 <NotificationProvider>

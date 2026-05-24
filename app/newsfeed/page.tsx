@@ -9,6 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import PostCard from "@/components/posts/PostCard";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
@@ -216,42 +217,7 @@ export default function NewsFeedPage() {
     // Debounce
     const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const feedRef = useRef<HTMLDivElement>(null);
-    const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            const { data, error } = await supabase
-                .from("room_settings")
-                .select("room_type, is_active");
-            if (!error && data) {
-                const mapped = data.reduce((acc, s) => {
-                    acc[s.room_type] = s.is_active;
-                    return acc;
-                }, {} as Record<string, boolean>);
-                setActiveStatuses(mapped);
-            }
-        };
-
-        fetchSettings();
-
-        // Realtime subscription
-        const channel = supabase
-            .channel("realtime-room-settings-fan-newsfeed")
-            .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
-                const updated = payload.new as { room_type: string; is_active: boolean };
-                if (updated && updated.room_type) {
-                    setActiveStatuses((prev) => ({
-                        ...prev,
-                        [updated.room_type]: updated.is_active,
-                    }));
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase]);
+    const { roomSettings: activeStatuses } = useTheme();
 
     // Redirect creators
     useEffect(() => {
