@@ -12,7 +12,26 @@ export async function POST(request: Request) {
         }
 
         const diditClient = new DiditClient();
-        const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verification/callback`;
+
+        // Dynamically resolve the application's base URL / origin from incoming request headers or URL
+        let origin = request.headers.get('origin');
+        if (!origin) {
+            const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+            const proto = request.headers.get('x-forwarded-proto') || 'https';
+            if (host) {
+                origin = `${proto}://${host}`;
+            } else {
+                try {
+                    origin = new URL(request.url).origin;
+                } catch {
+                    origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+                }
+            }
+        }
+        
+        // Remove trailing slashes from the origin to ensure a clean path
+        const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+        const callbackUrl = `${cleanOrigin}/verification/callback`;
 
         // Create session
         // Note: We need to check exact Didit API payload structure.
