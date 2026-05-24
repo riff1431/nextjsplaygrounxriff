@@ -16,21 +16,32 @@ export async function POST(
     }
 
     // 1. Fetch the queue item
-    const { data: item, error: fetchError } = await supabase
+    let { data: item, error: fetchError } = await supabase
         .from("truth_dare_queue")
         .select("*")
         .eq("id", queueItemId)
-        .single();
+        .maybeSingle();
 
-    if (fetchError || !item) {
-        return NextResponse.json({ error: "Queue item not found" }, { status: 404 });
+    if (!item) {
+        // Fallback: try to find the queue item by the request_id in its meta JSONB
+        const { data: fallbackItem } = await supabase
+            .from("truth_dare_queue")
+            .select("*")
+            .eq("meta->>request_id", queueItemId)
+            .maybeSingle();
+        
+        if (fallbackItem) {
+            item = fallbackItem;
+        } else {
+            return NextResponse.json({ error: "Queue item not found" }, { status: 404 });
+        }
     }
 
     // 2. Mark queue item as served (removes it from active queue via realtime)
     const { error: serveError } = await supabase
         .from("truth_dare_queue")
         .update({ is_served: true })
-        .eq("id", queueItemId);
+        .eq("id", item.id);
 
     if (serveError) {
         console.error("Failed to dismiss queue item:", serveError);

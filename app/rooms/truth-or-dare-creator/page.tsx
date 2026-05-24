@@ -826,7 +826,8 @@ function TruthOrDareCreatorContent() {
             }
 
             // 3. Update local state (only after successful API call)
-            setCurrentPrompt({
+            const promptId = data.game?.current_prompt?.id || item.id;
+            const updatedPrompt = data.game?.current_prompt || {
                 id: item.id,
                 label: pText,
                 source: item.type.includes('CUSTOM') ? 'custom' : 'tier',
@@ -835,7 +836,8 @@ function TruthOrDareCreatorContent() {
                 purchaser: item.fanName,
                 isDoubleDare: doubleDareArmed,
                 startedAt: Date.now()
-            });
+            };
+            setCurrentPrompt(updatedPrompt);
 
             // 4. Broadcast Realtime Event
             if (roomId) {
@@ -846,7 +848,7 @@ function TruthOrDareCreatorContent() {
                         payload: {
                             type: 'reveal',
                             prompt: {
-                                id: item.id,
+                                id: promptId,
                                 type: item.type.includes('TRUTH') ? 'truth' : 'dare',
                                 text: pText,
                                 fanName: item.fanName,
@@ -858,7 +860,7 @@ function TruthOrDareCreatorContent() {
 
             // 5. Trigger Local Overlay for Creator
             setOverlayPrompt({
-                id: item.id,
+                id: promptId,
                 type: item.type.includes('TRUTH') ? 'truth' : 'dare',
                 text: pText,
                 fanName: item.fanName || 'Anonymous',
@@ -868,8 +870,8 @@ function TruthOrDareCreatorContent() {
             setTimeout(() => setShowOverlay(false), 6000); // Hide after 6s
 
             // Remove from queue and activity feed
-            setQueue(q => q.filter(x => x.id !== item.id));
-            setActivityFeed(af => af.filter(x => x.id !== item.id));
+            setQueue(q => q.filter(x => x.id !== item.id && x.meta?.request_id !== item.id && x.id !== item.meta?.request_id));
+            setActivityFeed(af => af.filter(x => x.id !== item.id && x.id !== item.meta?.request_id && x.meta?.request_id !== item.id));
             if (doubleDareArmed) setDoubleDareArmed(false);
 
         } catch (err) {
@@ -1730,7 +1732,7 @@ function TruthOrDareCreatorContent() {
                                 ...queue.filter(q => q.type.includes("DARE") || q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
                                 ...activityFeed
                                     .filter(a => a.type === 'dare' || a.type === 'custom_dare' || a.type === 'truth' || a.type === 'custom_truth')
-                                    .filter(a => !queue.some(q => q.id === a.id))
+                                    .filter(a => !queue.some(q => q.id === a.id || q.meta?.request_id === a.id))
                                     .map(a => ({
                                         id: a.id,
                                         type: a.type.includes('custom') ? a.type.toUpperCase() : 'TIER_PURCHASE',
@@ -1754,8 +1756,8 @@ function TruthOrDareCreatorContent() {
                                         toast.error(data.error || "Failed to dismiss");
                                         return;
                                     }
-                                    setQueue(qq => qq.filter(x => x.id !== q.id));
-                                    setActivityFeed(af => af.filter(x => x.id !== q.id));
+                                    setQueue(qq => qq.filter(x => x.id !== q.id && x.meta?.request_id !== q.id && x.id !== q.meta?.request_id));
+                                    setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id && x.meta?.request_id !== q.id));
                                 } catch (err) {
                                     console.error("Dismiss error:", err);
                                     toast.error("Failed to dismiss request");

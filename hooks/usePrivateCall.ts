@@ -88,88 +88,99 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
         fetchPending();
     }, [roomId, userId, role]);
 
-    // Listen for realtime broadcast events
-    // FIX: subscribe to `room:${roomId}` to match the API broadcast target
+    // Listen for realtime postgres changes on suga_private_calls
     useEffect(() => {
         if (!roomId || !userId) return;
 
-        const channel = supabase.channel(`room:${roomId}`)
-            .on("broadcast", { event: "private_call_request" }, (payload) => {
-                // Creator receives: a fan requested a call
-                if (role === "creator") {
-                    const d = payload.payload;
+        const channel = supabase.channel(`suga_private_calls_changes_${roomId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "suga_private_calls",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const c = payload.new;
+                if (role === "creator" && c.creator_id === userId && c.status === "pending") {
                     const newCall: PrivateCallState = {
-                        callId: d.callId,
-                        roomId: roomId,
-                        fanId: d.fanId,
-                        creatorId: userId,
-                        fanName: d.fanName,
+                        callId: c.id,
+                        roomId: c.room_id,
+                        fanId: c.fan_id,
+                        creatorId: c.creator_id,
+                        fanName: c.fan_name,
                         status: "pending",
-                        agoraChannel: d.agoraChannel,
-                        durationSeconds: d.duration,
+                        agoraChannel: c.agora_channel,
+                        durationSeconds: c.duration_seconds,
                         startedAt: null,
                     };
-                    // Add to pending queue
                     setPendingCalls(prev => {
-                        if (prev.some(c => c.callId === d.callId)) return prev;
+                        if (prev.some(x => x.callId === c.id)) return prev;
                         return [...prev, newCall];
                     });
-                    // Also set as current callState if nothing active
                     setCallState(prev => prev ? prev : newCall);
                 }
             })
-            .on("broadcast", { event: "private_call_ringing" }, (payload) => {
-                const d = payload.payload;
-                // Fan receives: creator accepted, now ringing
-                if (role === "fan" && d.fanId === userId) {
-                    setCallState(prev => prev ? { ...prev, status: "ringing", agoraChannel: d.agoraChannel, durationSeconds: d.duration } : {
-                        callId: d.callId,
-                        roomId: roomId,
-                        fanId: d.fanId,
-                        creatorId: d.creatorId,
-                        fanName: "",
-                        status: "ringing",
-                        agoraChannel: d.agoraChannel,
-                        durationSeconds: d.duration,
-                        startedAt: null,
-                    });
-                }
-                // Creator: update the accepted call state to ringing
-                if (role === "creator" && d.creatorId === userId) {
-                    setCallState(prev => prev && prev.callId === d.callId ? { ...prev, status: "ringing" } : prev);
-                    setPendingCalls(prev => prev.filter(c => c.callId !== d.callId));
-                }
-            })
-            .on("broadcast", { event: "private_call_active" }, (payload) => {
-                const d = payload.payload;
-                if (d.fanId === userId || d.creatorId === userId) {
-                    setCallState(prev => prev ? { ...prev, status: "active", startedAt: d.startedAt, agoraChannel: d.agoraChannel, durationSeconds: d.duration } : null);
-                }
-            })
-            .on("broadcast", { event: "private_call_ended" }, (payload) => {
-                const d = payload.payload;
-                if (d.fanId === userId || d.creatorId === userId) {
-                    setCallState(prev => prev ? { ...prev, status: "ended" } : null);
-                    // Auto-clear after short delay
-                    setTimeout(() => setCallState(null), 2000);
-                }
-            })
-            .on("broadcast", { event: "private_call_declined" }, (payload) => {
-                const d = payload.payload;
-                if (d.fanId === userId) {
-                    setCallState(prev => prev ? { ...prev, status: "declined" } : null);
-                    setTimeout(() => setCallState(null), 3000);
-                }
-                // Creator: also remove from pending queue
-                if (role === "creator") {
-                    setPendingCalls(prev => prev.filter(c => c.callId !== d.callId));
-                }
-            })
-            .on("broadcast", { event: "private_call_rejected" }, (payload) => {
-                const d = payload.payload;
-                if (d.creatorId === userId) {
-                    setCallState(prev => prev ? { ...prev, status: "rejected_by_fan" } : null);
-                    setTimeout(() => setCallState(null), 3000);
+            .on("postgres_changes", {
+                event: "UPDATE",
+                schema: "public",
+                table: "suga_private_calls",
+                filter: `room_id=eq.${roomId}`,
+            }, (payload) => {
+                const c = payload.new;
+                const updated: PrivateCallState = {
+                    callId: c.id,
+                    roomId: c.room_id,
+                    fanId: c.fan_id,
+                    creatorId: c.creator_id,
+                    fanName: c.fan_name,
+                    status: c.status as any,
+                    agoraChannel: c.agora_channel,
+                    durationSeconds: c.duration_seconds,
+                    startedAt: c.started_at,
+                };
+
+                if (c.status === "pending") {
+                    if (role === "creator" && c.creator_id === userId) {
+                        setPendingCalls(prev => {
+                            if (prev.some(x => x.callId === c.id)) {
+                                return prev.map(x => x.callId === c.id ? updated : x);
+                            }
+                            return [...prev, updated];
+                        });
+                        setCallState(prev => prev ? prev : updated);
+                    }
+                } else if (c.status === "ringing") {
+                    if (role === "fan" && c.fan_id === userId) {
+                        setCallState(prev => prev && prev.callId === c.id ? { ...prev, status: "ringing" } : updated);
+                    } else if (role === "creator" && c.creator_id === userId) {
+                        setCallState(prev => prev && prev.callId === c.id ? { ...prev, status: "ringing" } : prev);
+                        setPendingCalls(prev => prev.filter(x => x.callId !== c.id));
+                    }
+                } else if (c.status === "active") {
+                    if (c.fan_id === userId || c.creator_id === userId) {
+                        setCallState(updated);
+                    }
+                } else if (c.status === "ended") {
+                    if (c.fan_id === userId || c.creator_id === userId) {
+                        setCallState(updated);
+                        setTimeout(() => setCallState(null), 2000);
+                    }
+                } else if (c.status === "declined") {
+                    if (role === "fan" && c.fan_id === userId) {
+                        setCallState(updated);
+                        setTimeout(() => setCallState(null), 3000);
+                    } else if (role === "creator" && c.creator_id === userId) {
+                        setPendingCalls(prev => prev.filter(x => x.callId !== c.id));
+                        if (callState?.callId === c.id) {
+                            setCallState(null);
+                        }
+                    }
+                } else if (c.status === "rejected_by_fan") {
+                    if (role === "creator" && c.creator_id === userId) {
+                        setCallState(updated);
+                        setTimeout(() => setCallState(null), 3000);
+                    } else if (role === "fan" && c.fan_id === userId) {
+                        setCallState(null);
+                    }
                 }
             })
             .subscribe();
@@ -177,7 +188,7 @@ export function usePrivateCall(roomId: string | null, userId: string | null, rol
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, userId, role]);
+    }, [roomId, userId, role, callState?.callId]);
 
     // Fan: initiate a private call
     const initiateCall = useCallback(async (fanName: string, requestId?: string) => {

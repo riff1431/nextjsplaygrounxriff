@@ -466,7 +466,7 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
                                 <input
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="10 - 1000"
+                                    placeholder="Put amount"
                                     type="number"
                                     min="10"
                                     max="1000"

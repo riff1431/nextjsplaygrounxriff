@@ -17,14 +17,25 @@ export async function POST(
     }
 
     // 1. Fetch the queue item
-    const { data: item, error: fetchError } = await supabase
+    let { data: item, error: fetchError } = await supabase
         .from("truth_dare_queue")
         .select("*")
         .eq("id", queueItemId)
-        .single();
+        .maybeSingle();
 
-    if (fetchError || !item) {
-        return NextResponse.json({ error: "Queue item not found" }, { status: 404 });
+    if (!item) {
+        // Fallback: try to find the queue item by the request_id in its meta JSONB
+        const { data: fallbackItem } = await supabase
+            .from("truth_dare_queue")
+            .select("*")
+            .eq("meta->>request_id", queueItemId)
+            .maybeSingle();
+        
+        if (fallbackItem) {
+            item = fallbackItem;
+        } else {
+            return NextResponse.json({ error: "Queue item not found" }, { status: 404 });
+        }
     }
 
     // 2. Process deferred payment (Fan -> Creator)
@@ -165,7 +176,7 @@ export async function POST(
     await supabase
         .from("truth_dare_queue")
         .update({ is_served: true })
-        .eq("id", queueItemId);
+        .eq("id", item.id);
 
     if (item.meta?.request_id) {
         await supabase
@@ -197,7 +208,7 @@ export async function POST(
             type: 'broadcast',
             event: 'question_answered',
             payload: {
-                queueItemId,
+                queueItemId: item.id,
                 requestId: item.meta?.request_id,
                 fanName: item.fan_name,
                 type: item.type,
