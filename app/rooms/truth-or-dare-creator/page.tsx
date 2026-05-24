@@ -871,7 +871,7 @@ function TruthOrDareCreatorContent() {
 
             // Remove from queue and activity feed
             setQueue(q => q.filter(x => x.id !== item.id && x.meta?.request_id !== item.id && x.id !== item.meta?.request_id));
-            setActivityFeed(af => af.filter(x => x.id !== item.id && x.id !== item.meta?.request_id && x.meta?.request_id !== item.id));
+            setActivityFeed(af => af.filter(x => x.id !== item.id && x.id !== item.meta?.request_id));
             if (doubleDareArmed) setDoubleDareArmed(false);
 
         } catch (err) {
@@ -1757,7 +1757,7 @@ function TruthOrDareCreatorContent() {
                                         return;
                                     }
                                     setQueue(qq => qq.filter(x => x.id !== q.id && x.meta?.request_id !== q.id && x.id !== q.meta?.request_id));
-                                    setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id && x.meta?.request_id !== q.id));
+                                    setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id));
                                 } catch (err) {
                                     console.error("Dismiss error:", err);
                                     toast.error("Failed to dismiss request");

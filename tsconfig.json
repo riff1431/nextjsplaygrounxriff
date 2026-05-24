@@ -41,6 +41,16 @@
   "exclude": [
     "node_modules",
     "scripts",
-    "temp"
+    "temp",
+    "scratch",
+    "temp_app",
+    "check_profiles.ts",
+    "check_suggestions.ts",
+    "check_table_exists.ts",
+    "debug_confessions_check.ts",
+    "fix_room_data.ts",
+    "get_profile_fields.ts",
+    "query.ts",
+    "test-rooms.ts"
   ]
 }
