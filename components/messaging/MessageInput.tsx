@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { Smile, Paperclip, Send, X, Image as ImageIcon } from "lucide-react";
-import EmojiPicker from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { toast } from "sonner";
 
 type Props = {

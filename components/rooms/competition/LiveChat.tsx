@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Smile } from 'lucide-react';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 
 const chatMessages = [
     { user: "User123", msg: "So sexy! 👄 🔥", avatar: "🙂" },
@@ -84,7 +86,7 @@ const LiveChat = () => {
                                         onEmojiClick={(e) => {
                                             setMessage(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

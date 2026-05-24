@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { useSessionChat } from "@/hooks/useSessionChat";
 import { Send, MessageCircle , Smile } from 'lucide-react';
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
@@ -191,7 +193,7 @@ export default function SessionChatPanel({
                                         onEmojiClick={(e) => {
                                             setInput(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { MessageSquare, Send, Zap , Smile } from 'lucide-react';
 
 interface Message {
@@ -101,7 +103,7 @@ const LoungeChat: React.FC<LoungeChatProps> = ({ messages, onSendMessage }) => {
                                         onEmojiClick={(e) => {
                                             setInputText(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

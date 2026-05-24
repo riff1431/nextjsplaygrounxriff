@@ -2,7 +2,9 @@
 
 import { Heart, Send, Smile } from "lucide-react";
 import {   useState , useEffect , useRef } from 'react';
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cs } from "@/utils/currency";
 
@@ -79,7 +81,7 @@ const LiveChat = () => {
                                         onEmojiClick={(e) => {
                                             setInput(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

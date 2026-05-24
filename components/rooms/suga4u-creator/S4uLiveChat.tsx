@@ -2,7 +2,9 @@
 
 import { Heart, Smile } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAvatarMap } from "@/hooks/useAvatarMap";
@@ -114,7 +116,7 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
                                         onEmojiClick={(e) => {
                                             setInput(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

@@ -2,7 +2,9 @@
 
 import { Heart, Send, Loader2 , Smile } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo } from "react";
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
@@ -340,7 +342,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                                         onEmojiClick={(e) => {
                                             setMsg(prev => prev + e.emoji);
                                         }}
-                                        theme={Theme.DARK}
+                                        theme={"dark" as any}
                                     />
                                 </div>
                             )}

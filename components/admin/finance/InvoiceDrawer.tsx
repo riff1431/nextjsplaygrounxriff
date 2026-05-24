@@ -25,8 +25,6 @@ type InvoiceData = {
     lines: InvoiceLine[];
 };
 
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { cs } from "@/utils/currency";
 
 export default function InvoiceDrawer({
@@ -46,8 +44,11 @@ export default function InvoiceDrawer({
 }) {
     if (!creator) return null;
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         if (!invoice) return;
+
+        const { default: jsPDF } = await import('jspdf');
+        const { default: autoTable } = await import('jspdf-autotable');
 
         const doc = new jsPDF();
         const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });

@@ -3,7 +3,9 @@
 import { Heart, Send, Smile } from "lucide-react";
 import { cs } from "@/utils/currency";
 import { useState, useRef, useEffect } from "react";
-import EmojiPicker, { Theme } from "emoji-picker-react";
+import dynamic from 'next/dynamic';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 
 const messages = [
     { user: "Jessica", emoji: "💖", text: "tipped ${cs()}50!", highlight: true },
@@ -77,7 +79,7 @@ const LiveChat = () => {
                     <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">
                         <EmojiPicker 
                             onEmojiClick={(e) => setMsg(prev => prev + e.emoji)}
-                            theme={Theme.DARK}
+                            theme={"dark" as any}
                         />
                     </div>
                 )}
