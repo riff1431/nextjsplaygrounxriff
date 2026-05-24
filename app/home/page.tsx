@@ -477,46 +477,39 @@ function HomeScreen({
                         <div>
                             <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 mt-3 px-1">Browse Room</div>
                             <div className="mt-1 space-y-2">
-                                {CATS.map((cat) => {
+                                {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
                                     const t = toneClasses(cat.tone);
                                     const isPrimary = !!cat.primary;
-                                    const isInactive = activeStatuses[cat.roomType] === false;
                                     return (
                                         <button
                                             key={cat.key}
-                                            disabled={isInactive}
                                             onClick={() => {
-                                                if (isInactive) return;
                                                 setActiveCat(cat.key);
                                                 router.push(cat.route);
                                             }}
                                             className={cx(
-                                                "w-full text-left px-3 py-2 rounded-xl border text-sm transition",
-                                                isInactive 
-                                                    ? "bg-zinc-955/30 border-zinc-900 text-zinc-600 opacity-25 cursor-not-allowed pointer-events-none" 
-                                                    : "bg-black/55 " + t.border + " " + t.glow + " " + t.hover,
-                                                !isInactive && isPrimary && "ring-1 ring-cyan-300/35",
-                                                !isInactive && activeCat === cat.key && "neon-pulse"
+                                                "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                t.border,
+                                                t.glow,
+                                                t.hover,
+                                                isPrimary && "ring-1 ring-cyan-300/35",
+                                                activeCat === cat.key && "neon-pulse"
                                             )}
                                         >
                                             <span
                                                 className={cx(
                                                     "inline-flex items-center gap-2 w-full justify-between",
-                                                    isInactive ? "text-zinc-650" : t.text + " neon-flicker",
-                                                    !isInactive && isPrimary && "animate-pulse"
+                                                    t.text + " neon-flicker",
+                                                    isPrimary && "animate-pulse"
                                                 )}
                                             >
                                                 <span className="inline-flex items-center gap-2">
-                                                    <span className={isInactive ? "text-zinc-700" : t.icon}>{cat.icon}</span>
+                                                    <span className={t.icon}>{cat.icon}</span>
                                                     <span className="truncate neon-deep">{cat.label}</span>
                                                 </span>
-                                                {isInactive && (
-                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-500 uppercase tracking-wide">Off</span>
-                                                )}
-                                                {!isInactive && cat.comingSoon && (
+                                                {cat.comingSoon && (
                                                     <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
                                                 )}
-
                                             </span>
                                         </button>
                                     );
@@ -525,43 +518,32 @@ function HomeScreen({
                         </div>
 
 
-                        {(() => {
-                            const isCompetitionInactive = activeStatuses["competition"] === false;
-                            return (
-                                <div className="mt-8 mb-4">
-                                    <button
-                                        disabled={isCompetitionInactive}
-                                        onClick={() => !isCompetitionInactive && router.push("/coming-soon")}
-                                        className={cx(
-                                            "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group flex items-center justify-between",
-                                            isCompetitionInactive
-                                                ? "bg-zinc-955/30 border-zinc-900 opacity-25 cursor-not-allowed pointer-events-none"
-                                                : "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10 shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
-                                        )}
-                                    >
-                                        <span className={cx("relative z-10 inline-flex items-center gap-2 font-semibold tracking-wide transition-colors", isCompetitionInactive ? "text-zinc-650" : "text-yellow-300 group-hover:text-yellow-200")}>
-                                            <Trophy className={cx("w-4 h-4", isCompetitionInactive ? "text-zinc-700" : "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]")} />
-                                            Competition
-                                        </span>
-                                        <span className="relative z-10 text-[8px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold uppercase tracking-wider animate-pulse">
-                                            {isCompetitionInactive ? "Off" : "Coming Soon"}
-                                        </span>
+                        {activeStatuses["competition"] !== false && (
+                            <div className="mt-8 mb-4">
+                                <button
+                                    onClick={() => router.push("/coming-soon")}
+                                    className={cx(
+                                        "w-full text-left px-3 py-3 rounded-xl border text-sm transition relative overflow-hidden group flex items-center justify-between",
+                                        "bg-black/80 border-yellow-500/90 hover:bg-yellow-500/10 shadow-[0_0_18px_rgba(234,179,8,0.85),0_0_60px_rgba(234,179,8,0.45)] hover:shadow-[0_0_26px_rgba(234,179,8,0.95),0_0_90px_rgba(234,179,8,0.65)]"
+                                    )}
+                                >
+                                    <span className="relative z-10 inline-flex items-center gap-2 font-semibold tracking-wide text-yellow-300 group-hover:text-yellow-200 transition-colors">
+                                        <Trophy className="w-4 h-4 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
+                                        Competition
+                                    </span>
+                                    <span className="relative z-10 text-[8px] px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-400/40 text-yellow-300 font-bold uppercase tracking-wider animate-pulse">
+                                        Coming Soon
+                                    </span>
 
-                                        {/* Subtle internal glow */}
-                                        {!isCompetitionInactive && (
-                                            <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
-                                        )}
-                                    </button>
-                                </div>
-                            );
-                        })()}
+                                    {/* Subtle internal glow */}
+                                    <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors pointer-events-none" />
+                                </button>
+                            </div>
+                        )}
 
 
                         <div className="mt-2 space-y-3">
                             <div className="grid grid-cols-1 gap-2">
-                                <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/newsfeed")}>
-                                    <Bell className="w-4 h-4" /> NewsFeed
-                                </button>
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/collections")}>
                                     <Star className="w-4 h-4" /> Collections
                                 </button>

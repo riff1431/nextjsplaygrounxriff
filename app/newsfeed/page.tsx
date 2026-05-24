@@ -508,33 +508,26 @@ export default function NewsFeedPage() {
                                         <div className="absolute -inset-12 blur-3xl bg-[radial-gradient(circle_at_25%_20%,rgba(255,0,200,0.30),transparent_55%),radial-gradient(circle_at_80%_35%,rgba(0,230,255,0.22),transparent_60%)]" />
                                     </div>
                                     <div className="relative">
-                                        <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
                                         <div className="space-y-2">
-                                            {ROOM_LINKS.map((room) => {
-                                                const isInactive = activeStatuses[room.roomType] === false;
+                                            {ROOM_LINKS.filter((room) => activeStatuses[room.roomType] !== false).map((room) => {
                                                 return (
                                                     <button
                                                         key={room.label}
-                                                        disabled={isInactive}
                                                         onClick={() => {
-                                                            if (isInactive) return;
                                                             router.push(room.route);
                                                         }}
                                                         className={cn(
-                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition",
-                                                            isInactive
-                                                                ? "bg-zinc-955/30 border-zinc-900 text-zinc-655 opacity-25 cursor-not-allowed pointer-events-none"
-                                                                : "bg-black/55 " + room.border + " " + room.glow + " " + room.hover
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                            room.border,
+                                                            room.glow,
+                                                            room.hover
                                                         )}
                                                     >
-                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between", isInactive ? "text-zinc-655" : "neon-flicker " + room.color)}>
+                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", room.color)}>
                                                             <span className="inline-flex items-center gap-2">
-                                                                <span className={isInactive ? "text-zinc-700" : ""}>{room.icon}</span>
+                                                                <span>{room.icon}</span>
                                                                 <span className="truncate neon-deep">{room.label}</span>
                                                             </span>
-                                                            {isInactive && (
-                                                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-zinc-500 uppercase tracking-wide">Off</span>
-                                                            )}
                                                         </span>
                                                     </button>
                                                 );
@@ -548,9 +541,6 @@ export default function NewsFeedPage() {
                                             </button>
                                             <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/membership")}>
                                                 <Star className="w-4 h-4" /> My Subscription
-                                            </button>
-                                            <button className="w-full rounded-xl border border-sky-400/80 bg-black px-3 py-2 text-sm text-sky-200 hover:bg-sky-500/10 inline-flex items-center gap-2 justify-start font-semibold ring-1 ring-sky-400/30" onClick={() => router.push("/newsfeed")}>
-                                                <Bell className="w-4 h-4" /> NewsFeed
                                             </button>
                                             <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
                                                 <MessageSquare className="w-4 h-4" /> Suggestions
