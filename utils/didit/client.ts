@@ -49,4 +49,39 @@ export class DiditClient {
             throw error;
         }
     }
+
+    /**
+     * Fetch the decision/status for a verification session from Didit.
+     * This is the polling/fallback approach — actively queries Didit's API
+     * instead of waiting for the webhook.
+     * 
+     * Endpoint: GET /v3/session/{session_id}/decision/
+     * Returns: { status: "Approved" | "Declined" | "In Review" | "In Progress" | ... }
+     */
+    async getSessionDecision(sessionId: string) {
+        const url = `${this.baseUrl}/session/${sessionId}/decision/`;
+
+        console.log(`Fetching Didit session decision at ${url}`);
+
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "x-api-key": this.apiKey
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Didit Decision Error Status:", response.status);
+                console.error("Didit Decision Error Body:", errorText);
+                throw new Error(`Failed to get Didit session decision: ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Didit Decision Exception:", error);
+            throw error;
+        }
+    }
 }

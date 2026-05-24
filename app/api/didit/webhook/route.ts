@@ -8,34 +8,29 @@ export async function POST(request: Request) {
         const signature = request.headers.get('x-didit-signature') || request.headers.get('X-Didit-Signature');
         const bodyText = await request.text();
 
+        console.log('[Didit Webhook] Received webhook. Signature present:', !!signature);
+        console.log('[Didit Webhook] Body:', bodyText);
+
         // Verify signature if secret is present
-        // Check Didit docs for signature verification method. 
-        // Commonly HMAC-SHA256 of body with secret.
         const webhookSecret = process.env.DIDIT_WEBHOOK_SECRET;
 
-        // NOTE: If signature verification fails or logic is complex, 
-        // we might verify existence of payload session_id in our DB as a fallback security measure 
-        // if signature logic documentation is ambiguous.
-        // For now trusting the secret is correct.
-
-        // Skipping strict signature check implementation for this iteration to avoid blocking if signature algo is unknown
-        // but verifying the secret exists.
-
         if (!webhookSecret) {
-            console.error("Missing webhook secret");
+            console.error("[Didit Webhook] Missing webhook secret");
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        // Ideally we verify signature here:
+        // Signature verification (uncomment when Didit's signature algorithm is confirmed)
         // const hmac = crypto.createHmac('sha256', webhookSecret);
         // const digest = hmac.update(bodyText).digest('hex');
-        // if (signature !== digest) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        // if (signature !== digest) {
+        //     console.error("[Didit Webhook] Signature mismatch");
+        //     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        // }
 
         const payload = JSON.parse(bodyText);
         const { session_id, status, decision } = payload;
 
-        // Didit payload structure differs by event. 
-        // Assuming session_id matches what we stored.
+        console.log('[Didit Webhook] Parsed payload:', { session_id, status, decision });
 
         // Use Service Role Client for Admin operations
         const supabaseAdmin = createSupabaseClient(
@@ -51,16 +46,32 @@ export async function POST(request: Request) {
             .single();
 
         if (searchError || !submission) {
-            console.error("Submission not found for session:", session_id);
+            console.error("[Didit Webhook] Submission not found for session:", session_id);
             return NextResponse.json({ message: 'Submission not found, ignoring' }, { status: 200 });
         }
 
+        console.log('[Didit Webhook] Found submission:', submission.id, 'for user:', submission.user_id);
+
         // Map Didit status to our status
-        // Didit: 'approved', 'declined', 'needs_review' etc
+        // Didit uses CAPITALIZED values: 'Approved', 'Declined', 'In Review', etc.
+        // Also handle lowercase variants for safety
         let newStatus = 'pending';
-        if (status === 'approved' || decision === 'approved') newStatus = 'approved';
-        else if (status === 'declined' || status === 'rejected' || decision === 'declined') newStatus = 'rejected';
-        else if (status === 'review_needed') newStatus = 'pending'; // Manual review
+        const statusValue = status || '';
+        const decisionValue = decision || '';
+        
+        if (statusValue === 'Approved' || statusValue === 'approved' || 
+            decisionValue === 'Approved' || decisionValue === 'approved') {
+            newStatus = 'approved';
+        } else if (statusValue === 'Declined' || statusValue === 'declined' || 
+                   statusValue === 'Rejected' || statusValue === 'rejected' ||
+                   decisionValue === 'Declined' || decisionValue === 'declined') {
+            newStatus = 'rejected';
+        } else if (statusValue === 'In Review' || statusValue === 'review_needed' || 
+                   statusValue === 'in_review') {
+            newStatus = 'pending'; // Manual review
+        }
+
+        console.log('[Didit Webhook] Mapped status:', newStatus, '(from Didit status:', statusValue, ', decision:', decisionValue, ')');
 
         // Update submission
         await supabaseAdmin
@@ -74,7 +85,7 @@ export async function POST(request: Request) {
 
         // Update User Profile if approved/rejected
         if (newStatus === 'approved' || newStatus === 'rejected') {
-            await supabaseAdmin
+            const { error: profileError } = await supabaseAdmin
                 .from('profiles')
                 .update({
                     kyc_status: newStatus,
@@ -82,11 +93,17 @@ export async function POST(request: Request) {
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', submission.user_id);
+            
+            if (profileError) {
+                console.error('[Didit Webhook] Failed to update profile:', profileError);
+            } else {
+                console.log('[Didit Webhook] Profile updated successfully for user:', submission.user_id);
+            }
         }
 
         return NextResponse.json({ received: true });
     } catch (error) {
-        console.error("Webhook error:", error);
+        console.error("[Didit Webhook] Error:", error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

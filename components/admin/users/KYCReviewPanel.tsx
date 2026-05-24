@@ -76,6 +76,9 @@ export default function KYCReviewPanel() {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [processing, setProcessing] = useState(false);
+    const [signedDocUrl, setSignedDocUrl] = useState<string | null>(null);
+    const [signedSelfieUrl, setSignedSelfieUrl] = useState<string | null>(null);
+    const [loadingMedia, setLoadingMedia] = useState(false);
 
     useEffect(() => {
         fetchSubmissions();
@@ -106,9 +109,46 @@ export default function KYCReviewPanel() {
         setLoading(false);
     };
 
-    const openDetailModal = (submission: KYCSubmission) => {
+    // Extract the storage path from a Supabase public URL or return as-is if already a path
+    const extractStoragePath = (url: string): string => {
+        const marker = "/object/public/kyc-documents/";
+        const idx = url.indexOf(marker);
+        if (idx !== -1) {
+            return decodeURIComponent(url.substring(idx + marker.length));
+        }
+        // If it's already a path (not a URL), return as-is
+        if (!url.startsWith("http")) {
+            return url;
+        }
+        return url;
+    };
+
+    const openDetailModal = async (submission: KYCSubmission) => {
         setSelectedSubmission(submission);
         setShowDetailModal(true);
+        setSignedDocUrl(null);
+        setSignedSelfieUrl(null);
+        setLoadingMedia(true);
+
+        // Resolve signed URLs for both documents
+        try {
+            const docPath = extractStoragePath(submission.document_url);
+            const selfiePath = extractStoragePath(submission.selfie_url);
+
+            const [docResult, selfieResult] = await Promise.all([
+                supabase.storage.from("kyc-documents").createSignedUrl(docPath, 60 * 5),
+                supabase.storage.from("kyc-documents").createSignedUrl(selfiePath, 60 * 5),
+            ]);
+
+            setSignedDocUrl(docResult.data?.signedUrl || null);
+            setSignedSelfieUrl(selfieResult.data?.signedUrl || null);
+
+            if (docResult.error) console.error("Doc signed URL error:", docResult.error);
+            if (selfieResult.error) console.error("Selfie signed URL error:", selfieResult.error);
+        } catch (err) {
+            console.error("Error resolving signed URLs:", err);
+        }
+        setLoadingMedia(false);
     };
 
     const closeDetailModal = () => {
@@ -502,37 +542,61 @@ export default function KYCReviewPanel() {
                             <div className="p-4 bg-black/40 rounded-xl">
                                 <div className="text-xs text-gray-400 mb-2">ID Document</div>
                                 <div className="aspect-video bg-black/60 rounded-lg overflow-hidden relative group">
-                                    <img
-                                        src={selectedSubmission.document_url}
-                                        alt="ID Document"
-                                        className="w-full h-full object-contain"
-                                    />
-                                    <a
-                                        href={selectedSubmission.document_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition"
-                                    >
-                                        <ExternalLink className="w-3 h-3 text-white" />
-                                    </a>
+                                    {loadingMedia ? (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <div className="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+                                        </div>
+                                    ) : signedDocUrl ? (
+                                        <>
+                                            <img
+                                                src={signedDocUrl}
+                                                alt="ID Document"
+                                                className="w-full h-full object-contain"
+                                            />
+                                            <a
+                                                href={signedDocUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                                            >
+                                                <ExternalLink className="w-3 h-3 text-white" />
+                                            </a>
+                                        </>
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                                            Failed to load document
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="p-4 bg-black/40 rounded-xl">
                                 <div className="text-xs text-gray-400 mb-2">Selfie Photo</div>
                                 <div className="aspect-video bg-black/60 rounded-lg overflow-hidden relative group">
-                                    <img
-                                        src={selectedSubmission.selfie_url}
-                                        alt="Selfie"
-                                        className="w-full h-full object-contain"
-                                    />
-                                    <a
-                                        href={selectedSubmission.selfie_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition"
-                                    >
-                                        <ExternalLink className="w-3 h-3 text-white" />
-                                    </a>
+                                    {loadingMedia ? (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <div className="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+                                        </div>
+                                    ) : signedSelfieUrl ? (
+                                        <>
+                                            <img
+                                                src={signedSelfieUrl}
+                                                alt="Selfie"
+                                                className="w-full h-full object-contain"
+                                            />
+                                            <a
+                                                href={signedSelfieUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                                            >
+                                                <ExternalLink className="w-3 h-3 text-white" />
+                                            </a>
+                                        </>
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                                            Failed to load selfie
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

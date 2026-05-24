@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { ShieldCheck, ExternalLink, AlertTriangle, CheckCircle } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { ShieldCheck, ExternalLink, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -12,14 +12,26 @@ interface Props {
     rejectionReason?: string;
 }
 
+const SESSION_STORAGE_KEY = 'didit_verification_started';
+
 export default function DiditVerificationStep({ onComplete, rejectionReason }: Props) {
     const [loading, setLoading] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(false);
     const [verificationStarted, setVerificationStarted] = useState(false);
     const router = useRouter();
     const supabase = createClient();
     const pollRef = useRef<NodeJS.Timeout | null>(null);
 
-    React.useEffect(() => {
+    // Restore verificationStarted state from sessionStorage on mount
+    // This prevents the UI from resetting to "Start Verification" on page refresh
+    useEffect(() => {
+        const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+        if (stored === 'true') {
+            setVerificationStarted(true);
+        }
+    }, []);
+
+    useEffect(() => {
         const checkStatusAndSubscribe = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -32,6 +44,7 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                 .single();
 
             if (profile?.kyc_status === 'approved') {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
                 toast.success("Already verified!");
                 onComplete();
                 return;
@@ -51,9 +64,11 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                     (payload) => {
                         const newStatus = payload.new.kyc_status;
                         if (newStatus === 'approved') {
+                            sessionStorage.removeItem(SESSION_STORAGE_KEY);
                             toast.success("Verification approved!");
                             onComplete();
                         } else if (newStatus === 'rejected') {
+                            sessionStorage.removeItem(SESSION_STORAGE_KEY);
                             toast.error("Verification rejected. Please try again.");
                             window.location.reload();
                         }
@@ -70,10 +85,12 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                     .single();
 
                 if (polledProfile?.kyc_status === 'approved') {
+                    sessionStorage.removeItem(SESSION_STORAGE_KEY);
                     toast.success("Verification approved!");
                     onComplete();
                     if (pollRef.current) clearInterval(pollRef.current);
                 } else if (polledProfile?.kyc_status === 'rejected') {
+                    sessionStorage.removeItem(SESSION_STORAGE_KEY);
                     toast.error("Verification rejected. Please try again.");
                     if (pollRef.current) clearInterval(pollRef.current);
                     window.location.reload();
@@ -111,6 +128,7 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                 window.open(data.url, '_blank');
                 setLoading(false);
                 setVerificationStarted(true);
+                sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
                 toast.info("Verification opened in a new tab. Complete it there and this page will update automatically.");
             } else {
                 toast.error("Could not retrieve verification URL");
@@ -120,6 +138,48 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
             console.error("Verification error:", error);
             toast.error("Failed to start verification process");
             setLoading(false);
+        }
+    };
+
+    /**
+     * Actively check verification status with Didit's API via our backend.
+     * This is the key fix — instead of window.location.reload(), we call
+     * our status endpoint which queries Didit directly.
+     */
+    const checkVerificationStatus = async () => {
+        setCheckingStatus(true);
+        try {
+            const response = await fetch('/api/didit/session/status');
+            
+            if (!response.ok) {
+                throw new Error('Status check failed');
+            }
+
+            const data = await response.json();
+            console.log('[DiditVerification] Status check result:', data);
+
+            if (data.status === 'approved') {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+                toast.success("🎉 Verification approved!");
+                onComplete();
+            } else if (data.status === 'rejected') {
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+                toast.error("Verification was not approved. Please try again.");
+                // Reset so they can start again
+                setVerificationStarted(false);
+            } else if (data.status === 'no_session') {
+                toast.info("No verification session found. Please start verification.");
+                setVerificationStarted(false);
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+            } else {
+                // Still pending / in progress
+                toast.info("Verification is still being processed. Please wait a moment and try again.");
+            }
+        } catch (error) {
+            console.error("Status check error:", error);
+            toast.error("Could not check status. Please try again.");
+        } finally {
+            setCheckingStatus(false);
         }
     };
 
@@ -203,10 +263,18 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                     )}
 
                     <button
-                        onClick={() => window.location.reload()}
-                        className="w-full py-3 rounded-xl font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors text-sm flex items-center justify-center gap-2"
+                        onClick={checkVerificationStatus}
+                        disabled={checkingStatus}
+                        className="w-full py-3 rounded-xl font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                        Check verification status
+                        {checkingStatus ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Checking status...
+                            </>
+                        ) : (
+                            'Check verification status'
+                        )}
                     </button>
 
                     <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
