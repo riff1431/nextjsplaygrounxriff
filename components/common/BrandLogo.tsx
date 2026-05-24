@@ -1,15 +1,28 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/app/context/ThemeContext";
 
 export default function BrandLogo({ className, showBadge = true }: { className?: string, showBadge?: boolean }) {
     const { theme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const logoSrc = theme?.logoUrl || "/logo.png";
-
     const logoHeight = theme?.logoSize ? theme.logoSize * 2 : 72; // Force 200% size
+
+    if (!mounted) {
+        return (
+            <div 
+                className={cn("flex items-center gap-3 select-none", className)}
+                style={{ height: `${logoHeight}px`, minWidth: `${logoHeight}px` }}
+            />
+        );
+    }
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>

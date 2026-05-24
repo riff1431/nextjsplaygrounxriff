@@ -28,7 +28,17 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+    const [theme, setTheme] = useState<ThemeSettings>(() => {
+        if (typeof window !== "undefined") {
+            const cached = localStorage.getItem("theme_config");
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch (e) {}
+            }
+        }
+        return DEFAULT_THEME;
+    });
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
@@ -44,15 +54,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 (payload) => {
                     const newTheme = payload.payload as ThemeSettings;
                     if (newTheme) {
-                        setTheme(current => ({ 
-                            ...current, 
-                            ...newTheme,
-                            logoUrl: newTheme.logoUrl || (newTheme as any).logo_url || current.logoUrl,
-                            faviconUrl: newTheme.faviconUrl || (newTheme as any).favicon_url || current.faviconUrl,
-                            logoSize: newTheme.logoSize || (newTheme as any).logo_size || current.logoSize,
-                            siteName: newTheme.siteName || (newTheme as any).site_name || current.siteName,
-                            primaryColor: newTheme.primaryColor || (newTheme as any).primary_color || current.primaryColor
-                        }));
+                        setTheme(current => {
+                            const updated = { 
+                                ...current, 
+                                ...newTheme,
+                                logoUrl: newTheme.logoUrl || (newTheme as any).logo_url || current.logoUrl,
+                                faviconUrl: newTheme.faviconUrl || (newTheme as any).favicon_url || current.faviconUrl,
+                                logoSize: newTheme.logoSize || (newTheme as any).logo_size || current.logoSize,
+                                siteName: newTheme.siteName || (newTheme as any).site_name || current.siteName,
+                                primaryColor: newTheme.primaryColor || (newTheme as any).primary_color || current.primaryColor
+                            };
+                            if (typeof window !== "undefined") {
+                                localStorage.setItem("theme_config", JSON.stringify(updated));
+                            }
+                            return updated;
+                        });
                     }
                 }
             )
@@ -83,6 +99,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                     logoSize: val.logoSize || val.logo_size || DEFAULT_THEME.logoSize,
                 };
                 setTheme(normalized);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem("theme_config", JSON.stringify(normalized));
+                }
             }
         } catch (error) {
             console.error("Error fetching theme:", error);
@@ -94,6 +113,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const updateTheme = async (newSettings: Partial<ThemeSettings>) => {
         const updated = { ...theme, ...newSettings };
         setTheme(updated); // Optimistic update
+        if (typeof window !== "undefined") {
+            localStorage.setItem("theme_config", JSON.stringify(updated));
+        }
 
         try {
             // 1. Save to DB (as before)
