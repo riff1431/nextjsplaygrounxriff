@@ -29,7 +29,12 @@ const TOOLTIP_GAP = 16; // gap between spotlight and tooltip
 const ARROW_SIZE = 10;
 
 function getTargetRect(target: string): Rect | null {
-  const el = document.querySelector(`[data-tour="${target}"]`);
+  // Primary: look for data-tour="<target>"
+  let el = document.querySelector(`[data-tour="${target}"]`);
+  // Fallback: look for data-tour-match="<target>" (allows one element to serve multiple tours)
+  if (!el) {
+    el = document.querySelector(`[data-tour-match="${target}"]`);
+  }
   if (!el) return null;
   const r = el.getBoundingClientRect();
   return {

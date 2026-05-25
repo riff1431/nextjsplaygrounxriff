@@ -69,6 +69,7 @@ export const CsStatsBar = ({
                 className={`cs-glass-card w-full px-6 py-3 flex items-center justify-center gap-2.5 transition-all group ${kycLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]'}`}
                 style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1.5px" }}
                 disabled={kycLocked}
+                data-tour="room-scheduler"
             >
                 <CalendarClock size={20} className="text-cyan-400 group-hover:text-cyan-300 transition-colors shrink-0" />
                 <span className="text-base font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors">Schedule</span>

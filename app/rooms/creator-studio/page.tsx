@@ -27,37 +27,47 @@ const CreatorStudioDashboardPage = () => {
 
             {/* Content */}
             <div className="relative z-10 p-3 sm:p-4 md:p-8 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
-                <CsDashboardHeader
-                    username={profile?.username}
-                    avatarUrl={profile?.avatar_url}
-                />
+                <div data-tour="profile-setup">
+                    <CsDashboardHeader
+                        username={profile?.username}
+                        avatarUrl={profile?.avatar_url}
+                    />
+                </div>
 
                 {/* KYC Verification Banner — shows when KYC is pending or rejected */}
                 {kycLocked && (
                     <CsKycVerificationBanner kycStatus={kycStatus} />
                 )}
 
-                <CsStatsBar
-                    tipsEarned={stats.tipsEarned}
-                    giftsCount={stats.giftsCount}
-                    totalFollowers={stats.totalFollowers}
-                    activeRooms={stats.activeRooms}
-                    subscribers={stats.subscribers}
-                    subscriptionEarnings={stats.subscriptionEarnings}
-                    isLoading={isLoading}
-                    kycLocked={kycLocked}
-                />
-                <CsCreatorStudio kycLocked={kycLocked} />
-                <CsSubscriptionSettings
-                    weeklyPrice={profile?.subscription_price_weekly ?? null}
-                    monthlyPrice={profile?.subscription_price_monthly ?? null}
-                    userId={user?.id ?? null}
-                    onSave={saveSubscriptionPrices}
-                />
-                <CsRecentRoomHistory
-                    rooms={recentRooms}
-                    isLoading={isLoading}
-                />
+                <div data-tour="earnings-dashboard">
+                    <CsStatsBar
+                        tipsEarned={stats.tipsEarned}
+                        giftsCount={stats.giftsCount}
+                        totalFollowers={stats.totalFollowers}
+                        activeRooms={stats.activeRooms}
+                        subscribers={stats.subscribers}
+                        subscriptionEarnings={stats.subscriptionEarnings}
+                        isLoading={isLoading}
+                        kycLocked={kycLocked}
+                    />
+                </div>
+                <div data-tour="live-streaming">
+                    <CsCreatorStudio kycLocked={kycLocked} />
+                </div>
+                <div data-tour="subscription-settings">
+                    <CsSubscriptionSettings
+                        weeklyPrice={profile?.subscription_price_weekly ?? null}
+                        monthlyPrice={profile?.subscription_price_monthly ?? null}
+                        userId={user?.id ?? null}
+                        onSave={saveSubscriptionPrices}
+                    />
+                </div>
+                <div data-tour="withdrawals">
+                    <CsRecentRoomHistory
+                        rooms={recentRooms}
+                        isLoading={isLoading}
+                    />
+                </div>
             </div>
         </div>
     );

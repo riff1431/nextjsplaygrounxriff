@@ -8,6 +8,8 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 import ToasterProvider from "@/components/providers/ToasterProvider";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import CookieBanner from "@/components/common/CookieBanner";
+import { GuidedTourProvider } from "@/components/guided-tour/GuidedTourProvider";
+import TourOverlay from "@/components/guided-tour/TourOverlay";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -83,7 +85,10 @@ export default async function RootLayout({
             <PaymentProvider>
               <CurrencyProvider>
                 <NotificationProvider>
-                  {children}
+                  <GuidedTourProvider>
+                    {children}
+                    <TourOverlay />
+                  </GuidedTourProvider>
                   <CookieBanner />
                   <ToasterProvider />
                 </NotificationProvider>

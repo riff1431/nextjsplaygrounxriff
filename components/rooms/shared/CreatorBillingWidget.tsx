@@ -6,15 +6,16 @@ import { cs } from "@/utils/currency";
 import { createClient } from "@/utils/supabase/client";
 
 /* ═══════════════════════════════════════════════════════════
-   CreatorBillingWidget  — fully responsive
+   CreatorBillingWidget  — Premium Unified Pill
    ─────────────────────────────────────────────────────────
-   Breakpoints:
-     < 480px  : hidden (parent hides via .slc-billing)
-     480–639px: EARNED + FANS only (compact labels)
-     640–1023px: EARNED + FANS + RATE
-     ≥ 1024px : EARNED + FANS + RATE (full labels)
+   Single glassmorphic pill with 3 stat sections:
+     EARNED  │  LIVE FANS  │  PER MIN
 
-   Always shows shimmer skeleton while loading.
+   Responsive:
+     < 480px  : hidden (parent .slc-billing controls this)
+     480–639px: EARNED + FANS (no rate)
+     ≥ 640px  : All 3 stats
+
    Real-time via Supabase + 30s poll fallback.
    ═══════════════════════════════════════════════════════════ */
 
@@ -76,6 +77,7 @@ export default function CreatorBillingWidget({
         finally { setLoading(false); }
     }, [sessionId, isValidSession]);
 
+    // ── Polling fallback ──
     useEffect(() => {
         if (!isValidSession) return;
         fetchSummary();
@@ -83,6 +85,7 @@ export default function CreatorBillingWidget({
         return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, [fetchSummary, pollMs, isValidSession]);
 
+    // ── Supabase real-time ──
     useEffect(() => {
         if (!isValidSession) return;
         const ch = supabase
@@ -108,153 +111,279 @@ export default function CreatorBillingWidget({
     const accentA = (a: number) => `hsla(${accentHsl}, ${a})`;
     const C = cs();
 
-    /* ── Skeleton (visible loading state) ── */
+    // ── Skeleton pill ──
     if (loading || !summary) {
         return (
             <>
                 <style>{`
-                    @keyframes cbw-shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+                    @keyframes cbw-sweep {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(200%); }
+                    }
                 `}</style>
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    {[{ w: 72, label: "Earned" }, { w: 60, label: "Fans" }, { w: 68, label: "Per Min" }].map(({ w, label }) => (
-                        <div key={label} style={{
-                            width: w, height: 36, borderRadius: 9,
-                            background: "rgba(255,255,255,0.12)",
-                            border: "1px solid rgba(255,255,255,0.2)",
-                            backdropFilter: "blur(8px)",
-                            animation: "cbw-shimmer 1.2s ease-in-out infinite",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".5px" }}>{label}</span>
-                        </div>
+                <div style={{
+                    display: "flex", alignItems: "center",
+                    background: "rgba(0,0,0,0.3)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 12,
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
+                    overflow: "hidden",
+                    position: "relative",
+                }}>
+                    {/* Shimmer sweep */}
+                    <div style={{
+                        position: "absolute", inset: 0,
+                        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
+                        animation: "cbw-sweep 1.5s ease-in-out infinite",
+                        zIndex: 1,
+                    }} />
+                    {[
+                        { label: "Earned", w: 78 },
+                        { label: "Live Fans", w: 72 },
+                        { label: "Per Min", w: 70 },
+                    ].map(({ label, w }, i) => (
+                        <React.Fragment key={label}>
+                            {i > 0 && <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />}
+                            <div style={{
+                                width: w, padding: "6px 14px", display: "flex",
+                                flexDirection: "column", alignItems: "center", gap: 3,
+                            }}>
+                                <div style={{ height: 8, width: "60%", borderRadius: 4, background: "rgba(255,255,255,0.08)" }} />
+                                <div style={{ height: 13, width: "80%", borderRadius: 4, background: "rgba(255,255,255,0.12)" }} />
+                            </div>
+                        </React.Fragment>
                     ))}
                 </div>
             </>
         );
     }
 
-    const earned = summary.total_earned % 1 === 0
+    const earnedInt = summary.total_earned % 1 === 0;
+    const earned = earnedInt
         ? `${C}${summary.total_earned}`
         : `${C}${summary.total_earned.toFixed(2)}`;
+
+    const showRate = summary.billing_enabled && summary.rate > 0;
+
+    // Pill glow on charge
+    const pillGlow = isCharging
+        ? `0 0 0 1px ${accentA(0.5)}, 0 0 20px ${accentA(0.35)}, 0 4px 20px rgba(0,0,0,0.4)`
+        : `0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06)`;
 
     return (
         <>
             <style>{`
-                @keyframes cbw-glow{0%,100%{box-shadow:0 0 8px ${accentA(0.25)}}50%{box-shadow:0 0 22px ${accentA(0.7)},0 0 40px ${accentA(0.3)}}}
-                @keyframes cbw-bump{0%{transform:scale(1)}30%{transform:translateY(-3px) scale(1.1)}60%{transform:translateY(1px) scale(.97)}100%{transform:scale(1)}}
-                @keyframes cbw-zap{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.35) rotate(12deg)}}
-                @keyframes cbw-fadein{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
-                @keyframes cbw-dot{0%,100%{opacity:1}50%{opacity:.25}}
-                .cbw-rate { display: flex; }
-                @media (max-width: 479px) { .cbw-rate { display: none; } }
+                @keyframes cbw-glow {
+                    0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06); }
+                    50% { box-shadow: 0 0 0 1px ${accentA(0.6)}, 0 0 28px ${accentA(0.4)}, 0 4px 24px rgba(0,0,0,0.4); }
+                }
+                @keyframes cbw-bump {
+                    0% { transform: scale(1) translateY(0); }
+                    30% { transform: scale(1.12) translateY(-2px); }
+                    60% { transform: scale(0.97) translateY(1px); }
+                    100% { transform: scale(1) translateY(0); }
+                }
+                @keyframes cbw-zap {
+                    0%,100% { opacity:1; transform:scale(1); }
+                    50% { opacity:.3; transform:scale(1.4) rotate(15deg); }
+                }
+                @keyframes cbw-fadein {
+                    from { opacity:0; transform:scale(.9) translateY(-4px); }
+                    to { opacity:1; transform:scale(1) translateY(0); }
+                }
+                @keyframes cbw-dot {
+                    0%,100% { opacity:1; transform:scale(1); }
+                    50% { opacity:.4; transform:scale(.7); }
+                }
+                @keyframes cbw-mount {
+                    from { opacity:0; transform:translateX(8px); }
+                    to { opacity:1; transform:translateX(0); }
+                }
+                .cbw-rate { display: flex; align-items: stretch; }
+                @media (max-width: 599px) { .cbw-rate { display: none !important; } }
             `}</style>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", fontFamily: "'Inter',sans-serif" }}>
+            {/* ── Unified pill ── */}
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "stretch",
+                    background: isCharging
+                        ? `linear-gradient(135deg, rgba(0,0,0,0.4), ${accentA(0.08)})`
+                        : "rgba(0,0,0,0.35)",
+                    border: `1px solid ${isCharging ? accentA(0.35) : "rgba(255,255,255,0.1)"}`,
+                    borderRadius: 12,
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
+                    boxShadow: pillGlow,
+                    overflow: "hidden",
+                    transition: "background .4s, border-color .4s, box-shadow .4s",
+                    animation: isCharging
+                        ? "cbw-glow .8s ease-in-out 2, cbw-mount .3s ease-out"
+                        : "cbw-mount .3s ease-out",
+                    fontFamily: "'Inter', sans-serif",
+                    flexShrink: 0,
+                }}
+            >
+                {/* ── Accent left stripe ── */}
+                <div style={{
+                    width: 3,
+                    background: `linear-gradient(to bottom, ${accentA(0.9)}, ${accentA(0.3)})`,
+                    flexShrink: 0,
+                }} />
 
-                {/* ── EARNED — always visible ── */}
-                <Tile
+                {/* ── EARNED ── */}
+                <StatSection
                     label="Earned"
+                    icon={<TrendingUp size={12} color={accent} />}
                     value={earned}
                     valueColor={accent}
-                    bg={isCharging ? accentA(0.2) : accentA(0.09)}
-                    border={accentA(isCharging ? 0.55 : 0.22)}
-                    icon={<TrendingUp size={11} color={accent} />}
-                    glow={isCharging}
-                    bumpValue={isCharging}
+                    bump={isCharging}
                 />
 
-                {/* ── FANS — always visible ── */}
-                <Tile
-                    label="Fans"
+                {/* Divider */}
+                <Divider />
+
+                {/* ── LIVE FANS ── */}
+                <StatSection
+                    label="Live Fans"
+                    icon={<Users size={12} color="rgba(255,255,255,0.55)" />}
                     value={String(summary.fan_count)}
                     valueColor="#fff"
-                    bg="rgba(255,255,255,0.06)"
-                    border="rgba(255,255,255,0.13)"
-                    icon={<Users size={11} color="rgba(255,255,255,0.5)" />}
-                    liveDot={summary.fan_count > 0}
-                    liveDotTitle={`${summary.live_fan_count} watching`}
+                    suffix={summary.fan_count > 0 ? (
+                        <span
+                            title={`${summary.live_fan_count} watching now`}
+                            style={{
+                                fontSize: 9,
+                                color: "#4ade80",
+                                animation: "cbw-dot 2s ease-in-out infinite",
+                                lineHeight: 1,
+                            }}
+                        >●</span>
+                    ) : undefined}
                 />
 
-                {/* ── RATE — hidden on very small screens ── */}
-                {summary.billing_enabled && summary.rate > 0 && (
+                {/* ── PER MIN — hidden on narrow screens ── */}
+                {showRate && (
                     <div className="cbw-rate">
-                        <Tile
+                        <Divider />
+                        <StatSection
                             label="Per Min"
+                            icon={<Timer size={12} color="hsl(35,100%,65%)" />}
                             value={`${C}${summary.rate}`}
                             valueColor="hsl(35,100%,65%)"
-                            bg="rgba(251,146,60,0.08)"
-                            border="rgba(251,146,60,0.2)"
-                            icon={<Timer size={11} color="hsl(35,100%,65%)" />}
+                            suffix={
+                                <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>/min</span>
+                            }
                         />
                     </div>
                 )}
 
-                {/* ── BILLED! flash ── */}
-                {isCharging && (
-                    <div style={{
-                        display: "flex", alignItems: "center", gap: "3px",
-                        padding: "4px 8px", borderRadius: "8px",
-                        background: accentA(0.16), border: `1px solid ${accent}`,
-                        animation: "cbw-fadein .2s ease-out",
-                    }}>
-                        <Zap size={10} color={accent} fill={accent} style={{ animation: "cbw-zap .4s ease-in-out 3" }} />
-                        <span style={{ fontSize: "9px", fontWeight: 800, color: accent, letterSpacing: ".6px", textTransform: "uppercase" }}>
-                            BILLED!
-                        </span>
-                    </div>
-                )}
-
-                {/* ── Billing off badge ── */}
+                {/* ── Billing OFF indicator ── */}
                 {!summary.billing_enabled && (
-                    <div style={{ padding: "4px 8px", borderRadius: "8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.28)", letterSpacing: ".4px", textTransform: "uppercase" }}>Off</span>
-                    </div>
+                    <>
+                        <Divider />
+                        <div style={{ padding: "6px 12px", display: "flex", alignItems: "center" }}>
+                            <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: ".5px" }}>
+                                Billing Off
+                            </span>
+                        </div>
+                    </>
                 )}
             </div>
+
+            {/* ── BILLED! flash badge ── */}
+            {isCharging && (
+                <div style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "5px 10px", borderRadius: 8,
+                    background: accentA(0.18),
+                    border: `1px solid ${accent}`,
+                    animation: "cbw-fadein .25s ease-out",
+                    flexShrink: 0,
+                }}>
+                    <Zap
+                        size={11}
+                        color={accent}
+                        fill={accent}
+                        style={{ animation: "cbw-zap .35s ease-in-out 4" }}
+                    />
+                    <span style={{
+                        fontSize: 10, fontWeight: 800,
+                        color: accent,
+                        letterSpacing: ".7px",
+                        textTransform: "uppercase",
+                    }}>BILLED!</span>
+                </div>
+            )}
         </>
     );
 }
 
-/* ── Tile ── */
-function Tile({
-    label, value, valueColor, bg, border, icon,
-    glow, bumpValue, liveDot, liveDotTitle,
+/* ── Divider ── */
+function Divider() {
+    return (
+        <div style={{
+            width: 1,
+            background: "rgba(255,255,255,0.08)",
+            margin: "6px 0",
+            flexShrink: 0,
+        }} />
+    );
+}
+
+/* ── Stat Section ── */
+function StatSection({
+    label, icon, value, valueColor, bump, suffix,
 }: {
-    label: string; value: string; valueColor: string;
-    bg: string; border: string; icon?: React.ReactNode;
-    glow?: boolean; bumpValue?: boolean;
-    liveDot?: boolean; liveDotTitle?: string;
+    label: string;
+    icon: React.ReactNode;
+    value: string;
+    valueColor: string;
+    bump?: boolean;
+    suffix?: React.ReactNode;
 }) {
     return (
         <div style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "4px 9px", borderRadius: "9px",
-            background: bg, border: `1px solid ${border}`,
-            backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
-            transition: "background .25s, border-color .25s, box-shadow .25s",
-            flexShrink: 0, cursor: "default",
-            animation: glow ? "cbw-glow .7s ease-in-out 2" : undefined,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "5px 13px",
+            gap: 1,
+            cursor: "default",
+            userSelect: "none",
         }}>
-            {icon}
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
-                <span style={{ fontSize: "8px", fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: ".6px" }}>
+            {/* Label row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                {icon}
+                <span style={{
+                    fontSize: 8,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.4)",
+                    textTransform: "uppercase",
+                    letterSpacing: ".65px",
+                    whiteSpace: "nowrap",
+                }}>
                     {label}
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                    <span style={{
-                        fontSize: "12px", fontWeight: 800, color: valueColor,
-                        transition: "color .2s",
-                        animation: bumpValue ? "cbw-bump .5s ease-in-out" : undefined,
-                    }}>
-                        {value}
-                    </span>
-                    {liveDot && (
-                        <span
-                            title={liveDotTitle}
-                            style={{ fontSize: "7px", color: "#4ade80", lineHeight: 1, animation: "cbw-dot 2s ease-in-out infinite" }}
-                        >●</span>
-                    )}
-                </div>
+            </div>
+            {/* Value row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <span style={{
+                    fontSize: 15,
+                    fontWeight: 800,
+                    color: valueColor,
+                    letterSpacing: "-.3px",
+                    lineHeight: 1,
+                    transition: "color .25s",
+                    animation: bump ? "cbw-bump .5s cubic-bezier(.34,1.56,.64,1)" : undefined,
+                    whiteSpace: "nowrap",
+                }}>
+                    {value}
+                </span>
+                {suffix}
             </div>
         </div>
     );

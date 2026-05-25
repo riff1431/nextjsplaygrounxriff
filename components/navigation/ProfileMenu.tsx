@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X } from "lucide-react";
+import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X, HelpCircle, BookOpen, RotateCcw } from "lucide-react";
 import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 import { toast } from "sonner";
 
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -14,7 +15,9 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const { isPending: isKycPending } = useKycStatus();
+    const { startTour } = useGuidedTour();
     const [isMobile, setIsMobile] = useState(false);
+    const [helpExpanded, setHelpExpanded] = useState(false);
 
     // Detect mobile
     useEffect(() => {
@@ -177,7 +180,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                     </>
                 ) : (
                     <>
-                        <button onClick={() => { router.push('/account/wallet'); setIsOpen(false); }} className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-pink-500/30 transition-all group">
+                        <button onClick={() => { router.push('/account/wallet'); setIsOpen(false); }} className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-pink-500/30 transition-all group" data-tour="wallet-button">
                             <CreditCard className="w-5 h-5 text-blue-300 group-hover:text-blue-200 group-hover:scale-110 transition-transform" />
                             <span className="text-xs text-gray-300">Wallet</span>
                         </button>
@@ -236,6 +239,77 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                         <Settings className={cx("w-4 h-4", isKycPending ? "text-gray-600" : "text-gray-500 group-hover:text-cyan-400 transition-colors")} />,
                         "/settings/profile",
                         isKycPending
+                    )}
+                </div>
+
+                {/* Divider */}
+                <div className="my-2 h-px bg-white/5 w-full" />
+
+                {/* Help & Tutorials */}
+                <div className="space-y-0.5">
+                    <button
+                        onClick={() => setHelpExpanded(!helpExpanded)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group"
+                    >
+                        <div className="flex items-center gap-3">
+                            <HelpCircle className="w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-colors" />
+                            Help & Tutorials
+                        </div>
+                        <ChevronDown className={cx("w-3.5 h-3.5 text-gray-500 transition-transform duration-200", helpExpanded && "rotate-180")} />
+                    </button>
+
+                    {helpExpanded && (
+                        <div className="ml-3 pl-4 border-l border-white/5 space-y-0.5">
+                            <button
+                                onClick={() => { setIsOpen(false); startTour('fan'); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                            >
+                                <RotateCcw className="w-3 h-3" />
+                                Restart Fan Tour
+                            </button>
+                            {role === 'creator' && (
+                                <button
+                                    onClick={() => { setIsOpen(false); startTour('creator'); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                                >
+                                    <RotateCcw className="w-3 h-3" />
+                                    Restart Creator Tour
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setIsOpen(false); startTour('suga'); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                            >
+                                <RotateCcw className="w-3 h-3" />
+                                Restart Suga Tour
+                            </button>
+
+                            <div className="my-1.5 h-px bg-white/5" />
+
+                            <button
+                                onClick={() => { setIsOpen(false); toast.info('Wallet guide coming soon!'); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                            >
+                                <BookOpen className="w-3 h-3" />
+                                How Wallet Works
+                            </button>
+                            <button
+                                onClick={() => { setIsOpen(false); toast.info('Rooms guide coming soon!'); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                            >
+                                <BookOpen className="w-3 h-3" />
+                                How Rooms Work
+                            </button>
+                            {role === 'creator' && (
+                                <button
+                                    onClick={() => { setIsOpen(false); toast.info('Payouts guide coming soon!'); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                                >
+                                    <BookOpen className="w-3 h-3" />
+                                    How Payouts Work
+                                </button>
+                            )}
+                        </div>
                     )}
                 </div>
 

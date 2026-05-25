@@ -144,7 +144,7 @@ export default function SessionLiveControls({
                 .slc-wrap {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 8px;
                     flex-wrap: nowrap;
                     justify-content: flex-end;
                     font-family: 'Inter', sans-serif;

@@ -102,7 +102,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
     );
 }
 
-function NeonCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function NeonCard({ children, className = "", ...rest }: { children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
     return (
         <div
             className={cx(
@@ -112,6 +112,7 @@ function NeonCard({ children, className = "" }: { children: React.ReactNode; cla
                 "hover:shadow-[0_0_38px_rgba(236,72,153,0.22),0_0_86px_rgba(59,130,246,0.14)] transition-shadow",
                 className
             )}
+            {...rest}
         >
             {children}
         </div>
@@ -452,20 +453,21 @@ function HomeScreen({
         route: string;
         comingSoon?: boolean;
         roomType: string;
+        dataTour?: string;
     }> = [
             { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
             { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
             { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
             { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
             { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
+            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
         ];
 
     return (
         <div className="w-full mx-auto px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Left rail (always-expanded categories) */}
-                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex lg:flex-col">
+                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex lg:flex-col" data-tour="rooms-menu">
                     {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
@@ -495,6 +497,7 @@ function HomeScreen({
                                                     isPrimary && "ring-1 ring-cyan-300/35",
                                                     activeCat === cat.key && "neon-pulse"
                                                 )}
+                                                {...(cat.dataTour ? { 'data-tour': cat.dataTour } : {})}
                                             >
                                                 <span
                                                     className={cx(
@@ -548,13 +551,13 @@ function HomeScreen({
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/collections")}>
                                     <Star className="w-4 h-4" /> Collections
                                 </button>
-                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
+                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")} data-tour="gifts-tips">
                                     <MessageSquare className="w-4 h-4" /> Suggestions
                                 </button>
-                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")}>
+                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")} data-tour="gift-system">
                                     <Users className="w-4 h-4" /> Subscriptions
                                 </button>
-                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")}>
+                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour="schedule-section">
                                     <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                 </button>
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" title="Log Out" onClick={() => router.push("/")}>
@@ -639,7 +642,7 @@ function HomeScreen({
                     </div>
                 </div>
                 {/* Right rail (Cleaned) – Auto-scrolling Creator Feed */}
-                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6">
+                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6" data-tour="creator-feed" data-tour-match="match-discovery">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Featured Creators
                     </div>
@@ -1110,6 +1113,7 @@ export default function Home() {
                             onClick={() => router.push('/account/messages')}
                             className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
                             title="Messages"
+                            data-tour="private-chat"
                         >
                             <MessageSquare className="w-5 h-5" />
                         </button>
@@ -1118,6 +1122,7 @@ export default function Home() {
                             onClick={() => router.push('/account/subscription')}
                             className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
                             title="Subscription"
+                            data-tour="subscription-section"
                         >
                             <Crown className="w-5 h-5" />
                         </button>
