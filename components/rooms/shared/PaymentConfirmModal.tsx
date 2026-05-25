@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Wallet, AlertCircle, Loader2 } from "lucide-react";
+import { X, Wallet, AlertCircle, Loader2, Timer, Clock } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { cs } from "@/utils/currency";
 
@@ -130,7 +130,27 @@ export default function PaymentConfirmModal({
                         </span>
                     </div>
                 </div>
-                
+
+                {/* Estimated watch time */}
+                {costPerMin && costPerMin > 0 && (balance || 0) > entryFee && (
+                    <div style={{
+                        background: "rgba(249,115,22,0.06)",
+                        border: "1px solid rgba(249,115,22,0.2)",
+                        borderRadius: "10px",
+                        padding: "10px 14px",
+                        marginBottom: "12px",
+                        display: "flex", alignItems: "center", gap: "8px",
+                    }}>
+                        <Timer size={14} color="#f97316" style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: "12px", color: "rgba(253,186,116,0.9)", lineHeight: "1.4" }}>
+                            With your balance, you can watch for approximately{" "}
+                            <strong style={{ color: "#fb923c" }}>
+                                {Math.floor(((balance || 0) - entryFee) / costPerMin)} min
+                            </strong>{" "}
+                            at {cs()}{costPerMin}/min.
+                        </span>
+                    </div>
+                )}
                 <div style={{ textAlign: "center", marginBottom: "16px", fontSize: "12px", color: "rgba(255,255,255,0.5)", lineHeight: "1.4" }}>
                     Billing starts immediately.{costPerMin && costPerMin > 0 ? ` ${cs()}${costPerMin}` : " Full minute billing"} per minute applies. <br/>
                     <span style={{ color: "rgba(255,255,255,0.8)" }}>By entering, you agree to be charged per minute as described.</span>

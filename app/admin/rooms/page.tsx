@@ -211,6 +211,16 @@ export default function AdminRoomSettingsPage() {
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
+                                    {s.billing_enabled && s.public_cost_per_min > 0 && (
+                                        <div style={{ marginTop: "4px", fontSize: "10px", color: "rgba(249,115,22,0.8)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                            ⏱️ Public fans will be charged <strong>{cs()}{s.public_cost_per_min}/min</strong> in real-time
+                                        </div>
+                                    )}
+                                    {!s.billing_enabled && (
+                                        <div style={{ marginTop: "4px", fontSize: "10px", color: "rgba(74,222,128,0.7)" }}>
+                                            ✓ Per-minute billing disabled — fans watch for free
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private {cs()}/min (min)</label>
@@ -229,6 +239,11 @@ export default function AdminRoomSettingsPage() {
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
+                                    {s.billing_enabled && s.min_private_cost_per_min > 0 && (
+                                        <div style={{ marginTop: "4px", fontSize: "10px", color: "rgba(249,115,22,0.8)", display: "flex", alignItems: "center", gap: "4px" }}>
+                                            ⏱️ Private sessions min rate: <strong>{cs()}{s.min_private_cost_per_min}/min</strong>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Toggles */}

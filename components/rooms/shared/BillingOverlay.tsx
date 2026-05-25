@@ -10,6 +10,7 @@ import { cs } from "@/utils/currency";
    BillingOverlay — Per-minute billing UI for fan watching pages
    ─────────────────────────────────────────────────────────
    • Shows a compact floating pill with minutes / total spent / rate
+   • Shows real-time countdown until next charge
    • Shows estimated remaining time based on balance
    • Warns when balance is low (< 2 minutes remaining)
    • Shows full-screen eject modal when funds run out
@@ -94,6 +95,10 @@ export default function BillingOverlay({
 
     // Auto-detect rate label
     const displayRate = rateLabel || (currentRate > 0 ? `${cs()}${currentRate}/min` : null);
+
+    // Real-time countdown
+    const secs = billing.secondsUntilNextCharge;
+    const countdownLabel = secs <= 0 ? "charging..." : `${secs}s`;
 
     // ── Auto-Eject Modal ──
     if (showEjectModal) {
@@ -268,9 +273,13 @@ export default function BillingOverlay({
                     0%, 100% { opacity: 1; }
                     50% { opacity: 0.6; }
                 }
+                @keyframes billingCountdownShrink {
+                    from { width: 100%; }
+                    to { width: 0%; }
+                }
             `}</style>
 
-            {/* Timer icon */}
+            {/* Timer icon + minutes */}
             <div style={{
                 display: "flex", alignItems: "center", gap: "5px",
                 color: lowBalance ? "hsl(0, 80%, 65%)" : accent,
@@ -308,6 +317,26 @@ export default function BillingOverlay({
                 </>
             )}
 
+            {/* Real-time countdown to next charge */}
+            {currentRate > 0 && (
+                <>
+                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "3px",
+                        color: secs <= 10 ? "hsl(30, 100%, 65%)" : "rgba(255,255,255,0.45)",
+                        animation: secs <= 10 ? "billingPulse 0.8s ease-in-out infinite" : "none",
+                    }}>
+                        <Timer style={{ width: "11px", height: "11px" }} />
+                        <span style={{
+                            fontSize: "10px", fontWeight: 700,
+                            minWidth: "52px",
+                        }}>
+                            next: {countdownLabel}
+                        </span>
+                    </div>
+                </>
+            )}
+
             {/* Estimated remaining */}
             {estimatedRemaining !== null && (
                 <>
@@ -316,12 +345,11 @@ export default function BillingOverlay({
                         display: "flex", alignItems: "center", gap: "3px",
                         animation: lowBalance ? "billingPulse 1.5s ease-in-out infinite" : "none",
                     }}>
-                        <Timer style={{ width: "11px", height: "11px", color: lowBalance ? "hsl(45, 100%, 55%)" : "rgba(255,255,255,0.5)" }} />
                         <span style={{
                             fontSize: "10px", fontWeight: 700,
                             color: lowBalance ? "hsl(45, 100%, 55%)" : "rgba(255,255,255,0.5)",
                         }}>
-                            ~{estimatedRemaining} min left
+                            ~{estimatedRemaining} left
                         </span>
                     </div>
                 </>

@@ -21,6 +21,7 @@ import EmojiPicker from "@/components/common/EmojiPicker";
 import CreatorProfileHover from "@/components/shared/CreatorProfileHover";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 import { cs } from "@/utils/currency";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -813,6 +814,13 @@ export default function BarLoungeRoom() {
                     if (pendingPurchase.type === "spin") { setPendingPurchase(null); await executeSpinAfterConfirm(); }
                     else { await handlePurchase(pendingPurchase.type, pendingPurchase.label, pendingPurchase.price, pendingPurchase.meta); setSpentHidden(s => s + pendingPurchase.price); setPendingPurchase(null); }
                 }}
+            />
+
+            {/* Per-minute billing overlay — charges fan based on admin room settings */}
+            <BillingOverlay
+                sessionId={sessionId}
+                accentHsl="42, 90%, 55%"
+                exitRoute="/home"
             />
 
         </div>

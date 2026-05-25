@@ -13,6 +13,8 @@ interface BillingState {
     rate: number | null;
     /** Whether billing is enabled for this room type */
     billingEnabled: boolean;
+    /** Seconds remaining until the next charge (0-60, counts down live) */
+    secondsUntilNextCharge: number;
 }
 
 /**
@@ -20,6 +22,7 @@ interface BillingState {
  *
  * Calls the billing API every 60 seconds while active.
  * Auto-ejects the fan when their balance runs out.
+ * Exposes `secondsUntilNextCharge` for real-time countdown UI.
  *
  * Usage:
  *   const billing = useSessionBilling(sessionId);
@@ -28,6 +31,7 @@ interface BillingState {
  *   // billing.minutesBilled, billing.totalBilled — for display
  *   // billing.autoEjected — true if fan was kicked for insufficient funds
  *   // billing.rate — per-minute rate (e.g. 2)
+ *   // billing.secondsUntilNextCharge — countdown to next charge (0-60)
  */
 export function useSessionBilling(sessionId: string | null) {
     const [state, setState] = useState<BillingState>({
@@ -39,10 +43,34 @@ export function useSessionBilling(sessionId: string | null) {
         autoEjected: false,
         rate: null,
         billingEnabled: true,
+        secondsUntilNextCharge: 60,
     });
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const rateFetchedRef = useRef(false);
+    const nextChargeTimeRef = useRef<number | null>(null); // epoch ms of next charge
+
+    // Clear countdown interval helper
+    const clearCountdown = useCallback(() => {
+        if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+        }
+    }, []);
+
+    // Start a 1-second countdown that updates `secondsUntilNextCharge`
+    const startCountdown = useCallback(() => {
+        clearCountdown();
+        // Set next charge at 60s from now
+        nextChargeTimeRef.current = Date.now() + 60_000;
+
+        countdownRef.current = setInterval(() => {
+            if (nextChargeTimeRef.current === null) return;
+            const remaining = Math.max(0, Math.ceil((nextChargeTimeRef.current - Date.now()) / 1000));
+            setState(prev => ({ ...prev, secondsUntilNextCharge: remaining }));
+        }, 1000);
+    }, [clearCountdown]);
 
     // Fetch billing status (rate) on first start
     const fetchBillingStatus = useCallback(async () => {
@@ -69,6 +97,9 @@ export function useSessionBilling(sessionId: string | null) {
     const billOneMinute = useCallback(async () => {
         if (!sessionId) return;
 
+        // Reset countdown immediately when we bill
+        startCountdown();
+
         try {
             const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/billing`, {
                 method: "POST",
@@ -85,12 +116,14 @@ export function useSessionBilling(sessionId: string | null) {
                         isActive: false,
                         autoEjected: true,
                         error: "Insufficient balance — session ended",
+                        secondsUntilNextCharge: 0,
                     }));
-                    // Stop the interval
+                    // Stop both intervals
                     if (intervalRef.current) {
                         clearInterval(intervalRef.current);
                         intervalRef.current = null;
                     }
+                    clearCountdown();
                     return;
                 }
                 setState(prev => ({ ...prev, error: data.error }));
@@ -110,7 +143,7 @@ export function useSessionBilling(sessionId: string | null) {
             console.error("Billing tick error:", err);
             setState(prev => ({ ...prev, error: err.message }));
         }
-    }, [sessionId]);
+    }, [sessionId, startCountdown, clearCountdown]);
 
     const startBilling = useCallback(() => {
         if (intervalRef.current) return; // Already running
@@ -120,9 +153,10 @@ export function useSessionBilling(sessionId: string | null) {
             isActive: true,
             autoEjected: false,
             error: null,
+            secondsUntilNextCharge: 60,
         }));
 
-        // Fetch rate first, then start ticking
+        // Fetch rate first
         fetchBillingStatus();
 
         // Bill immediately for the first minute, then every 60s
@@ -135,17 +169,17 @@ export function useSessionBilling(sessionId: string | null) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
-        setState(prev => ({ ...prev, isActive: false }));
-    }, []);
+        clearCountdown();
+        setState(prev => ({ ...prev, isActive: false, secondsUntilNextCharge: 60 }));
+    }, [clearCountdown]);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            clearCountdown();
         };
-    }, []);
+    }, [clearCountdown]);
 
     return {
         ...state,
@@ -153,4 +187,3 @@ export function useSessionBilling(sessionId: string | null) {
         stopBilling,
     };
 }
-

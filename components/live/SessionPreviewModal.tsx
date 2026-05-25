@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Crown, Users, Video, Lock, CheckCircle, Play, Mic, AlertCircle, User, Wallet, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, Crown, Users, Video, Lock, CheckCircle, Play, Mic, AlertCircle, User, Wallet, Clock, AlertTriangle, Loader2, Timer } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { cs } from "@/utils/currency";
@@ -19,10 +19,18 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
     const [error, setError] = useState<string | null>(null);
     const [accessStatus, setAccessStatus] = useState<'locked' | 'unlocked' | 'pending' | 'rejected' | 'none' | 'pending_payment'>('locked');
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [roomSettings, setRoomSettings] = useState<{ billing_enabled?: boolean; public_cost_per_min?: number; min_private_cost_per_min?: number } | null>(null);
 
     useEffect(() => {
         checkAccess();
         fetchWalletBalance();
+        // Fetch billing rates for this room type
+        if (session.room_type) {
+            fetch(`/api/v1/rooms/settings?room_type=${session.room_type}`)
+                .then(r => r.json())
+                .then(d => { if (d.settings) setRoomSettings(d.settings); })
+                .catch(() => { /* non-critical */ });
+        }
     }, [session.id]);
 
     const fetchWalletBalance = async () => {
@@ -171,6 +179,12 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
     const isPrivate = session.meta.is_private;
     const price = session.meta.price || 0;
     const insufficient = walletBalance !== null && walletBalance < price;
+    // Get per-minute rate from dynamic room settings
+    const costPerMin = roomSettings?.billing_enabled
+        ? (isPrivate
+            ? (session.meta?.cost_per_min || roomSettings?.min_private_cost_per_min || 0)
+            : (roomSettings?.public_cost_per_min || 0))
+        : 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
@@ -231,6 +245,20 @@ export default function SessionPreviewModal({ session, onClose }: SessionPreview
                     <div className="mb-5 p-3 rounded-xl bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
                         <div className="text-[10px] text-pink-300 uppercase tracking-wider font-semibold mb-0.5">Session Entry Fee</div>
                         <div className="text-2xl font-bold text-white">{cs()}{price}</div>
+                        {/* Per-minute billing rate */}
+                        {roomSettings?.billing_enabled && costPerMin > 0 && (
+                            <div className="mt-2 flex items-center justify-center gap-1.5">
+                                <Timer className="w-3 h-3 text-orange-400" />
+                                <span className="text-xs font-semibold text-orange-300">
+                                    + {cs()}{costPerMin}/min while in room
+                                </span>
+                            </div>
+                        )}
+                        {roomSettings && !roomSettings.billing_enabled && (
+                            <div className="mt-2 flex items-center justify-center gap-1.5">
+                                <span className="text-xs font-medium text-emerald-400">✓ Free to watch (no per-min charge)</span>
+                            </div>
+                        )}
                         <div className="mt-2 flex items-center justify-center gap-2">
                             <Wallet className="w-3.5 h-3.5 text-gray-400" />
                             <span className={`text-xs font-medium ${insufficient ? 'text-red-300' : 'text-emerald-300'}`}>
