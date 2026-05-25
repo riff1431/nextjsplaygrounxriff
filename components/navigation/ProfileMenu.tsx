@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X, HelpCircle, BookOpen, RotateCcw } from "lucide-react";
 import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
+import HelpGuideModal from "@/components/guided-tour/HelpGuideModal";
 import { toast } from "sonner";
 
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -18,6 +19,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
     const { startTour } = useGuidedTour();
     const [isMobile, setIsMobile] = useState(false);
     const [helpExpanded, setHelpExpanded] = useState(false);
+    const [activeGuide, setActiveGuide] = useState<"wallet" | "rooms" | "payouts" | null>(null);
 
     // Detect mobile
     useEffect(() => {
@@ -287,14 +289,14 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                             <div className="my-1.5 h-px bg-white/5" />
 
                             <button
-                                onClick={() => { setIsOpen(false); toast.info('Wallet guide coming soon!'); }}
+                                onClick={() => { setIsOpen(false); setActiveGuide('wallet'); }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
                             >
                                 <BookOpen className="w-3 h-3" />
                                 How Wallet Works
                             </button>
                             <button
-                                onClick={() => { setIsOpen(false); toast.info('Rooms guide coming soon!'); }}
+                                onClick={() => { setIsOpen(false); setActiveGuide('rooms'); }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
                             >
                                 <BookOpen className="w-3 h-3" />
@@ -302,7 +304,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                             </button>
                             {role === 'creator' && (
                                 <button
-                                    onClick={() => { setIsOpen(false); toast.info('Payouts guide coming soon!'); }}
+                                    onClick={() => { setIsOpen(false); setActiveGuide('payouts'); }}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
                                 >
                                     <BookOpen className="w-3 h-3" />
@@ -411,6 +413,14 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                     </>
                 )}
             </AnimatePresence>
+
+            {/* Help Guide Modal */}
+            {activeGuide && (
+                <HelpGuideModal
+                    guide={activeGuide}
+                    onClose={() => setActiveGuide(null)}
+                />
+            )}
         </div>
     );
 }
