@@ -112,9 +112,17 @@ export default function OnboardingPage() {
         );
     }
 
-    // Show verification pending for creators awaiting KYC review
+    // Creators with pending KYC go straight to the Creator Studio Dashboard (in lockdown mode)
     if (profileData?.role === "creator" && profileData.kyc_status === "pending") {
-        return <VerificationPendingScreen onStatusChange={refreshProfile} />;
+        router.push("/rooms/creator-studio");
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" />
+                    <p className="text-gray-400">Taking you to your dashboard...</p>
+                </div>
+            </div>
+        );
     }
 
     // Show bank payment pending screen if user has a pending bank payment

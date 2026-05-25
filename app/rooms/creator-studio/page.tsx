@@ -4,12 +4,17 @@ import { CsDashboardHeader, CsStatsBar } from "@/components/rooms/creator-studio
 import { CsCreatorStudio } from "@/components/rooms/creator-studio/CsCreatorStudio";
 import { CsSubscriptionSettings } from "@/components/rooms/creator-studio/CsSubscriptionSettings";
 import { CsRecentRoomHistory } from "@/components/rooms/creator-studio/CsRecentRoomHistory";
+import CsKycVerificationBanner from "@/components/rooms/creator-studio/CsKycVerificationBanner";
 import { useCreatorDashboard } from "@/hooks/useCreatorDashboard";
 import { useAuth } from "@/app/context/AuthContext";
+import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
 
 const CreatorStudioDashboardPage = () => {
     const { user } = useAuth();
     const { profile, stats, recentRooms, isLoading, saveSubscriptionPrices } = useCreatorDashboard();
+    const { kycStatus, isPending, isRejected, isApproved } = useKycStatus();
+
+    const kycLocked = isPending || isRejected;
 
     return (
         <div className="cs-theme min-h-screen relative">
@@ -26,6 +31,12 @@ const CreatorStudioDashboardPage = () => {
                     username={profile?.username}
                     avatarUrl={profile?.avatar_url}
                 />
+
+                {/* KYC Verification Banner — shows when KYC is pending or rejected */}
+                {kycLocked && (
+                    <CsKycVerificationBanner kycStatus={kycStatus} />
+                )}
+
                 <CsStatsBar
                     tipsEarned={stats.tipsEarned}
                     giftsCount={stats.giftsCount}
@@ -34,8 +45,9 @@ const CreatorStudioDashboardPage = () => {
                     subscribers={stats.subscribers}
                     subscriptionEarnings={stats.subscriptionEarnings}
                     isLoading={isLoading}
+                    kycLocked={kycLocked}
                 />
-                <CsCreatorStudio />
+                <CsCreatorStudio kycLocked={kycLocked} />
                 <CsSubscriptionSettings
                     weeklyPrice={profile?.subscription_price_weekly ?? null}
                     monthlyPrice={profile?.subscription_price_monthly ?? null}

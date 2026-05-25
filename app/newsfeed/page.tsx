@@ -518,6 +518,9 @@ export default function NewsFeedPage() {
                                             <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
                                                 <MessageSquare className="w-4 h-4" /> Suggestions
                                             </button>
+                                            <button className="w-full rounded-xl border border-pink-500/50 bg-pink-500/10 px-3 py-2 text-sm text-pink-200 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")}>
+                                                <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
+                                            </button>
                                             <button className="w-full rounded-xl border border-pink-500/25 bg-black/40 hover:bg-white/5 px-3 py-2 text-sm text-pink-200 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/home")}>
                                                 <ArrowLeft className="w-4 h-4" /> Back to Home
                                             </button>

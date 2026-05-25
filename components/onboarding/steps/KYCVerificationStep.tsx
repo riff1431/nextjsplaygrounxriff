@@ -167,6 +167,32 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
                 })
                 .eq("id", user.id);
 
+            // Notify admin(s) about the manual submission
+            try {
+                const { data: admins } = await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("role", "admin");
+
+                if (admins && admins.length > 0) {
+                    const { data: creatorProfile } = await supabase
+                        .from("profiles")
+                        .select("username")
+                        .eq("id", user.id)
+                        .single();
+
+                    const adminNotifications = admins.map((admin) => ({
+                        user_id: admin.id,
+                        type: "kyc_manual_submission",
+                        message: `📋 New manual KYC submission from @${creatorProfile?.username || "unknown"}. Awaiting review in Business Console.`,
+                    }));
+
+                    await supabase.from("notifications").insert(adminNotifications);
+                }
+            } catch (notifyErr) {
+                console.warn("Failed to notify admins:", notifyErr);
+            }
+
             toast.success("Verification submitted successfully!");
             onComplete();
         } catch (error) {

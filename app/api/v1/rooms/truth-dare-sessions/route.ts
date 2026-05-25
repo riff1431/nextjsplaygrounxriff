@@ -192,65 +192,69 @@ export async function POST(request: NextRequest) {
 
         if (sessionError) throw sessionError;
 
-        // 5. Record transaction
-        await supabase.from("truth_dare_session_transactions").insert({
-            session_id: session.id,
-            user_id: user.id,
-            transaction_type: "creator_start_fee",
-            amount: creatorFee,
-            currency: "EUR",
-            status: "completed",
-            payment_reference: null,
-        });
+        // 5-9: Run all post-insert operations in parallel for speed
+        await Promise.all([
+            // 5. Record transaction
+            supabase.from("truth_dare_session_transactions").insert({
+                session_id: session.id,
+                user_id: user.id,
+                transaction_type: "creator_start_fee",
+                amount: creatorFee,
+                currency: "EUR",
+                status: "completed",
+                payment_reference: null,
+            }),
 
-        // 6. Add creator as participant
-        await supabase.from("truth_dare_session_participants").insert({
-            session_id: session.id,
-            user_id: user.id,
-            role: "creator",
-        });
+            // 6. Add creator as participant
+            supabase.from("truth_dare_session_participants").insert({
+                session_id: session.id,
+                user_id: user.id,
+                role: "creator",
+            }),
 
-        // 7. Update/create game state row — CLEAN SLATE for new session
-        const gamePayload: Record<string, any> = {
-            room_id,
-            session_title: title,
-            session_description: description,
-            is_private: isPrivate,
-            unlock_price: Number(price) || 0,
-            status: "pending",
-            current_prompt: null,
-            votes_tier: null,
-            votes_tv: null,
-            is_double_dare_armed: false,
-            replay_until: null,
-            group_vote_state: null,
-            session_id: session.id,
-            updated_at: new Date().toISOString(),
-        };
-        let { error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" });
-        // If session_id column doesn't exist yet, retry without it
-        if (gameError && gameError.message?.includes('session_id')) {
-            delete gamePayload.session_id;
-            ({ error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" }));
-        }
-        if (gameError) console.error("Game state upsert error:", gameError);
+            // 7. Update/create game state row — CLEAN SLATE for new session
+            (async () => {
+                const gamePayload: Record<string, any> = {
+                    room_id,
+                    session_title: title,
+                    session_description: description,
+                    is_private: isPrivate,
+                    unlock_price: Number(price) || 0,
+                    status: "pending",
+                    current_prompt: null,
+                    votes_tier: null,
+                    votes_tv: null,
+                    is_double_dare_armed: false,
+                    replay_until: null,
+                    group_vote_state: null,
+                    session_id: session.id,
+                    updated_at: new Date().toISOString(),
+                };
+                let { error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" });
+                if (gameError && gameError.message?.includes('session_id')) {
+                    delete gamePayload.session_id;
+                    ({ error: gameError } = await supabase.from("truth_dare_games").upsert(gamePayload, { onConflict: "room_id" }));
+                }
+                if (gameError) console.error("Game state upsert error:", gameError);
+            })(),
 
-        // 7b. End any active group calls from previous sessions
-        await supabase.from("group_calls")
-            .update({ status: 'ended', ended_at: new Date().toISOString() })
-            .eq("room_id", room_id)
-            .eq("status", "active");
+            // 7b. End any active group calls from previous sessions
+            supabase.from("group_calls")
+                .update({ status: 'ended', ended_at: new Date().toISOString() })
+                .eq("room_id", room_id)
+                .eq("status", "active"),
 
-        // 8. Ensure room status is live
-        await supabase.from("rooms").update({ status: "live" }).eq("id", room_id);
+            // 8. Ensure room status is live
+            supabase.from("rooms").update({ status: "live" }).eq("id", room_id),
 
-        // 9. Notify creator
-        await supabase.from("notifications").insert({
-            user_id: user.id,
-            type: "truth_dare_session_created",
-            message: `"${title}" is now live!`,
-            reference_id: session.id,
-        });
+            // 9. Notify creator
+            supabase.from("notifications").insert({
+                user_id: user.id,
+                type: "truth_dare_session_created",
+                message: `"${title}" is now live!`,
+                reference_id: session.id,
+            }),
+        ]);
 
         return NextResponse.json({
             success: true,

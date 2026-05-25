@@ -116,6 +116,35 @@ export async function GET() {
                     })
                     .eq('id', user.id);
             }
+
+            // Notify admins if KYC is not approved
+            if (mappedStatus !== 'approved') {
+                try {
+                    const { data: creatorProfile } = await supabaseAdmin
+                        .from('profiles')
+                        .select('username')
+                        .eq('id', user.id)
+                        .single();
+
+                    const { data: admins } = await supabaseAdmin
+                        .from('profiles')
+                        .select('id')
+                        .eq('role', 'admin');
+
+                    if (admins && admins.length > 0) {
+                        const statusLabel = mappedStatus === 'rejected' ? 'declined' : 'pending';
+                        const adminNotifications = admins.map((admin) => ({
+                            user_id: admin.id,
+                            type: 'kyc_needs_review',
+                            message: `🔔 KYC verification for @${creatorProfile?.username || 'unknown'} is ${statusLabel}. Review needed in Business Console.`,
+                        }));
+
+                        await supabaseAdmin.from('notifications').insert(adminNotifications);
+                    }
+                } catch (notifyErr) {
+                    console.warn('[Status Check] Failed to notify admins:', notifyErr);
+                }
+            }
         }
 
         return NextResponse.json({ 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, CheckCircle, XCircle, RefreshCw, Home } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RefreshCw, Home, User, ArrowRight } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -94,20 +94,51 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
             return;
         }
 
+        // First, actively poll Didit's API via our backend for the latest status
+        try {
+            const response = await fetch('/api/didit/session/status');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[VerificationPending] Didit status check result:', data);
+                
+                if (data.status === 'approved') {
+                    setStatus('approved');
+                    toast.success('🎉 Your verification has been approved!');
+                    setTimeout(() => {
+                        router.push('/rooms/creator-studio');
+                    }, 1500);
+                    setChecking(false);
+                    return;
+                } else if (data.status === 'rejected') {
+                    setStatus('rejected');
+                    toast.error('Verification was not approved. Please check the reason.');
+                    await fetchRejectionReason();
+                    setChecking(false);
+                    return;
+                }
+            }
+        } catch (err) {
+            console.warn('[VerificationPending] Didit API check failed, falling back to DB:', err);
+        }
+
+        // Fallback: check the local database
         const { data } = await supabase
-            .from("profiles")
-            .select("kyc_status")
-            .eq("id", user.id)
+            .from('profiles')
+            .select('kyc_status')
+            .eq('id', user.id)
             .single();
 
-        if (data?.kyc_status === "approved") {
-            setStatus("approved");
+        if (data?.kyc_status === 'approved') {
+            setStatus('approved');
+            toast.success('🎉 Your verification has been approved!');
             setTimeout(() => {
-                router.push("/rooms/creator-studio");
+                router.push('/rooms/creator-studio');
             }, 1500);
-        } else if (data?.kyc_status === "rejected") {
-            setStatus("rejected");
+        } else if (data?.kyc_status === 'rejected') {
+            setStatus('rejected');
             await fetchRejectionReason();
+        } else {
+            toast.info('Verification is still being processed. Please check back later.');
         }
         setChecking(false);
     };
@@ -243,6 +274,24 @@ export default function VerificationPendingScreen({ onStatusChange }: Props) {
                     <RefreshCw className={`w-4 h-4 ${checking ? "animate-spin" : ""}`} />
                     {checking ? "Checking..." : "Check Status"}
                 </button>
+
+                {/* Go to Profile — escape route while waiting */}
+                <div className="mt-6 bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-500/20 rounded-2xl p-5">
+                    <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+                        <User className="w-4 h-4 text-pink-400" />
+                        Set up your profile while you wait
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                        You can edit your profile, upload an avatar, and write your bio while your verification is being processed.
+                    </p>
+                    <button
+                        onClick={() => router.push('/account/profile')}
+                        className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:from-pink-600 hover:to-purple-600 transition-all shadow-lg shadow-pink-500/25"
+                    >
+                        Go to My Profile
+                        <ArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
 
                 <p className="text-gray-600 text-xs mt-6">
                     You can safely close this page. We'll notify you when there's an update.

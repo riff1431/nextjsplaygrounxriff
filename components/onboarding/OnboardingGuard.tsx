@@ -1,9 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+
+/**
+ * Routes that creators with pending KYC can still access.
+ * Everything else redirects to /onboarding.
+ */
+const KYC_PENDING_ALLOWED_ROUTES = [
+    "/account/profile",
+    "/settings/profile",
+    "/rooms/creator-studio",
+];
 
 interface Props {
     children: React.ReactNode;
@@ -23,6 +33,7 @@ interface Props {
 export default function OnboardingGuard({ children }: Props) {
     const { user, role, isLoading: authLoading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
     const supabase = createClient();
     const [checking, setChecking] = useState(true);
     const [allowed, setAllowed] = useState(false);
@@ -82,10 +93,24 @@ export default function OnboardingGuard({ children }: Props) {
                     return;
                 }
 
-                // If KYC pending or rejected, redirect to onboarding
-                if (profile.kyc_status === "pending" || profile.kyc_status === "rejected") {
+                // If KYC rejected, always redirect to onboarding to resubmit
+                if (profile.kyc_status === "rejected") {
                     router.push("/onboarding");
                     return;
+                }
+
+                // If KYC pending, allow access to allowlisted routes (e.g. profile)
+                // but redirect everything else to onboarding
+                if (profile.kyc_status === "pending") {
+                    const isAllowed = KYC_PENDING_ALLOWED_ROUTES.some(
+                        (route) => pathname?.startsWith(route)
+                    );
+                    if (isAllowed) {
+                        setAllowed(true);
+                    } else {
+                        router.push("/onboarding");
+                        return;
+                    }
                 }
 
                 // If KYC approved, allow access
@@ -171,4 +196,56 @@ export function useOnboardingStatus() {
     };
 
     return status;
+}
+
+/**
+ * Hook to check creator KYC verification status.
+ * Returns { kycStatus, isPending, isApproved, isRejected, loading }
+ * Use this in components like ProfileMenu to conditionally lock features.
+ */
+export function useKycStatus() {
+    const { user, role } = useAuth();
+    const supabase = createClient();
+    const [state, setState] = useState({
+        kycStatus: "not_required" as string,
+        isPending: false,
+        isApproved: false,
+        isRejected: false,
+        loading: true,
+    });
+
+    useEffect(() => {
+        if (user && role === "creator") {
+            fetchKycStatus();
+        } else {
+            setState({
+                kycStatus: "not_required",
+                isPending: false,
+                isApproved: role === "fan" || role === "admin",
+                isRejected: false,
+                loading: false,
+            });
+        }
+    }, [user, role]);
+
+    const fetchKycStatus = async () => {
+        if (!user) return;
+
+        const { data } = await supabase
+            .from("profiles")
+            .select("kyc_status")
+            .eq("id", user.id)
+            .single();
+
+        const status = data?.kyc_status || "not_required";
+        setState({
+            kycStatus: status,
+            isPending: status === "pending",
+            isApproved: status === "approved",
+            isRejected: status === "rejected",
+            loading: false,
+        });
+    };
+
+    return state;
 }

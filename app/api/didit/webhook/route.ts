@@ -101,6 +101,38 @@ export async function POST(request: Request) {
             }
         }
 
+        // Notify admins if KYC is not approved (pending or rejected)
+        if (newStatus !== 'approved') {
+            try {
+                // Get the creator's username
+                const { data: creatorProfile } = await supabaseAdmin
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', submission.user_id)
+                    .single();
+
+                // Get all admin users
+                const { data: admins } = await supabaseAdmin
+                    .from('profiles')
+                    .select('id')
+                    .eq('role', 'admin');
+
+                if (admins && admins.length > 0) {
+                    const statusLabel = newStatus === 'rejected' ? 'declined' : 'pending';
+                    const adminNotifications = admins.map((admin) => ({
+                        user_id: admin.id,
+                        type: 'kyc_needs_review',
+                        message: `🔔 KYC verification for @${creatorProfile?.username || 'unknown'} is ${statusLabel}. Review needed in Business Console.`,
+                    }));
+
+                    await supabaseAdmin.from('notifications').insert(adminNotifications);
+                    console.log('[Didit Webhook] Admin notifications sent for status:', newStatus);
+                }
+            } catch (notifyErr) {
+                console.warn('[Didit Webhook] Failed to notify admins:', notifyErr);
+            }
+        }
+
         return NextResponse.json({ received: true });
     } catch (error) {
         console.error("[Didit Webhook] Error:", error);

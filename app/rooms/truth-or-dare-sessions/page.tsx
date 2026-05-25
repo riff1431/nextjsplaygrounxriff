@@ -246,78 +246,80 @@ export default function TruthOrDareSessionsBrowse() {
             }}>
                 <div style={{
                     maxWidth: "1400px", margin: "0 auto",
-                    padding: "16px 24px",
+                    padding: "12px 16px",
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                    gap: "16px", flexWrap: "wrap",
+                    gap: "12px", flexWrap: "wrap",
                 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
                         <button
                             onClick={() => router.back()}
                             style={{
                                 display: "inline-flex", alignItems: "center", gap: "6px",
-                                padding: "8px 14px", borderRadius: "12px",
+                                padding: "8px 10px", borderRadius: "12px",
                                 background: "rgba(255,255,255,0.04)",
                                 border: "1px solid rgba(236,72,153,0.15)",
                                 color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500,
-                                cursor: "pointer", transition: "all 0.2s ease",
+                                cursor: "pointer", transition: "all 0.2s ease", flexShrink: 0,
                             }}
                             onMouseEnter={e => { e.currentTarget.style.background = "rgba(236,72,153,0.15)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.boxShadow = "0 0 10px rgba(236,72,153,0.2)"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; e.currentTarget.style.boxShadow = "none"; }}
                         >
-                            <ArrowLeft style={{ width: 16, height: 16 }} /> Back
+                            <ArrowLeft style={{ width: 16, height: 16 }} />
+                            <span style={{ display: 'none' }} className="sm-inline">Back</span>
                         </button>
-                        <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ fontSize: "26px", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.5))" }}>🎭</span>
+                        <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{ fontSize: "22px", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.5))", flexShrink: 0 }}>🎭</span>
                                 <h1 style={{
-                                    fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800,
+                                    fontSize: "clamp(16px, 4vw, 24px)", fontWeight: 800,
                                     background: "linear-gradient(135deg, #fff 0%, #fbcfe8 50%, #ec4899 100%)",
                                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                                     letterSpacing: "-0.02em", margin: 0,
-                                    textShadow: "0 0 20px rgba(236,72,153,0.4)",
+                                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                                 }}>
                                     Truth & Dare
                                 </h1>
                             </div>
                             <p style={{
-                                fontSize: "12px", color: "rgba(251,207,232,0.6)",
-                                margin: "2px 0 0 36px", letterSpacing: "0.5px",
+                                fontSize: "11px", color: "rgba(251,207,232,0.6)",
+                                margin: "2px 0 0", letterSpacing: "0.3px",
                             }}>
-                                Browse live sessions • Join the fun
+                                Browse live sessions
                             </p>
                         </div>
                     </div>
 
                     {/* Search + Live Counter */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                         {sessions.length > 0 && (
                             <div style={{
                                 position: "relative", display: "flex", alignItems: "center",
                             }}>
                                 <Search style={{
-                                    position: "absolute", left: "12px",
-                                    width: 14, height: 14, color: "rgba(244,114,182,0.5)",
+                                    position: "absolute", left: "10px",
+                                    width: 13, height: 13, color: "rgba(244,114,182,0.5)",
                                 }} />
                                 <input
                                     type="text"
-                                    placeholder="Search sessions..."
+                                    placeholder="Search..."
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     style={{
-                                        padding: "8px 12px 8px 34px", borderRadius: "10px",
+                                        padding: "7px 10px 7px 30px", borderRadius: "10px",
                                         background: "rgba(236,72,153,0.04)",
                                         border: "1px solid rgba(236,72,153,0.2)",
                                         color: "#fff", fontSize: "13px", outline: "none",
-                                        width: "180px", transition: "all 0.3s ease",
+                                        width: "140px", transition: "all 0.3s ease",
+                                        maxWidth: "180px",
                                     }}
-                                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(236,72,153,0.8)"; e.currentTarget.style.width = "220px"; e.currentTarget.style.boxShadow = "0 0 15px rgba(236,72,153,0.2)"; }}
-                                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(236,72,153,0.2)"; e.currentTarget.style.width = "180px"; e.currentTarget.style.boxShadow = "none"; }}
+                                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(236,72,153,0.8)"; e.currentTarget.style.width = "180px"; e.currentTarget.style.boxShadow = "0 0 15px rgba(236,72,153,0.2)"; }}
+                                    onBlur={e => { e.currentTarget.style.borderColor = "rgba(236,72,153,0.2)"; e.currentTarget.style.width = "140px"; e.currentTarget.style.boxShadow = "none"; }}
                                 />
                             </div>
                         )}
                         <div style={{
-                            display: "inline-flex", alignItems: "center", gap: "6px",
-                            padding: "6px 14px", borderRadius: "20px",
+                            display: "inline-flex", alignItems: "center", gap: "5px",
+                            padding: "5px 10px", borderRadius: "20px",
                             background: sessions.length > 0
                                 ? "linear-gradient(135deg, rgba(236,72,153,0.2), rgba(217,70,239,0.1))"
                                 : "rgba(255,255,255,0.04)",
@@ -325,17 +327,19 @@ export default function TruthOrDareSessionsBrowse() {
                                 ? "1px solid rgba(236,72,153,0.4)"
                                 : "1px solid rgba(255,255,255,0.08)",
                             boxShadow: sessions.length > 0 ? "0 0 15px rgba(236,72,153,0.2)" : "none",
+                            whiteSpace: "nowrap",
                         }}>
                             {sessions.length > 0 && (
                                 <span style={{
-                                    width: 7, height: 7, borderRadius: "50%",
+                                    width: 6, height: 6, borderRadius: "50%",
                                     background: "#f472b6",
                                     boxShadow: "0 0 10px rgba(244,114,182,0.8), 0 0 20px rgba(236,72,153,0.6)",
                                     animation: "todPulsePink 1.5s ease-in-out infinite",
+                                    display: "inline-block",
                                 }} />
                             )}
                             <span style={{
-                                fontSize: "12px", fontWeight: 700,
+                                fontSize: "11px", fontWeight: 700,
                                 color: sessions.length > 0 ? "#fbcfe8" : "rgba(255,255,255,0.4)",
                                 letterSpacing: "0.5px",
                                 textShadow: sessions.length > 0 ? "0 0 10px rgba(236,72,153,0.5)" : "none",
@@ -351,7 +355,7 @@ export default function TruthOrDareSessionsBrowse() {
             <main style={{
                 position: "relative", zIndex: 1,
                 maxWidth: "1400px", margin: "0 auto",
-                padding: "32px 24px 64px",
+                padding: "clamp(16px, 4vw, 32px) clamp(12px, 4vw, 24px) 64px",
             }}>
                 {loading ? (
                     /* ── Loading State ── */
@@ -483,8 +487,8 @@ export default function TruthOrDareSessionsBrowse() {
                     /* ── Sessions Grid ── */
                     <div style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
-                        gap: "14px",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
+                        gap: "clamp(10px, 3vw, 14px)",
                     }}>
                         {filteredSessions.map((session, i) => {
                             const isHovered = hoveredCard === session.id;

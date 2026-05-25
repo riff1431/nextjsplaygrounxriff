@@ -1031,6 +1031,41 @@ function TruthOrDareCreatorContent() {
         const publicFee = dbSettings ? Number(dbSettings.public_entry_fee) : 10;
         const finalPrice = sessionForm.isPrivate ? Math.max(minPrivateFee, Number(sessionForm.price)) : publicFee;
         setIsCreatingSession(true);
+
+        // ── OPTIMISTIC UPDATE: Enter studio immediately so creator feels instant response ──
+        const optimisticTitle = sessionForm.title || "Live Truth or Dare";
+        const optimisticTimestamp = new Date().toISOString();
+
+        // Reset all session-scoped data for clean slate
+        setQueue([]);
+        setActivityFeed([]);
+        setSessionEarnings({ total: 0, tips: 0, truths: 0, dares: 0, custom: 0 });
+        setFanSpending({});
+        setCurrentPrompt(null);
+        setPromptElapsed(0);
+        setActiveCountdown(null);
+        setActiveTip(null);
+        setEarningsNotification(null);
+        setPendingRequests([]);
+        setVotesTier({ bronze: 0, silver: 0, gold: 0 });
+        setVotesTV({ truth: 0, dare: 0 });
+        setDoubleDareArmed(false);
+        setReplayUntil(null);
+        setSlotInvites([]);
+
+        // Show studio immediately (optimistic)
+        setSessionActive(true);
+        setIsInStudio(true);
+        setIsSessionLive(false);
+        setIsBroadcasting(false);
+        setSessionInfo({
+            title: optimisticTitle,
+            isPrivate: sessionForm.isPrivate,
+            price: finalPrice
+        });
+        setActiveSessionStartedAt(optimisticTimestamp);
+        setShowStartModal(false);
+
         try {
             const minCostPerMin = dbSettings ? Number(dbSettings.min_private_cost_per_min) : 4;
             const res = await fetch('/api/v1/rooms/truth-dare-sessions', {
@@ -1038,7 +1073,7 @@ function TruthOrDareCreatorContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     room_id: roomId,
-                    title: sessionForm.title || "Live Truth or Dare",
+                    title: optimisticTitle,
                     description: sessionForm.description,
                     session_type: sessionForm.isPrivate ? 'private' : 'public',
                     price: finalPrice,
@@ -1046,54 +1081,22 @@ function TruthOrDareCreatorContent() {
                 })
             });
             const data = await res.json();
-            console.log("Start Session Response:", data);
             if (!res.ok) throw new Error(data.error);
 
-            // Update wallet balance
-            if (data.new_balance !== undefined) {
-                setCreatorWalletBalance(data.new_balance);
-            }
+            // Confirm session ID once API responds (non-blocking for UI)
+            if (data.new_balance !== undefined) setCreatorWalletBalance(data.new_balance);
+            if (data.session?.id) setActiveSessionId(data.session.id);
+            const serverTimestamp = data.session?.started_at || data.session?.created_at || optimisticTimestamp;
+            setActiveSessionStartedAt(serverTimestamp);
 
-            toast.success(`Session "${sessionForm.title}" created! Click Go Live to start. 🎭`);
-
-            // ── CLEAN SLATE: Reset all session-scoped data ──
-            setQueue([]);
-            setActivityFeed([]);
-            setSessionEarnings({ total: 0, tips: 0, truths: 0, dares: 0, custom: 0 });
-            setFanSpending({});
-            setCurrentPrompt(null);
-            setPromptElapsed(0);
-            setActiveCountdown(null);
-            setActiveTip(null);
-            setEarningsNotification(null);
-            setPendingRequests([]);
-            setVotesTier({ bronze: 0, silver: 0, gold: 0 });
-            setVotesTV({ truth: 0, dare: 0 });
-            setDoubleDareArmed(false);
-            setReplayUntil(null);
-            setSlotInvites([]); // Clear collab invites from previous session
-
-            // Track active session ID + timestamp AFTER clean slate
-            // This triggers TodCreatorLiveChat to clear and re-fetch messages for the new session
-            const sessionTimestamp = data.session?.started_at || data.session?.created_at || new Date().toISOString();
-            if (data.session?.id) {
-                setActiveSessionId(data.session.id);
-            }
-            setActiveSessionStartedAt(sessionTimestamp);
-
-            // Enter the studio in PRE-LIVE (pending) state — creator must click "Go Live"
-            setSessionActive(true);
-            setIsInStudio(true);
-            setIsSessionLive(false); // Session is pending, not live yet
-            setIsBroadcasting(false);
-            setSessionInfo({
-                title: sessionForm.title || "Live Truth or Dare",
-                isPrivate: sessionForm.isPrivate,
-                price: finalPrice
-            });
-            setShowStartModal(false);
+            toast.success(`Session "${optimisticTitle}" created! Click Go Live to start. 🎭`);
         } catch (e: any) {
             console.error(e);
+            // Rollback optimistic state
+            setSessionActive(false);
+            setIsInStudio(false);
+            setSessionInfo(null);
+            setActiveSessionStartedAt(null);
             toast.error("Failed to start session: " + e.message);
         } finally {
             setIsCreatingSession(false);
@@ -1104,6 +1107,11 @@ function TruthOrDareCreatorContent() {
     async function goLive() {
         if (!roomId || isGoingLive) return;
         setIsGoingLive(true);
+
+        // ── OPTIMISTIC UPDATE: Flip to live instantly so creator sees immediate response ──
+        setIsSessionLive(true);
+        setIsBroadcasting(true);
+
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
                 method: 'POST',
@@ -1111,15 +1119,19 @@ function TruthOrDareCreatorContent() {
                 body: JSON.stringify({ action: 'GO_LIVE' })
             });
             if (res.ok) {
-                setIsSessionLive(true);
-                setIsBroadcasting(true);
                 toast.success('You are now LIVE! 🔴');
             } else {
                 const data = await res.json();
+                // Rollback on failure
+                setIsSessionLive(false);
+                setIsBroadcasting(false);
                 toast.error(data.error || 'Failed to go live');
             }
         } catch (e) {
             console.error('Failed to go live:', e);
+            // Rollback on failure
+            setIsSessionLive(false);
+            setIsBroadcasting(false);
             toast.error('Failed to go live');
         } finally {
             setIsGoingLive(false);
@@ -1128,26 +1140,33 @@ function TruthOrDareCreatorContent() {
 
     async function endSession() {
         if (!roomId) return;
-        // if (!confirm("End the current session?")) return; // Removed confirm, using modal
+
+        // ── OPTIMISTIC UPDATE: Exit studio immediately ──
+        setSessionActive(false);
+        setIsInStudio(false);
+        setIsSessionLive(false);
+        setIsBroadcasting(false);
+        setSessionInfo(null);
+        setShowStartModal(false);
+        setShowExitConfirmation(false);
+        const prevSessionId = activeSessionId;
+        const prevSessionStartedAt = activeSessionStartedAt;
+        setActiveSessionId(null);
+        setActiveSessionStartedAt(null);
+        setSlotInvites([]);
+
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'END_SESSION' })
             });
-            if (res.ok) {
-                setSessionActive(false);
-                setIsInStudio(false); // Exit Studio
-                setIsSessionLive(false);
-                setIsBroadcasting(false);
-                setSessionInfo(null);
-                setShowStartModal(false); // Return to Dashboard
-                setShowExitConfirmation(false); // Close Modal
-                setActiveSessionId(null);
-                setActiveSessionStartedAt(null);
-                setSlotInvites([]);
+            if (!res.ok) {
+                console.error('End session API error — UI already updated optimistically');
             }
         } catch (e) {
-            console.error(e);
+            console.error('endSession fetch failed:', e);
+            // Non-fatal — UI is already reset
         }
     }
 
@@ -1203,7 +1222,7 @@ function TruthOrDareCreatorContent() {
 
 
     return (
-        <div className="tod-creator-theme h-screen max-h-screen flex flex-col items-stretch p-2 lg:p-3 relative overflow-hidden">
+        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3 relative" style={{ overflowX: 'hidden' }}>
             {/* Background Image */}
             <div
                 className="fixed inset-0 bg-cover bg-center bg-no-repeat"
@@ -1211,39 +1230,40 @@ function TruthOrDareCreatorContent() {
             />
             <div className="fixed inset-0 bg-black/60" />
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-stretch flex-1 min-h-0 overflow-hidden">
+            <div className="relative z-10 flex flex-col items-stretch flex-1 min-h-0">
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-2 lg:mb-3 px-1">
+            <div className="flex items-center justify-between mb-2 lg:mb-3 px-1 gap-2">
                 <button
                     onClick={() => handleBackNavigation()}
-                    className="tod-creator-panel-bg tod-creator-neon-border-blue px-3 py-2 rounded-lg flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                    className="tod-creator-panel-bg tod-creator-neon-border-blue px-2.5 py-2 rounded-lg flex items-center gap-1.5 text-white/80 hover:text-white transition-colors shrink-0"
                 >
                     <ChevronLeft className="w-[18px] h-[18px]" />
-                    <span className="text-sm font-medium">Back</span>
+                    <span className="text-sm font-medium hidden sm:inline">Back</span>
                 </button>
-                <div className="flex items-center gap-4">
-                    <h1 className="text-xl font-bold tod-creator-text-neon-pink flex items-center gap-2">
-                        🎭 Truth or Dare — Creator View
+                <div className="flex items-center gap-2 min-w-0">
+                    <h1 className="text-sm sm:text-base lg:text-xl font-bold tod-creator-text-neon-pink flex items-center gap-1.5 truncate">
+                        🎭 <span className="hidden xs:inline">Truth or Dare</span><span className="xs:hidden">ToD</span>
+                        <span className="hidden sm:inline">— Creator View</span>
                     </h1>
                     <span
-                        className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border flex items-center gap-1.5 ${realtimeStatus === 'connected' ? 'border-green-500/40 text-green-300 bg-green-500/10' :
+                        className={`px-2 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase border flex items-center gap-1 shrink-0 ${realtimeStatus === 'connected' ? 'border-green-500/40 text-green-300 bg-green-500/10' :
                             realtimeStatus === 'error' ? 'border-red-500/40 text-red-300 bg-red-500/10' :
                                 realtimeStatus === 'closed' ? 'border-gray-500/40 text-gray-300 bg-gray-500/10' :
                                     'border-yellow-500/40 text-yellow-300 bg-yellow-500/10'
                             }`}
                     >
-                        <span className={`w-2 h-2 rounded-full ${realtimeStatus === 'connected' ? 'bg-green-400 animate-pulse' :
+                        <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'connected' ? 'bg-green-400 animate-pulse' :
                             realtimeStatus === 'error' ? 'bg-red-400' :
                                 realtimeStatus === 'closed' ? 'bg-gray-400' :
                                     'bg-yellow-400 animate-pulse'
                             }`} />
                         {realtimeStatus === 'connected' ? 'LIVE' :
-                            realtimeStatus === 'error' ? 'ERROR' :
-                                realtimeStatus === 'closed' ? 'OFFLINE' :
-                                    'CONNECTING...'}
+                            realtimeStatus === 'error' ? 'ERR' :
+                                realtimeStatus === 'closed' ? 'OFF' :
+                                    '...'}
                     </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 shrink-0">
                     {sessionActive && isInStudio && isSessionLive && (
                         <SessionLiveControls
                             sessionId={roomId || ""}
@@ -1254,27 +1274,29 @@ function TruthOrDareCreatorContent() {
                                     setShowStartModal(true);
                                     return null;
                                 }
-                                try {
-                                    const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ action: 'GO_LIVE' })
-                                    });
-                                    const data = await res.json();
-                                    if (res.ok) {
-                                        setIsSessionLive(true);
-                                        startCountdown();
-                                        toast.success('You are now LIVE! 🔴');
-                                        return new Date().toISOString();
+                                // Optimistic: flip UI immediately
+                                const liveTimestamp = new Date().toISOString();
+                                setIsSessionLive(true);
+                                startCountdown();
+                                // Fire API in background — don't await before returning
+                                fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'GO_LIVE' })
+                                }).then(res => {
+                                    if (!res.ok) {
+                                        res.json().then(data => toast.error(data.error || 'Failed to go live'));
+                                        setIsSessionLive(false);
+                                        setIsBroadcasting(false);
                                     } else {
-                                        toast.error(data.error || 'Failed to go live');
-                                        return null;
+                                        toast.success('You are now LIVE! 🔴');
                                     }
-                                } catch (e) {
+                                }).catch(e => {
                                     console.error('Failed to go live:', e);
-                                    toast.error('Failed to go live');
-                                    return null;
-                                }
+                                    setIsSessionLive(false);
+                                    setIsBroadcasting(false);
+                                });
+                                return liveTimestamp;
                             }}
                             customEnd={isHost ? async () => {
                                 setShowExitConfirmation(true);
@@ -1288,7 +1310,7 @@ function TruthOrDareCreatorContent() {
 
             {/* ─── DASHBOARD (No Active Session) ─── */}
             {!sessionActive ? (
-                <div className="flex-1 flex flex-col items-center justify-start px-4 py-4 gap-4 max-w-2xl mx-auto w-full">
+                <div className="flex-1 flex flex-col items-center justify-start px-2 sm:px-4 py-2 sm:py-4 gap-3 sm:gap-4 max-w-2xl mx-auto w-full overflow-y-auto">
                     {/* Start Session Card */}
                     <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-pink p-4 lg:p-5">
                         <div className="flex items-center gap-2.5 mb-4">
@@ -1561,7 +1583,7 @@ function TruthOrDareCreatorContent() {
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
-                <div className="flex-1 flex gap-2 lg:gap-3 min-h-0 relative overflow-hidden" style={{ height: 'calc(100vh - 70px)' }}>
+                <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-0 relative overflow-y-auto lg:overflow-hidden" style={{ minHeight: 'calc(100vh - 70px)' }}>
 
                     {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
                     {!isSessionLive && (
@@ -1618,9 +1640,9 @@ function TruthOrDareCreatorContent() {
                     )}
 
                     {/* ═══ LEFT SECTION: Video Grid + Bottom Row ═══ */}
-                    <div className="flex flex-col gap-2 lg:gap-3" style={{ width: '42%', minWidth: '380px' }}>
+                    <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0">
                         {/* 2x2 Video Grid */}
-                        <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }}>
                             {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
                             <div className="relative overflow-hidden">
                                 <div className="absolute inset-0">
@@ -1753,7 +1775,7 @@ function TruthOrDareCreatorContent() {
                         </div>
 
                         {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
-                        <div className="grid grid-cols-2 gap-2 lg:gap-3" style={{ height: '200px', minHeight: '180px' }}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-3" style={{ minHeight: '160px' }}>
                             {/* Summary / Earnings */}
                             <div className="min-h-0 overflow-auto">
                                 <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
@@ -1769,7 +1791,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className="flex-[1.5] min-w-[280px] min-h-0 overflow-hidden">
+                    <div className="w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden">
                         <TodCreatorRequestPanel
                             title="Incoming Requests"
                             accentColor="pink"
@@ -1812,7 +1834,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className="flex-[1.5] min-w-[280px] min-h-0 overflow-hidden">
+                    <div className="w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0">
                         <TodCreatorLiveChat 
                             roomId={roomId} 
                             sessionStartedAt={activeSessionStartedAt}

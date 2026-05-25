@@ -69,8 +69,13 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                             onComplete();
                         } else if (newStatus === 'rejected') {
                             sessionStorage.removeItem(SESSION_STORAGE_KEY);
-                            toast.error("Verification rejected. Please try again.");
-                            window.location.reload();
+                            toast.error("Verification was not approved.");
+                            // Navigate to dashboard — it will show in lockdown mode
+                            router.push('/rooms/creator-studio');
+                        } else if (newStatus === 'pending') {
+                            // Pending — navigate to dashboard lockdown mode
+                            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+                            router.push('/rooms/creator-studio');
                         }
                     }
                 )
@@ -91,9 +96,9 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                     if (pollRef.current) clearInterval(pollRef.current);
                 } else if (polledProfile?.kyc_status === 'rejected') {
                     sessionStorage.removeItem(SESSION_STORAGE_KEY);
-                    toast.error("Verification rejected. Please try again.");
+                    toast.error("Verification was not approved.");
                     if (pollRef.current) clearInterval(pollRef.current);
-                    window.location.reload();
+                    router.push('/rooms/creator-studio');
                 }
             }, 5000);
 
@@ -164,16 +169,17 @@ export default function DiditVerificationStep({ onComplete, rejectionReason }: P
                 onComplete();
             } else if (data.status === 'rejected') {
                 sessionStorage.removeItem(SESSION_STORAGE_KEY);
-                toast.error("Verification was not approved. Please try again.");
-                // Reset so they can start again
-                setVerificationStarted(false);
+                toast.info("Verification needs attention. Taking you to your dashboard.");
+                router.push('/rooms/creator-studio');
             } else if (data.status === 'no_session') {
                 toast.info("No verification session found. Please start verification.");
                 setVerificationStarted(false);
                 sessionStorage.removeItem(SESSION_STORAGE_KEY);
             } else {
-                // Still pending / in progress
-                toast.info("Verification is still being processed. Please wait a moment and try again.");
+                // Still pending / in progress — go to dashboard in lockdown mode
+                sessionStorage.removeItem(SESSION_STORAGE_KEY);
+                toast.info("Verification submitted! Taking you to your dashboard.");
+                router.push('/rooms/creator-studio');
             }
         } catch (error) {
             console.error("Status check error:", error);

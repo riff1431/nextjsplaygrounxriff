@@ -129,26 +129,30 @@ export async function POST(
                 .limit(1)
                 .maybeSingle();
 
-            if (pendingSession) {
-                // Update only this specific session to active
-                const { error: sessionError } = await admin
-                    .from('truth_dare_sessions')
-                    .update({ status: 'active', started_at: new Date().toISOString() })
-                    .eq('id', pendingSession.id);
+            const now = new Date().toISOString();
 
-                if (sessionError) console.error("Error going live in history:", sessionError);
-            }
+            // B. Run all updates in parallel — much faster than sequential awaits
+            const [gameResult] = await Promise.all([
+                // Game state → active
+                admin
+                    .from('truth_dare_games')
+                    .update({ status: 'active', updated_at: now })
+                    .eq('room_id', roomId)
+                    .then(r => r),
+                // Room status → live
+                admin.from('rooms').update({ status: 'live' }).eq('id', roomId)
+                    .then(r => r),
+                // Session record (if pending one exists)
+                pendingSession
+                    ? admin
+                        .from('truth_dare_sessions')
+                        .update({ status: 'active', started_at: now })
+                        .eq('id', pendingSession.id)
+                        .then(r => r)
+                    : Promise.resolve(null),
+            ]);
 
-            // B. Update Game State to active
-            const { error: updateError } = await admin
-                .from('truth_dare_games')
-                .update({ status: 'active', updated_at: new Date().toISOString() })
-                .eq('room_id', roomId);
-
-            if (updateError) throw updateError;
-
-            // C. Ensure room status is live
-            await admin.from('rooms').update({ status: 'live' }).eq('id', roomId);
+            if (gameResult.error) throw gameResult.error;
 
             return NextResponse.json({ success: true, message: "Session is now live" });
         }

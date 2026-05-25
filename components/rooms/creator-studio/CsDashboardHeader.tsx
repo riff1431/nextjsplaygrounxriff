@@ -32,6 +32,7 @@ interface CsStatsBarProps {
     subscribers: number;
     subscriptionEarnings: number;
     isLoading?: boolean;
+    kycLocked?: boolean;
 }
 
 export const CsStatsBar = ({
@@ -42,6 +43,7 @@ export const CsStatsBar = ({
     subscribers,
     subscriptionEarnings,
     isLoading,
+    kycLocked,
 }: CsStatsBarProps) => {
     const router = useRouter();
     const stats: StatCardProps[] = [
@@ -54,15 +56,16 @@ export const CsStatsBar = ({
     ];
 
     return (
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className={`flex flex-wrap gap-3 items-center ${kycLocked ? 'opacity-50 pointer-events-none' : ''}`}>
             {stats.map((stat) => (
                 <StatCard key={stat.label} {...stat} />
             ))}
             {/* Schedule Button */}
             <button
-                onClick={() => router.push("/rooms/creator-studio/schedule")}
-                className="cs-glass-card flex-1 px-6 py-3 flex items-center justify-center gap-2.5 min-w-[140px] cursor-pointer transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] group"
+                onClick={() => !kycLocked && router.push("/rooms/creator-studio/schedule")}
+                className={`cs-glass-card flex-1 px-6 py-3 flex items-center justify-center gap-2.5 min-w-[140px] transition-all group ${kycLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]'}`}
                 style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1.5px" }}
+                disabled={kycLocked}
             >
                 <CalendarClock size={20} className="text-cyan-400 group-hover:text-cyan-300 transition-colors shrink-0" />
                 <span className="text-base font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors">Schedule</span>

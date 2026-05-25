@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Upload, MessageSquare, Monitor, Zap, Tv, Gamepad2, Heart, Trophy } from "lucide-react";
+import { Upload, MessageSquare, Monitor, Zap, Tv, Gamepad2, Heart, Trophy, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 interface StudioCardProps {
     icon: React.ReactNode;
@@ -16,19 +17,28 @@ interface StudioCardProps {
     roomType?: string;
 }
 
-const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew, link, isInactive }: StudioCardProps & { isInactive?: boolean }) => {
+const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew, link, isInactive, kycLocked }: StudioCardProps & { isInactive?: boolean; kycLocked?: boolean }) => {
     const router = useRouter();
+    const isDisabled = isInactive || kycLocked;
 
     return (
         <div
-            onClick={() => !isInactive && link && router.push(link)}
-            className={`cs-glass-card p-4 flex items-start gap-3 transition-all group relative ${(!isInactive && link) ? 'hover:bg-white/10 cursor-pointer' : 'opacity-40 cursor-not-allowed pointer-events-none'}`}
+            onClick={() => {
+                if (kycLocked) {
+                    toast.info("🔒 Complete ID verification to unlock this room.", { duration: 3000 });
+                    return;
+                }
+                if (!isInactive && link) {
+                    router.push(link);
+                }
+            }}
+            className={`cs-glass-card p-4 flex items-start gap-3 transition-all group relative ${(!isDisabled && link) ? 'hover:bg-white/10 cursor-pointer' : 'opacity-40 cursor-not-allowed'}`}
             style={{ 
-                borderLeftColor: isInactive ? "rgba(255,255,255,0.15)" : borderColor, 
+                borderLeftColor: isDisabled ? "rgba(255,255,255,0.15)" : borderColor, 
                 borderLeftWidth: "3px" 
             }}
         >
-            <div className="shrink-0 mt-0.5" style={{ color: isInactive ? "rgba(255,255,255,0.3)" : borderColor }}>{icon}</div>
+            <div className="shrink-0 mt-0.5" style={{ color: isDisabled ? "rgba(255,255,255,0.3)" : borderColor }}>{icon}</div>
             <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
@@ -40,8 +50,13 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
                             <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)] text-white shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">Very New</span>
                         )}
                     </div>
-                    {isInactive && (
+                    {isInactive && !kycLocked && (
                         <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-950/40 border border-red-900/30 text-red-400">Disabled</span>
+                    )}
+                    {kycLocked && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-yellow-950/40 border border-yellow-900/30 text-yellow-400 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> KYC Pending
+                        </span>
                     )}
                 </div>
                 <p className="text-xs text-white/50 mt-1 leading-relaxed">{description}</p>
@@ -50,7 +65,7 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
     );
 };
 
-export const CsCreatorStudio = () => {
+export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
     const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
     const supabase = createClient();
 
@@ -107,7 +122,7 @@ export const CsCreatorStudio = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {cards.map((card) => {
                     const isInactive = card.roomType ? activeStatuses[card.roomType] === false : false;
-                    return <StudioCard key={card.title} {...card} isInactive={isInactive} />;
+                    return <StudioCard key={card.title} {...card} isInactive={isInactive} kycLocked={kycLocked} />;
                 })}
             </div>
         </div>
