@@ -33,7 +33,6 @@ const SUGA4U_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <Inbox className="w-5 h-5" /> },
     { id: "favorites", label: "Favorites", icon: <Star className="w-5 h-5" /> },
-    { id: "stream", label: "Stream", icon: <Video className="w-5 h-5" /> },
 ];
 
 const Suga4UCreatorPage = () => {
@@ -259,10 +258,32 @@ const Suga4UCreatorPage = () => {
                         </div>
                     </div>
 
-                    {/* Mobile: Tab-based layout */}
+                    {/* Mobile: Stream always on top + tab content below */}
                     <div className="lg:hidden flex flex-col gap-3">
+                        {/* Stream — always visible at top */}
+                        <div className="s4u-creator-glass-panel p-3 shrink-0">
+                            <div className="relative rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center aspect-square max-h-[360px] mx-auto">
+                                {roomId && user ? (
+                                    <LiveStreamWrapper
+                                        role="host"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={user.id}
+                                        hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                        hostName={user.user_metadata?.full_name || "Creator"}
+                                    />
+                                ) : (
+                                    <div className="relative flex flex-col items-center gap-2 text-white/50">
+                                        <span className="text-xs font-semibold">Connecting to stream...</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Tab content below stream */}
                         {mobileTab === "chat" && (
-                            <div className="min-h-[400px]" style={{ height: "calc(100dvh - 160px)" }}>
+                            <div className="min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
                                 <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
                         )}
@@ -286,30 +307,6 @@ const Suga4UCreatorPage = () => {
                                     <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
                                 </div>
                                 <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />
-                            </div>
-                        )}
-
-                        {mobileTab === "stream" && (
-                            <div className="flex flex-col gap-4">
-                                <div className="s4u-creator-glass-panel p-3">
-                                    <div className="relative rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center" style={{ height: "clamp(200px, 56vw, 360px)" }}>
-                                        {roomId && user ? (
-                                            <LiveStreamWrapper
-                                                role="host"
-                                                appId={APP_ID}
-                                                roomId={roomId}
-                                                uid={user.id}
-                                                hostId={user.id}
-                                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                                hostName={user.user_metadata?.full_name || "Creator"}
-                                            />
-                                        ) : (
-                                            <div className="relative flex flex-col items-center gap-2 text-white/50">
-                                                <span className="text-xs font-semibold">Connecting to stream...</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         )}
                     </div>

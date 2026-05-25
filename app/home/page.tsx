@@ -551,13 +551,13 @@ function HomeScreen({
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/collections")}>
                                     <Star className="w-4 h-4" /> Collections
                                 </button>
-                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")} data-tour="gifts-tips">
+                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")} data-tour="suggestions-button">
                                     <MessageSquare className="w-4 h-4" /> Suggestions
                                 </button>
-                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")} data-tour="gift-system">
+                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")}>
                                     <Users className="w-4 h-4" /> Subscriptions
                                 </button>
-                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour="schedule-section">
+                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour="newsfeed-button">
                                     <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                 </button>
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" title="Log Out" onClick={() => router.push("/")}>
@@ -642,7 +642,7 @@ function HomeScreen({
                     </div>
                 </div>
                 {/* Right rail (Cleaned) – Auto-scrolling Creator Feed */}
-                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6" data-tour="creator-feed" data-tour-match="match-discovery">
+                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6" data-tour="creator-feed">
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Featured Creators
                     </div>

@@ -62,7 +62,7 @@ const CreatorStudioDashboardPage = () => {
                         onSave={saveSubscriptionPrices}
                     />
                 </div>
-                <div data-tour="withdrawals">
+                <div data-tour="recent-rooms">
                     <CsRecentRoomHistory
                         rooms={recentRooms}
                         isLoading={isLoading}

@@ -30,7 +30,6 @@ import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/Mob
 import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
 
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
-    { id: "studio", label: "Studio", icon: <VideoIcon className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <InboxIcon className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
 ];
@@ -154,7 +153,7 @@ function TruthOrDareCreatorContent() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
-    const [mobileStudioTab, setMobileStudioTab] = useState("studio");
+    const [mobileStudioTab, setMobileStudioTab] = useState("requests");
     // Agora remote users from the host's CreatorStream — used to render collab streams in invite slots
     const [agoraRemoteUsers, setAgoraRemoteUsers] = useState<any[]>([]);
     const handleRemoteUsersChange = useCallback((users: any[]) => {
@@ -1596,7 +1595,7 @@ function TruthOrDareCreatorContent() {
 
                     {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
                     {!isSessionLive && (
-                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md rounded-xl">
+                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md rounded-xl overflow-y-auto pb-20 lg:pb-0">
                             <div className="flex flex-col items-center gap-6 max-w-md text-center px-6">
                                 {/* Pulsing ring */}
                                 <div className="relative">
@@ -1648,8 +1647,8 @@ function TruthOrDareCreatorContent() {
                         </div>
                     )}
 
-                    {/* ═══ LEFT SECTION: Video Grid + Bottom Row ═══ */}
-                    <div className={`flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0 ${mobileStudioTab !== "studio" ? "hidden lg:flex" : "flex"}`}>
+                    {/* ═══ LEFT SECTION: Video Grid + Bottom Row — always visible ═══ */}
+                    <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0">
                         {/* 2x2 Video Grid */}
                         <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }}>
                             {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
@@ -1863,13 +1862,15 @@ function TruthOrDareCreatorContent() {
                             }
                         />
                     </div>
-                    {/* Mobile Tab Bar for Studio */}
-                    <MobileStudioTabs
-                        tabs={TOD_STUDIO_TABS}
-                        activeTab={mobileStudioTab}
-                        onTabChange={setMobileStudioTab}
-                        accentHsl="330, 80%, 55%"
-                    />
+                    {/* Mobile Tab Bar for Studio — only show when session is live */}
+                    {isSessionLive && (
+                        <MobileStudioTabs
+                            tabs={TOD_STUDIO_TABS}
+                            activeTab={mobileStudioTab}
+                            onTabChange={setMobileStudioTab}
+                            accentHsl="330, 80%, 55%"
+                        />
+                    )}
                 </div>
             )}
 

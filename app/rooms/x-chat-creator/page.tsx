@@ -20,7 +20,6 @@ const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWra
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const XCHAT_TABS: MobileStudioTab[] = [
-    { id: "stream", label: "Stream", icon: <Video className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <Inbox className="w-5 h-5" /> },
     { id: "summary", label: "Summary", icon: <BarChart3 className="w-5 h-5" /> },
@@ -36,7 +35,7 @@ const XChatCreatorPage = () => {
     const [roomId, setRoomId] = useState<string | undefined>(urlRoomId || undefined);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [mobileTab, setMobileTab] = useState("stream");
+    const [mobileTab, setMobileTab] = useState("chat");
 
     // Must be called before any conditional return to satisfy Rules of Hooks
     useEffect(() => {
@@ -203,53 +202,53 @@ const XChatCreatorPage = () => {
                             </div>
                         </div>
 
-                        {/* Mobile: Tab-based layout */}
+                        {/* Mobile: Stream always on top + tab content below */}
                         <div className="lg:hidden flex flex-col gap-3 pt-2">
-                            {mobileTab === "stream" && (
-                                <div className="w-full">
-                                    <div
-                                        className="relative rounded-xl overflow-hidden aspect-video mx-auto"
-                                        style={{
-                                            maxWidth: '600px',
-                                            boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
-                                            border: '2px solid rgba(255, 215, 0, 0.5)',
-                                        }}
-                                    >
-                                        {roomId && user ? (
-                                            <LiveStreamWrapper
-                                                role="host"
-                                                appId={APP_ID}
-                                                roomId={roomId}
-                                                uid={user.id}
-                                                hostId={user.id}
-                                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                                hostName={user.user_metadata?.full_name || "Creator"}
+                            {/* Stream — always visible at top */}
+                            <div className="w-full shrink-0">
+                                <div
+                                    className="relative rounded-xl overflow-hidden aspect-square max-h-[360px] mx-auto"
+                                    style={{
+                                        maxWidth: '600px',
+                                        boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
+                                        border: '2px solid rgba(255, 215, 0, 0.5)',
+                                    }}
+                                >
+                                    {roomId && user ? (
+                                        <LiveStreamWrapper
+                                            role="host"
+                                            appId={APP_ID}
+                                            roomId={roomId}
+                                            uid={user.id}
+                                            hostId={user.id}
+                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                            hostName={user.user_metadata?.full_name || "Creator"}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-black/60">
+                                            <img
+                                                src="/x-chat/streamer-male.png"
+                                                alt="Creator stream"
+                                                className="w-full h-full object-cover object-top"
                                             />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-black/60">
-                                                <img
-                                                    src="/x-chat/streamer-male.png"
-                                                    alt="Creator stream"
-                                                    className="w-full h-full object-cover object-top"
-                                                />
-                                            </div>
-                                        )}
-                                        <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
-                                            <span className="text-red-500 text-sm">❤️</span>
-                                            <span className="text-sm font-bold text-foreground">800</span>
                                         </div>
+                                    )}
+                                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
+                                        <span className="text-red-500 text-sm">❤️</span>
+                                        <span className="text-sm font-bold text-foreground">800</span>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
+                            {/* Tab content below stream */}
                             {mobileTab === "chat" && (
-                                <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 160px)" }}>
+                                <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 380px)" }}>
                                     <LiveChat roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
 
                             {mobileTab === "requests" && (
-                                <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 160px)" }}>
+                                <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 380px)" }}>
                                     <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}

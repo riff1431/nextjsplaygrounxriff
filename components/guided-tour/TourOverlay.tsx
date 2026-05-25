@@ -270,8 +270,32 @@ export default function TourOverlay() {
     setTargetRect(r);
   }, [step]);
 
+  // When the step changes, try to find the target. If not found after retries, auto-skip.
   useEffect(() => {
-    updateRect();
+    if (!step || !activeTour) return;
+
+    let attempts = 0;
+    const maxAttempts = 5;
+    const retryInterval = 400; // ms between retries
+
+    const tryFind = () => {
+      const r = getTargetRect(step.target);
+      if (r) {
+        setTargetRect(r);
+        return;
+      }
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(tryFind, retryInterval);
+      } else {
+        // Target not found after retries — skip this step
+        console.warn(`Tour target [data-tour="${step.target}"] not found, auto-skipping.`);
+        nextStep();
+      }
+    };
+
+    tryFind();
+
     // Re-measure on scroll/resize
     window.addEventListener("scroll", updateRect, true);
     window.addEventListener("resize", updateRect);
@@ -279,7 +303,7 @@ export default function TourOverlay() {
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
     };
-  }, [updateRect]);
+  }, [step, activeTour, updateRect, nextStep]);
 
   // Measure tooltip after render
   useEffect(() => {

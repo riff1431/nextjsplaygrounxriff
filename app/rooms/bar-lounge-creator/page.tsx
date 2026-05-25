@@ -20,7 +20,6 @@ import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncoming
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 
 const BAR_LOUNGE_TABS: MobileStudioTab[] = [
-    { id: "video", label: "Video", icon: <Video className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <Inbox className="w-5 h-5" /> },
     { id: "summary", label: "Summary", icon: <BarChart3 className="w-5 h-5" /> },
@@ -37,7 +36,7 @@ const CreatorBarLoungeInner = () => {
     const [sessionTitle, setSessionTitle] = useState<string | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState(false);
     const [showIncomingCallsPanel, setShowIncomingCallsPanel] = useState(false);
-    const [mobileTab, setMobileTab] = useState("video");
+    const [mobileTab, setMobileTab] = useState("chat");
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId || null, user?.id || null, "creator");
@@ -193,22 +192,22 @@ const CreatorBarLoungeInner = () => {
                     </div>
                 </div>
 
-                {/* Mobile: Tab-based layout */}
+                {/* Mobile: Stream always on top + tab content below */}
                 <div className="lg:hidden flex flex-col gap-3">
-                    {mobileTab === "video" && (
-                        <div className="w-full min-h-[300px]" style={{ height: "clamp(250px, 56vw, 500px)" }}>
-                            <VideoStage roomId={roomId} />
-                        </div>
-                    )}
+                    {/* Video — always visible at top */}
+                    <div className="w-full shrink-0 aspect-square max-h-[360px] mx-auto rounded-xl overflow-hidden">
+                        <VideoStage roomId={roomId} />
+                    </div>
 
+                    {/* Tab content below stream */}
                     {mobileTab === "chat" && (
-                        <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 180px)" }}>
+                        <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
                             <LoungeChat roomId={roomId} sessionId={sessionId} />
                         </div>
                     )}
 
                     {mobileTab === "requests" && (
-                        <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 180px)" }}>
+                        <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
                             <IncomingRequests
                                 roomId={roomId}
                                 sessionId={sessionId}

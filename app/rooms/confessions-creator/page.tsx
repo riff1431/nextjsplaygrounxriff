@@ -16,7 +16,6 @@ import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 
 const CONFESSIONS_TABS: MobileStudioTab[] = [
-    { id: "content", label: "Content", icon: <Video className="w-5 h-5" /> },
     { id: "sidebar", label: "Sidebar", icon: <LayoutList className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
 ];
@@ -28,7 +27,7 @@ const ConfessionsCreatorPage = () => {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [isWrongUser, setIsWrongUser] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [mobileTab, setMobileTab] = useState("content");
+    const [mobileTab, setMobileTab] = useState("sidebar");
     const router = useRouter();
 
     useEffect(() => {
@@ -116,22 +115,22 @@ const ConfessionsCreatorPage = () => {
                     </div>
                 </div>
 
-                {/* Main content — responsive 3-col → mobile tabs */}
+                {/* Main content — responsive 3-col → mobile: content on top + tabs below */}
                 <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 lg:overflow-hidden xl:mx-40 min-h-0">
                     {/* Left Sidebar — visible on lg+, or when "sidebar" tab active on mobile */}
-                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[400px] lg:min-h-0`}>
+                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0`}>
                         <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
                     </div>
 
-                    {/* Center Content — visible on lg+, or when "content" tab active on mobile */}
-                    <div className={`${mobileTab === "content" ? "flex" : "hidden"} lg:flex flex-1 flex-col gap-4 min-h-0`}>
-                        <div className="flex-1 min-h-[400px] lg:min-h-0">
+                    {/* Center Content — always visible */}
+                    <div className="flex lg:flex flex-1 flex-col gap-4 min-h-0">
+                        <div className="flex-1 min-h-[250px] lg:min-h-0">
                             <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
                         </div>
                     </div>
 
                     {/* Live Chat — visible on lg+, or when "chat" tab active on mobile */}
-                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[400px] lg:min-h-0`}>
+                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0`}>
                         <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>

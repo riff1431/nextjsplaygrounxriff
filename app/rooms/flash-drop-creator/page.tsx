@@ -23,7 +23,6 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const FLASH_DROP_TABS: MobileStudioTab[] = [
     { id: "board", label: "Board", icon: <BarChart3 className="w-5 h-5" /> },
-    { id: "stream", label: "Stream", icon: <Video className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <ClipboardList className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
 ];
@@ -168,37 +167,34 @@ function FlashdropCreatorStudio() {
                         </div>
                     </div>
 
-                    {/* Mobile: Tab-based layout */}
+                    {/* Mobile: Stream always on top + tab content below */}
                     <div className="lg:hidden flex flex-col gap-3">
+                        {/* Stream — always visible at top */}
+                        <div className="rounded-xl overflow-hidden shrink-0 aspect-square max-h-[360px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                            {roomId && user ? (
+                                <LiveStreamWrapper
+                                    role="host"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={user.id}
+                                    hostId={user.id}
+                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                    hostName={user.user_metadata?.full_name || "Creator"}
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
+                                    Connecting to stream...
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tab content below stream */}
                         {/* Board tab */}
                         {mobileTab === "board" && (
                             <div className="flex flex-col gap-3">
                                 <SummaryBox roomId={roomId} sessionId={sessionId} />
                                 <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                                 <HighRollerPacks roomId={roomId} sessionId={sessionId} />
-                            </div>
-                        )}
-
-                        {/* Stream tab */}
-                        {mobileTab === "stream" && (
-                            <div className="flex flex-col gap-3">
-                                <div className="rounded-xl overflow-hidden" style={{ height: "280px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                    {roomId && user ? (
-                                        <LiveStreamWrapper
-                                            role="host"
-                                            appId={APP_ID}
-                                            roomId={roomId}
-                                            uid={user.id}
-                                            hostId={user.id}
-                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                            hostName={user.user_metadata?.full_name || "Creator"}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
-                                            Connecting to stream...
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         )}
 
