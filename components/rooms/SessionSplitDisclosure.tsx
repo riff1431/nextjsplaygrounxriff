@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { SPLIT_CONFIG } from "@/utils/finance/splitConfig";
 import { cs } from "@/utils/currency";
 
@@ -25,11 +25,47 @@ export default function SessionSplitDisclosure({
     onAcknowledge,
     onCancel,
 }: SessionSplitDisclosureProps) {
-    const global = SPLIT_CONFIG.GLOBAL;
-    const entry = isPrivate ? SPLIT_CONFIG.PRIVATE_ENTRY : SPLIT_CONFIG.PUBLIC_ENTRY;
-    const perMin = isPrivate ? SPLIT_CONFIG.PRIVATE_PER_MIN : SPLIT_CONFIG.PUBLIC_PER_MIN;
-    const suga = SPLIT_CONFIG.SUGA4U_FAVORITES;
-    const comp = SPLIT_CONFIG.COMPETITION_TIPS;
+    const [liveSplits, setLiveSplits] = useState<any>(null);
+
+    useEffect(() => {
+        fetch("/api/v1/splits/disclosure")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.splits) {
+                    setLiveSplits(data.splits);
+                }
+            })
+            .catch(err => console.error("Failed to fetch live splits:", err));
+    }, []);
+
+    const global = {
+        creator: liveSplits?.GLOBAL?.creator_pct ?? SPLIT_CONFIG.GLOBAL.creator,
+        platform: liveSplits?.GLOBAL?.platform_pct ?? SPLIT_CONFIG.GLOBAL.platform,
+    };
+    const entry = {
+        creator: isPrivate
+            ? (liveSplits?.PRIVATE_ENTRY?.creator_pct ?? SPLIT_CONFIG.PRIVATE_ENTRY.creator)
+            : (liveSplits?.PUBLIC_ENTRY?.creator_pct ?? SPLIT_CONFIG.PUBLIC_ENTRY.creator),
+        platform: isPrivate
+            ? (liveSplits?.PRIVATE_ENTRY?.platform_pct ?? SPLIT_CONFIG.PRIVATE_ENTRY.platform)
+            : (liveSplits?.PUBLIC_ENTRY?.platform_pct ?? SPLIT_CONFIG.PUBLIC_ENTRY.platform),
+    };
+    const perMin = {
+        creator: isPrivate
+            ? (liveSplits?.PRIVATE_PER_MIN?.creator_pct ?? SPLIT_CONFIG.PRIVATE_PER_MIN.creator)
+            : (liveSplits?.PUBLIC_PER_MIN?.creator_pct ?? SPLIT_CONFIG.PUBLIC_PER_MIN.creator),
+        platform: isPrivate
+            ? (liveSplits?.PRIVATE_PER_MIN?.platform_pct ?? SPLIT_CONFIG.PRIVATE_PER_MIN.platform)
+            : (liveSplits?.PUBLIC_PER_MIN?.platform_pct ?? SPLIT_CONFIG.PUBLIC_PER_MIN.platform),
+    };
+    const suga = {
+        creator: liveSplits?.SUGA4U_FAVORITES?.creator_pct ?? SPLIT_CONFIG.SUGA4U_FAVORITES.creator,
+        platform: liveSplits?.SUGA4U_FAVORITES?.platform_pct ?? SPLIT_CONFIG.SUGA4U_FAVORITES.platform,
+    };
+    const comp = {
+        creator: liveSplits?.COMPETITION_TIPS?.creator_pct ?? SPLIT_CONFIG.COMPETITION_TIPS.creator,
+        platform: liveSplits?.COMPETITION_TIPS?.platform_pct ?? SPLIT_CONFIG.COMPETITION_TIPS.platform,
+    };
 
     const rows = [
         {

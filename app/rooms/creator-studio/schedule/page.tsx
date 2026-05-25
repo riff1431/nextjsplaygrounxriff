@@ -8,12 +8,12 @@ import { toast } from "sonner";
 
 const ROOM_TYPES = [
     { value: "flash-drop", label: "Flash Drop", color: "#f97316", icon: "⚡" },
-    { value: "suga4u", label: "Suga4U", color: "#ec4899", icon: "💎" },
+    { value: "suga-4-u", label: "Suga 4 U", color: "#ec4899", icon: "💎" },
     { value: "confessions", label: "Confessions", color: "#a855f7", icon: "🔮" },
     { value: "x-chat", label: "X-Chat", color: "#ef4444", icon: "🔥" },
     { value: "truth-or-dare", label: "Truth or Dare", color: "#06b6d4", icon: "🎯" },
     { value: "bar-lounge", label: "Bar Lounge", color: "#84cc16", icon: "🍸" },
-    { value: "competitions", label: "Competitions", color: "#eab308", icon: "🏆" },
+    { value: "competition", label: "Competitions", color: "#eab308", icon: "🏆" },
 ];
 
 interface Schedule {
@@ -181,8 +181,10 @@ export default function SchedulePage() {
         }
     };
 
-    const getRoomMeta = (type: string) =>
-        ROOM_TYPES.find((r) => r.value === type) || { label: type, color: "#888", icon: "📅" };
+    const getRoomMeta = (type: string) => {
+        const normalizedType = type === "suga4u" ? "suga-4-u" : type === "competitions" ? "competition" : type;
+        return ROOM_TYPES.find((r) => r.value === normalizedType) || { label: type, color: "#888", icon: "📅" };
+    };
 
     const formatDateTime = (iso: string) => {
         const d = new Date(iso);

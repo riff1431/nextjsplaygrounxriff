@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     ArrowLeft, Heart, Search, RefreshCw, TrendingUp, Flame, Sparkles,
     Image as ImageIcon, Video, FileText, Filter, ChevronDown, X, User,
-    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle,
+    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle, Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -450,6 +450,13 @@ export default function NewsFeedPage() {
                                 <MessageSquare className="w-5 h-5" />
                             </button>
                             <NotificationIcon role="fan" />
+                             <button
+                                 onClick={() => router.push('/account/subscription')}
+                                 className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
+                                 title="Subscription"
+                             >
+                                 <Crown className="w-5 h-5" />
+                             </button>
                             <ProfileMenu
                                 user={user}
                                 profile={currentProfile}
@@ -505,9 +512,9 @@ export default function NewsFeedPage() {
                                             <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
                                                 <User className="w-4 h-4" /> My Profile
                                             </button>
-                                            <button className="w-full rounded-xl border border-emerald-400/80 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/membership")}>
-                                                <Star className="w-4 h-4" /> My Subscription
-                                            </button>
+                                             <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")}>
+                                                 <Users className="w-4 h-4" /> Subscriptions
+                                             </button>
                                             <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")}>
                                                 <MessageSquare className="w-4 h-4" /> Suggestions
                                             </button>

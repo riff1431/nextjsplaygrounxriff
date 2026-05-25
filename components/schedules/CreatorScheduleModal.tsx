@@ -6,10 +6,13 @@ import { CalendarClock, Clock, X, Sparkles } from "lucide-react";
 const ROOM_META: Record<string, { label: string; color: string; icon: string }> = {
     "flash-drop": { label: "Flash Drop", color: "#f97316", icon: "⚡" },
     suga4u: { label: "Suga4U", color: "#ec4899", icon: "💎" },
+    "suga-4-u": { label: "Suga 4 U", color: "#ec4899", icon: "💎" },
     confessions: { label: "Confessions", color: "#a855f7", icon: "🔮" },
     "x-chat": { label: "X-Chat", color: "#ef4444", icon: "🔥" },
     "truth-or-dare": { label: "Truth or Dare", color: "#06b6d4", icon: "🎯" },
     "bar-lounge": { label: "Bar Lounge", color: "#84cc16", icon: "🍸" },
+    competition: { label: "Competitions", color: "#eab308", icon: "🏆" },
+    competitions: { label: "Competitions", color: "#eab308", icon: "🏆" },
 };
 
 interface Schedule {
