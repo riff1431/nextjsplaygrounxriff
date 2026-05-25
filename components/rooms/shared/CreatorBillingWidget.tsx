@@ -6,17 +6,11 @@ import { cs } from "@/utils/currency";
 import { createClient } from "@/utils/supabase/client";
 
 /* ═══════════════════════════════════════════════════════════
-   CreatorBillingWidget  — Premium Unified Pill
+   CreatorBillingWidget — Premium Unified Pill
    ─────────────────────────────────────────────────────────
-   Single glassmorphic pill with 3 stat sections:
-     EARNED  │  LIVE FANS  │  PER MIN
-
-   Responsive:
-     < 480px  : hidden (parent .slc-billing controls this)
-     480–639px: EARNED + FANS (no rate)
-     ≥ 640px  : All 3 stats
-
-   Real-time via Supabase + 30s poll fallback.
+   Shows immediately with "—" placeholders (no invisible
+   skeleton). Updates in real-time via Supabase + 30s poll.
+   Visible on ALL room backgrounds (dark, medium, light).
    ═══════════════════════════════════════════════════════════ */
 
 interface BillingSummary {
@@ -43,7 +37,6 @@ export default function CreatorBillingWidget({
     pollMs = 30_000,
 }: CreatorBillingWidgetProps) {
     const [summary, setSummary] = useState<BillingSummary | null>(null);
-    const [loading, setLoading] = useState(true);
     const [isCharging, setIsCharging] = useState(false);
     const prevChargeAt = useRef<string | null>(null);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -59,8 +52,11 @@ export default function CreatorBillingWidget({
     const fetchSummary = useCallback(async () => {
         if (!isValidSession) return;
         try {
-            const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/billing-summary`);
-            if (!res.ok) { setLoading(false); return; }
+            const res = await fetch(
+                `/api/v1/rooms/sessions/${sessionId}/billing-summary`,
+                { cache: "no-store" }
+            );
+            if (!res.ok) return;
             const data: BillingSummary = await res.json();
 
             if (
@@ -74,10 +70,9 @@ export default function CreatorBillingWidget({
             prevChargeAt.current = data.last_charge_at;
             setSummary(data);
         } catch { /* silent */ }
-        finally { setLoading(false); }
     }, [sessionId, isValidSession]);
 
-    // ── Polling fallback ──
+    // ── Polling + immediate fetch ──
     useEffect(() => {
         if (!isValidSession) return;
         fetchSummary();
@@ -107,213 +102,143 @@ export default function CreatorBillingWidget({
 
     if (!isValidSession) return null;
 
+    const C = cs();
     const accent = `hsl(${accentHsl})`;
     const accentA = (a: number) => `hsla(${accentHsl}, ${a})`;
-    const C = cs();
 
-    // ── Skeleton pill ──
-    if (loading || !summary) {
-        return (
-            <>
-                <style>{`
-                    @keyframes cbw-sweep {
-                        0% { transform: translateX(-100%); }
-                        100% { transform: translateX(200%); }
-                    }
-                `}</style>
-                <div style={{
-                    display: "flex", alignItems: "center",
-                    background: "rgba(0,0,0,0.3)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 12,
-                    backdropFilter: "blur(14px)",
-                    WebkitBackdropFilter: "blur(14px)",
-                    overflow: "hidden",
-                    position: "relative",
-                }}>
-                    {/* Shimmer sweep */}
-                    <div style={{
-                        position: "absolute", inset: 0,
-                        background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)",
-                        animation: "cbw-sweep 1.5s ease-in-out infinite",
-                        zIndex: 1,
-                    }} />
-                    {[
-                        { label: "Earned", w: 78 },
-                        { label: "Live Fans", w: 72 },
-                        { label: "Per Min", w: 70 },
-                    ].map(({ label, w }, i) => (
-                        <React.Fragment key={label}>
-                            {i > 0 && <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />}
-                            <div style={{
-                                width: w, padding: "6px 14px", display: "flex",
-                                flexDirection: "column", alignItems: "center", gap: 3,
-                            }}>
-                                <div style={{ height: 8, width: "60%", borderRadius: 4, background: "rgba(255,255,255,0.08)" }} />
-                                <div style={{ height: 13, width: "80%", borderRadius: 4, background: "rgba(255,255,255,0.12)" }} />
-                            </div>
-                        </React.Fragment>
-                    ))}
-                </div>
-            </>
-        );
-    }
-
-    const earnedInt = summary.total_earned % 1 === 0;
-    const earned = earnedInt
-        ? `${C}${summary.total_earned}`
-        : `${C}${summary.total_earned.toFixed(2)}`;
-
-    const showRate = summary.billing_enabled && summary.rate > 0;
-
-    // Pill glow on charge
-    const pillGlow = isCharging
-        ? `0 0 0 1px ${accentA(0.5)}, 0 0 20px ${accentA(0.35)}, 0 4px 20px rgba(0,0,0,0.4)`
-        : `0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06)`;
+    // Values — show "—" while loading, real data once available
+    const earned = summary
+        ? (summary.total_earned % 1 === 0
+            ? `${C}${summary.total_earned}`
+            : `${C}${summary.total_earned.toFixed(2)}`)
+        : "—";
+    const fans = summary ? String(summary.fan_count) : "—";
+    const rate = summary
+        ? (summary.billing_enabled && summary.rate > 0 ? `${C}${summary.rate}` : "—")
+        : "—";
+    const hasFans = (summary?.fan_count ?? 0) > 0;
+    const showRate = !summary || (summary.billing_enabled && summary.rate > 0);
 
     return (
         <>
             <style>{`
                 @keyframes cbw-glow {
-                    0%,100% { box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06); }
-                    50% { box-shadow: 0 0 0 1px ${accentA(0.6)}, 0 0 28px ${accentA(0.4)}, 0 4px 24px rgba(0,0,0,0.4); }
+                    0%,100% { box-shadow: 0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08); }
+                    50% { box-shadow: 0 0 0 2px ${accentA(0.5)}, 0 0 28px ${accentA(0.4)}, 0 2px 16px rgba(0,0,0,0.5); }
                 }
                 @keyframes cbw-bump {
-                    0% { transform: scale(1) translateY(0); }
-                    30% { transform: scale(1.12) translateY(-2px); }
-                    60% { transform: scale(0.97) translateY(1px); }
-                    100% { transform: scale(1) translateY(0); }
+                    0%  { transform: scale(1)    translateY(0px); }
+                    35% { transform: scale(1.15) translateY(-3px); }
+                    65% { transform: scale(0.96) translateY(1px); }
+                    100%{ transform: scale(1)    translateY(0px); }
                 }
                 @keyframes cbw-zap {
-                    0%,100% { opacity:1; transform:scale(1); }
-                    50% { opacity:.3; transform:scale(1.4) rotate(15deg); }
+                    0%,100% { opacity:1; transform:scale(1) rotate(0deg); }
+                    50%     { opacity:.3; transform:scale(1.5) rotate(20deg); }
                 }
                 @keyframes cbw-fadein {
-                    from { opacity:0; transform:scale(.9) translateY(-4px); }
-                    to { opacity:1; transform:scale(1) translateY(0); }
+                    from { opacity:0; transform:scale(.92) translateY(-3px); }
+                    to   { opacity:1; transform:scale(1) translateY(0); }
                 }
                 @keyframes cbw-dot {
-                    0%,100% { opacity:1; transform:scale(1); }
-                    50% { opacity:.4; transform:scale(.7); }
+                    0%,100% { opacity:1;  transform:scale(1); }
+                    50%     { opacity:.3; transform:scale(.6); }
                 }
                 @keyframes cbw-mount {
-                    from { opacity:0; transform:translateX(8px); }
-                    to { opacity:1; transform:translateX(0); }
+                    from { opacity:0; transform:translateX(10px); }
+                    to   { opacity:1; transform:translateX(0); }
                 }
-                .cbw-rate { display: flex; align-items: stretch; }
-                @media (max-width: 599px) { .cbw-rate { display: none !important; } }
+                .cbw-rate { display:flex; align-items:stretch; }
+                @media (max-width:599px) { .cbw-rate { display:none !important; } }
             `}</style>
 
-            {/* ── Unified pill ── */}
+            {/* ── Main pill ── */}
             <div
                 style={{
                     display: "flex",
                     alignItems: "stretch",
+                    /* Strong semi-opaque dark bg — visible on ALL room backgrounds */
                     background: isCharging
-                        ? `linear-gradient(135deg, rgba(0,0,0,0.4), ${accentA(0.08)})`
-                        : "rgba(0,0,0,0.35)",
-                    border: `1px solid ${isCharging ? accentA(0.35) : "rgba(255,255,255,0.1)"}`,
+                        ? `linear-gradient(135deg, rgba(8,4,18,0.88) 0%, ${accentA(0.14)} 100%)`
+                        : "rgba(8, 4, 18, 0.82)",
+                    border: `1px solid ${isCharging ? accentA(0.5) : "rgba(255,255,255,0.18)"}`,
                     borderRadius: 12,
-                    backdropFilter: "blur(14px)",
-                    WebkitBackdropFilter: "blur(14px)",
-                    boxShadow: pillGlow,
+                    backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
+                    boxShadow: "0 2px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
                     overflow: "hidden",
-                    transition: "background .4s, border-color .4s, box-shadow .4s",
+                    transition: "background .35s, border-color .35s, box-shadow .35s",
                     animation: isCharging
-                        ? "cbw-glow .8s ease-in-out 2, cbw-mount .3s ease-out"
-                        : "cbw-mount .3s ease-out",
+                        ? "cbw-glow .8s ease-in-out 2, cbw-mount .3s ease-out both"
+                        : "cbw-mount .3s ease-out both",
                     fontFamily: "'Inter', sans-serif",
                     flexShrink: 0,
+                    userSelect: "none",
                 }}
             >
-                {/* ── Accent left stripe ── */}
+                {/* Accent stripe */}
                 <div style={{
                     width: 3,
-                    background: `linear-gradient(to bottom, ${accentA(0.9)}, ${accentA(0.3)})`,
                     flexShrink: 0,
+                    background: `linear-gradient(180deg, ${accent} 0%, ${accentA(0.4)} 100%)`,
                 }} />
 
-                {/* ── EARNED ── */}
-                <StatSection
+                {/* EARNED */}
+                <Stat
                     label="Earned"
-                    icon={<TrendingUp size={12} color={accent} />}
+                    icon={<TrendingUp size={11} color={accent} />}
                     value={earned}
                     valueColor={accent}
                     bump={isCharging}
                 />
 
-                {/* Divider */}
                 <Divider />
 
-                {/* ── LIVE FANS ── */}
-                <StatSection
+                {/* LIVE FANS */}
+                <Stat
                     label="Live Fans"
-                    icon={<Users size={12} color="rgba(255,255,255,0.55)" />}
-                    value={String(summary.fan_count)}
-                    valueColor="#fff"
-                    suffix={summary.fan_count > 0 ? (
-                        <span
-                            title={`${summary.live_fan_count} watching now`}
-                            style={{
-                                fontSize: 9,
-                                color: "#4ade80",
-                                animation: "cbw-dot 2s ease-in-out infinite",
-                                lineHeight: 1,
-                            }}
-                        >●</span>
-                    ) : undefined}
+                    icon={<Users size={11} color="rgba(255,255,255,0.6)" />}
+                    value={fans}
+                    valueColor="#ffffff"
+                    suffix={hasFans
+                        ? <span style={{ fontSize: 9, color: "#4ade80", animation: "cbw-dot 2s ease-in-out infinite", lineHeight: 1 }} title="Live now">●</span>
+                        : undefined
+                    }
                 />
 
-                {/* ── PER MIN — hidden on narrow screens ── */}
+                {/* PER MIN — hidden < 600px */}
                 {showRate && (
                     <div className="cbw-rate">
                         <Divider />
-                        <StatSection
+                        <Stat
                             label="Per Min"
-                            icon={<Timer size={12} color="hsl(35,100%,65%)" />}
-                            value={`${C}${summary.rate}`}
+                            icon={<Timer size={11} color="hsl(35,100%,65%)" />}
+                            value={rate}
                             valueColor="hsl(35,100%,65%)"
-                            suffix={
-                                <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>/min</span>
+                            suffix={summary
+                                ? <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", fontWeight: 400, marginLeft: 1 }}>/min</span>
+                                : undefined
                             }
                         />
                     </div>
                 )}
-
-                {/* ── Billing OFF indicator ── */}
-                {!summary.billing_enabled && (
-                    <>
-                        <Divider />
-                        <div style={{ padding: "6px 12px", display: "flex", alignItems: "center" }}>
-                            <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: ".5px" }}>
-                                Billing Off
-                            </span>
-                        </div>
-                    </>
-                )}
             </div>
 
-            {/* ── BILLED! flash badge ── */}
+            {/* BILLED! flash */}
             {isCharging && (
                 <div style={{
                     display: "flex", alignItems: "center", gap: 4,
-                    padding: "5px 10px", borderRadius: 8,
-                    background: accentA(0.18),
+                    padding: "5px 10px", borderRadius: 9,
+                    background: accentA(0.2),
                     border: `1px solid ${accent}`,
-                    animation: "cbw-fadein .25s ease-out",
+                    animation: "cbw-fadein .2s ease-out both",
                     flexShrink: 0,
+                    boxShadow: `0 0 16px ${accentA(0.3)}`,
                 }}>
-                    <Zap
-                        size={11}
-                        color={accent}
-                        fill={accent}
-                        style={{ animation: "cbw-zap .35s ease-in-out 4" }}
-                    />
+                    <Zap size={11} color={accent} fill={accent} style={{ animation: "cbw-zap .35s ease-in-out 4" }} />
                     <span style={{
-                        fontSize: 10, fontWeight: 800,
-                        color: accent,
-                        letterSpacing: ".7px",
-                        textTransform: "uppercase",
+                        fontSize: 10, fontWeight: 800, color: accent,
+                        letterSpacing: ".7px", textTransform: "uppercase",
                     }}>BILLED!</span>
                 </div>
             )}
@@ -326,15 +251,15 @@ function Divider() {
     return (
         <div style={{
             width: 1,
-            background: "rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.1)",
             margin: "6px 0",
             flexShrink: 0,
         }} />
     );
 }
 
-/* ── Stat Section ── */
-function StatSection({
+/* ── Stat section ── */
+function Stat({
     label, icon, value, valueColor, bump, suffix,
 }: {
     label: string;
@@ -350,34 +275,30 @@ function StatSection({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            padding: "5px 13px",
-            gap: 1,
+            padding: "5px 12px",
+            gap: 2,
             cursor: "default",
-            userSelect: "none",
+            minWidth: 56,
         }}>
-            {/* Label row */}
+            {/* Label */}
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                 {icon}
                 <span style={{
-                    fontSize: 8,
-                    fontWeight: 600,
-                    color: "rgba(255,255,255,0.4)",
-                    textTransform: "uppercase",
-                    letterSpacing: ".65px",
+                    fontSize: 8, fontWeight: 600,
+                    color: "rgba(255,255,255,0.45)",
+                    textTransform: "uppercase", letterSpacing: ".65px",
                     whiteSpace: "nowrap",
                 }}>
                     {label}
                 </span>
             </div>
-            {/* Value row */}
+            {/* Value */}
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                 <span style={{
-                    fontSize: 15,
-                    fontWeight: 800,
+                    fontSize: 15, fontWeight: 800,
                     color: valueColor,
-                    letterSpacing: "-.3px",
-                    lineHeight: 1,
-                    transition: "color .25s",
+                    letterSpacing: "-.2px", lineHeight: 1,
+                    transition: "color .2s",
                     animation: bump ? "cbw-bump .5s cubic-bezier(.34,1.56,.64,1)" : undefined,
                     whiteSpace: "nowrap",
                 }}>
