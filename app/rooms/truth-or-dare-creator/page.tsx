@@ -1266,7 +1266,7 @@ function TruthOrDareCreatorContent() {
                 <div className="flex items-center gap-2 shrink-0">
                     {sessionActive && isInStudio && isSessionLive && (
                         <SessionLiveControls
-                            sessionId={roomId || ""}
+                            sessionId={activeSessionId || ""}
                             accentHsl="330, 80%, 55%"
                             initialLiveStartedAt={sessionActive ? new Date().toISOString() : null}
                             customGoLive={async () => {

@@ -59,6 +59,8 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     // Fan Presence State
     const remoteUsers = useRemoteUsers(); // Track connected fans/collab creators
     const [fans, setFans] = useState<FanProfile[]>([]);
+    // Real-time watcher count from room_participants (accurate for audience-role fans)
+    const [watcherCount, setWatcherCount] = useState<number>(0);
 
     // Expose remote users to parent for collab slot rendering
     useEffect(() => {
@@ -106,6 +108,36 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
         // Debounce slightly or just run
         fetchFanProfiles();
     }, [remoteUsers.length, JSON.stringify(remoteUsers.map(u => u.uid))]);
+
+    // Real-time watcher count from room_participants
+    useEffect(() => {
+        if (!channelName) return;
+
+        async function fetchWatcherCount() {
+            const { data } = await supabase
+                .from('room_participants')
+                .select('user_id')
+                .eq('room_id', channelName);
+            const unique = new Set((data || []).map((p: any) => p.user_id).filter(Boolean));
+            setWatcherCount(unique.size);
+        }
+
+        fetchWatcherCount();
+
+        const channel = supabase
+            .channel(`creator-stream-participants-${channelName}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'room_participants',
+                filter: `room_id=eq.${channelName}`,
+            }, () => {
+                fetchWatcherCount();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [channelName]);
 
 
     const startStreamSequence = () => {
@@ -381,7 +413,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 {/* Participant Count */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-xs text-white shadow-lg w-fit">
                     <Users className="w-3 h-3 text-pink-400" />
-                    <span className="font-bold">{remoteUsers.length}</span> Watching
+                    <span className="font-bold">{watcherCount}</span> Watching
                 </div>
 
                 {/* Avatars (Max 10) */}

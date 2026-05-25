@@ -138,15 +138,15 @@ const Suga4UCreatorPage = () => {
                 <div className="mb-0 shrink-0 flex items-center justify-between">
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                        className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-4 h-4" />
                     </button>
-                    <div className="flex items-center gap-3">
-                        {/* Invite button (small) */}
+                    <div className="flex items-center gap-2">
+                        {/* Invite button */}
                         <button
                             onClick={() => setShowInviteModal(true)}
-                            className="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                            className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                             title="Invite fans"
                         >
                             <UserPlus className="w-4 h-4" />
@@ -155,13 +155,12 @@ const Suga4UCreatorPage = () => {
                         <div className="relative" data-incoming-btn>
                             <button
                                 onClick={() => setShowIncomingPanel(prev => !prev)}
-                                className="relative h-10 px-4 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-2 text-white text-sm font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                                className="relative h-9 px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
                             >
-                                <Phone className="w-4 h-4" />
-                                Incoming
-                                {/* Notification badge for pending private calls */}
+                                <Phone className="w-3.5 h-3.5" />
+                                <span className="hidden lg:inline">Incoming</span>
                                 {privateCall.pendingCalls.length > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
                                         {privateCall.pendingCalls.length}
                                     </span>
                                 )}

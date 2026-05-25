@@ -96,30 +96,30 @@ const CreatorBarLoungeInner = () => {
         >
             {/* Top Bar */}
             <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">
-                <div className="sm:absolute sm:left-4 flex items-center gap-3">
+                <div className="sm:absolute sm:left-4 flex items-center gap-2 sm:gap-3">
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="glass-panel px-3 py-2 rounded-lg flex items-center gap-1.5 hover:bg-white/10 transition-colors"
+                        className="glass-panel px-2 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                         style={{ borderColor: "hsla(45, 90%, 55%, 0.3)", color: "hsl(45, 90%, 55%)" }}
                     >
                         <ChevronLeft className="w-4 h-4" />
-                        <span className="text-sm font-medium hidden sm:inline">Back</span>
+                        <span className="text-sm font-medium hidden md:inline">Back</span>
                     </button>
                     <WalletPill />
                 </div>
-                <div className="text-center">
-                    <h1 className="text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
+                <div className="text-center hidden sm:block">
+                    <h1 className="text-xl lg:text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
                     <p className="text-[10px] font-medium uppercase tracking-widest flex items-center justify-center gap-2" style={{ color: "hsl(280, 15%, 55%)" }}>
                         <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
                         {sessionTitle || "Live Session"}
                     </p>
                 </div>
-                <div className="absolute right-4 flex items-center gap-3">
+                <div className="absolute right-2 sm:right-4 flex items-center gap-2">
                     {/* Incoming 1-on-1 calls */}
                     <div className="relative" data-incoming-btn>
                         <button
                             onClick={() => setShowIncomingCallsPanel(prev => !prev)}
-                            className="relative h-9 px-3 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all backdrop-blur-md shadow-lg"
+                            className="relative h-8 sm:h-9 px-2 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-all backdrop-blur-md shadow-lg"
                             style={{
                                 background: "hsla(320, 80%, 45%, 0.8)",
                                 border: "1px solid hsla(320, 80%, 60%, 0.4)",
@@ -127,11 +127,10 @@ const CreatorBarLoungeInner = () => {
                                 boxShadow: "0 0 15px hsla(320, 80%, 50%, 0.3)",
                             }}
                         >
-                            <Phone className="w-4 h-4" />
-                            <span className="hidden sm:inline">Incoming</span>
-                            {/* Notification badge */}
+                            <Phone className="w-3.5 h-3.5" />
+                            <span className="hidden lg:inline">Incoming</span>
                             {privateCall.pendingCalls.length > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
                                     {privateCall.pendingCalls.length}
                                 </span>
                             )}

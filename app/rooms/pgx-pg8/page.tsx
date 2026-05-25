@@ -6,8 +6,9 @@ import LiveChat from "@/components/rooms/pgx-pg8/LiveChat";
 import ContestantCard from "@/components/rooms/pgx-pg8/ContestantCard";
 import BuyVotes from "@/components/rooms/pgx-pg8/BuyVotes";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cs } from "@/utils/currency";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const contestants = [
     { rank: 1, name: "ALEXA", votes: "8.4k", gradient: "bg-gradient-to-br from-pink-600/60 to-purple-800/60" },
@@ -18,6 +19,8 @@ const contestants = [
 
 export default function CompetitionRoom() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const sessionId = searchParams.get("sessionId");
 
     return (
         <div className="competition-theme">
@@ -71,6 +74,13 @@ export default function CompetitionRoom() {
                     </main>
                 </div>
             </div>
+
+            {/* Per-minute billing overlay */}
+            <BillingOverlay
+                sessionId={sessionId}
+                accentHsl="290, 80%, 60%"
+                exitRoute="/rooms/fans-competitions"
+            />
         </div>
     );
 }

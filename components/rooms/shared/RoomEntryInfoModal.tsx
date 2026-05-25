@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X, CheckSquare, Square, Loader2 } from "lucide-react";
+import { X, CheckSquare, Square, Loader2, Timer } from "lucide-react";
 import { cs } from "@/utils/currency";
 
 /* ═══════════════════════════════════════════════════════════
@@ -35,7 +35,8 @@ interface RoomEntryInfoModalProps {
     sessionDescription?: string;
     sessionType?: string;        // "public" | "private"
     entryFee?: number;           // session entry fee
-    costPerMin?: number;         // per-minute billing rate
+    /** Static costPerMin fallback. If not given, fetched live from room settings API. */
+    costPerMin?: number;
 }
 
 /* ── Room theme presets ───────────────────────────────── */
@@ -157,6 +158,9 @@ export default function RoomEntryInfoModal({
     const [loading, setLoading] = useState(true);
     const [acknowledged, setAcknowledged] = useState(false);
     const [dontShowAgain, setDontShowAgain] = useState(false);
+    // Live billing rate — fetched from room settings
+    const [liveCostPerMin, setLiveCostPerMin] = useState<number | null>(null);
+    const [liveBillingEnabled, setLiveBillingEnabled] = useState<boolean | null>(null);
 
     const theme = ROOM_THEMES[roomType] || DEFAULT_THEME;
     const accent = accentHsl;
@@ -188,8 +192,22 @@ export default function RoomEntryInfoModal({
             fetchEntryInfo();
             setAcknowledged(false);
             setDontShowAgain(false);
+            // Fetch live billing rate from room settings API
+            fetch(`/api/v1/rooms/settings?room_type=${roomType}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.settings) {
+                        setLiveBillingEnabled(d.settings.billing_enabled ?? true);
+                        const isPriv = sessionType === "private";
+                        const rate = isPriv
+                            ? (d.settings.min_private_cost_per_min ?? 0)
+                            : (d.settings.public_cost_per_min ?? 0);
+                        setLiveCostPerMin(rate);
+                    }
+                })
+                .catch(() => { /* use prop fallback */ });
         }
-    }, [isOpen, fetchEntryInfo]);
+    }, [isOpen, fetchEntryInfo, roomType, sessionType]);
 
     const handleEnter = () => {
         if (dontShowAgain) {
@@ -446,59 +464,80 @@ export default function RoomEntryInfoModal({
                             </p>
                         )}
 
-                        {/* ── Dynamic Pricing Bar ── */}
-                        {(entryFee !== undefined && entryFee > 0) || (costPerMin !== undefined && costPerMin > 0) || sessionType === "public" ? (
-                            <div style={{
-                                marginTop: "8px",
-                                display: "flex",
-                                gap: "6px",
-                                justifyContent: "center",
-                                flexWrap: "wrap",
-                            }}>
-                                {entryFee !== undefined && entryFee > 0 && (
-                                    <div style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "5px",
-                                        padding: "5px 10px",
-                                        borderRadius: "8px",
-                                        background: "rgba(251,191,36,0.1)",
-                                        border: "1px solid rgba(251,191,36,0.25)",
-                                    }}>
-                                        <span style={{ fontSize: "13px" }}>🎟️</span>
-                                        <span style={{
-                                            fontSize: "11px",
-                                            fontWeight: 700,
-                                            color: "#fcd34d",
-                                            letterSpacing: "0.3px",
+                        {/* ── Dynamic Pricing Bar — always uses live rate ── */}
+                        {(() => {
+                            // Resolve effective rate: live DB > prop fallback
+                            const effectiveBillingEnabled = liveBillingEnabled !== null ? liveBillingEnabled : true;
+                            const effectiveRate = liveCostPerMin !== null ? liveCostPerMin : (costPerMin ?? 0);
+                            const showEntry = entryFee !== undefined && entryFee > 0;
+                            const showRate = effectiveBillingEnabled && effectiveRate > 0;
+                            if (!showEntry && !showRate) return null;
+                            return (
+                                <div style={{
+                                    marginTop: "8px",
+                                    display: "flex",
+                                    gap: "6px",
+                                    justifyContent: "center",
+                                    flexWrap: "wrap",
+                                }}>
+                                    {showEntry && (
+                                        <div style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "5px",
+                                            padding: "5px 10px",
+                                            borderRadius: "8px",
+                                            background: "rgba(251,191,36,0.1)",
+                                            border: "1px solid rgba(251,191,36,0.25)",
                                         }}>
-                                            Entry: {cs()}{entryFee}
-                                        </span>
-                                    </div>
-                                )}
-                                {(costPerMin !== undefined && costPerMin > 0) || sessionType === "public" ? (
-                                    <div style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "5px",
-                                        padding: "5px 10px",
-                                        borderRadius: "8px",
-                                        background: `hsla(${accent}, 0.1)`,
-                                        border: `1px solid hsla(${accent}, 0.25)`,
-                                    }}>
-                                        <span style={{ fontSize: "13px" }}>⏱️</span>
-                                        <span style={{
-                                            fontSize: "11px",
-                                            fontWeight: 700,
-                                            color: accentColor,
-                                            letterSpacing: "0.3px",
+                                            <span style={{ fontSize: "13px" }}>🎟️</span>
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                color: "#fcd34d",
+                                                letterSpacing: "0.3px",
+                                            }}>
+                                                Entry: {cs()}{entryFee}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {showRate && (
+                                        <div style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "5px",
+                                            padding: "5px 10px",
+                                            borderRadius: "8px",
+                                            background: `hsla(${accent}, 0.1)`,
+                                            border: `1px solid hsla(${accent}, 0.25)`,
                                         }}>
-                                            {cs()}{(costPerMin !== undefined && costPerMin > 0) ? costPerMin : 1}/min
-                                        </span>
-                                    </div>
-                                ) : null}
-                            </div>
-                        ) : null}
+                                            <Timer style={{ width: 11, height: 11, color: accentColor }} />
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                color: accentColor,
+                                                letterSpacing: "0.3px",
+                                            }}>
+                                                {cs()}{effectiveRate}/min
+                                            </span>
+                                        </div>
+                                    )}
+                                    {!showRate && effectiveBillingEnabled === false && (
+                                        <div style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "5px",
+                                            padding: "5px 10px",
+                                            borderRadius: "8px",
+                                            background: "rgba(74,222,128,0.08)",
+                                            border: "1px solid rgba(74,222,128,0.2)",
+                                        }}>
+                                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80" }}>✓ Free to watch</span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {loading ? (

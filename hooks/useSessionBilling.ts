@@ -87,6 +87,7 @@ export function useSessionBilling(sessionId: string | null) {
                     billingEnabled: data.billing_enabled ?? prev.billingEnabled,
                     minutesBilled: data.total_minutes || prev.minutesBilled,
                     totalBilled: data.total_billed || prev.totalBilled,
+                    lastBalance: data.new_balance !== undefined ? data.new_balance : prev.lastBalance,
                 }));
             }
         } catch {

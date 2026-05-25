@@ -206,12 +206,21 @@ export async function GET(
 
         const totalBilled = (records || []).reduce((sum, r) => sum + Number(r.amount), 0);
 
+        // Fetch current wallet balance so frontend can estimate remaining watch time
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("wallet_balance")
+            .eq("id", user.id)
+            .single();
+        const currentBalance = profile ? Number(profile.wallet_balance) : null;
+
         return NextResponse.json({
             records: records || [],
             total_minutes: records?.length || 0,
             total_billed: totalBilled,
             rate: computedRate,
             billing_enabled: billingEnabled,
+            new_balance: currentBalance,
         });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
