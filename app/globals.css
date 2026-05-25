@@ -2430,3 +2430,35 @@ body {
   box-shadow: none !important;
 }
 
+/* ── Guided Tour System ────────────────────────────────────────────────── */
+
+/* Neon glow ring pulsing around spotlighted element */
+.tour-spotlight-ring {
+  border: 2px solid rgba(236, 72, 153, 0.6);
+  box-shadow:
+    0 0 12px rgba(236, 72, 153, 0.5),
+    0 0 28px rgba(236, 72, 153, 0.25),
+    0 0 56px rgba(236, 72, 153, 0.1),
+    inset 0 0 12px rgba(236, 72, 153, 0.08);
+  animation: tour-ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tour-ring-pulse {
+  0%, 100% {
+    border-color: rgba(236, 72, 153, 0.55);
+    box-shadow:
+      0 0 12px rgba(236, 72, 153, 0.5),
+      0 0 28px rgba(236, 72, 153, 0.25),
+      0 0 56px rgba(236, 72, 153, 0.1),
+      inset 0 0 12px rgba(236, 72, 153, 0.08);
+  }
+  50% {
+    border-color: rgba(236, 72, 153, 0.85);
+    box-shadow:
+      0 0 20px rgba(236, 72, 153, 0.75),
+      0 0 44px rgba(236, 72, 153, 0.4),
+      0 0 80px rgba(236, 72, 153, 0.18),
+      inset 0 0 20px rgba(236, 72, 153, 0.12);
+  }
+}
+

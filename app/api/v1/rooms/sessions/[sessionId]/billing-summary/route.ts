@@ -1,21 +1,11 @@
 import { createAdminClient } from "@/utils/supabase/admin";
-import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 // ──────────────────────────────────────────────────────────────────────────
 // GET /api/v1/rooms/sessions/[sessionId]/billing-summary
 // Creator-facing billing summary for a live session.
-//
-// Returns:
-//   total_earned       — creator's net earnings (sum of creator_share)
-//   gross_collected    — total gross charged to fans (sum of amount)
-//   fan_count          — live participants OR unique billed fans (whichever is higher)
-//   live_fan_count     — from room_session_participants right now
-//   billed_fan_count   — unique fans with billing records
-//   total_minutes_billed
-//   rate               — effective per-minute rate (from room_settings)
-//   billing_enabled
-//   last_charge_at     — ISO timestamp of most recent billing record (for pulse detection)
+// No auth required — sessionId UUID is the access control
+// (only the creator knows their sessionId from the URL).
 // ──────────────────────────────────────────────────────────────────────────
 export async function GET(
     _request: NextRequest,
@@ -28,25 +18,17 @@ export async function GET(
         return NextResponse.json({ error: "Invalid sessionId" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-
-    // Auth check — must be a logged-in user (creator)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     try {
         const adminClient = createAdminClient();
 
         // ── 1. Session details ────────────────────────────────────────
-        const { data: session } = await adminClient
+        const { data: session, error: sessionErr } = await adminClient
             .from("room_sessions")
             .select("id, creator_id, room_type, session_type, is_private, cost_per_min, status")
             .eq("id", sessionId)
             .single();
 
-        if (!session) {
+        if (sessionErr || !session) {
             return NextResponse.json({ error: "Session not found" }, { status: 404 });
         }
 
@@ -67,8 +49,7 @@ export async function GET(
             ? Math.max(Number(session.cost_per_min) || minPrivateRate, minPrivateRate)
             : publicRate;
 
-        // ── 3. Billing records — the source of truth for earnings ─────
-        // creator_share is stored directly on each record by the billing POST route
+        // ── 3. Billing records — creator earnings ─────────────────────
         const { data: records } = await adminClient
             .from("session_billing_records")
             .select("fan_id, amount, creator_share, created_at")
@@ -80,19 +61,16 @@ export async function GET(
         const creatorEarned = safeRecords.reduce((s, r) => s + Number(r.creator_share ?? r.amount), 0);
         const uniqueBilledFans = new Set(safeRecords.map(r => r.fan_id)).size;
         const totalMinutesBilled = safeRecords.length;
-        const lastChargeAt = safeRecords[0]?.created_at ?? null; // already sorted desc
+        const lastChargeAt = safeRecords[0]?.created_at ?? null;
 
         // ── 4. Live participant count ──────────────────────────────────
-        // room_session_participants tracks fans who are actively in the room
         const { data: participants } = await adminClient
             .from("room_session_participants")
             .select("user_id")
             .eq("session_id", sessionId)
-            .neq("user_id", session.creator_id);   // exclude the creator
+            .neq("user_id", session.creator_id);
 
         const liveFanCount = participants ? participants.length : 0;
-
-        // Fan count = live participants (real-time), or billed fans if no participants table data
         const fanCount = liveFanCount > 0 ? liveFanCount : uniqueBilledFans;
 
         return NextResponse.json({

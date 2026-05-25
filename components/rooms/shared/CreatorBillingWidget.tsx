@@ -108,17 +108,26 @@ export default function CreatorBillingWidget({
     const accentA = (a: number) => `hsla(${accentHsl}, ${a})`;
     const C = cs();
 
-    /* ── Skeleton ── */
+    /* ── Skeleton (visible loading state) ── */
     if (loading || !summary) {
         return (
             <>
                 <style>{`
-                    @keyframes cbw-shimmer{0%,100%{opacity:.35}50%{opacity:.7}}
+                    @keyframes cbw-shimmer{0%,100%{opacity:.6}50%{opacity:1}}
                 `}</style>
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    <div className="cbw-tile-skeleton" style={{ width: 70, height: 36, borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", animation: "cbw-shimmer 1.4s ease-in-out infinite" }} />
-                    <div className="cbw-tile-skeleton" style={{ width: 64, height: 36, borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", animation: "cbw-shimmer 1.4s ease-in-out .15s infinite" }} />
-                    <div className="cbw-tile-skeleton hidden sm:block" style={{ width: 60, height: 36, borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", animation: "cbw-shimmer 1.4s ease-in-out .3s infinite" }} />
+                    {[{ w: 72, label: "Earned" }, { w: 60, label: "Fans" }, { w: 68, label: "Per Min" }].map(({ w, label }) => (
+                        <div key={label} style={{
+                            width: w, height: 36, borderRadius: 9,
+                            background: "rgba(255,255,255,0.12)",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            backdropFilter: "blur(8px)",
+                            animation: "cbw-shimmer 1.2s ease-in-out infinite",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".5px" }}>{label}</span>
+                        </div>
+                    ))}
                 </div>
             </>
         );
