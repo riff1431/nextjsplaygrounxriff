@@ -26,7 +26,7 @@ const CreatorStudioDashboardPage = () => {
             <div className="fixed inset-0 bg-black/60" />
 
             {/* Content */}
-            <div className="relative z-10 p-4 md:p-8 max-w-[1400px] mx-auto space-y-6">
+            <div className="relative z-10 p-3 sm:p-4 md:p-8 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
                 <CsDashboardHeader
                     username={profile?.username}
                     avatarUrl={profile?.avatar_url}

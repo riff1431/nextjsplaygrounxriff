@@ -16,7 +16,7 @@ interface CsSubscriptionSettingsProps {
 /* ── Upload Content Box ── */
 const CsUploadContentBox = ({ userId }: { userId: string | null }) => {
     return (
-        <div className="cs-glass-card p-5 flex-1 min-w-0 flex flex-col">
+        <div className="cs-glass-card p-4 sm:p-5 flex-1 min-w-0 flex flex-col">
             <h2 className="text-lg font-semibold mb-1 flex items-center gap-2 text-white">
                 <Upload size={20} className="text-cyan-400" /> Upload Content
             </h2>
@@ -76,7 +76,7 @@ const CsSubscriptionBox = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscription
     };
 
     return (
-        <div className="cs-glass-card p-5 flex-1 min-w-0 flex flex-col">
+        <div className="cs-glass-card p-4 sm:p-5 flex-1 min-w-0 flex flex-col">
             <h2 className="text-lg font-semibold mb-1 flex items-center gap-2 text-white">
                 <Crown size={20} className="text-[hsl(45,100%,55%)]" /> Subscription Settings
             </h2>
@@ -84,7 +84,7 @@ const CsSubscriptionBox = ({ weeklyPrice, monthlyPrice, onSave }: CsSubscription
                 Set your subscription prices. Fans can subscribe to unlock access to all your paid content. Leave blank to disable a tier.
             </p>
             <div className="flex flex-col gap-4 flex-1">
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1 min-w-0">
                         <label className="text-sm font-medium mb-1.5 block text-white">Weekly Price ($)</label>
                         <div className="flex items-center bg-white/5 border border-white/10 rounded-lg px-3 py-2.5">

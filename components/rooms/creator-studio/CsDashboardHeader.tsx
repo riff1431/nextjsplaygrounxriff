@@ -15,11 +15,11 @@ interface StatCardProps {
 }
 
 const StatCard = ({ icon, label, value, color }: StatCardProps) => (
-    <div className="cs-glass-card px-4 py-3 flex items-center gap-3 min-w-[140px]">
+    <div className="cs-glass-card px-3 py-3 flex items-center gap-2.5 flex-1 min-w-0">
         <div className={`${color} shrink-0`}>{icon}</div>
-        <div>
-            <p className="text-xs text-white/50">{label}</p>
-            <p className="text-lg font-bold text-white">{value}</p>
+        <div className="min-w-0">
+            <p className="text-[10px] sm:text-xs text-white/50 truncate">{label}</p>
+            <p className="text-base sm:text-lg font-bold text-white truncate">{value}</p>
         </div>
     </div>
 );
@@ -56,14 +56,17 @@ export const CsStatsBar = ({
     ];
 
     return (
-        <div className={`flex flex-wrap gap-3 items-center ${kycLocked ? 'opacity-50 pointer-events-none' : ''}`}>
-            {stats.map((stat) => (
-                <StatCard key={stat.label} {...stat} />
-            ))}
-            {/* Schedule Button */}
+        <div className={`space-y-3 ${kycLocked ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* Stats grid: 2 cols on mobile, 3 on sm, 6 on lg */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+                {stats.map((stat) => (
+                    <StatCard key={stat.label} {...stat} />
+                ))}
+            </div>
+            {/* Schedule Button — full width on mobile */}
             <button
                 onClick={() => !kycLocked && router.push("/rooms/creator-studio/schedule")}
-                className={`cs-glass-card flex-1 px-6 py-3 flex items-center justify-center gap-2.5 min-w-[140px] transition-all group ${kycLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]'}`}
+                className={`cs-glass-card w-full px-6 py-3 flex items-center justify-center gap-2.5 transition-all group ${kycLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]'}`}
                 style={{ borderColor: "hsl(38, 92%, 50%)", borderWidth: "1.5px" }}
                 disabled={kycLocked}
             >
@@ -85,19 +88,20 @@ export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProp
     const displayName = username || "Creator";
 
     return (
-        <div className="flex items-center justify-between mb-6">
-            <div>
-                <h1 className="text-3xl md:text-4xl cs-font-display italic cs-neon-text-pink">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4 sm:mb-6">
+            <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl cs-font-display italic cs-neon-text-pink leading-tight">
                     Creator Studio Dashboard
                 </h1>
-                <p className="text-white/50 mt-1">Welcome back, @{displayName}</p>
+                <p className="text-white/50 mt-1 text-sm sm:text-base">Welcome back, @{displayName}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
                 <NotificationIcon role="creator" />
 
+                {/* Messages — icon-only on mobile */}
                 <button
                     onClick={() => router.push('/account/messages')}
-                    className="px-4 py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
+                    className="p-2 sm:px-4 sm:py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
                     title="Messages"
                 >
                     <MessageSquare className="w-4 h-4" />

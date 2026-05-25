@@ -254,9 +254,8 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
                     : "border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.1)]"
             }`}
         >
-            {/* Status Header */}
             <div
-                className={`px-6 py-4 flex items-center justify-between ${
+                className={`px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 ${
                     isRejected
                         ? "bg-gradient-to-r from-red-500/10 to-red-900/10"
                         : "bg-gradient-to-r from-yellow-500/10 to-amber-900/10"
@@ -287,7 +286,7 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
                 <button
                     onClick={checkStatus}
                     disabled={checking}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
                         isPending
                             ? "bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30"
                             : "bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30"

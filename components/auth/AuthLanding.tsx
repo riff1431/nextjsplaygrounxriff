@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Lock, Mail, Sparkles, Crown, ShieldCheck, User, IdCard, Camera, CreditCard, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Phone, Sparkles, Crown, ShieldCheck, User, IdCard, Camera, CreditCard, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -97,6 +97,7 @@ export default function AuthLanding() {
     const [createPassword, setCreatePassword] = useState("");
     const [createFirst, setCreateFirst] = useState("");
     const [createLast, setCreateLast] = useState("");
+    const [createPhone, setCreatePhone] = useState("");
     const [createRole, setCreateRole] = useState<"fan" | "creator">("fan");
 
     // UI States
@@ -181,6 +182,7 @@ export default function AuthLanding() {
                     data: {
                         full_name: fullName,
                         role: createRole,
+                        phone: createPhone || undefined,
                         avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createEmail}`
                     }
                 }
@@ -738,6 +740,21 @@ export default function AuthLanding() {
                                                         value={createEmail}
                                                         onChange={(e) => setCreateEmail(e.target.value)}
                                                         placeholder="name@domain.com"
+                                                        className="h-11 rounded-xl pl-10 bg-black/40 border-white/10 text-gray-100 placeholder:text-gray-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="create_phone" className="text-gray-200">Phone number <span className="text-gray-500 text-xs">(optional)</span></Label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                                    <Input
+                                                        id="create_phone"
+                                                        type="tel"
+                                                        value={createPhone}
+                                                        onChange={(e) => setCreatePhone(e.target.value)}
+                                                        placeholder="+1 (555) 000-0000"
                                                         className="h-11 rounded-xl pl-10 bg-black/40 border-white/10 text-gray-100 placeholder:text-gray-500"
                                                     />
                                                 </div>

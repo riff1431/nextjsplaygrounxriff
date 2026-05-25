@@ -141,22 +141,28 @@ export default function SessionLiveControls({
     return (
         <>
             <style>{`
-                /* Responsive billing strip */
-                .slc-wrap { display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; font-family:'Inter',sans-serif; }
-
-                /* On very small screens: hide billing widget entirely */
-                @media (max-width: 479px) {
-                    .slc-billing { display: none !important; }
+                .slc-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex-wrap: nowrap;
+                    justify-content: flex-end;
+                    font-family: 'Inter', sans-serif;
                 }
-                /* On mobile (480–767px): show billing but compact mode */
-                @media (min-width: 480px) and (max-width: 767px) {
-                    .slc-billing { display: flex !important; }
+                /* Show billing on all screens ≥ 480px */
+                .slc-billing {
+                    display: flex;
+                    align-items: center;
+                }
+                /* Hide only on very small mobile */
+                @media (max-width: 479px) {
+                    .slc-billing { display: none; }
                 }
             `}</style>
 
             <div className="slc-wrap">
-                {/* Billing widget — hidden on very small screens */}
-                <div className="slc-billing hidden sm:flex">
+                {/* Billing widget — visible on tablet/desktop */}
+                <div className="slc-billing">
                     <CreatorBillingWidget
                         sessionId={sessionId}
                         accentHsl={accentHsl}

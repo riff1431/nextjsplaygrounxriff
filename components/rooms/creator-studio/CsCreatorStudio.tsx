@@ -119,7 +119,7 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-white">
                 <span className="cs-neon-text-pink">✦</span> Creator Studio
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {cards.map((card) => {
                     const isInactive = card.roomType ? activeStatuses[card.roomType] === false : false;
                     return <StudioCard key={card.title} {...card} isInactive={isInactive} kycLocked={kycLocked} />;

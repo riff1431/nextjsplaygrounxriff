@@ -136,6 +136,8 @@ export default function CreatorBillingWidget({
                 @keyframes cbw-zap{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.35) rotate(12deg)}}
                 @keyframes cbw-fadein{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
                 @keyframes cbw-dot{0%,100%{opacity:1}50%{opacity:.25}}
+                .cbw-rate { display: flex; }
+                @media (max-width: 479px) { .cbw-rate { display: none; } }
             `}</style>
 
             <div style={{ display: "flex", alignItems: "center", gap: "4px", fontFamily: "'Inter',sans-serif" }}>
@@ -164,9 +166,9 @@ export default function CreatorBillingWidget({
                     liveDotTitle={`${summary.live_fan_count} watching`}
                 />
 
-                {/* ── RATE — hidden on mobile, shown sm+ ── */}
+                {/* ── RATE — hidden on very small screens ── */}
                 {summary.billing_enabled && summary.rate > 0 && (
-                    <div className="hidden sm:block">
+                    <div className="cbw-rate">
                         <Tile
                             label="Per Min"
                             value={`${C}${summary.rate}`}
