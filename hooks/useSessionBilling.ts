@@ -9,6 +9,10 @@ interface BillingState {
     lastBalance: number | null;
     error: string | null;
     autoEjected: boolean;
+    /** Per-minute rate fetched from the server */
+    rate: number | null;
+    /** Whether billing is enabled for this room type */
+    billingEnabled: boolean;
 }
 
 /**
@@ -23,6 +27,7 @@ interface BillingState {
  *   // billing.stopBilling() — called when fan leaves
  *   // billing.minutesBilled, billing.totalBilled — for display
  *   // billing.autoEjected — true if fan was kicked for insufficient funds
+ *   // billing.rate — per-minute rate (e.g. 2)
  */
 export function useSessionBilling(sessionId: string | null) {
     const [state, setState] = useState<BillingState>({
@@ -32,9 +37,34 @@ export function useSessionBilling(sessionId: string | null) {
         lastBalance: null,
         error: null,
         autoEjected: false,
+        rate: null,
+        billingEnabled: true,
     });
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const rateFetchedRef = useRef(false);
+
+    // Fetch billing status (rate) on first start
+    const fetchBillingStatus = useCallback(async () => {
+        if (!sessionId || rateFetchedRef.current) return;
+        rateFetchedRef.current = true;
+
+        try {
+            const res = await fetch(`/api/v1/rooms/sessions/${sessionId}/billing`);
+            if (res.ok) {
+                const data = await res.json();
+                setState(prev => ({
+                    ...prev,
+                    rate: data.rate ?? prev.rate,
+                    billingEnabled: data.billing_enabled ?? prev.billingEnabled,
+                    minutesBilled: data.total_minutes || prev.minutesBilled,
+                    totalBilled: data.total_billed || prev.totalBilled,
+                }));
+            }
+        } catch {
+            // Non-critical — rate will be populated on next POST tick
+        }
+    }, [sessionId]);
 
     const billOneMinute = useCallback(async () => {
         if (!sessionId) return;
@@ -73,6 +103,8 @@ export function useSessionBilling(sessionId: string | null) {
                 totalBilled: data.total_billed,
                 lastBalance: data.new_balance,
                 error: null,
+                // Update rate from response if available
+                rate: data.amount !== undefined ? data.amount : prev.rate,
             }));
         } catch (err: any) {
             console.error("Billing tick error:", err);
@@ -90,10 +122,13 @@ export function useSessionBilling(sessionId: string | null) {
             error: null,
         }));
 
+        // Fetch rate first, then start ticking
+        fetchBillingStatus();
+
         // Bill immediately for the first minute, then every 60s
         billOneMinute();
         intervalRef.current = setInterval(billOneMinute, 60_000);
-    }, [billOneMinute]);
+    }, [billOneMinute, fetchBillingStatus]);
 
     const stopBilling = useCallback(() => {
         if (intervalRef.current) {
@@ -118,3 +153,4 @@ export function useSessionBilling(sessionId: string | null) {
         stopBilling,
     };
 }
+

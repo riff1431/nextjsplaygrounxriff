@@ -50,6 +50,7 @@ import PaymentApprovals from "../../../components/admin/finance/PaymentApprovals
 import SystemPromptManager from "../../../components/admin/content/SystemPromptManager";
 import KYCReviewPanel from "../../../components/admin/users/KYCReviewPanel";
 import FanMembershipManager from "../../../components/admin/settings/FanMembershipManager";
+import ConfessionListsManager from "../../../components/admin/content/ConfessionListsManager";
 import CreatorLevelManager from "../../../components/admin/settings/CreatorLevelManager";
 import AccountTypeManager from "../../../components/admin/settings/AccountTypeManager";
 import BarLoungeManager from "../../../components/admin/settings/BarLoungeManager";
@@ -68,6 +69,7 @@ type AdminModule =
     | "home"
     | "dashboard"
     | "prompts"
+    | "confession-lists" // Confession Lists
     | "pricing"
     | "theme"
     | "policy"
@@ -141,6 +143,7 @@ export default function AdminDashboardPage() {
         { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
         { id: "room-settings", label: "Room Settings", icon: <DoorOpen className="w-4 h-4" />, tone: "pink" },
         { id: "prompts", label: "System Truth & Dare", icon: <MessageCircle className="w-4 h-4" />, tone: "pink" },
+        { id: "confession-lists", label: "Confession Lists", icon: <Flame className="w-4 h-4" />, tone: "pink" },
         { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
         { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
         { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
@@ -306,6 +309,7 @@ export default function AdminDashboardPage() {
                                     </div>
                                 </button>
                                 <Tile id="prompts" label="System Truth & Dare" icon={<MessageCircle className="w-4 h-4" />} tone="pink" desc="Manage prompts" />
+                                <Tile id="confession-lists" label="Confession Lists" icon={<Flame className="w-4 h-4" />} tone="pink" desc="All confessions" />
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
                                 <Tile id="policy" label="Legal & Policies" icon={<FileText className="w-4 h-4" />} tone="cyan" desc="T&Cs and Privacy" />
                                 <Tile id="important-pages" label="Important Pages" icon={<FileText className="w-4 h-4" />} tone="amber" desc="Edit public pages" />
@@ -343,6 +347,7 @@ export default function AdminDashboardPage() {
 
                     {/* Integrated Modules */}
                     {bizModule === "prompts" && <SystemPromptManager />}
+                    {bizModule === "confession-lists" && <ConfessionListsManager />}
                     {bizModule === "pricing" && <PricingControls />}
                     {bizModule === "theme" && <AdminThemeEditor />}
                     {bizModule === "policy" && <PolicyEditor />}

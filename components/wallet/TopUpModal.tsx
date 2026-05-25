@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, CreditCard, Banknote, Landmark, ChevronRight, Check, Wallet, Loader2, Upload, Shield } from "lucide-react";
+import { X, CreditCard, Banknote, Landmark, ChevronRight, Check, Wallet, Loader2, Upload, Shield, AlertCircle } from "lucide-react";
 import { usePayment } from "../../app/context/PaymentContext";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import StripePaymentModal from "@/components/live/StripePaymentModal";
 import { uploadToLocalServer } from "@/utils/uploadHelper";
 import { cs } from "@/utils/currency";
+import { useCurrency } from "@/app/context/CurrencyContext";
 
 type Props = {
     isOpen: boolean;
@@ -17,6 +18,7 @@ type Props = {
 
 export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
     const { config } = usePayment();
+    const { currency, formatPrice } = useCurrency();
     const supabase = createClient();
     const [step, setStep] = useState<1 | 2>(1);
     const [amount, setAmount] = useState<number>(0);
@@ -133,7 +135,9 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                     amount={amount}
                     onClose={() => setShowStripeModal(false)}
                     onSuccess={() => {
-                        onTopUp(amount, 'card', 'completed');
+                        // Do NOT call onTopUp here — the confirm-wallet API already
+                        // inserted the transaction and updated the wallet balance.
+                        // Calling onTopUp again would add the funds a second time.
                         setShowStripeModal(false);
                         onClose();
                         // Reset state
@@ -149,17 +153,24 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                 />
             )}
 
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                <div className="bg-[#0a0a0a] border border-pink-500/20 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(236,72,153,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                <div className="bg-[#0b0c10]/95 border border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_60px_rgba(236,72,153,0.18)] relative animate-in fade-in zoom-in-95 duration-300">
+                    {/* Visual Accent Gradient Top Strip */}
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
 
                     {/* Header */}
-                    <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            <Wallet className="w-5 h-5 text-pink-500" />
+                    <div className="p-6 border-b border-white/10 flex items-center justify-between mt-2">
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
+                            <div className="p-2 bg-pink-500/10 rounded-xl border border-pink-500/20 text-pink-400">
+                                <Wallet className="w-5 h-5" />
+                            </div>
                             Top Up Wallet
                         </h2>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition">
-                            <X className="w-5 h-5 text-gray-400" />
+                        <button 
+                            onClick={onClose} 
+                            className="p-2 hover:bg-white/5 hover:text-white rounded-full text-gray-400 transition"
+                        >
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -167,7 +178,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                     <div className="p-6">
                         {step === 1 ? (
                             <div className="space-y-6">
-                                <div className="text-sm text-gray-400">Select amount to add to your wallet</div>
+                                <div className="text-sm text-gray-400">Select or enter the amount you want to top up.</div>
 
                                 {/* Amount Grid */}
                                 <div className="grid grid-cols-3 gap-3">
@@ -175,28 +186,32 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         <button
                                             key={val}
                                             onClick={() => handleAmountSelect(val)}
-                                            className={`py-3 rounded-xl border font-semibold transition-all ${amount === val && !customAmount
-                                                ? "bg-pink-600 border-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]"
-                                                : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-pink-500/30"
-                                                }`}
+                                            className={`py-3.5 rounded-xl border font-bold text-sm tracking-tight transition-all duration-300 transform active:scale-95 cursor-pointer ${
+                                                amount === val && !customAmount
+                                                    ? "bg-gradient-to-r from-pink-600 to-pink-500 border-pink-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.45)] scale-[1.02]"
+                                                    : "bg-white/[0.02] border-white/10 text-gray-300 hover:bg-pink-500/[0.08] hover:border-pink-500/30 hover:text-white"
+                                            }`}
                                         >
-                                            ${val}
+                                            {formatPrice(val, 0)}
                                         </button>
                                     ))}
                                 </div>
 
                                 {/* Custom Amount */}
                                 <div>
-                                    <label className="text-xs text-gray-500 mb-2 block uppercase tracking-wider font-semibold">Custom Amount</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">{cs()}</span>
+                                    <label className="text-xs font-bold uppercase tracking-widest text-pink-400/80 mb-2 block">Custom Amount</label>
+                                    <div className="relative group">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-extrabold text-sm transition-colors group-focus-within:text-pink-400">
+                                            {currency.symbol}
+                                        </span>
                                         <input
                                             type="number"
                                             value={customAmount}
                                             onChange={handleCustomAmountChange}
-                                            placeholder="Enter amount"
-                                            className={`w-full bg-white/5 border rounded-xl py-3 pl-8 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 transition-all ${customAmount ? "border-pink-500/50 ring-pink-500/20" : "border-white/10 focus:border-pink-500/50"
-                                                }`}
+                                            placeholder="Enter other amount"
+                                            className={`w-full bg-black/40 border rounded-xl py-3.5 pl-9 pr-4 text-white placeholder-gray-600 focus:outline-none focus:ring-4 focus:ring-pink-500/20 transition-all duration-200 ${
+                                                customAmount ? "border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.15)]" : "border-white/10 focus:border-pink-500"
+                                            }`}
                                         />
                                     </div>
                                 </div>
@@ -204,119 +219,141 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                 <button
                                     onClick={() => setStep(2)}
                                     disabled={!amount || amount <= 0}
-                                    className="w-full py-3.5 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 disabled:opacity-40 disabled:pointer-events-none text-white font-extrabold tracking-wide shadow-[0_0_25px_rgba(236,72,153,0.3)] hover:shadow-[0_0_35px_rgba(236,72,153,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                     Continue <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-400">Total to pay</span>
-                                    <span className="text-2xl font-bold text-white">{cs()}{amount.toFixed(2)}</span>
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/[0.06]">
+                                    <span className="text-xs text-gray-400 font-medium">Checkout Total</span>
+                                    <span className="text-2xl font-black text-white tracking-tight">{formatPrice(amount, 2)}</span>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Select Payment Method</div>
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
+                                    <div className="text-xs font-bold uppercase tracking-widest text-pink-400/80 mb-1">Select Payment Method</div>
 
                                     {/* Stripe Card */}
                                     {config.stripe.enabled && (
-                                        <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'card' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                        <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                                            method === 'card' 
+                                                ? 'bg-gradient-to-r from-pink-950/20 to-purple-950/20 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.15)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-pink-500/30'
+                                        }`}>
                                             <input type="radio" name="method" className="hidden" onChange={() => setMethod('card')} />
-                                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center text-blue-400 shrink-0 border border-blue-500/10">
                                                 <CreditCard className="w-5 h-5" />
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-white">Credit / Debit Card</div>
-                                                <div className="text-xs text-gray-400">Instant | Visa, Mastercard</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm text-white">Credit / Debit Card</div>
+                                                <div className="text-[11px] text-gray-400 truncate">Instant | Visa, Mastercard, AMEX</div>
                                             </div>
-                                            {method === 'card' && <Check className="w-5 h-5 text-pink-500" />}
+                                            {method === 'card' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
                                         </label>
                                     )}
 
                                     {/* RiskPayGo Checkout */}
                                     {config.riskpaygo?.enabled && (
-                                        <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'riskpaygo' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                        <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                                            method === 'riskpaygo' 
+                                                ? 'bg-gradient-to-r from-pink-950/20 to-purple-950/20 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.15)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-pink-500/30'
+                                        }`}>
                                             <input type="radio" name="method" className="hidden" onChange={() => setMethod('riskpaygo')} />
-                                            <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center text-pink-400 shrink-0 border border-pink-500/10">
                                                 <Shield className="w-5 h-5" />
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-white">RiskPayGo Checkout</div>
-                                                <div className="text-xs text-gray-400">Secure Direct Checkout (Global)</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm text-white">RiskPayGo Checkout</div>
+                                                <div className="text-[11px] text-gray-400 truncate">Secure Direct Checkout (Global)</div>
                                             </div>
-                                            {method === 'riskpaygo' && <Check className="w-5 h-5 text-pink-500" />}
+                                            {method === 'riskpaygo' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
                                         </label>
                                     )}
 
                                     {/* PayPal */}
                                     {config.paypal.enabled && (
-                                        <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'paypal' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                        <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                                            method === 'paypal' 
+                                                ? 'bg-gradient-to-r from-pink-950/20 to-purple-950/20 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.15)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-pink-500/30'
+                                        }`}>
                                             <input type="radio" name="method" className="hidden" onChange={() => setMethod('paypal')} />
-                                            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/20 to-blue-600/20 flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/10">
                                                 <Banknote className="w-5 h-5" />
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-white">PayPal</div>
-                                                <div className="text-xs text-gray-400">Instant</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm text-white">PayPal</div>
+                                                <div className="text-[11px] text-gray-400 truncate">Instant Wallet checkout</div>
                                             </div>
-                                            {method === 'paypal' && <Check className="w-5 h-5 text-pink-500" />}
+                                            {method === 'paypal' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
                                         </label>
                                     )}
 
                                     {/* Bank */}
                                     {config.bank.enabled && (
-                                        <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${method === 'bank' ? 'bg-pink-500/10 border-pink-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                        <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                                            method === 'bank' 
+                                                ? 'bg-gradient-to-r from-pink-950/20 to-purple-950/20 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.15)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-pink-500/30'
+                                        }`}>
                                             <input type="radio" name="method" className="hidden" onChange={() => setMethod('bank')} />
-                                            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center text-green-400 shrink-0 border border-green-500/10">
                                                 <Landmark className="w-5 h-5" />
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="font-semibold text-white">Offline Bank Transfer</div>
-                                                <div className="text-xs text-gray-400">Manually Reviewed</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm text-white">Offline Bank Transfer</div>
+                                                <div className="text-[11px] text-gray-400 truncate">Manually verified by admin</div>
                                             </div>
-                                            {method === 'bank' && <Check className="w-5 h-5 text-pink-500" />}
+                                            {method === 'bank' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
                                         </label>
                                     )}
 
                                     {!config.stripe.enabled && !config.riskpaygo?.enabled && !config.paypal.enabled && !config.bank.enabled && (
-                                        <div className="text-center text-red-400 text-sm py-4">
-                                            No payment methods available.
+                                        <div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
+                                            <AlertCircle className="w-6 h-6 text-red-400" />
+                                            <span className="text-red-400 text-xs font-semibold">No payment methods configured.</span>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="text-xs text-gray-500/80 leading-relaxed text-center px-4 py-2 border border-white/5 rounded-xl bg-white/5">
-                                    All purchases are final. No refunds once access is granted. Please review our <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline">Refund Policy</a>.
+                                <div className="text-[10px] text-gray-500 leading-normal text-center px-4 py-2.5 border border-white/5 rounded-xl bg-white/[0.02]">
+                                    All purchases are final. No refunds once access is granted. Please review our <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline hover:text-pink-300 transition font-medium">Refund Policy</a>.
                                 </div>
 
                                 {method === 'bank' && config.bank.enabled && (
-                                    <div className="space-y-4">
-                                        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-200 text-xs">
-                                            <p className="font-bold mb-1">Bank Details:</p>
-                                            <p>{config.bank.bankName}</p>
-                                            <p>Acct: {config.bank.accountNumber}</p>
-                                            {config.bank.routingNumber && <p>Routing: {config.bank.routingNumber}</p>}
-                                            <p>Ref: <span className="font-mono bg-black/30 px-1 rounded">Your Username</span></p>
-                                            <p className="mt-2 opacity-80">{config.bank.instructions}</p>
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-3 duration-300">
+                                        <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-yellow-200 text-[11px] space-y-1">
+                                            <p className="font-extrabold text-xs mb-1.5 flex items-center gap-1.5"><Landmark className="w-3.5 h-3.5" /> Offline Bank details:</p>
+                                            <p><span className="text-gray-400 font-medium">Bank Name:</span> {config.bank.bankName}</p>
+                                            <p><span className="text-gray-400 font-medium">Account:</span> <span className="font-mono bg-black/40 px-1 py-0.5 rounded border border-white/5">{config.bank.accountNumber}</span></p>
+                                            {config.bank.routingNumber && <p><span className="text-gray-400 font-medium">Routing / SWIFT:</span> {config.bank.routingNumber}</p>}
+                                            <p><span className="text-gray-400 font-medium">Reference:</span> <span className="font-mono bg-black/40 px-1 py-0.5 rounded border border-white/5">Your username</span></p>
+                                            <p className="mt-2 text-yellow-300/80 leading-relaxed font-medium">{config.bank.instructions}</p>
                                         </div>
 
-                                        <div className="border border-dashed border-white/20 rounded-xl p-6 text-center hover:bg-white/5 transition relative">
+                                        <div className="border-2 border-dashed border-white/10 hover:border-pink-500/30 hover:bg-pink-500/[0.01] rounded-2xl p-7 text-center transition-all duration-300 relative group cursor-pointer">
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleFileChange}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                             />
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Upload className="w-6 h-6 text-gray-400" />
+                                            <div className="flex flex-col items-center gap-2.5">
+                                                <div className="p-2.5 rounded-full bg-white/5 text-gray-400 group-hover:text-pink-400 group-hover:bg-pink-500/10 transition-colors border border-white/5">
+                                                    <Upload className="w-5 h-5" />
+                                                </div>
                                                 {proofFile ? (
-                                                    <span className="text-sm text-green-400 font-medium">{proofFile.name}</span>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-xs text-green-400 font-semibold truncate max-w-[200px]">{proofFile.name}</span>
+                                                        <span className="text-[10px] text-gray-500">File uploaded successfully</span>
+                                                    </div>
                                                 ) : (
-                                                    <>
-                                                        <span className="text-sm text-gray-300 font-medium">Upload Payment Proof</span>
-                                                        <span className="text-xs text-gray-500">Click to select screenshot</span>
-                                                    </>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-xs text-gray-200 font-semibold group-hover:text-white transition-colors">Upload Payment Proof</span>
+                                                        <span className="text-[10px] text-gray-500">Click to select receipt screenshot</span>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -326,16 +363,16 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="px-6 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold transition"
+                                        className="px-5 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold transition duration-200 text-sm cursor-pointer"
                                     >
                                         Back
                                     </button>
                                     <button
                                         onClick={handleSubmit}
                                         disabled={!method || loading || (method === 'bank' && !proofFile)}
-                                        className="flex-1 py-3.5 rounded-xl bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all flex items-center justify-center gap-2"
+                                        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 disabled:opacity-40 disabled:pointer-events-none text-white font-extrabold shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
                                     >
-                                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : method === 'bank' ? "Submit Verification" : "Pay Now"}
+                                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : method === 'bank' ? "Submit Verification" : "Pay Now"}
                                     </button>
                                 </div>
                             </div>

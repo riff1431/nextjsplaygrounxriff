@@ -116,9 +116,10 @@ export async function POST(request: NextRequest) {
         let costPerMin = 0;
         if (sType === "private" && cost_per_min !== undefined) {
             costPerMin = Number(cost_per_min) || 0;
-            if (costPerMin < 4) {
+            const minCostPerMin = settings ? Number(settings.min_private_cost_per_min) : 4;
+            if (costPerMin < minCostPerMin) {
                 return NextResponse.json({
-                    error: "Cost per minute must be at least ${SYM}4 for private sessions",
+                    error: `Cost per minute must be at least ${SYM}${minCostPerMin} for private sessions`,
                 }, { status: 400 });
             }
         }
@@ -164,7 +165,9 @@ export async function POST(request: NextRequest) {
                 description: description || null,
                 session_type: sType,
                 entry_fee: entryFee,
-                cost_per_min: sType === "private" ? costPerMin : 0,
+                cost_per_min: sType === "private"
+                    ? costPerMin
+                    : (settings.billing_enabled !== false ? Number(settings.public_cost_per_min) || 2 : 0),
                 status: "active",
                 agora_channel: agoraChannel,
             })

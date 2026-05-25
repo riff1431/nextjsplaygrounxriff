@@ -6,7 +6,7 @@ import { Check, X, Eye, Loader2, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Image from "next/image";
-import { cs } from "@/utils/currency";
+import { useCurrency } from "@/app/context/CurrencyContext";
 
 interface Transaction {
     id: string;
@@ -21,12 +21,15 @@ interface Transaction {
         user: {
             email: string;
             full_name: string;
+            username?: string;
+            avatar_url?: string | null;
         }
     }
 }
 
 export default function PaymentApprovals() {
     const supabase = createClient();
+    const { formatPrice } = useCurrency();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -34,42 +37,39 @@ export default function PaymentApprovals() {
     const fetchPendingTransactions = async () => {
         setLoading(true);
         try {
-            // Fetch pending transactions with user details (via wallet)
-            // Note: This assumes relations are set up. If not, we might need manual joins or fetch.
-            // Let's try to fetch transactions and then we might need to fetch user emails if relations aren't perfect in generic Supabase setup
-            // For now, simpler query on transactions first.
-
+            // Fetch pending bank transactions using the direct user_id
             const { data, error } = await supabase
                 .from('transactions')
-                .select(`
-                    *,
-                    wallets (
-                        user_id
-                    )
-                `)
+                .select('*')
                 .eq('status', 'pending')
                 .eq('payment_method', 'bank')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            // Enrich with user emails (manual fetch avoid complex joins right now for speed)
+            // Enrich with user emails and names from profiles table using direct user_id
             const enriched = await Promise.all(data.map(async (tx: any) => {
                 let userName = "Unknown User";
                 let userEmail = "";
+                let userUsername = "";
+                let userAvatarUrl = null;
 
-                if (tx.wallets?.user_id) {
+                const targetUserId = tx.user_id;
+
+                if (targetUserId) {
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('email, full_name')
-                        .eq('id', tx.wallets.user_id)
+                        .select('full_name, username, avatar_url, role')
+                        .eq('id', targetUserId)
                         .single();
 
                     if (profile) {
                         userName = profile.full_name || "No Name";
-                        userEmail = profile.email || tx.wallets.user_id;
+                        userEmail = profile.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : "User";
+                        userUsername = profile.username || "";
+                        userAvatarUrl = profile.avatar_url || null;
                     } else {
-                        userEmail = tx.wallets.user_id;
+                        userEmail = "User";
                     }
                 }
 
@@ -78,7 +78,9 @@ export default function PaymentApprovals() {
                     wallet: {
                         user: {
                             full_name: userName,
-                            email: userEmail
+                            email: userEmail,
+                            username: userUsername,
+                            avatar_url: userAvatarUrl
                         }
                     }
                 };
@@ -168,11 +170,33 @@ export default function PaymentApprovals() {
                             transactions.map((tx) => (
                                 <tr key={tx.id} className="hover:bg-white/5 transition">
                                     <td className="p-4">
-                                        <div className="font-medium text-white">{tx.wallet?.user?.full_name || "Unknown User"}</div>
-                                        <div className="text-xs text-gray-500">{tx.wallet?.user?.email}</div>
+                                        <div className="flex items-center gap-3">
+                                            {tx.wallet?.user?.avatar_url ? (
+                                                <img
+                                                    src={tx.wallet.user.avatar_url}
+                                                    alt={tx.wallet.user.full_name}
+                                                    className="w-10 h-10 rounded-full border border-pink-500/25 object-cover shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white font-extrabold text-xs shrink-0 border border-pink-500/25">
+                                                    {(tx.wallet?.user?.full_name || "U")[0].toUpperCase()}
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <div className="font-bold text-white truncate flex items-center gap-1.5">
+                                                    {tx.wallet?.user?.full_name || "Unknown User"}
+                                                    {tx.wallet?.user?.username && (
+                                                        <span className="text-[10px] text-pink-400 font-semibold bg-pink-500/10 px-1.5 py-0.5 rounded-md border border-pink-500/15">
+                                                            @{tx.wallet.user.username}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[11px] text-gray-500 truncate">{tx.wallet?.user?.email}</div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td className="p-4">
-                                        <div className="font-bold text-green-400">{cs()}{tx.amount}</div>
+                                        <div className="font-bold text-green-400">{formatPrice(tx.amount)}</div>
                                         <div className="text-xs text-gray-500">{tx.payment_method}</div>
                                     </td>
                                     <td className="p-4 text-center">

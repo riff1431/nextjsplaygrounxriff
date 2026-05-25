@@ -10,12 +10,18 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function test() {
-  const { data, error } = await supabase
-    .from('confession_requests')
-    .select('id, topic, room_id, creator_id, fan_id')
-    .eq('room_id', 'f3b35702-0479-43da-a36c-1b25dbc3077a');
-    
-  console.log('Requests for this room:', data);
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error("Error:", error);
+    return;
+  }
+
+  console.log("Columns in profiles table:", Object.keys(profile));
 }
 
 test();

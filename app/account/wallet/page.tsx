@@ -16,15 +16,13 @@ import TopUpModal from "@/components/wallet/TopUpModal";
 import WithdrawalModal from "@/components/wallet/WithdrawalModal";
 import { useAuth } from "@/app/context/AuthContext";
 import { cs } from "@/utils/currency";
+import { useCurrency } from "@/app/context/CurrencyContext";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
 }
-
-const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(n);
 
 // ── UI Primitives ─────────────────────────────────────────────────────────────
 
@@ -57,6 +55,9 @@ export default function WalletPage() {
     const router = useRouter();
     const supabase = createClient();
     const { role } = useAuth();
+    const { currency, formatPrice } = useCurrency();
+
+    const fmt = useCallback((n: number) => formatPrice(n, 2), [formatPrice]);
 
     // Core state
     const [balance, setBalance] = useState<number>(0);
@@ -306,6 +307,13 @@ export default function WalletPage() {
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white transition group"
+                            title="Go Back"
+                        >
+                            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                        </button>
                         {role === "creator" && (
                             <Link
                                 href="/creator/dashboard"
@@ -345,7 +353,7 @@ export default function WalletPage() {
                         <div className="text-5xl md:text-6xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                             {fmt(balance)}
                         </div>
-                        <div className="text-xs text-gray-400">EUR · Available for spending</div>
+                        <div className="text-xs text-gray-400">{currency.code} · Available for spending</div>
 
                         <div className="flex flex-wrap gap-3 pt-2 justify-center">
                             <button
@@ -361,7 +369,7 @@ export default function WalletPage() {
                                     disabled={balance < 10}
                                     className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
                                 >
-                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? " (min ${cs()}10)" : ""}
+                                    <ArrowUpRight className="w-4 h-4" /> Withdraw{balance < 10 ? ` (min ${formatPrice(10)})` : ""}
                                 </button>
                             ) : (
                                 <button

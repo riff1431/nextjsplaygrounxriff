@@ -164,11 +164,15 @@ export default function AdminRoomSettingsPage() {
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public Entry Fee ({cs()})</label>
                                     <input
                                         type="number"
-                                        defaultValue={s.public_entry_fee}
+                                        value={s.public_entry_fee}
                                         min={0}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, public_entry_fee: val } : item));
+                                        }}
                                         onBlur={(e) => {
-                                            const v = Number(e.target.value);
-                                            if (v !== s.public_entry_fee) updateSetting(s.room_type, { public_entry_fee: v } as any);
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { public_entry_fee: val } as any);
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
@@ -177,11 +181,15 @@ export default function AdminRoomSettingsPage() {
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Min Private Fee ({cs()})</label>
                                     <input
                                         type="number"
-                                        defaultValue={s.min_private_entry_fee}
+                                        value={s.min_private_entry_fee}
                                         min={0}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, min_private_entry_fee: val } : item));
+                                        }}
                                         onBlur={(e) => {
-                                            const v = Number(e.target.value);
-                                            if (v !== s.min_private_entry_fee) updateSetting(s.room_type, { min_private_entry_fee: v } as any);
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { min_private_entry_fee: val } as any);
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
@@ -190,12 +198,16 @@ export default function AdminRoomSettingsPage() {
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Public {cs()}/min</label>
                                     <input
                                         type="number"
-                                        defaultValue={s.public_cost_per_min ?? 2}
+                                        value={s.public_cost_per_min ?? 2}
                                         min={0}
                                         step={0.01}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, public_cost_per_min: val } : item));
+                                        }}
                                         onBlur={(e) => {
-                                            const v = Number(e.target.value);
-                                            if (v !== s.public_cost_per_min) updateSetting(s.room_type, { public_cost_per_min: v } as any);
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { public_cost_per_min: val } as any);
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
@@ -204,12 +216,16 @@ export default function AdminRoomSettingsPage() {
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private {cs()}/min (min)</label>
                                     <input
                                         type="number"
-                                        defaultValue={s.min_private_cost_per_min ?? 5}
+                                        value={s.min_private_cost_per_min ?? 5}
                                         min={0}
                                         step={0.01}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, min_private_cost_per_min: val } : item));
+                                        }}
                                         onBlur={(e) => {
-                                            const v = Number(e.target.value);
-                                            if (v !== s.min_private_cost_per_min) updateSetting(s.room_type, { min_private_cost_per_min: v } as any);
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { min_private_cost_per_min: val } as any);
                                         }}
                                         style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />
@@ -246,12 +262,16 @@ export default function AdminRoomSettingsPage() {
                                     <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Private 1-on-1 Duration (seconds)</label>
                                     <input
                                         type="number"
-                                        defaultValue={s.private_1on1_duration_seconds ?? 60}
+                                        value={s.private_1on1_duration_seconds ?? 60}
                                         min={10}
                                         max={600}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, private_1on1_duration_seconds: val } : item));
+                                        }}
                                         onBlur={(e) => {
-                                            const v = Number(e.target.value);
-                                            if (v !== (s.private_1on1_duration_seconds ?? 60)) updateSetting(s.room_type, { private_1on1_duration_seconds: v } as any);
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { private_1on1_duration_seconds: val } as any);
                                         }}
                                         style={{ width: "120px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
                                     />

@@ -136,15 +136,40 @@ export async function POST(request: NextRequest) {
 
         const new_balance = walletData?.balance || 0;
 
-        // 4. Create session record
+        // Fetch room settings for 'truth-or-dare'
+        const { data: settings } = await supabase
+            .from("room_settings")
+            .select("*")
+            .eq("room_type", "truth-or-dare")
+            .single();
+
+        if (settings && !settings.is_active) {
+            return NextResponse.json({ error: "Truth & Dare room is currently disabled" }, { status: 403 });
+        }
+
         const isPrivate = session_type === "private";
+
+        // Validate session type
+        if (!isPrivate && settings && !settings.public_sessions_enabled) {
+            return NextResponse.json({ error: "Public sessions are disabled for Truth & Dare" }, { status: 403 });
+        }
+        if (isPrivate && settings && !settings.private_sessions_enabled) {
+            return NextResponse.json({ error: "Private sessions are disabled for Truth & Dare" }, { status: 403 });
+        }
+
+        // Validate entry fee
+        const entryFee = Number(price) || 0;
+        if (isPrivate && settings && entryFee < Number(settings.min_private_entry_fee)) {
+            return NextResponse.json({ error: `Private session fee must be at least ${SYM}${settings.min_private_entry_fee}` }, { status: 400 });
+        }
 
         // Validate cost per minute for private sessions
         let costPerMin = 0;
         if (isPrivate && cost_per_min !== undefined) {
             costPerMin = Number(cost_per_min) || 0;
-            if (costPerMin < 4) {
-                return NextResponse.json({ error: "Cost per minute must be at least ${SYM}4 for private sessions" }, { status: 400 });
+            const minCostPerMin = settings ? Number(settings.min_private_cost_per_min) : 4;
+            if (costPerMin < minCostPerMin) {
+                return NextResponse.json({ error: `Cost per minute must be at least ${SYM}${minCostPerMin} for private sessions` }, { status: 400 });
             }
         }
 

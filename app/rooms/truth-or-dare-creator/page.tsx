@@ -167,6 +167,7 @@ function TruthOrDareCreatorContent() {
         }, 1000);
     };
 
+    const [dbSettings, setDbSettings] = useState<any>(null);
     const [sessionForm, setSessionForm] = useState({
         title: "",
         description: "",
@@ -175,6 +176,34 @@ function TruthOrDareCreatorContent() {
         costPerMin: 4
     });
     const [sessionInfo, setSessionInfo] = useState<{ title: string; isPrivate: boolean; price: number } | null>(null);
+
+    // Fetch dynamic room settings from DB
+    useEffect(() => {
+        async function fetchSettings() {
+            try {
+                const { data, error } = await supabase
+                    .from("room_settings")
+                    .select("*")
+                    .eq("room_type", "truth-or-dare")
+                    .single();
+                if (data && !error) {
+                    setDbSettings(data);
+                    
+                    const isPrivateDefault = data.public_sessions_enabled === false && data.private_sessions_enabled !== false;
+                    
+                    setSessionForm(prev => ({
+                        ...prev,
+                        isPrivate: isPrivateDefault,
+                        price: isPrivateDefault ? (data.min_private_entry_fee ?? 20) : (data.public_entry_fee ?? 10),
+                        costPerMin: data.min_private_cost_per_min ?? 4,
+                    }));
+                }
+            } catch (err) {
+                console.error("Fetch truth-or-dare room settings error:", err);
+            }
+        }
+        fetchSettings();
+    }, [supabase]);
 
     // Wallet & Fee State
     const CREATOR_SESSION_FEE = 10;
@@ -998,9 +1027,12 @@ function TruthOrDareCreatorContent() {
     async function startSession() {
         if (!roomId) return;
         // Enforce pricing rules
-        const finalPrice = sessionForm.isPrivate ? Math.max(20, Number(sessionForm.price)) : 10;
+        const minPrivateFee = dbSettings ? Number(dbSettings.min_private_entry_fee) : 20;
+        const publicFee = dbSettings ? Number(dbSettings.public_entry_fee) : 10;
+        const finalPrice = sessionForm.isPrivate ? Math.max(minPrivateFee, Number(sessionForm.price)) : publicFee;
         setIsCreatingSession(true);
         try {
+            const minCostPerMin = dbSettings ? Number(dbSettings.min_private_cost_per_min) : 4;
             const res = await fetch('/api/v1/rooms/truth-dare-sessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1010,7 +1042,7 @@ function TruthOrDareCreatorContent() {
                     description: sessionForm.description,
                     session_type: sessionForm.isPrivate ? 'private' : 'public',
                     price: finalPrice,
-                    cost_per_min: sessionForm.isPrivate ? Math.max(4, sessionForm.costPerMin) : 0
+                    cost_per_min: sessionForm.isPrivate ? Math.max(minCostPerMin, sessionForm.costPerMin) : 0
                 })
             });
             const data = await res.json();
@@ -1292,24 +1324,31 @@ function TruthOrDareCreatorContent() {
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1.5 block">Session Type</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: false, price: 10 })}
-                                        className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
-                                            ? 'bg-green-500/20 border-green-500/50 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
-                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
-                                            }`}
-                                    >
-                                        🌐 Public
-                                    </button>
-                                    <button
-                                        onClick={() => setSessionForm({ ...sessionForm, isPrivate: true, price: Math.max(20, sessionForm.price) })}
-                                        className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
-                                            ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
-                                            }`}
-                                    >
-                                        🔒 Private
-                                    </button>
+                                    {(dbSettings === null || dbSettings.public_sessions_enabled !== false) && (
+                                        <button
+                                            onClick={() => setSessionForm({ ...sessionForm, isPrivate: false, price: dbSettings ? Number(dbSettings.public_entry_fee) : 10 })}
+                                            className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
+                                                ? 'bg-green-500/20 border-green-500/50 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
+                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            🌐 Public
+                                        </button>
+                                    )}
+                                    {(dbSettings === null || dbSettings.private_sessions_enabled !== false) && (
+                                        <button
+                                            onClick={() => {
+                                                const minPrivateFee = dbSettings ? Number(dbSettings.min_private_entry_fee) : 20;
+                                                setSessionForm({ ...sessionForm, isPrivate: true, price: Math.max(minPrivateFee, sessionForm.price) });
+                                            }}
+                                            className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
+                                                ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            🔒 Private
+                                        </button>
+                                    )}
                                 </div>
                                 {sessionForm.isPrivate && (
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
@@ -1326,11 +1365,14 @@ function TruthOrDareCreatorContent() {
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
                                         value={sessionForm.price}
-                                        min={20}
-                                        onChange={(e) => setSessionForm({ ...sessionForm, price: Math.max(20, Number(e.target.value)) })}
+                                        min={dbSettings ? Number(dbSettings.min_private_entry_fee) : 20}
+                                        onChange={(e) => {
+                                            const minFee = dbSettings ? Number(dbSettings.min_private_entry_fee) : 20;
+                                            setSessionForm({ ...sessionForm, price: Math.max(minFee, Number(e.target.value)) });
+                                        }}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum {cs()}20. Fans pay this to join your private session.
+                                        Minimum {cs()}{dbSettings ? Number(dbSettings.min_private_entry_fee) : 20}. Fans pay this to join your private session.
                                     </p>
                                 </div>
                             )}
@@ -1343,11 +1385,14 @@ function TruthOrDareCreatorContent() {
                                         type="number"
                                         className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 transition"
                                         value={sessionForm.costPerMin}
-                                        min={4}
-                                        onChange={(e) => setSessionForm({ ...sessionForm, costPerMin: Math.max(4, Number(e.target.value)) })}
+                                        min={dbSettings ? Number(dbSettings.min_private_cost_per_min) : 4}
+                                        onChange={(e) => {
+                                            const minCost = dbSettings ? Number(dbSettings.min_private_cost_per_min) : 4;
+                                            setSessionForm({ ...sessionForm, costPerMin: Math.max(minCost, Number(e.target.value)) });
+                                        }}
                                     />
                                     <p className="text-[10px] text-white/30 mt-1 px-1">
-                                        Minimum {cs()}4. Fans are charged per minute in your private session.
+                                        Minimum {cs()}{dbSettings ? Number(dbSettings.min_private_cost_per_min) : 4}. Fans are charged per minute in your private session.
                                     </p>
                                 </div>
                             )}

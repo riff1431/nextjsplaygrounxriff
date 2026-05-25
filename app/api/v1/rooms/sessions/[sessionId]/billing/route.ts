@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { applyRevenueSplit } from "@/utils/finance/applyRevenueSplit";
 import { getServerCurrencySymbol } from "@/utils/serverCurrency";
@@ -26,7 +27,7 @@ export async function POST(
         // Get session
         const { data: session } = await supabase
             .from("room_sessions")
-            .select("id, creator_id, room_id, title, status, session_type, is_private, cost_per_min")
+            .select("id, creator_id, room_id, title, status, session_type, is_private, cost_per_min, room_type")
             .eq("id", sessionId)
             .single();
 
@@ -38,56 +39,92 @@ export async function POST(
             return NextResponse.json({ error: "Creator is not billed" }, { status: 400 });
         }
 
+        // Fetch room settings for this session's room type
+        const { data: settings } = await supabase
+            .from("room_settings")
+            .select("*")
+            .eq("room_type", session.room_type || "")
+            .single();
+
+        // Determine billing enabled
+        const billingEnabled = settings ? (settings.billing_enabled ?? true) : true;
+
         // Determine rate and split type
         const isPrivate = session.session_type === 'private' || session.is_private;
-        const rate = isPrivate
-            ? Math.max(session.cost_per_min || 5, 5) // Private: min ${SYM}5/min
-            : 2; // Public: ${SYM}2/min
+        const minPrivateRate = settings ? Number(settings.min_private_cost_per_min) : 5;
+        const publicRate = settings ? Number(settings.public_cost_per_min) : 2;
+
+        const rate = !billingEnabled
+            ? 0
+            : (isPrivate
+                ? Math.max(Number(session.cost_per_min) || minPrivateRate, minPrivateRate)
+                : publicRate);
+
         const splitType = isPrivate ? 'PRIVATE_PER_MIN' : 'PUBLIC_PER_MIN';
 
         // Get last billing record for this session + fan
-        const { data: lastBilling } = await supabase
+        // Use admin client to bypass RLS (no INSERT policy exists for fans)
+        const adminClient = createAdminClient();
+        const { data: lastBilling } = await adminClient
             .from("session_billing_records")
             .select("minute_number")
             .eq("session_id", sessionId)
             .eq("fan_id", user.id)
             .order("minute_number", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
         const minuteNumber = (lastBilling?.minute_number || 0) + 1;
 
-        // Apply revenue split
-        const splitResult = await applyRevenueSplit({
-            supabase,
-            fanUserId: user.id,
-            creatorUserId: session.creator_id,
-            grossAmount: rate,
-            splitType,
-            description: `Per-minute billing: ${session.title} (min #${minuteNumber})`,
-            roomId: session.room_id,
-            relatedType: isPrivate ? 'per_min_private' : 'per_min_public',
-            relatedId: sessionId,
-            earningsCategory: 'per_min',
-        });
+        let creatorShare = 0;
+        let platformShare = 0;
+        let newBalance = null;
 
-        if (!splitResult.success) {
-            return NextResponse.json({
-                error: splitResult.error || "Insufficient balance — auto-eject",
-                auto_eject: true,
-            }, { status: 402 });
+        if (rate > 0) {
+            // Apply revenue split
+            const splitResult = await applyRevenueSplit({
+                supabase,
+                fanUserId: user.id,
+                creatorUserId: session.creator_id,
+                grossAmount: rate,
+                splitType,
+                description: `Per-minute billing: ${session.title} (min #${minuteNumber})`,
+                roomId: session.room_id,
+                relatedType: isPrivate ? 'per_min_private' : 'per_min_public',
+                relatedId: sessionId,
+                earningsCategory: 'per_min',
+            });
+
+            if (!splitResult.success) {
+                return NextResponse.json({
+                    error: splitResult.error || "Insufficient balance — auto-eject",
+                    auto_eject: true,
+                }, { status: 402 });
+            }
+
+            creatorShare = splitResult.creatorShare;
+            platformShare = splitResult.platformShare;
+            newBalance = splitResult.newBalance;
+        } else {
+            // Rate is 0 (billing is disabled). We query the user's current wallet balance
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("wallet_balance")
+                .eq("id", user.id)
+                .single();
+            newBalance = profile ? Number(profile.wallet_balance) : 0;
         }
 
-        // Record billing
-        const { error: billingError } = await supabase
+        // Record billing (use admin client to bypass RLS)
+        const { error: billingError } = await adminClient
             .from("session_billing_records")
             .insert({
                 session_id: sessionId,
                 fan_id: user.id,
                 minute_number: minuteNumber,
                 amount: rate,
-                creator_share: splitResult.creatorShare,
-                platform_share: splitResult.platformShare,
+                creator_share: creatorShare,
+                platform_share: platformShare,
             });
 
         if (billingError) {
@@ -98,9 +135,9 @@ export async function POST(
             success: true,
             minute_number: minuteNumber,
             amount: rate,
-            creator_share: splitResult.creatorShare,
-            platform_share: splitResult.platformShare,
-            new_balance: splitResult.newBalance,
+            creator_share: creatorShare,
+            platform_share: platformShare,
+            new_balance: newBalance,
             total_billed: minuteNumber * rate,
         });
     } catch (err: any) {
@@ -127,7 +164,38 @@ export async function GET(
     }
 
     try {
-        const { data: records, error } = await supabase
+        // Fetch session to determine rate
+        const { data: session } = await supabase
+            .from("room_sessions")
+            .select("id, session_type, is_private, cost_per_min, room_type, creator_id")
+            .eq("id", sessionId)
+            .single();
+
+        let computedRate = 0;
+        let billingEnabled = true;
+
+        if (session) {
+            const { data: settings } = await supabase
+                .from("room_settings")
+                .select("*")
+                .eq("room_type", session.room_type || "")
+                .single();
+
+            billingEnabled = settings ? (settings.billing_enabled ?? true) : true;
+            const isPrivate = session.session_type === 'private' || session.is_private;
+            const minPrivateRate = settings ? Number(settings.min_private_cost_per_min) : 5;
+            const publicRate = settings ? Number(settings.public_cost_per_min) : 2;
+
+            computedRate = !billingEnabled
+                ? 0
+                : (isPrivate
+                    ? Math.max(Number(session.cost_per_min) || minPrivateRate, minPrivateRate)
+                    : publicRate);
+        }
+
+        // Use admin client to bypass RLS for billing records
+        const adminClient = createAdminClient();
+        const { data: records, error } = await adminClient
             .from("session_billing_records")
             .select("*")
             .eq("session_id", sessionId)
@@ -142,6 +210,8 @@ export async function GET(
             records: records || [],
             total_minutes: records?.length || 0,
             total_billed: totalBilled,
+            rate: computedRate,
+            billing_enabled: billingEnabled,
         });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });

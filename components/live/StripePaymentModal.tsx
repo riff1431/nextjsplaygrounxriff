@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { X, AlertCircle } from 'lucide-react';
-import { cs } from "@/utils/currency";
+import { X, AlertCircle, Lock, ShieldCheck, Loader2 } from 'lucide-react';
+import { cs, fp } from "@/utils/currency";
 
 const CheckoutForm = ({ amount, roomId, confirmUrl, onClose, onSuccess }: { amount: number, roomId?: string, confirmUrl?: string, onClose: () => void, onSuccess: () => void }) => {
     const stripe = useStripe();
@@ -59,12 +59,27 @@ const CheckoutForm = ({ amount, roomId, confirmUrl, onClose, onSuccess }: { amou
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <PaymentElement />
-            {message && <div className="text-red-400 text-sm">{message}</div>}
+            {message && (
+                <div className="flex items-center gap-2 text-red-400 text-xs bg-red-500/10 border border-red-500/20 p-3 rounded-xl">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{message}</span>
+                </div>
+            )}
             <button
                 disabled={isLoading || !stripe || !elements}
-                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl transition disabled:opacity-50"
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-extrabold rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] disabled:opacity-40 disabled:pointer-events-none active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-                {isLoading ? 'Processing...' : `Pay ${cs()}${amount.toFixed(2)}`}
+                {isLoading ? (
+                    <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Processing Security Check...</span>
+                    </>
+                ) : (
+                    <>
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{`Pay ${fp(amount, 2)}`}</span>
+                    </>
+                )}
             </button>
         </form>
     );
@@ -134,38 +149,85 @@ export default function StripePaymentModal({ amount, roomId, confirmUrl, metadat
         appearance: {
             theme: 'night' as const,
             labels: 'floating' as const,
+            variables: {
+                colorPrimary: '#ec4899', // pink-500 to match topup pink presets
+                colorBackground: '#0d0d12', // deep luxury dark
+                colorText: '#ffffff',
+                colorDanger: '#ff4a5a',
+                fontFamily: 'Outfit, Inter, system-ui, sans-serif',
+                spacingUnit: '4px',
+                borderRadius: '16px',
+            },
+            rules: {
+                '.Input': {
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                    boxShadow: 'none',
+                    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                },
+                '.Input:focus': {
+                    borderColor: '#ec4899',
+                    boxShadow: '0 0 0 3px rgba(236, 72, 153, 0.25)',
+                },
+                '.Input--invalid': {
+                    borderColor: '#ff4a5a',
+                    boxShadow: '0 0 0 3px rgba(255, 74, 90, 0.25)',
+                },
+                '.Label': {
+                    color: '#a1a1aa',
+                    fontWeight: '500',
+                }
+            }
         },
     };
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md bg-gray-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative p-6 animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+            <div className="w-full max-w-md bg-[#0b0c10]/90 border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_60px_rgba(236,72,153,0.15)] relative p-6 animate-in fade-in zoom-in duration-200">
+                {/* Visual Accent Gradient Top Strip */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
+                
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 transition"
+                    className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                 </button>
 
-                <div className="mb-6">
-                    <h3 className="text-xl font-bold text-white">Stripe Secure Payment</h3>
-                    <p className="text-gray-400 text-sm">Amount: ${amount.toFixed(2)}</p>
+                {/* Header Section */}
+                <div className="flex items-center gap-3 mb-5 mt-2">
+                    <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
+                        <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-white tracking-tight">Stripe Secure Payment</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">256-bit SSL Encrypted</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Amount Row Card */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/[0.06] mb-6">
+                    <span className="text-xs text-gray-400 font-medium">Checkout Total</span>
+                    <span className="text-2xl font-black text-white tracking-tight">{fp(amount, 2)}</span>
                 </div>
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center p-8 gap-3">
-                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                        <span className="text-gray-400 text-sm">Preparing secure checkout...</span>
+                        <div className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" />
+                        <span className="text-gray-400 text-xs font-medium">Preparing secure checkout...</span>
                     </div>
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center p-8 gap-4 text-center">
-                        <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-red-400" />
+                        <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                            <AlertCircle className="w-5 h-5 text-red-400" />
                         </div>
-                        <p className="text-red-400 text-sm">{error}</p>
+                        <p className="text-red-400 text-sm font-medium">{error}</p>
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition"
+                            className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition border border-white/10"
                         >
                             Close
                         </button>
@@ -179,4 +241,5 @@ export default function StripePaymentModal({ amount, roomId, confirmUrl, metadat
         </div>
     );
 }
+
 

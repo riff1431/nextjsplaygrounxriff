@@ -2,14 +2,15 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Wallet, AlertTriangle, X } from "lucide-react";
+import { Clock, Wallet, AlertTriangle, X, Timer } from "lucide-react";
 import { useSessionBilling } from "@/hooks/useSessionBilling";
 import { cs } from "@/utils/currency";
 
 /* ═══════════════════════════════════════════════════════════
    BillingOverlay — Per-minute billing UI for fan watching pages
    ─────────────────────────────────────────────────────────
-   • Shows a compact floating pill with minutes / total spent
+   • Shows a compact floating pill with minutes / total spent / rate
+   • Shows estimated remaining time based on balance
    • Warns when balance is low (< 2 minutes remaining)
    • Shows full-screen eject modal when funds run out
    ═══════════════════════════════════════════════════════════ */
@@ -20,7 +21,7 @@ interface BillingOverlayProps {
     accentHsl?: string;
     /** Called when fan is auto-ejected for insufficient funds */
     onAutoEject?: () => void;
-    /** Per-minute rate label to display (defaults to "€2/min") */
+    /** Per-minute rate label to display (defaults to auto-detected) */
     rateLabel?: string;
     /** Back route when ejected */
     exitRoute?: string;
@@ -83,7 +84,16 @@ export default function BillingOverlay({
     const accent = `hsl(${accentHsl})`;
     const accentBg = `hsla(${accentHsl}, 0.15)`;
     const accentBorder = `hsla(${accentHsl}, 0.3)`;
-    const lowBalance = billing.lastBalance !== null && billing.lastBalance < 10;
+
+    // Compute remaining estimate
+    const currentRate = billing.rate ?? 0;
+    const estimatedRemaining = (billing.lastBalance !== null && currentRate > 0)
+        ? Math.floor(billing.lastBalance / currentRate)
+        : null;
+    const lowBalance = estimatedRemaining !== null && estimatedRemaining <= 2;
+
+    // Auto-detect rate label
+    const displayRate = rateLabel || (currentRate > 0 ? `${cs()}${currentRate}/min` : null);
 
     // ── Auto-Eject Modal ──
     if (showEjectModal) {
@@ -164,6 +174,19 @@ export default function BillingOverlay({
                         </div>
                     </div>
 
+                    {/* Rate info */}
+                    {currentRate > 0 && (
+                        <div style={{
+                            padding: "8px 16px", borderRadius: "8px",
+                            background: "rgba(255,255,255,0.04)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            marginBottom: "20px",
+                            fontSize: "12px", color: "rgba(255,255,255,0.5)",
+                        }}>
+                            Billing rate: <span style={{ color: accent, fontWeight: 700 }}>{cs()}{currentRate}/min</span>
+                        </div>
+                    )}
+
                     {/* Buttons */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         <button
@@ -219,7 +242,7 @@ export default function BillingOverlay({
             zIndex: 9990,
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "10px",
             padding: "8px 16px",
             borderRadius: "9999px",
             background: lowBalance
@@ -275,6 +298,35 @@ export default function BillingOverlay({
                 </span>
             </div>
 
+            {/* Rate display */}
+            {displayRate && (
+                <>
+                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
+                    <span style={{ fontSize: "10px", color: accent, fontWeight: 600 }}>
+                        {displayRate}
+                    </span>
+                </>
+            )}
+
+            {/* Estimated remaining */}
+            {estimatedRemaining !== null && (
+                <>
+                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
+                    <div style={{
+                        display: "flex", alignItems: "center", gap: "3px",
+                        animation: lowBalance ? "billingPulse 1.5s ease-in-out infinite" : "none",
+                    }}>
+                        <Timer style={{ width: "11px", height: "11px", color: lowBalance ? "hsl(45, 100%, 55%)" : "rgba(255,255,255,0.5)" }} />
+                        <span style={{
+                            fontSize: "10px", fontWeight: 700,
+                            color: lowBalance ? "hsl(45, 100%, 55%)" : "rgba(255,255,255,0.5)",
+                        }}>
+                            ~{estimatedRemaining} min left
+                        </span>
+                    </div>
+                </>
+            )}
+
             {/* Low balance warning */}
             {lowBalance && (
                 <>
@@ -283,21 +335,11 @@ export default function BillingOverlay({
                         display: "flex", alignItems: "center", gap: "4px",
                         animation: "billingPulse 1.5s ease-in-out infinite",
                     }}>
-                        <AlertTriangle style={{ width: "12px", height: "12px", color: "hsl(45, 100%, 55%)" }} />
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "hsl(45, 100%, 55%)" }}>
+                        <AlertTriangle style={{ width: "12px", height: "12px", color: "hsl(0, 80%, 65%)" }} />
+                        <span style={{ fontSize: "10px", fontWeight: 700, color: "hsl(0, 80%, 65%)" }}>
                             LOW
                         </span>
                     </div>
-                </>
-            )}
-
-            {/* Rate label */}
-            {rateLabel && (
-                <>
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-                    <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>
-                        {rateLabel}
-                    </span>
                 </>
             )}
 
