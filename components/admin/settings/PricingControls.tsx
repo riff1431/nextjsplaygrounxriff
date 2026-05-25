@@ -52,50 +52,13 @@ export default function PricingControls() {
             <AdminSectionTitle
                 icon={<Settings className="w-4 h-4" />}
                 title="Pricing Controls"
-                sub="Global defaults + versioning notes."
+                sub="Pricing configurations and versioning notes."
                 right={
                     <NeonButton onClick={handleSave} variant="pink">Save Changes</NeonButton>
                 }
             />
 
-            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-                    <div className="text-sm text-cyan-200">Global Defaults</div>
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <label className="text-xs text-gray-300">
-                            Entry Fee ({cs()})
-                            <input
-                                type="number"
-                                value={pricing.entry_fee}
-                                onChange={(e) => setPricing(p => ({ ...p, entry_fee: Number(e.target.value) }))}
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors"
-                            />
-                        </label>
-                        <label className="text-xs text-gray-300">
-                            Free Minutes
-                            <input
-                                type="number"
-                                value={pricing.free_minutes}
-                                onChange={(e) => setPricing(p => ({ ...p, free_minutes: Number(e.target.value) }))}
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors"
-                            />
-                        </label>
-                        <label className="text-xs text-gray-300">
-                            Per Minute ($)
-                            <input
-                                type="number"
-                                value={pricing.rate_per_minute}
-                                onChange={(e) => setPricing(p => ({ ...p, rate_per_minute: Number(e.target.value) }))}
-                                className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-pink-500/50 transition-colors"
-                            />
-                        </label>
-                    </div>
-
-                    <div className="mt-3 text-[11px] text-gray-400">
-                        These values are authoritative. Rooms without overrides will use these rates immediately.
-                    </div>
-                </div>
-
+            <div className="mt-4">
                 <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-cyan-200">Pricing Versioning</div>

@@ -79,6 +79,7 @@ export default function SubscriptionsPage() {
                         status,
                         current_period_end,
                         tier,
+                        creator_id,
                         creator:profiles!creator_id (
                             full_name,
                             avatar_url,
@@ -169,7 +170,7 @@ export default function SubscriptionsPage() {
                         subscriptions.map((sub) => {
                             const color = "pink";
                             const tier = sub.tier;
-                            const creatorName = sub.creator?.full_name || "Unknown Creator";
+                            const creatorName = sub.creator?.full_name || sub.creator?.username || "Unknown Creator";
                             const avatar = sub.creator?.avatar_url || "";
                             const initial = creatorName[0] || "?";
                             const isCancelled = sub.status === 'cancelled';

@@ -54,7 +54,7 @@ const SECTION_META: Record<string, { icon: React.ReactNode; color: string; bgCol
     COMPETITION_TIPS: { icon: <Shield size={15} />,  color: "hsl(150,80%,55%)",  bgColor: "rgba(72,187,120,0.1)",  section: "Exceptions" },
 };
 
-const SECTION_ORDER = ["Global", "Public Room", "Private Room", "Exceptions"];
+const SECTION_ORDER = ["Global"];
 
 // ─── Mini Donut Chart ─────────────────────────────────────────────────────────
 function DonutChart({ creator, platform }: { creator: number; platform: number }) {
@@ -574,36 +574,7 @@ export default function AdminSplitsPage() {
                         );
                     })}
 
-                    {/* Creator Invite Splits — Informational */}
-                    <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
-                            <div style={{ height: "1px", width: "16px", background: "rgba(255,255,255,0.1)" }} />
-                            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                                Creator Invites
-                            </span>
-                            <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
-                        </div>
-                        <div style={{
-                            background: "rgba(255,255,255,0.02)",
-                            border: "1px dashed rgba(255,255,255,0.1)",
-                            borderRadius: "16px",
-                            padding: "20px",
-                            display: "flex", alignItems: "flex-start", gap: "14px",
-                        }}>
-                            <Users size={20} color="hsl(195,100%,65%)" style={{ flexShrink: 0, marginTop: 2 }} />
-                            <div>
-                                <h3 style={{ color: "#fff", fontSize: "14px", fontWeight: 700, margin: "0 0 6px" }}>
-                                    Per-Session Creator Splits
-                                </h3>
-                                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: 0, lineHeight: 1.7 }}>
-                                    When a creator invites another creator to their session, <strong style={{ color: "rgba(255,255,255,0.8)" }}>the inviter sets a custom revenue split</strong> for the invited creator.
-                                    The invited creator must <strong style={{ color: "rgba(255,255,255,0.8)" }}>explicitly accept</strong> the split before entering the room.
-                                    These splits are negotiated per session and are stored in the <code style={{ color: "hsl(280,100%,75%)", fontSize: "11px" }}>creator_invite_splits</code> table.
-                                    No platform-wide default applies — this is fully creator-controlled.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             )}
 
