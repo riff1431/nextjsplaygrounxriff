@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Phone } from "lucide-react";
+import { ChevronLeft, Phone, Video, MessageCircle, Inbox, BarChart3 } from "lucide-react";
 
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -17,7 +17,14 @@ import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCallCreatorModal";
 import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 
+const BAR_LOUNGE_TABS: MobileStudioTab[] = [
+    { id: "video", label: "Video", icon: <Video className="w-5 h-5" /> },
+    { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
+    { id: "requests", label: "Requests", icon: <Inbox className="w-5 h-5" /> },
+    { id: "summary", label: "Summary", icon: <BarChart3 className="w-5 h-5" /> },
+];
 
 const CreatorBarLoungeInner = () => {
     const router = useRouter();
@@ -30,6 +37,7 @@ const CreatorBarLoungeInner = () => {
     const [sessionTitle, setSessionTitle] = useState<string | undefined>(undefined);
     const [showExitModal, setShowExitModal] = useState(false);
     const [showIncomingCallsPanel, setShowIncomingCallsPanel] = useState(false);
+    const [mobileTab, setMobileTab] = useState("video");
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId || null, user?.id || null, "creator");
@@ -83,19 +91,14 @@ const CreatorBarLoungeInner = () => {
         );
     }
 
-
-
-
-
-
     // --- Live View ---
     return (
         <div
-            className="h-[100dvh] w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme overflow-hidden"
+            className="min-h-[100dvh] lg:h-[100dvh] w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme overflow-hidden"
             style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-v2.png')" }}
         >
             {/* Top Bar */}
-            <div className="relative z-20 flex items-center justify-between sm:justify-center px-4 py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[70px]">
+            <div className="relative z-20 flex items-center justify-between sm:justify-center px-3 sm:px-4 py-2 sm:py-3 glass-panel rounded-none border-x-0 border-t-0 min-h-[56px] sm:min-h-[70px]">
                 <div className="sm:absolute sm:left-4 flex items-center gap-2 sm:gap-3">
                     <button
                         onClick={() => setShowExitModal(true)}
@@ -105,7 +108,9 @@ const CreatorBarLoungeInner = () => {
                         <ChevronLeft className="w-4 h-4" />
                         <span className="text-sm font-medium hidden md:inline">Back</span>
                     </button>
-                    <WalletPill />
+                    <div className="hidden sm:block">
+                        <WalletPill />
+                    </div>
                 </div>
                 <div className="text-center hidden sm:block">
                     <h1 className="text-xl lg:text-2xl gold-text" style={{ fontFamily: "'Pacifico', cursive" }}>Bar Lounge</h1>
@@ -114,7 +119,7 @@ const CreatorBarLoungeInner = () => {
                         {sessionTitle || "Live Session"}
                     </p>
                 </div>
-                <div className="absolute right-2 sm:right-4 flex items-center gap-2">
+                <div className="absolute right-2 sm:right-4 flex items-center gap-1.5 sm:gap-2">
                     {/* Incoming 1-on-1 calls */}
                     <div className="relative" data-incoming-btn>
                         <button
@@ -158,10 +163,11 @@ const CreatorBarLoungeInner = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-y-auto lg:overflow-hidden">
-                <div className="w-full h-full grid grid-cols-1 lg:grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
+            <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-y-auto lg:overflow-hidden pb-20 lg:pb-4">
+                {/* Desktop: 3-col grid */}
+                <div className="hidden lg:grid w-full h-full grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
                     {/* Left - Chat */}
-                    <div className="h-full hidden lg:flex min-h-[400px]">
+                    <div className="h-full flex min-h-[400px]">
                         <LoungeChat roomId={roomId} sessionId={sessionId} />
                     </div>
 
@@ -173,7 +179,7 @@ const CreatorBarLoungeInner = () => {
                     </div>
 
                     {/* Right - Requests & Summary */}
-                    <div className="hidden lg:flex flex-col gap-4 h-full min-h-[400px]">
+                    <div className="flex flex-col gap-4 h-full min-h-[400px]">
                         <div className="flex-1 min-h-0">
                             <IncomingRequests
                                 roomId={roomId}
@@ -186,7 +192,48 @@ const CreatorBarLoungeInner = () => {
                         <SummaryPanel roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>
+
+                {/* Mobile: Tab-based layout */}
+                <div className="lg:hidden flex flex-col gap-3">
+                    {mobileTab === "video" && (
+                        <div className="w-full min-h-[300px]" style={{ height: "clamp(250px, 56vw, 500px)" }}>
+                            <VideoStage roomId={roomId} />
+                        </div>
+                    )}
+
+                    {mobileTab === "chat" && (
+                        <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 180px)" }}>
+                            <LoungeChat roomId={roomId} sessionId={sessionId} />
+                        </div>
+                    )}
+
+                    {mobileTab === "requests" && (
+                        <div className="w-full min-h-[400px]" style={{ height: "calc(100dvh - 180px)" }}>
+                            <IncomingRequests
+                                roomId={roomId}
+                                sessionId={sessionId}
+                                pendingPrivateCalls={privateCall.pendingCalls}
+                                onAcceptPrivateCall={privateCall.acceptCall}
+                                onDeclinePrivateCall={privateCall.declineCall}
+                            />
+                        </div>
+                    )}
+
+                    {mobileTab === "summary" && (
+                        <div className="w-full">
+                            <SummaryPanel roomId={roomId} sessionId={sessionId} />
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {/* Mobile Tab Bar */}
+            <MobileStudioTabs
+                tabs={BAR_LOUNGE_TABS}
+                activeTab={mobileTab}
+                onTabChange={setMobileTab}
+                accentHsl="45, 90%, 55%"
+            />
 
             <CreatorExitModal
                 isOpen={showExitModal}

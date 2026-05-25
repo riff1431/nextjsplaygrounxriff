@@ -230,7 +230,7 @@ export default function RoomSessionDashboard({
     if (loading) {
         return (
             <div
-                className="min-h-screen flex items-center justify-center"
+                className="min-h-screen flex items-center justify-center relative"
                 style={{
                     backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
                     backgroundSize: "cover",
@@ -262,13 +262,13 @@ export default function RoomSessionDashboard({
         >
             {backgroundImage && <div className="absolute inset-0 bg-black/75" />}
 
-            <div className="relative z-10 max-w-3xl mx-auto px-6 py-10">
+            <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
                 {/* ── Header ── */}
-                <div className="flex items-center justify-between mb-10">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-10">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                         <button
                             onClick={() => router.push(backRoute)}
-                            className="px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors hover:bg-white/10"
+                            className="px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 sm:gap-2 text-sm font-medium transition-colors hover:bg-white/10 shrink-0"
                             style={{
                                 background: "rgba(255,255,255,0.04)",
                                 border: `1px solid ${accentBorder}`,
@@ -276,21 +276,21 @@ export default function RoomSessionDashboard({
                             }}
                         >
                             <ChevronLeft className="w-[18px] h-[18px]" />
-                            Back
+                            <span className="hidden sm:inline">Back</span>
                         </button>
-                        <div>
+                        <div className="min-w-0">
                             <h1
-                                className="text-3xl font-bold flex items-center gap-3"
+                                className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3"
                                 style={{
                                     color: accentColor,
                                     textShadow: `0 0 20px hsla(${accentHsl}, 0.4)`,
                                 }}
                             >
-                                <span className="text-3xl">{roomEmoji}</span>
-                                {roomLabel}
+                                <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
+                                <span className="truncate">{roomLabel}</span>
                             </h1>
                             <p
-                                className="text-sm mt-1"
+                                className="text-xs sm:text-sm mt-0.5 sm:mt-1"
                                 style={{ color: `hsla(${accentHsl}, 0.6)` }}
                             >
                                 Manage your live sessions
@@ -305,23 +305,23 @@ export default function RoomSessionDashboard({
                     <>
                     <button
                         onClick={() => setShowForm(true)}
-                        className="w-full group relative overflow-hidden rounded-2xl p-8 flex items-center gap-6 transition-all mb-8 hover:scale-[1.01]"
+                        className="w-full group relative overflow-hidden rounded-2xl p-5 sm:p-8 flex items-center gap-4 sm:gap-6 transition-all mb-4 sm:mb-8 hover:scale-[1.01] active:scale-[0.99]"
                         style={{
                             background: "hsla(270, 40%, 12%, 0.6)",
                             border: `2px dashed ${accentBorder}`,
                         }}
                     >
                         <div
-                            className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                            className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
                             style={{ background: accentBg, border: `1px solid ${accentBorder}` }}
                         >
-                            <Plus className="w-8 h-8" style={{ color: accentColor }} />
+                            <Plus className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: accentColor }} />
                         </div>
-                        <div className="text-left">
-                            <div className="text-xl font-bold text-white">
+                        <div className="text-left min-w-0">
+                            <div className="text-base sm:text-xl font-bold text-white">
                                 Start New Session
                             </div>
-                            <div className="text-sm mt-1" style={{ color: "hsl(280, 15%, 60%)" }}>
+                            <div className="text-xs sm:text-sm mt-0.5 sm:mt-1" style={{ color: "hsl(280, 15%, 60%)" }}>
                                 Create a new {roomLabel} session and go live
                             </div>
                         </div>
@@ -329,23 +329,23 @@ export default function RoomSessionDashboard({
                     {offlinePageRoute && (
                         <button
                             onClick={() => router.push(offlinePageRoute)}
-                            className="w-full group relative overflow-hidden rounded-2xl p-8 flex items-center gap-6 transition-all mb-8 hover:scale-[1.01]"
+                            className="w-full group relative overflow-hidden rounded-2xl p-5 sm:p-8 flex items-center gap-4 sm:gap-6 transition-all mb-4 sm:mb-8 hover:scale-[1.01] active:scale-[0.99]"
                             style={{
                                 background: "hsla(270, 40%, 12%, 0.6)",
                                 border: `2px dashed ${accentBorder}`,
                             }}
                         >
                             <div
-                                className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                                className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
                                 style={{ background: accentBg, border: `1px solid ${accentBorder}` }}
                             >
-                                <Sparkles className="w-8 h-8" style={{ color: accentColor }} />
+                                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: accentColor }} />
                             </div>
-                            <div className="text-left">
-                                <div className="text-xl font-bold text-white">
+                            <div className="text-left min-w-0">
+                                <div className="text-base sm:text-xl font-bold text-white">
                                     {offlineLabel}
                                 </div>
-                                <div className="text-sm mt-1" style={{ color: "hsl(280, 15%, 60%)" }}>
+                                <div className="text-xs sm:text-sm mt-0.5 sm:mt-1" style={{ color: "hsl(280, 15%, 60%)" }}>
                                     {offlineDescription}
                                 </div>
                             </div>
@@ -354,19 +354,19 @@ export default function RoomSessionDashboard({
                     </>
                 ) : (
                     <div
-                        className="w-full rounded-2xl p-6 mb-8"
+                        className="w-full rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8"
                         style={{
                             background: "hsla(270, 40%, 12%, 0.8)",
                             border: `1px solid ${accentBorder}`,
                             boxShadow: accentGlow,
                         }}
                     >
-                        <div className="flex items-center gap-3 mb-5">
-                            <Video className="w-5 h-5" style={{ color: accentColor }} />
-                            <h2 className="text-lg font-bold text-white">New Session</h2>
+                        <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                            <Video className="w-5 h-5 shrink-0" style={{ color: accentColor }} />
+                            <h2 className="text-base sm:text-lg font-bold text-white">New Session</h2>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3 sm:space-y-4">
                             {/* Title */}
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">
@@ -379,7 +379,7 @@ export default function RoomSessionDashboard({
                                         setSessionForm({ ...sessionForm, title: e.target.value })
                                     }
                                     placeholder={`e.g. Late Night ${roomLabel} 🔥`}
-                                    className="w-full rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none text-sm"
+                                    className="w-full rounded-xl px-3 sm:px-4 py-3 sm:py-3.5 text-white placeholder-gray-500 focus:outline-none text-sm"
                                     style={{
                                         background: "hsla(270, 30%, 18%, 0.5)",
                                         border: `1px solid hsla(280, 40%, 35%, 0.4)`,
@@ -398,7 +398,7 @@ export default function RoomSessionDashboard({
                                         setSessionForm({ ...sessionForm, description: e.target.value })
                                     }
                                     placeholder="Tell fans what to expect..."
-                                    className="w-full rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none text-sm h-20 resize-none"
+                                    className="w-full rounded-xl px-3 sm:px-4 py-3 sm:py-3.5 text-white placeholder-gray-500 focus:outline-none text-sm h-20 resize-none"
                                     style={{
                                         background: "hsla(270, 30%, 18%, 0.5)",
                                         border: "1px solid hsla(280, 40%, 35%, 0.4)",
@@ -417,7 +417,7 @@ export default function RoomSessionDashboard({
                                             onClick={() =>
                                                 setSessionForm({ ...sessionForm, isPrivate: false, price: dbSettings ? Number(dbSettings.public_entry_fee) : 10 })
                                             }
-                                            className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
+                                            className={`py-3 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${!sessionForm.isPrivate
                                                     ? "bg-green-500/20 border-green-500/50 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
                                                     : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                                                 }`}
@@ -435,7 +435,7 @@ export default function RoomSessionDashboard({
                                                     price: Math.max(minPrivateFee, sessionForm.price),
                                                 });
                                             }}
-                                            className={`py-2.5 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
+                                            className={`py-3 rounded-lg text-sm font-bold transition border flex items-center justify-center gap-2 ${sessionForm.isPrivate
                                                     ? "bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]"
                                                     : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                                                 }`}
@@ -469,7 +469,7 @@ export default function RoomSessionDashboard({
                                                     price: Math.max(minFee, Number(e.target.value)),
                                                 });
                                             }}
-                                            className="w-full rounded-xl px-4 py-3 text-white focus:outline-none text-sm"
+                                            className="w-full rounded-xl px-3 sm:px-4 py-3 sm:py-3.5 text-white focus:outline-none text-sm"
                                             style={{
                                                 background: "hsla(270, 30%, 18%, 0.5)",
                                                 border: "1px solid hsla(280, 40%, 35%, 0.4)",
@@ -494,7 +494,7 @@ export default function RoomSessionDashboard({
                                                     costPerMin: Math.max(minCost, Number(e.target.value)),
                                                 });
                                             }}
-                                            className="w-full rounded-xl px-4 py-3 text-white focus:outline-none text-sm"
+                                            className="w-full rounded-xl px-3 sm:px-4 py-3 sm:py-3.5 text-white focus:outline-none text-sm"
                                             style={{
                                                 background: "hsla(270, 30%, 18%, 0.5)",
                                                 border: "1px solid hsla(280, 40%, 35%, 0.4)",
@@ -508,7 +508,7 @@ export default function RoomSessionDashboard({
                             )}
 
                             {/* Action Buttons */}
-                            <div className="flex items-center gap-3 pt-1">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1">
                                 <button
                                     onClick={() => {
                                         setShowForm(false);
@@ -520,7 +520,7 @@ export default function RoomSessionDashboard({
                                             costPerMin: 4,
                                         });
                                     }}
-                                    className="flex-1 rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-white/5"
+                                    className="flex-1 rounded-xl px-4 py-3.5 text-sm font-medium transition-colors hover:bg-white/5"
                                     style={{
                                         border: "1px solid hsla(280, 40%, 35%, 0.4)",
                                         color: "hsl(280, 15%, 60%)",
@@ -531,7 +531,7 @@ export default function RoomSessionDashboard({
                                 <button
                                     onClick={handleStartSession}
                                     disabled={!sessionForm.title.trim() || isCreating}
-                                    className="flex-1 rounded-xl px-4 py-3 text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 rounded-xl px-4 py-3.5 text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     style={{
                                         background: accentGradient,
                                         color: "#fff",
@@ -552,9 +552,9 @@ export default function RoomSessionDashboard({
 
                 {/* ── Active / Live Sessions ── */}
                 {activeSessions.length > 0 && (
-                    <div className="mb-8">
+                    <div className="mb-4 sm:mb-8">
                         <h2
-                            className="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
+                            className="text-sm font-bold uppercase tracking-widest mb-3 sm:mb-4 flex items-center gap-2"
                             style={{ color: accentColor }}
                         >
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -564,15 +564,15 @@ export default function RoomSessionDashboard({
                             {activeSessions.map((session) => (
                                 <div
                                     key={session.id}
-                                    className="rounded-2xl p-5 flex items-center justify-between transition-all"
+                                    className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-all"
                                     style={{
                                         background: "hsla(270, 40%, 12%, 0.6)",
                                         border: "1px solid hsla(150, 80%, 45%, 0.3)",
                                         boxShadow: "0 0 20px hsla(150, 80%, 45%, 0.08)",
                                     }}
                                 >
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2 mb-1">
                                             {session.live_started_at ? (
                                                 <>
                                                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -608,11 +608,11 @@ export default function RoomSessionDashboard({
                                                 {session.session_type === "private" ? "🔒 Private" : "🌐 Public"}
                                             </span>
                                         </div>
-                                        <div className="text-lg font-semibold text-white truncate">
+                                        <div className="text-base sm:text-lg font-semibold text-white truncate">
                                             {session.title || "Untitled Session"}
                                         </div>
                                         <div
-                                            className="text-xs mt-1 flex items-center gap-1.5"
+                                            className="text-xs mt-1 flex flex-wrap items-center gap-1.5"
                                             style={{ color: "hsl(280, 15%, 60%)" }}
                                         >
                                             <Clock className="w-3 h-3" />
@@ -620,10 +620,10 @@ export default function RoomSessionDashboard({
                                             <LiveViewerBadge roomId={session.room_id} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                                    <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={() => handleEndSession(session.id)}
-                                            className="rounded-xl px-4 py-2.5 text-xs font-medium transition-colors hover:bg-red-900/30"
+                                            className="flex-1 sm:flex-none rounded-xl px-3 sm:px-4 py-2.5 text-xs font-medium transition-colors hover:bg-red-900/30"
                                             style={{
                                                 border: "1px solid hsla(320, 80%, 60%, 0.4)",
                                                 color: "hsl(320, 80%, 60%)",
@@ -633,7 +633,7 @@ export default function RoomSessionDashboard({
                                         </button>
                                         <button
                                             onClick={() => handleResume(session)}
-                                            className="rounded-xl px-5 py-2.5 text-sm font-bold flex items-center gap-2 transition-all hover:brightness-110"
+                                            className="flex-1 sm:flex-none rounded-xl px-4 sm:px-5 py-2.5 text-sm font-bold flex items-center justify-center gap-2 transition-all hover:brightness-110"
                                             style={{
                                                 background: accentGradient,
                                                 color: "#fff",
@@ -650,23 +650,23 @@ export default function RoomSessionDashboard({
                 )}
 
                 {/* ── Past Sessions History ── */}
-                <div>
+                <div className="pb-6">
                     <h2
-                        className="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2"
+                        className="text-sm font-bold uppercase tracking-widest mb-3 sm:mb-4 flex items-center gap-2"
                         style={{ color: "hsl(280, 15%, 60%)" }}
                     >
                         <Calendar className="w-4 h-4" /> Session History
                     </h2>
                     {pastSessions.length === 0 ? (
                         <div
-                            className="rounded-2xl p-10 text-center"
+                            className="rounded-2xl p-8 sm:p-10 text-center"
                             style={{
                                 background: "hsla(270, 40%, 12%, 0.4)",
                                 border: "1px solid hsla(280, 40%, 25%, 0.3)",
                             }}
                         >
                             <Sparkles
-                                className="w-10 h-10 mx-auto mb-3"
+                                className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3"
                                 style={{ color: "hsl(280, 15%, 40%)" }}
                             />
                             <p style={{ color: "hsl(280, 15%, 50%)" }} className="text-sm">
@@ -678,25 +678,25 @@ export default function RoomSessionDashboard({
                             {pastSessions.slice(0, 20).map((session) => (
                                 <div
                                     key={session.id}
-                                    className="rounded-xl p-4 flex items-center justify-between transition-colors hover:bg-white/5"
+                                    className="rounded-xl p-3 sm:p-4 flex items-center justify-between gap-2 transition-colors hover:bg-white/5"
                                     style={{
                                         background: "hsla(270, 40%, 12%, 0.3)",
                                         border: "1px solid hsla(280, 40%, 25%, 0.25)",
                                     }}
                                 >
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <div className="font-medium text-white/80 truncate text-sm">
                                             {session.title || "Untitled Session"}
                                         </div>
                                         <div
-                                            className="text-xs mt-0.5 flex items-center gap-1.5"
+                                            className="text-xs mt-0.5 flex flex-wrap items-center gap-1"
                                             style={{ color: "hsl(280, 15%, 50%)" }}
                                         >
                                             <Clock className="w-3 h-3" />
                                             {formatDate(session.started_at)}
                                             {session.viewer_count > 0 && (
                                                 <>
-                                                    <span className="mx-1">·</span>
+                                                    <span className="mx-0.5">·</span>
                                                     <Users className="w-3 h-3" />
                                                     {session.viewer_count} viewers
                                                 </>
@@ -704,7 +704,7 @@ export default function RoomSessionDashboard({
                                         </div>
                                     </div>
                                     <span
-                                        className="text-[10px] px-2.5 py-1 rounded-full font-medium uppercase tracking-wider shrink-0"
+                                        className="text-[10px] px-2 sm:px-2.5 py-1 rounded-full font-medium uppercase tracking-wider shrink-0"
                                         style={{
                                             background: "hsla(280, 40%, 25%, 0.3)",
                                             color: "hsl(280, 15%, 55%)",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Video, LayoutList, MessageCircle } from "lucide-react";
 import ConfessionsTopBar from "@/components/rooms/confessions-creator/ConfessionsTopBar";
 import ConfessionsLeftSidebar from "@/components/rooms/confessions-creator/ConfessionsLeftSidebar";
 import ConfessionsCenterContent from "@/components/rooms/confessions-creator/ConfessionsCenterContent";
@@ -12,6 +13,13 @@ import { useAuth } from "@/app/context/AuthContext";
 import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+
+const CONFESSIONS_TABS: MobileStudioTab[] = [
+    { id: "content", label: "Content", icon: <Video className="w-5 h-5" /> },
+    { id: "sidebar", label: "Sidebar", icon: <LayoutList className="w-5 h-5" /> },
+    { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
+];
 
 const ConfessionsCreatorPage = () => {
     const { user } = useAuth();
@@ -20,6 +28,7 @@ const ConfessionsCreatorPage = () => {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [isWrongUser, setIsWrongUser] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
+    const [mobileTab, setMobileTab] = useState("content");
     const router = useRouter();
 
     useEffect(() => {
@@ -72,7 +81,7 @@ const ConfessionsCreatorPage = () => {
 
     return (
         <div
-            className="conf-theme h-screen overflow-hidden relative"
+            className="conf-theme min-h-[100dvh] lg:h-screen lg:overflow-hidden relative"
             style={{
                 backgroundImage: "url('/rooms/confessions-creator-bg.png')",
                 backgroundSize: "cover",
@@ -85,15 +94,18 @@ const ConfessionsCreatorPage = () => {
             <ConfessionsFloatingHearts />
 
             {/* Content */}
-            <div className="relative z-10 flex flex-col h-screen">
-                <div className="relative flex items-center">
+            <div className="relative z-10 flex flex-col h-full min-h-[100dvh] lg:h-screen">
+                {/* Top bar — responsive */}
+                <div className="relative flex items-center shrink-0">
                     <div className="flex-1">
                         <ConfessionsTopBar onBack={() => setShowExitModal(true)} />
                     </div>
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 z-20 flex items-center gap-4">
+                    <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 sm:gap-4">
                         {isWrongUser && (
-                            <div className="bg-red-500/20 text-red-500 border border-red-500 px-3 py-1 rounded-full text-xs font-bold animate-pulse flex items-center gap-2">
-                                <span>⚠️</span> WRONG ACCOUNT (RLS BLOCKED)
+                            <div className="bg-red-500/20 text-red-500 border border-red-500 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold animate-pulse flex items-center gap-1 sm:gap-2">
+                                <span>⚠️</span>
+                                <span className="hidden sm:inline">WRONG ACCOUNT (RLS BLOCKED)</span>
+                                <span className="sm:hidden">RLS ERR</span>
                             </div>
                         )}
                         <SessionLiveControls
@@ -103,16 +115,35 @@ const ConfessionsCreatorPage = () => {
                         />
                     </div>
                 </div>
-                <div className="flex-1 flex items-stretch gap-16 px-4 pb-4 overflow-hidden xl:mx-40">
-                    <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
-                    <div className="flex-1 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 min-h-0">
+
+                {/* Main content — responsive 3-col → mobile tabs */}
+                <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 lg:overflow-hidden xl:mx-40 min-h-0">
+                    {/* Left Sidebar — visible on lg+, or when "sidebar" tab active on mobile */}
+                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[400px] lg:min-h-0`}>
+                        <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
+                    </div>
+
+                    {/* Center Content — visible on lg+, or when "content" tab active on mobile */}
+                    <div className={`${mobileTab === "content" ? "flex" : "hidden"} lg:flex flex-1 flex-col gap-4 min-h-0`}>
+                        <div className="flex-1 min-h-[400px] lg:min-h-0">
                             <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
                         </div>
                     </div>
-                    <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
+
+                    {/* Live Chat — visible on lg+, or when "chat" tab active on mobile */}
+                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[400px] lg:min-h-0`}>
+                        <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
+                    </div>
                 </div>
             </div>
+
+            {/* Mobile Tab Bar — hidden on lg+ */}
+            <MobileStudioTabs
+                tabs={CONFESSIONS_TABS}
+                activeTab={mobileTab}
+                onTabChange={setMobileTab}
+                accentHsl="280, 70%, 60%"
+            />
 
             <CreatorExitModal
                 isOpen={showExitModal}

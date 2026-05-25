@@ -26,6 +26,14 @@ import TodInviteCreatorModal from "@/components/rooms/truth-or-dare-creator/TodI
 import dynamic from "next/dynamic";
 import { cs } from "@/utils/currency";
 const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
+
+const TOD_STUDIO_TABS: MobileStudioTab[] = [
+    { id: "studio", label: "Studio", icon: <VideoIcon className="w-5 h-5" /> },
+    { id: "requests", label: "Requests", icon: <InboxIcon className="w-5 h-5" /> },
+    { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
+];
 
 // ---------- Pricing / constants ----------
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -146,6 +154,7 @@ function TruthOrDareCreatorContent() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
+    const [mobileStudioTab, setMobileStudioTab] = useState("studio");
     // Agora remote users from the host's CreatorStream — used to render collab streams in invite slots
     const [agoraRemoteUsers, setAgoraRemoteUsers] = useState<any[]>([]);
     const handleRemoteUsersChange = useCallback((users: any[]) => {
@@ -1327,7 +1336,7 @@ function TruthOrDareCreatorContent() {
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Session Title</label>
                                 <input
-                                    className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
                                     placeholder="e.g. Late Night Truth or Dare 🔥"
                                     value={sessionForm.title}
                                     onChange={(e) => setSessionForm({ ...sessionForm, title: e.target.value })}
@@ -1336,7 +1345,7 @@ function TruthOrDareCreatorContent() {
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Description (optional)</label>
                                 <textarea
-                                    className="w-full bg-white/5 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-14"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-14"
                                     placeholder="Tell fans what to expect..."
                                     value={sessionForm.description}
                                     onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
@@ -1428,7 +1437,7 @@ function TruthOrDareCreatorContent() {
                             <button
                                 onClick={startSession}
                                 disabled={isCreatingSession || !sessionForm.title.trim() || history.some((s: any) => s.status === 'active' || s.status === 'pending')}
-                                className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-pink-900/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isCreatingSession ? (
                                     <>⏳ Creating Session...</>
@@ -1488,7 +1497,7 @@ function TruthOrDareCreatorContent() {
                                                             <div className="text-[10px] text-white/40">earned</div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex flex-wrap items-center gap-2 mt-3">
                                                         <button
                                                             onClick={() => {
                                                                 // Rejoin: set session active state and enter studio
@@ -1533,13 +1542,13 @@ function TruthOrDareCreatorContent() {
                                                                         .catch(e => console.error('Failed to fetch session earnings on rejoin:', e));
                                                                 }
                                                             }}
-                                                            className="flex-1 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-green-900/20"
+                                                            className="flex-1 min-w-[120px] py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-green-900/20"
                                                         >
                                                             <Play className="w-3.5 h-3.5" /> Rejoin Session
                                                         </button>
                                                         <button
                                                             onClick={() => setPendingEndSession({ id: s.id, title: s.session_title || s.title || 'Untitled' })}
-                                                            className="py-2 px-4 rounded-lg bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                                                            className="py-2.5 px-4 rounded-lg bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
                                                         >
                                                             <Square className="w-3 h-3" /> End
                                                         </button>
@@ -1560,15 +1569,15 @@ function TruthOrDareCreatorContent() {
                                         </h3>
                                         <div className="space-y-2 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
                                             {pastSessions.map((s: any, i: number) => (
-                                                <div key={s.id || i} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-lg px-3 py-2 hover:border-white/10 transition">
-                                                    <div>
-                                                        <div className="text-xs text-white font-medium">{s.session_title || s.title || "Untitled"}</div>
-                                                        <div className="text-[10px] text-white/40 mt-0.5 flex items-center gap-2">
+                                                <div key={s.id || i} className="flex items-center justify-between gap-2 bg-black/30 border border-white/5 rounded-lg px-3 py-2 hover:border-white/10 transition">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-xs text-white font-medium truncate">{s.session_title || s.title || "Untitled"}</div>
+                                                        <div className="text-[10px] text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
                                                             <span>{formatCanadaDate(s.started_at || s.created_at)}</span>
                                                             <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30">{s.is_private ? '🔒 Private' : '🌐 Public'}</span>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right">
+                                                    <div className="text-right shrink-0">
                                                         <div className="text-xs font-bold text-green-400">{cs()}{(s.total_earnings || 0).toFixed(2)}</div>
                                                         <div className="text-[10px] text-white/40">{s.participant_count || 0} viewers</div>
                                                     </div>
@@ -1583,7 +1592,7 @@ function TruthOrDareCreatorContent() {
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
-                <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-0 relative overflow-y-auto lg:overflow-hidden" style={{ minHeight: 'calc(100vh - 70px)' }}>
+                <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-0 relative overflow-y-auto lg:overflow-hidden pb-16 lg:pb-0" style={{ minHeight: 'calc(100dvh - 70px)' }}>
 
                     {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
                     {!isSessionLive && (
@@ -1640,7 +1649,7 @@ function TruthOrDareCreatorContent() {
                     )}
 
                     {/* ═══ LEFT SECTION: Video Grid + Bottom Row ═══ */}
-                    <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0">
+                    <div className={`flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0 ${mobileStudioTab !== "studio" ? "hidden lg:flex" : "flex"}`}>
                         {/* 2x2 Video Grid */}
                         <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }}>
                             {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
@@ -1791,7 +1800,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className="w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden">
+                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden ${mobileStudioTab !== "requests" ? "hidden lg:block" : "block"}`}>
                         <TodCreatorRequestPanel
                             title="Incoming Requests"
                             accentColor="pink"
@@ -1834,7 +1843,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className="w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0">
+                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0 ${mobileStudioTab !== "chat" ? "hidden lg:block" : "block"}`}>
                         <TodCreatorLiveChat 
                             roomId={roomId} 
                             sessionStartedAt={activeSessionStartedAt}
@@ -1854,6 +1863,13 @@ function TruthOrDareCreatorContent() {
                             }
                         />
                     </div>
+                    {/* Mobile Tab Bar for Studio */}
+                    <MobileStudioTabs
+                        tabs={TOD_STUDIO_TABS}
+                        activeTab={mobileStudioTab}
+                        onTabChange={setMobileStudioTab}
+                        accentHsl="330, 80%, 55%"
+                    />
                 </div>
             )}
 

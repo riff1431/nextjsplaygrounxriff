@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
-import { ArrowLeft, UserPlus, Bell, Phone } from "lucide-react";
+import { ArrowLeft, UserPlus, Phone, MessageCircle, Inbox, Star, Video } from "lucide-react";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import { toast } from "sonner";
@@ -24,9 +24,17 @@ import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import { cs } from "@/utils/currency";
 import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallCreatorModal from "@/components/rooms/truth-or-dare-creator/GroupCallCreatorModal";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
+const SUGA4U_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
+    { id: "requests", label: "Requests", icon: <Inbox className="w-5 h-5" /> },
+    { id: "favorites", label: "Favorites", icon: <Star className="w-5 h-5" /> },
+    { id: "stream", label: "Stream", icon: <Video className="w-5 h-5" /> },
+];
 
 const Suga4UCreatorPage = () => {
     const { user } = useAuth();
@@ -37,6 +45,7 @@ const Suga4UCreatorPage = () => {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
+    const [mobileTab, setMobileTab] = useState("chat");
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
@@ -107,7 +116,7 @@ const Suga4UCreatorPage = () => {
 
     return (
         <div
-            className="s4u-creator-theme h-screen overflow-hidden relative"
+            className="s4u-creator-theme min-h-[100dvh] lg:h-screen lg:overflow-hidden relative"
             style={{
                 backgroundImage: "url('/rooms/suga4u-creator-bg.jpeg')",
                 backgroundSize: "cover",
@@ -132,17 +141,17 @@ const Suga4UCreatorPage = () => {
             `}} />
 
             {/* Content */}
-            <div className="relative z-10 p-2 pb-10 max-w-[1400px] mx-auto flex flex-col h-full">
+            <div className="relative z-10 p-2 max-w-[1400px] mx-auto flex flex-col min-h-[100dvh] lg:h-screen">
                 
                 {/* Top Header Row */}
-                <div className="mb-0 shrink-0 flex items-center justify-between">
+                <div className="mb-0 shrink-0 flex items-center justify-between min-h-[44px]">
                     <button
                         onClick={() => setShowExitModal(true)}
                         className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                     >
                         <ArrowLeft className="w-4 h-4" />
                     </button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         {/* Invite button */}
                         <button
                             onClick={() => setShowInviteModal(true)}
@@ -155,7 +164,7 @@ const Suga4UCreatorPage = () => {
                         <div className="relative" data-incoming-btn>
                             <button
                                 onClick={() => setShowIncomingPanel(prev => !prev)}
-                                className="relative h-9 px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                                className="relative h-9 px-2 sm:px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
                             >
                                 <Phone className="w-3.5 h-3.5" />
                                 <span className="hidden lg:inline">Incoming</span>
@@ -187,68 +196,133 @@ const Suga4UCreatorPage = () => {
                     </div>
                 </div>
 
-                {/* Main 4-col grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0 pt-2">
+                {/* Main grid — responsive */}
+                <div className="flex-1 min-h-0 pt-2 pb-16 lg:pb-2 overflow-y-auto lg:overflow-hidden">
+                    {/* Desktop: 4-col grid */}
+                    <div className="hidden lg:grid grid-cols-4 gap-4 h-full">
+                        {/* Left column: Live Chat (Full Height) */}
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                            <div className="flex-1 min-h-0 flex flex-col">
+                                <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                        </div>
 
-                    {/* Left column: Live Chat (Full Height) */}
-                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                        {/* Column 2: Pending Requests + Group Vote */}
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                            <div className="flex-1 min-h-0 flex flex-col">
+                                <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                            <div className="shrink-0 flex flex-col">
+                                <S4uCreatorGroupVote
+                                    roomId={roomId || undefined}
+                                    onStartCall={() => groupCall.initiateCall('sugar')}
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Column 2: Pending Requests + Group Vote */}
-                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                        {/* Column 3: Creators Favorites + Session Summary */}
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                            <div className="flex-1 min-h-0 flex flex-col">
+                                <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                            <div className="shrink-0">
+                                <S4uSessionSummary roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
                         </div>
-                        <div className="shrink-0 flex flex-col">
-                            <S4uCreatorGroupVote
-                                roomId={roomId || undefined}
-                                onStartCall={() => groupCall.initiateCall('sugar')}
-                            />
-                        </div>
-                    </div>
 
-                    {/* Column 3: Creators Favorites + Session Summary */}
-                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
-                        </div>
-                        <div className="shrink-0">
-                            <S4uSessionSummary roomId={roomId || undefined} sessionId={sessionId || undefined} />
-                        </div>
-                    </div>
-
-                    {/* Right column: Creator Secrets + Live Stream */}
-                    <div className="lg:col-span-1 flex flex-col gap-4 min-h-0">
-                        <div className="flex-1 min-h-0 flex flex-col">
-                            <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />
-                        </div>
-                        <div className="shrink-0">
-                            <div className="s4u-creator-glass-panel p-4">
-                                <div className="relative rounded-lg overflow-hidden h-48 bg-white/5 border border-white/10 flex items-center justify-center">
-                                    {roomId && user ? (
-                                        <LiveStreamWrapper
-                                            role="host"
-                                            appId={APP_ID}
-                                            roomId={roomId}
-                                            uid={user.id}
-                                            hostId={user.id}
-                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                            hostName={user.user_metadata?.full_name || "Creator"}
-                                        />
-                                    ) : (
-                                        <div className="relative flex flex-col items-center gap-2 text-white/50">
-                                            <span className="text-xs font-semibold">Connecting to stream...</span>
-                                        </div>
-                                    )}
+                        {/* Right column: Creator Secrets + Live Stream */}
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                            <div className="flex-1 min-h-0 flex flex-col">
+                                <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                            <div className="shrink-0">
+                                <div className="s4u-creator-glass-panel p-4">
+                                    <div className="relative rounded-lg overflow-hidden h-48 bg-white/5 border border-white/10 flex items-center justify-center">
+                                        {roomId && user ? (
+                                            <LiveStreamWrapper
+                                                role="host"
+                                                appId={APP_ID}
+                                                roomId={roomId}
+                                                uid={user.id}
+                                                hostId={user.id}
+                                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                                hostName={user.user_metadata?.full_name || "Creator"}
+                                            />
+                                        ) : (
+                                            <div className="relative flex flex-col items-center gap-2 text-white/50">
+                                                <span className="text-xs font-semibold">Connecting to stream...</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Mobile: Tab-based layout */}
+                    <div className="lg:hidden flex flex-col gap-3">
+                        {mobileTab === "chat" && (
+                            <div className="min-h-[400px]" style={{ height: "calc(100dvh - 160px)" }}>
+                                <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                        )}
+
+                        {mobileTab === "requests" && (
+                            <div className="flex flex-col gap-4">
+                                <div className="min-h-[300px]">
+                                    <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                                </div>
+                                <S4uCreatorGroupVote
+                                    roomId={roomId || undefined}
+                                    onStartCall={() => groupCall.initiateCall('sugar')}
+                                />
+                                <S4uSessionSummary roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                        )}
+
+                        {mobileTab === "favorites" && (
+                            <div className="flex flex-col gap-4">
+                                <div className="min-h-[300px]">
+                                    <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                                </div>
+                                <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />
+                            </div>
+                        )}
+
+                        {mobileTab === "stream" && (
+                            <div className="flex flex-col gap-4">
+                                <div className="s4u-creator-glass-panel p-3">
+                                    <div className="relative rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center" style={{ height: "clamp(200px, 56vw, 360px)" }}>
+                                        {roomId && user ? (
+                                            <LiveStreamWrapper
+                                                role="host"
+                                                appId={APP_ID}
+                                                roomId={roomId}
+                                                uid={user.id}
+                                                hostId={user.id}
+                                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                                hostName={user.user_metadata?.full_name || "Creator"}
+                                            />
+                                        ) : (
+                                            <div className="relative flex flex-col items-center gap-2 text-white/50">
+                                                <span className="text-xs font-semibold">Connecting to stream...</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            {/* Mobile Tab Bar */}
+            <MobileStudioTabs
+                tabs={SUGA4U_TABS}
+                activeTab={mobileTab}
+                onTabChange={setMobileTab}
+                accentHsl="340, 75%, 55%"
+            />
 
             {/* Invite Modal */}
             <InviteModal
