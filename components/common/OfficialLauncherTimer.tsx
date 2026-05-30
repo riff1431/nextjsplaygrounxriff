@@ -146,14 +146,43 @@ export default function OfficialLauncherTimer() {
 
     return (
         <AnimatePresence>
+            <style>{`
+                .global-launcher-timer-alert {
+                    position: fixed !important;
+                    top: 16px !important;
+                    left: 16px !important;
+                    right: 16px !important;
+                    z-index: 9999 !important;
+                    display: flex !important;
+                    justify-content: center !important;
+                    pointer-events: none !important;
+                }
+                .global-launcher-timer-alert > * {
+                    pointer-events: auto !important;
+                }
+                @media (min-width: 640px) {
+                    .global-launcher-timer-alert {
+                        left: auto !important;
+                        right: 24px !important;
+                        top: 24px !important;
+                        display: block !important;
+                    }
+                }
+                @media (min-width: 768px) {
+                    .global-launcher-timer-alert {
+                        right: 32px !important;
+                        top: 32px !important;
+                    }
+                }
+            `}</style>
             <motion.div
                 initial={{ opacity: 0, y: -30, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                className="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 md:right-8 md:top-8 z-[9999]"
+                className="global-launcher-timer-alert"
             >
-                <div className="relative group p-4 rounded-2xl border border-pink-500/25 bg-black/85 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.15)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-full sm:w-[340px] max-w-[340px] mx-auto sm:mx-0 overflow-hidden">
+                <div className="relative group p-4 rounded-2xl border border-pink-500/25 bg-black/90 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.15)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-full max-w-[290px] sm:max-w-[340px] overflow-hidden">
                     {/* Glowing Accent Lines */}
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-transparent to-cyan-500/5 opacity-40 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                     <div className="absolute -top-12 -right-12 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/20 transition-all duration-700 pointer-events-none" />
