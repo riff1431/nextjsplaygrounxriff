@@ -151,9 +151,9 @@ export default function OfficialLauncherTimer() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                className="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 md:right-8 md:top-8 z-[9999] flex justify-center sm:block"
+                className="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:top-6 md:right-8 md:top-8 z-[9999]"
             >
-                <div className="relative group p-4 rounded-2xl border border-pink-500/25 bg-black/85 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.1)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-[290px] sm:w-[340px] overflow-hidden">
+                <div className="relative group p-4 rounded-2xl border border-pink-500/25 bg-black/85 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.15)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-full sm:w-[340px] max-w-[340px] mx-auto sm:mx-0 overflow-hidden">
                     {/* Glowing Accent Lines */}
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-transparent to-cyan-500/5 opacity-40 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                     <div className="absolute -top-12 -right-12 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/20 transition-all duration-700 pointer-events-none" />
