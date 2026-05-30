@@ -324,11 +324,11 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                 "group relative rounded-2xl border border-pink-500/25 bg-black/40 overflow-hidden",
                 "hover:border-pink-500/45 transition",
                 "flex flex-col text-left",
-                "aspect-square" // Instagram-style square tile
+                "aspect-[3/4] sm:aspect-square" // Optimized for mobile viewports
             )}
             title={creator.tags.includes("Suga 4 U") ? "Open Suga4U (preview)" : "Join Room"}
         >
-            {/* Background Image (Cover) - fills the entire square */}
+            {/* Background Image (Cover) - fills the entire tile */}
             {creator.cover_url ? (
                 <div
                     className="absolute inset-0 bg-cover bg-center opacity-80 group-hover:opacity-100 transition-opacity duration-700"
@@ -339,18 +339,18 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
             {/* Gradient Overlay for Text Readability */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/15 to-black/85 pointer-events-none" />
 
-            {/* Flex spacer to push body to bottom of the square */}
+            {/* Flex spacer to push body to bottom */}
             <div className="flex-1" />
 
             {/* Body at the bottom */}
-            <div className="relative p-3 flex flex-col z-10">
+            <div className="relative p-2.5 sm:p-3 flex flex-col z-10">
                 {/* Row: Avatar + name + level */}
-                <div className="flex items-center gap-2.5 w-full min-h-[44px]">
+                <div className="flex items-center gap-2 sm:gap-2.5 w-full min-h-[38px] sm:min-h-[44px]">
                     {creator.avatar_url ? (
-                        <img src={creator.avatar_url} alt="" className="w-11 h-11 rounded-full border-2 border-white/30 object-cover shrink-0" />
+                        <img src={creator.avatar_url} alt="" className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white/30 object-cover shrink-0" />
                     ) : (
-                        <div className="w-11 h-11 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
-                            <User className="w-5 h-5 text-pink-300" />
+                        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-pink-500/20 border-2 border-pink-500/40 flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4 sm:w-5 h-5 text-pink-300" />
                         </div>
                     )}
 
@@ -359,8 +359,8 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                             {creator.name}
                         </div>
 
-                        <div className="flex items-center gap-1 mt-0.5 flex-wrap min-h-[16px]">
-                            <span className="shrink-0 text-[8px] sm:text-[9px] px-1.5 py-[1px] rounded-full border border-blue-500/25 text-blue-200 bg-black/50 backdrop-blur-sm">
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap min-h-[14px] sm:min-h-[16px]">
+                            <span className="shrink-0 text-[7.5px] sm:text-[9px] px-1.5 py-[1px] rounded-full border border-blue-500/25 text-blue-200 bg-black/50 backdrop-blur-sm">
                                 {creator.level}
                             </span>
                             {creator.userId && <UserBadgeDisplay userId={creator.userId} />}
@@ -374,14 +374,14 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
                         t ? (
                             <span
                                 key={`${creator.id}-${t}`}
-                                className="text-[10px] px-2 py-[2px] rounded-full border border-pink-500/20 text-pink-200 bg-black/40 backdrop-blur-sm"
+                                className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-[1.5px] sm:py-[2px] rounded-full border border-pink-500/20 text-pink-200 bg-black/40 backdrop-blur-sm"
                             >
                                 {t}
                             </span>
                         ) : (
                             <span
                                 key={`${creator.id}-pad-${idx}`}
-                                className="text-[10px] px-2 py-[2px] rounded-full border border-transparent text-transparent select-none"
+                                className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-[1.5px] sm:py-[2px] rounded-full border border-transparent text-transparent select-none"
                             >
                                 pad
                             </span>
@@ -586,36 +586,7 @@ function HomeScreen({
                 {/* Main grid */}
                 <div className="flex-1 min-w-0">
 
-                    {/* Mobile Horizontal Rooms Swipe List */}
-                    <div className="lg:hidden w-full overflow-x-auto scrollbar-none pb-2 mb-4">
-                        <div className="flex gap-2.5 min-w-max px-1">
-                            {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
-                                const t = toneClasses(cat.tone);
-                                const isPrimary = !!cat.primary;
-                                return (
-                                    <button
-                                        key={`mobile-${cat.key}`}
-                                        onClick={() => {
-                                            setActiveCat(cat.key);
-                                            router.push(cat.route);
-                                        }}
-                                        className={cx(
-                                            "inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full border text-xs font-semibold transition bg-black/55 shrink-0",
-                                            t.border,
-                                            t.glow,
-                                            t.hover,
-                                            isPrimary && "ring-1 ring-cyan-300/35",
-                                            activeCat === cat.key && "neon-pulse"
-                                        )}
-                                        {...(cat.dataTour ? { 'data-tour': cat.dataTour } : {})}
-                                    >
-                                        <span className={t.icon}>{cat.icon}</span>
-                                        <span className={cx(t.text + " neon-flicker uppercase tracking-wider")}>{cat.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    {/* Mobile Horizontal Rooms Swipe List Removed */}
 
                     <div className="hidden md:flex flex-col gap-3 mb-4">
                         {/* Mobile Search Input */}
@@ -719,8 +690,13 @@ function HomeScreen({
                                 }
                                 .creator-feed-scroll-viewport {
                                     overflow: hidden;
-                                    max-height: 78vh;
+                                    max-height: 380px; /* Limit height on mobile */
                                     position: relative;
+                                }
+                                @media (min-width: 1024px) {
+                                    .creator-feed-scroll-viewport {
+                                        max-height: 78vh; /* Revert to full tall height on desktop */
+                                    }
                                 }
                                 .creator-feed-scroll-viewport::before,
                                 .creator-feed-scroll-viewport::after {
@@ -1195,8 +1171,8 @@ export default function Home() {
                 )}
             </AnimatePresence>
 
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3 sm:gap-6">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-6">
                     <button
                         onClick={() => setIsSidebarOpen(true)}
                         className="lg:hidden p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
@@ -1280,7 +1256,7 @@ export default function Home() {
                 </div>
 
                 {/* Top-right: Search + My Profile only */}
-                <div className="order-2 md:order-3 flex items-center gap-2 sm:gap-3">
+                <div className="order-2 md:order-3 flex items-center gap-1.5 sm:gap-3">
                     <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
                         <Search className="w-4 h-4 text-pink-300" />
                         <input

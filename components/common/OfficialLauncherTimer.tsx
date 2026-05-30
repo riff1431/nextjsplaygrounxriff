@@ -153,13 +153,68 @@ export default function OfficialLauncherTimer() {
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className="fixed top-4 left-4 right-4 z-[9999] flex justify-center pointer-events-none sm:left-auto sm:right-6 sm:top-6 sm:block md:right-8 md:top-8"
             >
-                <div className="relative group p-3 sm:p-4 rounded-2xl border border-pink-500/25 bg-black/90 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.15)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-full max-w-[290px] sm:max-w-[340px] overflow-hidden pointer-events-auto">
+                <div className="relative group p-2.5 sm:p-4 rounded-2xl border border-pink-500/25 bg-black/90 backdrop-blur-xl shadow-[0_0_30px_rgba(236,72,153,0.25),0_0_60px_rgba(0,230,255,0.15)] hover:border-pink-500/40 hover:shadow-[0_0_40px_rgba(236,72,153,0.35),0_0_80px_rgba(34,211,238,0.2)] transition-all duration-500 w-full max-w-[260px] sm:max-w-[340px] overflow-hidden pointer-events-auto">
                     {/* Glowing Accent Lines */}
                     <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-transparent to-cyan-500/5 opacity-40 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                     <div className="absolute -top-12 -right-12 w-24 h-24 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/20 transition-all duration-700 pointer-events-none" />
                     <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all duration-700 pointer-events-none" />
 
-                    <div className="relative space-y-2.5 sm:space-y-3">
+                    {/* MOBILE LAYOUT (Compact 3 lines) */}
+                    <div className="sm:hidden relative space-y-2">
+                        {/* Line 1: Title + Close */}
+                        <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/5">
+                            <div className="text-[9.5px] font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-300 flex items-center gap-1.5 min-w-0">
+                                <Clock className="w-3 h-3 text-pink-400 shrink-0" />
+                                <span className="truncate leading-tight">{label}</span>
+                            </div>
+                            <button
+                                onClick={handleDismiss}
+                                className="p-0.5 rounded text-gray-400 hover:text-white cursor-pointer shrink-0"
+                                title="Close Notification"
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+
+                        {/* Line 2: Inline Countdown Timer + Live Dot */}
+                        {timeLeft.completed ? (
+                            <div className="text-[10px] font-bold text-center text-emerald-400 py-1">
+                                WE ARE LIVE!
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between bg-zinc-950/60 border border-white/5 rounded-xl px-2 py-1.5">
+                                <div className="flex items-center gap-1 font-mono text-[11px] font-bold text-white">
+                                    <span className="text-pink-400">{String(timeLeft.days).padStart(2, "0")}d</span>
+                                    <span className="text-pink-500/50">:</span>
+                                    <span>{String(timeLeft.hours).padStart(2, "0")}h</span>
+                                    <span className="text-pink-500/50">:</span>
+                                    <span>{String(timeLeft.minutes).padStart(2, "0")}m</span>
+                                    <span className="text-pink-500/50">:</span>
+                                    <span className="text-pink-400 animate-pulse">{String(timeLeft.seconds).padStart(2, "0")}s</span>
+                                </div>
+                                <span className="flex items-center gap-1 text-[8px] font-bold text-cyan-400 tracking-wider uppercase shrink-0">
+                                    <span className="relative flex h-1 w-1">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-1 w-1 bg-cyan-500"></span>
+                                    </span>
+                                    LIVE
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Line 3: Skip button */}
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleDismiss}
+                                className="text-[8px] font-black text-gray-500 hover:text-pink-400 transition-colors tracking-widest uppercase cursor-pointer"
+                            >
+                                Skip Alert
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* DESKTOP LAYOUT (Original Grid) */}
+                    <div className="hidden sm:block relative space-y-2.5 sm:space-y-3">
                         {/* Title Row */}
                         <div className="flex items-start justify-between border-b border-white/5 pb-2.5 gap-2">
                             <div className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-fuchsia-300 drop-shadow-[0_0_10px_rgba(236,72,153,0.2)] flex items-start gap-1.5 flex-1 min-w-0">

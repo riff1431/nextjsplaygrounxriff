@@ -104,31 +104,31 @@ export default function LaunchTimer() {
                     <Timer className="h-3 w-3 text-pink-400 animate-pulse" />
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center sm:gap-2">
-                    <span className="text-[10px] sm:text-xs font-medium tracking-wide text-fuchsia-200/90 whitespace-nowrap inline-flex items-center gap-1">
+                <div className="flex flex-row items-center gap-1.5 sm:gap-2">
+                    <span className="text-[9px] sm:text-xs font-medium tracking-wide text-fuchsia-200/90 whitespace-nowrap inline-flex items-center gap-1">
                         {settings.label}
                         <Sparkles className="h-2.5 w-2.5 text-cyan-400 animate-bounce hidden sm:inline" />
                     </span>
 
                     {timeLeft.completed ? (
-                        <span className="text-[11px] sm:text-xs font-black tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
+                        <span className="text-[10px] sm:text-xs font-black tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.3)] animate-pulse">
                             WE ARE LIVE!
                         </span>
                     ) : (
-                        <div className="flex items-center gap-1 font-mono text-[11px] sm:text-xs font-bold text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">
-                            <div className="bg-white/5 border border-white/10 px-1 rounded flex flex-col items-center">
+                        <div className="flex items-center gap-0.5 sm:gap-1 font-mono text-[10px] sm:text-xs font-bold text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.2)]">
+                            <div className="bg-white/5 border border-white/10 px-0.5 sm:px-1 rounded flex flex-col items-center">
                                 <span>{String(timeLeft.days).padStart(2, "0")}</span>
                             </div>
                             <span className="text-pink-500/70 font-sans font-black animate-pulse">:</span>
-                            <div className="bg-white/5 border border-white/10 px-1 rounded flex flex-col items-center">
+                            <div className="bg-white/5 border border-white/10 px-0.5 sm:px-1 rounded flex flex-col items-center">
                                 <span>{String(timeLeft.hours).padStart(2, "0")}</span>
                             </div>
                             <span className="text-pink-500/70 font-sans font-black animate-pulse">:</span>
-                            <div className="bg-white/5 border border-white/10 px-1 rounded flex flex-col items-center">
+                            <div className="bg-white/5 border border-white/10 px-0.5 sm:px-1 rounded flex flex-col items-center">
                                 <span>{String(timeLeft.minutes).padStart(2, "0")}</span>
                             </div>
                             <span className="text-pink-500/70 font-sans font-black animate-pulse">:</span>
-                            <div className="bg-white/5 border border-white/10 px-1 rounded flex flex-col items-center text-pink-400">
+                            <div className="bg-white/5 border border-white/10 px-0.5 sm:px-1 rounded flex flex-col items-center text-pink-400">
                                 <span>{String(timeLeft.seconds).padStart(2, "0")}</span>
                             </div>
                         </div>
