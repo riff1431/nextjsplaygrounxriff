@@ -169,6 +169,19 @@ function PgxPage2Inner() {
     const [vipDeliveryOpen, setVipDeliveryOpen] = useState(false);
     const [vipDeliveryData, setVipDeliveryData] = useState<any>(null);
 
+    // Interactive states for mobile
+    const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
+    const [floatingHearts, setFloatingHearts] = useState<{ id: number; left: number }[]>([]);
+    const [chatFilter, setChatFilter] = useState<"all" | "paid" | "priority">("all");
+
+    const triggerHeart = () => {
+        const newHeart = { id: Date.now() + Math.random(), left: Math.random() * 60 + 20 };
+        setFloatingHearts(prev => [...prev, newHeart]);
+        setTimeout(() => {
+            setFloatingHearts(prev => prev.filter(h => h.id !== newHeart.id));
+        }, 1500);
+    };
+
     // Helper: safely parse creator_reply whether it's a JSONB object, JSON string, or plain text
     const parseCreatorReply = useCallback((raw: any): { text?: string; mediaUrl?: string; mediaType?: string } | null => {
         if (!raw) return null;
@@ -209,6 +222,42 @@ function PgxPage2Inner() {
         }
         return null;
     }, [messages, currentTime]);
+
+    const filteredMessages = useMemo(() => {
+        if (chatFilter === "paid") {
+            return messages.filter(m => m.is_system || m.content.includes("💰") || m.content.includes(cs()) || m.content.toLowerCase().includes("sent") || m.content.toLowerCase().includes("tip"));
+        }
+        if (chatFilter === "priority") {
+            return messages.filter(m => m.handle?.includes("VIP") || m.is_system);
+        }
+        return messages;
+    }, [messages, chatFilter]);
+
+    const [roomViewerCount, setRoomViewerCount] = useState(123);
+
+    useEffect(() => {
+        if (!roomId) return;
+        
+        const fetchViewerCount = async () => {
+            const { data } = await supabase.from("rooms").select("viewer_count").eq("id", roomId).single();
+            if (data?.viewer_count !== undefined) {
+                setRoomViewerCount(data.viewer_count);
+            }
+        };
+        fetchViewerCount();
+
+        // Subscribe to changes on public.rooms for real-time viewer count updates
+        const channel = supabase.channel(`room-viewers-${roomId}`)
+            .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` }, (payload) => {
+                const count = payload.new?.viewer_count;
+                if (count !== undefined) {
+                    setRoomViewerCount(count);
+                }
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, supabase]);
 
     // Session Status Gating — fetch initial status and subscribe to realtime updates
     useEffect(() => {
@@ -556,7 +605,7 @@ function PgxPage2Inner() {
     }
 
     return (
-        <div style={{ position: "relative", minHeight: "100vh", overflow: "hidden", fontFamily: "'Montserrat', sans-serif", color: FG }}>
+        <div className="main-room-wrapper" style={{ position: "relative", minHeight: "100vh", overflow: "hidden", fontFamily: "'Montserrat', sans-serif", color: FG }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
                 @keyframes glow-pulse    { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
@@ -575,6 +624,40 @@ function PgxPage2Inner() {
                 .pg2-scroll::-webkit-scrollbar       { width: 4px; }
                 .pg2-scroll::-webkit-scrollbar-track { background: transparent; }
                 .pg2-scroll::-webkit-scrollbar-thumb { background: hsla(280,60%,45%,0.3); border-radius: 10px; }
+                @keyframes mobile-heart-rise {
+                    0% { transform: translateY(100%) scale(0.5); opacity: 0; }
+                    15% { opacity: 0.9; }
+                    100% { transform: translateY(-240px) translateX(var(--x-shift, 10px)) scale(1.3); opacity: 0; }
+                }
+                .mobile-heart-float {
+                    position: absolute;
+                    bottom: 20px;
+                    font-size: 24px;
+                    animation: mobile-heart-rise 1.5s ease-out forwards;
+                    pointer-events: none;
+                    z-index: 25;
+                }
+                @media (min-width: 769px) {
+                    .desktop-layout-container { display: block !important; }
+                    .mobile-layout-container { display: none !important; }
+                }
+                @media (max-width: 768px) {
+                    .desktop-layout-container { display: none !important; }
+                    .mobile-layout-container {
+                        display: flex !important;
+                        flex-direction: column;
+                        width: 100%;
+                        min-height: 100vh;
+                        box-sizing: border-box;
+                        padding: 12px;
+                        padding-bottom: 90px;
+                        position: relative;
+                        z-index: 20;
+                    }
+                    .main-room-wrapper {
+                        overflow-y: auto !important;
+                    }
+                }
             `}</style>
 
             {/* Toasts */}
@@ -589,7 +672,8 @@ function PgxPage2Inner() {
                 <div key={i} className="pg2-sparkle" style={{ position: "fixed", width: "4px", height: "4px", borderRadius: "9999px", background: GOLD, zIndex: 10, pointerEvents: "none", left: `${(i * 13 + 7) % 100}%`, top: `${(i * 17 + 11) % 100}%`, animationDelay: `${(i * 0.3) % 4}s`, animationDuration: `${2 + (i % 3)}s` }} />
             ))}
 
-            {/* Header */}
+            <div className="desktop-layout-container">
+                {/* Header */}
             <div style={{ position: "relative", zIndex: 30, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 24px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: `${GOLD}cc`, cursor: "pointer" }}>
@@ -1219,6 +1303,778 @@ function PgxPage2Inner() {
                         </div>
                     </div>
 
+                </div>
+            </div>
+            </div>
+
+            {/* Mobile Layout Container */}
+            <div className="mobile-layout-container">
+                {/* Mobile Header */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", zIndex: 30 }}>
+                    <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: `#fff`, cursor: "pointer", border: "1px solid hsla(0,0%,100%,0.1)", background: "hsla(0,0%,100%,0.05)" }}>
+                        <ArrowLeft style={{ width: "16px", height: "16px" }} /> Exit Lounge
+                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <button
+                            onClick={toggleIncomingPanel}
+                            style={{
+                                position: "relative",
+                                padding: "8px 12px",
+                                display: "inline-flex", alignItems: "center", gap: "6px",
+                                fontSize: "12px", fontWeight: 700,
+                                color: "#fff",
+                                cursor: "pointer",
+                                background: "hsl(342, 100%, 45%)", // Red premium background
+                                border: "none",
+                                borderRadius: "12px",
+                                boxShadow: "0 0 15px hsla(342,100%,45%,0.4)",
+                            }}
+                        >
+                            <Bell style={{ width: "14px", height: "14px" }} />
+                            Incoming
+                            {unseenCount > 0 && (
+                                <span style={{
+                                    position: "absolute", top: "-5px", right: "-5px",
+                                    minWidth: "18px", height: "18px",
+                                    display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
+                                    borderRadius: "50%",
+                                    background: GOLD,
+                                    color: BG,
+                                    fontSize: "10px", fontWeight: 900,
+                                    boxShadow: "0 0 8px hsla(42,90%,55%,0.6)",
+                                }}>
+                                    {unseenCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Mobile Incoming Dropdown Panel */}
+                        {showIncomingPanel && (
+                            <div style={{
+                                position: "absolute", top: "60px", right: "12px", left: "12px",
+                                maxHeight: "380px",
+                                ...glassPanel,
+                                background: "hsla(270,50%,8%,0.95)",
+                                backdropFilter: "blur(24px)",
+                                border: "1px solid hsla(320,100%,65%,0.3)",
+                                borderRadius: "1rem",
+                                boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+                                overflow: "hidden",
+                                zIndex: 100,
+                            }}>
+                                {/* Panel header */}
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid hsla(280,60%,45%,0.2)", background: "hsla(320,60%,30%,0.1)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Bell style={{ width: "16px", height: "16px", color: PINK }} />
+                                        <span style={{ fontSize: "14px", fontWeight: 700 }}>My Activity</span>
+                                        <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 6px", borderRadius: "9999px", background: "hsla(320,100%,65%,0.2)", color: PINK }}>{incomingItems.length}</span>
+                                    </div>
+                                    <button onClick={() => setShowIncomingPanel(false)} style={{ background: "none", border: "none", color: MUTED, cursor: "pointer" }}><X style={{ width: "16px", height: "16px" }} /></button>
+                                </div>
+                                {/* Panel list */}
+                                <div className="pg2-scroll" style={{ maxHeight: "320px", overflowY: "auto", padding: "8px" }}>
+                                    {incomingItems.length === 0 ? (
+                                        <div style={{ padding: "24px 16px", textAlign: "center", color: MUTED, fontSize: "12px" }}>No activity yet this session</div>
+                                    ) : (
+                                        incomingItems.map((item: any) => {
+                                            const emoji = incomingTypeEmoji(item.type);
+                                            const sc = incomingStatusColor(item.status);
+                                            const isRequest = ["vip", "booth", "custom"].includes(item.type);
+                                            return (
+                                                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", marginBottom: "4px", borderRadius: "0.5rem", background: sc.bg, border: `1px solid ${sc.border}` }}>
+                                                    <span style={{ fontSize: "18px" }}>{emoji}</span>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ display: "flex", alignItems: "center", justifyItems: "center", gap: "4px" }}>
+                                                            <span style={{ fontSize: "12px", fontWeight: 600 }}>{item.label}</span>
+                                                            <span style={{ fontSize: "11px", color: GOLD, fontWeight: 700 }}>{cs()}{item.amount}</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
+                                                            {isRequest ? (
+                                                                <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 4px", borderRadius: "3px", background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, textTransform: "uppercase" }}>
+                                                                    {item.status}
+                                                                </span>
+                                                            ) : <span style={{ fontSize: "9px", color: "hsl(140,70%,55%)" }}>✓ Sent</span>}
+                                                            <span style={{ fontSize: "9px", color: `${MUTED}88` }}>{formatTimeAgo(item.created_at)}</span>
+                                                        </div>
+                                                    </div>
+                                                    {item.type === "custom" && item.creator_reply && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const reply = parseCreatorReply(item.creator_reply);
+                                                                if (reply) setVipDeliveryData({ creatorName, text: reply.text, mediaUrl: reply.mediaUrl, mediaType: reply.mediaType, originalRequestLabel: item.label });
+                                                                setVipDeliveryOpen(true);
+                                                                setShowIncomingPanel(false);
+                                                            }}
+                                                            style={{ background: "hsla(320,100%,65%,0.15)", border: `1px solid ${PINK}`, color: "#fff", padding: "2px 8px", borderRadius: "6px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}
+                                                        >
+                                                            View Reply
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Mobile Wallet pill matching mockup */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: "hsla(270,40%,12%,0.8)",
+                            border: `1.5px solid ${GOLD}`,
+                            borderRadius: "14px",
+                            padding: "4px 8px 4px 10px",
+                            boxShadow: `0 0 10px hsla(42,90%,55%,0.2)`,
+                        }}>
+                            <span style={{ color: GOLD, fontSize: "13px" }}>🪙</span>
+                            <span style={{ color: FG, fontWeight: 700, fontSize: "12px", fontFamily: "'Montserrat', sans-serif" }}>
+                                {cs()}{balance}
+                            </span>
+                            <div style={{
+                                width: "20px", height: "20px",
+                                borderRadius: "50%",
+                                background: `linear-gradient(135deg, ${PINK}, ${PURPLE})`,
+                                color: "#fff",
+                                display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
+                                fontSize: "12px", fontWeight: 800,
+                                marginLeft: "4px",
+                                cursor: "pointer",
+                                boxShadow: "0 0 8px hsla(320,100%,65%,0.3)"
+                            }}>
+                                +
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Video Frame */}
+                <div style={{ width: "100%", marginBottom: "16px", position: "relative" }}>
+                    <div style={{
+                        position: "relative",
+                        borderRadius: "20px",
+                        border: `2px solid ${PINK}`,
+                        boxShadow: `0 0 20px hsla(320,100%,65%,0.4), 0 0 40px hsla(320,100%,65%,0.15)`,
+                        overflow: "hidden",
+                        width: "100%",
+                        paddingBottom: "56.25%", // 16:9 ratio
+                        background: "#000"
+                    }}>
+                        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+                            {roomId && user ? (
+                                <LiveStreamWrapper
+                                    role="fan"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={user.id || 0}
+                                    hostId={hostId || ""}
+                                    hostAvatarUrl={hostProfile?.avatar_url || null}
+                                    hostName={creatorName}
+                                />
+                            ) : (
+                                <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, hsla(270,50%,15%,0.8), hsla(280,60%,10%,0.9))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                    <Wine style={{ width: "40px", height: "40px", color: `${GOLD}33` }} />
+                                    <span style={{ fontSize: "12px", color: MUTED }}>Connecting...</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Floating hearts animation */}
+                        {floatingHearts.map(h => (
+                            <span
+                                key={h.id}
+                                className="mobile-heart-float"
+                                style={{
+                                    left: `${h.left}%`,
+                                    filter: `drop-shadow(0 0 8px ${PINK})`,
+                                    color: PINK
+                                }}
+                            >
+                                ❤️
+                            </span>
+                        ))}
+
+                        {/* LIVE & Viewer Badge */}
+                        <div style={{ position: "absolute", top: "12px", left: "12px", zIndex: 10, display: "flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", borderRadius: "9999px", padding: "4px 10px" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 800, color: PINK }}>
+                                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: PINK, boxShadow: `0 0 8px ${PINK}` }} className="pg2-glow-pulse" />
+                                LIVE
+                            </span>
+                            <span style={{ width: "1px", height: "10px", background: "rgba(255,255,255,0.2)" }} />
+                            <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#fff", fontWeight: 600 }}>
+                                👁 {roomViewerCount}
+                            </span>
+                        </div>
+
+                        {/* Interactive Heart outlines (Right) */}
+                        <div style={{ position: "absolute", top: "12px", right: "12px", zIndex: 10, display: "flex", gap: "8px" }}>
+                            <div
+                                onClick={triggerHeart}
+                                style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1px solid ${PINK}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 10px hsla(320,100%,65%,0.2)` }}
+                            >
+                                <Heart style={{ width: "16px", height: "16px", color: PINK }} />
+                            </div>
+                            <div
+                                onClick={triggerHeart}
+                                style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1px solid ${PINK}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: `0 0 10px hsla(320,100%,65%,0.2)` }}
+                            >
+                                <Heart style={{ width: "16px", height: "16px", color: PINK, fill: PINK }} />
+                            </div>
+                        </div>
+
+                        {/* Creator label bottom left */}
+                        <div style={{ position: "absolute", bottom: "12px", left: "12px", zIndex: 10, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", borderRadius: "10px", padding: "4px 10px", fontSize: "12px", fontWeight: 600, color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
+                            {creatorName}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Buy A Drink */}
+                <div style={{ marginBottom: "20px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "16px", color: PINK }}>🍸</span>
+                            <h2 style={{ fontSize: "13px", fontWeight: 800, color: PINK, textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Buy a Drink</h2>
+                            <span style={{ fontSize: "11px", color: MUTED }}>for {creatorName}</span>
+                        </div>
+                        <span style={{ fontSize: "11px", color: PINK, fontWeight: 700, cursor: "pointer", textTransform: "uppercase" }}>View All ➔</span>
+                    </div>
+
+                    {/* Horizontal scroll drink menu */}
+                    <div className="pg2-scroll" style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "6px", width: "100%", scrollSnapType: "x mandatory" }}>
+                        {drinks.map((drink: any) => {
+                            const id = drink.id || drink.name;
+                            const isThisBuying = buying === id;
+                            return (
+                                <div
+                                    key={id}
+                                    style={{
+                                        flex: "0 0 120px",
+                                        scrollSnapAlign: "start",
+                                        background: "hsla(270,40%,12%,0.8)",
+                                        border: `1.5px solid hsla(280,60%,45%,0.25)`,
+                                        borderRadius: "14px",
+                                        padding: "10px",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        minHeight: "130px",
+                                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                                        position: "relative"
+                                    }}
+                                >
+                                    <span style={{ fontSize: "28px", margin: "4px 0" }}>{drink.icon}</span>
+                                    <div style={{ textAlign: "center", width: "100%" }}>
+                                        <div style={{ fontSize: "11px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{drink.name}</div>
+                                        <div style={{ fontSize: "10px", color: GOLD, fontWeight: 800, marginTop: "2px" }}>{cs()}{drink.price}</div>
+                                    </div>
+                                    <button
+                                        onClick={() => !buying && handleDrinkTip(drink)}
+                                        disabled={!!buying}
+                                        style={{
+                                            width: "100%",
+                                            marginTop: "8px",
+                                            padding: "6px 0",
+                                            borderRadius: "8px",
+                                            background: isThisBuying ? "transparent" : "hsl(342, 100%, 45%)",
+                                            border: "none",
+                                            color: "#fff",
+                                            fontSize: "10px",
+                                            fontFamily: "'Montserrat', sans-serif",
+                                            fontWeight: 800,
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "4px",
+                                            boxShadow: isThisBuying ? "none" : "0 0 10px hsla(342,100%,45%,0.3)"
+                                        }}
+                                    >
+                                        {isThisBuying ? (
+                                            <Loader2 style={{ width: "12px", height: "12px", color: GOLD, animation: "spin 1s linear infinite" }} />
+                                        ) : (
+                                            <>🎁 Send</>
+                                        )}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Mobile Lounge Chat */}
+                <div style={{
+                    background: "hsla(270,40%,10%,0.6)",
+                    border: `1.5px solid hsla(280,60%,45%,0.25)`,
+                    borderRadius: "16px",
+                    padding: "12px",
+                    marginBottom: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: "280px"
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ color: PINK, fontSize: "14px" }}>💬</span>
+                            <h2 style={{ fontSize: "13px", fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Lounge Chat</h2>
+                        </div>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 8px", borderRadius: "9999px", fontSize: "10px", fontWeight: 700, background: "hsla(140,70%,45%,0.15)", border: "1px solid hsla(140,70%,45%,0.3)", color: "hsl(140,70%,55%)" }}>
+                            <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "hsl(140,70%,55%)" }} className="pg2-glow-pulse" />
+                            Live
+                        </span>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                        <button
+                            onClick={() => setChatFilter("all")}
+                            style={{
+                                padding: "4px 12px",
+                                borderRadius: "9999px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                background: chatFilter === "all" ? "hsla(280,60%,45%,0.3)" : "rgba(0,0,0,0.3)",
+                                border: chatFilter === "all" ? `1.5px solid ${PINK}` : "1px solid rgba(255,255,255,0.1)",
+                                color: "#fff",
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setChatFilter("paid")}
+                            style={{
+                                padding: "4px 12px",
+                                borderRadius: "9999px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                background: chatFilter === "paid" ? "hsla(280,60%,45%,0.3)" : "rgba(0,0,0,0.3)",
+                                border: chatFilter === "paid" ? `1.5px solid ${PINK}` : "1px solid rgba(255,255,255,0.1)",
+                                color: chatFilter === "paid" ? "#fff" : MUTED,
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            🔥 Paid
+                        </button>
+                        <button
+                            onClick={() => setChatFilter("priority")}
+                            style={{
+                                padding: "4px 12px",
+                                borderRadius: "9999px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                background: chatFilter === "priority" ? "hsla(280,60%,45%,0.3)" : "rgba(0,0,0,0.3)",
+                                border: chatFilter === "priority" ? `1.5px solid ${PINK}` : "1px solid rgba(255,255,255,0.1)",
+                                color: chatFilter === "priority" ? "#fff" : MUTED,
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            👑 Priority
+                        </button>
+                    </div>
+
+                    {/* Pinned User Message in Chat */}
+                    {activePinMessage && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px", background: "hsla(320,60%,30%,0.2)", border: `1px solid ${PINK}`, borderRadius: "10px", padding: "8px 10px", marginBottom: "8px", boxShadow: `0 0 10px hsla(320,100%,65%,0.2)` }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "space-between" }}>
+                                <span style={{ fontSize: "9px", fontWeight: 800, color: PINK, textTransform: "uppercase" }}>📌 Pinned Message</span>
+                                <span style={{ fontSize: "9px", color: MUTED }}>
+                                    {Math.ceil((10 * 60 * 1000 - (currentTime - new Date(activePinMessage.created_at).getTime())) / 60000)}m left
+                                </span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ fontSize: "14px" }}>👑</span>
+                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#fff" }}>{activePinMessage.handle}</span>
+                                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>{activePinMessage.content}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Scrollable messages container */}
+                    <div className="pg2-scroll" style={{ flex: 1, overflowY: "auto", minHeight: "140px", maxHeight: "200px", paddingRight: "4px", marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {filteredMessages.length === 0 ? (
+                            <div style={{ textAlign: "center", color: MUTED, fontSize: "11px", padding: "12px 0" }}>No messages found in this view. 👋</div>
+                        ) : (
+                            filteredMessages.map((msg: any, i: number) => {
+                                const msgKey = msg.id ?? i;
+                                const isLiked = likedMessages[msgKey];
+                                return (
+                                    <div key={msgKey} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "6px 8px", borderRadius: "8px", background: "hsla(270,40%,15%,0.3)", border: "1px solid hsla(280,60%,45%,0.1)" }}>
+                                        <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+                                            <span style={{ fontSize: "14px" }}>{msg.is_system ? "🔔" : "🧑"}</span>
+                                            <div style={{ minWidth: 0 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                                    <span style={{ fontWeight: 700, fontSize: "11px", color: FG }}>{msg.handle || "Guest"}</span>
+                                                    {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
+                                                </div>
+                                                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", marginTop: "1px" }}>{msg.content}</div>
+                                            </div>
+                                        </div>
+                                        {/* Like Icon for Message */}
+                                        <Heart
+                                            onClick={() => setLikedMessages(prev => ({ ...prev, [msgKey]: !isLiked }))}
+                                            style={{
+                                                width: "14px", height: "14px",
+                                                color: isLiked ? PINK : MUTED,
+                                                fill: isLiked ? PINK : "none",
+                                                cursor: "pointer",
+                                                marginTop: "2px",
+                                                transition: "all 0.2s"
+                                            }}
+                                        />
+                                    </div>
+                                );
+                            })
+                        )}
+                        <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Chat Input Field */}
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <div style={{
+                            flex: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: "hsla(270,30%,18%,0.5)",
+                            border: "1px solid hsla(280,40%,30%,0.4)",
+                            borderRadius: "12px",
+                            padding: "4px 8px"
+                        }}>
+                            <EmojiPicker
+                                onEmojiSelect={(emoji) => setChatInput((prev) => prev + emoji)}
+                                accentColor={GOLD}
+                                position="top"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Send a message..."
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                                style={{
+                                    flex: 1,
+                                    background: "transparent",
+                                    border: "none",
+                                    outline: "none",
+                                    color: FG,
+                                    fontSize: "11px",
+                                    padding: "6px 0",
+                                    fontFamily: "'Montserrat', sans-serif"
+                                }}
+                            />
+                        </div>
+                        <button
+                            onClick={handleSendChat}
+                            style={{
+                                background: "linear-gradient(135deg, hsla(280,100%,70%,0.9), hsla(320,100%,65%,0.9))",
+                                border: "none",
+                                borderRadius: "12px",
+                                padding: "8px 16px",
+                                color: "#fff",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                boxShadow: "0 0 10px hsla(280,100%,70%,0.3)"
+                            }}
+                        >
+                            SEND
+                        </button>
+                    </div>
+                </div>
+
+                {/* VIP Lounge & Summary cards side-by-side */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+                    {/* VIP LOUNGE CARD */}
+                    <div style={{
+                        background: "hsla(270,40%,10%,0.6)",
+                        border: `1.5px solid ${PINK}`,
+                        borderRadius: "16px",
+                        padding: "10px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        minHeight: "150px",
+                        position: "relative",
+                        overflow: "hidden"
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "8px" }}>
+                            <Crown style={{ width: "14px", height: "14px", color: PINK }} />
+                            <span style={{ fontSize: "11px", fontWeight: 800, color: PINK, textTransform: "uppercase" }}>VIP Lounge</span>
+                        </div>
+
+                        {/* VIP Lounge Actions */}
+                        {vipRequestStatus === 'accepted' ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%", justifyContent: "center" }}>
+                                <div style={{ fontSize: "10px", color: "hsl(140,70%,55%)", fontWeight: 700 }}>✓ VIP Active</div>
+                                <div style={{ position: "relative" }}>
+                                    <textarea
+                                        placeholder="Request something..."
+                                        value={customReqText}
+                                        onChange={(e) => setCustomReqText(e.target.value.slice(0, 50))}
+                                        rows={2}
+                                        style={{
+                                            width: "100%",
+                                            borderRadius: "6px",
+                                            background: "rgba(0,0,0,0.3)",
+                                            border: "1px solid rgba(255,255,255,0.1)",
+                                            color: FG,
+                                            fontSize: "10px",
+                                            padding: "4px",
+                                            outline: "none",
+                                            resize: "none",
+                                            fontFamily: "'Montserrat', sans-serif"
+                                        }}
+                                    />
+                                    <button
+                                        onClick={handleCustomRequest}
+                                        disabled={!customReqText.trim()}
+                                        style={{
+                                            position: "absolute",
+                                            bottom: "4px",
+                                            right: "4px",
+                                            background: GOLD,
+                                            border: "none",
+                                            color: BG,
+                                            fontSize: "9px",
+                                            fontWeight: 800,
+                                            padding: "2px 6px",
+                                            borderRadius: "4px",
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px", height: "100%", justifyContent: "center" }}>
+                                <button
+                                    onClick={() => !buying && doPurchase("vip", "VIP Upgrade", vipPrice, "vip")}
+                                    disabled={!!buying}
+                                    style={{
+                                        background: `linear-gradient(135deg, ${PINK}, ${PURPLE})`,
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        padding: "8px 4px",
+                                        color: "#fff",
+                                        fontSize: "10px",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                        boxShadow: `0 0 10px hsla(320,100%,65%,0.3)`
+                                    }}
+                                >
+                                    Upgrade to VIP - {cs()}{vipPrice}
+                                </button>
+                                <span style={{ fontSize: "9px", color: MUTED, textAlign: "center" }}>Unlock Custom Requests</span>
+                            </div>
+                        )}
+
+                        {/* VIP Only overlay if not VIP */}
+                        {vipRequestStatus !== 'accepted' && (
+                            <div style={{
+                                position: "absolute", inset: 0,
+                                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                background: "rgba(10,5,20,0.85)", backdropFilter: "blur(2px)",
+                                zIndex: 10,
+                                padding: "8px",
+                                textAlign: "center"
+                            }}>
+                                <Crown style={{ width: "16px", height: "16px", color: GOLD, marginBottom: "4px" }} />
+                                <span style={{ fontSize: "10px", fontWeight: 800, color: GOLD, textTransform: "uppercase" }}>VIP Only</span>
+                                <button
+                                    onClick={() => !buying && doPurchase("vip", "VIP Upgrade", vipPrice, "vip")}
+                                    style={{ background: "none", border: "none", color: "#fff", fontSize: "9px", textDecoration: "underline", cursor: "pointer", marginTop: "4px", padding: 0 }}
+                                >
+                                    Purchase VIP to unlock
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SUMMARY STATS CARD */}
+                    <div style={{
+                        background: "hsla(270,40%,10%,0.6)",
+                        border: `1.5px solid hsla(280,60%,45%,0.25)`,
+                        borderRadius: "16px",
+                        padding: "10px",
+                        display: "flex",
+                        flexDirection: "column",
+                        minHeight: "150px"
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "8px" }}>
+                            <span style={{ fontSize: "12px" }}>⭐</span>
+                            <span style={{ fontSize: "11px", fontWeight: 800, color: "#fff", textTransform: "uppercase" }}>Summary</span>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", flex: 1, alignContent: "center" }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px" }}>🔥</span>
+                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Reactions</span>
+                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>126</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px" }}>💎</span>
+                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Stickers</span>
+                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>48</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px" }}>💰</span>
+                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Paid Messages</span>
+                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>{cs()}235</span>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                <span style={{ fontSize: "12px" }}>👥</span>
+                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Fans</span>
+                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>78</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Pin Name Row */}
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "linear-gradient(90deg, hsla(320,100%,65%,0.1), hsla(280,100%,70%,0.1))",
+                    border: `1.5px solid ${PINK}`,
+                    borderRadius: "14px",
+                    padding: "8px 12px",
+                    marginBottom: "20px",
+                    boxShadow: `0 0 10px hsla(320,100%,65%,0.1)`
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ fontSize: "14px" }}>🔥</span>
+                        <span style={{ fontSize: "11px", fontWeight: 800, color: PINK, textTransform: "uppercase", letterSpacing: "0.5px" }}>Pin Name to Top 10 mins</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ color: GOLD, fontWeight: 800, fontSize: "11px" }}>+{cs()}25</span>
+                        <button
+                            onClick={() => !buying && doPurchase("pin", "Pin Name to Top", 25, "pin")}
+                            disabled={!!buying}
+                            style={{
+                                background: `linear-gradient(135deg, ${PINK}, ${PURPLE})`,
+                                border: "none",
+                                borderRadius: "8px",
+                                padding: "6px 12px",
+                                color: "#fff",
+                                fontSize: "10px",
+                                fontFamily: "'Montserrat', sans-serif",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px"
+                            }}
+                        >
+                            {buying === "pin" ? <Loader2 style={{ width: "12px", height: "12px", animation: "spin 1s linear infinite" }} /> : <>📌 Pin</>}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Sticky Bottom Row */}
+                <div style={{
+                    position: "fixed",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: "hsla(270,50%,6%,0.95)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    borderTop: `1.5px solid hsla(280,60%,45%,0.25)`,
+                    padding: "10px 12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    zIndex: 40,
+                    boxShadow: "0 -8px 24px rgba(0,0,0,0.5)"
+                }}>
+                    {/* Custom Tip */}
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: "hsla(270,30%,18%,0.4)",
+                        border: "1px solid hsla(280,60%,45%,0.3)",
+                        borderRadius: "10px",
+                        padding: "4px 8px",
+                        flex: 1,
+                        maxWidth: "110px"
+                    }}>
+                        <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}</span>
+                        <input
+                            type="number"
+                            placeholder="Tip"
+                            value={tipAmount}
+                            onChange={(e) => setTipAmount(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                outline: "none",
+                                color: FG,
+                                fontSize: "11px",
+                                width: "40px",
+                                fontWeight: 700,
+                                fontFamily: "'Montserrat', sans-serif"
+                            }}
+                        />
+                        <button
+                            onClick={handleCustomTip}
+                            disabled={!tipAmount}
+                            style={{ background: "none", border: "none", color: GOLD, cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", padding: 0 }}
+                        >
+                            ➔
+                        </button>
+                    </div>
+
+                    {/* Private 1-on-1 */}
+                    <button
+                        onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
+                        disabled={!!buying || !!privateCall.callState}
+                        style={{
+                            flex: 1.5,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            background: `linear-gradient(135deg, ${PURPLE}, ${PINK})`,
+                            border: `1.5px solid ${PINK}`,
+                            borderRadius: "10px",
+                            padding: "8px 10px",
+                            color: "#fff",
+                            fontSize: "10px",
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            boxShadow: `0 0 15px hsla(320,100%,65%,0.3)`
+                        }}
+                    >
+                        <Phone style={{ width: "12px", height: "12px", fill: "#fff" }} />
+                        PRIVATE Call - {cs()}{PRIVATE_CALL_PRICE}
+                    </button>
+
+                    {/* Billing Status overlay / timer */}
+                    <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: "rgba(0,0,0,0.4)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "10px",
+                        padding: "6px 8px"
+                    }}>
+                        <span style={{ fontSize: "10px", color: MUTED }}>⏱️ 0m</span>
+                        <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}0</span>
+                        <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: MUTED, cursor: "pointer" }}>✕</span>
+                    </div>
                 </div>
             </div>
 
