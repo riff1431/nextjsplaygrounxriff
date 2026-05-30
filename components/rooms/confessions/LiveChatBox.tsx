@@ -21,9 +21,10 @@ interface LiveChatBoxProps {
     roomId?: string | null;
     className?: string;
     sessionId?: string | null;
+    variant?: "desktop" | "mobile";
 }
 
-const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
+const LiveChatBox = ({ roomId, className, sessionId, variant = "desktop" }: LiveChatBoxProps) => {
     const { user } = useAuth();
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -158,17 +159,21 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
     const senderIds = useMemo(() => messages.map(m => m.sender_id), [messages]);
     const avatarMap = useAvatarMap(senderIds);
 
+    const nameColors = ["text-[#ec4899]", "text-[#d946ef]", "text-[#c084fc]", "text-[#f472b6]", "text-[#a78bfa]"];
+
     return (
-        <div className={`neon-glass-card flex flex-col ${className || ""}`}>
+        <div className={variant === "mobile" ? `flex flex-col bg-transparent w-full ${className || ""}` : `neon-glass-card flex flex-col ${className || ""}`}>
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 shrink-0">
-                <MessageSquare className="w-4 h-4 text-rose-400" />
-                <h3 className="text-sm font-bold text-white/90">Live Chat</h3>
-                <span className="ml-auto text-[10px] text-white/40">{messages.length} msgs</span>
-            </div>
+            {variant !== "mobile" && (
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 shrink-0">
+                    <MessageSquare className="w-4 h-4 text-rose-400" />
+                    <h3 className="text-sm font-bold text-white/90">Live Chat</h3>
+                    <span className="ml-auto text-[10px] text-white/40">{messages.length} msgs</span>
+                </div>
+            )}
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 max-h-[500px] p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar">
+            <div ref={scrollRef} className={`flex-1 overflow-y-auto min-h-0 p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar ${variant === "mobile" ? "max-h-[200px]" : "max-h-[500px]"}`}>
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-white/30" />
@@ -178,63 +183,76 @@ const LiveChatBox = ({ roomId, className, sessionId }: LiveChatBoxProps) => {
                         No messages yet. Say hi! 👋
                     </div>
                 ) : (
-                    messages.map((msg) => (
-                        <div key={msg.id} className={`flex gap-2 ${msg.is_system ? 'py-0.5' : ''}`}>
-                            {msg.is_system ? (
-                                /* ── System / Activity Message ── */
-                                <div className="w-full px-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/15">
-                                    <p className="text-[11px] font-semibold text-amber-300/90 leading-relaxed">
-                                        {msg.message}
-                                    </p>
-                                </div>
-                            ) : (
-                                /* ── Regular User Message ── */
-                                <>
-                                    <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300 overflow-hidden">
-                                        {avatarMap[msg.sender_id] ? (
-                                            <img src={avatarMap[msg.sender_id]} alt="" className="w-full h-full object-cover" />
-                                        ) : (msg.sender_name?.charAt(0)?.toUpperCase() || "?")}
+                    messages.map((msg) => {
+                        const nameColorClass = nameColors[msg.sender_name.charCodeAt(0) % nameColors.length];
+                        return (
+                            <div key={msg.id} className={`flex gap-2 ${msg.is_system ? 'py-0.5' : ''}`}>
+                                {msg.is_system ? (
+                                    /* ── System / Activity Message ── */
+                                    <div className="w-full px-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/15">
+                                        <p className="text-[11px] font-semibold text-amber-300/90 leading-relaxed">
+                                            {msg.message}
+                                        </p>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-baseline gap-1.5">
-                                            <span className={`text-xs font-bold truncate ${msg.sender_id === user?.id ? "text-rose-400" : "text-white/80"}`}>
-                                                {msg.sender_name}
-                                            </span>
-                                            <UserBadgeDisplay userId={msg.sender_id} />
-                                            <span className="text-white/20 text-[9px] ml-auto shrink-0">
-                                                {formatTime(msg.created_at)}
-                                            </span>
+                                ) : (
+                                    /* ── Regular User Message ── */
+                                    <>
+                                        <div className="w-6 h-6 rounded-full bg-rose-500/15 border border-rose-500/20 shrink-0 flex items-center justify-center text-[10px] font-bold text-rose-300 overflow-hidden">
+                                            {avatarMap[msg.sender_id] ? (
+                                                <img src={avatarMap[msg.sender_id]} alt="" className="w-full h-full object-cover" />
+                                            ) : (msg.sender_name?.charAt(0)?.toUpperCase() || "?")}
                                         </div>
-                                        <p className="text-white/50 text-xs leading-relaxed">{msg.message}</p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    ))
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-baseline gap-1.5">
+                                                <span className={`text-xs font-bold truncate ${msg.sender_id === user?.id ? "text-rose-400" : nameColorClass}`}>
+                                                    {msg.sender_name}
+                                                </span>
+                                                <UserBadgeDisplay userId={msg.sender_id} />
+                                                <span className="text-white/20 text-[9px] ml-auto shrink-0">
+                                                    {formatTime(msg.created_at)}
+                                                </span>
+                                            </div>
+                                            <p className="text-white/50 text-xs leading-relaxed">{msg.message}</p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })
                 )}
             </div>
 
             {/* Input */}
-            <div className="p-2.5 border-t border-white/10 shrink-0">
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={user ? "Type a message..." : "Log in to chat"}
-                        disabled={!user}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none focus:border-rose-500/40 focus:bg-white/8 transition disabled:opacity-40"
-                    />
-                    <EmojiPicker
-                        onEmojiSelect={(emoji) => setNewMessage(prev => prev + emoji)}
-                        accentColor="hsl(350, 80%, 60%)"
-                        position="top"
-                    />
+            <div className={`p-2.5 shrink-0 ${variant === "mobile" ? "" : "border-t border-white/10"}`}>
+                <div className="flex gap-2 items-center">
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder={user ? "Type a message..." : "Log in to chat"}
+                            disabled={!user}
+                            className={variant === "mobile"
+                                ? "w-full bg-white/5 border border-white/10 rounded-full pl-4 pr-10 py-2.5 text-xs text-white placeholder:text-white/25 focus:outline-none focus:border-rose-500/40 transition disabled:opacity-40"
+                                : "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/25 focus:outline-none focus:border-rose-500/40 focus:bg-white/8 transition disabled:opacity-40"
+                            }
+                        />
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                            <EmojiPicker
+                                onEmojiSelect={(emoji) => setNewMessage(prev => prev + emoji)}
+                                accentColor="hsl(350, 80%, 60%)"
+                                position="top"
+                            />
+                        </div>
+                    </div>
                     <button
                         onClick={handleSend}
                         disabled={!user || sending || !newMessage.trim()}
-                        className="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-2 rounded-xl transition disabled:opacity-40 disabled:hover:bg-rose-600"
+                        className={variant === "mobile"
+                            ? "bg-rose-600 hover:bg-rose-500 text-white w-9 h-9 rounded-full transition flex items-center justify-center disabled:opacity-40 shrink-0"
+                            : "bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-2 rounded-xl transition flex items-center justify-center disabled:opacity-40 shrink-0"
+                        }
                     >
                         {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                     </button>

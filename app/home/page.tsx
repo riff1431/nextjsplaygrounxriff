@@ -28,6 +28,14 @@ import {
     ArrowLeft,
     Menu,
     X,
+    Share2,
+    Compass,
+    Bookmark,
+    Award,
+    Unlock,
+    MoreHorizontal,
+    Flag,
+    Home as HomeIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -45,6 +53,12 @@ import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { activeCreators, CreatorCard } from "@/components/data/activeCreators";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { toast } from "sonner";
+import { cs } from "@/utils/currency";
+import CommentsModal from "@/components/posts/CommentsModal";
+import UnlockPostModal from "@/components/posts/UnlockPostModal";
+import ReportModal from "@/components/common/ReportModal";
+import { formatDistanceToNow } from "date-fns";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "" }: { className?: string }) {
@@ -92,6 +106,10 @@ type Post = {
         avatar_url: string | null;
         role?: string;
     } | null;
+    is_paid?: boolean;
+    price?: number;
+    likes?: { count: number }[];
+    comments?: { count: number }[];
 };
 
 // ---- Mock content ----------------------------------------------------------
@@ -412,6 +430,298 @@ const CATS: Array<{
         { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
         { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
     ];
+
+// ---- Mobile Compact Post Card Component -----------------------------------
+function MobilePostCard({
+    post: initialPost,
+    user,
+    currentUserId,
+    isSubscribed
+}: {
+    post: Post;
+    user: any;
+    currentUserId: string | null;
+    isSubscribed?: boolean;
+}) {
+    const [post, setPost] = useState<Post>(initialPost);
+    const [liked, setLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [commentCount, setCommentCount] = useState(0);
+    const [bookmarked, setBookmarked] = useState(false);
+    const [isUnlocked, setIsUnlocked] = useState(isSubscribed || false);
+    const [showUnlockModal, setShowUnlockModal] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        setPost(initialPost);
+    }, [initialPost]);
+
+    useEffect(() => {
+        if (isSubscribed) setIsUnlocked(true);
+    }, [isSubscribed]);
+
+    useEffect(() => {
+        if (post.likes && post.likes[0]) setLikeCount(post.likes[0].count);
+        if (post.comments && post.comments[0]) setCommentCount(post.comments[0].count);
+
+        const checkStatus = async () => {
+            if (!currentUserId) return;
+
+            // Check if liked
+            const { data: likeData } = await supabase
+                .from('post_likes')
+                .select('user_id')
+                .eq('post_id', post.id)
+                .eq('user_id', currentUserId)
+                .single();
+            if (likeData) setLiked(true);
+
+            // Check if bookmarked
+            const { data: bookmarkData } = await supabase
+                .from('post_bookmarks')
+                .select('id')
+                .eq('post_id', post.id)
+                .eq('user_id', currentUserId)
+                .single();
+            if (bookmarkData) setBookmarked(true);
+
+            if (isSubscribed) return;
+
+            // Check if unlocked (if paid)
+            if (post.is_paid) {
+                const { data: unlockData } = await supabase
+                    .from('post_unlocks')
+                    .select('id')
+                    .eq('post_id', post.id)
+                    .eq('user_id', currentUserId)
+                    .single();
+                if (unlockData) setIsUnlocked(true);
+            }
+
+            // Check subscription
+            if (post.is_paid && !isUnlocked && !isSubscribed) {
+                const { data: subData } = await supabase
+                    .from('subscriptions')
+                    .select('id')
+                    .eq('user_id', currentUserId)
+                    .eq('creator_id', post.user_id)
+                    .eq('status', 'active')
+                    .gt('current_period_end', new Date().toISOString())
+                    .single();
+                if (subData) setIsUnlocked(true);
+            }
+        };
+
+        const fetchCounts = async () => {
+            const { count: lCount } = await supabase.from('post_likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
+            if (lCount !== null) setLikeCount(lCount);
+
+            const { count: cCount } = await supabase.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
+            if (cCount !== null) setCommentCount(cCount);
+        };
+
+        checkStatus();
+        fetchCounts();
+    }, [post.id, currentUserId, post.is_paid, isSubscribed]);
+
+    const handleLike = async () => {
+        if (!currentUserId) {
+            toast.error("Please log in to like posts");
+            return;
+        }
+        const newLiked = !liked;
+        setLiked(newLiked);
+        setLikeCount(prev => newLiked ? prev + 1 : Math.max(0, prev - 1));
+
+        try {
+            if (newLiked) {
+                await supabase.from('post_likes').insert({ post_id: post.id, user_id: currentUserId });
+            } else {
+                await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', currentUserId);
+            }
+        } catch (error) {
+            setLiked(!newLiked);
+            setLikeCount(prev => !newLiked ? prev + 1 : Math.max(0, prev - 1));
+            toast.error("Failed to update like");
+        }
+    };
+
+    const handleBookmark = async () => {
+        if (!currentUserId) {
+            toast.error("Please log in to save posts");
+            return;
+        }
+        const newBookmarked = !bookmarked;
+        setBookmarked(newBookmarked);
+        try {
+            if (newBookmarked) {
+                const { error } = await supabase.from('post_bookmarks').insert({ post_id: post.id, user_id: currentUserId });
+                if (error) throw error;
+                toast.success("Saved to collections");
+            } else {
+                const { error } = await supabase.from('post_bookmarks').delete().eq('post_id', post.id).eq('user_id', currentUserId);
+                if (error) throw error;
+            }
+        } catch (err) {
+            setBookmarked(!newBookmarked);
+            toast.error("Failed to update bookmark");
+        }
+    };
+
+    const handleShare = () => {
+        const url = `${window.location.origin}/post/${post.id}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Link copied to clipboard");
+    };
+
+    const handleUnlock = () => {
+        if (!currentUserId) {
+            toast.error("Please login to unlock content");
+            return;
+        }
+        setShowUnlockModal(true);
+    };
+
+    const isOwner = currentUserId === post.user_id;
+    const canView = !post.is_paid || isOwner || isUnlocked;
+    const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
+
+    return (
+        <div className="bg-[#0b0b12]/90 border border-white/[0.04] rounded-2xl p-4 flex flex-col gap-3 relative shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+            <UnlockPostModal
+                isOpen={showUnlockModal}
+                onClose={() => setShowUnlockModal(false)}
+                post={post}
+                currentUserId={currentUserId}
+                onUnlockSuccess={() => setIsUnlocked(true)}
+            />
+            <ReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetId={post.id}
+                targetType="post"
+            />
+            
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <Link href={`/profile/${user.id || post.user_id}`} className="flex items-center gap-3 active:opacity-75 transition-opacity">
+                    <img 
+                        src={user.avatar_url || "/creators/creator-1.jpg"} 
+                        alt={user.username || "avatar"} 
+                        className="w-9 h-9 rounded-full border border-white/20 object-cover shrink-0" 
+                    />
+                    <div className="min-w-0">
+                        <div className="text-xs font-semibold text-white flex items-center gap-1.5 flex-wrap">
+                            <span>{user.full_name || user.username}</span>
+                            {user.id && <UserBadgeDisplay userId={user.id} />}
+                            {post.is_paid && (
+                                <span className="bg-[#a259ff] text-white text-[7.5px] font-bold tracking-wide uppercase px-1.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(162,89,255,0.4)]">
+                                    PREMIUM
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 mt-0.5">@{user.username} • {timeAgo}</div>
+                    </div>
+                </Link>
+                
+                <button 
+                    onClick={() => setIsReportModalOpen(true)}
+                    className="text-zinc-500 hover:text-white p-1"
+                    title="Report post"
+                >
+                    <MoreHorizontal className="w-4 h-4" />
+                </button>
+            </div>
+
+            {/* Content Container */}
+            <div className="relative">
+                {!canView ? (
+                    // Locked premium post
+                    <div className="flex flex-col gap-3">
+                        {post.caption && (
+                            <p className="text-zinc-300 text-xs leading-relaxed">{post.caption}</p>
+                        )}
+                        <div className="w-full relative aspect-[16/9] bg-gradient-to-b from-zinc-900/60 to-black/80 rounded-xl overflow-hidden border border-white/[0.05] flex flex-col items-center justify-center p-4 text-center">
+                            <div className="absolute inset-0 opacity-15 bg-cover bg-center filter blur-md" style={{ backgroundImage: post.media_url ? `url(${post.media_url})` : undefined }} />
+                            <div className="relative z-10 w-11 h-11 rounded-full bg-pink-500/10 border border-pink-500/30 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(236,72,153,0.2)]">
+                                <Lock className="w-5 h-5 text-pink-400" />
+                            </div>
+                            <span className="relative z-10 text-xs font-bold text-white mb-0.5">Premium Content</span>
+                            <span className="relative z-10 text-[9px] text-zinc-400 mb-3">Unlock this post from @{user.username}</span>
+                            <button
+                                onClick={handleUnlock}
+                                className="relative z-10 bg-gradient-to-r from-pink-500 to-purple-600 active:scale-95 transition-transform text-[10px] font-bold text-white px-5 py-2 rounded-full shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                            >
+                                Unlock for {cs()}{post.price}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    // Unlocked or standard post
+                    <div className="flex gap-3 items-start justify-between">
+                        {/* Caption text */}
+                        <div className="flex-1 min-w-0 py-0.5">
+                            {post.caption && (
+                                <p className="text-zinc-200 text-xs leading-relaxed whitespace-pre-wrap">{post.caption}</p>
+                            )}
+                        </div>
+
+                        {/* Thumbnail image on the right */}
+                        {post.media_url && post.content_type === 'image' && (
+                            <div className="w-24 h-16 rounded-xl overflow-hidden border border-white/[0.08] shrink-0 shadow-md">
+                                <img src={post.media_url} alt="content" className="w-full h-full object-cover" />
+                            </div>
+                        )}
+
+                        {post.media_url && post.content_type === 'video' && (
+                            <div className="w-24 h-16 rounded-xl overflow-hidden border border-white/[0.08] shrink-0 bg-black relative flex items-center justify-center">
+                                <video src={post.media_url} className="w-full h-full object-cover opacity-80" muted playsInline />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Actions Bar */}
+            <div className="flex items-center gap-5 pt-1 border-t border-white/[0.03]">
+                <button
+                    onClick={handleLike}
+                    className={`flex items-center gap-1.5 transition-colors ${liked ? "text-pink-500" : "text-zinc-400 active:text-pink-500"}`}
+                >
+                    <Heart className={`w-4 h-4 ${liked ? "fill-current scale-110" : ""}`} />
+                    <span className="text-[10px] font-medium">{likeCount}</span>
+                </button>
+
+                <CommentsModal
+                    postId={post.id}
+                    currentUserId={currentUserId}
+                    onOpenChange={() => {}}
+                    trigger={
+                        <button className="flex items-center gap-1.5 text-zinc-400 active:text-blue-400">
+                            <MessageCircle className="w-4 h-4" />
+                            <span className="text-[10px] font-medium">{commentCount}</span>
+                        </button>
+                    }
+                />
+
+                <button onClick={handleShare} className="text-zinc-400 active:text-white">
+                    <Share2 className="w-4 h-4" />
+                </button>
+
+                <button
+                    onClick={handleBookmark}
+                    className={`ml-auto ${bookmarked ? "text-yellow-400" : "text-zinc-400 active:text-yellow-400"}`}
+                >
+                    <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-current" : ""}`} />
+                </button>
+            </div>
+        </div>
+    );
+}
 
 // ---- Home Screen -----------------------------------------------------------
 function HomeScreen({
@@ -1067,288 +1377,481 @@ export default function Home() {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+
+        /* Mobile specific logo styles */
+        .logo-playground-font {
+          font-family: 'Pacifico', 'Brush Script MT', 'Apple Chancery', 'Segoe UI', cursive;
+          font-style: italic;
+          color: #ec4899;
+          text-shadow: 0 0 10px rgba(236, 72, 153, 0.75), 0 0 22px rgba(236, 72, 153, 0.35);
+        }
+        .logo-x-font {
+          font-family: var(--font-outfit), sans-serif;
+          font-weight: 900;
+          color: #06b6d4;
+          text-shadow: 0 0 10px rgba(6, 182, 212, 0.75), 0 0 22px rgba(6, 182, 212, 0.35);
+        }
       `}</style>
 
             {/* Dynamic Welcome Popup for Fans */}
             <WelcomePopup role="fan" />
 
-            {/* Mobile Navigation Drawer */}
-            <AnimatePresence>
-                {isSidebarOpen && (
-                    <>
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.7 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
-                            onClick={() => setIsSidebarOpen(false)}
-                        />
-                        {/* Drawer body */}
-                        <motion.div
-                            initial={{ x: "-100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "-100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
-                        >
-                            <div className="space-y-6">
-                                {/* Header of Drawer */}
-                                <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                                    <Logo onClick={() => { setIsSidebarOpen(false); router.push("/"); }} />
-                                    <button
-                                        onClick={() => setIsSidebarOpen(false)}
-                                        className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
+            {/* 1. DESKTOP/LAPTOP LAYOUT */}
+            <div className="hidden md:block">
+                {/* Mobile Navigation Drawer */}
+                <AnimatePresence>
+                    {isSidebarOpen && (
+                        <>
+                            {/* Backdrop */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.7 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+                                onClick={() => setIsSidebarOpen(false)}
+                            />
+                            {/* Drawer body */}
+                            <motion.div
+                                initial={{ x: "-100%" }}
+                                animate={{ x: 0 }}
+                                exit={{ x: "-100%" }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
+                            >
+                                <div className="space-y-6">
+                                    {/* Header of Drawer */}
+                                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                        <Logo onClick={() => { setIsSidebarOpen(false); router.push("/"); }} />
+                                        <button
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
 
-                                {/* Room Categories list */}
-                                <div>
-                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
-                                    <div className="space-y-2">
-                                        {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
-                                            const t = toneClasses(cat.tone);
-                                            const isPrimary = !!cat.primary;
-                                            return (
-                                                <button
-                                                    key={`drawer-${cat.key}`}
-                                                    onClick={() => {
-                                                        setIsSidebarOpen(false);
-                                                        router.push(cat.route);
-                                                    }}
-                                                    className={cx(
-                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
-                                                        t.border,
-                                                        t.glow,
-                                                        t.hover,
-                                                        isPrimary && "ring-1 ring-cyan-300/35"
-                                                    )}
-                                                >
-                                                    <span
+                                    {/* Room Categories list */}
+                                    <div>
+                                        <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
+                                        <div className="space-y-2">
+                                            {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
+                                                const t = toneClasses(cat.tone);
+                                                const isPrimary = !!cat.primary;
+                                                return (
+                                                    <button
+                                                        key={`drawer-${cat.key}`}
+                                                        onClick={() => {
+                                                            setIsSidebarOpen(false);
+                                                            router.push(cat.route);
+                                                        }}
                                                         className={cx(
-                                                            "inline-flex items-center gap-2 w-full justify-between",
-                                                            t.text + " neon-flicker",
-                                                            isPrimary && "animate-pulse"
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                            t.border,
+                                                            t.glow,
+                                                            t.hover,
+                                                            isPrimary && "ring-1 ring-cyan-300/35"
                                                         )}
                                                     >
-                                                        <span className="inline-flex items-center gap-2">
-                                                            <span className={t.icon}>{cat.icon}</span>
-                                                            <span className="truncate neon-deep">{cat.label}</span>
+                                                        <span
+                                                            className={cx(
+                                                                "inline-flex items-center gap-2 w-full justify-between",
+                                                                t.text + " neon-flicker",
+                                                                isPrimary && "animate-pulse"
+                                                            )}
+                                                        >
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <span className={t.icon}>{cat.icon}</span>
+                                                                <span className="truncate neon-deep">{cat.label}</span>
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Account section in Drawer */}
-                            <div className="pt-4 border-t border-white/10 mt-auto">
-                                <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
-                                <div className="space-y-2">
-                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/collections"); }}>
-                                        <Star className="w-4 h-4" /> Collections
-                                    </button>
-                                    <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
-                                        <MessageSquare className="w-4 h-4" /> Suggestions
-                                    </button>
-                                    <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
-                                        <Users className="w-4 h-4" /> Subscriptions
-                                    </button>
-                                    <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
-                                        <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
-                                    </button>
-                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
-                                        <LogOut className="w-4 h-4" /> Log Out
-                                    </button>
+                                {/* Account section in Drawer */}
+                                <div className="pt-4 border-t border-white/10 mt-auto">
+                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
+                                    <div className="space-y-2">
+                                        <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/collections"); }}>
+                                            <Star className="w-4 h-4" /> Collections
+                                        </button>
+                                        <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
+                                            <MessageSquare className="w-4 h-4" /> Suggestions
+                                        </button>
+                                        <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
+                                            <Users className="w-4 h-4" /> Subscriptions
+                                        </button>
+                                        <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
+                                            <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
+                                        </button>
+                                        <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
+                                            <LogOut className="w-4 h-4" /> Log Out
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
 
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-6">
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className="lg:hidden p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
-                        title="Open menu"
-                    >
-                        <Menu className="w-5 h-5" />
-                    </button>
-                    <Logo onClick={() => router.push("/")} />
-
-                    {/* Animated neon handwriting welcome (reveals on load) */}
-                    <div className={cx("hidden md:flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
-                    >
-                        <div
-                            className={cx(
-                                "text-sm",
-                                "neon-write",
-                                "drop-shadow-[0_0_44px_rgba(255,0,200,0.95)]"
-                            )}
-                            aria-label={`Welcome ${firstName}`}
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-6">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                            title="Open menu"
                         >
-                            <span className="neon-write-stroke">Welcome</span>
-                            <span className="mx-2" />
-                            <span className="font-semibold neon-write-stroke">{firstName}</span>
-                        </div>
+                            <Menu className="w-5 h-5" />
+                        </button>
+                        <Logo onClick={() => router.push("/")} />
 
-                        {/* Membership Plan Badge - Icon Only */}
-                        {showTierBadge && (
-                            <button
-                                onClick={() => router.push('/account/membership')}
+                        {/* Animated neon handwriting welcome (reveals on load) */}
+                        <div className={cx("hidden md:flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
+                        >
+                            <div
                                 className={cx(
-                                    "inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer",
-                                    "transition-all duration-300 hover:scale-110 overflow-hidden",
-                                    membershipPlan
-                                        ? ""
-                                        : cx(fanTierClasses(fanTier), fanTierBg(fanTier)),
-                                    "vip-glow"
+                                    "text-sm",
+                                    "neon-write",
+                                    "drop-shadow-[0_0_44px_rgba(255,0,200,0.95)]"
                                 )}
-                                style={membershipPlan ? {
-                                    backgroundColor: `${membershipPlan.badge_color}20`,
-                                    color: membershipPlan.badge_color,
-                                    borderColor: `${membershipPlan.badge_color}50`,
-                                    boxShadow: `0 0 14px ${membershipPlan.badge_color}40, 0 0 40px ${membershipPlan.badge_color}15`
-                                } : undefined}
-                                title={`Membership: ${membershipPlan?.display_name || tierLabel}`}
+                                aria-label={`Welcome ${firstName}`}
                             >
-                                {membershipPlan?.badge_icon_url ? (
-                                    <img src={membershipPlan.badge_icon_url} alt={membershipPlan.display_name} className="w-5 h-5 object-contain" />
-                                ) : membershipPlan ? (
-                                    <span className="text-sm">{({ bronze: "🥉", silver: "🥈", gold: "🥇" } as any)[membershipPlan.name] || "⭐"}</span>
-                                ) : (
-                                    <Crown className="w-4 h-4" />
-                                )}
-                            </button>
-                        )}
+                                <span className="neon-write-stroke">Welcome</span>
+                                <span className="mx-2" />
+                                <span className="font-semibold neon-write-stroke">{firstName}</span>
+                            </div>
 
-                        {/* Account Type Badge - Icon Only */}
-                        {userAccountType && (
-                            <button
-                                onClick={() => router.push('/account/membership')}
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden"
-                                style={{
-                                    backgroundColor: `${userAccountType.badge_color || '#ec4899'}20`,
-                                    borderColor: `${userAccountType.badge_color || '#ec4899'}50`,
-                                    boxShadow: `0 0 14px ${userAccountType.badge_color || '#ec4899'}40, 0 0 40px ${userAccountType.badge_color || '#ec4899'}15`
-                                }}
-                                title={`Account Type: ${userAccountType.display_name}`}
-                            >
-                                {userAccountType.badge_icon_url ? (
-                                    <img src={userAccountType.badge_icon_url} alt={userAccountType.display_name} className="w-5 h-5 object-contain" />
-                                ) : (
-                                    <span className="text-sm">{userAccountType.badge_icon || '✨'}</span>
-                                )}
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Launch Timer Countdown in top middle */}
-                <div className="order-3 md:order-2 w-full md:w-auto flex justify-center">
-                    <LaunchTimer />
-                </div>
-
-                {/* Top-right: Search + My Profile only */}
-                <div className="order-2 md:order-3 flex items-center gap-1.5 sm:gap-3">
-                    <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
-                        <Search className="w-4 h-4 text-pink-300" />
-                        <input
-                            value={homeQuery}
-                            onChange={(e) => setHomeQuery(e.target.value)}
-                            className="bg-transparent outline-none text-sm w-44"
-                            placeholder="Search creators…"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 sm:gap-3">
-                        {/* Mobile Search/Filter Toggle */}
-                        <button
-                            onClick={() => setIsMobileFiltersOpen(prev => !prev)}
-                            className={cx(
-                                "md:hidden p-2 rounded-lg transition-all duration-200 flex items-center justify-center relative",
-                                isMobileFiltersOpen
-                                    ? "bg-pink-500 text-white border border-pink-400"
-                                    : "bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20"
-                            )}
-                            title="Search & Filters"
-                        >
-                            <Search className="w-5 h-5" />
-                            {!isMobileFiltersOpen && (homeQuery || levelFilter !== "All" || tagFilter !== "All" || sortBy !== "Recommended") && (
-                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black animate-pulse" />
-                            )}
-                        </button>
-                        <button
-                            onClick={() => router.push('/account/messages')}
-                            className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
-                            title="Messages"
-                            data-tour="private-chat"
-                        >
-                            <MessageSquare className="w-5 h-5" />
-                        </button>
-                        <NotificationIcon role="fan" />
-                        <button
-                            onClick={() => router.push('/account/subscription')}
-                            className="hidden md:flex p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
-                            title="Subscription"
-                            data-tour="subscription-section"
-                        >
-                            <Crown className="w-5 h-5" />
-                        </button>
-                        <ProfileMenu
-                            user={user}
-                            profile={currentProfile}
-                            role={role}
-                            router={router}
-                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Search & Filter Panel */}
-            <AnimatePresence>
-                {isMobileFiltersOpen && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                        className="md:hidden w-full border-b border-pink-500/20 bg-zinc-950/95 backdrop-blur-md px-4 py-3.5 space-y-3 overflow-hidden"
-                    >
-                        {/* Search Bar */}
-                        <div className="relative flex items-center w-full rounded-xl border border-pink-500/20 bg-black/45 px-3 py-2">
-                            <Search className="w-4 h-4 text-pink-400 shrink-0 mr-2" />
-                            <input
-                                value={homeQuery}
-                                onChange={(e) => setHomeQuery(e.target.value)}
-                                className="bg-transparent outline-none text-sm w-full text-white placeholder-zinc-500"
-                                placeholder="Search creators…"
-                            />
-                            {homeQuery && (
+                            {/* Membership Plan Badge - Icon Only */}
+                            {showTierBadge && (
                                 <button
-                                    onClick={() => setHomeQuery("")}
-                                    className="p-1 text-zinc-400 hover:text-white"
+                                    onClick={() => router.push('/account/membership')}
+                                    className={cx(
+                                        "inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer",
+                                        "transition-all duration-300 hover:scale-110 overflow-hidden",
+                                        membershipPlan
+                                            ? ""
+                                            : cx(fanTierClasses(fanTier), fanTierBg(fanTier)),
+                                        "vip-glow"
+                                    )}
+                                    style={membershipPlan ? {
+                                        backgroundColor: `${membershipPlan.badge_color}20`,
+                                        color: membershipPlan.badge_color,
+                                        borderColor: `${membershipPlan.badge_color}50`,
+                                        boxShadow: `0 0 14px ${membershipPlan.badge_color}40, 0 0 40px ${membershipPlan.badge_color}15`
+                                    } : undefined}
+                                    title={`Membership: ${membershipPlan?.display_name || tierLabel}`}
                                 >
-                                    <X className="w-4 h-4" />
+                                    {membershipPlan?.badge_icon_url ? (
+                                        <img src={membershipPlan.badge_icon_url} alt={membershipPlan.display_name} className="w-5 h-5 object-contain" />
+                                    ) : membershipPlan ? (
+                                        <span className="text-sm">{({ bronze: "🥉", silver: "🥈", gold: "🥇" } as any)[membershipPlan.name] || "⭐"}</span>
+                                    ) : (
+                                        <Crown className="w-4 h-4" />
+                                    )}
+                                </button>
+                            )}
+
+                            {/* Account Type Badge - Icon Only */}
+                            {userAccountType && (
+                                <button
+                                    onClick={() => router.push('/account/membership')}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden"
+                                    style={{
+                                        backgroundColor: `${userAccountType.badge_color || '#ec4899'}20`,
+                                        borderColor: `${userAccountType.badge_color || '#ec4899'}50`,
+                                        boxShadow: `0 0 14px ${userAccountType.badge_color || '#ec4899'}40, 0 0 40px ${userAccountType.badge_color || '#ec4899'}15`
+                                    }}
+                                    title={`Account Type: ${userAccountType.display_name}`}
+                                >
+                                    {userAccountType.badge_icon_url ? (
+                                        <img src={userAccountType.badge_icon_url} alt={userAccountType.display_name} className="w-5 h-5 object-contain" />
+                                    ) : (
+                                        <span className="text-sm">{userAccountType.badge_icon || '✨'}</span>
+                                    )}
                                 </button>
                             )}
                         </div>
+                    </div>
 
-                        {/* Filters Grid */}
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Level</span>
+                    {/* Launch Timer Countdown in top middle */}
+                    <div className="order-3 md:order-2 w-full md:w-auto flex justify-center">
+                        <LaunchTimer />
+                    </div>
+
+                    {/* Top-right: Search + My Profile only */}
+                    <div className="order-2 md:order-3 flex items-center gap-1.5 sm:gap-3">
+                        <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                            <Search className="w-4 h-4 text-pink-300" />
+                            <input
+                                value={homeQuery}
+                                onChange={(e) => setHomeQuery(e.target.value)}
+                                className="bg-transparent outline-none text-sm w-44"
+                                placeholder="Search creators…"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 sm:gap-3">
+                            {/* Mobile Search/Filter Toggle */}
+                            <button
+                                onClick={() => setIsMobileFiltersOpen(prev => !prev)}
+                                className={cx(
+                                    "md:hidden p-2 rounded-lg transition-all duration-200 flex items-center justify-center relative",
+                                    isMobileFiltersOpen
+                                        ? "bg-pink-500 text-white border border-pink-400"
+                                        : "bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20"
+                                )}
+                                title="Search & Filters"
+                            >
+                                <Search className="w-5 h-5" />
+                                {!isMobileFiltersOpen && (homeQuery || levelFilter !== "All" || tagFilter !== "All" || sortBy !== "Recommended") && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black animate-pulse" />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => router.push('/account/messages')}
+                                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                                title="Messages"
+                                data-tour="private-chat"
+                            >
+                                <MessageSquare className="w-5 h-5" />
+                            </button>
+                            <NotificationIcon role="fan" />
+                            <button
+                                onClick={() => router.push('/account/subscription')}
+                                className="hidden md:flex p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
+                                title="Subscription"
+                                data-tour="subscription-section"
+                            >
+                                <Crown className="w-5 h-5" />
+                            </button>
+                            <ProfileMenu
+                                user={user}
+                                profile={currentProfile}
+                                role={role}
+                                router={router}
+                                onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Search & Filter Panel */}
+                <AnimatePresence>
+                    {isMobileFiltersOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            className="md:hidden w-full border-b border-pink-500/20 bg-zinc-950/95 backdrop-blur-md px-4 py-3.5 space-y-3 overflow-hidden"
+                        >
+                            {/* Search Bar */}
+                            <div className="relative flex items-center w-full rounded-xl border border-pink-500/20 bg-black/45 px-3 py-2">
+                                <Search className="w-4 h-4 text-pink-400 shrink-0 mr-2" />
+                                <input
+                                    value={homeQuery}
+                                    onChange={(e) => setHomeQuery(e.target.value)}
+                                    className="bg-transparent outline-none text-sm w-full text-white placeholder-zinc-500"
+                                    placeholder="Search creators…"
+                                />
+                                {homeQuery && (
+                                    <button
+                                        onClick={() => setHomeQuery("")}
+                                        className="p-1 text-zinc-400 hover:text-white"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Filters Grid */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Level</span>
+                                    <select
+                                        value={levelFilter}
+                                        onChange={(e) => setLevelFilter(e.target.value as any)}
+                                        className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                    >
+                                        <option value="All">All Tiers</option>
+                                        <option value="Rookie">Rookie</option>
+                                        <option value="Rising">Rising</option>
+                                        <option value="Star">Star</option>
+                                        <option value="Elite">Elite</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Type</span>
+                                    <select
+                                        value={tagFilter}
+                                        onChange={(e) => setTagFilter(e.target.value)}
+                                        className="w-full bg-black/50 border border-blue-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-blue-500/40"
+                                    >
+                                        <option value="All">All Types</option>
+                                        {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
+                                        {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
+                                        {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
+                                        {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
+                                        {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
+                                        {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Sort</span>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as any)}
+                                        className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                    >
+                                        <option value="Recommended">Recommended</option>
+                                        <option value="Rookie→Elite">Rookie → Elite</option>
+                                        <option value="Elite→Rookie">Elite → Rookie</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <HomeScreen
+                    onEnterSuga4U={() => setLevelFilter("Elite")}
+                    query={homeQuery}
+                    setQuery={setHomeQuery}
+                    rooms={rooms}
+                    posts={posts}
+                    userId={user?.id}
+                    subscribedCreatorIds={subscribedCreatorIds}
+                    activeStatuses={activeStatuses}
+                    levelFilter={levelFilter}
+                    setLevelFilter={setLevelFilter}
+                    tagFilter={tagFilter}
+                    setTagFilter={setTagFilter}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                />
+            </div>
+
+            {/* 2. REDESIGNED MOBILE EXPERIENCE */}
+            <div className="block md:hidden min-h-screen bg-[#06060a] pb-24 relative overflow-x-hidden">
+                {/* Header */}
+                <div className="sticky top-0 z-40 bg-[#07070c]/90 backdrop-blur-md border-b border-white/[0.04] px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center min-w-0">
+                        <span 
+                            onClick={() => router.push("/home")}
+                            className="text-lg font-bold select-none cursor-pointer flex items-center shrink-0"
+                        >
+                            <span className="logo-playground-font text-base tracking-wide">PlayGround</span>
+                            <span className="logo-x-font text-lg ml-0.5">X</span>
+                        </span>
+                        <span className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px]">
+                            Welcome {firstName}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        {/* Status badging row */}
+                        <div className="flex items-center gap-1">
+                            <button 
+                                onClick={() => router.push('/account/membership')}
+                                className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] shadow-[0_0_8px_rgba(59,130,246,0.15)] shrink-0"
+                                title="Silver Tier"
+                            >
+                                🥈
+                            </button>
+                            <button 
+                                onClick={() => router.push('/account/membership')}
+                                className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-[11px] shrink-0"
+                                title="VIP badge"
+                            >
+                                👑
+                            </button>
+                            <div className="shrink-0 scale-90">
+                                <NotificationIcon role="fan" />
+                            </div>
+                            <button 
+                                onClick={() => router.push('/account/subscription')}
+                                className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 shrink-0"
+                                title="Subscriptions"
+                            >
+                                <Crown className="w-3.5 h-3.5 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
+                            </button>
+                        </div>
+                        
+                        {/* Profile avatar dropdown */}
+                        <div className="shrink-0 scale-90">
+                            <ProfileMenu
+                                user={user}
+                                profile={currentProfile}
+                                role={role}
+                                router={router}
+                                onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Search & Filter Toggle Row */}
+                <div className="px-4 py-3 flex items-center justify-between">
+                    <div className="flex-1 flex items-center gap-2 bg-[#121218] border border-white/[0.05] rounded-full px-4 py-2 shadow-[inset_0_1.5px_2px_rgba(0,0,0,0.6)]">
+                        <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+                        <input
+                            value={homeQuery}
+                            onChange={(e) => setHomeQuery(e.target.value)}
+                            className="bg-transparent outline-none text-xs w-full text-white placeholder-zinc-500 font-sans"
+                            placeholder="Search creators..."
+                        />
+                        {homeQuery && (
+                            <button onClick={() => setHomeQuery("")} className="text-zinc-500 shrink-0">
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
+                    
+                    <button
+                        onClick={() => setIsMobileFiltersOpen(prev => !prev)}
+                        className={cx(
+                            "p-2.5 rounded-2xl bg-black border flex items-center justify-center ml-2 cursor-pointer transition-all duration-200 shrink-0",
+                            isMobileFiltersOpen
+                                ? "border-pink-500 text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.3)] bg-pink-500/10"
+                                : "border-white/10 text-zinc-400 hover:border-pink-500/30"
+                        )}
+                        title="Filters"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-pink-400">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="2" y1="14" x2="6" y2="14"></line>
+                            <line x1="10" y1="8" x2="14" y2="8"></line>
+                            <line x1="18" y1="16" x2="22" y2="16"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Mobile Filter Expandable Drawer Panel */}
+                <AnimatePresence>
+                    {isMobileFiltersOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full bg-[#121217] border-b border-white/[0.04] px-4 py-3 flex gap-2 overflow-hidden"
+                        >
+                            <div className="flex-1 flex flex-col gap-1">
+                                <span className="text-[8.5px] text-zinc-500 font-semibold uppercase tracking-wider pl-1">Level</span>
                                 <select
                                     value={levelFilter}
                                     onChange={(e) => setLevelFilter(e.target.value as any)}
-                                    className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-pink-500/40"
                                 >
                                     <option value="All">All Tiers</option>
                                     <option value="Rookie">Rookie</option>
@@ -1357,13 +1860,12 @@ export default function Home() {
                                     <option value="Elite">Elite</option>
                                 </select>
                             </div>
-
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Type</span>
+                            <div className="flex-1 flex flex-col gap-1">
+                                <span className="text-[8.5px] text-zinc-500 font-semibold uppercase tracking-wider pl-1">Type</span>
                                 <select
                                     value={tagFilter}
                                     onChange={(e) => setTagFilter(e.target.value)}
-                                    className="w-full bg-black/50 border border-blue-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-blue-500/40"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-blue-500/40"
                                 >
                                     <option value="All">All Types</option>
                                     {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
@@ -1374,40 +1876,244 @@ export default function Home() {
                                     {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
                                 </select>
                             </div>
-
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Sort</span>
+                            <div className="flex-1 flex flex-col gap-1">
+                                <span className="text-[8.5px] text-zinc-500 font-semibold uppercase tracking-wider pl-1">Sort</span>
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value as any)}
-                                    className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] text-zinc-200 outline-none focus:border-pink-500/40"
                                 >
                                     <option value="Recommended">Recommended</option>
                                     <option value="Rookie→Elite">Rookie → Elite</option>
                                     <option value="Elite→Rookie">Elite → Rookie</option>
                                 </select>
                             </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-            <HomeScreen
-                onEnterSuga4U={() => setLevelFilter("Elite")}
-                query={homeQuery}
-                setQuery={setHomeQuery}
-                rooms={rooms}
-                posts={posts}
-                userId={user?.id}
-                subscribedCreatorIds={subscribedCreatorIds}
-                activeStatuses={activeStatuses}
-                levelFilter={levelFilter}
-                setLevelFilter={setLevelFilter}
-                tagFilter={tagFilter}
-                setTagFilter={setTagFilter}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-            />
+                {/* Browse Room Category Grid */}
+                <div className="px-4 mt-2">
+                    <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide mb-3 pl-0.5 font-sans">Browse Room</h3>
+                    <div className="grid grid-cols-3 gap-2.5">
+                        {CATS.map((cat) => {
+                            const tColorMap = {
+                                blue: { border: "border-cyan-500/25", glow: "shadow-[0_0_12px_rgba(6,182,212,0.12)]", text: "text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]" },
+                                red: { border: "border-pink-500/25", glow: "shadow-[0_0_12px_rgba(236,72,153,0.12)]", text: "text-pink-400 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" },
+                                yellow: { border: "border-yellow-500/25", glow: "shadow-[0_0_12px_rgba(234,179,8,0.12)]", text: "text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]" },
+                                purple: { border: "border-purple-500/25", glow: "shadow-[0_0_12px_rgba(168,85,247,0.12)]", text: "text-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.6)]" },
+                                green: { border: "border-emerald-500/25", glow: "shadow-[0_0_12px_rgba(16,185,129,0.12)]", text: "text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" },
+                                pink: { border: "border-pink-500/25", glow: "shadow-[0_0_12px_rgba(236,72,153,0.12)]", text: "text-pink-400 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" }
+                            }[cat.tone] || { border: "border-zinc-800", glow: "", text: "text-white" };
+
+                            const getCustomIcon = (key: string) => {
+                                if (key === "drops") return <Gift className={`w-8 h-8 ${tColorMap.text}`} />;
+                                if (key === "conf") return <Lock className={`w-8 h-8 ${tColorMap.text}`} />;
+                                if (key === "xchat") return <MessageCircle className={`w-8 h-8 ${tColorMap.text}`} />;
+                                if (key === "bar") return <BarDrinkIcon className={`w-8 h-8 ${tColorMap.text}`} />;
+                                if (key === "truth") {
+                                    return (
+                                        <svg className={`w-8 h-8 ${tColorMap.text}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M9.5 5.5C6.5 5.5 4 8 4 11C4 14.5 6.5 16.5 9.5 16.5C12.5 16.5 15 14.5 15 11C15 8 12.5 5.5 9.5 5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="M7 9H7.01M12 9H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+                                            <path d="M8.5 12.5C8.5 12.5 9 13.3 9.5 13.3C10 13.3 10.5 12.5 10.5 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                                            <path d="M14.5 7.5C17.5 7.5 20 10 20 13C20 16.5 17.5 18.5 14.5 18.5C11.5 18.5 9 16.5 9 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3"/>
+                                        </svg>
+                                    );
+                                }
+                                return <Crown className={`w-8 h-8 ${tColorMap.text}`} />;
+                            };
+
+                            return (
+                                <button
+                                    key={`mobile-room-${cat.key}`}
+                                    onClick={() => router.push(cat.route)}
+                                    className={cx(
+                                        "aspect-square rounded-2xl bg-[#09090e] border flex flex-col items-center justify-center gap-2 p-2 active:scale-95 transition-all",
+                                        tColorMap.border,
+                                        tColorMap.glow
+                                    )}
+                                >
+                                    <div className="flex-1 flex items-center justify-center">
+                                        {getCustomIcon(cat.key)}
+                                    </div>
+                                    <span className="text-[10px] font-semibold text-zinc-300 tracking-tight leading-none text-center pb-1">
+                                        {cat.label}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Featured Creators Horizontal Slider */}
+                <div className="mt-6">
+                    <div className="px-4 flex items-center justify-between mb-3">
+                        <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide pl-0.5">Featured Creators</h3>
+                        <button 
+                            onClick={() => {
+                                setLevelFilter("All");
+                                setTagFilter("All");
+                            }}
+                            className="text-pink-500 text-xs font-semibold active:opacity-75 transition-opacity"
+                        >
+                            View All
+                        </button>
+                    </div>
+
+                    <div className="flex overflow-x-auto gap-3.5 px-4 pb-3 scrollbar-none">
+                        {rooms.slice(0, 8).map((creator, idx) => {
+                            const isLive = idx === 0 || idx === 3 || idx === 5; // Simulates active live state
+                            const levelColors = creator.level === "Elite" 
+                                ? "border-purple-500/40 text-purple-300 bg-purple-950/40"
+                                : creator.level === "Star"
+                                ? "border-amber-500/40 text-amber-300 bg-amber-950/40"
+                                : "border-blue-500/40 text-blue-300 bg-blue-950/40";
+
+                            return (
+                                <div
+                                    key={`mobile-featured-${creator.id}-${idx}`}
+                                    onClick={() => {
+                                        if (creator.userId) router.push("/profile/" + creator.userId);
+                                        else router.push("/room/" + creator.id);
+                                    }}
+                                    className="w-[140px] aspect-[2.7/4] flex-shrink-0 relative rounded-2xl overflow-hidden border border-white/[0.04] bg-zinc-950 shadow-[0_4px_16px_rgba(0,0,0,0.5)] active:scale-98 transition-transform"
+                                >
+                                    {/* Cover Image background */}
+                                    <div 
+                                        className="absolute inset-0 bg-cover bg-center opacity-85" 
+                                        style={{ backgroundImage: `url(${creator.cover_url || `/creators/creator-${(idx % 5) + 1}.jpg`})` }}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#040407] via-[#040407]/40 to-transparent pointer-events-none" />
+
+                                    {/* LIVE badge (top-left) */}
+                                    {isLive && (
+                                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#ff0055] text-[7.5px] font-black px-1.5 py-0.5 rounded-full text-white tracking-widest animate-pulse shadow-[0_0_8px_rgba(255,0,85,0.4)]">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                                            LIVE
+                                        </div>
+                                    )}
+
+                                    {/* Like button shortcut (top-right) */}
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toast.success(`Subscribed to @${creator.name}'s room updates!`);
+                                        }}
+                                        className="absolute top-2.5 right-2.5 p-1 rounded-full bg-black/45 backdrop-blur-sm border border-white/[0.08] text-white hover:text-pink-500"
+                                    >
+                                        <Heart className="w-3 h-3" />
+                                    </button>
+
+                                    {/* Bottom Info Details */}
+                                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex flex-col gap-1.5">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <img 
+                                                src={creator.avatar_url || `/creators/creator-${(idx % 5) + 1}.jpg`} 
+                                                alt={creator.name} 
+                                                className="w-5.5 h-5.5 rounded-full border border-white/20 object-cover shrink-0" 
+                                            />
+                                            <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                <span className="text-[9.5px] font-bold text-white truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] leading-tight">
+                                                    {creator.name}
+                                                </span>
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    <span className={`text-[6.5px] font-bold px-1 py-[0.5px] rounded border uppercase tracking-wider ${levelColors}`}>
+                                                        {creator.level}
+                                                    </span>
+                                                    {creator.userId && <UserBadgeDisplay userId={creator.userId} />}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Creator tag badges */}
+                                        <div className="flex flex-wrap gap-0.5">
+                                            {creator.tags.slice(0, 2).map((tag, tIdx) => (
+                                                <span 
+                                                    key={`${creator.id}-mtag-${tIdx}`}
+                                                    className="text-[6.5px] bg-black/55 border border-white/[0.08] px-1 py-0.5 rounded text-zinc-300 leading-none shrink-0"
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Recent Posts Feed */}
+                <div className="mt-5">
+                    <div className="px-4 flex items-center justify-between mb-3">
+                        <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide pl-0.5">Recent Posts</h3>
+                        <button 
+                            onClick={() => router.push("/newsfeed")}
+                            className="text-pink-500 text-xs font-semibold active:opacity-75 transition-opacity"
+                        >
+                            View All
+                        </button>
+                    </div>
+
+                    <div className="px-4 flex flex-col gap-3.5">
+                        {posts.length === 0 ? (
+                            <div className="text-center py-8 text-zinc-600 text-xs bg-zinc-950/40 rounded-2xl border border-white/[0.02]">
+                                No recent updates.
+                            </div>
+                        ) : (
+                            posts.slice(0, 5).map((post) => (
+                                <MobilePostCard
+                                    key={post.id}
+                                    post={post}
+                                    user={post.profiles}
+                                    currentUserId={user?.id || null}
+                                    isSubscribed={subscribedCreatorIds.has(post.user_id)}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Bottom Sticky Tab Bar Navigation */}
+                <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#07070c]/95 backdrop-blur-lg border-t border-white/[0.08] flex items-center justify-around py-2 shadow-[0_-4px_24px_rgba(0,0,0,0.8)]">
+                    <button 
+                        onClick={() => router.push('/home')}
+                        className="flex flex-col items-center justify-center gap-0.5 text-[#ff007f] cursor-pointer"
+                    >
+                        <HomeIcon className="w-5 h-5 fill-[#ff007f]/10" />
+                        <span className="text-[9px] font-semibold font-sans">Home</span>
+                    </button>
+                    <button 
+                        onClick={() => router.push('/newsfeed')}
+                        className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
+                    >
+                        <Compass className="w-5 h-5" />
+                        <span className="text-[9px] font-medium font-sans">Browse</span>
+                    </button>
+                    <button 
+                        onClick={() => router.push('/account/messages')}
+                        className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
+                    >
+                        <MessageCircle className="w-5 h-5" />
+                        <span className="text-[9px] font-medium font-sans">Messages</span>
+                    </button>
+                    <button 
+                        onClick={() => router.push('/account/collections')}
+                        className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
+                    >
+                        <Heart className="w-5 h-5" />
+                        <span className="text-[9px] font-medium font-sans">Favorites</span>
+                    </button>
+                    <button 
+                        onClick={() => router.push('/account/profile')}
+                        className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
+                    >
+                        <User className="w-5 h-5" />
+                        <span className="text-[9px] font-medium font-sans">Profile</span>
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

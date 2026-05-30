@@ -272,13 +272,29 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
 
     // ─── Idle State: Always show when no active campaigns ───
     const renderIdleState = () => (
-        <div className="w-full flex-1 min-h-[220px] flex flex-col glass-panel p-3 lg:p-4 border-white/10 bg-black/20 rounded-2xl relative overflow-hidden">
+        <div className="w-full flex-1 flex flex-col lg:flex-col lg:min-h-[220px] glass-panel p-3 lg:p-4 border-white/10 bg-black/20 rounded-2xl relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-3xl rounded-full -mr-8 -mt-8 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-20 h-20 bg-pink-500/5 blur-3xl rounded-full -ml-6 -mb-6 pointer-events-none" />
             
-            {/* Section Header */}
-            <div className="flex items-center gap-2 mb-2 shrink-0">
+            {/* Mobile Horizontal Layout */}
+            <div className="flex lg:hidden items-center gap-3.5 w-full">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                    <Users className="w-5 h-5 text-purple-400/80" />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                    <h3 className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">
+                        Vote together to unlock goals
+                    </h3>
+                    <p className="text-xs font-semibold text-white/90 mt-0.5">Waiting for Goals</p>
+                    <p className="text-[10px] text-gray-500 leading-snug mt-0.5 max-w-[280px] break-words">
+                        Creator will set group voting goals — vote together to make things happen!
+                    </p>
+                </div>
+            </div>
+
+            {/* Desktop Section Header (hidden on mobile) */}
+            <div className="hidden lg:flex items-center gap-2 mb-2 shrink-0">
                 <div className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center">
                     <Target className="w-3 h-3 text-purple-400" />
                 </div>
@@ -287,8 +303,8 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                 </h3>
             </div>
 
-            {/* Waiting State */}
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            {/* Desktop Waiting State (hidden on mobile) */}
+            <div className="hidden lg:flex flex-1 flex-col items-center justify-center gap-3">
                 {/* Animated voting icon */}
                 <motion.div
                     animate={{ 
@@ -328,8 +344,8 @@ export default function GroupVotePanel({ roomId, initialState, currentUserId }: 
                 </div>
             </div>
 
-            {/* Mini info cards */}
-            <div className="flex gap-2 mt-auto pt-3 shrink-0">
+            {/* Desktop Mini info cards (hidden on mobile) */}
+            <div className="hidden lg:flex gap-2 mt-auto pt-3 shrink-0">
                 <div className="flex-1 py-2 px-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex flex-col items-center justify-center gap-1 transition-all hover:bg-cyan-500/10">
                     <Zap className="w-4 h-4 text-cyan-400/80" />
                     <span className="text-[10px] font-bold text-cyan-400/90 uppercase tracking-widest">Truth</span>

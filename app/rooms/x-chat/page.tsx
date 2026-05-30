@@ -84,6 +84,54 @@ const BoostRow = ({
     </button>
 );
 
+/* ── mobile reaction chip ───────────────────────────────── */
+const MobileReactionButton = ({
+    emoji, label, price, onClick,
+}: { emoji: string; label: string; price: number; onClick: () => void }) => (
+    <button onClick={onClick} className="mobile-reaction-chip">
+        <span className="mobile-reaction-emoji">{emoji}</span>
+        <div className="mobile-reaction-details">
+            <span className="mobile-reaction-label">{label}</span>
+            <span className="mobile-reaction-price">{cs()}{price}</span>
+        </div>
+    </button>
+);
+
+/* ── mobile navigation SVGs ──────────────────────────────── */
+const HomeIcon = () => (
+    <svg className="mobile-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+);
+
+const RoomsIcon = () => (
+    <svg className="mobile-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+);
+
+const MessagesIcon = () => (
+    <svg className="mobile-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+        <polyline points="22,6 12,13 2,6" />
+    </svg>
+);
+
+const ProfileIcon = () => (
+    <svg className="mobile-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+    </svg>
+);
+
+const FullscreenIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 3h6v6M9 21H3v-6M21 9v12h-12M3 15V3h12" />
+    </svg>
+);
+
 /* ═══════════════════════════════════════════════════════════ */
 const XChatRoom = () => {
     const router = useRouter();
@@ -98,6 +146,15 @@ const XChatRoom = () => {
     const [hostId, setHostId]       = useState<string | null>(null);
     const [hostAvatar, setHostAvatar] = useState<string | null>(null);
     const [hostName, setHostName]   = useState("Loading...");
+
+    const [isMobile, setIsMobile]   = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 767);
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const [requestStatus, setRequestStatus] = useState<RequestStatus>("none");
     const [requestLoading, setRequestLoading] = useState(false);
@@ -318,7 +375,20 @@ const XChatRoom = () => {
         return null;
     };
 
-    /* ═══════════════════════════════════ RENDER ══════════ */
+    /* ── ═══════════════════════════════════ RENDER ══════════ */
+    const mobileRow1 = [
+        reactionsRow1[0], // Boost
+        reactionsRow1[1], // Shine
+        stickersRow1[0],  // Kiss
+        stickersRow1[1],  // Tease
+        reactionsRow2[0], // Crown
+    ];
+    const mobileRow2 = [
+        reactionsRow2[1], // Pulse
+        stickersRow2[0],  // Rose
+        stickersRow2[1],  // Gift
+    ];
+
     if (sessionStatus === 'pending') {
         return (
             <div className="h-screen w-full flex flex-col items-center justify-center bg-[#0a0a0a] text-white relative xchat-page">
@@ -363,6 +433,243 @@ const XChatRoom = () => {
                     </button>
                 </div>
             </div>
+        );
+    }
+
+    if (isMobile) {
+        return (
+            <ProtectRoute allowedRoles={["fan"]}>
+                <div className="xchat-mobile-shell">
+                    {/* MOBILE HEADER */}
+                    <header className="mobile-header">
+                        <div className="mobile-header-left">
+                            <button onClick={() => router.push("/home")} className="mobile-back-btn">
+                                <ArrowLeft size={16} />
+                            </button>
+                            {roomId && (
+                                <button onClick={() => setShowInviteModal(true)} className="mobile-invite-btn">
+                                    <UserPlus size={14} />
+                                    <span>Invite</span>
+                                </button>
+                            )}
+                        </div>
+                        <div className="mobile-header-right">
+                            {renderStatus()}
+                            {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
+                            <WalletPill />
+                        </div>
+                    </header>
+
+                    {/* MOBILE BODY */}
+                    <div className="mobile-body">
+                        {/* 1. VIDEO stage */}
+                        <div className="mobile-canvas-container">
+                            {roomId && user && hostId ? (
+                                <LiveStreamWrapper
+                                    role="fan"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={user.id}
+                                    hostId={hostId}
+                                    hostAvatarUrl={hostAvatar || ""}
+                                    hostName={hostName}
+                                />
+                            ) : (
+                                <div className="mobile-canvas-placeholder">
+                                    <div className="mobile-avatar-ring">
+                                        {hostAvatar
+                                            ? <img src={hostAvatar} alt={hostName} className="w-full h-full object-cover" />
+                                            : <span className="text-3xl">✨</span>}
+                                    </div>
+                                    <p className="mobile-host-name">{hostName}</p>
+                                    <p className="mobile-host-status">• • • SETTING UP • • •</p>
+                                </div>
+                            )}
+
+                            {/* PIP self-view */}
+                            {sessionActive && user && (
+                                <div className="mobile-pip">
+                                    <LiveStreamWrapper
+                                        role="host"
+                                        appId={APP_ID}
+                                        roomId={`${roomId}_fan`}
+                                        uid={user.id}
+                                        hostId={user.id}
+                                        hostAvatarUrl={user?.user_metadata?.avatar_url || ""}
+                                        hostName="You"
+                                    />
+                                    <span className="mobile-pip-label">You</span>
+                                </div>
+                            )}
+
+                            {/* Overlaid Badges */}
+                            <div className="mobile-canvas-badges">
+                                <div className="mobile-live-badge">
+                                    <span className="mobile-live-dot animate-pulse" />
+                                    <span className="mobile-live-text">LIVE</span>
+                                </div>
+                                <div className="mobile-viewer-badge">
+                                    <Eye size={11} />
+                                    <span>123</span>
+                                </div>
+                            </div>
+
+                            <button className="mobile-canvas-expand-btn">
+                                <FullscreenIcon />
+                            </button>
+
+                            {/* floating emoji burst */}
+                            {animatingEmoji && (
+                                <div className="mobile-emoji-burst">
+                                    <span>{animatingEmoji}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 2. REACTIONS & TIPS */}
+                        <div className="mobile-reactions-card">
+                            <span className="mobile-section-label">Reactions & Tips</span>
+                            <div className="mobile-reactions-row-1">
+                                {mobileRow1.map(r => (
+                                    <MobileReactionButton 
+                                        key={r.type} 
+                                        emoji={r.emoji} 
+                                        label={r.label} 
+                                        price={r.price} 
+                                        onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} 
+                                    />
+                                ))}
+                            </div>
+                            <div className="mobile-reactions-row-2">
+                                {mobileRow2.map(r => (
+                                    <MobileReactionButton 
+                                        key={r.type} 
+                                        emoji={r.emoji} 
+                                        label={r.label} 
+                                        price={r.price} 
+                                        onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} 
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 3. LIVE CHAT PANEL */}
+                        <div className="mobile-chat-container">
+                            <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} isMobile={true} />
+                        </div>
+
+                        {/* 4. VISIBILITY BOOSTS & DIRECT ACCESS */}
+                        <div className="mobile-boosts-container">
+                            {/* Visibility Boosts */}
+                            <div className="mobile-boost-card">
+                                <div className="mobile-boost-header">
+                                    <Eye size={12} className="mobile-boost-header-icon" />
+                                    <span className="mobile-boost-title">Visibility Boosts</span>
+                                </div>
+                                <div className="mobile-boost-list">
+                                    {visibilityBoosts.map(b => (
+                                        <button 
+                                            key={b.type} 
+                                            onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })} 
+                                            className="mobile-boost-row"
+                                        >
+                                            <div className="mobile-boost-row-left">
+                                                <div className={`mobile-boost-icon-circle ${b.colorClass || ''}`}>
+                                                    <b.icon size={13} className="mobile-animated-icon" />
+                                                </div>
+                                                <span className="mobile-boost-label">{b.label}</span>
+                                            </div>
+                                            <span className="mobile-boost-price">{cs()}{b.price}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Direct Access */}
+                            <div className="mobile-boost-card">
+                                <div className="mobile-boost-header">
+                                    <Zap size={12} className="mobile-boost-header-icon" />
+                                    <span className="mobile-boost-title">Direct Access</span>
+                                </div>
+                                <div className="mobile-boost-list">
+                                    {directAccess.map(d => (
+                                        <button 
+                                            key={d.type} 
+                                            onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })} 
+                                            className="mobile-boost-row"
+                                        >
+                                            <div className="mobile-boost-row-left">
+                                                <div className={`mobile-boost-icon-circle ${d.colorClass || ''}`}>
+                                                    <d.icon size={13} className="mobile-animated-icon" />
+                                                </div>
+                                                <span className="mobile-boost-label">{d.label}</span>
+                                            </div>
+                                            <span className="mobile-boost-price">{cs()}{d.price}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PERSISTENT BOTTOM NAVIGATION BAR */}
+                    <nav className="mobile-bottom-nav">
+                        <button onClick={() => router.push("/home")} className="mobile-nav-item">
+                            <HomeIcon />
+                            <span className="mobile-nav-label">Home</span>
+                        </button>
+                        <button onClick={() => router.push("/rooms/x-chat-sessions")} className="mobile-nav-item active">
+                            <RoomsIcon />
+                            <span className="mobile-nav-label">Rooms</span>
+                        </button>
+                        <button onClick={() => router.push("/account/messages")} className="mobile-nav-item">
+                            <MessagesIcon />
+                            <span className="mobile-nav-label">Messages</span>
+                        </button>
+                        <button onClick={() => router.push("/account/profile")} className="mobile-nav-item">
+                            <ProfileIcon />
+                            <span className="mobile-nav-label">Profile</span>
+                        </button>
+                    </nav>
+
+                    {/* Spend Confirm Modal */}
+                    <SpendConfirmModal
+                        isOpen={!!pending}
+                        onClose={() => { setPending(null); setVoicePrompt(""); }}
+                        title={
+                            ["voice_note_boost", "choose_topic", "private_question", "mini_chat", "shoutout"].includes(pending?.reactionType || "") 
+                                ? `Request ${pending?.label}` 
+                                : "Confirm Purchase"
+                        }
+                        itemLabel={pending ? `${pending.emoji || ""} ${pending.label}` : ""}
+                        amount={pending?.price || 0}
+                        walletBalance={balance}
+                        onConfirm={handleReactionSend}
+                        requireInput={["voice_note_boost", "choose_topic", "private_question", "mini_chat", "shoutout"].includes(pending?.reactionType || "")}
+                        allowInput={true}
+                        inputPlaceholder={
+                            pending?.reactionType === "voice_note_boost" ? "What should the voice note be about?" : 
+                            pending?.reactionType === "choose_topic" ? "What topic do you want to choose?" : 
+                            pending?.reactionType === "private_question" ? "Type your private question here..." :
+                            pending?.reactionType === "mini_chat" ? "What do you want the creator to wear?" :
+                            pending?.reactionType === "shoutout" ? "What name should the creator say?" :
+                            "Add an optional message..."
+                        }
+                        inputValue={voicePrompt}
+                        onInputChange={setVoicePrompt}
+                    />
+
+                    <InviteModal isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} roomId={roomId} />
+                    <InvitationPopup />
+
+                    {/* Per-minute billing overlay */}
+                    <BillingOverlay
+                        sessionId={urlSessionId}
+                        accentHsl="45, 100%, 50%"
+                        exitRoute="/home"
+                    />
+                </div>
+            </ProtectRoute>
         );
     }
 

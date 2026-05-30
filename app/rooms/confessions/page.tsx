@@ -3,7 +3,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
-    MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus, Loader2
+    MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus, Loader2,
+    Eye, BadgeCheck, Send
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -202,6 +203,7 @@ function ConfessionsRoom() {
     const [creatorSearch, setCreatorSearch] = useState('');
     const [searchDebounce, setSearchDebounce] = useState<ReturnType<typeof setTimeout> | null>(null);
     const [isSearchMode, setIsSearchMode] = useState(false);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     // Request Form
     const [reqType, setReqType] = useState<'Text' | 'Image' | 'Video'>('Text');
@@ -732,7 +734,8 @@ function ConfessionsRoom() {
                 </div>
                 <FloatingHearts />
 
-                <div className="relative z-10 h-full flex flex-col overflow-hidden">
+                {/* ── DESKTOP VIEW ── */}
+                <div className="hidden md:flex relative z-10 h-full flex-col overflow-hidden">
                     {/* Header */}
                     <header className="shrink-0 z-30 border-b border-border bg-background/60 backdrop-blur-xl">
                         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-3">
@@ -853,6 +856,443 @@ function ConfessionsRoom() {
                             </div>
                         </div>
                     </main>
+                </div>
+
+                {/* ── MOBILE REDESIGN VIEW (matches reference image) ── */}
+                <div className="flex md:hidden relative z-10 h-full flex-col overflow-hidden bg-[#070102]">
+                    {/* Header */}
+                    <header className="shrink-0 z-30 border-b border-[#22070c] bg-[#0c0204] px-4 py-3 flex items-center justify-between">
+                        <button onClick={() => router.push("/home")} className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition">
+                            <ArrowLeft size={18} />
+                        </button>
+                        
+                        <div className="flex items-center gap-1.5">
+                            <Heart className="h-4.5 w-4.5 fill-primary text-primary drop-shadow-[0_0_8px_rgba(255,42,109,0.5)]" />
+                            <span className="text-base font-black tracking-tight text-white display-font uppercase">
+                                PlayGround<span className="text-primary drop-shadow-[0_0_10px_rgba(255,42,109,0.5)]">X</span>
+                            </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowInviteModal(true)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#d50057] text-white text-xs font-bold active:scale-[0.98] transition shadow-[0_0_12px_rgba(213,0,87,0.4)]"
+                            >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                <span>Invite</span>
+                            </button>
+                            <button 
+                                onClick={() => setShowMobileMenu(true)} 
+                                className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition relative"
+                            >
+                                <span className="font-extrabold text-sm tracking-widest leading-none">...</span>
+                                {requests.filter(r => r.status === 'delivered').length > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                )}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Mobile Scroll Content */}
+                    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-24 hide-scrollbar">
+                        
+                        {/* Live Video Spotlight */}
+                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/5 shadow-2xl bg-black/60 shrink-0">
+                            {roomId && user && hostId ? (
+                                isLive ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={hostId}
+                                        hostAvatarUrl={hostAvatar || ""}
+                                        hostName={hostStreamName}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-[url('/assets/noise.png')] opacity-10 mix-blend-overlay"></div>
+                                        <div className="relative z-10 flex flex-col items-center p-4">
+                                            <div className="w-14 h-14 rounded-full border border-rose-500/30 p-0.5 mb-2 relative">
+                                                <div className="absolute inset-0 border border-rose-500 rounded-full animate-ping opacity-25"></div>
+                                                <img src={hostAvatar || "/default-avatar.png"} alt="Creator" className="w-full h-full rounded-full object-cover grayscale" />
+                                            </div>
+                                            <h4 className="text-sm font-bold text-white mb-1">Waiting for {hostStreamName}</h4>
+                                            <p className="text-rose-200/40 text-[10px] font-medium">Session will begin shortly...</p>
+                                        </div>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-rose-200/40 text-xs">
+                                    {roomId ? "Connecting to stream..." : "No active session"}
+                                </div>
+                            )}
+
+                            {/* Overlays on Player */}
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20 pointer-events-none">
+                                <span className="flex items-center gap-1 bg-[#d50057] px-2 py-0.5 rounded-md text-[9px] font-extrabold text-white uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
+                                </span>
+                                <span className="flex items-center gap-1 bg-black/50 border border-white/10 px-2 py-0.5 rounded-md text-[9px] font-extrabold text-white/90">
+                                    <Eye className="w-3 h-3 text-white/70" /> 123
+                                </span>
+                            </div>
+
+                            <button className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/40 hover:bg-black/60 flex items-center justify-center text-white/85 z-20 transition">
+                                <span className="text-sm">⛶</span>
+                            </button>
+
+                            {/* Neon glowing heart overlay bottom left */}
+                            <button 
+                                onClick={() => handleReaction('LOVE', 10)}
+                                className="absolute bottom-3 left-3 w-10 h-10 rounded-full bg-black/40 border border-rose-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(225,29,72,0.4)] z-20 transition active:scale-95 group"
+                            >
+                                <Heart className="w-5 h-5 fill-[#ff2a6d] text-[#ff2a6d] drop-shadow-[0_0_5px_#ff2a6d] group-hover:scale-110 transition-transform" />
+                            </button>
+                        </div>
+
+                        {/* Reactions & Tips */}
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Reactions & Tips</h4>
+                            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
+                                {[
+                                    { icon: "💋", label: "KISS", price: 5 },
+                                    { icon: "💖", label: "LOVE", price: 10 },
+                                    { icon: "🔥", label: "SPICY", price: 20 },
+                                    { icon: "💎", label: "DIAMOND", price: 50 },
+                                ].map((tip, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleReaction(tip.label, tip.price)}
+                                        className="flex flex-col items-center justify-center min-w-[76px] py-2.5 rounded-2xl border border-white/5 bg-[#140407] hover:border-rose-500/30 transition active:scale-[0.97]"
+                                    >
+                                        <span className="text-lg mb-1">{tip.icon}</span>
+                                        <span className="text-[9px] font-black text-white/90 uppercase tracking-wider">{tip.label}</span>
+                                        <span className="text-[9px] text-[#ff2a6d] font-bold mt-0.5">€{tip.price}</span>
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => handleReaction('GIFT', 10)}
+                                    className="flex flex-col items-center justify-center min-w-[76px] py-2.5 rounded-2xl border border-dashed border-rose-500/30 bg-[#140407] hover:bg-rose-950/20 transition active:scale-[0.97] group"
+                                >
+                                    <Gift className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform mb-1.5" />
+                                    <span className="text-[9px] font-black text-rose-300 uppercase tracking-wider">Gift</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Live Chat Section */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center px-1">
+                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Live Chat</h4>
+                                <span className="flex items-center gap-1 text-[10px] text-[#ff2a6d] font-bold">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff2a6d] animate-pulse" /> 256
+                                </span>
+                            </div>
+                            <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-2.5">
+                                <LiveChatBox roomId={roomId} sessionId={urlSessionId} variant="mobile" />
+                            </div>
+                        </div>
+
+                        {/* All Confessions Section */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center px-1">
+                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">All Confessions</h4>
+                                <button onClick={() => handleTierFilter('All')} className="text-[10px] text-[#ff2a6d] font-bold hover:underline">View all</button>
+                            </div>
+
+                            {/* Filter Tabs */}
+                            <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                                {['All', 'Spicy', 'Dirty', 'Bedroom', 'Forbidden'].map((tier) => {
+                                    const isActive = tierFilter === tier;
+                                    return (
+                                        <button
+                                            key={tier}
+                                            onClick={() => handleTierFilter(tier)}
+                                            className={cn(
+                                                "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border whitespace-nowrap",
+                                                isActive
+                                                    ? "bg-[#d50057] text-white border-transparent shadow-[0_0_12px_rgba(213,0,87,0.4)]"
+                                                    : "bg-white/5 text-white/50 border-white/10"
+                                            )}
+                                        >
+                                            {tier}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Horizontal Cards Scroll */}
+                            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                                {loadingWall && (
+                                    <div className="w-full flex items-center justify-center py-6">
+                                        <Loader2 className="w-5 h-5 animate-spin text-rose-500" />
+                                    </div>
+                                )}
+                                {!loadingWall && confessions.length === 0 && (
+                                    <div className="text-center w-full py-6 text-white/30 text-xs italic">No secrets available</div>
+                                )}
+                                {!loadingWall && confessions.length > 0 && confessions.map((c, i) => {
+                                    const isUnlocked = myUnlocks.has(c.id);
+                                    // Likes count generator
+                                    const likesCount = (c.price * 13 + (c.title?.charCodeAt(0) || 7)) % 140 + 20;
+
+                                    return (
+                                        <div
+                                            key={c.id || i}
+                                            onClick={() => isUnlocked ? setViewConfession(c) : setPurchaseConfession(c)}
+                                            className="min-w-[155px] max-w-[155px] p-3 rounded-2xl bg-[#110103]/60 border border-rose-500/20 flex flex-col justify-between h-[155px] shadow-[0_0_12px_rgba(225,29,72,0.06)] relative group cursor-pointer transition active:scale-[0.98]"
+                                        >
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-5 h-5 rounded-full bg-rose-950 border border-rose-500/30 flex items-center justify-center text-[8px] font-bold text-rose-300">
+                                                        👤
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-white/90 truncate max-w-[70px]">
+                                                        {c.creator?.full_name || "Anonymous"}
+                                                    </span>
+                                                    <span className="text-[8px] text-white/30 shrink-0 ml-auto">
+                                                        2h ago
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-white/60 leading-normal line-clamp-3 font-medium">
+                                                    {isUnlocked ? (c.content || c.teaser) : c.teaser}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/5">
+                                                <span className="flex items-center gap-1 text-[9px] text-rose-400 font-bold">
+                                                    💖 {likesCount}
+                                                </span>
+                                                {!isUnlocked ? (
+                                                    <span className="text-[9px] bg-[#d50057]/20 text-[#ff4c8a] border border-[#d50057]/30 px-1.5 py-0.5 rounded-md font-extrabold">
+                                                        €{c.price}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[9px] text-green-400 font-extrabold flex items-center gap-0.5">
+                                                        ✓ Open
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Request a Confession Form */}
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Request a Confession</h4>
+                            
+                            <div className="bg-[#0e0204] border border-white/5 rounded-2xl p-4 space-y-4">
+                                <div className="space-y-1.5">
+                                    <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">What should they confess?</span>
+                                    <textarea
+                                        value={reqTopic}
+                                        onChange={(e) => setReqTopic(e.target.value)}
+                                        placeholder="Describe what you'd like to see..."
+                                        maxLength={200}
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 text-xs focus:outline-none focus:border-rose-500/40 transition-all resize-none h-20"
+                                    />
+                                    <div className="text-right text-[9px] text-white/30">{reqTopic.length}/200</div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="flex-1 space-y-1.5">
+                                        <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">Your Offer</span>
+                                        <div className="relative">
+                                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#ff2a6d]">€</span>
+                                            <input
+                                                type="number"
+                                                value={reqAmount || ''}
+                                                onChange={(e) => setReqAmount(Number(e.target.value))}
+                                                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold focus:outline-none focus:border-rose-500/40 transition"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="shrink-0 flex items-end">
+                                        <button 
+                                            onClick={() => handleReaction('GIFT', reqAmount)}
+                                            className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 active:scale-95 transition"
+                                        >
+                                            <Gift className="w-4 h-4 text-[#ff2a6d]" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Custom Toggles inside request confession for completeness */}
+                                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                                    <div>
+                                        <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Identity</div>
+                                        <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
+                                            <button onClick={() => setIsAnon(false)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${!isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Public</button>
+                                            <button onClick={() => setIsAnon(true)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Anon</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Send mode</div>
+                                        <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
+                                            <button onClick={() => setConfessionMode("1on1")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "1on1" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>1on1</button>
+                                            <button onClick={() => setConfessionMode("global")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "global" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Global</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleOpenConfirm}
+                                    disabled={isSending || !reqTopic.trim() || reqAmount <= 0}
+                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d50057] to-[#ff2a6d] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(213,0,87,0.3)] disabled:opacity-50 disabled:active:scale-100"
+                                >
+                                    <Send className="w-3.5 h-3.5" />
+                                    {isSending ? "Processing..." : "Send Request"}
+                                </button>
+
+                                <div className="flex justify-between items-center text-[9px] text-white/30 px-1 pt-1">
+                                    <span>{confessionMode === "global" ? "🌐 Visible to ALL creators." : "🔒 Sent directly to host."}</span>
+                                    <span className="font-bold text-[#ff2a6d] uppercase tracking-wider text-right">€{reqAmount} {isAnon ? "Anonymous" : "Public"} • {confessionMode === "1on1" ? "1 on 1" : "Global"}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Top Offers Section */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center px-1">
+                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Top Offers</h4>
+                                <span className="text-[10px] text-[#ff2a6d] font-bold hover:underline">View all</span>
+                            </div>
+
+                            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
+                                {/* Merge actual bids with placeholders for a rich experience */}
+                                {(() => {
+                                    const combinedBids = [
+                                        ...bids.map((b, idx) => ({ rank: idx + 1, name: b.name, amount: b.amount, isMe: b.id === 'me' })),
+                                        { rank: bids.length + 1, name: "AnonKing", amount: 100 },
+                                        { rank: bids.length + 2, name: "SweetSecret", amount: 75 },
+                                        { rank: bids.length + 3, name: "HeartBreaker", amount: 50 },
+                                    ].slice(0, 4);
+
+                                    const rankColors = [
+                                        "bg-amber-400 text-black", // Gold
+                                        "bg-slate-300 text-black", // Silver
+                                        "bg-amber-600 text-white", // Bronze
+                                        "bg-white/10 text-white/55"
+                                    ];
+
+                                    return combinedBids.map((bid, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-center gap-3 p-3 rounded-2xl bg-[#0f0407] border border-white/5 min-w-[150px] shrink-0"
+                                        >
+                                            <div className={`w-5 h-5 rounded-full ${rankColors[idx] || rankColors[3]} flex items-center justify-center text-[9px] font-black shrink-0`}>
+                                                {idx + 1}
+                                            </div>
+                                            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] shrink-0">
+                                                👤
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-black text-white truncate">{bid.name}</p>
+                                                <p className="text-[9px] text-[#ff2a6d] font-bold">€{bid.amount}</p>
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+
+                        {/* Room Info Section */}
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Room Info</h4>
+                            
+                            <div className="grid grid-cols-3 gap-2.5">
+                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
+                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Host</span>
+                                    <span className="text-[10px] font-black text-white flex items-center gap-0.5 truncate">
+                                        {hostStreamName || "ConfessorX"} <BadgeCheck className="w-3.5 h-3.5 text-[#ff2a6d] fill-[#ff2a6d] text-white inline shrink-0" />
+                                    </span>
+                                </div>
+                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
+                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Followers</span>
+                                    <span className="text-[10px] font-black text-white flex items-center gap-0.5">
+                                        12.4K 💎
+                                    </span>
+                                </div>
+                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
+                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Rules</span>
+                                    <span className="text-[9px] font-medium text-white/60 leading-tight line-clamp-2">
+                                        Be respectful and kind
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {/* Mobile Sidebar / Drawer Options Menu */}
+                    {showMobileMenu && (
+                        <div className="fixed inset-0 z-[60] flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowMobileMenu(false)}>
+                            <div className="w-72 h-full bg-[#120205] border-l border-rose-500/10 p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300" onClick={(e) => e.stopPropagation()}>
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                                        <h4 className="text-base font-black text-white uppercase tracking-wider">Room Options</h4>
+                                        <button onClick={() => setShowMobileMenu(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 hover:bg-white/10"><X size={16} /></button>
+                                    </div>
+                                    
+                                    {/* Wallet balance */}
+                                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                                        <div className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">My Wallet Balance</div>
+                                        <div className="flex items-center gap-2">
+                                            <Coins className="text-amber-400 w-5 h-5" />
+                                            <span className="text-xl font-black text-white">{cs()}{walletBalance}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Inbox deliveries */}
+                                    <button
+                                        onClick={() => { setShowIncomingModal(true); setShowMobileMenu(false); }}
+                                        className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-left transition"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <UserRound className="text-primary w-5 h-5" />
+                                            <span className="text-sm font-bold text-white">Incoming Deliveries</span>
+                                        </div>
+                                        {requests.filter(r => r.status === 'delivered').length > 0 && (
+                                            <span className="px-2 py-0.5 rounded-full bg-primary text-[10px] font-black text-white animate-pulse">
+                                                {requests.filter(r => r.status === 'delivered').length}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {/* Active Requests List */}
+                                    <div className="space-y-2.5">
+                                        <h5 className="text-xs font-extrabold text-white/40 uppercase tracking-widest px-1">My Requests Status</h5>
+                                        <div className="space-y-2 max-h-[35vh] overflow-y-auto pr-1">
+                                            {requests.length === 0 ? (
+                                                <div className="text-center text-white/30 text-xs py-4 italic">No requests placed</div>
+                                            ) : (
+                                                requests.map((req, i) => (
+                                                    <div key={req.id || i} className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="font-bold text-white truncate">{req.topic}</div>
+                                                            <div className="text-[10px] text-white/40 uppercase font-semibold mt-0.5 tracking-wider">{req.status.replace('_', ' ')}</div>
+                                                        </div>
+                                                        {req.status === 'delivered' ? (
+                                                            <button onClick={() => { setReviewRequest(req); setShowMobileMenu(false); }} className="px-2.5 py-1 rounded-lg bg-[#d50057] hover:opacity-95 text-[10px] text-white font-bold transition">Review</button>
+                                                        ) : (
+                                                            <span className="font-bold text-amber-400">{cs()}{req.amount}</span>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onClick={() => router.push("/home")} className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white font-bold text-xs uppercase tracking-widest text-center transition">
+                                    Exit Room
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── MODALS (Stripe, Toast, Confirm, Unlock, View, Review) ── */}

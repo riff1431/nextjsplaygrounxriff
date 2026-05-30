@@ -33,9 +33,11 @@ interface EmojiPickerProps {
     accentColor?: string;
     /** Position the popup above or below the trigger */
     position?: "top" | "bottom";
+    /** Optional custom trigger element to render instead of the default Smile icon */
+    customTrigger?: React.ReactNode;
 }
 
-export default function EmojiPicker({ onEmojiSelect, accentColor = "hsl(45, 90%, 55%)", position = "top" }: EmojiPickerProps) {
+export default function EmojiPicker({ onEmojiSelect, accentColor = "hsl(45, 90%, 55%)", position = "top", customTrigger }: EmojiPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState(0);
     const triggerRef = useRef<HTMLButtonElement>(null);
@@ -226,7 +228,15 @@ export default function EmojiPicker({ onEmojiSelect, accentColor = "hsl(45, 90%,
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Open emoji picker"
-                style={{
+                style={customTrigger ? {
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                } : {
                     background: "none",
                     border: "none",
                     cursor: "pointer",
@@ -238,10 +248,10 @@ export default function EmojiPicker({ onEmojiSelect, accentColor = "hsl(45, 90%,
                     transition: "all 0.2s",
                     color: isOpen ? accentColor : "hsl(280, 15%, 60%)",
                 }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = accentColor; (e.currentTarget as HTMLButtonElement).style.background = "hsla(280, 40%, 25%, 0.3)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = isOpen ? accentColor : "hsl(280, 15%, 60%)"; (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
+                onMouseEnter={customTrigger ? undefined : (e) => { (e.currentTarget as HTMLButtonElement).style.color = accentColor; (e.currentTarget as HTMLButtonElement).style.background = "hsla(280, 40%, 25%, 0.3)"; }}
+                onMouseLeave={customTrigger ? undefined : (e) => { (e.currentTarget as HTMLButtonElement).style.color = isOpen ? accentColor : "hsl(280, 15%, 60%)"; (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
             >
-                <Smile style={{ width: "18px", height: "18px" }} />
+                {customTrigger || <Smile style={{ width: "18px", height: "18px" }} />}
             </button>
 
             {popupContent}
