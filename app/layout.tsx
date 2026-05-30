@@ -10,6 +10,7 @@ import { NotificationProvider } from "@/components/providers/NotificationProvide
 import CookieBanner from "@/components/common/CookieBanner";
 import { GuidedTourProvider } from "@/components/guided-tour/GuidedTourProvider";
 import TourOverlay from "@/components/guided-tour/TourOverlay";
+import OfficialLauncherTimer from "@/components/common/OfficialLauncherTimer";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -89,6 +90,7 @@ export default async function RootLayout({
                     {children}
                     <TourOverlay />
                   </GuidedTourProvider>
+                  <OfficialLauncherTimer />
                   <CookieBanner />
                   <ToasterProvider />
                 </NotificationProvider>

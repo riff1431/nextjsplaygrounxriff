@@ -6,6 +6,8 @@ import { useAuth } from "@/app/context/AuthContext";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { cs } from "@/utils/currency";
+import LaunchTimer from "@/components/common/LaunchTimer";
+import WelcomePopup from "@/components/common/WelcomePopup";
 
 interface StatCardProps {
     icon: React.ReactNode;
@@ -89,35 +91,46 @@ export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProp
     const displayName = username || "Creator";
 
     return (
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-4 sm:mb-6">
-            <div className="min-w-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl cs-font-display italic cs-neon-text-pink leading-tight">
-                    Creator Studio Dashboard
-                </h1>
-                <p className="text-white/50 mt-1 text-sm sm:text-base">Welcome back, @{displayName}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-                <NotificationIcon role="creator" />
+        <>
+            {/* Dynamic Welcome Popup for Creator */}
+            <WelcomePopup role="creator" />
 
-                {/* Messages — icon-only on mobile */}
-                <button
-                    onClick={() => router.push('/account/messages')}
-                    className="p-2 sm:px-4 sm:py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
-                    title="Messages"
-                >
-                    <MessageSquare className="w-4 h-4" />
-                </button>
+            <div className="flex flex-wrap md:flex-nowrap items-start justify-between gap-4 mb-4 sm:mb-6">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl cs-font-display italic cs-neon-text-pink leading-tight">
+                        Creator Studio Dashboard
+                    </h1>
+                    <p className="text-white/50 mt-1 text-sm sm:text-base">Welcome back, @{displayName}</p>
+                </div>
 
-                <div className="relative z-50">
-                    <ProfileMenu
-                        user={user}
-                        profile={{ username: displayName, avatar_url: avatarUrl }}
-                        role="creator"
-                        router={router}
-                        onSignOut={logout}
-                    />
+                {/* Launch Timer Countdown in top middle */}
+                <div className="order-3 md:order-2 w-full md:w-auto flex justify-center">
+                    <LaunchTimer />
+                </div>
+
+                <div className="order-2 md:order-3 flex items-center gap-2 shrink-0">
+                    <NotificationIcon role="creator" />
+
+                    {/* Messages — icon-only on mobile */}
+                    <button
+                        onClick={() => router.push('/account/messages')}
+                        className="p-2 sm:px-4 sm:py-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 font-medium flex items-center gap-2 transition"
+                        title="Messages"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                    </button>
+
+                    <div className="relative z-50">
+                        <ProfileMenu
+                            user={user}
+                            profile={{ username: displayName, avatar_url: avatarUrl }}
+                            role="creator"
+                            router={router}
+                            onSignOut={logout}
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };

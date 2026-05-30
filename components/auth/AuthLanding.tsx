@@ -18,6 +18,8 @@ import Link from "next/link";
 
 import BrandLogo from "@/components/common/BrandLogo";
 import SiteFooter from "@/components/navigation/SiteFooter";
+import LaunchTimer from "@/components/common/LaunchTimer";
+import WelcomePopup from "@/components/common/WelcomePopup";
 
 // ... (keep imports)
 
@@ -395,6 +397,14 @@ export default function AuthLanding() {
           50% { opacity: 0.7; transform: scale(1.5); }
         }
       `}</style>
+
+            {/* Launch Timer in Top Middle */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[50]">
+                <LaunchTimer />
+            </div>
+
+            {/* Dynamic Welcome Popup */}
+            <WelcomePopup role="all" />
 
             {/* ═══════════════ BACKDROP ═══════════════ */}
             <div className="pointer-events-none fixed inset-0 overflow-hidden">

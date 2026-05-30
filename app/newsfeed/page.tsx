@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     ArrowLeft, Heart, Search, RefreshCw, TrendingUp, Flame, Sparkles,
     Image as ImageIcon, Video, FileText, Filter, ChevronDown, X, User,
-    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle, Users,
+    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle, Users, Menu,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -194,6 +194,7 @@ export default function NewsFeedPage() {
 
     // State
     const [posts, setPosts] = useState<FeedPost[]>([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -405,10 +406,113 @@ export default function NewsFeedPage() {
                     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(236,72,153,0.3); border-radius: 8px; }
                 `}</style>
 
+                {/* Mobile Navigation Drawer */}
+                <AnimatePresence>
+                    {isSidebarOpen && (
+                        <>
+                            {/* Backdrop */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.7 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+                                onClick={() => setIsSidebarOpen(false)}
+                            />
+                            {/* Drawer body */}
+                            <motion.div
+                                initial={{ x: "-100%" }}
+                                animate={{ x: 0 }}
+                                exit={{ x: "-100%" }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
+                            >
+                                <div className="space-y-6">
+                                    {/* Header of Drawer */}
+                                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                        <button
+                                            onClick={() => { setIsSidebarOpen(false); router.push("/home"); }}
+                                            className="flex items-center gap-2 select-none text-left"
+                                            title="Back to Home"
+                                        >
+                                            <BrandLogo showBadge={false} />
+                                        </button>
+                                        <button
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Room Categories list */}
+                                    <div>
+                                        <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
+                                        <div className="space-y-2">
+                                            {ROOM_LINKS.filter((room) => activeStatuses[room.roomType] !== false).map((room) => {
+                                                return (
+                                                    <button
+                                                        key={`drawer-${room.label}`}
+                                                        onClick={() => {
+                                                            setIsSidebarOpen(false);
+                                                            router.push(room.route);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                            room.border,
+                                                            room.glow,
+                                                            room.hover
+                                                        )}
+                                                    >
+                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", room.color)}>
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <span>{room.icon}</span>
+                                                                <span className="truncate neon-deep">{room.label}</span>
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Account section in Drawer */}
+                                <div className="pt-4 border-t border-white/10 mt-auto">
+                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
+                                    <div className="space-y-2">
+                                        <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => { setIsSidebarOpen(false); router.push("/account/profile"); }}>
+                                            <User className="w-4 h-4" /> My Profile
+                                        </button>
+                                        <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
+                                            <Users className="w-4 h-4" /> Subscriptions
+                                        </button>
+                                        <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
+                                            <MessageSquare className="w-4 h-4" /> Suggestions
+                                        </button>
+                                        <button className="w-full rounded-xl border border-pink-500/50 bg-pink-500/10 px-3 py-2 text-sm text-pink-200 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
+                                            <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
+                                        </button>
+                                        <button className="w-full rounded-xl border border-pink-500/25 bg-black/40 hover:bg-white/5 px-3 py-2 text-sm text-pink-200 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/home"); }}>
+                                            <ArrowLeft className="w-4 h-4" /> Back to Home
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+
                 {/* ── Top Header ── */}
-                <header className="sticky top-0 z-40 px-6 py-3 border-b border-pink-500/20 bg-black/80 backdrop-blur-xl">
+                <header className="sticky top-0 z-40 px-4 sm:px-6 py-3 border-b border-pink-500/20 bg-black/80 backdrop-blur-xl">
                     <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="lg:hidden p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                                title="Open menu"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </button>
                             <button
                                 onClick={() => router.push("/home")}
                                 className="flex items-center gap-2 select-none text-left"
@@ -422,7 +526,7 @@ export default function NewsFeedPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             {/* Search bar */}
                             <div className="relative hidden md:block">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-300/50" />
@@ -444,7 +548,7 @@ export default function NewsFeedPage() {
 
                             <button
                                 onClick={() => router.push("/account/messages")}
-                                className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
                                 title="Messages"
                             >
                                 <MessageSquare className="w-5 h-5" />
@@ -452,7 +556,7 @@ export default function NewsFeedPage() {
                             <NotificationIcon role="fan" />
                              <button
                                  onClick={() => router.push('/account/subscription')}
-                                 className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
+                                 className="hidden md:flex p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
                                  title="Subscription"
                              >
                                  <Crown className="w-5 h-5" />
@@ -473,7 +577,7 @@ export default function NewsFeedPage() {
                     <div className="flex flex-col lg:flex-row gap-6">
 
                         {/* ── Left Sidebar ── */}
-                        <aside className="w-full lg:w-56 shrink-0">
+                        <aside className="hidden lg:block lg:w-56 shrink-0">
                             <div className="lg:sticky lg:top-20 space-y-4">
                                 {/* Browse Room */}
                                 <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14),0_0_56px_rgba(59,130,246,0.08)]">

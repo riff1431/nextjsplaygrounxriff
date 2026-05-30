@@ -15,8 +15,8 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
             <img
                 src={logoSrc}
                 alt={theme?.siteName || "PlayGroundX"}
-                className="w-auto object-contain flex-shrink-0"
-                style={{ height: `${logoHeight}px`, minWidth: `${logoHeight}px` }}
+                className="w-auto object-contain flex-shrink-0 h-8 md:h-[var(--logo-height)]"
+                style={{ "--logo-height": `${logoHeight}px` } as React.CSSProperties}
             />
         </div>
     );

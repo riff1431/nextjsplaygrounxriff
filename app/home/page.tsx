@@ -26,6 +26,8 @@ import {
     Trophy,
     Upload,
     ArrowLeft,
+    Menu,
+    X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -37,6 +39,8 @@ import PostCard from "@/components/posts/PostCard";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
+import LaunchTimer from "@/components/common/LaunchTimer";
+import WelcomePopup from "@/components/common/WelcomePopup";
 import WorldTruthDareList from "@/components/rooms/WorldTruthDareList";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { activeCreators, CreatorCard } from "@/components/data/activeCreators";
@@ -389,6 +393,26 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
     );
 }
 
+// ---- Home Screen Categories ------------------------------------------------
+const CATS: Array<{
+    label: string;
+    key: string;
+    icon: React.ReactNode;
+    tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow";
+    primary?: boolean;
+    route: string;
+    comingSoon?: boolean;
+    roomType: string;
+    dataTour?: string;
+}> = [
+        { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
+        { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
+        { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
+        { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
+        { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
+        { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
+    ];
+
 // ---- Home Screen -----------------------------------------------------------
 function HomeScreen({
     onEnterSuga4U,
@@ -444,30 +468,11 @@ function HomeScreen({
         return rows;
     }, [query, levelFilter, tagFilter, sortBy, rooms]);
 
-    const CATS: Array<{
-        label: string;
-        key: string;
-        icon: React.ReactNode;
-        tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow";
-        primary?: boolean;
-        route: string;
-        comingSoon?: boolean;
-        roomType: string;
-        dataTour?: string;
-    }> = [
-            { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
-            { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
-            { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
-            { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
-            { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
-            { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
-        ];
-
     return (
-        <div className="w-full mx-auto px-6 py-6">
+        <div className="w-full mx-auto px-4 py-4 sm:px-6 sm:py-6">
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Left rail (always-expanded categories) */}
-                <NeonCard className="w-full lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex lg:flex-col" data-tour="rooms-menu">
+                <NeonCard className="hidden lg:flex lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex-col" data-tour="rooms-menu">
                     {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
@@ -571,7 +576,51 @@ function HomeScreen({
                 {/* Main grid */}
                 <div className="flex-1 min-w-0">
 
+                    {/* Mobile Horizontal Rooms Swipe List */}
+                    <div className="lg:hidden w-full overflow-x-auto scrollbar-none pb-2 mb-4">
+                        <div className="flex gap-2.5 min-w-max px-1">
+                            {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
+                                const t = toneClasses(cat.tone);
+                                const isPrimary = !!cat.primary;
+                                return (
+                                    <button
+                                        key={`mobile-${cat.key}`}
+                                        onClick={() => {
+                                            setActiveCat(cat.key);
+                                            router.push(cat.route);
+                                        }}
+                                        className={cx(
+                                            "inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full border text-xs font-semibold transition bg-black/55 shrink-0",
+                                            t.border,
+                                            t.glow,
+                                            t.hover,
+                                            isPrimary && "ring-1 ring-cyan-300/35",
+                                            activeCat === cat.key && "neon-pulse"
+                                        )}
+                                        {...(cat.dataTour ? { 'data-tour': cat.dataTour } : {})}
+                                    >
+                                        <span className={t.icon}>{cat.icon}</span>
+                                        <span className={cx(t.text + " neon-flicker uppercase tracking-wider")}>{cat.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="flex flex-col gap-3 mb-4">
+                        {/* Mobile Search Input */}
+                        <div className="md:hidden w-full">
+                            <div className="flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-4 py-3">
+                                <Search className="w-4 h-4 text-pink-300" />
+                                <input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    className="bg-transparent outline-none text-sm w-full text-white placeholder-gray-500"
+                                    placeholder="Search creators…"
+                                />
+                            </div>
+                        </div>
+
                         {/* Filters */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div className="rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
@@ -906,6 +955,7 @@ export default function Home() {
     }, [user]);
 
     const [homeQuery, setHomeQuery] = useState("");
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [levelFilter, setLevelFilter] = useState<string | "All">("All");
     const [tagFilter, setTagFilter] = useState<string | "All">("All"); // Renamed for clarity in UI
     const { roomSettings: activeStatuses } = useTheme();
@@ -1022,14 +1072,130 @@ export default function Home() {
           mix-blend-mode: screen;
           animation: smokeDrift 9s ease-in-out infinite;
         }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
       `}</style>
 
-            <div className="px-6 py-4 border-b border-pink-500/20 flex items-center justify-between">
-                <div className="flex items-center gap-6">
+            {/* Dynamic Welcome Popup for Fans */}
+            <WelcomePopup role="fan" />
+
+            {/* Mobile Navigation Drawer */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.7 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                        {/* Drawer body */}
+                        <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
+                        >
+                            <div className="space-y-6">
+                                {/* Header of Drawer */}
+                                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                    <Logo onClick={() => { setIsSidebarOpen(false); router.push("/"); }} />
+                                    <button
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {/* Room Categories list */}
+                                <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
+                                    <div className="space-y-2">
+                                        {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
+                                            const t = toneClasses(cat.tone);
+                                            const isPrimary = !!cat.primary;
+                                            return (
+                                                <button
+                                                    key={`drawer-${cat.key}`}
+                                                    onClick={() => {
+                                                        setIsSidebarOpen(false);
+                                                        router.push(cat.route);
+                                                    }}
+                                                    className={cx(
+                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                        t.border,
+                                                        t.glow,
+                                                        t.hover,
+                                                        isPrimary && "ring-1 ring-cyan-300/35"
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={cx(
+                                                            "inline-flex items-center gap-2 w-full justify-between",
+                                                            t.text + " neon-flicker",
+                                                            isPrimary && "animate-pulse"
+                                                        )}
+                                                    >
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <span className={t.icon}>{cat.icon}</span>
+                                                            <span className="truncate neon-deep">{cat.label}</span>
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Account section in Drawer */}
+                            <div className="pt-4 border-t border-white/10 mt-auto">
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
+                                <div className="space-y-2">
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/collections"); }}>
+                                        <Star className="w-4 h-4" /> Collections
+                                    </button>
+                                    <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
+                                        <MessageSquare className="w-4 h-4" /> Suggestions
+                                    </button>
+                                    <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
+                                        <Users className="w-4 h-4" /> Subscriptions
+                                    </button>
+                                    <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
+                                        <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
+                                    </button>
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
+                                        <LogOut className="w-4 h-4" /> Log Out
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3 sm:gap-6">
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="lg:hidden p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                        title="Open menu"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
                     <Logo onClick={() => router.push("/")} />
 
                     {/* Animated neon handwriting welcome (reveals on load) */}
-                    <div className={cx("flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
+                    <div className={cx("hidden md:flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
                     >
                         <div
                             className={cx(
@@ -1067,7 +1233,7 @@ export default function Home() {
                                 {membershipPlan?.badge_icon_url ? (
                                     <img src={membershipPlan.badge_icon_url} alt={membershipPlan.display_name} className="w-5 h-5 object-contain" />
                                 ) : membershipPlan ? (
-                                    <span className="text-sm">{{ bronze: "🥉", silver: "🥈", gold: "🥇" }[membershipPlan.name] || "⭐"}</span>
+                                    <span className="text-sm">{({ bronze: "🥉", silver: "🥈", gold: "🥇" } as any)[membershipPlan.name] || "⭐"}</span>
                                 ) : (
                                     <Crown className="w-4 h-4" />
                                 )}
@@ -1096,9 +1262,14 @@ export default function Home() {
                     </div>
                 </div>
 
+                {/* Launch Timer Countdown in top middle */}
+                <div className="order-3 md:order-2 w-full md:w-auto flex justify-center">
+                    <LaunchTimer />
+                </div>
+
                 {/* Top-right: Search + My Profile only */}
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                <div className="order-2 md:order-3 flex items-center gap-2 sm:gap-3">
+                    <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
                         <Search className="w-4 h-4 text-pink-300" />
                         <input
                             value={homeQuery}
@@ -1108,10 +1279,10 @@ export default function Home() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 sm:gap-3">
                         <button
                             onClick={() => router.push('/account/messages')}
-                            className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
+                            className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
                             title="Messages"
                             data-tour="private-chat"
                         >
@@ -1120,7 +1291,7 @@ export default function Home() {
                         <NotificationIcon role="fan" />
                         <button
                             onClick={() => router.push('/account/subscription')}
-                            className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
+                            className="hidden md:flex p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
                             title="Subscription"
                             data-tour="subscription-section"
                         >

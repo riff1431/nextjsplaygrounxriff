@@ -59,6 +59,7 @@ import AdminCreatorEarnings from "../../../components/admin/finance/AdminCreator
 import PolicyEditor from "../../../components/admin/settings/PolicyEditor";
 import ImportantPagesManager from "../../../components/admin/settings/ImportantPagesManager";
 import CurrencyManager from "../../../components/admin/settings/CurrencyManager";
+import CampaignsManager from "../../../components/admin/settings/CampaignsManager";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -68,6 +69,7 @@ function cx(...parts: Array<string | false | null | undefined>) {
 type AdminModule =
     | "home"
     | "dashboard"
+    | "campaigns"
     | "prompts"
     | "confession-lists" // Confession Lists
     | "pricing"
@@ -138,34 +140,67 @@ export default function AdminDashboardPage() {
         "revenue-splits": "/admin/finance/splits",
     };
 
-    const NAV: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink"; badge?: number }> = [
-        { id: "home", label: "Admin Home", icon: <Home className="w-4 h-4" />, tone: "cyan" },
-        { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
-        { id: "room-settings", label: "Room Settings", icon: <DoorOpen className="w-4 h-4" />, tone: "pink" },
-        { id: "prompts", label: "System Truth & Dare", icon: <MessageCircle className="w-4 h-4" />, tone: "pink" },
-        { id: "confession-lists", label: "Confession Lists", icon: <Flame className="w-4 h-4" />, tone: "pink" },
-        { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
-        { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
-        { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
-        { id: "important-pages", label: "Important Pages", icon: <FileText className="w-4 h-4" />, tone: "amber" },
-        { id: "currency", label: "Default Currency", icon: <Coins className="w-4 h-4" />, tone: "green" },
-        { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
-        { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
-        { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
-        { id: "kyc", label: "KYC Review", icon: <Lock className="w-4 h-4" />, tone: "red" },
-        { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
-        { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
-        { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
-        { id: "bar-lounge", label: "Bar Lounge", icon: <Martini className="w-4 h-4" />, tone: "pink" },
-        { id: "bank-payments", label: "Bank Payments", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
-        { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
-        { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
-        { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
-        { id: "creator-earnings", label: "Creator Earnings", icon: <DollarSign className="w-4 h-4" />, tone: "green" },
-        { id: "revenue-splits", label: "Revenue Splits", icon: <DollarSign className="w-4 h-4" />, tone: "amber" },
-        { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: pendingSuggestions },
-        // Placeholders below
-        { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: unreadMessages },
+    const NAV_GROUPS: Array<{
+        title: string;
+        items: Array<{ id: AdminModule; label: string; icon: React.ReactNode; tone?: "cyan" | "amber" | "red" | "green" | "pink"; badge?: number }>;
+    }> = [
+        {
+            title: "Core Console",
+            items: [
+                { id: "home", label: "Admin Home", icon: <Home className="w-4 h-4" />, tone: "cyan" },
+                { id: "dashboard", label: "Dashboard", icon: <Star className="w-4 h-4" />, tone: "green" },
+            ]
+        },
+        {
+            title: "Rooms & Content",
+            items: [
+                { id: "room-settings", label: "Room Settings", icon: <DoorOpen className="w-4 h-4" />, tone: "pink" },
+                { id: "prompts", label: "System Truth & Dare", icon: <MessageCircle className="w-4 h-4" />, tone: "pink" },
+                { id: "confession-lists", label: "Confession Lists", icon: <Flame className="w-4 h-4" />, tone: "pink" },
+                { id: "bar-lounge", label: "Bar Lounge", icon: <Martini className="w-4 h-4" />, tone: "pink" },
+            ]
+        },
+        {
+            title: "Marketing & Campaigns",
+            items: [
+                { id: "campaigns", label: "Timer & Popups", icon: <Timer className="w-4 h-4" />, tone: "pink" },
+                { id: "theme", label: "Theme & Brand", icon: <Palette className="w-4 h-4" />, tone: "pink" },
+                { id: "policy", label: "Legal & Policies", icon: <FileText className="w-4 h-4" />, tone: "cyan" },
+                { id: "important-pages", label: "Important Pages", icon: <FileText className="w-4 h-4" />, tone: "amber" },
+            ]
+        },
+        {
+            title: "Users & Safety",
+            items: [
+                { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, tone: "cyan" },
+                { id: "kyc", label: "KYC Review", icon: <Lock className="w-4 h-4" />, tone: "red" },
+                { id: "suggestions", label: "Suggestions", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: pendingSuggestions },
+                { id: "messaging", label: "Messaging", icon: <MessageCircle className="w-4 h-4" />, tone: "cyan", badge: unreadMessages },
+            ]
+        },
+        {
+            title: "System Config",
+            items: [
+                { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
+                { id: "currency", label: "Default Currency", icon: <Coins className="w-4 h-4" />, tone: "green" },
+                { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+                { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
+                { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
+                { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
+            ]
+        },
+        {
+            title: "Finance & Payouts",
+            items: [
+                { id: "approvals", label: "Payment Approvals", icon: <Check className="w-4 h-4" />, tone: "green" },
+                { id: "bank-payments", label: "Bank Payments", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+                { id: "refunds", label: "Refunds", icon: <CreditCard className="w-4 h-4" />, tone: "amber" },
+                { id: "finance-payouts", label: "Payouts (Page)", icon: <Banknote className="w-4 h-4" />, tone: "green" },
+                { id: "payouts", label: "Payouts", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+                { id: "creator-earnings", label: "Creator Earnings", icon: <DollarSign className="w-4 h-4" />, tone: "green" },
+                { id: "revenue-splits", label: "Revenue Splits", icon: <DollarSign className="w-4 h-4" />, tone: "amber" },
+            ]
+        }
     ];
 
     function HeaderRight() {
@@ -248,34 +283,43 @@ export default function AdminDashboardPage() {
                             Business Console
                         </div>
 
-                        <div className="space-y-2 max-h-[60vh] overflow-y-auto lg:max-h-none">
-                            {NAV.map((n) => (
-                                <button
-                                    key={n.id}
-                                    onClick={() => {
-                                        if (ROUTE_MAP[n.id]) {
-                                            router.push(ROUTE_MAP[n.id]);
-                                        } else {
-                                            setBizModule(n.id);
-                                        }
-                                        setShowMobileNav(false);
-                                    }}
-                                    className={cx(
-                                        "w-full rounded-xl border bg-black/40 px-3 py-2 text-sm transition",
-                                        bizModule === n.id ? "border-cyan-300/55 text-cyan-200" : "border-white/10 text-gray-200 hover:bg-white/5"
-                                    )}
-                                >
-                                    <span className="inline-flex items-center gap-2 flex-1">
-                                        {n.icon}
-                                        {n.label}
-                                        {ROUTE_MAP[n.id] && <span className="text-[9px] text-gray-500 ml-1">↗</span>}
-                                    </span>
-                                    {n.badge && n.badge > 0 && (
-                                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">
-                                            {n.badge}
-                                        </span>
-                                    )}
-                                </button>
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto lg:max-h-[80vh] pr-1 scrollbar-thin">
+                            {NAV_GROUPS.map((group) => (
+                                <div key={group.title} className="space-y-1">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500/80 px-2.5 pt-2 pb-1">
+                                        {group.title}
+                                    </div>
+                                    <div className="space-y-1">
+                                        {group.items.map((n) => (
+                                            <button
+                                                key={n.id}
+                                                onClick={() => {
+                                                    if (ROUTE_MAP[n.id]) {
+                                                        router.push(ROUTE_MAP[n.id]);
+                                                    } else {
+                                                        setBizModule(n.id);
+                                                    }
+                                                    setShowMobileNav(false);
+                                                }}
+                                                className={cx(
+                                                    "w-full rounded-xl border bg-black/40 px-3 py-2 text-sm transition flex items-center justify-between text-left",
+                                                    bizModule === n.id ? "border-cyan-300/55 text-cyan-200 bg-cyan-500/5 shadow-[0_0_10px_rgba(6,182,212,0.1)]" : "border-white/10 text-gray-200 hover:bg-white/5"
+                                                )}
+                                            >
+                                                <span className="inline-flex items-center gap-2 flex-1">
+                                                    {n.icon}
+                                                    {n.label}
+                                                    {ROUTE_MAP[n.id] && <span className="text-[9px] text-gray-500 ml-1">↗</span>}
+                                                </span>
+                                                {n.badge && n.badge > 0 ? (
+                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">
+                                                        {n.badge}
+                                                    </span>
+                                                ) : null}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </NeonCard>
@@ -313,6 +357,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="pricing" label="Pricing Controls" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Global configuration" />
                                 <Tile id="policy" label="Legal & Policies" icon={<FileText className="w-4 h-4" />} tone="cyan" desc="T&Cs and Privacy" />
                                 <Tile id="important-pages" label="Important Pages" icon={<FileText className="w-4 h-4" />} tone="amber" desc="Edit public pages" />
+                                <Tile id="campaigns" label="Timer & Popups" icon={<Timer className="w-4 h-4" />} tone="pink" desc="Manage countdowns & popups" />
                                 <Tile id="users" label="Users" icon={<Users className="w-4 h-4" />} tone="cyan" desc="Manage access" />
                                 <Tile id="kyc" label="KYC Review" icon={<Lock className="w-4 h-4" />} tone="red" desc="Verify creators" />
                                 <Tile id="memberships" label="Memberships" icon={<Star className="w-4 h-4" />} tone="amber" desc="Fan plans" />
@@ -352,6 +397,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "theme" && <AdminThemeEditor />}
                     {bizModule === "policy" && <PolicyEditor />}
                     {bizModule === "important-pages" && <ImportantPagesManager />}
+                    {bizModule === "campaigns" && <CampaignsManager />}
                     {bizModule === "currency" && <CurrencyManager />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
