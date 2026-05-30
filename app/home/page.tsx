@@ -1396,106 +1396,107 @@ export default function Home() {
             {/* Dynamic Welcome Popup for Fans */}
             <WelcomePopup role="fan" />
 
-            {/* 1. DESKTOP/LAPTOP LAYOUT */}
-            <div className="hidden md:block">
-                {/* Mobile Navigation Drawer */}
-                <AnimatePresence>
-                    {isSidebarOpen && (
-                        <>
-                            {/* Backdrop */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.7 }}
-                                exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
-                                onClick={() => setIsSidebarOpen(false)}
-                            />
-                            {/* Drawer body */}
-                            <motion.div
-                                initial={{ x: "-100%" }}
-                                animate={{ x: 0 }}
-                                exit={{ x: "-100%" }}
-                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
-                            >
-                                <div className="space-y-6">
-                                    {/* Header of Drawer */}
-                                    <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                                        <Logo onClick={() => { setIsSidebarOpen(false); router.push("/"); }} />
-                                        <button
-                                            onClick={() => setIsSidebarOpen(false)}
-                                            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
-                                        >
-                                            <X className="w-5 h-5" />
-                                        </button>
-                                    </div>
+            {/* Mobile Navigation Drawer */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.7 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                        {/* Drawer body */}
+                        <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 left-0 w-64 bg-zinc-950/95 border-r border-pink-500/25 z-50 p-5 flex flex-col justify-between overflow-y-auto"
+                        >
+                            <div className="space-y-6">
+                                {/* Header of Drawer */}
+                                <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                    <Logo onClick={() => { setIsSidebarOpen(false); router.push("/"); }} />
+                                    <button
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
 
-                                    {/* Room Categories list */}
-                                    <div>
-                                        <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
-                                        <div className="space-y-2">
-                                            {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
-                                                const t = toneClasses(cat.tone);
-                                                const isPrimary = !!cat.primary;
-                                                return (
-                                                    <button
-                                                        key={`drawer-${cat.key}`}
-                                                        onClick={() => {
-                                                            setIsSidebarOpen(false);
-                                                            router.push(cat.route);
-                                                        }}
+                                {/* Room Categories list */}
+                                <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">Browse Room</div>
+                                    <div className="space-y-2">
+                                        {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
+                                            const t = toneClasses(cat.tone);
+                                            const isPrimary = !!cat.primary;
+                                            return (
+                                                <button
+                                                    key={`drawer-${cat.key}`}
+                                                    onClick={() => {
+                                                        setIsSidebarOpen(false);
+                                                        router.push(cat.route);
+                                                    }}
+                                                    className={cx(
+                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                        t.border,
+                                                        t.glow,
+                                                        t.hover,
+                                                        isPrimary && "ring-1 ring-cyan-300/35"
+                                                    )}
+                                                >
+                                                    <span
                                                         className={cx(
-                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
-                                                            t.border,
-                                                            t.glow,
-                                                            t.hover,
-                                                            isPrimary && "ring-1 ring-cyan-300/35"
+                                                            "inline-flex items-center gap-2 w-full justify-between",
+                                                            t.text + " neon-flicker",
+                                                            isPrimary && "animate-pulse"
                                                         )}
                                                     >
-                                                        <span
-                                                            className={cx(
-                                                                "inline-flex items-center gap-2 w-full justify-between",
-                                                                t.text + " neon-flicker",
-                                                                isPrimary && "animate-pulse"
-                                                            )}
-                                                        >
-                                                            <span className="inline-flex items-center gap-2">
-                                                                <span className={t.icon}>{cat.icon}</span>
-                                                                <span className="truncate neon-deep">{cat.label}</span>
-                                                            </span>
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <span className={t.icon}>{cat.icon}</span>
+                                                            <span className="truncate neon-deep">{cat.label}</span>
                                                         </span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Account section in Drawer */}
-                                <div className="pt-4 border-t border-white/10 mt-auto">
-                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
-                                    <div className="space-y-2">
-                                        <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/collections"); }}>
-                                            <Star className="w-4 h-4" /> Collections
-                                        </button>
-                                        <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
-                                            <MessageSquare className="w-4 h-4" /> Suggestions
-                                        </button>
-                                        <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
-                                            <Users className="w-4 h-4" /> Subscriptions
-                                        </button>
-                                        <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
-                                            <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
-                                        </button>
-                                        <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
-                                            <LogOut className="w-4 h-4" /> Log Out
-                                        </button>
-                                    </div>
+                            {/* Account section in Drawer */}
+                            <div className="pt-4 border-t border-white/10 mt-auto">
+                                <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
+                                <div className="space-y-2">
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/collections"); }}>
+                                        <Star className="w-4 h-4" /> Collections
+                                    </button>
+                                    <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/suggestions"); }}>
+                                        <MessageSquare className="w-4 h-4" /> Suggestions
+                                    </button>
+                                    <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/account/subscription"); }}>
+                                        <Users className="w-4 h-4" /> Subscriptions
+                                    </button>
+                                    <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
+                                        <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
+                                    </button>
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
+                                        <LogOut className="w-4 h-4" /> Log Out
+                                    </button>
                                 </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* 1. DESKTOP/LAPTOP LAYOUT */}
+            <div className="hidden md:block">
 
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-pink-500/20 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-6">
@@ -1740,7 +1741,14 @@ export default function Home() {
             <div className="block md:hidden min-h-screen bg-[#06060a] pb-24 relative overflow-x-hidden">
                 {/* Header */}
                 <div className="sticky top-0 z-40 bg-[#07070c]/90 backdrop-blur-md border-b border-white/[0.04] px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300 transition shrink-0"
+                            title="Open menu"
+                        >
+                            <Menu className="w-4.5 h-4.5" />
+                        </button>
                         <span 
                             onClick={() => router.push("/home")}
                             className="text-lg font-bold select-none cursor-pointer flex items-center shrink-0"
@@ -1748,50 +1756,32 @@ export default function Home() {
                             <span className="logo-playground-font text-base tracking-wide">PlayGround</span>
                             <span className="logo-x-font text-lg ml-0.5">X</span>
                         </span>
-                        <span className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px]">
+                        <span className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px] hidden min-[450px]:inline-block">
                             Welcome {firstName}
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        {/* Status badging row */}
-                        <div className="flex items-center gap-1">
-                            <button 
-                                onClick={() => router.push('/account/membership')}
-                                className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] shadow-[0_0_8px_rgba(59,130,246,0.15)] shrink-0"
-                                title="Silver Tier"
-                            >
-                                🥈
-                            </button>
-                            <button 
-                                onClick={() => router.push('/account/membership')}
-                                className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-[11px] shrink-0"
-                                title="VIP badge"
-                            >
-                                👑
-                            </button>
-                            <div className="shrink-0 scale-90">
-                                <NotificationIcon role="fan" />
-                            </div>
-                            <button 
-                                onClick={() => router.push('/account/subscription')}
-                                className="flex items-center justify-center w-7 h-7 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 shrink-0"
-                                title="Subscriptions"
-                            >
-                                <Crown className="w-3.5 h-3.5 text-yellow-400 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]" />
-                            </button>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        {/* Messages button */}
+                        <button 
+                            onClick={() => router.push('/account/messages')}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300 transition shrink-0"
+                            title="Messages"
+                        >
+                            <MessageSquare className="w-4 h-4" />
+                        </button>
+
+                        {/* NotificationIcon */}
+                        <NotificationIcon role="fan" />
                         
-                        {/* Profile avatar dropdown */}
-                        <div className="shrink-0 scale-90">
-                            <ProfileMenu
-                                user={user}
-                                profile={currentProfile}
-                                role={role}
-                                router={router}
-                                onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
-                            />
-                        </div>
+                        {/* ProfileMenu */}
+                        <ProfileMenu
+                            user={user}
+                            profile={currentProfile}
+                            role={role}
+                            router={router}
+                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                        />
                     </div>
                 </div>
 

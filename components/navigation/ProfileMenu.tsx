@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X, HelpCircle, BookOpen, RotateCcw } from "lucide-react";
 import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
@@ -20,13 +21,18 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
     const [isMobile, setIsMobile] = useState(false);
     const [helpExpanded, setHelpExpanded] = useState(false);
     const [activeGuide, setActiveGuide] = useState<"wallet" | "rooms" | "payouts" | null>(null);
+    const [mounted, setMounted] = useState(false);
 
-    // Detect mobile
+    // Detect mobile and set mounted
     useEffect(() => {
+        setMounted(true);
         const check = () => setIsMobile(window.innerWidth < 640);
         check();
         window.addEventListener("resize", check);
-        return () => window.removeEventListener("resize", check);
+        return () => {
+            window.removeEventListener("resize", check);
+            setMounted(false);
+        };
     }, []);
 
     // Close on click outside (desktop only)
@@ -131,6 +137,17 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
             <div className="p-5 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent relative">
                 {/* Decorative glow */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 blur-[50px] pointer-events-none" />
+
+                {/* Mobile Close Button */}
+                {isMobile && (
+                    <button
+                        onClick={() => setIsOpen(false)}
+                        className="absolute top-4 right-4 p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition z-20"
+                        aria-label="Close menu"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                )}
 
                 <div className="relative z-10 flex items-start gap-4">
                     <div className="w-14 h-14 rounded-2xl p-[2px] bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 shadow-lg shadow-pink-500/20 shrink-0">
@@ -332,16 +349,15 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
     return (
         <div className="relative z-50" ref={containerRef} data-tour="wallet-button">
             {/* Trigger Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={cx(
-                    "flex items-center gap-2 pl-2 pr-3 sm:pr-4 py-1.5 rounded-full transition-all duration-300",
-                    "border border-pink-500/20 bg-black/40 hover:bg-white/5 hover:border-pink-500/40",
-                    isOpen && "bg-white/10 border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
-                )}
-            >
-                {/* Avatar Circle */}
-                <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 to-blue-500 shrink-0">
+            {isMobile ? (
+                /* ── Mobile: borderless circular avatar ── */
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={cx(
+                        "relative flex items-center justify-center w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 to-blue-500 hover:scale-105 active:scale-95 transition-all duration-300 shrink-0",
+                        isOpen ? "shadow-[0_0_12px_rgba(236,72,153,0.4)] ring-1 ring-pink-500/50" : "shadow-[0_0_6px_rgba(236,72,153,0.15)]"
+                    )}
+                >
                     <div className="w-full h-full rounded-full bg-black overflow-hidden relative">
                         {(profile?.avatar_url || user?.user_metadata?.avatar_url) ? (
                             <img src={profile?.avatar_url || user?.user_metadata?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -351,25 +367,47 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                             </div>
                         )}
                     </div>
-                </div>
+                </button>
+            ) : (
+                /* ── Desktop: capsule with name and chevron ── */
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={cx(
+                        "flex items-center gap-2 pl-2 pr-3 sm:pr-4 py-1.5 rounded-full transition-all duration-300",
+                        "border border-pink-500/20 bg-black/40 hover:bg-white/5 hover:border-pink-500/40",
+                        isOpen && "bg-white/10 border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                    )}
+                >
+                    {/* Avatar Circle */}
+                    <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-pink-500 to-blue-500 shrink-0">
+                        <div className="w-full h-full rounded-full bg-black overflow-hidden relative">
+                            {(profile?.avatar_url || user?.user_metadata?.avatar_url) ? (
+                                <img src={profile?.avatar_url || user?.user_metadata?.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                                    <User className="w-4 h-4 text-zinc-400" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
-                {/* Name & Chevron — hide name text on very small screens */}
-                <div className="hidden sm:flex items-center gap-2">
-                    <span className="text-sm font-medium text-pink-100 max-w-[100px] truncate">
-                        {profile?.username || user?.user_metadata?.username || "My Profile"}
-                    </span>
-                    <ChevronDown className={cx("w-4 h-4 text-pink-300/70 transition-transform duration-300", isOpen && "rotate-180")} />
-                </div>
-                {/* On tiny screens just show the chevron */}
-                <ChevronDown className={cx("w-4 h-4 text-pink-300/70 transition-transform duration-300 sm:hidden", isOpen && "rotate-180")} />
-            </button>
+                    {/* Name & Chevron — hide name text on very small screens */}
+                    <div className="hidden sm:flex items-center gap-2">
+                        <span className="text-sm font-medium text-pink-100 max-w-[100px] truncate">
+                            {profile?.username || user?.user_metadata?.username || "My Profile"}
+                        </span>
+                        <ChevronDown className={cx("w-4 h-4 text-pink-300/70 transition-transform duration-300", isOpen && "rotate-180")} />
+                    </div>
+                    {/* On tiny screens just show the chevron */}
+                    <ChevronDown className={cx("w-4 h-4 text-pink-300/70 transition-transform duration-300 sm:hidden", isOpen && "rotate-180")} />
+                </button>
+            )}
 
             {/* Dropdown / Bottom-Sheet */}
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        {isMobile ? (
-                            /* ── Mobile: bottom-sheet ── */
+            {mounted && isMobile && typeof document !== "undefined" ? (
+                createPortal(
+                    <AnimatePresence>
+                        {isOpen && (
                             <>
                                 {/* Backdrop */}
                                 <motion.div
@@ -378,7 +416,7 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     transition={{ duration: 0.2 }}
-                                    className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+                                    className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm"
                                     onClick={() => setIsOpen(false)}
                                 />
                                 {/* Sheet */}
@@ -388,31 +426,38 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                     animate={{ y: 0 }}
                                     exit={{ y: "100%" }}
                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-l border-r border-pink-500/25 bg-black/98 backdrop-blur-xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+                                    className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-3xl border-t border-l border-r border-pink-500/25 bg-[#0d0d14] backdrop-blur-xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
                                 >
                                     {/* Drag handle */}
-                                    <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-black/98 z-10">
+                                    <div className="flex justify-center pt-3 pb-1.5 sticky top-0 bg-[#0d0d14] z-10 shrink-0">
                                         <div className="w-10 h-1 rounded-full bg-white/20" />
                                     </div>
-                                    {menuPanelContent}
+                                    <div className="overflow-y-auto flex-1 pb-4">
+                                        {menuPanelContent}
+                                    </div>
                                 </motion.div>
                             </>
-                        ) : (
-                            /* ── Desktop: dropdown ── */
-                            <motion.div
-                                key="profile-dropdown"
-                                variants={menuVars}
-                                initial="hidden"
-                                animate="visible"
-                                exit="exit"
-                                className="absolute right-0 top-full mt-3 w-80 rounded-2xl overflow-hidden border border-pink-500/25 bg-black/85 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8),0_0_20px_rgba(236,72,153,0.1)]"
-                            >
-                                {menuPanelContent}
-                            </motion.div>
                         )}
-                    </>
-                )}
-            </AnimatePresence>
+                    </AnimatePresence>,
+                    document.body
+                )
+            ) : (
+                <AnimatePresence>
+                    {isOpen && (
+                        /* ── Desktop: dropdown ── */
+                        <motion.div
+                            key="profile-dropdown"
+                            variants={menuVars}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="absolute right-0 top-full mt-3 w-80 rounded-2xl overflow-hidden border border-pink-500/25 bg-black/85 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8),0_0_20px_rgba(236,72,153,0.1)]"
+                        >
+                            {menuPanelContent}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            )}
 
             {/* Help Guide Modal */}
             {activeGuide && (

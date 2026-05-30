@@ -145,16 +145,16 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
             {/* Bell button */}
             <button
                 onClick={() => setOpen(!open)}
-                className={`relative p-2.5 rounded-xl border transition-all ${
+                className={`relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
                     open
                         ? "bg-pink-500/20 border-pink-500/40 text-pink-300"
                         : "bg-pink-500/10 border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300"
                 }`}
                 title="Notifications"
             >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-pink-600 border-2 border-black animate-pulse" />
+                    <span className="absolute top-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-pink-600 border border-black animate-pulse" />
                 )}
             </button>
 
