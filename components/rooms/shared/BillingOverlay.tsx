@@ -239,31 +239,34 @@ export default function BillingOverlay({
     if (dismissed) return null;
 
     return (
-        <div style={{
-            position: "fixed",
-            bottom: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 9990,
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            padding: "8px 16px",
-            borderRadius: "9999px",
-            background: lowBalance
-                ? "hsla(0, 60%, 15%, 0.9)"
-                : "hsla(270, 40%, 12%, 0.9)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: lowBalance
-                ? "1px solid hsla(0, 70%, 50%, 0.4)"
-                : `1px solid ${accentBorder}`,
-            boxShadow: lowBalance
-                ? "0 4px 20px hsla(0, 70%, 50%, 0.25)"
-                : `0 4px 20px hsla(${accentHsl}, 0.2)`,
-            fontFamily: "'Inter', 'Montserrat', sans-serif",
-            animation: "billingPillSlideUp 0.4s ease-out",
-        }}>
+        <div
+            className="billing-overlay-pill"
+            style={{
+                position: "fixed",
+                bottom: "20px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 9990,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "8px 16px",
+                borderRadius: "9999px",
+                background: lowBalance
+                    ? "hsla(0, 60%, 15%, 0.9)"
+                    : "hsla(270, 40%, 12%, 0.9)",
+                backdropFilter: "blur(16px)",
+                WebkitBackdropFilter: "blur(16px)",
+                border: lowBalance
+                    ? "1px solid hsla(0, 70%, 50%, 0.4)"
+                    : `1px solid ${accentBorder}`,
+                boxShadow: lowBalance
+                    ? "0 4px 20px hsla(0, 70%, 50%, 0.25)"
+                    : `0 4px 20px hsla(${accentHsl}, 0.2)`,
+                fontFamily: "'Inter', 'Montserrat', sans-serif",
+                animation: "billingPillSlideUp 0.4s ease-out",
+            }}
+        >
             <style>{`
                 @keyframes billingPillSlideUp {
                     from { opacity: 0; transform: translate(-50%, 20px); }
@@ -276,6 +279,11 @@ export default function BillingOverlay({
                 @keyframes billingCountdownShrink {
                     from { width: 100%; }
                     to { width: 0%; }
+                }
+                @media (max-width: 1023px) {
+                    .billing-overlay-pill {
+                        bottom: 76px !important;
+                    }
                 }
             `}</style>
 

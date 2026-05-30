@@ -423,6 +423,12 @@ function HomeScreen({
     userId,
     subscribedCreatorIds,
     activeStatuses,
+    levelFilter,
+    setLevelFilter,
+    tagFilter,
+    setTagFilter,
+    sortBy,
+    setSortBy,
 }: {
     onEnterSuga4U: () => void;
     query: string;
@@ -432,12 +438,16 @@ function HomeScreen({
     userId?: string;
     subscribedCreatorIds: Set<string>;
     activeStatuses: Record<string, boolean>;
+    levelFilter: "All" | "Rookie" | "Rising" | "Star" | "Elite";
+    setLevelFilter: React.Dispatch<React.SetStateAction<"All" | "Rookie" | "Rising" | "Star" | "Elite">>;
+    tagFilter: string;
+    setTagFilter: React.Dispatch<React.SetStateAction<string>>;
+    sortBy: "Recommended" | "Rookie→Elite" | "Elite→Rookie";
+    setSortBy: React.Dispatch<React.SetStateAction<"Recommended" | "Rookie→Elite" | "Elite→Rookie">>;
 }) {
     const router = useRouter();
     const [activeCat, setActiveCat] = useState("all");
-    const [tagFilter, setTagFilter] = useState("All");
-    const [sortBy, setSortBy] = useState<"Recommended" | "Rookie→Elite" | "Elite→Rookie">("Recommended");
-    const [levelFilter, setLevelFilter] = useState<"All" | "Rookie" | "Rising" | "Star" | "Elite">("All");
+
 
     // Use fetched rooms (which include active creators seeded in DB)
     const dataSource: CreatorCard[] = rooms;
@@ -607,7 +617,7 @@ function HomeScreen({
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 mb-4">
+                    <div className="hidden md:flex flex-col gap-3 mb-4">
                         {/* Mobile Search Input */}
                         <div className="md:hidden w-full">
                             <div className="flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-4 py-3">
@@ -956,8 +966,10 @@ export default function Home() {
 
     const [homeQuery, setHomeQuery] = useState("");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [levelFilter, setLevelFilter] = useState<string | "All">("All");
-    const [tagFilter, setTagFilter] = useState<string | "All">("All"); // Renamed for clarity in UI
+    const [levelFilter, setLevelFilter] = useState<"All" | "Rookie" | "Rising" | "Star" | "Elite">("All");
+    const [tagFilter, setTagFilter] = useState<string>("All"); // Renamed for clarity in UI
+    const [sortBy, setSortBy] = useState<"Recommended" | "Rookie→Elite" | "Elite→Rookie">("Recommended");
+    const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
     const { roomSettings: activeStatuses } = useTheme();
 
     // NOTE: no fan-tier selector on Home per requirements; retained for Suga4U preview behavior.
@@ -1280,6 +1292,22 @@ export default function Home() {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-3">
+                        {/* Mobile Search/Filter Toggle */}
+                        <button
+                            onClick={() => setIsMobileFiltersOpen(prev => !prev)}
+                            className={cx(
+                                "md:hidden p-2 rounded-lg transition-all duration-200 flex items-center justify-center relative",
+                                isMobileFiltersOpen
+                                    ? "bg-pink-500 text-white border border-pink-400"
+                                    : "bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20"
+                            )}
+                            title="Search & Filters"
+                        >
+                            <Search className="w-5 h-5" />
+                            {!isMobileFiltersOpen && (homeQuery || levelFilter !== "All" || tagFilter !== "All" || sortBy !== "Recommended") && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black animate-pulse" />
+                            )}
+                        </button>
                         <button
                             onClick={() => router.push('/account/messages')}
                             className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
@@ -1308,6 +1336,86 @@ export default function Home() {
                 </div>
             </div>
 
+            {/* Mobile Search & Filter Panel */}
+            <AnimatePresence>
+                {isMobileFiltersOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                        className="md:hidden w-full border-b border-pink-500/20 bg-zinc-950/95 backdrop-blur-md px-4 py-3.5 space-y-3 overflow-hidden"
+                    >
+                        {/* Search Bar */}
+                        <div className="relative flex items-center w-full rounded-xl border border-pink-500/20 bg-black/45 px-3 py-2">
+                            <Search className="w-4 h-4 text-pink-400 shrink-0 mr-2" />
+                            <input
+                                value={homeQuery}
+                                onChange={(e) => setHomeQuery(e.target.value)}
+                                className="bg-transparent outline-none text-sm w-full text-white placeholder-zinc-500"
+                                placeholder="Search creators…"
+                            />
+                            {homeQuery && (
+                                <button
+                                    onClick={() => setHomeQuery("")}
+                                    className="p-1 text-zinc-400 hover:text-white"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Filters Grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Level</span>
+                                <select
+                                    value={levelFilter}
+                                    onChange={(e) => setLevelFilter(e.target.value as any)}
+                                    className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                >
+                                    <option value="All">All Tiers</option>
+                                    <option value="Rookie">Rookie</option>
+                                    <option value="Rising">Rising</option>
+                                    <option value="Star">Star</option>
+                                    <option value="Elite">Elite</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Type</span>
+                                <select
+                                    value={tagFilter}
+                                    onChange={(e) => setTagFilter(e.target.value)}
+                                    className="w-full bg-black/50 border border-blue-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-blue-500/40"
+                                >
+                                    <option value="All">All Types</option>
+                                    {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
+                                    {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
+                                    {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
+                                    {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
+                                    {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
+                                    {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider pl-1">Sort</span>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as any)}
+                                    className="w-full bg-black/50 border border-pink-500/20 rounded-lg px-2 py-1.5 text-xs text-zinc-200 outline-none focus:border-pink-500/40"
+                                >
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Rookie→Elite">Rookie → Elite</option>
+                                    <option value="Elite→Rookie">Elite → Rookie</option>
+                                </select>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <HomeScreen
                 onEnterSuga4U={() => setLevelFilter("Elite")}
                 query={homeQuery}
@@ -1317,6 +1425,12 @@ export default function Home() {
                 userId={user?.id}
                 subscribedCreatorIds={subscribedCreatorIds}
                 activeStatuses={activeStatuses}
+                levelFilter={levelFilter}
+                setLevelFilter={setLevelFilter}
+                tagFilter={tagFilter}
+                setTagFilter={setTagFilter}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
             />
         </div>
     );

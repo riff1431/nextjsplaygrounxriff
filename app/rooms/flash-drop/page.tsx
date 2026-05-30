@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Video, UserPlus } from "lucide-react";
+import { ArrowLeft, Video, UserPlus, BarChart3, MessageSquare, Zap } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -17,18 +17,20 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifications";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
-/**
- * Flash Drops Room — Fan View Preview
- * -----------------------------------
- * Purpose: Time-limited content drops with aggressive high-value purchase lanes.
- */
+const FAN_TABS: MobileStudioTab[] = [
+    { id: "board", label: "Board", icon: <BarChart3 className="w-5 h-5" /> },
+    { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
+    { id: "impulse", label: "Impulse", icon: <Zap className="w-5 h-5" /> },
+];
 
 export default function FlashDropsRoomPreview() {
+    const [mobileTab, setMobileTab] = useState("board");
     const router = useRouter();
     const searchParams = useSearchParams();
     const urlRoomId = searchParams.get("roomId");
@@ -427,9 +429,9 @@ export default function FlashDropsRoomPreview() {
 
 
                     {/* Main Content Area — fills remaining viewport height */}
-                    <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                        {/* Left sidebar buttons + 3-column layout */}
-                        <div className="flex-1 min-h-0 flex gap-3 px-3 pt-3">
+                    <main className="flex-1 min-h-0 flex flex-col overflow-hidden pb-16 lg:pb-0">
+                        {/* Desktop: Left sidebar buttons + 3-column layout */}
+                        <div className="hidden lg:flex flex-1 min-h-0 gap-3 px-3 pt-3">
                             {/* Left sidebar — Back + Invite */}
                             <div className="shrink-0 flex flex-col gap-2 pt-1">
                                 <button
@@ -487,6 +489,70 @@ export default function FlashDropsRoomPreview() {
                                 <ImpulsePanel roomId={roomId} sessionId={urlSessionId} onSpend={requestSpend} />
                             </div>
 
+                        </div>
+
+                        {/* Mobile: Stream on top, tab content below */}
+                        <div className="lg:hidden flex flex-1 flex-col min-h-0 px-2 pt-2 gap-2 overflow-hidden">
+                            {/* Stream Wrapper */}
+                            <div className="relative rounded-xl overflow-hidden fd-neon-border-md shrink-0 aspect-video w-full">
+                                {roomId && user && hostId ? (
+                                    <LiveStreamWrapper
+                                        role="fan"
+                                        appId={APP_ID}
+                                        roomId={roomId}
+                                        uid={user.id}
+                                        hostId={hostId}
+                                        hostAvatarUrl={hostAvatar || ""}
+                                        hostName={hostName}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-black/50 text-white/40 text-sm">
+                                        {roomId ? "Connecting..." : "No active session"}
+                                    </div>
+                                )}
+
+                                {/* Floating action buttons on top-left of stream */}
+                                <div className="absolute top-3 left-3 flex flex-col gap-2 z-30">
+                                    <button
+                                        onClick={() => router.back()}
+                                        className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all shadow-md"
+                                        title="Go Back"
+                                    >
+                                        <ArrowLeft size={16} className="text-primary" />
+                                    </button>
+                                    {roomId && (
+                                        <button
+                                            onClick={() => setShowInviteModal(true)}
+                                            className="w-9 h-9 rounded-lg border border-primary/40 bg-primary/10 flex items-center justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary shadow-md"
+                                            title="Invite Friends"
+                                        >
+                                            <UserPlus size={16} />
+                                        </button>
+                                    )}
+                                    {roomId && user && (
+                                        <IncomingNotifications roomId={roomId} sessionId={urlSessionId} />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tab Content Box — takes up all remaining height */}
+                            <div className="flex-1 min-h-0 overflow-hidden relative">
+                                {mobileTab === "board" && (
+                                    <div className="h-full flex flex-col overflow-hidden">
+                                        <LiveDropBoard roomId={roomId} onSpend={requestSpend} drops={drops} loading={loadingDrops} />
+                                    </div>
+                                )}
+                                {mobileTab === "chat" && (
+                                    <div className="h-full flex flex-col overflow-hidden">
+                                        <FlashDropLiveChat roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                    </div>
+                                )}
+                                {mobileTab === "impulse" && (
+                                    <div className="h-full flex flex-col overflow-hidden">
+                                        <ImpulsePanel roomId={roomId} sessionId={urlSessionId} onSpend={requestSpend} />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Bundle strip — compact bottom bar */}
@@ -554,6 +620,14 @@ export default function FlashDropsRoomPreview() {
                     sessionId={urlSessionId}
                     accentHsl="330, 100%, 55%"
                     exitRoute="/home"
+                />
+
+                {/* Mobile Tab Bar */}
+                <MobileStudioTabs
+                    tabs={FAN_TABS}
+                    activeTab={mobileTab}
+                    onTabChange={setMobileTab}
+                    accentHsl="330, 100%, 55%"
                 />
 
             </div>
