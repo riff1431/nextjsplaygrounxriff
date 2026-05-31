@@ -61,10 +61,11 @@ import ReportModal from "@/components/common/ReportModal";
 import { formatDistanceToNow } from "date-fns";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
-function BarDrinkIcon({ className = "" }: { className?: string }) {
+function BarDrinkIcon({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) {
     return (
         <svg
             className={className}
+            style={style}
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -73,12 +74,12 @@ function BarDrinkIcon({ className = "" }: { className?: string }) {
             <path
                 d="M7 3h10l-1 7a4 4 0 0 1-4 3H12a4 4 0 0 1-4-3L7 3Z"
                 stroke="currentColor"
-                strokeWidth="1.6"
+                strokeWidth="1.8"
                 strokeLinejoin="round"
             />
-            <path d="M10 21h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            <path d="M12 13v8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            <path d="M9 6h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            <path d="M10 21h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M12 13v8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M9 6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
     );
 }
@@ -1749,13 +1750,7 @@ export default function Home() {
                         >
                             <Menu className="w-4.5 h-4.5" />
                         </button>
-                        <span 
-                            onClick={() => router.push("/home")}
-                            className="text-lg font-bold select-none cursor-pointer flex items-center shrink-0"
-                        >
-                            <span className="logo-playground-font text-base tracking-wide">PlayGround</span>
-                            <span className="logo-x-font text-lg ml-0.5">X</span>
-                        </span>
+                        <Logo onClick={() => router.push("/home")} />
                         <span className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px] hidden min-[450px]:inline-block">
                             Welcome {firstName}
                         </span>
@@ -1888,30 +1883,72 @@ export default function Home() {
                     <div className="grid grid-cols-3 gap-2.5">
                         {CATS.map((cat) => {
                             const tColorMap = {
-                                blue: { border: "border-cyan-500/25", glow: "shadow-[0_0_12px_rgba(6,182,212,0.12)]", text: "text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]" },
-                                red: { border: "border-pink-500/25", glow: "shadow-[0_0_12px_rgba(236,72,153,0.12)]", text: "text-pink-400 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" },
-                                yellow: { border: "border-yellow-500/25", glow: "shadow-[0_0_12px_rgba(234,179,8,0.12)]", text: "text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]" },
-                                purple: { border: "border-purple-500/25", glow: "shadow-[0_0_12px_rgba(168,85,247,0.12)]", text: "text-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.6)]" },
-                                green: { border: "border-emerald-500/25", glow: "shadow-[0_0_12px_rgba(16,185,129,0.12)]", text: "text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" },
-                                pink: { border: "border-pink-500/25", glow: "shadow-[0_0_12px_rgba(236,72,153,0.12)]", text: "text-pink-400 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]" }
-                            }[cat.tone] || { border: "border-zinc-800", glow: "", text: "text-white" };
+                                blue: {
+                                    radialBg: "radial-gradient(circle at center, rgba(6, 182, 212, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-cyan-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(6,182,212,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(6,182,212,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-cyan-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(6, 182, 212, 0.95)) drop-shadow(0 0 8px rgba(6, 182, 212, 0.5)) drop-shadow(0 0 16px rgba(6, 182, 212, 0.2))" }
+                                },
+                                red: {
+                                    radialBg: "radial-gradient(circle at center, rgba(236, 72, 153, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-pink-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(236,72,153,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(236,72,153,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-pink-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(236, 72, 153, 0.95)) drop-shadow(0 0 8px rgba(236, 72, 153, 0.5)) drop-shadow(0 0 16px rgba(236, 72, 153, 0.2))" }
+                                },
+                                yellow: {
+                                    radialBg: "radial-gradient(circle at center, rgba(234, 179, 8, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-yellow-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(234,179,8,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(234,179,8,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-yellow-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(234, 179, 8, 0.95)) drop-shadow(0 0 8px rgba(234, 179, 8, 0.5)) drop-shadow(0 0 16px rgba(234, 179, 8, 0.2))" }
+                                },
+                                purple: {
+                                    radialBg: "radial-gradient(circle at center, rgba(168, 85, 247, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-purple-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(168,85,247,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(168,85,247,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-purple-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(168, 85, 247, 0.95)) drop-shadow(0 0 8px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 16px rgba(168, 85, 247, 0.2))" }
+                                },
+                                green: {
+                                    radialBg: "radial-gradient(circle at center, rgba(16, 185, 129, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-emerald-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(16,185,129,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(16,185,129,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-emerald-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(16, 185, 129, 0.95)) drop-shadow(0 0 8px rgba(16, 185, 129, 0.5)) drop-shadow(0 0 16px rgba(16, 185, 129, 0.2))" }
+                                },
+                                pink: {
+                                    radialBg: "radial-gradient(circle at center, rgba(236, 72, 153, 0.16) 0%, rgba(9, 9, 14, 0.98) 75%)",
+                                    border: "border-pink-500/30",
+                                    glow: "shadow-[0_0_15px_rgba(236,72,153,0.15),inset_0_1px_1.5px_rgba(255,255,255,0.05)] active:shadow-[0_0_22px_rgba(236,72,153,0.3),inset_0_1px_2px_rgba(255,255,255,0.15)]",
+                                    text: "text-pink-400",
+                                    iconStyle: { filter: "drop-shadow(0 0 2px rgba(236, 72, 153, 0.95)) drop-shadow(0 0 8px rgba(236, 72, 153, 0.5)) drop-shadow(0 0 16px rgba(236, 72, 153, 0.2))" }
+                                }
+                            }[cat.tone] || {
+                                radialBg: "none",
+                                border: "border-zinc-800",
+                                glow: "",
+                                text: "text-white",
+                                iconStyle: {}
+                            };
 
                             const getCustomIcon = (key: string) => {
-                                if (key === "drops") return <Gift className={`w-8 h-8 ${tColorMap.text}`} />;
-                                if (key === "conf") return <Lock className={`w-8 h-8 ${tColorMap.text}`} />;
-                                if (key === "xchat") return <MessageCircle className={`w-8 h-8 ${tColorMap.text}`} />;
-                                if (key === "bar") return <BarDrinkIcon className={`w-8 h-8 ${tColorMap.text}`} />;
+                                if (key === "drops") return <Gift className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                if (key === "conf") return <Lock className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                if (key === "xchat") return <MessageCircle className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                if (key === "bar") return <BarDrinkIcon className={`w-8 h-8 ${tColorMap.text}`} style={tColorMap.iconStyle} />;
                                 if (key === "truth") {
                                     return (
-                                        <svg className={`w-8 h-8 ${tColorMap.text}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M9.5 5.5C6.5 5.5 4 8 4 11C4 14.5 6.5 16.5 9.5 16.5C12.5 16.5 15 14.5 15 11C15 8 12.5 5.5 9.5 5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <svg className={`w-8 h-8 ${tColorMap.text}`} style={tColorMap.iconStyle} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M9.5 5.5C6.5 5.5 4 8 4 11C4 14.5 6.5 16.5 9.5 16.5C12.5 16.5 15 14.5 15 11C15 8 12.5 5.5 9.5 5.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                                             <path d="M7 9H7.01M12 9H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-                                            <path d="M8.5 12.5C8.5 12.5 9 13.3 9.5 13.3C10 13.3 10.5 12.5 10.5 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-                                            <path d="M14.5 7.5C17.5 7.5 20 10 20 13C20 16.5 17.5 18.5 14.5 18.5C11.5 18.5 9 16.5 9 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3"/>
+                                            <path d="M8.5 12.5C8.5 12.5 9 13.3 9.5 13.3C10 13.3 10.5 12.5 10.5 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                                            <path d="M14.5 7.5C17.5 7.5 20 10 20 13C20 16.5 17.5 18.5 14.5 18.5C11.5 18.5 9 16.5 9 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3"/>
                                         </svg>
                                     );
                                 }
-                                return <Crown className={`w-8 h-8 ${tColorMap.text}`} />;
+                                return <Crown className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
                             };
 
                             return (
@@ -1919,15 +1956,18 @@ export default function Home() {
                                     key={`mobile-room-${cat.key}`}
                                     onClick={() => router.push(cat.route)}
                                     className={cx(
-                                        "aspect-square rounded-2xl bg-[#09090e] border flex flex-col items-center justify-center gap-2 p-2 active:scale-95 transition-all",
+                                        "aspect-square rounded-2xl border flex flex-col items-center justify-center gap-2.5 p-2 active:scale-95 group transition-all duration-300",
                                         tColorMap.border,
                                         tColorMap.glow
                                     )}
+                                    style={{
+                                        background: tColorMap.radialBg
+                                    }}
                                 >
-                                    <div className="flex-1 flex items-center justify-center">
+                                    <div className="flex-1 flex items-center justify-center transition-transform duration-300 group-active:scale-110">
                                         {getCustomIcon(cat.key)}
                                     </div>
-                                    <span className="text-[10px] font-semibold text-zinc-300 tracking-tight leading-none text-center pb-1">
+                                    <span className="text-[10px] font-semibold text-zinc-300 group-active:text-white tracking-tight leading-none text-center pb-1 transition-colors duration-200">
                                         {cat.label}
                                     </span>
                                 </button>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Clock, Sparkles, X, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/utils/supabase/client";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface TimerSettings {
     enabled: boolean;
@@ -15,6 +16,10 @@ const TARGET_DATE_KEY = "playgroundx_official_launcher_target";
 const DISMISSED_KEY = "playgroundx_official_launcher_dismissed";
 
 export default function OfficialLauncherTimer() {
+    const { user, role, isLoading: authLoading } = useAuth();
+    const [onboardingComplete, setOnboardingComplete] = useState<boolean>(false);
+    const [checkingOnboarding, setCheckingOnboarding] = useState<boolean>(true);
+
     const [targetDate, setTargetDate] = useState<Date | null>(null);
     const [label, setLabel] = useState<string>("Official Portal Global Launch");
     const [isDismissed, setIsDismissed] = useState<boolean>(true); // Start true to prevent layout flash
@@ -26,8 +31,52 @@ export default function OfficialLauncherTimer() {
         completed: boolean;
     }>({ days: 0, hours: 0, minutes: 0, seconds: 0, completed: false });
 
+    // --- Guard: only show to fully-onboarded users ---
     useEffect(() => {
-        // Only run client-side
+        if (authLoading) return;
+
+        // Not logged in → never show
+        if (!user) {
+            setOnboardingComplete(false);
+            setCheckingOnboarding(false);
+            return;
+        }
+
+        const supabaseCheck = createClient();
+        const checkProfile = async () => {
+            try {
+                const { data: profile } = await supabaseCheck
+                    .from("profiles")
+                    .select("role, onboarding_completed_at, kyc_status")
+                    .eq("id", user.id)
+                    .single();
+
+                if (!profile) {
+                    setOnboardingComplete(false);
+                    return;
+                }
+
+                const isFanDone =
+                    profile.role === "fan" && !!profile.onboarding_completed_at;
+                const isCreatorDone =
+                    profile.role === "creator" && profile.kyc_status === "approved";
+                const isAdmin = profile.role === "admin";
+
+                setOnboardingComplete(isFanDone || isCreatorDone || isAdmin);
+            } catch {
+                setOnboardingComplete(false);
+            } finally {
+                setCheckingOnboarding(false);
+            }
+        };
+
+        checkProfile();
+    }, [user, authLoading]);
+
+    useEffect(() => {
+        // Only run client-side after we know onboarding is complete
+        if (!onboardingComplete) return;
+
         const dismissed = localStorage.getItem(DISMISSED_KEY);
         if (dismissed !== "true") {
             setIsDismissed(false);
@@ -109,7 +158,7 @@ export default function OfficialLauncherTimer() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, []);
+    }, [onboardingComplete]);
 
     // Calculate time left
     useEffect(() => {
@@ -142,6 +191,8 @@ export default function OfficialLauncherTimer() {
         localStorage.setItem(DISMISSED_KEY, "true");
     };
 
+    // Never show on auth, onboarding, or any page before signup is fully complete
+    if (authLoading || checkingOnboarding || !onboardingComplete) return null;
     if (isDismissed || !targetDate) return null;
 
     return (

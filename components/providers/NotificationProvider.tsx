@@ -15,6 +15,11 @@ type Notification = {
     metadata?: any;
     is_read: boolean;
     created_at: string;
+    actor_id?: string | null;
+    actor?: {
+        username: string;
+        avatar_url: string | null;
+    } | null;
 };
 
 type NotificationContextType = {
@@ -31,20 +36,53 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [onboardingComplete, setOnboardingComplete] = useState(false);
     const supabase = createClient();
+
+    // Check if user has fully completed onboarding before showing any toasts
+    useEffect(() => {
+        if (!user) {
+            setOnboardingComplete(false);
+            return;
+        }
+        const checkOnboarding = async () => {
+            try {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("role, onboarding_completed_at, kyc_status")
+                    .eq("id", user.id)
+                    .single();
+                if (!profile) { setOnboardingComplete(false); return; }
+                const done =
+                    (profile.role === "fan" && !!profile.onboarding_completed_at) ||
+                    (profile.role === "creator" && profile.kyc_status === "approved") ||
+                    profile.role === "admin";
+                setOnboardingComplete(done);
+            } catch {
+                setOnboardingComplete(false);
+            }
+        };
+        checkOnboarding();
+    }, [user]);
 
     const fetchNotifications = async () => {
         if (!user) return;
         try {
             const { data, error } = await supabase
                 .from("notifications")
-                .select("*")
+                .select(`
+                    *,
+                    actor:actor_id (
+                        username,
+                        avatar_url
+                    )
+                `)
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false })
                 .limit(50);
 
             if (error) throw error;
-            setNotifications(data || []);
+            setNotifications((data as any) || []);
             setUnreadCount(data?.filter(n => !n.is_read).length || 0);
         } catch (err) {
             console.error("Error fetching notifications:", err);
@@ -72,8 +110,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     table: "notifications",
                     filter: `user_id=eq.${user.id}`,
                 },
-                (payload) => {
+                async (payload) => {
                     const newNotif = payload.new as Notification;
+                    
+                    if (newNotif.actor_id) {
+                        try {
+                            const { data: actorData } = await supabase
+                                .from("profiles")
+                                .select("username, avatar_url")
+                                .eq("id", newNotif.actor_id)
+                                .single();
+                            if (actorData) {
+                                newNotif.actor = actorData;
+                            }
+                        } catch (err) {
+                            console.error("Error fetching actor details for realtime notification:", err);
+                        }
+                    }
+
                     setNotifications((prev) => [newNotif, ...prev]);
                     setUnreadCount((prev) => prev + 1);
 
@@ -86,7 +140,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     const isConfession = (newNotif.type === 'confession_tip' || newNotif.type === 'confession_request' || newNotif.type === 'confession_request_update') && pathname.includes('/rooms/confessions');
                     const isBarLounge = newNotif.type === 'bar_request' && pathname.includes('/rooms/bar-lounge');
                     const isSessionCreated = newNotif.type === 'session_created' || newNotif.type === 'truth_dare_session_created';
-                    const skipToast = isConfession || isBarLounge || isSessionCreated;
+                    // Never show toasts to users who haven't finished signing up
+                    const skipToast = isConfession || isBarLounge || isSessionCreated || !onboardingComplete;
 
                     if (!skipToast) {
                         // Toast — enhanced for room invitations
