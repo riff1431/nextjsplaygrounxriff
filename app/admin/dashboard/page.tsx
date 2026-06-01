@@ -17,6 +17,7 @@ import {
     Flame,
     Coins,
     Palette,
+    Mail,
     Menu,
     X,
     Check,
@@ -61,6 +62,7 @@ import ImportantPagesManager from "../../../components/admin/settings/ImportantP
 import CurrencyManager from "../../../components/admin/settings/CurrencyManager";
 import CampaignsManager from "../../../components/admin/settings/CampaignsManager";
 import IframeMenuManager from "../../../components/admin/settings/IframeMenuManager";
+import EmailSettingsPanel from "../../../components/admin/emails/EmailSettingsPanel";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -100,6 +102,7 @@ type AdminModule =
     | "revenue-splits" // Links to /admin/finance/splits
     | "creator-earnings" // Creator Earnings panel
     | "currency" // Default Currency
+    | "emails" // SMTP and Email logs
     | "iframe-menus"; // dynamic iframe menus
 
 export default function AdminDashboardPage() {
@@ -186,6 +189,7 @@ export default function AdminDashboardPage() {
                 { id: "pricing", label: "Pricing Controls", icon: <Settings className="w-4 h-4" />, tone: "amber" },
                 { id: "currency", label: "Default Currency", icon: <Coins className="w-4 h-4" />, tone: "green" },
                 { id: "payments", label: "Payment Gateways", icon: <CreditCard className="w-4 h-4" />, tone: "green" },
+                { id: "emails", label: "SMTP & Email Logs", icon: <Mail className="w-4 h-4" />, tone: "cyan" },
                 { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
                 { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
                 { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
@@ -368,6 +372,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="currency" label="Default Currency" icon={<Coins className="w-4 h-4" />} tone="green" desc="Set display currency" />
                                 <Tile id="iframe-menus" label="Iframe Menu" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Manage fan & creator menus" />
+                                <Tile id="emails" label="SMTP & Email Logs" icon={<Mail className="w-4 h-4" />} tone="cyan" desc="SMTP servers & logs" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="creator-earnings" label="Creator Earnings" icon={<DollarSign className="w-4 h-4" />} tone="green" desc="All creator activity" />
@@ -404,6 +409,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "campaigns" && <CampaignsManager />}
                     {bizModule === "currency" && <CurrencyManager />}
                     {bizModule === "iframe-menus" && <IframeMenuManager />}
+                    {bizModule === "emails" && <EmailSettingsPanel />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

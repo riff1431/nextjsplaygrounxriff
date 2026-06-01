@@ -26,6 +26,7 @@ interface KYCSubmission {
     id_type_other: string | null;
     document_url: string;
     selfie_url: string;
+    selfie_with_id_url?: string;
     status: "pending" | "approved" | "rejected";
     rejection_reason: string | null;
     reviewed_by: string | null;
@@ -78,6 +79,7 @@ export default function KYCReviewPanel() {
     const [processing, setProcessing] = useState(false);
     const [signedDocUrl, setSignedDocUrl] = useState<string | null>(null);
     const [signedSelfieUrl, setSignedSelfieUrl] = useState<string | null>(null);
+    const [signedSelfieWithIdUrl, setSignedSelfieWithIdUrl] = useState<string | null>(null);
     const [loadingMedia, setLoadingMedia] = useState(false);
 
     useEffect(() => {
@@ -128,23 +130,35 @@ export default function KYCReviewPanel() {
         setShowDetailModal(true);
         setSignedDocUrl(null);
         setSignedSelfieUrl(null);
+        setSignedSelfieWithIdUrl(null);
         setLoadingMedia(true);
 
-        // Resolve signed URLs for both documents
+        // Resolve signed URLs for documents
         try {
             const docPath = extractStoragePath(submission.document_url);
             const selfiePath = extractStoragePath(submission.selfie_url);
+            const selfieWithIdPath = submission.selfie_with_id_url ? extractStoragePath(submission.selfie_with_id_url) : null;
 
-            const [docResult, selfieResult] = await Promise.all([
+            const promises = [
                 supabase.storage.from("kyc-documents").createSignedUrl(docPath, 60 * 5),
                 supabase.storage.from("kyc-documents").createSignedUrl(selfiePath, 60 * 5),
-            ]);
+            ];
 
-            setSignedDocUrl(docResult.data?.signedUrl || null);
-            setSignedSelfieUrl(selfieResult.data?.signedUrl || null);
+            if (selfieWithIdPath) {
+                promises.push(supabase.storage.from("kyc-documents").createSignedUrl(selfieWithIdPath, 60 * 5));
+            }
 
-            if (docResult.error) console.error("Doc signed URL error:", docResult.error);
-            if (selfieResult.error) console.error("Selfie signed URL error:", selfieResult.error);
+            const results = await Promise.all(promises);
+
+            setSignedDocUrl(results[0].data?.signedUrl || null);
+            setSignedSelfieUrl(results[1].data?.signedUrl || null);
+            if (selfieWithIdPath && results[2]) {
+                setSignedSelfieWithIdUrl(results[2].data?.signedUrl || null);
+            }
+
+            if (results[0].error) console.error("Doc signed URL error:", results[0].error);
+            if (results[1].error) console.error("Selfie signed URL error:", results[1].error);
+            if (selfieWithIdPath && results[2]?.error) console.error("Selfie with ID signed URL error:", results[2].error);
         } catch (err) {
             console.error("Error resolving signed URLs:", err);
         }
@@ -538,7 +552,7 @@ export default function KYCReviewPanel() {
                         </div>
 
                         {/* Documents */}
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className={`grid gap-4 mb-4 ${selectedSubmission.selfie_with_id_url ? "grid-cols-3" : "grid-cols-2"}`}>
                             <div className="p-4 bg-black/40 rounded-xl">
                                 <div className="text-xs text-gray-400 mb-2">ID Document</div>
                                 <div className="aspect-video bg-black/60 rounded-lg overflow-hidden relative group">
@@ -599,6 +613,38 @@ export default function KYCReviewPanel() {
                                     )}
                                 </div>
                             </div>
+                            {selectedSubmission.selfie_with_id_url && (
+                                <div className="p-4 bg-black/40 rounded-xl">
+                                    <div className="text-xs text-gray-400 mb-2">Selfie holding ID</div>
+                                    <div className="aspect-video bg-black/60 rounded-lg overflow-hidden relative group">
+                                        {loadingMedia ? (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <div className="w-6 h-6 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
+                                            </div>
+                                        ) : signedSelfieWithIdUrl ? (
+                                            <>
+                                                <img
+                                                    src={signedSelfieWithIdUrl}
+                                                    alt="Selfie holding ID"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                <a
+                                                    href={signedSelfieWithIdUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                                                >
+                                                    <ExternalLink className="w-3 h-3 text-white" />
+                                                </a>
+                                            </>
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                                                Failed to load selfie with ID
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Rejection Reason (if rejected) */}

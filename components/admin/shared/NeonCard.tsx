@@ -27,6 +27,7 @@ export function NeonButton({
     variant = "pink",
     disabled,
     title,
+    type = "button",
 }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -34,6 +35,7 @@ export function NeonButton({
     variant?: "pink" | "blue" | "red" | "green" | "ghost";
     disabled?: boolean;
     title?: string;
+    type?: "button" | "submit" | "reset";
 }) {
     const base =
         "px-3 py-2 rounded-xl text-sm transition border disabled:opacity-50 disabled:cursor-not-allowed";
@@ -49,7 +51,7 @@ export function NeonButton({
                         : "bg-black/40 hover:bg-white/5 border-pink-500/25";
 
     return (
-        <button title={title} disabled={disabled} onClick={onClick} className={cx(base, styles, className)}>
+        <button type={type} title={title} disabled={disabled} onClick={onClick} className={cx(base, styles, className)}>
             {children}
         </button>
     );

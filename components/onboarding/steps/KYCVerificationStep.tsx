@@ -39,10 +39,13 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
     const [documentPreview, setDocumentPreview] = useState<string | null>(null);
     const [selfieFile, setSelfieFile] = useState<File | null>(null);
     const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
+    const [selfieWithIdFile, setSelfieWithIdFile] = useState<File | null>(null);
+    const [selfieWithIdPreview, setSelfieWithIdPreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const documentInputRef = useRef<HTMLInputElement>(null);
     const selfieInputRef = useRef<HTMLInputElement>(null);
+    const selfieWithIdInputRef = useRef<HTMLInputElement>(null);
 
     const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -78,6 +81,20 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
         }
     };
 
+    const handleSelfieWithIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("File size must be less than 5MB");
+                return;
+            }
+            setSelfieWithIdFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setSelfieWithIdPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
     const removeDocument = () => {
         setDocumentFile(null);
         setDocumentPreview(null);
@@ -90,12 +107,19 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
         if (selfieInputRef.current) selfieInputRef.current.value = "";
     };
 
+    const removeSelfieWithId = () => {
+        setSelfieWithIdFile(null);
+        setSelfieWithIdPreview(null);
+        if (selfieWithIdInputRef.current) selfieWithIdInputRef.current.value = "";
+    };
+
     const isFormValid = () => {
         return (
             idType &&
             (idType !== "others" || idTypeOther.trim()) &&
             documentFile &&
-            selfieFile
+            selfieFile &&
+            selfieWithIdFile
         );
     };
 
@@ -133,6 +157,20 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
                 return;
             }
 
+            // Upload selfie holding ID
+            const selfieWithIdExt = selfieWithIdFile!.name.split(".").pop();
+            const selfieWithIdPath = `${user.id}/selfie_with_id_${Date.now()}.${selfieWithIdExt}`;
+            const { error: selfieWithIdError } = await supabase.storage
+                .from("kyc-documents")
+                .upload(selfieWithIdPath, selfieWithIdFile!);
+
+            if (selfieWithIdError) {
+                console.error("Selfie holding ID upload error:", selfieWithIdError);
+                toast.error("Failed to upload selfie holding ID");
+                setSubmitting(false);
+                return;
+            }
+
             // Get public URLs
             const { data: docUrlData } = supabase.storage
                 .from("kyc-documents")
@@ -140,6 +178,9 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
             const { data: selfieUrlData } = supabase.storage
                 .from("kyc-documents")
                 .getPublicUrl(selfiePath);
+            const { data: selfieWithIdUrlData } = supabase.storage
+                .from("kyc-documents")
+                .getPublicUrl(selfieWithIdPath);
 
             // Create KYC submission record
             const { error: kycError } = await supabase.from("kyc_submissions").insert({
@@ -148,21 +189,23 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
                 id_type_other: idType === "others" ? idTypeOther : null,
                 document_url: docUrlData.publicUrl,
                 selfie_url: selfieUrlData.publicUrl,
+                selfie_with_id_url: selfieWithIdUrlData.publicUrl,
                 status: "pending",
             });
 
             if (kycError) {
                 console.error("KYC submission error:", kycError);
-                toast.error("Failed to submit verification");
+                toast.error(`Failed to submit verification: ${kycError.message}`);
                 setSubmitting(false);
                 return;
             }
 
-            // Update profile kyc_status
+            // Update profile kyc_status and onboarding completed
             await supabase
                 .from("profiles")
                 .update({
                     kyc_status: "pending",
+                    onboarding_completed_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                 })
                 .eq("id", user.id);
@@ -198,9 +241,9 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
         } catch (error) {
             console.error("Submission error:", error);
             toast.error("Something went wrong");
+        } finally {
+            setSubmitting(false);
         }
-
-        setSubmitting(false);
     };
 
     return (
@@ -361,6 +404,48 @@ export default function KYCVerificationStep({ onComplete, rejectionReason }: Pro
                         accept="image/*"
                         capture="user"
                         onChange={handleSelfieChange}
+                        className="hidden"
+                    />
+                </div>
+
+                {/* Selfie holding ID Upload */}
+                <div className="bg-black/40 border border-white/10 rounded-2xl p-6">
+                    <label className="text-sm font-medium text-gray-300 block mb-4">
+                        Upload Selfie holding ID Card
+                    </label>
+                    <p className="text-xs text-gray-500 mb-4">
+                        Take a selfie holding your selected ID document next to your face. Make sure details are legible. (max 5MB)
+                    </p>
+
+                    {selfieWithIdFile ? (
+                        <div className="relative">
+                            <img
+                                src={selfieWithIdPreview || ""}
+                                alt="Selfie holding ID preview"
+                                className="w-full h-48 object-contain bg-black/60 rounded-xl"
+                            />
+                            <button
+                                onClick={removeSelfieWithId}
+                                className="absolute top-2 right-2 p-1.5 bg-red-500/80 rounded-full hover:bg-red-500"
+                            >
+                                <X className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => selfieWithIdInputRef.current?.click()}
+                            className="w-full h-48 border-2 border-dashed border-white/20 rounded-xl hover:border-pink-500/50 transition-colors flex flex-col items-center justify-center gap-3"
+                        >
+                            <Camera className="w-8 h-8 text-gray-400" />
+                            <span className="text-gray-400">Click to upload selfie holding ID</span>
+                        </button>
+                    )}
+                    <input
+                        ref={selfieWithIdInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="user"
+                        onChange={handleSelfieWithIdChange}
                         className="hidden"
                     />
                 </div>

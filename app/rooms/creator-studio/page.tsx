@@ -5,6 +5,8 @@ import { CsCreatorStudio } from "@/components/rooms/creator-studio/CsCreatorStud
 import { CsSubscriptionSettings } from "@/components/rooms/creator-studio/CsSubscriptionSettings";
 import { CsRecentRoomHistory } from "@/components/rooms/creator-studio/CsRecentRoomHistory";
 import CsKycVerificationBanner from "@/components/rooms/creator-studio/CsKycVerificationBanner";
+import CsKycSkippedBanner from "@/components/rooms/creator-studio/CsKycSkippedBanner";
+import CsKycSkippedPopup from "@/components/rooms/creator-studio/CsKycSkippedPopup";
 import { useCreatorDashboard } from "@/hooks/useCreatorDashboard";
 import { useAuth } from "@/app/context/AuthContext";
 import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
@@ -14,7 +16,7 @@ const CreatorStudioDashboardPage = () => {
     const { profile, stats, recentRooms, isLoading, saveSubscriptionPrices } = useCreatorDashboard();
     const { kycStatus, isPending, isRejected, isApproved } = useKycStatus();
 
-    const kycLocked = isPending || isRejected;
+    const kycLocked = kycStatus !== "approved";
 
     return (
         <div className="cs-theme min-h-screen relative">
@@ -35,8 +37,18 @@ const CreatorStudioDashboardPage = () => {
                 </div>
 
                 {/* KYC Verification Banner — shows when KYC is pending or rejected */}
-                {kycLocked && (
+                {(isPending || isRejected) && (
                     <CsKycVerificationBanner kycStatus={kycStatus} />
+                )}
+
+                {/* KYC Skipped Banner — shows when KYC was skipped */}
+                {kycStatus === "skipped" && (
+                    <CsKycSkippedBanner />
+                )}
+
+                {/* KYC Skipped Popup Modal */}
+                {kycStatus === "skipped" && (
+                    <CsKycSkippedPopup />
                 )}
 
                 <div data-tour="earnings-dashboard">

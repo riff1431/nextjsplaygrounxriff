@@ -52,10 +52,13 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
     const [documentPreview, setDocumentPreview] = useState<string | null>(null);
     const [selfieFile, setSelfieFile] = useState<File | null>(null);
     const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
+    const [selfieWithIdFile, setSelfieWithIdFile] = useState<File | null>(null);
+    const [selfieWithIdPreview, setSelfieWithIdPreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const documentInputRef = useRef<HTMLInputElement>(null);
     const selfieInputRef = useRef<HTMLInputElement>(null);
+    const selfieWithIdInputRef = useRef<HTMLInputElement>(null);
 
     // Fetch rejection reason on mount if rejected
     useEffect(() => {
@@ -137,6 +140,20 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
         }
     };
 
+    const handleSelfieWithIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("File size must be less than 5MB");
+                return;
+            }
+            setSelfieWithIdFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => setSelfieWithIdPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
     const removeDocument = () => {
         setDocumentFile(null);
         setDocumentPreview(null);
@@ -149,8 +166,14 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
         if (selfieInputRef.current) selfieInputRef.current.value = "";
     };
 
+    const removeSelfieWithId = () => {
+        setSelfieWithIdFile(null);
+        setSelfieWithIdPreview(null);
+        if (selfieWithIdInputRef.current) selfieWithIdInputRef.current.value = "";
+    };
+
     const isFormValid = () => {
-        return idType && (idType !== "others" || idTypeOther.trim()) && documentFile && selfieFile;
+        return idType && (idType !== "others" || idTypeOther.trim()) && documentFile && selfieFile && selfieWithIdFile;
     };
 
     const handleManualSubmit = async () => {
@@ -184,9 +207,23 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
                 return;
             }
 
+            // Upload selfie holding ID
+            const selfieWithIdExt = selfieWithIdFile!.name.split(".").pop();
+            const selfieWithIdPath = `${user.id}/selfie_with_id_${Date.now()}.${selfieWithIdExt}`;
+            const { error: selfieWithIdError } = await supabase.storage
+                .from("kyc-documents")
+                .upload(selfieWithIdPath, selfieWithIdFile!);
+
+            if (selfieWithIdError) {
+                toast.error("Failed to upload selfie holding ID");
+                setSubmitting(false);
+                return;
+            }
+
             // Get public URLs
             const { data: docUrlData } = supabase.storage.from("kyc-documents").getPublicUrl(docPath);
             const { data: selfieUrlData } = supabase.storage.from("kyc-documents").getPublicUrl(selfiePath);
+            const { data: selfieWithIdUrlData } = supabase.storage.from("kyc-documents").getPublicUrl(selfieWithIdPath);
 
             // Create KYC submission record
             const { error: kycError } = await supabase.from("kyc_submissions").insert({
@@ -195,11 +232,29 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
                 id_type_other: idType === "others" ? idTypeOther : null,
                 document_url: docUrlData.publicUrl,
                 selfie_url: selfieUrlData.publicUrl,
+                selfie_with_id_url: selfieWithIdUrlData.publicUrl,
                 status: "pending",
             });
 
             if (kycError) {
-                toast.error("Failed to submit verification");
+                console.error("Database insert error:", kycError);
+                toast.error(`Failed to submit verification: ${kycError.message}`);
+                setSubmitting(false);
+                return;
+            }
+
+            // Update profile kyc_status to pending
+            const { error: profileError } = await supabase
+                .from("profiles")
+                .update({
+                    kyc_status: "pending",
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("id", user.id);
+
+            if (profileError) {
+                console.error("Database update error:", profileError);
+                toast.error(`Failed to update profile status: ${profileError.message}`);
                 setSubmitting(false);
                 return;
             }
@@ -233,6 +288,7 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
             setIdTypeOther("");
             removeDocument();
             removeSelfie();
+            removeSelfieWithId();
         } catch (error) {
             console.error("Manual submission error:", error);
             toast.error("Something went wrong");
@@ -465,6 +521,42 @@ export default function CsKycVerificationBanner({ kycStatus, onStatusChange }: P
                                     accept="image/*"
                                     capture="user"
                                     onChange={handleSelfieChange}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            {/* Selfie with ID Upload */}
+                            <div>
+                                <label className="text-sm font-medium text-gray-300 block mb-2">Selfie holding ID Card</label>
+                                {selfieWithIdFile ? (
+                                    <div className="relative">
+                                        <img
+                                            src={selfieWithIdPreview || ""}
+                                            alt="Selfie holding ID"
+                                            className="w-full h-32 object-contain bg-black/60 rounded-xl"
+                                        />
+                                        <button
+                                            onClick={removeSelfieWithId}
+                                            className="absolute top-2 right-2 p-1 bg-red-500/80 rounded-full hover:bg-red-500"
+                                        >
+                                            <X className="w-3 h-3 text-white" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => selfieWithIdInputRef.current?.click()}
+                                        className="w-full h-32 border-2 border-dashed border-white/15 rounded-xl hover:border-pink-500/40 transition-colors flex flex-col items-center justify-center gap-2"
+                                    >
+                                        <Camera className="w-6 h-6 text-gray-500" />
+                                        <span className="text-gray-500 text-xs">Click to upload selfie holding ID Card</span>
+                                    </button>
+                                )}
+                                <input
+                                    ref={selfieWithIdInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="user"
+                                    onChange={handleSelfieWithIdChange}
                                     className="hidden"
                                 />
                             </div>

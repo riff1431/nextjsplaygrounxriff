@@ -88,7 +88,12 @@ export default function OnboardingGuard({ children }: Props) {
             // Creator users: check onboarding and KYC status
             if (profile.role === "creator") {
                 // If onboarding not completed, redirect
-                if (!profile.onboarding_completed_at && profile.kyc_status !== "approved") {
+                if (
+                    !profile.onboarding_completed_at &&
+                    profile.kyc_status !== "approved" &&
+                    profile.kyc_status !== "pending" &&
+                    profile.kyc_status !== "skipped"
+                ) {
                     router.push("/onboarding");
                     return;
                 }
@@ -113,8 +118,12 @@ export default function OnboardingGuard({ children }: Props) {
                     }
                 }
 
-                // If KYC approved, allow access
-                if (profile.kyc_status === "approved") {
+                // If KYC approved, skipped or not required, allow access
+                if (
+                    profile.kyc_status === "approved" ||
+                    profile.kyc_status === "skipped" ||
+                    profile.kyc_status === "not_required"
+                ) {
                     setAllowed(true);
                 }
             }

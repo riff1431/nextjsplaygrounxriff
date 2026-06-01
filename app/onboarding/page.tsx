@@ -83,7 +83,7 @@ export default function OnboardingPage() {
             // Fan is done, redirect
             router.push("/home");
             return;
-        } else if (profile.role === "creator" && profile.kyc_status === "approved") {
+        } else if (profile.role === "creator" && (profile.kyc_status === "approved" || profile.kyc_status === "skipped")) {
             // Creator is done, redirect
             router.push("/rooms/creator-studio");
             return;

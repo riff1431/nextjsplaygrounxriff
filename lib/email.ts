@@ -11,6 +11,7 @@
 import { Resend } from "resend";
 import { render } from "react-email";
 import { createAdminClient } from "@/utils/supabase/admin";
+import nodemailer from "nodemailer";
 
 // ─── Singleton ───────────────────────────────────────────────
 let _resend: Resend | null = null;
@@ -24,6 +25,27 @@ function getResend(): Resend {
         _resend = new Resend(key);
     }
     return _resend;
+}
+
+// Fetch dynamic SMTP settings from database
+async function getActiveSmtpConfig() {
+    try {
+        const supabase = createAdminClient();
+        const { data, error } = await supabase
+            .from("smtp_settings")
+            .select("*")
+            .eq("is_active", true)
+            .maybeSingle();
+
+        if (error) {
+            console.error("[Email] Error fetching SMTP settings:", error);
+            return null;
+        }
+        return data;
+    } catch (err) {
+        console.error("[Email] Exception fetching SMTP settings:", err);
+        return null;
+    }
 }
 
 // ─── Types ───────────────────────────────────────────────────
@@ -56,10 +78,55 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     const { to, subject, react, templateId, userId, metadata } = params;
 
     try {
-        const resend = getResend();
-
         // Render React component to HTML
         const html = await render(react);
+
+        // Check for active dynamic SMTP configuration
+        const smtpConfig = await getActiveSmtpConfig();
+
+        if (smtpConfig) {
+            console.log(`[Email] Sending "${templateId}" to ${to} via dynamic SMTP (${smtpConfig.host})`);
+            
+            const transporter = nodemailer.createTransport({
+                host: smtpConfig.host,
+                port: smtpConfig.port,
+                secure: smtpConfig.secure, // true for 465, false for other ports
+                auth: {
+                    user: smtpConfig.username,
+                    pass: smtpConfig.password,
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+
+            const mailOptions = {
+                from: `"${smtpConfig.from_name}" <${smtpConfig.from_email}>`,
+                to,
+                subject,
+                html,
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            const messageId = info.messageId || undefined;
+
+            // Log success
+            await logEmail({
+                userId,
+                templateId,
+                to,
+                subject,
+                status: "sent",
+                resendId: messageId,
+                metadata: { ...metadata, provider: "smtp", smtp_host: smtpConfig.host },
+            });
+
+            console.log(`[Email] ✅ Sent "${templateId}" to ${to} (smtp:${messageId})`);
+            return { success: true, resendId: messageId };
+        }
+
+        // Fallback to Resend
+        const resend = getResend();
 
         // Send via Resend
         const { data, error } = await resend.emails.send({
@@ -71,8 +138,8 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         });
 
         if (error) {
-            console.error(`[Email] Failed to send "${templateId}" to ${to}:`, error);
-            await logEmail({ userId, templateId, to, subject, status: "failed", metadata });
+            console.error(`[Email] Failed to send "${templateId}" to ${to} via Resend:`, error);
+            await logEmail({ userId, templateId, to, subject, status: "failed", metadata: { ...metadata, provider: "resend" } });
             return { success: false, error: error.message };
         }
 
@@ -86,7 +153,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
             subject,
             status: "sent",
             resendId,
-            metadata,
+            metadata: { ...metadata, provider: "resend" },
         });
 
         console.log(`[Email] ✅ Sent "${templateId}" to ${to} (resend:${resendId})`);
