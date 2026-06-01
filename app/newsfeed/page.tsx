@@ -15,6 +15,7 @@ import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { AnimatePresence, motion } from "framer-motion";
+import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface FeedPost {
@@ -43,6 +44,66 @@ type SortOption = "latest" | "popular" | "trending";
 /* ─── Helpers ───────────────────────────────────────────────── */
 function cn(...xs: Array<string | false | null | undefined>) {
     return xs.filter(Boolean).join(" ");
+}
+
+function toneClasses(tone: any) {
+    switch (tone) {
+        case "green":
+            return {
+                text: "text-emerald-400 drop-shadow-[0_0_22px_rgba(0,255,170,1)] neon-deep",
+                icon: "text-emerald-400 drop-shadow-[0_0_26px_rgba(0,255,170,1)]",
+                border: "border-emerald-400/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(0,255,170,0.85),0_0_60px_rgba(0,255,170,0.45)] hover:shadow-[0_0_26px_rgba(0,255,170,0.95),0_0_90px_rgba(0,255,170,0.65)]",
+                hover: "hover:bg-emerald-500/8",
+            };
+        case "purple":
+            return {
+                text: "text-violet-400 drop-shadow-[0_0_22px_rgba(170,80,255,1)] neon-deep",
+                icon: "text-violet-400 drop-shadow-[0_0_26px_rgba(170,80,255,1)]",
+                border: "border-violet-400/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(170,80,255,0.85),0_0_60px_rgba(170,80,255,0.45)] hover:shadow-[0_0_26px_rgba(170,80,255,0.95),0_0_90px_rgba(170,80,255,0.65)]",
+                hover: "hover:bg-violet-500/8",
+            };
+        case "red":
+            return {
+                text: "text-rose-400 drop-shadow-[0_0_22px_rgba(255,55,95,1)] neon-deep",
+                icon: "text-rose-400 drop-shadow-[0_0_26px_rgba(255,55,95,1)]",
+                border: "border-rose-400/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(255,55,95,0.85),0_0_60px_rgba(255,55,95,0.45)] hover:shadow-[0_0_26px_rgba(255,55,95,0.95),0_0_90px_rgba(255,55,95,0.65)]",
+                hover: "hover:bg-rose-500/8",
+            };
+        case "blue":
+            return {
+                text: "text-cyan-300 drop-shadow-[0_0_22px_rgba(0,230,255,1)] neon-deep",
+                icon: "text-cyan-300 drop-shadow-[0_0_26px_rgba(0,230,255,1)]",
+                border: "border-cyan-300/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(0,230,255,0.85),0_0_60px_rgba(0,230,255,0.45)] hover:shadow-[0_0_26px_rgba(0,230,255,0.95),0_0_90px_rgba(0,230,255,0.65)]",
+                hover: "hover:bg-cyan-500/8",
+            };
+        case "yellow":
+            return {
+                text: "text-lime-300 drop-shadow-[0_0_22px_rgba(200,255,0,1)] neon-deep",
+                icon: "text-lime-300 drop-shadow-[0_0_26px_rgba(200,255,0,1)]",
+                border: "border-lime-300/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(200,255,0,0.85),0_0_60px_rgba(200,255,0,0.45)] hover:shadow-[0_0_26px_rgba(200,255,0,0.95),0_0_90px_rgba(200,255,0,0.65)]",
+                hover: "hover:bg-lime-500/8",
+            };
+        case "pink":
+        default:
+            return {
+                text: "text-pink-400 drop-shadow-[0_0_22px_rgba(236,72,153,1)] neon-deep",
+                icon: "text-pink-400 drop-shadow-[0_0_26px_rgba(236,72,153,1)]",
+                border: "border-pink-400/90",
+                glow:
+                    "shadow-[0_0_18px_rgba(236,72,153,0.85),0_0_60px_rgba(236,72,153,0.45)] hover:shadow-[0_0_26px_rgba(236,72,153,0.95),0_0_90px_rgba(236,72,153,0.65)]",
+                hover: "hover:bg-pink-500/8",
+            };
+    }
 }
 
 /* ─── Skeleton Loader ───────────────────────────────────────── */
@@ -207,6 +268,7 @@ export default function NewsFeedPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchInput, setSearchInput] = useState("");
     const [activeCreatorId, setActiveCreatorId] = useState<string | null>(null);
+    const [iframeMenus, setIframeMenus] = useState<any[]>([]);
 
     // Creators for story row
     const [creators, setCreators] = useState<Array<{ id: string; username: string; avatar_url: string | null }>>([]);
@@ -226,6 +288,30 @@ export default function NewsFeedPage() {
             router.push("/rooms/creator-studio");
         }
     }, [role, authLoading, router]);
+
+    useEffect(() => {
+        const fetchIframeMenus = async () => {
+            const { data, error } = await supabase
+                .from("iframe_menus")
+                .select("*")
+                .order("created_at", { ascending: true });
+            if (!error && data) {
+                setIframeMenus(data.filter(m => m.target_role === "fan" || m.target_role === "both"));
+            }
+        };
+        fetchIframeMenus();
+
+        const channel = supabase
+            .channel("realtime-newsfeed-iframe-menus")
+            .on("postgres_changes", { event: "*", schema: "public", table: "iframe_menus" }, () => {
+                fetchIframeMenus();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     // Fetch user profile & subscriptions
     useEffect(() => {
@@ -472,6 +558,31 @@ export default function NewsFeedPage() {
                                                     </button>
                                                 );
                                             })}
+                                            {iframeMenus.map((room) => {
+                                                const t = toneClasses(room.color);
+                                                return (
+                                                    <button
+                                                        key={`drawer-${room.id}`}
+                                                        onClick={() => {
+                                                            setIsSidebarOpen(false);
+                                                            router.push(`/iframe/${room.id}`);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                            t.border,
+                                                            t.glow,
+                                                            t.hover
+                                                        )}
+                                                    >
+                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <DynamicIcon name={room.icon} className="w-4 h-4" />
+                                                                <span className="truncate neon-deep">{room.name}</span>
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
@@ -604,6 +715,30 @@ export default function NewsFeedPage() {
                                                             <span className="inline-flex items-center gap-2">
                                                                 <span>{room.icon}</span>
                                                                 <span className="truncate neon-deep">{room.label}</span>
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                            {iframeMenus.map((room) => {
+                                                const t = toneClasses(room.color);
+                                                return (
+                                                    <button
+                                                        key={room.id}
+                                                        onClick={() => {
+                                                            router.push(`/iframe/${room.id}`);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                            t.border,
+                                                            t.glow,
+                                                            t.hover
+                                                        )}
+                                                    >
+                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <DynamicIcon name={room.icon} className="w-4 h-4" />
+                                                                <span className="truncate neon-deep">{room.name}</span>
                                                             </span>
                                                         </span>
                                                     </button>

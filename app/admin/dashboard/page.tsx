@@ -60,6 +60,7 @@ import PolicyEditor from "../../../components/admin/settings/PolicyEditor";
 import ImportantPagesManager from "../../../components/admin/settings/ImportantPagesManager";
 import CurrencyManager from "../../../components/admin/settings/CurrencyManager";
 import CampaignsManager from "../../../components/admin/settings/CampaignsManager";
+import IframeMenuManager from "../../../components/admin/settings/IframeMenuManager";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -98,7 +99,8 @@ type AdminModule =
     | "finance-payouts" // Links to /admin/finance/payouts
     | "revenue-splits" // Links to /admin/finance/splits
     | "creator-earnings" // Creator Earnings panel
-    | "currency"; // Default Currency
+    | "currency" // Default Currency
+    | "iframe-menus"; // dynamic iframe menus
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -187,6 +189,7 @@ export default function AdminDashboardPage() {
                 { id: "account-types", label: "Account Types", icon: <Sparkles className="w-4 h-4" />, tone: "pink" },
                 { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
                 { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
+                { id: "iframe-menus", label: "Iframe Menu", icon: <Settings className="w-4 h-4" />, tone: "amber" },
             ]
         },
         {
@@ -364,6 +367,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="creator-levels" label="Creator Levels" icon={<Star className="w-4 h-4" />} tone="pink" desc="Creator tiers" />
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="currency" label="Default Currency" icon={<Coins className="w-4 h-4" />} tone="green" desc="Set display currency" />
+                                <Tile id="iframe-menus" label="Iframe Menu" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Manage fan & creator menus" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
                                 <Tile id="creator-earnings" label="Creator Earnings" icon={<DollarSign className="w-4 h-4" />} tone="green" desc="All creator activity" />
@@ -399,6 +403,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "important-pages" && <ImportantPagesManager />}
                     {bizModule === "campaigns" && <CampaignsManager />}
                     {bizModule === "currency" && <CurrencyManager />}
+                    {bizModule === "iframe-menus" && <IframeMenuManager />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

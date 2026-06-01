@@ -39,6 +39,7 @@ import { NotificationIcon } from "@/components/common/NotificationIcon";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
 import BrandLogo from "@/components/common/BrandLogo";
 import PostCard from "@/components/posts/PostCard";
+import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 import { fp } from "@/utils/currency";
 
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -183,6 +184,7 @@ export default function FeedPage() {
     const { roomSettings: activeStatuses } = useTheme();
 
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+    const [iframeMenus, setIframeMenus] = useState<any[]>([]);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -351,6 +353,30 @@ export default function FeedPage() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentUser]);
+
+    useEffect(() => {
+        const fetchIframeMenus = async () => {
+            const { data, error } = await supabase
+                .from("iframe_menus")
+                .select("*")
+                .order("created_at", { ascending: true });
+            if (!error && data) {
+                setIframeMenus(data.filter(m => m.target_role === "fan" || m.target_role === "both"));
+            }
+        };
+        fetchIframeMenus();
+
+        const channel = supabase
+            .channel("realtime-subscribed-feed-iframe-menus")
+            .on("postgres_changes", { event: "*", schema: "public", table: "iframe_menus" }, () => {
+                fetchIframeMenus();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const firstName = userRole === "creator"
         ? "Creator"
@@ -579,6 +605,30 @@ export default function FeedPage() {
                                                         <span className="inline-flex items-center gap-2">
                                                             <span className={t.icon}>{cat.icon}</span>
                                                             <span className="truncate neon-deep">{cat.label}</span>
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                        {iframeMenus.map((menu) => {
+                                            const t = toneClasses(menu.color as any);
+                                            return (
+                                                <button
+                                                    key={menu.id}
+                                                    onClick={() => {
+                                                        router.push(`/iframe/${menu.id}`);
+                                                    }}
+                                                    className={cx(
+                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                        t.border,
+                                                        t.glow,
+                                                        t.hover
+                                                    )}
+                                                >
+                                                    <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <DynamicIcon name={menu.icon} className="w-4 h-4" />
+                                                            <span className="truncate neon-deep">{menu.name}</span>
                                                         </span>
                                                     </span>
                                                 </button>

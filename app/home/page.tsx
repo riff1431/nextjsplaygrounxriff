@@ -42,6 +42,7 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { createClient } from "@/utils/supabase/client";
+import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 import CreatePostModal from "@/components/posts/CreatePostModal";
 import PostCard from "@/components/posts/PostCard";
 import { AnimatePresence, motion } from "framer-motion";
@@ -740,6 +741,7 @@ function HomeScreen({
     setTagFilter,
     sortBy,
     setSortBy,
+    iframeMenus = [],
 }: {
     onEnterSuga4U: () => void;
     query: string;
@@ -755,6 +757,7 @@ function HomeScreen({
     setTagFilter: React.Dispatch<React.SetStateAction<string>>;
     sortBy: "Recommended" | "Rookie→Elite" | "Elite→Rookie";
     setSortBy: React.Dispatch<React.SetStateAction<"Recommended" | "Rookie→Elite" | "Elite→Rookie">>;
+    iframeMenus?: any[];
 }) {
     const router = useRouter();
     const [activeCat, setActiveCat] = useState("all");
@@ -839,6 +842,39 @@ function HomeScreen({
                                                     {cat.comingSoon && (
                                                         <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-gray-700/80 text-gray-300 font-medium uppercase tracking-wide">Soon</span>
                                                     )}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                    {iframeMenus.map((menu) => {
+                                        const t = toneClasses(menu.color);
+                                        return (
+                                            <button
+                                                key={menu.id}
+                                                onClick={() => {
+                                                    setActiveCat(menu.id);
+                                                    router.push(`/iframe/${menu.id}`);
+                                                }}
+                                                className={cx(
+                                                    "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                    t.border,
+                                                    t.glow,
+                                                    t.hover,
+                                                    activeCat === menu.id && "neon-pulse animate-pulse"
+                                                )}
+                                            >
+                                                <span
+                                                    className={cx(
+                                                        "inline-flex items-center gap-2 w-full justify-between",
+                                                        t.text + " neon-flicker"
+                                                    )}
+                                                >
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <span className={t.icon}>
+                                                            <DynamicIcon name={menu.icon} className="w-4 h-4" />
+                                                        </span>
+                                                        <span className="truncate neon-deep">{menu.name}</span>
+                                                    </span>
                                                 </span>
                                             </button>
                                         );
@@ -1066,6 +1102,7 @@ export default function Home() {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
+    const [iframeMenus, setIframeMenus] = useState<any[]>([]);
 
     const [currentProfile, setCurrentProfile] = useState<{ username: string | null, full_name: string | null, avatar_url: string | null, fan_membership_id?: string | null } | null>(null);
     const [userAccountType, setUserAccountType] = useState<{ display_name: string, badge_icon: string, badge_color: string, badge_icon_url?: string | null } | null>(null);
@@ -1250,6 +1287,30 @@ export default function Home() {
         };
         fetchUserData();
     }, [user]);
+
+    useEffect(() => {
+        const fetchIframeMenus = async () => {
+            const { data, error } = await supabase
+                .from("iframe_menus")
+                .select("*")
+                .order("created_at", { ascending: true });
+            if (!error && data) {
+                setIframeMenus(data.filter(m => m.target_role === "fan" || m.target_role === "both"));
+            }
+        };
+        fetchIframeMenus();
+
+        const channel = supabase
+            .channel("realtime-home-iframe-menus")
+            .on("postgres_changes", { event: "*", schema: "public", table: "iframe_menus" }, () => {
+                fetchIframeMenus();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const [homeQuery, setHomeQuery] = useState("");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1461,6 +1522,31 @@ export default function Home() {
                                                         <span className="inline-flex items-center gap-2">
                                                             <span className={t.icon}>{cat.icon}</span>
                                                             <span className="truncate neon-deep">{cat.label}</span>
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                        {iframeMenus.map((menu) => {
+                                            const t = toneClasses(menu.color);
+                                            return (
+                                                <button
+                                                    key={`drawer-${menu.id}`}
+                                                    onClick={() => {
+                                                        setIsSidebarOpen(false);
+                                                        router.push(`/iframe/${menu.id}`);
+                                                    }}
+                                                    className={cx(
+                                                        "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                        t.border,
+                                                        t.glow,
+                                                        t.hover
+                                                    )}
+                                                >
+                                                    <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <DynamicIcon name={menu.icon} className="w-4 h-4" />
+                                                            <span className="truncate neon-deep">{menu.name}</span>
                                                         </span>
                                                     </span>
                                                 </button>
@@ -1735,6 +1821,7 @@ export default function Home() {
                     setTagFilter={setTagFilter}
                     sortBy={sortBy}
                     setSortBy={setSortBy}
+                    iframeMenus={iframeMenus}
                 />
             </div>
 
