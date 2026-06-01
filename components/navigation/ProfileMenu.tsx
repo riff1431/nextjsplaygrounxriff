@@ -8,15 +8,52 @@ import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 import HelpGuideModal from "@/components/guided-tour/HelpGuideModal";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
 }
 
 export default function ProfileMenu({ user, profile, role, router, onSignOut }: any) {
+    const supabase = createClient();
     const [isOpen, setIsOpen] = useState(false);
+    const [iframeMenus, setIframeMenus] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const { isPending: isKycPending } = useKycStatus();
+
+    // Fetch and subscribe to dynamic iframe menus matching user role
+    useEffect(() => {
+        const fetchIframeMenus = async () => {
+            const { data, error } = await supabase
+                .from("iframe_menus")
+                .select("*")
+                .order("created_at", { ascending: true });
+            if (!error && data) {
+                const filtered = data.filter((m: any) => {
+                    if (role === "creator") {
+                        return m.target_role === "creator" || m.target_role === "both";
+                    } else {
+                        return m.target_role === "fan" || m.target_role === "both";
+                    }
+                });
+                setIframeMenus(filtered);
+            }
+        };
+
+        fetchIframeMenus();
+
+        const channel = supabase
+            .channel("realtime-profile-menu-iframe-menus")
+            .on("postgres_changes", { event: "*", schema: "public", table: "iframe_menus" }, () => {
+                fetchIframeMenus();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [role]);
     const { startTour } = useGuidedTour();
     const [isMobile, setIsMobile] = useState(false);
     const [helpExpanded, setHelpExpanded] = useState(false);
@@ -259,6 +296,20 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                         "/settings/profile",
                         isKycPending
                     )}
+
+                    {/* Dynamic Iframe Menus */}
+                    {iframeMenus.map((menu) => (
+                        <button
+                            key={menu.id}
+                            onClick={() => { router.push(`/iframe/${menu.id}`); setIsOpen(false); }}
+                            className={cx(
+                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group"
+                            )}
+                        >
+                            <DynamicIcon name={menu.icon} className="w-4 h-4 text-gray-500 group-hover:text-pink-400 transition-colors" />
+                            <span className="truncate">{menu.name}</span>
+                        </button>
+                    ))}
                 </div>
 
                 {/* Divider */}

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { 
     ArrowLeft, Search, RefreshCw, MessageSquare, Menu, X, Sparkles, 
-    Lock, MessageCircle, Crown, Star, Users, Flame, LogOut, HelpCircle, Heart 
+    Lock, MessageCircle, Crown, Star, Users, Flame, LogOut, HelpCircle, Heart, Dices
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -92,8 +92,10 @@ const CATS = [
     { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
 ];
 
-export default function IframeWrapperPage({ params }: { params: { id: string } }) {
+export default function IframeWrapperPage({ params: paramsPromise }: { params: any }) {
     const router = useRouter();
+    const params = useParams();
+    const id = params?.id as string;
     const { user, role, logout } = useAuth();
     const { roomSettings: activeStatuses } = useTheme();
     const supabase = createClient();
@@ -120,11 +122,15 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
 
     const fetchMenuDetails = async () => {
         setLoading(true);
+        if (!id) {
+            setLoading(false);
+            return;
+        }
         // 1. Fetch current menu item
         const { data: currentMenu, error: currentError } = await supabase
             .from("iframe_menus")
             .select("*")
-            .eq("id", params.id)
+            .eq("id", id)
             .single();
 
         if (currentError) {
@@ -159,9 +165,11 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [params.id]);
+    }, [id]);
 
     const filteredMenus = allMenus.filter(m => m.target_role === "fan" || m.target_role === "both");
+    const casinoMenu = filteredMenus.find(m => m.name.toLowerCase().includes("casino"));
+    const otherIframeMenus = filteredMenus.filter(m => !m.name.toLowerCase().includes("casino"));
 
     if (loading) {
         return (
@@ -252,7 +260,7 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
                     </div>
 
                     {/* Full Height Iframe Container */}
-                    <div className="flex-1 bg-black/40 border border-white/5 rounded-3xl p-1.5 md:p-3 relative overflow-hidden backdrop-blur-md shadow-2xl h-[calc(100vh-170px)]">
+                    <div className="flex-1 bg-black/40 border border-white/5 rounded-3xl p-1.5 md:p-3 relative overflow-hidden backdrop-blur-md shadow-2xl h-[calc(100dvh-130px)] md:h-[calc(100dvh-150px)] lg:h-[calc(100dvh-160px)]">
                         <iframe
                             src={menuItem.url}
                             className="w-full h-full rounded-2xl border-none bg-black"
@@ -325,31 +333,68 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
                                         );
                                     })}
 
-                                    {/* Dynamic categories */}
-                                    {filteredMenus.map(menu => {
-                                        const t = toneClasses(menu.color);
-                                        const isActive = menuItem.id === menu.id;
-                                        return (
+                                    {/* Separated Featured Apps Section */}
+                                    {otherIframeMenus.length > 0 && (
+                                        <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+                                            <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">
+                                                Featured Apps
+                                            </div>
+                                            {otherIframeMenus.map(menu => {
+                                                const t = toneClasses(menu.color);
+                                                const isActive = menuItem.id === menu.id;
+                                                return (
+                                                    <button
+                                                        key={menu.id}
+                                                        onClick={() => { setIsSidebarOpen(false); router.push(`/iframe/${menu.id}`); }}
+                                                        className={cx(
+                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                            t.border,
+                                                            t.glow,
+                                                            t.hover,
+                                                            isActive && "ring-2 ring-pink-500/50 bg-pink-500/10"
+                                                        )}
+                                                    >
+                                                        <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <DynamicIcon name={menu.icon} className="w-4 h-4" />
+                                                                <span className="truncate neon-deep">{menu.name}</span>
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Standalone Casino Button in the middle */}
+                                    {casinoMenu && (
+                                        <div className="py-3 my-2 border-t border-b border-white/5">
                                             <button
-                                                key={menu.id}
-                                                onClick={() => { setIsSidebarOpen(false); router.push(`/iframe/${menu.id}`); }}
+                                                onClick={() => {
+                                                    setIsSidebarOpen(false);
+                                                    router.push(`/iframe/${casinoMenu.id}`);
+                                                }}
                                                 className={cx(
-                                                    "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
-                                                    t.border,
-                                                    t.glow,
-                                                    t.hover,
-                                                    isActive && "ring-2 ring-pink-500/50 bg-pink-500/10"
+                                                    "w-full text-left px-4 py-3 rounded-2xl border text-base transition duration-300 relative overflow-hidden group cursor-pointer",
+                                                    menuItem.id === casinoMenu.id
+                                                        ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border-yellow-400 shadow-[0_0_22px_rgba(234,179,8,0.65)]"
+                                                        : "border-yellow-600/30 shadow-[0_0_12px_rgba(234,179,8,0.2)]"
                                                 )}
                                             >
-                                                <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
-                                                    <span className="inline-flex items-center gap-2">
-                                                        <DynamicIcon name={menu.icon} className="w-4 h-4" />
-                                                        <span className="truncate neon-deep">{menu.name}</span>
+                                                <span className="relative z-10 flex items-center gap-3 w-full justify-between">
+                                                    <span className="flex items-center gap-3 font-bold text-yellow-300">
+                                                        <Dices className="w-4 h-4 text-yellow-400" />
+                                                        <span className="tracking-wide text-yellow-200 uppercase font-black text-sm">
+                                                            {casinoMenu.name}
+                                                        </span>
+                                                    </span>
+                                                    <span className="text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 font-bold uppercase tracking-wider animate-pulse">
+                                                        VIP
                                                     </span>
                                                 </span>
                                             </button>
-                                        );
-                                    })}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -451,31 +496,70 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
                                                 );
                                             })}
 
-                                            {/* Dynamic Categories */}
-                                            {filteredMenus.map(menu => {
-                                                const t = toneClasses(menu.color);
-                                                const isActive = menuItem.id === menu.id;
-                                                return (
+                                            {/* Separated Featured Apps Section */}
+                                            {otherIframeMenus.length > 0 && (
+                                                <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+                                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">
+                                                        Featured Apps
+                                                    </div>
+                                                    {otherIframeMenus.map(menu => {
+                                                        const t = toneClasses(menu.color);
+                                                        const isActive = menuItem.id === menu.id;
+                                                        return (
+                                                            <button
+                                                                key={menu.id}
+                                                                onClick={() => router.push(`/iframe/${menu.id}`)}
+                                                                className={cx(
+                                                                    "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
+                                                                    t.border,
+                                                                    t.glow,
+                                                                    t.hover,
+                                                                    isActive && "ring-2 ring-pink-500/50 bg-pink-500/10 shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                                                                )}
+                                                            >
+                                                                <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                                    <span className="inline-flex items-center gap-2">
+                                                                        <DynamicIcon name={menu.icon} className="w-4 h-4" />
+                                                                        <span className="truncate neon-deep">{menu.name}</span>
+                                                                    </span>
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Standalone Casino Button in the middle */}
+                                            {casinoMenu && (
+                                                <div className="py-3 my-2 border-t border-b border-white/5">
                                                     <button
-                                                        key={menu.id}
-                                                        onClick={() => router.push(`/iframe/${menu.id}`)}
+                                                        onClick={() => {
+                                                            router.push(`/iframe/${casinoMenu.id}`);
+                                                        }}
                                                         className={cx(
-                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55",
-                                                            t.border,
-                                                            t.glow,
-                                                            t.hover,
-                                                            isActive && "ring-2 ring-pink-500/50 bg-pink-500/10 shadow-[0_0_12px_rgba(236,72,153,0.3)]"
+                                                            "w-full text-left px-4 py-3 rounded-2xl border text-base transition duration-300 relative overflow-hidden group cursor-pointer",
+                                                            menuItem.id === casinoMenu.id
+                                                                ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border-yellow-400 shadow-[0_0_22px_rgba(234,179,8,0.65)]"
+                                                                : "bg-black/75 border-yellow-600/30 hover:border-yellow-400 hover:shadow-[0_0_18px_rgba(234,179,8,0.45)] hover:bg-yellow-950/10"
                                                         )}
                                                     >
-                                                        <span className={cx("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
-                                                            <span className="inline-flex items-center gap-2">
-                                                                <DynamicIcon name={menu.icon} className="w-4 h-4" />
-                                                                <span className="truncate neon-deep">{menu.name}</span>
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                                                        <span className="relative z-10 flex items-center gap-3 w-full justify-between">
+                                                            <span className="flex items-center gap-3 font-bold text-yellow-300 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]">
+                                                                <span className="p-1 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-400/20">
+                                                                    <Dices className="w-4 h-4" />
+                                                                </span>
+                                                                <span className="tracking-wide text-yellow-200 group-hover:text-yellow-100 transition-colors uppercase font-black text-sm">
+                                                                    {casinoMenu.name}
+                                                                </span>
+                                                            </span>
+                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 font-bold uppercase tracking-wider animate-pulse">
+                                                                VIP
                                                             </span>
                                                         </span>
                                                     </button>
-                                                );
-                                            })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -506,7 +590,7 @@ export default function IframeWrapperPage({ params }: { params: { id: string } }
                     </aside>
 
                     {/* Main Full-Height Iframe View */}
-                    <main className="flex-1 bg-black/45 border border-white/5 rounded-3xl p-1.5 md:p-3 relative overflow-hidden backdrop-blur-md shadow-2xl h-[calc(100vh-170px)] w-full">
+                    <main className="flex-1 bg-black/45 border border-white/5 rounded-3xl p-1.5 md:p-3 relative overflow-hidden backdrop-blur-md shadow-2xl h-[calc(100dvh-130px)] md:h-[calc(100dvh-150px)] lg:h-[calc(100dvh-160px)] w-full">
                         <iframe
                             src={menuItem.url}
                             className="w-full h-full rounded-2xl border-none bg-black"

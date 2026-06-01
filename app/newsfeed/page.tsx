@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     ArrowLeft, Heart, Search, RefreshCw, TrendingUp, Flame, Sparkles,
     Image as ImageIcon, Video, FileText, Filter, ChevronDown, X, User,
-    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle, Users, Menu,
+    Crown, Star, MessageSquare, Bell, LogOut, Lock, MessageCircle, Users, Menu, Dices,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -269,6 +269,8 @@ export default function NewsFeedPage() {
     const [searchInput, setSearchInput] = useState("");
     const [activeCreatorId, setActiveCreatorId] = useState<string | null>(null);
     const [iframeMenus, setIframeMenus] = useState<any[]>([]);
+    const casinoMenu = iframeMenus.find(m => m.name.toLowerCase().includes("casino"));
+    const otherIframeMenus = iframeMenus.filter(m => !m.name.toLowerCase().includes("casino"));
 
     // Creators for story row
     const [creators, setCreators] = useState<Array<{ id: string; username: string; avatar_url: string | null }>>([]);
@@ -558,31 +560,66 @@ export default function NewsFeedPage() {
                                                     </button>
                                                 );
                                             })}
-                                            {iframeMenus.map((room) => {
-                                                const t = toneClasses(room.color);
-                                                return (
+                                            {/* Separated Featured Apps Section */}
+                                            {otherIframeMenus.length > 0 && (
+                                                <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+                                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">
+                                                        Featured Apps
+                                                    </div>
+                                                    {otherIframeMenus.map((room) => {
+                                                        const t = toneClasses(room.color);
+                                                        return (
+                                                            <button
+                                                                key={`drawer-${room.id}`}
+                                                                onClick={() => {
+                                                                    setIsSidebarOpen(false);
+                                                                    router.push(`/iframe/${room.id}`);
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                                    t.border,
+                                                                    t.glow,
+                                                                    t.hover
+                                                                )}
+                                                            >
+                                                                <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                                    <span className="inline-flex items-center gap-2">
+                                                                        <DynamicIcon name={room.icon} className="w-4 h-4" />
+                                                                        <span className="truncate neon-deep">{room.name}</span>
+                                                                    </span>
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Standalone Casino Button in the middle */}
+                                            {casinoMenu && (
+                                                <div className="py-3 my-2 border-t border-b border-white/5">
                                                     <button
-                                                        key={`drawer-${room.id}`}
                                                         onClick={() => {
                                                             setIsSidebarOpen(false);
-                                                            router.push(`/iframe/${room.id}`);
+                                                            router.push(`/iframe/${casinoMenu.id}`);
                                                         }}
                                                         className={cn(
-                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
-                                                            t.border,
-                                                            t.glow,
-                                                            t.hover
+                                                            "w-full text-left px-4 py-3 rounded-2xl border text-base transition duration-300 relative overflow-hidden group cursor-pointer border-yellow-600/30 shadow-[0_0_12px_rgba(234,179,8,0.2)]"
                                                         )}
                                                     >
-                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
-                                                            <span className="inline-flex items-center gap-2">
-                                                                <DynamicIcon name={room.icon} className="w-4 h-4" />
-                                                                <span className="truncate neon-deep">{room.name}</span>
+                                                        <span className="relative z-10 flex items-center gap-3 w-full justify-between">
+                                                            <span className="flex items-center gap-3 font-bold text-yellow-300">
+                                                                <Dices className="w-4 h-4 text-yellow-400" />
+                                                                <span className="tracking-wide text-yellow-200 uppercase font-black text-sm">
+                                                                    {casinoMenu.name}
+                                                                </span>
+                                                            </span>
+                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 font-bold uppercase tracking-wider animate-pulse">
+                                                                VIP
                                                             </span>
                                                         </span>
                                                     </button>
-                                                );
-                                            })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -720,30 +757,67 @@ export default function NewsFeedPage() {
                                                     </button>
                                                 );
                                             })}
-                                            {iframeMenus.map((room) => {
-                                                const t = toneClasses(room.color);
-                                                return (
+                                            {/* Separated Featured Apps Section */}
+                                            {otherIframeMenus.length > 0 && (
+                                                <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+                                                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">
+                                                        Featured Apps
+                                                    </div>
+                                                    {otherIframeMenus.map((room) => {
+                                                        const t = toneClasses(room.color);
+                                                        return (
+                                                            <button
+                                                                key={room.id}
+                                                                onClick={() => {
+                                                                    router.push(`/iframe/${room.id}`);
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
+                                                                    t.border,
+                                                                    t.glow,
+                                                                    t.hover
+                                                                )}
+                                                            >
+                                                                <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
+                                                                    <span className="inline-flex items-center gap-2">
+                                                                        <DynamicIcon name={room.icon} className="w-4 h-4" />
+                                                                        <span className="truncate neon-deep">{room.name}</span>
+                                                                    </span>
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Standalone Casino Button in the middle */}
+                                            {casinoMenu && (
+                                                <div className="py-3 my-2 border-t border-b border-white/5">
                                                     <button
-                                                        key={room.id}
                                                         onClick={() => {
-                                                            router.push(`/iframe/${room.id}`);
+                                                            router.push(`/iframe/${casinoMenu.id}`);
                                                         }}
                                                         className={cn(
-                                                            "w-full text-left px-3 py-2 rounded-xl border text-sm transition bg-black/55 cursor-pointer",
-                                                            t.border,
-                                                            t.glow,
-                                                            t.hover
+                                                            "w-full text-left px-4 py-3 rounded-2xl border text-base transition duration-300 relative overflow-hidden group cursor-pointer border-yellow-600/30 hover:border-yellow-400 hover:shadow-[0_0_18px_rgba(234,179,8,0.45)] hover:bg-yellow-950/10"
                                                         )}
                                                     >
-                                                        <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", t.text)}>
-                                                            <span className="inline-flex items-center gap-2">
-                                                                <DynamicIcon name={room.icon} className="w-4 h-4" />
-                                                                <span className="truncate neon-deep">{room.name}</span>
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                                                        <span className="relative z-10 flex items-center gap-3 w-full justify-between">
+                                                            <span className="flex items-center gap-3 font-bold text-yellow-300 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]">
+                                                                <span className="p-1 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-400/20">
+                                                                    <Dices className="w-4 h-4" />
+                                                                </span>
+                                                                <span className="tracking-wide text-yellow-200 group-hover:text-yellow-100 transition-colors uppercase font-black text-sm">
+                                                                    {casinoMenu.name}
+                                                                </span>
+                                                            </span>
+                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 font-bold uppercase tracking-wider animate-pulse">
+                                                                VIP
                                                             </span>
                                                         </span>
                                                     </button>
-                                                );
-                                            })}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Quick Links */}

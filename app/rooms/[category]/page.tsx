@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { NeonCard, NeonButton } from "@/components/ui/neon-shared";
 import { ArrowLeft, Lock, MessageCircle, Sparkles, Video, Crown, Trophy } from "lucide-react";
@@ -40,13 +40,14 @@ const CATEGORIES: Record<string, { label: string; icon: any; tone: string }> = {
     "suga-4-u": { label: "Suga 4 U", icon: Crown, tone: "pink" },
 };
 
-export default function RoomCategoryPage({ params }: { params: { category: string } }) {
+export default function RoomCategoryPage({ params: paramsPromise }: { params: any }) {
     const router = useRouter();
+    const params = useParams();
     const supabase = createClient();
     const [rooms, setRooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const categoryKey = params.category;
+    const categoryKey = (params?.category as string) || "";
     const categoryInfo = CATEGORIES[categoryKey] || { label: "Rooms", icon: MessageCircle, tone: "pink" };
     const Icon = categoryInfo.icon;
 

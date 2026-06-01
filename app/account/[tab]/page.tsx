@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { NeonCard } from "@/components/ui/neon-shared";
 import { ArrowLeft, CreditCard, MessageCircle, Star, Bell, Users, Settings } from "lucide-react";
 import Link from "next/link";
@@ -43,9 +43,10 @@ const TABS: Record<string, { label: string; icon: any; content: string }> = {
     }
 };
 
-export default function AccountGenericPage({ params }: { params: { tab: string } }) {
+export default function AccountGenericPage({ params: paramsPromise }: { params: any }) {
     const router = useRouter();
-    const tabKey = params.tab;
+    const params = useParams();
+    const tabKey = (params?.tab as string) || "";
     const tabInfo = TABS[tabKey] || { label: "Account", icon: Settings, content: "Account settings" };
     const Icon = tabInfo.icon;
 

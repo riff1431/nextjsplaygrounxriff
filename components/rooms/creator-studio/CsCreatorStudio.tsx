@@ -5,6 +5,7 @@ import { Upload, MessageSquare, Monitor, Zap, Tv, Gamepad2, Heart, Trophy, Lock 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 
 interface StudioCardProps {
     icon: React.ReactNode;
@@ -67,6 +68,7 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
 
 export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
     const [activeStatuses, setActiveStatuses] = useState<Record<string, boolean>>({});
+    const [iframeMenus, setIframeMenus] = useState<any[]>([]);
     const supabase = createClient();
 
     useEffect(() => {
@@ -85,7 +87,7 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
 
         fetchSettings();
 
-        // Realtime subscription
+        // Realtime subscription for room settings
         const channel = supabase
             .channel("realtime-room-settings-creator-studio")
             .on("postgres_changes", { event: "*", schema: "public", table: "room_settings" }, (payload) => {
@@ -104,7 +106,37 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
         };
     }, []);
 
-    const cards: StudioCardProps[] = [
+    // Fetch dynamic creator iframe menus
+    useEffect(() => {
+        const fetchIframeMenus = async () => {
+            const { data, error } = await supabase
+                .from("iframe_menus")
+                .select("*")
+                .order("created_at", { ascending: true });
+            if (!error && data) {
+                // Filter for creator or both target roles
+                const creatorMenus = data.filter(
+                    (m: any) => m.target_role === "creator" || m.target_role === "both"
+                );
+                setIframeMenus(creatorMenus);
+            }
+        };
+
+        fetchIframeMenus();
+
+        const channel = supabase
+            .channel("realtime-iframe-menus-creator-studio")
+            .on("postgres_changes", { event: "*", schema: "public", table: "iframe_menus" }, () => {
+                fetchIframeMenus();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    const staticCards: StudioCardProps[] = [
         { icon: <MessageSquare size={20} />, title: "Confessions Studio", description: "Manage backlog, publish text/voice/video confessions.", borderColor: "hsl(45, 100%, 55%)", link: "/rooms/confessions-creator", roomType: "confessions" },
         { icon: <Monitor size={20} />, title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", link: "/rooms/x-chat-creator", roomType: "x-chat" },
         { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", link: "/rooms/flash-drop-creator", roomType: "flash-drop" },
@@ -114,13 +146,33 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
         { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", link: "/coming-soon", roomType: "competition" },
     ];
 
+    const colorMap: Record<string, string> = {
+        pink: "hsl(330, 90%, 60%)",
+        blue: "hsl(180, 100%, 50%)",
+        purple: "hsl(280, 100%, 65%)",
+        green: "hsl(150, 80%, 45%)",
+        yellow: "hsl(45, 100%, 55%)",
+        red: "hsl(0, 90%, 55%)",
+    };
+
+    const dynamicCards: StudioCardProps[] = iframeMenus.map((menu) => ({
+        icon: <DynamicIcon name={menu.icon} className="w-5 h-5" />,
+        title: menu.name,
+        description: `Click to open the integrated ${menu.name} application.`,
+        borderColor: colorMap[menu.color] || "hsl(330, 90%, 60%)",
+        link: `/iframe/${menu.id}`,
+        roomType: undefined,
+    }));
+
+    const allCards = [...staticCards, ...dynamicCards];
+
     return (
         <div>
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-white">
                 <span className="cs-neon-text-pink">✦</span> Creator Studio
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                {cards.map((card) => {
+                {allCards.map((card) => {
                     const isInactive = card.roomType ? activeStatuses[card.roomType] === false : false;
                     return <StudioCard key={card.title} {...card} isInactive={isInactive} kycLocked={kycLocked} />;
                 })}

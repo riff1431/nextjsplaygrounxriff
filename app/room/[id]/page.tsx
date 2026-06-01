@@ -2,11 +2,12 @@ import React from "react";
 import RoomClient from "@/components/room/RoomClient";
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default function RoomPage({ params }: PageProps) {
-    return <RoomClient roomId={params.id} />;
+export default async function RoomPage({ params }: PageProps) {
+    const { id } = await params;
+    return <RoomClient roomId={id} />;
 }
