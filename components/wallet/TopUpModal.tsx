@@ -20,13 +20,23 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
     const { config } = usePayment();
     const { currency, formatPrice } = useCurrency();
     const supabase = createClient();
-    const [step, setStep] = useState<1 | 2>(1);
+    const { user } = useAuth();
+    const [step, setStep] = useState<1 | 2 | 3>(1);
     const [amount, setAmount] = useState<number>(0);
     const [customAmount, setCustomAmount] = useState("");
     const [method, setMethod] = useState<"card" | "paypal" | "bank" | "riskpaygo" | "">("");
     const [loading, setLoading] = useState(false);
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [showStripeModal, setShowStripeModal] = useState(false);
+
+    // RiskPayGo billing details
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [country, setCountry] = useState("US");
+    const [phone, setPhone] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
+    const [stateOfResidence, setStateOfResidence] = useState("FL");
+    const [postCode, setPostCode] = useState("");
 
     useEffect(() => {
         // Reset states when modal is opened
@@ -36,8 +46,38 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
             setCustomAmount("");
             setMethod("");
             setProofFile(null);
+            setFirstName("");
+            setLastName("");
+            setCountry("US");
+            setPhone("");
+            setDateOfBirth("");
+            setStateOfResidence("FL");
+            setPostCode("");
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen && user) {
+            const fetchProfile = async () => {
+                try {
+                    const { data } = await supabase
+                        .from("profiles")
+                        .select("username, display_name")
+                        .eq("id", user.id)
+                        .single();
+                    if (data) {
+                        const fullName = data.display_name || data.username || "";
+                        const nameParts = fullName.trim().split(/\s+/);
+                        if (nameParts[0]) setFirstName(nameParts[0]);
+                        if (nameParts.slice(1).join(" ")) setLastName(nameParts.slice(1).join(" "));
+                    }
+                } catch (err) {
+                    console.error("Failed to load profile for pre-populating fields:", err);
+                }
+            };
+            fetchProfile();
+        }
+    }, [isOpen, user, supabase]);
 
     if (!isOpen) return null;
 
@@ -64,6 +104,59 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
         }
     };
 
+
+    const handleRiskPayGoSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!amount) return;
+
+        if (!firstName.trim() || !lastName.trim() || !country || !phone.trim() || !dateOfBirth) {
+            alert("Please fill in all required customer details.");
+            return;
+        }
+
+        if (country === "US" && (!stateOfResidence || !postCode.trim())) {
+            alert("For US customers, state of residence and ZIP/postal code are required.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const bodyPayload = {
+                amount,
+                customerDetails: {
+                    first_name: firstName.trim(),
+                    last_name: lastName.trim(),
+                    country_of_residence: country,
+                    phone: phone.trim(),
+                    date_of_birth: dateOfBirth,
+                    ...(country === "US" ? {
+                        state_of_residence: stateOfResidence,
+                        post_code: postCode.trim()
+                    } : {})
+                }
+            };
+
+            const res = await fetch('/api/v1/payments/riskpaygo/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyPayload)
+            });
+            const data = await res.json();
+            if (data.success && data.checkoutUrl) {
+                // Redirect directly to checkout
+                window.location.href = data.checkoutUrl;
+                return; // Retain loader state while browser redirects
+            } else {
+                alert(data.error || "Failed to initiate RiskPayGo checkout.");
+            }
+        } catch (err) {
+            console.error("RiskPayGo creation error:", err);
+            alert("An error occurred trying to connect to RiskPayGo.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!amount || !method) return;
         if (method === 'bank' && !proofFile) return; // Require proof for bank
@@ -75,27 +168,8 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
         }
 
         if (method === 'riskpaygo') {
-            setLoading(true);
-            try {
-                const res = await fetch('/api/v1/payments/riskpaygo/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount })
-                });
-                const data = await res.json();
-                if (data.success && data.checkoutUrl) {
-                    // Redirect directly to checkout
-                    window.location.href = data.checkoutUrl;
-                    return; // Retain loader state while browser redirects
-                } else {
-                    alert(data.error || "Failed to initiate RiskPayGo checkout.");
-                }
-            } catch (err) {
-                console.error("RiskPayGo creation error:", err);
-                alert("An error occurred trying to connect to RiskPayGo.");
-            } finally {
-                setLoading(false);
-            }
+            // Transition to Step 3: Billing Details
+            setStep(3);
             return;
         }
 
@@ -176,7 +250,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
 
                     {/* Content */}
                     <div className="p-6">
-                        {step === 1 ? (
+                        {step === 1 && (
                             <div className="space-y-6">
                                 <div className="text-sm text-gray-400">Select or enter the amount you want to top up.</div>
 
@@ -224,7 +298,8 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                     Continue <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
-                        ) : (
+                        )}
+                        {step === 2 && (
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/[0.06]">
                                     <span className="text-xs text-gray-400 font-medium">Checkout Total</span>
@@ -372,10 +447,181 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         disabled={!method || loading || (method === 'bank' && !proofFile)}
                                         className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 disabled:opacity-40 disabled:pointer-events-none text-white font-extrabold shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
                                     >
-                                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : method === 'bank' ? "Submit Verification" : "Pay Now"}
+                                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : method === 'bank' ? "Submit Verification" : method === 'riskpaygo' ? "Continue" : "Pay Now"}
                                     </button>
                                 </div>
                             </div>
+                        )}
+
+                        {step === 3 && (
+                            <form onSubmit={handleRiskPayGoSubmit} className="space-y-4 animate-in fade-in duration-300">
+                                <div className="text-xs font-bold uppercase tracking-widest text-pink-400/80 mb-2">Billing Details</div>
+                                
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">First Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={firstName}
+                                            onChange={(e) => setFirstName(e.target.value)}
+                                            placeholder="John"
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">Last Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={lastName}
+                                            onChange={(e) => setLastName(e.target.value)}
+                                            placeholder="Smith"
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">Date of Birth</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            value={dateOfBirth}
+                                            onChange={(e) => setDateOfBirth(e.target.value)}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pink-500 text-sm transition scheme-dark"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">Phone Number</label>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                            placeholder="+13465550123"
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">Country of Residence</label>
+                                    <select
+                                        value={country}
+                                        onChange={(e) => setCountry(e.target.value)}
+                                        className="w-full bg-black/80 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pink-500 text-sm transition"
+                                    >
+                                        <option value="US">United States (US)</option>
+                                        <option value="GB">United Kingdom (GB)</option>
+                                        <option value="CA">Canada (CA)</option>
+                                        <option value="AU">Australia (AU)</option>
+                                        <option value="DE">Germany (DE)</option>
+                                        <option value="FR">France (FR)</option>
+                                        <option value="ES">Spain (ES)</option>
+                                        <option value="IT">Italy (IT)</option>
+                                        <option value="NL">Netherlands (NL)</option>
+                                        <option value="BR">Brazil (BR)</option>
+                                        <option value="MX">Mexico (MX)</option>
+                                        <option value="JP">Japan (JP)</option>
+                                        <option value="SG">Singapore (SG)</option>
+                                        <option value="NZ">New Zealand (NZ)</option>
+                                    </select>
+                                </div>
+
+                                {country === "US" && (
+                                    <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">State of Residence</label>
+                                            <select
+                                                value={stateOfResidence}
+                                                onChange={(e) => setStateOfResidence(e.target.value)}
+                                                className="w-full bg-black/80 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-pink-500 text-sm transition"
+                                            >
+                                                <option value="AL">Alabama (AL)</option>
+                                                <option value="AK">Alaska (AK)</option>
+                                                <option value="AZ">Arizona (AZ)</option>
+                                                <option value="AR">Arkansas (AR)</option>
+                                                <option value="CA">California (CA)</option>
+                                                <option value="CO">Colorado (CO)</option>
+                                                <option value="CT">Connecticut (CT)</option>
+                                                <option value="DE">Delaware (DE)</option>
+                                                <option value="FL">Florida (FL)</option>
+                                                <option value="GA">Georgia (GA)</option>
+                                                <option value="HI">Hawaii (HI)</option>
+                                                <option value="ID">Idaho (ID)</option>
+                                                <option value="IL">Illinois (IL)</option>
+                                                <option value="IN">Indiana (IN)</option>
+                                                <option value="IA">Iowa (IA)</option>
+                                                <option value="KS">Kansas (KS)</option>
+                                                <option value="KY">Kentucky (KY)</option>
+                                                <option value="LA">Louisiana (LA)</option>
+                                                <option value="ME">Maine (ME)</option>
+                                                <option value="MD">Maryland (MD)</option>
+                                                <option value="MA">Massachusetts (MA)</option>
+                                                <option value="MI">Michigan (MI)</option>
+                                                <option value="MN">Minnesota (MN)</option>
+                                                <option value="MS">Mississippi (MS)</option>
+                                                <option value="MO">Missouri (MO)</option>
+                                                <option value="MT">Montana (MT)</option>
+                                                <option value="NE">Nebraska (NE)</option>
+                                                <option value="NV">Nevada (NV)</option>
+                                                <option value="NH">New Hampshire (NH)</option>
+                                                <option value="NJ">New Jersey (NJ)</option>
+                                                <option value="NM">New Mexico (NM)</option>
+                                                <option value="NY">New York (NY)</option>
+                                                <option value="NC">North Carolina (NC)</option>
+                                                <option value="ND">North Dakota (ND)</option>
+                                                <option value="OH">Ohio (OH)</option>
+                                                <option value="OK">Oklahoma (OK)</option>
+                                                <option value="OR">Oregon (OR)</option>
+                                                <option value="PA">Pennsylvania (PA)</option>
+                                                <option value="RI">Rhode Island (RI)</option>
+                                                <option value="SC">South Carolina (SC)</option>
+                                                <option value="SD">South Dakota (SD)</option>
+                                                <option value="TN">Tennessee (TN)</option>
+                                                <option value="TX">Texas (TX)</option>
+                                                <option value="UT">Utah (UT)</option>
+                                                <option value="VT">Vermont (VT)</option>
+                                                <option value="VA">Virginia (VA)</option>
+                                                <option value="WA">Washington (WA)</option>
+                                                <option value="WV">West Virginia (WV)</option>
+                                                <option value="WI">Wisconsin (WI)</option>
+                                                <option value="WY">Wyoming (WY)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">ZIP / Post Code</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={postCode}
+                                                onChange={(e) => setPostCode(e.target.value)}
+                                                placeholder="33101"
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(2)}
+                                        className="px-5 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-bold transition duration-200 text-sm cursor-pointer"
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 disabled:opacity-40 disabled:pointer-events-none text-white font-extrabold shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:shadow-[0_0_30px_rgba(236,72,153,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+                                    >
+                                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm & Pay"}
+                                    </button>
+                                </div>
+                            </form>
                         )}
                     </div>
                 </div>

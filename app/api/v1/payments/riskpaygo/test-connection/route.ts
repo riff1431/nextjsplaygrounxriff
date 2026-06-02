@@ -63,11 +63,14 @@ export async function POST(req: Request) {
             order_key: `key_${testOrderId}`,
             amount: "0.01",
             currency: "EUR",
-            customer: {
-                email: "test_connection@playgroundx.com",
+            customer_details: {
                 first_name: "Test",
                 last_name: "Admin",
-                country: "US"
+                country_of_residence: "US",
+                state_of_residence: "FL",
+                post_code: "33101",
+                phone: "+13465550123",
+                date_of_birth: "1990-05-20"
             },
             site: {
                 url: "http://localhost:3000/",

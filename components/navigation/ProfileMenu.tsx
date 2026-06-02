@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X, HelpCircle, BookOpen, RotateCcw } from "lucide-react";
+import { ChevronDown, CreditCard, Crown, LogOut, Settings, Star, User, LayoutGrid, Briefcase, Award, Trophy, MessageSquare, Lock, Clock, X, HelpCircle, BookOpen, RotateCcw, ShieldCheck } from "lucide-react";
 import { useKycStatus } from "@/components/onboarding/OnboardingGuard";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 import HelpGuideModal from "@/components/guided-tour/HelpGuideModal";
@@ -270,6 +270,14 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                         "Profile",
                         <User className="w-4 h-4 text-gray-500 group-hover:text-pink-400 transition-colors" />,
                         "/account/profile",
+                        false
+                    )}
+
+                    {/* Verification — creator status page link */}
+                    {role === "creator" && renderMenuItem(
+                        "Verification",
+                        <ShieldCheck className="w-4 h-4 text-gray-500 group-hover:text-pink-400 transition-colors" />,
+                        "/kyc-verification",
                         false
                     )}
 

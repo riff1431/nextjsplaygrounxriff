@@ -94,11 +94,14 @@ export async function POST(req: Request) {
             order_key: orderKey,
             amount: "1.00",
             currency: "EUR",
-            customer: {
-                email: user.email || 'admin@playgroundx.com',
+            customer_details: {
                 first_name: 'Admin',
                 last_name: 'Test',
-                country: 'US'
+                country_of_residence: 'US',
+                state_of_residence: 'FL',
+                post_code: '33101',
+                phone: '+13465550123',
+                date_of_birth: '1990-05-20'
             },
             site: {
                 url: req.headers.get('origin') + '/',

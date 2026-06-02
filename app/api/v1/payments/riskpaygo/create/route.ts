@@ -13,7 +13,30 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { amount, customerCountry } = body;
+        const { amount, customerDetails } = body;
+
+        // Verify customerDetails presence and structure
+        if (!customerDetails) {
+            return NextResponse.json({ error: 'Customer billing details are required.' }, { status: 400 });
+        }
+
+        const {
+            first_name,
+            last_name,
+            country_of_residence,
+            phone,
+            date_of_birth,
+            state_of_residence,
+            post_code
+        } = customerDetails;
+
+        if (!first_name || !last_name || !country_of_residence || !phone || !date_of_birth) {
+            return NextResponse.json({ error: 'Missing required customer details.' }, { status: 400 });
+        }
+
+        if (country_of_residence === "US" && (!state_of_residence || !post_code)) {
+            return NextResponse.json({ error: 'State of residence and postal code are required for US customers.' }, { status: 400 });
+        }
 
         // 2. Validate Amount
         const parsedAmount = parseFloat(amount);
@@ -122,11 +145,16 @@ export async function POST(req: Request) {
             order_key: orderKey,
             amount: parsedAmount.toFixed(2),
             currency: "EUR",
-            customer: {
-                email: user.email || 'customer@playgroundx.com',
-                first_name: firstName,
-                last_name: lastName,
-                country: customerCountry || req.headers.get('x-vercel-ip-country') || 'US'
+            customer_details: {
+                first_name,
+                last_name,
+                country_of_residence,
+                phone,
+                date_of_birth,
+                ...(country_of_residence === "US" ? {
+                    state_of_residence,
+                    post_code
+                } : {})
             },
             site: {
                 url: req.headers.get('origin') + '/',

@@ -173,6 +173,7 @@ function PgxPage2Inner() {
     const [likedMessages, setLikedMessages] = useState<Record<string, boolean>>({});
     const [floatingHearts, setFloatingHearts] = useState<{ id: number; left: number }[]>([]);
     const [chatFilter, setChatFilter] = useState<"all" | "paid" | "priority">("all");
+    const [isChatFocused, setIsChatFocused] = useState(false);
 
     const triggerHeart = () => {
         const newHeart = { id: Date.now() + Math.random(), left: Math.random() * 60 + 20 };
@@ -605,7 +606,7 @@ function PgxPage2Inner() {
     }
 
     return (
-        <div className="main-room-wrapper" style={{ position: "relative", minHeight: "100vh", overflow: "hidden", fontFamily: "'Montserrat', sans-serif", color: FG }}>
+        <div className="main-room-wrapper" style={{ position: "relative", minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", color: FG }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
                 @keyframes glow-pulse    { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
@@ -637,6 +638,18 @@ function PgxPage2Inner() {
                     pointer-events: none;
                     z-index: 25;
                 }
+                .main-room-wrapper {
+                    overflow: hidden;
+                }
+                .mobile-contain-region {
+                    content-visibility: auto;
+                    contain-intrinsic-size: auto 200px;
+                }
+                @supports not (content-visibility: auto) {
+                    .mobile-contain-region {
+                        contain: layout style paint;
+                    }
+                }
                 @media (min-width: 769px) {
                     .desktop-layout-container { display: block !important; }
                     .mobile-layout-container { display: none !important; }
@@ -655,7 +668,15 @@ function PgxPage2Inner() {
                         z-index: 20;
                     }
                     .main-room-wrapper {
+                        height: 100vh !important;
+                        min-height: 100vh !important;
                         overflow-y: auto !important;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                }
+                @media (max-width: 1023px) {
+                    body:has(input:focus) .billing-overlay-pill {
+                        display: none !important;
                     }
                 }
             `}</style>
@@ -1419,34 +1440,7 @@ function PgxPage2Inner() {
                         )}
 
                         {/* Mobile Wallet pill matching mockup */}
-                        <div style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            background: "hsla(270,40%,12%,0.8)",
-                            border: `1.5px solid ${GOLD}`,
-                            borderRadius: "14px",
-                            padding: "4px 8px 4px 10px",
-                            boxShadow: `0 0 10px hsla(42,90%,55%,0.2)`,
-                        }}>
-                            <span style={{ color: GOLD, fontSize: "13px" }}>🪙</span>
-                            <span style={{ color: FG, fontWeight: 700, fontSize: "12px", fontFamily: "'Montserrat', sans-serif" }}>
-                                {cs()}{balance}
-                            </span>
-                            <div style={{
-                                width: "20px", height: "20px",
-                                borderRadius: "50%",
-                                background: `linear-gradient(135deg, ${PINK}, ${PURPLE})`,
-                                color: "#fff",
-                                display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
-                                fontSize: "12px", fontWeight: 800,
-                                marginLeft: "4px",
-                                cursor: "pointer",
-                                boxShadow: "0 0 8px hsla(320,100%,65%,0.3)"
-                            }}>
-                                +
-                            </div>
-                        </div>
+                        <WalletPill compact className="mobile-wallet-pill-custom" />
                     </div>
                 </div>
 
@@ -1481,21 +1475,6 @@ function PgxPage2Inner() {
                             )}
                         </div>
 
-                        {/* Floating hearts animation */}
-                        {floatingHearts.map(h => (
-                            <span
-                                key={h.id}
-                                className="mobile-heart-float"
-                                style={{
-                                    left: `${h.left}%`,
-                                    filter: `drop-shadow(0 0 8px ${PINK})`,
-                                    color: PINK
-                                }}
-                            >
-                                ❤️
-                            </span>
-                        ))}
-
                         {/* LIVE & Viewer Badge */}
                         <div style={{ position: "absolute", top: "12px", left: "12px", zIndex: 10, display: "flex", alignItems: "center", gap: "6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", borderRadius: "9999px", padding: "4px 10px" }}>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 800, color: PINK }}>
@@ -1529,6 +1508,23 @@ function PgxPage2Inner() {
                             {creatorName}
                         </div>
                     </div>
+
+                    {/* Floating hearts container (aligned with video but without overflow constraints) */}
+                    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 25 }}>
+                        {floatingHearts.map(h => (
+                            <span
+                                key={h.id}
+                                className="mobile-heart-float"
+                                style={{
+                                    left: `${h.left}%`,
+                                    filter: `drop-shadow(0 0 8px ${PINK})`,
+                                    color: PINK
+                                }}
+                            >
+                                ❤️
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Mobile Buy A Drink */}
@@ -1543,7 +1539,7 @@ function PgxPage2Inner() {
                     </div>
 
                     {/* Horizontal scroll drink menu */}
-                    <div className="pg2-scroll" style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "6px", width: "100%", scrollSnapType: "x mandatory" }}>
+                    <div className="pg2-scroll mobile-contain-region" style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "6px", width: "100%", scrollSnapType: "x mandatory" }}>
                         {drinks.map((drink: any) => {
                             const id = drink.id || drink.name;
                             const isThisBuying = buying === id;
@@ -1697,7 +1693,7 @@ function PgxPage2Inner() {
                     )}
 
                     {/* Scrollable messages container */}
-                    <div className="pg2-scroll" style={{ flex: 1, overflowY: "auto", minHeight: "140px", maxHeight: "200px", paddingRight: "4px", marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <div className="pg2-scroll mobile-contain-region" style={{ flex: 1, overflowY: "auto", minHeight: "140px", maxHeight: "200px", paddingRight: "4px", marginBottom: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
                         {filteredMessages.length === 0 ? (
                             <div style={{ textAlign: "center", color: MUTED, fontSize: "11px", padding: "12px 0" }}>No messages found in this view. 👋</div>
                         ) : (
@@ -1758,6 +1754,8 @@ function PgxPage2Inner() {
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                                onFocus={() => setIsChatFocused(true)}
+                                onBlur={() => setIsChatFocused(false)}
                                 style={{
                                     flex: 1,
                                     background: "transparent",
@@ -1819,6 +1817,8 @@ function PgxPage2Inner() {
                                         value={customReqText}
                                         onChange={(e) => setCustomReqText(e.target.value.slice(0, 50))}
                                         rows={2}
+                                        onFocus={() => setIsChatFocused(true)}
+                                        onBlur={() => setIsChatFocused(false)}
                                         style={{
                                             width: "100%",
                                             borderRadius: "6px",
@@ -1980,102 +1980,104 @@ function PgxPage2Inner() {
                 </div>
 
                 {/* Mobile Sticky Bottom Row */}
-                <div style={{
-                    position: "fixed",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: "hsla(270,50%,6%,0.95)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                    borderTop: `1.5px solid hsla(280,60%,45%,0.25)`,
-                    padding: "10px 12px 14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "8px",
-                    zIndex: 40,
-                    boxShadow: "0 -8px 24px rgba(0,0,0,0.5)"
-                }}>
-                    {/* Custom Tip */}
+                {!isChatFocused && (
                     <div style={{
+                        position: "fixed",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: "hsla(270,50%,6%,0.95)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        borderTop: `1.5px solid hsla(280,60%,45%,0.25)`,
+                        padding: "10px 12px 14px",
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
-                        background: "hsla(270,30%,18%,0.4)",
-                        border: "1px solid hsla(280,60%,45%,0.3)",
-                        borderRadius: "10px",
-                        padding: "4px 8px",
-                        flex: 1,
-                        maxWidth: "110px"
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        zIndex: 40,
+                        boxShadow: "0 -8px 24px rgba(0,0,0,0.5)"
                     }}>
-                        <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}</span>
-                        <input
-                            type="number"
-                            placeholder="Tip"
-                            value={tipAmount}
-                            onChange={(e) => setTipAmount(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
-                            style={{
-                                background: "transparent",
-                                border: "none",
-                                outline: "none",
-                                color: FG,
-                                fontSize: "11px",
-                                width: "40px",
-                                fontWeight: 700,
-                                fontFamily: "'Montserrat', sans-serif"
-                            }}
-                        />
-                        <button
-                            onClick={handleCustomTip}
-                            disabled={!tipAmount}
-                            style={{ background: "none", border: "none", color: GOLD, cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", padding: 0 }}
-                        >
-                            ➔
-                        </button>
-                    </div>
-
-                    {/* Private 1-on-1 */}
-                    <button
-                        onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
-                        disabled={!!buying || !!privateCall.callState}
-                        style={{
-                            flex: 1.5,
+                        {/* Custom Tip */}
+                        <div style={{
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            background: `linear-gradient(135deg, ${PURPLE}, ${PINK})`,
-                            border: `1.5px solid ${PINK}`,
+                            gap: "4px",
+                            background: "hsla(270,30%,18%,0.4)",
+                            border: "1px solid hsla(280,60%,45%,0.3)",
                             borderRadius: "10px",
-                            padding: "8px 10px",
-                            color: "#fff",
-                            fontSize: "10px",
-                            fontWeight: 800,
-                            cursor: "pointer",
-                            boxShadow: `0 0 15px hsla(320,100%,65%,0.3)`
-                        }}
-                    >
-                        <Phone style={{ width: "12px", height: "12px", fill: "#fff" }} />
-                        PRIVATE Call - {cs()}{PRIVATE_CALL_PRICE}
-                    </button>
+                            padding: "4px 8px",
+                            flex: 1,
+                            maxWidth: "110px"
+                        }}>
+                            <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}</span>
+                            <input
+                                type="number"
+                                placeholder="Tip"
+                                value={tipAmount}
+                                onChange={(e) => setTipAmount(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleCustomTip()}
+                                style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    outline: "none",
+                                    color: FG,
+                                    fontSize: "11px",
+                                    width: "40px",
+                                    fontWeight: 700,
+                                    fontFamily: "'Montserrat', sans-serif"
+                                }}
+                            />
+                            <button
+                                onClick={handleCustomTip}
+                                disabled={!tipAmount}
+                                style={{ background: "none", border: "none", color: GOLD, cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", padding: 0 }}
+                            >
+                                ➔
+                            </button>
+                        </div>
 
-                    {/* Billing Status overlay / timer */}
-                    <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        background: "rgba(0,0,0,0.4)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: "10px",
-                        padding: "6px 8px"
-                    }}>
-                        <span style={{ fontSize: "10px", color: MUTED }}>⏱️ 0m</span>
-                        <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}0</span>
-                        <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: MUTED, cursor: "pointer" }}>✕</span>
+                        {/* Private 1-on-1 */}
+                        <button
+                            onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
+                            disabled={!!buying || !!privateCall.callState}
+                            style={{
+                                flex: 1.5,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "6px",
+                                background: `linear-gradient(135deg, ${PURPLE}, ${PINK})`,
+                                border: `1.5px solid ${PINK}`,
+                                borderRadius: "10px",
+                                padding: "8px 10px",
+                                color: "#fff",
+                                fontSize: "10px",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                boxShadow: `0 0 15px hsla(320,100%,65%,0.3)`
+                            }}
+                        >
+                            <Phone style={{ width: "12px", height: "12px", fill: "#fff" }} />
+                            PRIVATE Call - {cs()}{PRIVATE_CALL_PRICE}
+                        </button>
+
+                        {/* Billing Status overlay / timer */}
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            background: "rgba(0,0,0,0.4)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "10px",
+                            padding: "6px 8px"
+                        }}>
+                            <span style={{ fontSize: "10px", color: MUTED }}>⏱️ 0m</span>
+                            <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}0</span>
+                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: MUTED, cursor: "pointer" }}>✕</span>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Per-minute billing overlay */}
