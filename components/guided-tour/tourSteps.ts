@@ -132,9 +132,9 @@ const creatorSteps: TourStep[] = [
   {
     target: "subscription-settings",
     icon: "💎",
-    title: "Subscription Pricing",
+    title: "Content & Subscription Pricing",
     content:
-      "Set your weekly and monthly subscription prices. Fans pay to access your exclusive content and premium rooms.",
+      "Manage subscriber content and pricing in one place. Upload exclusive photos, videos, and posts for your supporters, and set custom weekly or monthly subscription rates for fans to unlock access.",
     placement: "bottom",
   },
   {

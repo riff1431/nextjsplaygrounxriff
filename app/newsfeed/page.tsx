@@ -726,14 +726,14 @@ export default function NewsFeedPage() {
 
                         {/* ── Left Sidebar ── */}
                         <aside className="hidden lg:block lg:w-56 shrink-0">
-                            <div className="lg:sticky lg:top-20 space-y-4">
+                            <div className="lg:sticky lg:top-20 h-[calc(100vh-112px)]">
                                 {/* Browse Room */}
-                                <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14),0_0_56px_rgba(59,130,246,0.08)]">
+                                <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14),0_0_56px_rgba(59,130,246,0.08)] h-full flex flex-col relative overflow-hidden">
                                     <div className="pointer-events-none absolute inset-0 opacity-55">
                                         <div className="absolute -inset-12 blur-3xl bg-[radial-gradient(circle_at_25%_20%,rgba(255,0,200,0.30),transparent_55%),radial-gradient(circle_at_80%_35%,rgba(0,230,255,0.22),transparent_60%)]" />
                                     </div>
-                                    <div className="relative">
-                                        <div className="space-y-2">
+                                    <div className="relative flex flex-col justify-between flex-1 min-h-0">
+                                        <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
                                             {ROOM_LINKS.filter((room) => activeStatuses[room.roomType] !== false).map((room) => {
                                                 return (
                                                     <button
@@ -821,8 +821,8 @@ export default function NewsFeedPage() {
                                         </div>
 
                                         {/* Quick Links */}
-                                        <div className="mt-6 space-y-2">
-                                            <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start" onClick={() => router.push("/account/profile")}>
+                                        <div className="mt-4 pt-4 border-t border-white/5 space-y-2 shrink-0">
+                                            <button className="w-full rounded-xl border border-cyan-300/90 bg-black px-3 py-2 text-sm text-cyan-200 hover:bg-cyan-500/10 inline-flex items-center gap-2 justify-start animate-none" onClick={() => router.push("/account/profile")}>
                                                 <User className="w-4 h-4" /> My Profile
                                             </button>
                                              <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")}>
@@ -1011,9 +1011,9 @@ export default function NewsFeedPage() {
 
                         {/* ── Right Sidebar: Trending / Suggestions ── */}
                         <aside className="w-full lg:w-72 shrink-0 hidden xl:block">
-                            <div className="lg:sticky lg:top-20 space-y-4">
+                            <div className="lg:sticky lg:top-20 h-[calc(100vh-112px)] flex flex-col gap-4">
                                 {/* Quick Stats */}
-                                <div className="rounded-2xl border border-blue-500/20 bg-black p-4">
+                                <div className="rounded-2xl border border-blue-500/20 bg-black p-4 shrink-0">
                                     <h3 className="text-sm font-bold text-blue-200 flex items-center gap-2 mb-3">
                                         <Sparkles className="w-4 h-4 text-blue-400" />
                                         Feed Stats
@@ -1035,7 +1035,7 @@ export default function NewsFeedPage() {
                                 </div>
 
                                 {/* Featured Creators - Auto-scroll bottom-to-top */}
-                                <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14)]">
+                                <div className="rounded-2xl border border-pink-500/25 bg-black p-4 shadow-[0_0_24px_rgba(236,72,153,0.14)] flex-1 flex flex-col min-h-0 overflow-hidden">
                                     <style>{`
                                         @keyframes scrollUp {
                                             0% { transform: translateY(0); }
@@ -1043,9 +1043,10 @@ export default function NewsFeedPage() {
                                         }
                                         .trending-scroll-container {
                                             overflow: hidden;
-                                            /* Show 8 items: each item ~52px (py-2 + gap) */
-                                            max-height: 416px;
                                             position: relative;
+                                            flex: 1;
+                                            min-height: 0;
+                                            height: 100%;
                                         }
                                         .trending-scroll-container::before,
                                         .trending-scroll-container::after {
@@ -1072,7 +1073,7 @@ export default function NewsFeedPage() {
                                             animation-play-state: paused;
                                         }
                                     `}</style>
-                                    <h3 className="text-sm font-bold text-pink-200 flex items-center gap-2 mb-4">
+                                    <h3 className="text-sm font-bold text-pink-200 flex items-center gap-2 mb-4 shrink-0">
                                         <TrendingUp className="w-4 h-4 text-pink-500" />
                                         Featured Creators
                                     </h3>

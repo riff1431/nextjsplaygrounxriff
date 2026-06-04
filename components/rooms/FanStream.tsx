@@ -23,12 +23,22 @@ interface FanStreamProps {
     collabCreators?: { id: string, name: string, avatarUrl?: string }[];
 }
 
+function toNumericUid(input: string | number): number {
+    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+        hash = hash >>> 0;
+    }
+    return hash || 1;
+}
+
 export default function FanStream({ appId, channelName, uid, hostId, hostAvatarUrl, hostName, collabCreators, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
-    const [stringUid, setStringUid] = useState<string>(String(uid));
+    const [numericUid, setNumericUid] = useState<number>(0);
     const client = useRTCClient();
 
-    // Fetch Token + string UID
+    // Fetch Token + numeric UID
     useEffect(() => {
         let mounted = true;
         async function fetchToken() {
@@ -49,7 +59,7 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                 } else {
                     setToken(null);
                 }
-                if (data.stringUid) setStringUid(data.stringUid);
+                if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e) {
                 console.error("FanStream: Failed to fetch token", e);
                 if (mounted) setToken(null); // default to App ID only
@@ -68,10 +78,10 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
         }
     }, [client]);
 
-    // Join as audience — only when token has resolved (null = App ID only, string = with token)
-    const isReady = token !== undefined;
+    // Join as audience — only when token has resolved (null = App ID only, number = with token)
+    const isReady = token !== undefined && numericUid > 0;
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: stringUid },
+        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
         isReady
     );
 
@@ -167,11 +177,12 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                     let displayName = `Creator ${idx + 1}`;
                     let isHost = false;
                     
-                    if (hostId && user.uid === String(hostId)) {
+                    const hostNumericUid = hostId ? toNumericUid(hostId) : null;
+                    if (hostNumericUid && Number(user.uid) === hostNumericUid) {
                         displayName = hostName || 'Creator';
                         isHost = true;
                     } else if (collabCreators) {
-                        const collab = collabCreators.find(c => String(c.id) === String(user.uid));
+                        const collab = collabCreators.find(c => toNumericUid(c.id) === Number(user.uid));
                         if (collab) displayName = collab.name;
                     }
 

@@ -154,6 +154,73 @@ function TruthOrDareCreatorContent() {
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
     const [mobileStudioTab, setMobileStudioTab] = useState("requests");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [requestsUnread, setRequestsUnread] = useState(0);
+
+    useEffect(() => {
+        if (mobileStudioTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [mobileStudioTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        const fetchInitialCounts = async () => {
+            let q = supabase
+                .from("truth_dare_requests")
+                .select("id", { count: "exact", head: true })
+                .eq("room_id", roomId)
+                .eq("status", "pending");
+            if (activeSessionId) q = q.eq("session_id", activeSessionId);
+            const { count } = await q;
+            if (count !== null) {
+                setRequestsUnread(count);
+            }
+        };
+        fetchInitialCounts();
+
+        const channel = supabase
+            .channel(`unread-badges-tod-${roomId}`)
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "chat_messages", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    if (activeSessionId && newMsg.session_id !== activeSessionId) return;
+                    if (mobileStudioTab !== "chat") {
+                        setChatUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "truth_dare_requests", filter: `room_id=eq.${roomId}` },
+                async () => {
+                    let q = supabase
+                        .from("truth_dare_requests")
+                        .select("id", { count: "exact", head: true })
+                        .eq("room_id", roomId)
+                        .eq("status", "pending");
+                    if (activeSessionId) q = q.eq("session_id", activeSessionId);
+                    const { count } = await q;
+                    if (count !== null) {
+                        setRequestsUnread(count);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, activeSessionId, mobileStudioTab]);
+
+    const mappedTabs = TOD_STUDIO_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        return tab;
+    });
     // Agora remote users from the host's CreatorStream — used to render collab streams in invite slots
     const [agoraRemoteUsers, setAgoraRemoteUsers] = useState<any[]>([]);
     const handleRemoteUsersChange = useCallback((users: any[]) => {
@@ -1865,7 +1932,7 @@ function TruthOrDareCreatorContent() {
                     {/* Mobile Tab Bar for Studio — only show when session is live */}
                     {isSessionLive && (
                         <MobileStudioTabs
-                            tabs={TOD_STUDIO_TABS}
+                            tabs={mappedTabs}
                             activeTab={mobileStudioTab}
                             onTabChange={setMobileStudioTab}
                             accentHsl="330, 80%, 55%"

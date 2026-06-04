@@ -27,19 +27,94 @@ const FLASH_DROP_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
 ];
 
-/** Inner component that renders the live studio (only when sessionId is present) */
 function FlashdropCreatorStudio() {
     const { user } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
+    const supabase = createClient();
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("board");
 
+    const [chatUnread, setChatUnread] = useState(0);
+    const [requestsUnread, setRequestsUnread] = useState(0);
+
+    useEffect(() => {
+        if (mobileTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (mobileTab === "requests") {
+            setRequestsUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        const fetchInitialCounts = async () => {
+            let q = supabase
+                .from("flash_drop_requests")
+                .select("id, content")
+                .eq("room_id", roomId)
+                .eq("status", "pending");
+            if (sessionId) q = q.eq("session_id", sessionId);
+            const { data } = await q;
+            if (data) {
+                const count = data.filter(r => !r.content.includes('Impulse') && !r.content.includes('Reaction') && !r.content.includes('Purchased Pack')).length;
+                setRequestsUnread(count);
+            }
+        };
+        fetchInitialCounts();
+
+        const channel = supabase
+            .channel(`unread-badges-flash-drop-${roomId}`)
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "room_chat_messages", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    if (sessionId && newMsg.session_id !== sessionId) return;
+                    if (mobileTab !== "chat") {
+                        setChatUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` },
+                async () => {
+                    let q = supabase
+                        .from("flash_drop_requests")
+                        .select("id, content")
+                        .eq("room_id", roomId)
+                        .eq("status", "pending");
+                    if (sessionId) q = q.eq("session_id", sessionId);
+                    const { data } = await q;
+                    if (data) {
+                        const count = data.filter(r => !r.content.includes('Impulse') && !r.content.includes('Reaction') && !r.content.includes('Purchased Pack')).length;
+                        setRequestsUnread(count);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, sessionId, mobileTab]);
+
+    const mappedTabs = FLASH_DROP_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        return tab;
+    });
+
     useEffect(() => {
         if (!user) return;
-        const supabase = createClient();
         async function findRoom() {
             if (sessionId) {
                 const { data: session } = await supabase
@@ -242,7 +317,7 @@ function FlashdropCreatorStudio() {
 
             {/* Mobile Tab Bar */}
             <MobileStudioTabs
-                tabs={FLASH_DROP_TABS}
+                tabs={mappedTabs}
                 activeTab={mobileTab}
                 onTabChange={setMobileTab}
                 accentHsl="170, 80%, 50%"

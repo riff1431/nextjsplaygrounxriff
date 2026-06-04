@@ -33,10 +33,20 @@ interface FanProfile {
     avatar_url: string | null;
 }
 
+function toNumericUid(input: string | number): number {
+    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+        hash = hash >>> 0;
+    }
+    return hash || 1;
+}
+
 export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName, onRemoteUsersChange }: CreatorStreamProps) {
     const supabase = createClient();
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [stringUid, setStringUid] = useState<string>(String(uid));
+    const [numericUid, setNumericUid] = useState<number>(0);
     const [isStreaming, setIsStreaming] = useState(true);
     const client = useRTCClient();
 
@@ -85,27 +95,37 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 return;
             }
 
-            // remoteUsers uid comes as string/number based on join method
-            // We expect string UUIDs for fans
-            const fanIds = remoteUsers.map(u => String(u.uid));
-
-            // Avoid re-fetching if we already have these profiles?
-            // For simplicity, just fetch current list to keep it synced.
             try {
+                // Fetch room participants to get their UUIDs
+                const { data: participants } = await supabase
+                    .from('room_participants')
+                    .select('user_id')
+                    .eq('room_id', channelName);
+
+                if (!participants || participants.length === 0) {
+                    setFans([]);
+                    return;
+                }
+
+                const userIds = participants.map(p => p.user_id).filter(Boolean);
+
                 const { data } = await supabase
                     .from('profiles')
                     .select('id, username, avatar_url')
-                    .in('id', fanIds);
+                    .in('id', userIds);
 
                 if (data) {
-                    setFans(data);
+                    // Match remoteUsers (numeric) to profiles (UUIDs hashed to numeric)
+                    const matched = data.filter(p =>
+                        remoteUsers.some(u => Number(u.uid) === toNumericUid(p.id))
+                    );
+                    setFans(matched);
                 }
             } catch (e) {
                 console.error("Error fetching fan profiles:", e);
             }
         }
 
-        // Debounce slightly or just run
         fetchFanProfiles();
     }, [remoteUsers.length, JSON.stringify(remoteUsers.map(u => u.uid))]);
 
@@ -186,7 +206,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 } else {
                     setToken(null);
                 }
-                if (data.stringUid) setStringUid(data.stringUid);
+                if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e: any) {
                 console.error("Failed to fetch token", e);
                 if (mounted) setError(e.message || "Failed to load studio token.");
@@ -197,11 +217,11 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     }, [channelName, uid]);
 
     // Join & Publish
-    console.log("CreatorStream: Joining with UID:", stringUid);
+    console.log("CreatorStream: Joining with UID:", numericUid);
 
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: stringUid },
-        token !== undefined
+        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        token !== undefined && numericUid > 0
     );
 
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);

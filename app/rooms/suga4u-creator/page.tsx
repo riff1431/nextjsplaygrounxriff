@@ -40,11 +40,84 @@ const Suga4UCreatorPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("sessionId");
+    const supabase = createClient();
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+
+    const [chatUnread, setChatUnread] = useState(0);
+    const [requestsUnread, setRequestsUnread] = useState(0);
+
+    useEffect(() => {
+        if (mobileTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (mobileTab === "requests") {
+            setRequestsUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        const fetchInitialRequests = async () => {
+            let q = supabase
+                .from("suga_paid_requests")
+                .select("id", { count: "exact", head: true })
+                .eq("room_id", roomId)
+                .eq("status", "pending");
+            if (sessionId) q = q.eq("session_id", sessionId);
+            const { count } = await q;
+            if (count !== null) setRequestsUnread(count);
+        };
+        fetchInitialRequests();
+
+        const channel = supabase
+            .channel(`unread-badges-suga4u-${roomId}`)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "suga_activity_events",
+                filter: `room_id=eq.${roomId}`
+            }, (payload) => {
+                const newEvent = payload.new as any;
+                if (sessionId && newEvent.session_id !== sessionId) return;
+                if (newEvent.type === "CHAT" && mobileTab !== "chat") {
+                    setChatUnread(prev => prev + 1);
+                }
+            })
+            .on("postgres_changes", {
+                event: "*",
+                schema: "public",
+                table: "suga_paid_requests",
+                filter: `room_id=eq.${roomId}`
+            }, async () => {
+                let q = supabase
+                    .from("suga_paid_requests")
+                    .select("id", { count: "exact", head: true })
+                    .eq("room_id", roomId)
+                    .eq("status", "pending");
+                if (sessionId) q = q.eq("session_id", sessionId);
+                const { count } = await q;
+                if (count !== null) setRequestsUnread(count);
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, sessionId, mobileTab]);
+
+    const mappedTabs = SUGA4U_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        return tab;
+    });
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "creator");
@@ -69,7 +142,6 @@ const Suga4UCreatorPage = () => {
 
     useEffect(() => {
         if (!user || !sessionId) return;
-        const supabase = createClient();
         async function findRoom() {
             // Fetch room_id from the session (most reliable)
             const { data: session } = await supabase
@@ -315,7 +387,7 @@ const Suga4UCreatorPage = () => {
 
             {/* Mobile Tab Bar */}
             <MobileStudioTabs
-                tabs={SUGA4U_TABS}
+                tabs={mappedTabs}
                 activeTab={mobileTab}
                 onTabChange={setMobileTab}
                 accentHsl="340, 75%, 55%"

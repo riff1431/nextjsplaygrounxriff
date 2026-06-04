@@ -37,6 +37,73 @@ const CreatorBarLoungeInner = () => {
     const [showExitModal, setShowExitModal] = useState(false);
     const [showIncomingCallsPanel, setShowIncomingCallsPanel] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [requestsUnread, setRequestsUnread] = useState(0);
+
+    useEffect(() => {
+        if (mobileTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+
+        const fetchInitialCounts = async () => {
+            let q = supabase
+                .from("bar_lounge_requests")
+                .select("id", { count: "exact", head: true })
+                .eq("room_id", roomId)
+                .eq("status", "pending");
+            if (sessionId) q = q.eq("session_id", sessionId);
+            const { count } = await q;
+            if (count !== null) {
+                setRequestsUnread(count);
+            }
+        };
+        fetchInitialCounts();
+
+        const channel = supabase
+            .channel(`unread-badges-bar-lounge-${roomId}`)
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "bar_lounge_messages", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    if (sessionId && newMsg.session_id !== sessionId) return;
+                    if (mobileTab !== "chat") {
+                        setChatUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "bar_lounge_requests", filter: `room_id=eq.${roomId}` },
+                async () => {
+                    let q = supabase
+                        .from("bar_lounge_requests")
+                        .select("id", { count: "exact", head: true })
+                        .eq("room_id", roomId)
+                        .eq("status", "pending");
+                    if (sessionId) q = q.eq("session_id", sessionId);
+                    const { count } = await q;
+                    if (count !== null) {
+                        setRequestsUnread(count);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, sessionId, mobileTab]);
+
+    const mappedTabs = BAR_LOUNGE_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        return tab;
+    });
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId || null, user?.id || null, "creator");
@@ -228,7 +295,7 @@ const CreatorBarLoungeInner = () => {
 
             {/* Mobile Tab Bar */}
             <MobileStudioTabs
-                tabs={BAR_LOUNGE_TABS}
+                tabs={mappedTabs}
                 activeTab={mobileTab}
                 onTabChange={setMobileTab}
                 accentHsl="45, 90%, 55%"

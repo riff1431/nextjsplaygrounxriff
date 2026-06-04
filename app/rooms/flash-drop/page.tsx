@@ -31,6 +31,11 @@ const FAN_TABS: MobileStudioTab[] = [
 
 export default function FlashDropsRoomPreview() {
     const [mobileTab, setMobileTab] = useState("board");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [boardUnread, setBoardUnread] = useState(0);
+
+
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const urlRoomId = searchParams.get("roomId");
@@ -63,6 +68,68 @@ export default function FlashDropsRoomPreview() {
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (mobileTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (mobileTab === "board") {
+            setBoardUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+        const supabase = createClient();
+
+        const channel = supabase
+            .channel(`unread-badges-fan-flash-drop-${roomId}`)
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "room_chat_messages", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    if (urlSessionId && newMsg.session_id !== urlSessionId) return;
+                    if (mobileTab !== "chat") {
+                        setChatUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "flash_drops", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const drop = payload.new as any;
+                    if (drop.status === 'Live' && mobileTab !== "board") {
+                        setBoardUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "flash_drops", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const drop = payload.new as any;
+                    if (drop.status === 'Live' && mobileTab !== "board") {
+                        setBoardUnread((prev) => prev + 1);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, urlSessionId, mobileTab]);
+
+    const mappedTabs = FAN_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "board") return { ...tab, badge: boardUnread };
+        return tab;
+    });
 
     useEffect(() => {
         if (!urlSessionId) {
@@ -624,7 +691,7 @@ export default function FlashDropsRoomPreview() {
 
                 {/* Mobile Tab Bar */}
                 <MobileStudioTabs
-                    tabs={FAN_TABS}
+                    tabs={mappedTabs}
                     activeTab={mobileTab}
                     onTabChange={setMobileTab}
                     accentHsl="330, 100%, 55%"

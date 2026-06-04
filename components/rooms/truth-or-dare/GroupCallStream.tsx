@@ -100,13 +100,23 @@ function Tile({ name, avatarUrl, isLocal, isSpeaking, roleBadge, children }: {
     );
 }
 
+function toNumericUid(input: string | number): number {
+    if (typeof input === 'number') return Math.abs(input) % 0x7FFFFFFF || 1;
+    let hash = 5381;
+    for (let i = 0; i < input.length; i++) {
+        hash = ((hash << 5) + hash) ^ input.charCodeAt(i);
+        hash = hash >>> 0;
+    }
+    return hash || 1;
+}
+
 // ─── Inner component (lives inside AgoraRTCProvider) ─────────────────────────
 function GroupCallStreamInner({
     appId, channelName, uid, role, onLeave,
     localDisplayName = 'You', participantFanIds = [], creatorId,
 }: GroupCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [stringUid, setStringUid] = useState<string>(String(uid));
+    const [numericUid, setNumericUid] = useState<number>(0);
     const [micEnabled, setMicEnabled] = useState(true);
     const [camEnabled, setCamEnabled] = useState(true);
     const [speakingUids, setSpeakingUids] = useState<Set<string | number>>(new Set());
@@ -142,29 +152,6 @@ function GroupCallStreamInner({
             .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [participantFanIds.join(','), creatorId]);
-
-    // ── Dynamic profile fetch for unknown remote UIDs ──────────────────────────
-    // Handles late-joiners or participants not in the initial participantFanIds list
-    const remoteUsers = useRemoteUsers();
-    useEffect(() => {
-        const remoteUids = remoteUsers.map(u => String(u.uid));
-        const missingIds = remoteUids.filter(uid => !profiles[uid]);
-        if (!missingIds.length) return;
-        createClient()
-            .from('profiles')
-            .select('id, full_name, username, avatar_url')
-            .in('id', missingIds)
-            .then(({ data }) => {
-                if (!data || !data.length) return;
-                setProfiles(prev => {
-                    const updated = { ...prev };
-                    data.forEach(p => { updated[p.id] = { name: p.full_name || p.username || 'User', avatarUrl: p.avatar_url || null }; });
-                    return updated;
-                });
-            })
-            .catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [remoteUsers.length]);
 
     // ── Local tracks ───────────────────────────────────────────────────────────
     const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
@@ -213,27 +200,26 @@ function GroupCallStreamInner({
             .then(data => {
                 if (!mounted) return;
                 if (data.token !== undefined) setToken(data.token);
-                if (data.stringUid) setStringUid(data.stringUid);
-                else setStringUid(String(uid));
+                if (data.numericUid) setNumericUid(data.numericUid);
             })
-            .catch(() => { if (mounted) { setToken(null); setStringUid(String(uid)); } });
+            .catch(() => { if (mounted) { setToken(null); setNumericUid(0); } });
         return () => { mounted = false; };
     }, [channelName, uid]);
 
-    const isReady = token !== undefined && !!stringUid;
+    const isReady = token !== undefined && numericUid > 0;
 
     // ── Join + Publish ─────────────────────────────────────────────────────────
-    useJoin({ appid: appId, channel: channelName, token: token ?? null, uid: stringUid }, isReady);
+    useJoin({ appid: appId, channel: channelName, token: token ?? null, uid: numericUid }, isReady);
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(Boolean);
     usePublish(tracksToPublish as any, isReady && tracksToPublish.length > 0);
 
-    // ── Remote users (already declared above for dynamic profile fetch) ───────
-    // const remoteUsers = useRemoteUsers(); — moved up next to profile fetch
+    // ── Remote users
+    const remoteUsers = useRemoteUsers();
 
     // Debug log (dev only)
     useEffect(() => {
-        console.log(`[GroupCall] channel=${channelName} mode=rtc remoteUsers=${remoteUsers.length} uid=${stringUid} remoteUids=${remoteUsers.map(u => String(u.uid).slice(0, 8)).join(',')}`);
-    }, [remoteUsers.length, channelName, stringUid]);
+        console.log(`[GroupCall] channel=${channelName} mode=rtc remoteUsers=${remoteUsers.length} uid=${numericUid} remoteUids=${remoteUsers.map(u => String(u.uid).slice(0, 8)).join(',')}`);
+    }, [remoteUsers.length, channelName, numericUid]);
 
     // ── Grid calculation ───────────────────────────────────────────────────────
     const total = remoteUsers.length + 1;
@@ -241,20 +227,20 @@ function GroupCallStreamInner({
     const rows = Math.ceil(total / cols);
 
     // ── UID-based name resolver for remote tiles ──────────────────────────────
-    // Each participant joins Agora with their Supabase UUID as the string UID,
-    // so remoteUser.uid IS the Supabase user ID — we look up profiles directly.
+    // Match remote users (using numeric user.uid) against the profiles map (by computing toNumericUid(uuid))
     const getRemoteProfile = (remoteUid: string | number): { name: string; avatarUrl: string | null; roleBadge: 'creator' | 'fan' } => {
-        const uidStr = String(remoteUid);
+        const uidNum = Number(remoteUid);
         // Check if this is the creator
-        if (creatorId && uidStr === creatorId) {
+        if (creatorId && toNumericUid(creatorId) === uidNum) {
             const p = profiles[creatorId];
             return p
                 ? { name: p.name, avatarUrl: p.avatarUrl, roleBadge: 'creator' }
                 : { name: 'Creator', avatarUrl: null, roleBadge: 'creator' };
         }
-        // Fan — look up by UID
-        if (profiles[uidStr]) {
-            return { name: profiles[uidStr].name, avatarUrl: profiles[uidStr].avatarUrl, roleBadge: 'fan' };
+        // Fan — look up by UUID to numeric UID matching
+        const matchedFanId = participantFanIds.find(id => toNumericUid(id) === uidNum);
+        if (matchedFanId && profiles[matchedFanId]) {
+            return { name: profiles[matchedFanId].name, avatarUrl: profiles[matchedFanId].avatarUrl, roleBadge: 'fan' };
         }
         return { name: 'User', avatarUrl: null, roleBadge: 'fan' };
     };
@@ -262,7 +248,7 @@ function GroupCallStreamInner({
     // ── Connecting state ───────────────────────────────────────────────────────
     if (!isReady) {
         return (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0a0a10', gap: 16 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', background: '#0a0a10', gap: 16, width: '100%', height: '100%' }}>
                 <div style={{ width: 36, height: 36, border: '2px solid rgba(6,182,212,0.25)', borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Connecting…</span>
             </div>
@@ -284,7 +270,7 @@ function GroupCallStreamInner({
             }}>
 
                 {/* Local tile — manual vidRef.play() (same as working PrivateCallStream) */}
-                <Tile name={localDisplayName} isLocal isSpeaking={speakingUids.has(stringUid)} roleBadge={role === 'creator' ? 'creator' : 'fan'}>
+                <Tile name={localDisplayName} isLocal isSpeaking={speakingUids.has(numericUid)} roleBadge={role === 'creator' ? 'creator' : 'fan'}>
                     {/* vidRef div is always in DOM so track.play() target is stable */}
                     <div
                         ref={vidRef}
