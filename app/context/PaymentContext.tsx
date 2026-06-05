@@ -81,7 +81,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                 .eq("key", "payment_config")
                 .single();
 
-            if (data?.value) {
+            if (data?.value && !error) {
                 // Merge with default to ensure structure exists
                 setConfig(prev => ({
                     ...prev,
@@ -90,9 +90,57 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                     bank: { ...prev.bank, ...data.value.bank },
                     riskpaygo: { ...prev.riskpaygo, ...data.value.riskpaygo },
                 }));
+                setLoading(false);
+                return;
             }
         } catch (error) {
-            console.error("Error fetching payment config:", error);
+            console.warn("Could not load from admin_settings, falling back to public payment_settings table:", error);
+        }
+
+        // Fallback: Fetch from public columns of payment_settings table
+        try {
+            const { data: dbRows, error: dbErr } = await supabase
+                .from("payment_settings")
+                .select("provider, is_enabled, config");
+
+            if (dbRows && dbRows.length > 0 && !dbErr) {
+                setConfig(prev => {
+                    const newConfig = { ...prev };
+                    dbRows.forEach((row: any) => {
+                        const prov = row.provider as keyof PaymentConfig;
+                        if (prov === 'stripe') {
+                            newConfig.stripe.enabled = row.is_enabled;
+                            if (row.config?.public_key) {
+                                newConfig.stripe.publicKey = row.config.public_key;
+                            }
+                        }
+                        else if (prov === 'paypal') {
+                            newConfig.paypal.enabled = row.is_enabled;
+                            if (row.config?.client_id) {
+                                newConfig.paypal.clientId = row.config.client_id;
+                            }
+                        }
+                        else if (prov === 'bank') {
+                            newConfig.bank.enabled = row.is_enabled;
+                            newConfig.bank.bankName = row.config?.bank_name || newConfig.bank.bankName;
+                            newConfig.bank.accountName = row.config?.account_name || newConfig.bank.accountName;
+                            newConfig.bank.accountNumber = row.config?.account_number || newConfig.bank.accountNumber;
+                            newConfig.bank.routingNumber = row.config?.routing_number || row.config?.swift || newConfig.bank.routingNumber;
+                            newConfig.bank.instructions = row.config?.instructions || newConfig.bank.instructions;
+                        }
+                        else if (prov === 'riskpaygo') {
+                            newConfig.riskpaygo.enabled = row.is_enabled;
+                            newConfig.riskpaygo.apiUrl = row.config?.api_url || newConfig.riskpaygo.apiUrl;
+                            newConfig.riskpaygo.returnUrl = row.config?.return_url || newConfig.riskpaygo.returnUrl;
+                            newConfig.riskpaygo.cancelUrl = row.config?.cancel_url || newConfig.riskpaygo.cancelUrl;
+                            newConfig.riskpaygo.mode = row.config?.mode || newConfig.riskpaygo.mode;
+                        }
+                    });
+                    return newConfig;
+                });
+            }
+        } catch (err) {
+            console.error("Fatal error loading fallback config:", err);
         } finally {
             setLoading(false);
         }
@@ -103,18 +151,18 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
         setConfig(updated);
 
         try {
-            const { error } = await supabase
-                .from("admin_settings")
-                .upsert({
-                    key: "payment_config",
-                    value: updated as any,
-                    updated_at: new Date().toISOString()
-                });
-
-            if (error) throw error;
+            const res = await fetch('/api/admin/payments/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updated)
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                throw new Error(data.error || 'Failed to update payment settings');
+            }
         } catch (error) {
             console.error("Failed to persist payment config:", error);
-            // Optionally revert logic here
+            throw error;
         }
     };
 

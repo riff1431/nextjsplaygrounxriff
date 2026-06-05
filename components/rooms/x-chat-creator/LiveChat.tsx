@@ -19,6 +19,7 @@ interface ChatMsg {
     status: string;
     creator_reply: string | null;
     created_at: string;
+    session_id?: string | null;
 }
 
 const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string | null }) => {
@@ -51,7 +52,8 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
 
         // Subscribe to real-time changes
         const channelName = sessionId ? `x-chat-${roomId}-${sessionId}` : `x-chat-${roomId}`;
-        const filterStr = sessionId ? `session_id=eq.${sessionId}` : `room_id=eq.${roomId}`;
+        // Always filter by room_id in subscription to ensure reliable real-time delivery
+        const filterStr = `room_id=eq.${roomId}`;
 
         const channel = supabase
             .channel(channelName)
@@ -61,9 +63,12 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 table: "x_chat_messages",
                 filter: filterStr,
             }, (payload: any) => {
+                const newMsg = payload.new as ChatMsg;
+                // If we're scoped to a session, ignore messages from other sessions
+                if (sessionId && newMsg.session_id !== sessionId) return;
                 setMessages((prev) => {
-                    if (prev.some(m => m.id === (payload.new as ChatMsg).id)) return prev;
-                    return [...prev, payload.new as ChatMsg];
+                    if (prev.some(m => m.id === newMsg.id)) return prev;
+                    return [...prev, newMsg];
                 });
             })
             .on("postgres_changes", {
@@ -73,6 +78,8 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
                 filter: filterStr,
             }, (payload: any) => {
                 const updated = payload.new as ChatMsg;
+                // If we're scoped to a session, ignore updates from other sessions
+                if (sessionId && updated.session_id !== sessionId) return;
                 setMessages((prev) => prev.map(m => m.id === updated.id ? updated : m));
             })
             .subscribe();
@@ -125,7 +132,17 @@ const LiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string |
             status: "Answered",
         };
         if (sessionId) insertPayload.session_id = sessionId;
-        await supabase.from("x_chat_messages").insert(insertPayload);
+        const { data: insertedMsg } = await supabase
+            .from("x_chat_messages")
+            .insert(insertPayload)
+            .select()
+            .single();
+        if (insertedMsg) {
+            setMessages((prev) => {
+                if (prev.some(m => m.id === insertedMsg.id)) return prev;
+                return [...prev, insertedMsg as ChatMsg];
+            });
+        }
         setMessage("");
     };
 

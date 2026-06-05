@@ -183,100 +183,15 @@ export default function PaymentGatewayManager() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Save to admin_settings via context (legacy support)
+            // Save to admin_settings and sync to payment_settings via context API route
             await updateConfig(formData);
-
-            // Also sync to payment_settings table for API access
-            await syncToPaymentSettings(formData);
-
             toast.success("Payment gateway settings updated");
         } catch (error) {
+            console.error("Failed to save settings:", error);
             toast.error("Failed to save settings");
         } finally {
             setSaving(false);
         }
-    };
-
-    // Sync to payment_settings table for Stripe & RiskPayGo API routes
-    const syncToPaymentSettings = async (data: typeof formData) => {
-        const supabase = (await import("@/utils/supabase/client")).createClient();
-
-        // Sync Stripe
-        await supabase
-            .from('payment_settings')
-            .upsert({
-                provider: 'stripe',
-                is_enabled: data.stripe.enabled,
-                config: { public_key: data.stripe.publicKey },
-                secret_config: { secret_key: data.stripe.secretKey },
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'provider' });
-
-        // Sync PayPal
-        await supabase
-            .from('payment_settings')
-            .upsert({
-                provider: 'paypal',
-                is_enabled: data.paypal.enabled,
-                config: { client_id: data.paypal.clientId },
-                secret_config: {},
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'provider' });
-
-        // Sync Bank
-        await supabase
-            .from('payment_settings')
-            .upsert({
-                provider: 'bank',
-                is_enabled: data.bank.enabled,
-                config: {
-                    bank_name: data.bank.bankName,
-                    account_name: data.bank.accountName,
-                    account_number: data.bank.accountNumber,
-                    routing_number: data.bank.routingNumber,
-                    instructions: data.bank.instructions
-                },
-                secret_config: {},
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'provider' });
-
-        // Sync RiskPayGo securely, preventing placeholder overwrite
-        const { data: existingRiskSettings } = await supabase
-            .from('payment_settings')
-            .select('secret_config')
-            .eq('provider', 'riskpaygo')
-            .single();
-
-        const existingSecrets = existingRiskSettings?.secret_config || {};
-
-        const finalApiToken = (data.riskpaygo.apiToken && !data.riskpaygo.apiToken.includes('••'))
-            ? data.riskpaygo.apiToken
-            : existingSecrets.api_token || "";
-
-        const finalWebhookSecret = (data.riskpaygo.webhookSecret && !data.riskpaygo.webhookSecret.includes('••'))
-            ? data.riskpaygo.webhookSecret
-            : existingSecrets.webhook_secret || "";
-
-        const finalMerchantId = data.riskpaygo.merchantId || existingSecrets.merchant_id || "";
-
-        await supabase
-            .from('payment_settings')
-            .upsert({
-                provider: 'riskpaygo',
-                is_enabled: data.riskpaygo.enabled,
-                config: {
-                    api_url: data.riskpaygo.apiUrl,
-                    return_url: data.riskpaygo.returnUrl,
-                    cancel_url: data.riskpaygo.cancelUrl,
-                    mode: data.riskpaygo.mode
-                },
-                secret_config: {
-                    merchant_id: finalMerchantId,
-                    api_token: finalApiToken,
-                    webhook_secret: finalWebhookSecret
-                },
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'provider' });
     };
 
     const toggleGateway = (gateway: 'stripe' | 'paypal' | 'bank' | 'riskpaygo') => {

@@ -340,7 +340,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                                 <Shield className="w-5 h-5" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-bold text-sm text-white">RiskPayGo Checkout</div>
+                                                <div className="font-bold text-sm text-white">PayGo Checkout</div>
                                                 <div className="text-[11px] text-gray-400 truncate">Secure Direct Checkout (Global)</div>
                                             </div>
                                             {method === 'riskpaygo' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
