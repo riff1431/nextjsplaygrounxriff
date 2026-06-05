@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { Crown, Sparkles, MessageCircle, BarChart3, Users, DollarSign, Play, Archive, Plus, Lock, MessageSquare, Zap, Wine, Video, Trophy, Settings, ChevronDown, User, LogOut, Upload, ArrowLeft } from "lucide-react";
+import { Crown, Sparkles, MessageCircle, BarChart3, Users, DollarSign, Play, Archive, Plus, Lock, MessageSquare, Zap, Wine, Video, Trophy, Settings, ChevronDown, User, LogOut, Upload, ArrowLeft, Dices } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import CreatePostModal from "@/components/posts/CreatePostModal";
@@ -112,6 +112,7 @@ export default function CreatorDashboard() {
             'x-chat': '/rooms/x-chat-creator',
             'flash-drop': '/rooms/flash-drop-creator',
             'bar-lounge': '/rooms/bar-lounge-creator',
+            'casino': '/rooms/casino-creator',
             'truth-or-dare': '/creator/rooms/truth-or-dare',
             suga4u: '/rooms/suga4u-creator',
         };
@@ -346,6 +347,27 @@ export default function CreatorDashboard() {
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Bar Lounge (Host)</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage VIP tables and drink menu.</p>
+                                </button>
+                            );
+                        })()}
+
+                        {/* Casino Lounge */}
+                        {(() => {
+                            const isInactive = activeStatuses['casino'] === false;
+                            return (
+                                <button 
+                                    onClick={() => !isInactive && router.push('/rooms/casino-creator')} 
+                                    className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-red-500/50 hover:bg-gray-900/60'}`}
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Dices className="w-12 h-12 text-gray-800 group-hover:text-red-900/50 transition transform group-hover:scale-110" /></div>
+                                    <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">
+                                        {isInactive ? "Disabled" : "New"}
+                                    </span>
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-red-500/20 text-red-400 group-hover:bg-red-500 group-hover:text-white'}`}>
+                                        <Dices className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-100 mb-1">Casino Lounge (Host)</h3>
+                                    <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Host multiplayer Baccarat sessions and deal cards in real-time.</p>
                                 </button>
                             );
                         })()}

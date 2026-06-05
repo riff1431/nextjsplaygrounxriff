@@ -593,6 +593,7 @@ export default function SubscriptionsPage() {
         { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
         { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
         { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
+        { label: "Casino Lounge", key: "casino", icon: <Dices className="w-4 h-4" />, tone: "red", route: "/rooms/casino-sessions", roomType: "casino" },
         { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
         { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
     ];

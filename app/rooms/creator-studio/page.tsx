@@ -51,18 +51,16 @@ const CreatorStudioDashboardPage = () => {
                     <CsKycSkippedPopup />
                 )}
 
-                <div data-tour="earnings-dashboard">
-                    <CsStatsBar
-                        tipsEarned={stats.tipsEarned}
-                        giftsCount={stats.giftsCount}
-                        totalFollowers={stats.totalFollowers}
-                        activeRooms={stats.activeRooms}
-                        subscribers={stats.subscribers}
-                        subscriptionEarnings={stats.subscriptionEarnings}
-                        isLoading={isLoading}
-                        kycLocked={kycLocked}
-                    />
-                </div>
+                <CsStatsBar
+                    tipsEarned={stats.tipsEarned}
+                    giftsCount={stats.giftsCount}
+                    totalFollowers={stats.totalFollowers}
+                    activeRooms={stats.activeRooms}
+                    subscribers={stats.subscribers}
+                    subscriptionEarnings={stats.subscriptionEarnings}
+                    isLoading={isLoading}
+                    kycLocked={kycLocked}
+                />
                 <div data-tour="live-streaming">
                     <CsCreatorStudio kycLocked={kycLocked} />
                 </div>
