@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Clock, XCircle, Loader2, UserPlus, Pin, Mic, Megaphone, HelpCircle, Shirt, MessageSquare, Eye, Zap } from "lucide-react";
+import { ArrowLeft, Clock, XCircle, Loader2, UserPlus, Pin, Mic, Megaphone, HelpCircle, Shirt, MessageSquare, Eye, Zap, Info } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -148,6 +148,7 @@ const XChatRoom = () => {
     const [hostName, setHostName]   = useState("Loading...");
 
     const [isMobile, setIsMobile]   = useState(false);
+    const [activeTab, setActiveTab] = useState<"chat" | "boosts" | "access" | "info">("chat");
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 767);
@@ -437,6 +438,13 @@ const XChatRoom = () => {
     }
 
     if (isMobile) {
+        const allMobileReactions = [
+            ...reactionsRow1,
+            ...stickersRow1,
+            ...reactionsRow2,
+            ...stickersRow2,
+        ];
+
         return (
             <ProtectRoute allowedRoles={["fan"]}>
                 <div className="xchat-mobile-shell">
@@ -529,19 +537,8 @@ const XChatRoom = () => {
                         {/* 2. REACTIONS & TIPS */}
                         <div className="mobile-reactions-card">
                             <span className="mobile-section-label">Reactions & Tips</span>
-                            <div className="mobile-reactions-row-1">
-                                {mobileRow1.map(r => (
-                                    <MobileReactionButton 
-                                        key={r.type} 
-                                        emoji={r.emoji} 
-                                        label={r.label} 
-                                        price={r.price} 
-                                        onClick={() => setPending({ label: r.label, price: r.price, reactionType: r.type, emoji: r.emoji })} 
-                                    />
-                                ))}
-                            </div>
-                            <div className="mobile-reactions-row-2">
-                                {mobileRow2.map(r => (
+                            <div className="mobile-reactions-scroll-row">
+                                {allMobileReactions.map(r => (
                                     <MobileReactionButton 
                                         key={r.type} 
                                         emoji={r.emoji} 
@@ -553,82 +550,157 @@ const XChatRoom = () => {
                             </div>
                         </div>
 
-                        {/* 3. LIVE CHAT PANEL */}
-                        <div className="mobile-chat-container">
-                            <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} isMobile={true} />
-                        </div>
+                        {/* 3. TABBED CONTENT CONTAINER */}
+                        <div className="mobile-tab-content-container">
+                            {activeTab === "chat" && (
+                                <div className="mobile-chat-container">
+                                    <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} isMobile={true} />
+                                </div>
+                            )}
+                            
+                            {activeTab === "boosts" && (
+                                <div className="mobile-boosts-scroll-area">
+                                    <div className="mobile-boost-card">
+                                        <div className="mobile-boost-header">
+                                            <Eye size={12} className="mobile-boost-header-icon" />
+                                            <span className="mobile-boost-title">Visibility Boosts</span>
+                                        </div>
+                                        <div className="mobile-boost-list">
+                                            {visibilityBoosts.map(b => (
+                                                <button 
+                                                    key={b.type} 
+                                                    onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })} 
+                                                    className="mobile-boost-row"
+                                                >
+                                                    <div className="mobile-boost-row-left">
+                                                        <div className={`mobile-boost-icon-circle ${b.colorClass || ''}`}>
+                                                            <b.icon size={13} className="mobile-animated-icon" />
+                                                        </div>
+                                                        <span className="mobile-boost-label">{b.label}</span>
+                                                    </div>
+                                                    <span className="mobile-boost-price">{cs()}{b.price}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
-                        {/* 4. VISIBILITY BOOSTS & DIRECT ACCESS */}
-                        <div className="mobile-boosts-container">
-                            {/* Visibility Boosts */}
-                            <div className="mobile-boost-card">
-                                <div className="mobile-boost-header">
-                                    <Eye size={12} className="mobile-boost-header-icon" />
-                                    <span className="mobile-boost-title">Visibility Boosts</span>
+                            {activeTab === "access" && (
+                                <div className="mobile-boosts-scroll-area">
+                                    <div className="mobile-boost-card">
+                                        <div className="mobile-boost-header">
+                                            <Zap size={12} className="mobile-boost-header-icon" />
+                                            <span className="mobile-boost-title">Direct Access</span>
+                                        </div>
+                                        <div className="mobile-boost-list">
+                                            {directAccess.map(d => (
+                                                <button 
+                                                    key={d.type} 
+                                                    onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })} 
+                                                    className="mobile-boost-row"
+                                                >
+                                                    <div className="mobile-boost-row-left">
+                                                        <div className={`mobile-boost-icon-circle ${d.colorClass || ''}`}>
+                                                            <d.icon size={13} className="mobile-animated-icon" />
+                                                        </div>
+                                                        <span className="mobile-boost-label">{d.label}</span>
+                                                    </div>
+                                                    <span className="mobile-boost-price">{cs()}{d.price}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="mobile-boost-list">
-                                    {visibilityBoosts.map(b => (
-                                        <button 
-                                            key={b.type} 
-                                            onClick={() => setPending({ label: b.label, price: b.price, reactionType: b.type })} 
-                                            className="mobile-boost-row"
-                                        >
-                                            <div className="mobile-boost-row-left">
-                                                <div className={`mobile-boost-icon-circle ${b.colorClass || ''}`}>
-                                                    <b.icon size={13} className="mobile-animated-icon" />
-                                                </div>
-                                                <span className="mobile-boost-label">{b.label}</span>
-                                            </div>
-                                            <span className="mobile-boost-price">{cs()}{b.price}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            )}
 
-                            {/* Direct Access */}
-                            <div className="mobile-boost-card">
-                                <div className="mobile-boost-header">
-                                    <Zap size={12} className="mobile-boost-header-icon" />
-                                    <span className="mobile-boost-title">Direct Access</span>
-                                </div>
-                                <div className="mobile-boost-list">
-                                    {directAccess.map(d => (
-                                        <button 
-                                            key={d.type} 
-                                            onClick={() => setPending({ label: d.label, price: d.price, reactionType: d.type })} 
-                                            className="mobile-boost-row"
-                                        >
-                                            <div className="mobile-boost-row-left">
-                                                <div className={`mobile-boost-icon-circle ${d.colorClass || ''}`}>
-                                                    <d.icon size={13} className="mobile-animated-icon" />
-                                                </div>
-                                                <span className="mobile-boost-label">{d.label}</span>
+                            {activeTab === "info" && (
+                                <div className="mobile-info-scroll-area">
+                                    <div className="mobile-host-info-card">
+                                        <div className="mobile-host-avatar-ring">
+                                            {hostAvatar ? (
+                                                <img src={hostAvatar} alt={hostName} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-4xl">✨</span>
+                                            )}
+                                        </div>
+                                        <h3 className="mobile-host-name-title">{hostName}</h3>
+                                        <p className="mobile-host-role-badge">Room Creator</p>
+                                        
+                                        <div className="mobile-info-divider" />
+                                        
+                                        <div className="mobile-info-stats">
+                                            <div className="mobile-info-stat-item">
+                                                <span className="stat-label">Session ID</span>
+                                                <span className="stat-value truncate max-w-[120px]">{urlSessionId || "N/A"}</span>
                                             </div>
-                                            <span className="mobile-boost-price">{cs()}{d.price}</span>
-                                        </button>
-                                    ))}
+                                            <div className="mobile-info-stat-item">
+                                                <span className="stat-label">Active Status</span>
+                                                <span className="stat-value text-green-400">Live</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mobile-info-actions">
+                                            {requestStatus === "none" && (
+                                                <button 
+                                                    onClick={sendRequest} 
+                                                    disabled={requestLoading}
+                                                    className="mobile-action-req-btn"
+                                                >
+                                                    {requestLoading ? <Loader2 className="animate-spin" size={14} /> : "Request to Chat"}
+                                                </button>
+                                            )}
+                                            {requestStatus === "pending" && (
+                                                <div className="mobile-info-status-pending">
+                                                    <Clock size={13} className="animate-pulse" /> Request Pending…
+                                                </div>
+                                            )}
+                                            {requestStatus === "accepted" && (
+                                                <div className="mobile-info-status-accepted">
+                                                    Active session in progress
+                                                </div>
+                                            )}
+                                            {requestStatus === "declined" && (
+                                                <div className="mobile-info-status-declined">
+                                                    Request Declined
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
                     {/* PERSISTENT BOTTOM NAVIGATION BAR */}
                     <nav className="mobile-bottom-nav">
-                        <button onClick={() => router.push("/home")} className="mobile-nav-item">
-                            <HomeIcon />
-                            <span className="mobile-nav-label">Home</span>
+                        <button 
+                            onClick={() => setActiveTab("chat")} 
+                            className={`mobile-nav-item ${activeTab === "chat" ? "active" : ""}`}
+                        >
+                            <MessageSquare size={18} className="mobile-nav-icon" />
+                            <span className="mobile-nav-label">Chat</span>
                         </button>
-                        <button onClick={() => router.push("/rooms/x-chat-sessions")} className="mobile-nav-item active">
-                            <RoomsIcon />
-                            <span className="mobile-nav-label">Rooms</span>
+                        <button 
+                            onClick={() => setActiveTab("boosts")} 
+                            className={`mobile-nav-item ${activeTab === "boosts" ? "active" : ""}`}
+                        >
+                            <Eye size={18} className="mobile-nav-icon" />
+                            <span className="mobile-nav-label">Boosts</span>
                         </button>
-                        <button onClick={() => router.push("/account/messages")} className="mobile-nav-item">
-                            <MessagesIcon />
-                            <span className="mobile-nav-label">Messages</span>
+                        <button 
+                            onClick={() => setActiveTab("access")} 
+                            className={`mobile-nav-item ${activeTab === "access" ? "active" : ""}`}
+                        >
+                            <Zap size={18} className="mobile-nav-icon" />
+                            <span className="mobile-nav-label">Direct Access</span>
                         </button>
-                        <button onClick={() => router.push("/account/profile")} className="mobile-nav-item">
-                            <ProfileIcon />
-                            <span className="mobile-nav-label">Profile</span>
+                        <button 
+                            onClick={() => setActiveTab("info")} 
+                            className={`mobile-nav-item ${activeTab === "info" ? "active" : ""}`}
+                        >
+                            <Info size={18} className="mobile-nav-icon" />
+                            <span className="mobile-nav-label">Room Info</span>
                         </button>
                     </nav>
 

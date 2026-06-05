@@ -2540,15 +2540,15 @@ body {
     background: rgba(255, 215, 0, 0.15);
   }
 
-  /* Body Scroll Area */
+  /* Body Scroll Area - non-scrolling shell */
   .mobile-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.6rem;
-    padding-bottom: calc(60px + env(safe-area-inset-bottom) + 0.75rem);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    padding-bottom: calc(52px + env(safe-area-inset-bottom) + 0.5rem);
     scrollbar-width: none;
   }
 
@@ -2712,11 +2712,12 @@ body {
 
   /* 2. Reactions & Tips Section */
   .mobile-reactions-card {
-    padding: 0.6rem;
+    padding: 0.5rem 0.6rem;
     border-radius: 12px;
     background: rgba(15, 15, 15, 0.6);
     border: 1.5px solid rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.01);
+    flex-shrink: 0;
   }
 
   .mobile-section-label {
@@ -2726,21 +2727,20 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     padding-left: 0.25rem;
   }
 
-  .mobile-reactions-row-1 {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.35rem;
-    margin-bottom: 0.35rem;
+  .mobile-reactions-scroll-row {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding: 0.1rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-
-  .mobile-reactions-row-2 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.35rem;
+  .mobile-reactions-scroll-row::-webkit-scrollbar {
+    display: none;
   }
 
   /* Button card style matching reference */
@@ -2749,14 +2749,15 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    padding: 0.35rem 0.25rem;
+    padding: 0.35rem 0.55rem;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
     border: 1.5px solid rgba(255, 255, 255, 0.06);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    min-width: 0;
+    min-width: max-content;
     text-align: left;
+    flex-shrink: 0;
   }
 
   .mobile-reaction-chip:active {
@@ -2799,7 +2800,7 @@ body {
     background: rgba(10, 10, 10, 0.6);
     border: 1.5px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
-    height: 360px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -3097,6 +3098,169 @@ body {
   .mobile-nav-item.active .mobile-nav-icon {
     transform: translateY(-1px);
     filter: drop-shadow(0 0 4px currentColor);
+  }
+
+  /* Tab and host info styles */
+  .mobile-tab-content-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+
+  .mobile-boosts-scroll-area, .mobile-info-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.25rem 0.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .mobile-host-info-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.7), rgba(0, 0, 0, 0.9));
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    margin: 1rem 0.5rem;
+  }
+
+  .mobile-host-avatar-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid hsl(45, 90%, 55%);
+    background: linear-gradient(135deg, hsl(45, 90%, 25%), hsl(35, 90%, 15%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    margin-bottom: 0.75rem;
+  }
+
+  .mobile-host-name-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.2rem;
+  }
+
+  .mobile-host-role-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: hsl(45, 90%, 55%);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgba(255, 215, 0, 0.15);
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    margin-bottom: 1.25rem;
+  }
+
+  .mobile-info-divider {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 1.25rem;
+  }
+
+  .mobile-info-stats {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .mobile-info-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    flex: 1;
+  }
+
+  .mobile-info-stat-item .stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .mobile-info-stat-item .stat-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .mobile-info-actions {
+    width: 100%;
+  }
+
+  .mobile-action-req-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 99px;
+    background: linear-gradient(90deg, hsl(45, 95%, 45%), hsl(45, 95%, 55%));
+    color: #000;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    transition: all 0.2s;
+  }
+
+  .mobile-action-req-btn:active {
+    transform: scale(0.97);
+    filter: brightness(0.9);
+  }
+
+  .mobile-info-status-pending {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    color: hsl(45, 90%, 55%);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .mobile-info-status-accepted {
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: rgb(74, 222, 128);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .mobile-info-status-declined {
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: rgb(248, 113, 113);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
   }
 }
 
