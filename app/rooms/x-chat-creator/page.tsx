@@ -183,7 +183,7 @@ const XChatCreatorPage = () => {
                 <div className="absolute inset-0 bg-background/20" />
 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col h-full min-h-[100dvh] lg:h-screen lg:overflow-hidden">
+                <div className="relative z-10 flex flex-col h-[100dvh] lg:h-screen lg:overflow-hidden overflow-hidden">
                     {/* Top Bar */}
                     <motion.header
                         initial={{ opacity: 0, y: -20 }}
@@ -198,7 +198,7 @@ const XChatCreatorPage = () => {
                             <span className="text-sm hidden sm:inline">Back</span>
                         </button>
                         <h1
-                            className="mx-auto text-lg sm:text-2xl md:text-3xl gold-text truncate px-16 sm:px-24"
+                            className="mx-auto text-lg sm:text-2xl md:text-3xl gold-text truncate px-16 sm:px-24 hidden sm:block"
                             style={{ fontFamily: "'Pacifico', cursive" }}
                         >
                             <span className="hidden sm:inline">Creators View for </span>X Chat
@@ -213,7 +213,7 @@ const XChatCreatorPage = () => {
                     </motion.header>
 
                     {/* Main layout */}
-                    <div className="flex-1 min-h-0 px-2 sm:px-3 pb-20 lg:pb-3 max-w-[1600px] mx-auto w-full overflow-y-auto lg:overflow-hidden">
+                    <div className="flex-1 min-h-0 px-2 sm:px-3 pb-16 lg:pb-3 max-w-[1600px] mx-auto w-full flex flex-col lg:block overflow-hidden">
                         {/* Desktop: 3-col grid */}
                         <div className="hidden lg:grid grid-cols-[400px_1fr_400px] gap-3 h-full">
                             {/* Left - Live Chat */}
@@ -270,11 +270,11 @@ const XChatCreatorPage = () => {
                         </div>
 
                         {/* Mobile: Stream always on top + tab content below */}
-                        <div className="lg:hidden flex flex-col gap-3 pt-2">
+                        <div className="lg:hidden flex flex-col gap-3 pt-2 flex-1 min-h-0 overflow-hidden">
                             {/* Stream — always visible at top */}
                             <div className="w-full shrink-0">
                                 <div
-                                    className="relative rounded-xl overflow-hidden aspect-square max-h-[360px] mx-auto"
+                                    className="relative rounded-xl overflow-hidden aspect-video mx-auto"
                                     style={{
                                         maxWidth: '600px',
                                         boxShadow: '0 0 30px rgba(255, 215, 0, 0.35), 0 0 60px rgba(255, 215, 0, 0.15)',
@@ -309,19 +309,19 @@ const XChatCreatorPage = () => {
 
                             {/* Tab content below stream */}
                             {mobileTab === "chat" && (
-                                <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 380px)" }}>
+                                <div className="w-full flex-1 min-h-0">
                                     <LiveChat roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
 
                             {mobileTab === "requests" && (
-                                <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 380px)" }}>
+                                <div className="w-full flex-1 min-h-0">
                                     <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
 
                             {mobileTab === "summary" && (
-                                <div className="w-full">
+                                <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4">
                                     <SummaryPanel roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
