@@ -274,7 +274,6 @@ export default function NewsFeedPage() {
 
     // Creators for story row
     const [creators, setCreators] = useState<Array<{ id: string; username: string; avatar_url: string | null }>>([]);
-    const [featuredCreators, setFeaturedCreators] = useState<Array<{ id: string; username: string; avatar_url: string | null }>>([]);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
 
     // Profile
@@ -338,7 +337,7 @@ export default function NewsFeedPage() {
         fetchUserData();
     }, [user]);
 
-    // Fetch creators for story row & featured creators
+    // Fetch creators for story row
     useEffect(() => {
         const fetchCreators = async () => {
             const { data } = await supabase
@@ -349,25 +348,7 @@ export default function NewsFeedPage() {
                 .limit(20);
             if (data) setCreators(data as any);
         };
-
-        const fetchFeaturedCreators = async () => {
-            const { data } = await supabase
-                .from("profiles")
-                .select(`
-                    id, 
-                    username, 
-                    avatar_url,
-                    creator_level_plans:creator_level_id!inner(name)
-                `)
-                .eq("role", "creator")
-                .eq("creator_level_plans.name", "elite")
-                .order("created_at", { ascending: false })
-                .limit(10);
-            if (data) setFeaturedCreators(data as any);
-        };
-
         fetchCreators();
-        fetchFeaturedCreators();
     }, []);
 
     // Fetch posts
@@ -488,7 +469,6 @@ export default function NewsFeedPage() {
         { label: "Confessions", icon: <Lock className="w-4 h-4" />, route: "/rooms/confessions-browse", color: "text-rose-400", border: "border-rose-400/90", glow: "shadow-[0_0_18px_rgba(255,55,95,0.85)]", hover: "hover:bg-rose-500/8", roomType: "confessions" },
         { label: "X Chat", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/x-chat-sessions", color: "text-lime-300", border: "border-lime-300/90", glow: "shadow-[0_0_18px_rgba(200,255,0,0.85)]", hover: "hover:bg-lime-500/8", roomType: "x-chat" },
         { label: "Bar Lounge", icon: <BarDrinkIcon className="w-4 h-4" />, route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8", roomType: "bar-lounge" },
-        { label: "Casino Lounge", icon: <Dices className="w-4 h-4" />, route: "/rooms/casino-sessions", color: "text-red-400", border: "border-red-400/90", glow: "shadow-[0_0_18px_rgba(255,50,50,0.85)]", hover: "hover:bg-red-500/8", roomType: "casino" },
         { label: "Truth or Dare", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8", roomType: "truth-or-dare" },
         { label: "Suga 4 U", icon: <Crown className="w-4 h-4" />, route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8", roomType: "suga-4-u" },
     ];
@@ -1100,7 +1080,7 @@ export default function NewsFeedPage() {
                                     <div className="trending-scroll-container">
                                         <div className="trending-scroll-inner">
                                             {/* Render 10 creators, duplicated for seamless loop */}
-                                            {[...featuredCreators.slice(0, 10), ...featuredCreators.slice(0, 10)].map((c, idx) => (
+                                            {[...creators.slice(0, 10), ...creators.slice(0, 10)].map((c, idx) => (
                                                 <button
                                                     key={`${c.id}-${idx}`}
                                                     onClick={() => router.push(`/profile/${c.id}`)}

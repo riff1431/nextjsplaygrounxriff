@@ -430,7 +430,6 @@ const CATS: Array<{
         { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
         { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
         { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
-        { label: "Casino Lounge", key: "casino", icon: <Dices className="w-4 h-4" />, tone: "red", route: "/rooms/casino-sessions", roomType: "casino" },
         { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
         { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
     ];
@@ -734,7 +733,6 @@ function HomeScreen({
     setQuery,
     rooms, // Received from parent
     posts, // New prop
-    featuredPosts,
     userId,
     subscribedCreatorIds,
     activeStatuses,
@@ -751,7 +749,6 @@ function HomeScreen({
     setQuery: React.Dispatch<React.SetStateAction<string>>;
     rooms: any[];
     posts: Post[];
-    featuredPosts: Post[];
     userId?: string;
     subscribedCreatorIds: Set<string>;
     activeStatuses: Record<string, boolean>;
@@ -1024,7 +1021,6 @@ function HomeScreen({
                                     {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
                                     {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
                                     {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
-                                    {activeStatuses["casino"] !== false && <option value="Casino Lounge">Casino Lounge</option>}
                                     {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
                                     {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
                                     {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
@@ -1072,7 +1068,7 @@ function HomeScreen({
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Featured Creators
                     </div>
 
-                    {featuredPosts.length === 0 ? (
+                    {posts.length === 0 ? (
                         <div className="text-center py-6 text-gray-500 text-sm">
                             No recent updates.
                         </div>
@@ -1124,7 +1120,7 @@ function HomeScreen({
                             <div className="creator-feed-scroll-viewport">
                                 <div className="creator-feed-scroll-track">
                                     {/* Render posts twice for seamless infinite loop */}
-                                    {[...featuredPosts, ...featuredPosts].map((post, idx) => (
+                                    {[...posts, ...posts].map((post, idx) => (
                                         <PostCard
                                             key={`${post.id}-feed-${idx}`}
                                             post={post as any}
@@ -1150,7 +1146,6 @@ export default function Home() {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
-    const [featuredPosts, setFeaturedPosts] = useState<Post[]>([]);
     const [iframeMenus, setIframeMenus] = useState<any[]>([]);
     const casinoMenu = useMemo(() => iframeMenus.find(m => m.name.toLowerCase().includes("casino")), [iframeMenus]);
     const otherIframeMenus = useMemo(() => iframeMenus.filter(m => !m.name.toLowerCase().includes("casino")), [iframeMenus]);
@@ -1189,15 +1184,11 @@ export default function Home() {
                     // fallback to activeCreators if DB fails
                     setRooms(activeCreators);
                 } else if (creatorsData && creatorsData.length > 0) {
-                    const levelIdToName: Record<string, "Rookie" | "Rising" | "Star" | "Elite"> = {
-                        "215761bd-6eb2-4aa0-a3f4-988a4b8d9ab5": "Rookie",
-                        "936cdba3-6ff9-4623-9276-867c9394db45": "Rising",
-                        "a71ccaf3-f559-4698-bd3a-540790aa7520": "Star",
-                        "389746b4-6b67-402f-a201-634ee6bdff71": "Elite"
-                    };
-
-                    const calculateLevel = (levelId: string): "Rookie" | "Rising" | "Star" | "Elite" => {
-                        return levelIdToName[levelId] || "Rookie";
+                    const calculateLevel = (count: number): "Rookie" | "Rising" | "Star" | "Elite" => {
+                        if (count >= 20) return "Elite";
+                        if (count >= 10) return "Star";
+                        if (count >= 3) return "Rising";
+                        return "Rookie";
                     };
 
                     const mapped: CreatorCard[] = (creatorsData as any[]).map((c) => {
@@ -1205,7 +1196,7 @@ export default function Home() {
                             id: c.id,
                             userId: c.id,
                             name: c.username || "Unknown Creator",
-                            level: calculateLevel(c.creator_level_id),
+                            level: calculateLevel(c.post_count || 0),
                             // Use tags from DB if available, else fallback
                             tags: (c.tags && c.tags.length > 0) ? c.tags : ["General"],
                             avatar_url: c.avatar_url,
@@ -1246,39 +1237,6 @@ export default function Home() {
                     }
                 } else {
                     setPosts(postsData as unknown as Post[]);
-                }
-
-                // 3. Fetch Featured Posts (Elite package only)
-                const { data: featuredPostsData, error: featuredError } = await supabase
-                    .from('posts')
-                    .select(`
-                        *,
-                        profiles!user_id!inner(
-                            id,
-                            username,
-                            avatar_url,
-                            role,
-                            creator_level_plans:creator_level_id!inner(
-                                id,
-                                name,
-                                display_name
-                            )
-                        )
-                    `)
-                    .eq('profiles.role', 'creator')
-                    .eq('profiles.creator_level_plans.name', 'elite')
-                    .not('media_url', 'is', null)
-                    .order('created_at', { ascending: false })
-                    .limit(10);
-
-                if (featuredError) {
-                    if (featuredError.message?.includes('AbortError') || (featuredError as any).name === 'AbortError') {
-                        // ignore
-                    } else {
-                        console.error("Error fetching featured posts:", featuredError);
-                    }
-                } else {
-                    setFeaturedPosts(featuredPostsData as unknown as Post[]);
                 }
 
             } catch (err: any) {
@@ -1906,7 +1864,6 @@ export default function Home() {
                                         {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
                                         {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
                                         {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
-                                        {activeStatuses["casino"] !== false && <option value="Casino Lounge">Casino Lounge</option>}
                                         {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
                                         {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
                                         {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
@@ -1936,7 +1893,6 @@ export default function Home() {
                     setQuery={setHomeQuery}
                     rooms={rooms}
                     posts={posts}
-                    featuredPosts={featuredPosts}
                     userId={user?.id}
                     subscribedCreatorIds={subscribedCreatorIds}
                     activeStatuses={activeStatuses}
@@ -2068,7 +2024,6 @@ export default function Home() {
                                     {activeStatuses["flash-drop"] !== false && <option value="Flash Drops">Flash Drops</option>}
                                     {activeStatuses["confessions"] !== false && <option value="Confessions">Confessions</option>}
                                     {activeStatuses["bar-lounge"] !== false && <option value="Bar Lounge">Bar Lounge</option>}
-                                    {activeStatuses["casino"] !== false && <option value="Casino Lounge">Casino Lounge</option>}
                                     {activeStatuses["truth-or-dare"] !== false && <option value="Truth or Dare">Truth or Dare</option>}
                                     {activeStatuses["suga-4-u"] !== false && <option value="Suga 4 U">Suga 4 U</option>}
                                     {activeStatuses["x-chat"] !== false && <option value="X Chat">X Chat</option>}
@@ -2205,7 +2160,7 @@ export default function Home() {
                     </div>
 
                     <div className="flex overflow-x-auto gap-3.5 px-4 pb-3 scrollbar-none">
-                        {rooms.filter((r) => r.level === "Elite").slice(0, 8).map((creator, idx) => {
+                        {rooms.slice(0, 8).map((creator, idx) => {
                             const isLive = idx === 0 || idx === 3 || idx === 5; // Simulates active live state
                             const levelColors = creator.level === "Elite" 
                                 ? "border-purple-500/40 text-purple-300 bg-purple-950/40"
