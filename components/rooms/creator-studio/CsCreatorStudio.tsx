@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Upload, MessageSquare, Monitor, Zap, Tv, Gamepad2, Heart, Trophy, Lock } from "lucide-react";
+import { Upload, MessageSquare, Monitor, Zap, Tv, Gamepad2, Heart, Trophy, Lock, Dices } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -143,6 +143,7 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
         { icon: <Tv size={20} />, title: "Bar Lounge", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)", link: "/rooms/bar-lounge-creator", roomType: "bar-lounge" },
         { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)", link: "/rooms/truth-or-dare-creator", roomType: "truth-or-dare" },
         { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", link: "/rooms/suga4u-creator", roomType: "suga-4-u" },
+        { icon: <Dices size={20} />, title: "Casino Lounge", description: "Host live table games and chat with players.", borderColor: "hsl(45, 95%, 50%)", link: "/rooms/casino", roomType: "casino" },
         { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", link: "/coming-soon", roomType: "competition" },
     ];
 

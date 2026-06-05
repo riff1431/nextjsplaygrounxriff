@@ -1,0 +1,269 @@
+// CasinoRoutes.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+type UserRole = "creator" | "fan";
+
+const mockUser = {
+  id: "user_123",
+  name: "JohnDoe",
+  role: "creator" as UserRole,
+};
+
+const lounges = [
+  {
+    id: "1",
+    tableName: "KingMike’s High Rollers",
+    creatorName: "KingMike",
+    gameType: "Blackjack",
+    minBet: 100,
+    maxBet: 10000,
+    startTime: "Live Now",
+    status: "LIVE",
+  },
+  {
+    id: "2",
+    tableName: "SophiaX VIP Lounge",
+    creatorName: "SophiaX",
+    gameType: "Baccarat",
+    minBet: 50,
+    maxBet: 5000,
+    startTime: "Live Now",
+    status: "LIVE",
+  },
+  {
+    id: "3",
+    tableName: "Ella’s Elite Room",
+    creatorName: "Ella",
+    gameType: "Roulette",
+    minBet: 25,
+    maxBet: 2500,
+    startTime: "20 mins",
+    status: "UPCOMING",
+  },
+];
+
+function Sidebar() {
+  return (
+    <aside className="w-[250px] min-h-screen bg-[#07020d] border-r border-pink-500/30 p-5 text-white">
+      <div className="text-3xl font-bold mb-8">
+        <span className="text-pink-500">PlayGround</span>
+        <span className="text-cyan-400">X</span>
+        <div className="text-sm text-pink-400">• Casino</div>
+      </div>
+
+      {[
+        "Home",
+        "Flash Drops",
+        "Confessions",
+        "X Chat",
+        "Bar Lounge",
+        "Truth or Dare",
+        "Suga 4 U",
+        "Casino",
+      ].map((item) => (
+        <div
+          key={item}
+          className={`px-4 py-3 mb-2 rounded-xl border ${
+            item === "Casino"
+              ? "border-yellow-400 bg-yellow-500/10 text-yellow-300"
+              : "border-white/10 text-gray-300"
+          }`}
+        >
+          {item}
+        </div>
+      ))}
+    </aside>
+  );
+}
+
+// 1. CLICK CASINO BUTTON PAGE
+export function CasinoEntryButton() {
+  const navigate = useNavigate();
+
+  const handleCasinoClick = () => {
+    if (mockUser.role === "creator") {
+      navigate("/casino/creator-choice");
+    } else {
+      navigate("/casino/lounges");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex bg-black text-white">
+      <Sidebar />
+
+      <main className="flex-1 p-10">
+        <div className="max-w-5xl mx-auto rounded-3xl border border-pink-500/40 bg-[#12051c] p-10">
+          <h1 className="text-4xl font-bold mb-4">
+            Welcome back, <span className="text-pink-400">{mockUser.name}</span>
+          </h1>
+
+          <p className="text-gray-300 mb-8">
+            Enter PlayGroundX Casino and join live creator-hosted tables.
+          </p>
+
+          <div className="grid grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-pink-500/40 bg-black/40 p-6">
+              <div className="text-pink-400 text-sm mb-2">LIVE NOW</div>
+              <h2 className="text-2xl font-bold">High Roller Club</h2>
+              <p className="text-gray-400 mt-2">Creator tables are active now.</p>
+            </div>
+
+            <button
+              onClick={handleCasinoClick}
+              className="rounded-2xl border border-pink-500/60 bg-gradient-to-br from-purple-700 to-pink-600 p-8 hover:scale-[1.02] transition"
+            >
+              <div className="text-6xl mb-4">🎲</div>
+              <h2 className="text-3xl font-black">ENTER CASINO</h2>
+            </button>
+
+            <div className="rounded-2xl border border-pink-500/40 bg-black/40 p-6">
+              <h2 className="text-xl font-bold">Balance</h2>
+              <div className="text-4xl font-black mt-3">$2,450.00</div>
+              <button className="mt-6 w-full py-3 rounded-xl bg-pink-600 font-bold">
+                Deposit
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// 2. CREATOR - PLAY OR HOST
+export function CreatorPlayOrHost() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      <Sidebar />
+
+      <main className="flex-1 flex items-center justify-center p-10">
+        <div className="w-full max-w-4xl rounded-3xl border border-pink-500/50 bg-[#100517] p-10">
+          <h1 className="text-4xl font-black text-center mb-3">
+            Welcome to PlayGroundX <span className="text-pink-500">Casino</span>
+          </h1>
+
+          <p className="text-center text-gray-300 mb-10">
+            What would you like to do?
+          </p>
+
+          <div className="grid grid-cols-2 gap-8">
+            <button
+              onClick={() => navigate("/casino/play")}
+              className="rounded-3xl border border-purple-500/60 bg-black/50 p-10 hover:bg-purple-900/30 transition"
+            >
+              <div className="text-7xl mb-6">▶️</div>
+              <h2 className="text-3xl font-black">PLAY</h2>
+              <p className="text-gray-400 mt-3">
+                Browse PGX Casino and play as a player.
+              </p>
+            </button>
+
+            <button
+              onClick={() => navigate("/casino/host-lobby")}
+              className="rounded-3xl border border-pink-500/60 bg-black/50 p-10 hover:bg-pink-900/30 transition"
+            >
+              <div className="text-7xl mb-6">👑</div>
+              <h2 className="text-3xl font-black">HOST</h2>
+              <p className="text-gray-400 mt-3">
+                Create your own table and host fans live.
+              </p>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// 3. CREATOR - HOST LOBBY
+export function CreatorHostLobby() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      <Sidebar />
+
+      <main className="flex-1 p-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-black">Creator Host Lobby</h1>
+            <p className="text-gray-400">
+              View existing tables and create your own live casino lounge.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate("/casino/create-lounge")}
+            className="px-6 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-black"
+          >
+            + Create New Table
+          </button>
+        </div>
+
+        <div className="flex gap-3 mb-6">
+          {["All Tables", "My Tables", "Scheduled", "Ended"].map((tab) => (
+            <button
+              key={tab}
+              className="px-5 py-3 rounded-xl border border-pink-500/40 bg-[#12051c]"
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-pink-500/40 bg-[#0d0613] overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-pink-500/10 text-pink-300">
+              <tr>
+                <th className="p-4">Table Name</th>
+                <th className="p-4">Creator</th>
+                <th className="p-4">Game</th>
+                <th className="p-4">Stakes</th>
+                <th className="p-4">Start Time</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {lounges.map((room) => (
+                <tr key={room.id} className="border-t border-white/10">
+                  <td className="p-4 font-bold">{room.tableName}</td>
+                  <td className="p-4 text-pink-400">{room.creatorName}</td>
+                  <td className="p-4">{room.gameType}</td>
+                  <td className="p-4">
+                    ${room.minBet} - ${room.maxBet}
+                  </td>
+                  <td className="p-4">{room.startTime}</td>
+                  <td className="p-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        room.status === "LIVE"
+                          ? "bg-green-500/20 text-green-400"
+                          : "bg-yellow-500/20 text-yellow-300"
+                      }`}
+                    >
+                      {room.status}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <button
+                      onClick={() => navigate(`/casino/lounge/${room.id}`)}
+                      className="px-4 py-2 rounded-lg bg-pink-600 font-bold"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  );
+}

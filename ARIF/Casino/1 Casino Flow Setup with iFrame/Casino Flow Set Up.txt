@@ -1,0 +1,32 @@
+Casino Flow Set Up!!
+
+Casino button
+If a Creator clicks on it then it goes to next page which asks Creator if they want to Play or Host.
+If fan clicks on casino button, then go straight to Play, can not host.
+
+Creator clicks Host then it goes to Creator Host Lobby where they see other tables, and can create a table with 
+Table name
+By Creator Name
+Game Type (maybe we get api of list of games to choose from and they select a table game specifically)
+$ Min - $ Max
+Start Time
+Duration
+Create Lounge button
+
+
+If any chooses to Play then it opens full screen iFrame of pgxcasino.com with only top border playgroundX
+USer scrolls pgxcasino.com, if they choose Creator lounges and choose a game from theat Creator Lobby to play then, it opens the game in next page which has iFrame left side pgxcasino table opened, right side has the pgx panel with video screen, tips, gifts, and chat lounge below.
+
+If they choose a game from normal room, not from Creator Lounge then it continues in the full iFrame pgxcasino.
+
+Fan must have a account for playgroundx to access the right panel and see the creator etc, so has to sign in or create account then it goes straight to that creator room.
+Must have a pgxcasino account to continue on the left side also.
+So 2 sign ins to act 2 independent wallets systems and chat systems etc.
+
+
+
+On Pgxcasino site, if user clicks Creator Lounge it goes Creator lobby and then they can expand view of a table to see details, then they click Enter the table a Creator hosted, it then takes them to PlayGroundX iFrame page, right side being the Creator Room with video screen, tips, gifts, chat lounge, and left side remains pgx table that creator is hosting.
+
+When a creator is finished hosting the room and she logs off, the right side can collapse if the user wants to continue the same room hosted by the casino since it runs 24/7, that way does not affect their bets when a creator leaves. So the iFrame collapses when she leaves.
+
+

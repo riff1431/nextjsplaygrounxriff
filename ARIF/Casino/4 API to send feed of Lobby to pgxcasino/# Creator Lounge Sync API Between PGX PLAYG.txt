@@ -1,0 +1,526 @@
+# Creator Lounge Sync API Between PlayGroundX and PGX Casino
+
+## Final Flow
+
+PlayGroundX Creator creates lounge
+→ PlayGroundX saves lounge
+→ PlayGroundX sends lounge to PGX Casino API
+→ PGX Casino displays lounge under Creator Lounges scroll section
+→ User clicks View All to open full Creator Lounge Directory
+→ User clicks a lounge card
+→ PGX Casino opens Creator Lounge Detail Page
+→ User clicks Join Creator Lounge
+→ User is redirected to PlayGroundX Creator Room
+→ PlayGroundX opens PGX Casino iframe on the left and Creator Panel on the right
+
+---
+
+# 1. PlayGroundX Creates Lounge
+
+## PlayGroundX Route
+
+POST /api/casino/lounges/create
+
+```ts
+import express from "express";
+import crypto from "crypto";
+
+const router = express.Router();
+
+router.post("/api/casino/lounges/create", async (req, res) => {
+  try {
+    const {
+      creatorId,
+      creatorName,
+      tableName,
+      gameType,
+      casinoGameId,
+      minBet,
+      maxBet,
+      startTime,
+      durationMinutes,
+      coverImageUrl,
+      creatorAvatarUrl,
+      description,
+      vipOnly,
+    } = req.body;
+
+    const loungeId = `pgx_lounge_${crypto.randomUUID()}`;
+
+    const lounge = {
+      loungeId,
+      creatorId,
+      creatorName,
+      tableName,
+      gameType,
+      casinoGameId,
+      minBet,
+      maxBet,
+      startTime,
+      durationMinutes,
+      coverImageUrl,
+      creatorAvatarUrl,
+      description,
+      status: "scheduled",
+      vipOnly: !!vipOnly,
+      playgroundxRoomUrl: `https://playgroundx.vip/casino/lounge/${loungeId}`,
+      iframeGameUrl: `https://pgxcasino.com/game/${casinoGameId}`,
+    };
+
+    // 1. Save lounge to PlayGroundX database
+    // await db.creatorLounges.create({ data: lounge });
+
+    // 2. Push lounge to PGX Casino
+    const pgxResponse = await fetch(
+      "https://pgxcasino.com/api/external/creator-lounges",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-PGX-API-Key": process.env.PGX_CASINO_API_KEY!,
+        },
+        body: JSON.stringify(lounge),
+      }
+    );
+
+    if (!pgxResponse.ok) {
+      throw new Error("Failed to sync lounge to PGX Casino");
+    }
+
+    res.json({
+      success: true,
+      lounge,
+    });
+  } catch (error) {
+    console.error("Create lounge error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Could not create creator lounge",
+    });
+  }
+});
+
+export default router;
+```
+
+---
+
+# 2. Payload Sent From PlayGroundX To PGX Casino
+
+```json
+{
+  "loungeId": "pgx_lounge_123",
+  "creatorId": "creator_456",
+  "creatorName": "SophiaX",
+  "tableName": "Diamond Dreams",
+  "gameType": "Roulette",
+  "casinoGameId": "roulette_live_001",
+  "minBet": 20,
+  "maxBet": 10000,
+  "startTime": "2026-06-04T20:00:00Z",
+  "durationMinutes": 120,
+  "coverImageUrl": "https://playgroundx.vip/uploads/lounge-cover.jpg",
+  "creatorAvatarUrl": "https://playgroundx.vip/uploads/sophia-avatar.jpg",
+  "description": "Join SophiaX live while she hosts roulette tables and chats with fans.",
+  "status": "scheduled",
+  "vipOnly": false,
+  "playgroundxRoomUrl": "https://playgroundx.vip/casino/lounge/pgx_lounge_123",
+  "iframeGameUrl": "https://pgxcasino.com/game/roulette_live_001"
+}
+```
+
+---
+
+# 3. PGX Casino Receives Lounge
+
+## PGX Casino Receiver API
+
+POST https://pgxcasino.com/api/external/creator-lounges
+
+```ts
+import express from "express";
+
+const router = express.Router();
+
+router.post("/api/external/creator-lounges", async (req, res) => {
+  try {
+    const apiKey = req.headers["x-pgx-api-key"];
+
+    if (apiKey !== process.env.PGX_CASINO_API_KEY) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const lounge = req.body;
+
+    // Save or update lounge in PGX Casino database
+    // await db.creatorLounges.upsert({
+    //   where: { loungeId: lounge.loungeId },
+    //   update: lounge,
+    //   create: lounge,
+    // });
+
+    res.json({
+      success: true,
+      message: "Creator lounge synced",
+      lounge,
+    });
+  } catch (error) {
+    console.error("PGX Casino lounge sync error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Could not sync creator lounge",
+    });
+  }
+});
+
+export default router;
+```
+
+---
+
+# 4. PGX Casino Homepage Creator Lounges Scroll
+
+## API
+
+GET https://pgxcasino.com/api/creator-lounges/featured
+
+```ts
+router.get("/api/creator-lounges/featured", async (req, res) => {
+  const lounges = await db.creatorLounges.findMany({
+    where: {
+      status: {
+        in: ["live", "scheduled"],
+      },
+    },
+    orderBy: [
+      { status: "asc" },
+      { startTime: "asc" },
+    ],
+    take: 8,
+  });
+
+  res.json({
+    success: true,
+    lounges,
+  });
+});
+```
+
+## Homepage Display
+
+Show this as a horizontal scroll section:
+
+Creator Lounges
+
+* Creator photo
+* Creator name
+* Table name
+* Game type
+* Min bet
+* Max bet
+* Live/Scheduled badge
+* Join / View button
+* View All button
+
+Important:
+
+The lounge card should NOT redirect directly to PlayGroundX.
+
+It should open the PGX Casino Creator Lounge Detail Page first.
+
+```tsx
+<button
+  onClick={() =>
+    window.location.href = `/creator-lounges/${lounge.loungeId}`
+  }
+>
+  View Lounge
+</button>
+```
+
+---
+
+# 5. PGX Casino View All Creator Lounges
+
+## API
+
+GET https://pgxcasino.com/api/creator-lounges
+
+```ts
+router.get("/api/creator-lounges", async (req, res) => {
+  const {
+    gameType,
+    status,
+    vipOnly,
+    search,
+  } = req.query;
+
+  const lounges = await db.creatorLounges.findMany({
+    where: {
+      ...(gameType && { gameType }),
+      ...(status && { status }),
+      ...(vipOnly && { vipOnly: vipOnly === "true" }),
+      ...(search && {
+        OR: [
+          { tableName: { contains: String(search), mode: "insensitive" } },
+          { creatorName: { contains: String(search), mode: "insensitive" } },
+        ],
+      }),
+    },
+    orderBy: {
+      startTime: "asc",
+    },
+  });
+
+  res.json({
+    success: true,
+    lounges,
+  });
+});
+```
+
+## View All Page
+
+Route:
+
+/creator-lounges
+
+Show:
+
+* Search
+* Filter by game type
+* Filter by live/scheduled
+* Filter by VIP only
+* Sort by newest, live now, highest stakes, lowest min bet
+* Grid of all Creator Lounge cards
+
+Each card opens:
+
+/creator-lounges/:loungeId
+
+Not PlayGroundX yet.
+
+---
+
+# 6. PGX Casino Creator Lounge Detail Page
+
+This is the extra step before going to PlayGroundX.
+
+## Page Route
+
+GET /creator-lounges/:loungeId
+
+Example:
+
+https://pgxcasino.com/creator-lounges/pgx_lounge_123
+
+## API
+
+GET https://pgxcasino.com/api/creator-lounges/:loungeId
+
+```ts
+router.get("/api/creator-lounges/:loungeId", async (req, res) => {
+  try {
+    const lounge = await db.creatorLounges.findUnique({
+      where: {
+        loungeId: req.params.loungeId,
+      },
+    });
+
+    if (!lounge) {
+      return res.status(404).json({
+        success: false,
+        message: "Creator lounge not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      lounge,
+    });
+  } catch (error) {
+    console.error("Get creator lounge detail error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Could not load creator lounge",
+    });
+  }
+});
+```
+
+## Detail Page Should Show
+
+Creator photo
+Creator name
+Table name
+Game type
+Min bet
+Max bet
+Start time
+Duration
+Live/Scheduled status
+Current viewers
+Description
+VIP only badge if needed
+Join Creator Lounge button
+
+Example layout:
+
+SophiaX
+Diamond Dreams
+Roulette
+$20 - $10,000
+LIVE NOW
+1,248 viewers
+
+Join SophiaX while she hosts roulette tables and chats with fans.
+
+[ Join Creator Lounge ]
+
+---
+
+# 7. Join Creator Lounge Button
+
+Only this button redirects to PlayGroundX.
+
+```tsx
+<button
+  onClick={() => {
+    window.location.href = lounge.playgroundxRoomUrl;
+  }}
+>
+  Join Creator Lounge
+</button>
+```
+
+Destination:
+
+https://playgroundx.vip/casino/lounge/pgx_lounge_123
+
+---
+
+# 8. PlayGroundX Creator Room Opens
+
+Route:
+
+/casino/lounge/:loungeId
+
+PlayGroundX loads the lounge details using:
+
+GET /api/casino/lounges/:loungeId
+
+Then renders:
+
+Left side:
+
+PGX Casino iframe table
+
+Right side:
+
+Creator video
+Tips
+Gifts
+Reactions
+Chat Lounge
+
+Example:
+
+```tsx
+<iframe
+  src={lounge.iframeGameUrl}
+  className="w-full h-full border-0"
+  allow="fullscreen; autoplay; camera; microphone"
+/>
+```
+
+---
+
+# 9. Final User Flow
+
+## From PlayGroundX
+
+Creator clicks Casino
+→ Play or Host
+→ Host
+→ Create Lounge
+→ Lounge is saved on PlayGroundX
+→ Lounge is pushed to PGX Casino
+→ Lounge appears on PGX Casino Creator Lounges
+
+## From PGX Casino
+
+User visits PGX Casino
+→ Sees Creator Lounges scroll
+→ Clicks View All
+→ Opens full Creator Lounge Directory
+→ Clicks a lounge
+→ Opens Creator Lounge Detail Page on PGX Casino
+→ Clicks Join Creator Lounge
+→ Redirects to PlayGroundX Creator Room
+→ PGX Casino game opens inside iframe
+→ PlayGroundX creator panel appears on the right
+
+---
+
+# 10. Important Rule
+
+Do not send users directly from PGX Casino lounge cards to PlayGroundX.
+
+Wrong:
+
+```tsx
+window.location.href = lounge.playgroundxRoomUrl;
+```
+
+Correct:
+
+```tsx
+window.location.href = `/creator-lounges/${lounge.loungeId}`;
+```
+
+Then on the Creator Lounge Detail Page:
+
+```tsx
+window.location.href = lounge.playgroundxRoomUrl;
+```
+
+---
+
+# 11. Architecture Summary
+
+PlayGroundX controls:
+
+* Creator accounts
+* Fan accounts
+* Creator video
+* Tips
+* Gifts
+* Reactions
+* Chat Lounge
+* Creator lounge creation
+* Creator room page
+
+PGX Casino controls:
+
+* Casino account
+* Casino wallet
+* Deposits
+* Withdrawals
+* Betting engine
+* Casino games
+* Casino transactions
+* Creator Lounge discovery pages
+
+One-way iframe architecture:
+
+PGX Casino redirects users to PlayGroundX Creator Room.
+
+PlayGroundX embeds PGX Casino game/table inside iframe.
+
+The casino betting system and creator social system stay separate.

@@ -25,6 +25,8 @@ interface GuidedTourContextType {
   totalSteps: number;
   /** Whether the completion modal is visible */
   showCompletion: boolean;
+  /** The tour type that was just completed (available while showCompletion is true) */
+  completedTourType: TourType | null;
   /** Start a specific tour */
   startTour: (type: TourType) => void;
   /** Go to the next step */
@@ -59,55 +61,18 @@ export function GuidedTourProvider({
   const [activeTour, setActiveTour] = useState<TourType | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [completedTourType, setCompletedTourType] = useState<TourType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasChecked, setHasChecked] = useState(false);
 
   const steps = activeTour ? tourConfigs[activeTour] : [];
   const totalSteps = steps.length;
 
-  // ── Auto-start logic: check DB on first login ──────────────────────────
+  // ── No auto-start: tours only launch via explicit user click ────────────
   useEffect(() => {
     if (authLoading || !user || hasChecked) return;
-
-    const checkTourStatus = async () => {
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("guided_tour_completed, guided_tour_type, role, account_type")
-          .eq("id", user.id)
-          .single();
-
-        if (profile && !profile.guided_tour_completed) {
-          // Determine which tour to show
-          let tourType: TourType = "fan";
-
-          if (profile.role === "creator") {
-            tourType = "creator";
-          } else if (
-            profile.account_type &&
-            ["sugadaddy", "sugamama", "sugababy"].includes(
-              profile.account_type.toLowerCase()
-            )
-          ) {
-            tourType = "suga";
-          }
-
-          // Small delay so the page has time to render target elements
-          setTimeout(() => {
-            setActiveTour(tourType);
-            setCurrentStep(0);
-          }, 1500);
-        }
-      } catch (err) {
-        // Silently fail — don't block the app if DB columns don't exist yet
-        console.warn("Guided tour check skipped:", err);
-      } finally {
-        setIsLoading(false);
-        setHasChecked(true);
-      }
-    };
-
-    checkTourStatus();
+    setIsLoading(false);
+    setHasChecked(true);
   }, [user, authLoading, hasChecked]);
 
   // ── Persist completion to DB ───────────────────────────────────────────
@@ -172,11 +137,13 @@ export function GuidedTourProvider({
       setCurrentStep((s) => s + 1);
     } else {
       // Last step → finish
+      const finishedTour = activeTour;
       if (activeTour) {
         persistCompletion(activeTour);
       }
       setActiveTour(null);
       setCurrentStep(0);
+      setCompletedTourType(finishedTour);
       setShowCompletion(true);
     }
   }, [currentStep, totalSteps, activeTour, persistCompletion]);
@@ -196,16 +163,19 @@ export function GuidedTourProvider({
   }, [activeTour, persistCompletion]);
 
   const finishTour = useCallback(() => {
+    const finishedTour = activeTour;
     if (activeTour) {
       persistCompletion(activeTour);
     }
     setActiveTour(null);
     setCurrentStep(0);
+    setCompletedTourType(finishedTour);
     setShowCompletion(true);
   }, [activeTour, persistCompletion]);
 
   const dismissCompletion = useCallback(() => {
     setShowCompletion(false);
+    setCompletedTourType(null);
   }, []);
 
   return (
@@ -216,6 +186,7 @@ export function GuidedTourProvider({
         steps,
         totalSteps,
         showCompletion,
+        completedTourType,
         startTour,
         nextStep,
         prevStep,

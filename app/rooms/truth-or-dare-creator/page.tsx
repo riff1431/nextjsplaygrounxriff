@@ -1342,6 +1342,7 @@ function TruthOrDareCreatorContent() {
                 <div className="flex items-center gap-2 shrink-0">
                     <RoomTourHelpButton tourType="truth_or_dare_creator" accentHsl="330, 80%, 55%" />
                     {sessionActive && isInStudio && isSessionLive && (
+                        <div data-tour="tod-go-live-button">
                         <SessionLiveControls
                             sessionId={activeSessionId || ""}
                             accentHsl="330, 80%, 55%"
@@ -1381,6 +1382,7 @@ function TruthOrDareCreatorContent() {
                             onEnd={() => {}}
                             hideEnd={!isHost}
                         />
+                        </div>
                     )}
                 </div>
             </div>
@@ -1719,7 +1721,7 @@ function TruthOrDareCreatorContent() {
                     {/* ═══ LEFT SECTION: Video Grid + Bottom Row — always visible ═══ */}
                     <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0">
                         {/* 2x2 Video Grid */}
-                        <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }}>
+                        <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }} data-tour="tod-live-stream">
                             {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
                             <div className="relative overflow-hidden">
                                 <div className="absolute inset-0">
@@ -1854,11 +1856,11 @@ function TruthOrDareCreatorContent() {
                         {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-3" style={{ minHeight: '160px' }}>
                             {/* Summary / Earnings */}
-                            <div className="min-h-0 overflow-auto">
+                            <div className="min-h-0 overflow-auto" data-tour="tod-room-earnings">
                                 <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
                             </div>
                             {/* Group Voting */}
-                            <div className="min-h-0 overflow-auto">
+                            <div className="min-h-0 overflow-auto" data-tour="tod-group-vote">
                                 <GroupVoteManager 
                                     roomId={roomId} 
                                     onStartCall={(type) => groupCall.initiateCall(type)}
@@ -1868,7 +1870,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden ${mobileStudioTab !== "requests" ? "hidden lg:block" : "block"}`}>
+                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden ${mobileStudioTab !== "requests" ? "hidden lg:block" : "block"}`} data-tour="tod-incoming-requests">
                         <TodCreatorRequestPanel
                             title="Incoming Requests"
                             accentColor="pink"
@@ -1911,7 +1913,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0 ${mobileStudioTab !== "chat" ? "hidden lg:block" : "block"}`}>
+                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0 ${mobileStudioTab !== "chat" ? "hidden lg:block" : "block"}`} data-tour="tod-live-chat">
                         <TodCreatorLiveChat 
                             roomId={roomId} 
                             sessionStartedAt={activeSessionStartedAt}

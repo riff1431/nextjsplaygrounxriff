@@ -168,11 +168,13 @@ function FlashdropCreatorStudio() {
                     </h1>
                     <div className="absolute right-0 z-50 flex items-center gap-2">
                         <RoomTourHelpButton tourType="flashdrop_creator" accentHsl="170, 80%, 50%" />
-                        <SessionLiveControls
-                            sessionId={sessionId!}
-                            onEnd={() => router.push("/rooms/flash-drop-creator")}
-                            accentHsl="170, 80%, 50%"
-                        />
+                        <div data-tour="flashdrop-live-stream">
+                            <SessionLiveControls
+                                sessionId={sessionId!}
+                                onEnd={() => router.push("/rooms/flash-drop-creator")}
+                                accentHsl="170, 80%, 50%"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -181,13 +183,13 @@ function FlashdropCreatorStudio() {
                     {/* Desktop/Tablet: Grid layout */}
                     <div className="hidden lg:flex gap-3 h-full min-h-0">
                         {/* 1st: Summary Box + Live Drop Board */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden flashdrop-summary-box">
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden flashdrop-summary-box" data-tour="flashdrop-summary-box">
                             <SummaryBox roomId={roomId} sessionId={sessionId} />
                             <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                         </div>
 
                         {/* 2nd: Video + High Roller Packs */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto" data-tour="flashdrop-high-roller-packs">
                             <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                 {roomId && user ? (
                                     <LiveStreamWrapper
@@ -209,7 +211,7 @@ function FlashdropCreatorStudio() {
                         </div>
 
                         {/* 3rd: Custom Request Drops */}
-                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }} data-tour="flashdrop-custom-request-drops">
                             <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                 <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55%), hsl(330 100% 55%))' }}>
                                     <ClipboardList size={10} className="text-white" />
@@ -226,7 +228,7 @@ function FlashdropCreatorStudio() {
                         </div>
 
                         {/* 4th: Live Chat */}
-                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden flashdrop-live-chat" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden flashdrop-live-chat" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }} data-tour="flashdrop-live-chat">
                             <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                 <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(170 80% 45%))' }}>
                                     <MessageSquare size={10} className="text-white" />

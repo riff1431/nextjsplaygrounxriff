@@ -1374,6 +1374,7 @@ function TruthOrDareContent() {
                     <div className="flex flex-col gap-2 lg:gap-3 flex-1 lg:flex-[2] min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                         <div
                             className="relative rounded-2xl lg:rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
+                            data-tour="tod-fan-live-stream"
                         >
                             {roomId ? (
                                 <LiveStreamWrapper
@@ -1401,7 +1402,7 @@ function TruthOrDareContent() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                                 {/* Col 1: System Dares (now on left) */}
-                                <div className="space-y-4">
+                                <div className="space-y-4" data-tour="tod-fan-system-dares">
                                     <h4 className="text-sm font-bold text-red-400 uppercase tracking-widest pb-2 px-2 bg-red-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(239,68,68,0.6), 0 0 30px rgba(239,68,68,0.3)' }}>System Dares</h4>
                                     <div className="space-y-3">
                                         {dareTiers.map((t) => (
@@ -1505,7 +1506,7 @@ function TruthOrDareContent() {
                         {/* Action Buttons */}
                         {/* Action Buttons row - strictly matching icons in screenshot */}
                         {/* Reaction Bar */}
-                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 flex justify-between gap-1.5 sm:gap-2 border-white/10 bg-black/20">
+                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 flex justify-between gap-1.5 sm:gap-2 border-white/10 bg-black/20" data-tour="tod-fan-gifts">
                             {[
                                 { name: "Kiss", emoji: "💋", price: 10 },
                                 { name: "Love", emoji: "❤️", price: 20 },
@@ -1527,7 +1528,7 @@ function TruthOrDareContent() {
                         </div>
 
                         {/* Tip Creator Section */}
-                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 border-white/10 bg-black/20">
+                        <div className="glass-panel p-2.5 sm:p-3 lg:p-4 border-white/10 bg-black/20" data-tour="tod-fan-tip-creator">
                             <div className="flex items-center gap-2 mb-3">
                                 <Send className="w-4 h-4 text-green-400" />
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Tip Creator</h3>
@@ -1558,7 +1559,7 @@ function TruthOrDareContent() {
                     </div>
 
                     {/* Right: Dedicated Chat Column */}
-                    <div className="flex flex-col w-full lg:w-[280px] xl:w-[340px] 2xl:w-[380px] min-h-0 shrink-0 lg:h-full overflow-hidden">
+                    <div className="flex flex-col w-full lg:w-[280px] xl:w-[340px] 2xl:w-[380px] min-h-0 shrink-0 lg:h-full overflow-hidden" data-tour="tod-fan-live-chat">
                         <div className="glass-panel border-white/10 bg-white/5 flex flex-col flex-1 min-h-0 overflow-hidden">
                             {/* Chat Header */}
                             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">

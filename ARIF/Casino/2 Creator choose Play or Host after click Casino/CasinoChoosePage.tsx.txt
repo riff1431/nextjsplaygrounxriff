@@ -1,0 +1,225 @@
+// CasinoChoosePage.tsx
+
+import { useNavigate } from "react-router-dom";
+
+const creatorLounges = [
+  {
+    id: "1",
+    name: "Diamond Dreams",
+    creator: "SophiaX",
+    viewers: "1.2K",
+    image: "/casino/diamond-dreams.png",
+  },
+  {
+    id: "2",
+    name: "High Roller Club",
+    creator: "KingMike",
+    viewers: "823",
+    image: "/casino/high-roller-club.png",
+  },
+  {
+    id: "3",
+    name: "Lucky Night",
+    creator: "Ella",
+    viewers: "654",
+    image: "/casino/lucky-night.png",
+  },
+  {
+    id: "4",
+    name: "VIP Exclusive",
+    creator: "JohnnyX",
+    viewers: "1.3K",
+    image: "/casino/vip-exclusive.png",
+  },
+];
+
+export default function CasinoChoosePage() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      <aside className="w-[260px] bg-[#07020d] border-r border-pink-500/20 p-6">
+        <div className="mb-10">
+          <div className="text-3xl font-black">
+            <span className="text-pink-500">PlayGround</span>
+            <span className="text-cyan-400">X</span>
+          </div>
+          <div className="text-pink-500 text-sm mt-1">• Casino</div>
+        </div>
+
+        <div className="text-gray-400 text-sm mb-4">BROWSE ROOM</div>
+
+        {[
+          ["Flash Drops", "💎"],
+          ["Confessions", "🔒"],
+          ["X Chat", "💬"],
+          ["Bar Lounge", "🍸"],
+          ["Truth or Dare", "🎲"],
+          ["Spin 4 U", "👑"],
+          ["Casino", "♠️"],
+        ].map(([label, icon]) => (
+          <div
+            key={label}
+            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
+              label === "Casino"
+                ? "border-yellow-400 bg-yellow-500/10 text-yellow-300"
+                : "border-pink-500/30 bg-black/30 text-gray-200"
+            }`}
+          >
+            <span>
+              {icon} {label}
+            </span>
+            {label === "Casino" && (
+              <span className="text-[10px] border border-yellow-400 rounded px-2 py-1">
+                NEW
+              </span>
+            )}
+          </div>
+        ))}
+
+        <div className="border-t border-white/10 mt-8 pt-6">
+          <div className="text-gray-400 text-sm mb-4">MY ACCOUNT</div>
+
+          {["Collections", "Suggestions", "Subscriptions", "NewsFeed", "Log Out"].map(
+            (item) => (
+              <div
+                key={item}
+                className="px-4 py-3 mb-3 rounded-xl border border-white/10 bg-black/30 text-gray-200"
+              >
+                {item}
+              </div>
+            )
+          )}
+        </div>
+      </aside>
+
+      <main className="flex-1 p-8 bg-[radial-gradient(circle_at_top_right,#321044,transparent_40%)]">
+        <header className="flex items-center justify-between mb-10">
+          <div>
+            <div className="text-pink-500 font-bold text-lg">• Casino</div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="px-5 py-3 rounded-full bg-[#100517] border border-white/10">
+              💎 12,560
+            </div>
+
+            <div className="px-5 py-3 rounded-full bg-[#100517] border border-white/10">
+              🪙 $5,250.00
+            </div>
+
+            <div className="h-12 w-12 rounded-full bg-[#100517] border border-pink-500/30 flex items-center justify-center">
+              🔔
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#100517] border border-pink-500/30">
+              <div className="h-9 w-9 rounded-full bg-pink-500" />
+              <span>SophiaX</span>
+              <span>⌄</span>
+            </div>
+          </div>
+        </header>
+
+        <section className="rounded-3xl border border-pink-500/25 bg-[#08030d]/90 p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black">
+              WELCOME TO{" "}
+              <span className="text-pink-500">PLAYGROUNDX CASINO</span>
+            </h1>
+            <p className="text-gray-300 mt-3 text-lg">
+              Play, Host and Join Exclusive Casino Rooms
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <button
+              onClick={() => navigate("/casino/play")}
+              className="group h-[410px] rounded-3xl border border-cyan-400/70 bg-black/60 overflow-hidden relative hover:scale-[1.01] transition"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#1146ff55,transparent_55%)]" />
+              <div className="absolute inset-0 opacity-30 bg-[url('/casino/play-bg.png')] bg-cover bg-center" />
+
+              <div className="relative z-10 h-full flex flex-col items-center justify-center p-8">
+                <div className="text-8xl mb-6">🃏</div>
+
+                <h2 className="text-4xl font-black mb-4">PLAY CASINO</h2>
+
+                <p className="text-gray-200 text-lg max-w-sm mb-8">
+                  Play your favorite games and win big inside PGX Casino.
+                </p>
+
+                <div className="w-[80%] py-4 rounded-xl bg-gradient-to-r from-blue-600 to-pink-600 font-black text-xl">
+                  PLAY NOW
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate("/casino/host-lobby")}
+              className="group h-[410px] rounded-3xl border border-pink-500/70 bg-black/60 overflow-hidden relative hover:scale-[1.01] transition"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#ff149355,transparent_55%)]" />
+              <div className="absolute inset-0 opacity-30 bg-[url('/casino/host-bg.png')] bg-cover bg-center" />
+
+              <div className="relative z-10 h-full flex flex-col items-center justify-center p-8">
+                <div className="text-8xl mb-6">👑</div>
+
+                <h2 className="text-4xl font-black mb-4">
+                  HOST CASINO ROOM
+                </h2>
+
+                <p className="text-gray-200 text-lg max-w-sm mb-8">
+                  Create your own table, go live and build your VIP lounge.
+                </p>
+
+                <div className="w-[80%] py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-black text-xl">
+                  HOST A ROOM
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-10 flex items-center justify-between">
+            <h2 className="text-2xl font-black">CREATOR LOUNGES</h2>
+
+            <button
+              onClick={() => navigate("/casino/lounges")}
+              className="text-pink-400 font-bold"
+            >
+              View All
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-6 mt-5">
+            {creatorLounges.map((room) => (
+              <button
+                key={room.id}
+                onClick={() => navigate(`/casino/lounge-preview/${room.id}`)}
+                className="rounded-2xl overflow-hidden border border-pink-500/40 bg-[#100517] text-left hover:scale-[1.02] transition"
+              >
+                <div className="h-[170px] relative bg-gradient-to-br from-pink-900 via-purple-900 to-black">
+                  <div className="absolute top-3 left-3 px-3 py-1 rounded-md bg-red-600 text-xs font-black">
+                    ● LIVE
+                  </div>
+
+                  <div className="absolute top-3 right-3 px-3 py-1 rounded-md bg-black/70 text-sm">
+                    👁 {room.viewers}
+                  </div>
+
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-70">
+                    👑
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <h3 className="font-black text-xl">{room.name}</h3>
+                  <p className="text-gray-400">By {room.creator}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

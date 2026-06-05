@@ -194,6 +194,7 @@ const XChatCreatorPage = () => {
                         <button
                             onClick={() => setShowExitModal(true)}
                             className="flex items-center gap-1 text-foreground hover:text-primary transition-colors absolute left-3 sm:left-4"
+                            data-tour="xchat-creator-earned-amount"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             <span className="text-sm hidden sm:inline">Back</span>
@@ -206,11 +207,13 @@ const XChatCreatorPage = () => {
                         </h1>
                         <div className="absolute right-2 sm:right-4 flex items-center gap-2">
                             <RoomTourHelpButton tourType="xchat_creator" accentHsl="45, 90%, 55%" />
-                            <SessionLiveControls
-                                sessionId={sessionId!}
-                                onEnd={() => router.push("/rooms/x-chat-creator")}
-                                accentHsl="45, 90%, 55%"
-                            />
+                            <div data-tour="xchat-creator-timer-control">
+                                <SessionLiveControls
+                                    sessionId={sessionId!}
+                                    onEnd={() => router.push("/rooms/x-chat-creator")}
+                                    accentHsl="45, 90%, 55%"
+                                />
+                            </div>
                         </div>
                     </motion.header>
 
@@ -219,7 +222,7 @@ const XChatCreatorPage = () => {
                         {/* Desktop: 3-col grid */}
                         <div className="hidden lg:grid grid-cols-[400px_1fr_400px] gap-3 h-full">
                             {/* Left - Live Chat */}
-                            <div className="flex min-h-0 xchat-creator-live-chat-panel">
+                            <div className="flex min-h-0 xchat-creator-live-chat-panel" data-tour="xchat-creator-live-chat-panel">
                                 <LiveChat roomId={roomId} sessionId={sessionId} />
                             </div>
 
@@ -265,7 +268,7 @@ const XChatCreatorPage = () => {
                             </div>
 
                             {/* Right - Requests + Summary */}
-                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin xchat-creator-incoming-requests">
+                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin xchat-creator-incoming-requests" data-tour="xchat-creator-incoming-requests">
                                 <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 <SummaryPanel roomId={roomId} sessionId={sessionId} />
                             </div>

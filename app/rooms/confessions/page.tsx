@@ -751,7 +751,7 @@ function ConfessionsRoom() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3" data-tour="confession-invite-incoming">
                                 <RoomTourHelpButton tourType="confession_fan" accentHsl="350, 80%, 55%" />
                                 <button
                                     onClick={() => setShowInviteModal(true)}
@@ -784,7 +784,7 @@ function ConfessionsRoom() {
                         <div className="flex flex-col lg:flex-row gap-4 xl:gap-6 h-full">
 
                             {/* Left Column */}
-                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[480px] shrink-0 lg:h-full overflow-hidden">
+                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[480px] shrink-0 lg:h-full overflow-hidden" data-tour="confession-creator-spotlight">
                                 <CreatorSpotlight
                                     liveStreamNode={
                                         roomId && user && hostId ? (
@@ -822,7 +822,7 @@ function ConfessionsRoom() {
                             </div>
 
                             {/* Center Column - wider, independently scrollable */}
-                            <div className="flex-1 min-w-0 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent">
+                            <div className="flex-1 min-w-0 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent" data-tour="confession-all-creator-confessions">
                                 <ConfessionWall
                                     confessions={confessions}
                                     myUnlocks={myUnlocks}
@@ -836,7 +836,7 @@ function ConfessionsRoom() {
                             </div>
 
                             {/* Right Column */}
-                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0 lg:h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent">
+                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0 lg:h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent" data-tour="confession-request-builder">
                                 <RequestConfession
                                     reqType={reqType}
                                     setReqType={setReqType}

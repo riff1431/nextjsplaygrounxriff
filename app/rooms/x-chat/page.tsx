@@ -757,12 +757,12 @@ const XChatRoom = () => {
                     {/* ── HEADER ──────────────────────────────────── */}
                     <header className="xchat-header">
                         <div className="xchat-header-left">
-                            <button onClick={() => router.push("/home")} className="xchat-back-btn">
+                            <button onClick={() => router.push("/home")} className="xchat-back-btn" data-tour="xchat-fan-back">
                                 <ArrowLeft size={15} />
                                 <span className="hidden sm:inline">Back</span>
                             </button>
                             {roomId && (
-                                <button onClick={() => setShowInviteModal(true)} className="xchat-invite-btn">
+                                <button onClick={() => setShowInviteModal(true)} className="xchat-invite-btn" data-tour="xchat-fan-invite">
                                     <UserPlus size={13} />
                                     <span className="hidden sm:inline">Invite</span>
                                 </button>
@@ -772,7 +772,7 @@ const XChatRoom = () => {
                                 <span className="xs:hidden">X Chat</span>
                             </h1>
                         </div>
-                        <div className="xchat-header-right">
+                        <div className="xchat-header-right" data-tour="xchat-fan-top-bar">
                             <RoomTourHelpButton tourType="xchat_fan" accentHsl="45, 90%, 55%" />
                             {renderStatus()}
                             {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
@@ -788,7 +788,7 @@ const XChatRoom = () => {
                         <div className="xchat-left">
 
                             {/* CANVAS */}
-                            <div className="xchat-canvas">
+                            <div className="xchat-canvas" data-tour="xchat-fan-video-area">
                                 {roomId && user && hostId ? (
                                     <LiveStreamWrapper
                                         role="fan"
@@ -837,7 +837,7 @@ const XChatRoom = () => {
                             </div>
 
                             {/* PAID REACTIONS – ROW 1 */}
-                            <div className="xchat-reaction-card">
+                            <div className="xchat-reaction-card" data-tour="xchat-fan-paid-reactions">
                                 <div className="xchat-reaction-half xchat-reaction-half--left">
                                     <span className="xchat-section-label">Paid Reactions</span>
                                     <div className="xchat-chip-row">
@@ -883,7 +883,7 @@ const XChatRoom = () => {
                             {/* VISIBILITY BOOSTS + DIRECT ACCESS */}
                             <div className="xchat-bottom-row">
                                 {/* Visibility Boosts */}
-                                <div className="xchat-boost-card">
+                                <div className="xchat-boost-card" data-tour="xchat-fan-visibility-boosts">
                                     <div className="xchat-section-header">
                                         <Eye size={14} className="xchat-section-header-icon" />
                                         <span className="xchat-section-label" style={{ marginBottom: 0 }}>Visibility Boosts</span>
@@ -897,7 +897,7 @@ const XChatRoom = () => {
                                 </div>
 
                                 {/* Direct Access */}
-                                <div className="xchat-boost-card">
+                                <div className="xchat-boost-card" data-tour="xchat-fan-direct-access">
                                     <div className="xchat-section-header">
                                         <Zap size={14} className="xchat-section-header-icon" />
                                         <span className="xchat-section-label" style={{ marginBottom: 0 }}>Direct Access</span>
@@ -913,7 +913,7 @@ const XChatRoom = () => {
                         </div>
 
                         {/* ── RIGHT PANEL: Chat ──────────────────────── */}
-                        <div className="xchat-right">
+                        <div className="xchat-right" data-tour="xchat-fan-chat-messages">
                             <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} />
                         </div>
 

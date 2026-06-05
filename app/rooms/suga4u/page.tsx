@@ -625,6 +625,7 @@ const Suga4URoom = () => {
                                     onClick={() => router.back()}
                                     className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
                                     title="Go back"
+                                    data-tour="suga-fan-back-to-rooms"
                                 >
                                     <ArrowLeft className="w-5 h-5" />
                                 </button>
@@ -634,6 +635,7 @@ const Suga4URoom = () => {
                                 <button
                                     onClick={() => setShowInviteModal(true)}
                                     className="btn-pink px-3.5 py-1.5 text-xs flex items-center gap-1.5 rounded-full transition-all hover:scale-105 shadow-lg shadow-pink-500/20"
+                                    data-tour="suga-fan-invite"
                                 >
                                     <UserPlus size={14} />
                                     Invite
@@ -641,7 +643,7 @@ const Suga4URoom = () => {
                             </div>
                             <div className="flex items-center gap-2">
                                 <RoomTourHelpButton tourType="suga4u_fan" accentHsl="340, 75%, 55%" />
-                                <div className="relative">
+                                <div className="relative" data-tour="suga-fan-incoming-from-creator">
                                     <button
                                         onClick={toggleIncomingPanel}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 backdrop-blur-md ${
@@ -798,7 +800,9 @@ const Suga4URoom = () => {
                                 </div>
 
                                 <WalletPill />
-                                <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
+                                <div data-tour="suga-fan-creator-info">
+                                    <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
+                                </div>
                             </div>
                         </header>
 
@@ -842,8 +846,12 @@ const Suga4URoom = () => {
                                 </div>
 
                                 <div className="flex-1 grid grid-cols-[1fr_1.5fr] gap-3 min-h-0">
-                                    <CreatorSecrets roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
-                                    <CreatorFavorites roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                    <div data-tour="suga-fan-creator-secrets">
+                                        <CreatorSecrets roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                    </div>
+                                    <div data-tour="suga-fan-creator-favorites">
+                                        <CreatorFavorites roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                    </div>
                                 </div>
                             </div>
 
@@ -853,7 +861,7 @@ const Suga4URoom = () => {
                             </div>
 
                             {/* RIGHT: Options */}
-                            <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
+                            <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll" data-tour="suga-fan-paid-requests">
                                 <PaidRequestMenu roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                                 <SendSugarGifts roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                                 <QuickPaidActions

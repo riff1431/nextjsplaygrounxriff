@@ -220,6 +220,7 @@ const Suga4UCreatorPage = () => {
                     <button
                         onClick={() => setShowExitModal(true)}
                         className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                        data-tour="suga-creator-back-to-rooms"
                     >
                         <ArrowLeft className="w-4 h-4" />
                     </button>
@@ -234,7 +235,7 @@ const Suga4UCreatorPage = () => {
                             <UserPlus className="w-4 h-4" />
                         </button>
                         {/* Incoming 1-on-1 notifications */}
-                        <div className="relative" data-incoming-btn>
+                        <div className="relative" data-incoming-btn data-tour="suga-creator-incoming-requests">
                             <button
                                 onClick={() => setShowIncomingPanel(prev => !prev)}
                                 className="relative h-9 px-2 sm:px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
@@ -261,11 +262,13 @@ const Suga4UCreatorPage = () => {
                                 }}
                             />
                         </div>
-                        <SessionLiveControls
-                            sessionId={sessionId!}
-                            onEnd={() => router.push("/rooms/suga4u-creator")}
-                            accentHsl="340, 75%, 55%"
-                        />
+                        <div data-tour="suga-creator-go-live-end">
+                            <SessionLiveControls
+                                sessionId={sessionId!}
+                                onEnd={() => router.push("/rooms/suga4u-creator")}
+                                accentHsl="340, 75%, 55%"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -274,7 +277,7 @@ const Suga4UCreatorPage = () => {
                     {/* Desktop: 4-col grid */}
                     <div className="hidden lg:grid grid-cols-4 gap-4 h-full">
                         {/* Left column: Live Chat (Full Height) */}
-                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-live-chat">
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-live-chat" data-tour="suga-creator-live-chat">
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
@@ -282,10 +285,10 @@ const Suga4UCreatorPage = () => {
 
                         {/* Column 2: Pending Requests + Group Vote */}
                         <div className="col-span-1 flex flex-col gap-4 min-h-0">
-                            <div className="flex-1 min-h-0 flex flex-col">
+                            <div className="flex-1 min-h-0 flex flex-col" data-tour="suga-creator-pending-requests">
                                 <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
-                            <div className="shrink-0 flex flex-col">
+                            <div className="shrink-0 flex flex-col" data-tour="suga-creator-group-vote">
                                 <S4uCreatorGroupVote
                                     roomId={roomId || undefined}
                                     onStartCall={() => groupCall.initiateCall('sugar')}
@@ -294,21 +297,21 @@ const Suga4UCreatorPage = () => {
                         </div>
 
                         {/* Column 3: Creators Favorites + Session Summary */}
-                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-favorites">
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-favorites" data-tour="suga-creator-favorites">
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
-                            <div className="shrink-0">
+                            <div className="shrink-0" data-tour="suga-creator-summary">
                                 <S4uSessionSummary roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
                         </div>
 
                         {/* Right column: Creator Secrets + Live Stream */}
                         <div className="col-span-1 flex flex-col gap-4 min-h-0">
-                            <div className="flex-1 min-h-0 flex flex-col">
+                            <div className="flex-1 min-h-0 flex flex-col" data-tour="suga-creator-secrets">
                                 <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
-                            <div className="shrink-0">
+                            <div className="shrink-0" data-tour="suga-creator-live-preview">
                                 <div className="s4u-creator-glass-panel p-4">
                                     <div className="relative rounded-lg overflow-hidden h-48 bg-white/5 border border-white/10 flex items-center justify-center">
                                         {roomId && user ? (

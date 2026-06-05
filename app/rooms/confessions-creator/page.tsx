@@ -183,30 +183,32 @@ const ConfessionsCreatorPage = () => {
                                 <span className="sm:hidden">RLS ERR</span>
                             </div>
                         )}
-                        <SessionLiveControls
-                            sessionId={sessionId!}
-                            onEnd={() => router.push("/rooms/confessions-creator")}
-                            accentHsl="280, 70%, 60%"
-                        />
+                        <div data-tour="confession-start-end-room">
+                            <SessionLiveControls
+                                sessionId={sessionId!}
+                                onEnd={() => router.push("/rooms/confessions-creator")}
+                                accentHsl="280, 70%, 60%"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 {/* Main content — responsive 3-col → mobile: content on top + tabs below */}
                 <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 lg:overflow-hidden xl:mx-40 min-h-0">
                     {/* Left Sidebar — visible on lg+, or when "sidebar" tab active on mobile */}
-                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-my-requests`}>
+                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-my-requests`} data-tour="confession-my-requests">
                         <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
                     </div>
 
                     {/* Center Content — always visible */}
-                    <div className="flex lg:flex flex-1 flex-col gap-4 min-h-0">
+                    <div className="flex lg:flex flex-1 flex-col gap-4 min-h-0" data-tour="confession-wall">
                         <div className="flex-1 min-h-[250px] lg:min-h-0">
                             <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
                         </div>
                     </div>
 
                     {/* Live Chat — visible on lg+, or when "chat" tab active on mobile */}
-                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-live-chat`}>
+                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-live-chat`} data-tour="confession-live-chat">
                         <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>

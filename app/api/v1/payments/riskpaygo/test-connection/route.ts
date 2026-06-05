@@ -135,21 +135,30 @@ export async function POST(req: Request) {
 
         // Check for specific error scenarios
         const errMsg = responseData.error || responseData.message || 'Unknown Gateway Error';
+        const errMsgLower = errMsg.toLowerCase();
         
-        if (status === 401 || status === 403 || errMsg.toLowerCase().includes('unauthorized') || errMsg.toLowerCase().includes('credentials')) {
+        // 1. Check for domain / site / project approval warning (which returns 403 from RiskPayGo)
+        if (
+            errMsgLower.includes('domain') || 
+            errMsgLower.includes('site') || 
+            errMsgLower.includes('dominio') || 
+            errMsgLower.includes('proyecto') ||
+            errMsgLower.includes('project')
+        ) {
             return NextResponse.json({
-                success: false,
-                error: 'Invalid API Token or Merchant ID. Please double check credentials.',
+                success: true, // Credentials work, but warning is needed
+                warning: true,
+                error: 'Credentials are valid! However, this domain (site.url) is not yet registered/approved in your RiskPayGo account.',
                 status,
                 details: errMsg
             });
         }
 
-        if (errMsg.toLowerCase().includes('domain') || errMsg.toLowerCase().includes('site')) {
+        // 2. Check for general authentication / credential failures
+        if (status === 401 || status === 403 || errMsgLower.includes('unauthorized') || errMsgLower.includes('credentials') || errMsgLower.includes('merchant no autorizado')) {
             return NextResponse.json({
-                success: true, // Credentials work, but warning is needed
-                warning: true,
-                error: 'Credentials are valid! However, this domain (site.url) is not yet registered/approved in your RiskPayGo account.',
+                success: false,
+                error: 'Invalid API Token or Merchant ID. Please double check credentials.',
                 status,
                 details: errMsg
             });

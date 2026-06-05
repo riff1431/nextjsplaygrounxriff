@@ -171,6 +171,7 @@ const CreatorBarLoungeInner = () => {
                         onClick={() => setShowExitModal(true)}
                         className="glass-panel px-2 sm:px-3 py-2 rounded-lg flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                         style={{ borderColor: "hsla(45, 90%, 55%, 0.3)", color: "hsl(45, 90%, 55%)" }}
+                        data-tour="bar-room-info"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span className="text-sm font-medium hidden md:inline">Back</span>
@@ -189,7 +190,7 @@ const CreatorBarLoungeInner = () => {
                 <div className="absolute right-2 sm:right-4 flex items-center gap-1.5 sm:gap-2">
                     <RoomTourHelpButton tourType="bar_lounge_creator" accentHsl="45, 90%, 55%" />
                     {/* Incoming 1-on-1 calls */}
-                    <div className="relative" data-incoming-btn>
+                    <div className="relative" data-incoming-btn data-tour="bar-incoming-button">
                         <button
                             onClick={() => setShowIncomingCallsPanel(prev => !prev)}
                             className="relative h-8 sm:h-9 px-2 sm:px-3 rounded-lg flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-all backdrop-blur-md shadow-lg"
@@ -222,11 +223,13 @@ const CreatorBarLoungeInner = () => {
                             }}
                         />
                     </div>
-                    <SessionLiveControls
-                        sessionId={sessionId!}
-                        onEnd={() => router.push("/rooms/bar-lounge-creator")}
-                        accentHsl="45, 90%, 55%"
-                    />
+                    <div data-tour="bar-start-end-room">
+                        <SessionLiveControls
+                            sessionId={sessionId!}
+                            onEnd={() => router.push("/rooms/bar-lounge-creator")}
+                            accentHsl="45, 90%, 55%"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -235,19 +238,19 @@ const CreatorBarLoungeInner = () => {
                 {/* Desktop: 3-col grid */}
                 <div className="hidden lg:grid w-full h-full grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
                     {/* Left - Chat */}
-                    <div className="h-full flex min-h-[400px] bar-lounge-chat">
+                    <div className="h-full flex min-h-[400px] bar-lounge-chat" data-tour="bar-lounge-chat">
                         <LoungeChat roomId={roomId} sessionId={sessionId} />
                     </div>
 
                     {/* Center - Video */}
-                    <div className="h-full flex items-center justify-center w-full min-h-[400px]">
+                    <div className="h-full flex items-center justify-center w-full min-h-[400px]" data-tour="bar-tips-drinks-guide">
                         <div className="w-full h-full">
                             <VideoStage roomId={roomId} />
                         </div>
                     </div>
 
                     {/* Right - Requests & Summary */}
-                    <div className="flex flex-col gap-4 h-full min-h-[400px] bar-incoming-section">
+                    <div className="flex flex-col gap-4 h-full min-h-[400px] bar-incoming-section" data-tour="bar-incoming-section">
                         <div className="flex-1 min-h-0">
                             <IncomingRequests
                                 roomId={roomId}

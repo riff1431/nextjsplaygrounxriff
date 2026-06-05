@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket, Sparkles, Award } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { isRoomTour, type TourType } from "./tourSteps";
 
 // ---------------------------------------------------------------------------
 // Confetti Particle
@@ -52,8 +53,10 @@ function generateParticles(count: number): Particle[] {
 // ---------------------------------------------------------------------------
 export default function TourCompletionModal({
   onDismiss,
+  completedTourType,
 }: {
   onDismiss: () => void;
+  completedTourType?: TourType | null;
 }) {
   const router = useRouter();
   const [particles] = useState(() => generateParticles(60));
@@ -66,7 +69,11 @@ export default function TourCompletionModal({
 
   const handleExplore = () => {
     onDismiss();
-    router.push("/home");
+    // Room tours: stay on the current page (just close the modal)
+    // Global tours (fan/creator/suga): navigate to home
+    if (!completedTourType || !isRoomTour(completedTourType)) {
+      router.push("/home");
+    }
   };
 
   return (
@@ -202,8 +209,9 @@ export default function TourCompletionModal({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
               >
-                Your tour is complete! Dive into rooms, connect with creators,
-                and discover everything PlayGroundX has to offer.
+                {completedTourType && isRoomTour(completedTourType)
+                  ? "You've mastered this room! You now know all the features — enjoy the experience."
+                  : "Your tour is complete! Dive into rooms, connect with creators, and discover everything PlayGroundX has to offer."}
               </motion.p>
 
               {/* CTA Button */}
@@ -224,7 +232,7 @@ export default function TourCompletionModal({
                 transition={{ delay: 0.9 }}
               >
                 <Rocket className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                Start Exploring
+                {completedTourType && isRoomTour(completedTourType) ? "Got It" : "Start Exploring"}
               </motion.button>
             </div>
           </div>

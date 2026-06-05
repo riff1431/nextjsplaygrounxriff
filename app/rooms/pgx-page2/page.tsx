@@ -711,7 +711,7 @@ function PgxPage2Inner() {
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <RoomTourHelpButton tourType="bar_lounge_fan" accentHsl="42, 90%, 55%" />
                     {/* Incoming Button */}
-                    <div style={{ position: "relative" }}>
+                    <div style={{ position: "relative" }} data-tour="fan-incoming-button">
                         <button
                             onClick={toggleIncomingPanel}
                             className="pg2-btn-glow"
@@ -897,7 +897,9 @@ function PgxPage2Inner() {
                             </div>
                         )}
                     </div>
-                    <WalletPill />
+                    <div data-tour="fan-wallet-balance">
+                        <WalletPill />
+                    </div>
                 </div>
             </div>
 
@@ -906,7 +908,7 @@ function PgxPage2Inner() {
                 <div style={{ maxWidth: "80rem", margin: "0 auto", display: "grid", gridTemplateColumns: "320px 1fr 350px", gap: "24px", height: "calc(100vh - 3rem)" }}>
 
                     {/* ═══ LEFT: Drink Menu ═══ */}
-                    <div className="pg2-scroll" style={{ overflowY: "auto" }}>
+                    <div className="pg2-scroll" style={{ overflowY: "auto" }} data-tour="fan-buy-drink-menu">
                         <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                                 <Wine className="pg2-glow-pulse" style={{ width: "20px", height: "12px", color: PURPLE }} />
@@ -945,7 +947,7 @@ function PgxPage2Inner() {
 
 
                             {/* VIP section */}
-                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "12px", marginTop: "20px", display: "flex", flexDirection: "column", gap: "8px" }} data-tour="fan-vip-lounge">
                                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "15px", fontWeight: 700, color: FG, textAlign: "center", margin: 0 }}>VIP Lounge</h3>
 
                                 {/* ── VIP & Custom Request Unified Container ── */}
@@ -1125,7 +1127,7 @@ function PgxPage2Inner() {
                     </div>
 
                     {/* ═══ CENTER: Live Stream & Actions ═══ */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }} data-tour="fan-lounge-chat">
 
                         {/* Live stream — 4:3 landscape positioned at the bottom */}
                         <div style={{ width: "100%", marginTop: "auto", flexShrink: 0 }}>
@@ -1180,7 +1182,7 @@ function PgxPage2Inner() {
                         </div>
 
                         {/* Custom Tip and Private 1-on-1 merged into one row */}
-                        <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }}>
+                        <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }} data-tour="fan-custom-tip">
                             
                             {/* Custom Tip row */}
                             <div style={{ ...glassPanel, flex: 1, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }}>
@@ -1300,6 +1302,7 @@ function PgxPage2Inner() {
 
                         {/* Pin Name */}
                         <div style={{ ...chatMsg, ...glowPink, display: "flex", alignItems: "center", gap: "8px", cursor: buying ? "not-allowed" : "pointer", marginBottom: "8px", opacity: buying ? 0.7 : 1 }}
+                            data-tour="fan-pin-name"
                             onClick={() => !buying && doPurchase("pin", "Pin Name to Top", 25, "pin")}>
                             <span style={{ fontSize: "18px" }}>🔥</span>
                             <span className="pg2-neon-flicker" style={{ fontSize: "12px", fontWeight: 700, color: PINK }}>PIN NAME TO TOP 10 mins</span>

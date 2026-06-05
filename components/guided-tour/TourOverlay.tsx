@@ -258,6 +258,7 @@ export default function TourOverlay() {
     steps,
     totalSteps,
     showCompletion,
+    completedTourType,
     nextStep,
     prevStep,
     skipTour,
@@ -289,7 +290,7 @@ export default function TourOverlay() {
     setTargetRect(r);
   }, [step]);
 
-  // When the step changes, try to find the target. If not found after retries, auto-skip.
+  // When the step changes, try to find the target. If not found, show tooltip without spotlight.
   useEffect(() => {
     if (!step || !activeTour) return;
 
@@ -312,9 +313,9 @@ export default function TourOverlay() {
         scrollTargetIntoView(step.target);
         setTimeout(tryFind, retryInterval);
       } else {
-        // Target not found after retries — skip this step
-        console.warn(`Tour target [data-tour="${step.target}"] not found, auto-skipping.`);
-        nextStep();
+        // Target not found — show tooltip without spotlight (do NOT auto-skip)
+        console.warn(`Tour target "${step.target}" not found, showing step without highlight.`);
+        setTargetRect(null);
       }
     };
 
@@ -328,7 +329,7 @@ export default function TourOverlay() {
       window.removeEventListener("scroll", updateRect, true);
       window.removeEventListener("resize", updateRect);
     };
-  }, [step, activeTour, updateRect, nextStep]);
+  }, [step, activeTour, updateRect]);
 
   // Measure tooltip after render
   useEffect(() => {
@@ -367,7 +368,7 @@ export default function TourOverlay() {
 
   // ── Completion modal (shown after tour ends) ─────────────────────────
   if (showCompletion) {
-    return <TourCompletionModal onDismiss={dismissCompletion} />;
+    return <TourCompletionModal onDismiss={dismissCompletion} completedTourType={completedTourType} />;
   }
 
   // Nothing active
@@ -388,10 +389,10 @@ export default function TourOverlay() {
 
   const tooltipPos = targetRect
     ? getTooltipPosition(placement, targetRect, tooltipSize.w, tooltipSize.h)
-    : { top: 100, left: 100 };
+    : null; // null = center on screen
 
   const arrowStyle = targetRect
-    ? getArrowStyle(placement, targetRect, tooltipPos, tooltipSize.w, tooltipSize.h)
+    ? getArrowStyle(placement, targetRect, tooltipPos!, tooltipSize.w, tooltipSize.h)
     : {};
 
   const isFirstStep = currentStep === 0;
@@ -399,6 +400,9 @@ export default function TourOverlay() {
 
   // ── Progress: show dots for ≤8 steps, fraction for more ──────────────
   const showDotsProgress = totalSteps <= 8;
+
+  // When no target found on desktop, center the tooltip
+  const noTargetDesktop = !isMobile && !targetRect;
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -412,17 +416,17 @@ export default function TourOverlay() {
         onClick={skipTour}
       />
 
-      {/* SVG spotlight mask */}
+      {/* SVG spotlight mask — only when target is found */}
       <SpotlightMask rect={targetRect} />
 
-      {/* Neon ring around target */}
+      {/* Neon ring around target — only when target is found */}
       <AnimatePresence mode="wait">
         {targetRect && (
           <SpotlightRing key={`ring-${currentStep}`} rect={targetRect} />
         )}
       </AnimatePresence>
 
-      {/* Tooltip — Desktop: positioned near target / Mobile: bottom sheet */}
+      {/* Tooltip — Desktop: positioned near target / Mobile: bottom sheet / No target: centered */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`tooltip-${currentStep}`}
@@ -431,17 +435,27 @@ export default function TourOverlay() {
             "z-[10000]",
             isMobile
               ? "fixed bottom-0 left-0 right-0 rounded-t-3xl"
-              : "fixed rounded-2xl"
+              : noTargetDesktop
+                ? "fixed rounded-2xl"
+                : "fixed rounded-2xl"
           )}
           style={
             isMobile
               ? {}
-              : {
-                  top: tooltipPos.top,
-                  left: tooltipPos.left,
-                  maxWidth: desktopTooltipWidth,
-                  width: desktopTooltipWidth,
-                }
+              : noTargetDesktop
+                ? {
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    maxWidth: desktopTooltipWidth,
+                    width: desktopTooltipWidth,
+                  }
+                : {
+                    top: tooltipPos!.top,
+                    left: tooltipPos!.left,
+                    maxWidth: desktopTooltipWidth,
+                    width: desktopTooltipWidth,
+                  }
           }
           initial={isMobile ? { y: "100%" } : { opacity: 0, y: 12, scale: 0.96 }}
           animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}

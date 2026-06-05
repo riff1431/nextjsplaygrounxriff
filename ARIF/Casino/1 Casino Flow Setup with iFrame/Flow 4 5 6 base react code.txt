@@ -1,0 +1,456 @@
+import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+
+const creatorLounges = [
+  {
+    id: "1",
+    name: "High Roller Club",
+    creator: "KingMike",
+    game: "Blackjack",
+    min: 100,
+    max: 25000,
+    viewers: "1.2K",
+    status: "LIVE",
+    image: "/casino/lounge-1.png",
+  },
+  {
+    id: "2",
+    name: "Diamond Dreams",
+    creator: "SophiaX",
+    game: "Roulette",
+    min: 20,
+    max: 10000,
+    viewers: "983",
+    status: "LIVE",
+    image: "/casino/lounge-2.png",
+  },
+  {
+    id: "3",
+    name: "Lucky Night",
+    creator: "Ella",
+    game: "Slots",
+    min: 10,
+    max: 5000,
+    viewers: "742",
+    status: "LIVE",
+    image: "/casino/lounge-3.png",
+  },
+  {
+    id: "4",
+    name: "Vegas Elite",
+    creator: "JohnnyX",
+    game: "Poker",
+    min: 50,
+    max: 10000,
+    viewers: "631",
+    status: "LIVE",
+    image: "/casino/lounge-4.png",
+  },
+  {
+    id: "5",
+    name: "Baccarat Lounge",
+    creator: "AceKing",
+    game: "Baccarat",
+    min: 50,
+    max: 3000,
+    viewers: "589",
+    status: "LIVE",
+    image: "/casino/lounge-5.png",
+  },
+  {
+    id: "6",
+    name: "Roll The Dice",
+    creator: "Liza",
+    game: "Roulette",
+    min: 30,
+    max: 7500,
+    viewers: "512",
+    status: "LIVE",
+    image: "/casino/lounge-6.png",
+  },
+];
+
+function Sidebar() {
+  return (
+    <aside className="w-[250px] min-h-screen bg-[#07020d] border-r border-pink-500/30 p-5 text-white">
+      <div className="text-3xl font-bold mb-8">
+        <span className="text-pink-500">PlayGround</span>
+        <span className="text-cyan-400">X</span>
+        <div className="text-sm text-pink-400">• Casino</div>
+      </div>
+
+      {[
+        "Flash Drops",
+        "Confessions",
+        "X Chat",
+        "Bar Lounge",
+        "Truth or Dare",
+        "Suga 4 U",
+        "Casino",
+      ].map((item) => (
+        <div
+          key={item}
+          className={`px-4 py-3 mb-2 rounded-xl border ${
+            item === "Casino"
+              ? "border-yellow-400 bg-yellow-500/10 text-yellow-300"
+              : "border-white/10 text-gray-300"
+          }`}
+        >
+          {item}
+        </div>
+      ))}
+
+      <div className="mt-10 border-t border-white/10 pt-6">
+        {["Collections", "Subscriptions", "Wallet", "News Feed", "Settings", "Log Out"].map(
+          (item) => (
+            <div key={item} className="px-4 py-3 mb-2 rounded-xl border border-white/10">
+              {item}
+            </div>
+          )
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// 4. CREATE LOUNGE CONFIRMATION
+export function CreateLoungeConfirmation() {
+  const navigate = useNavigate();
+
+  const createdLounge = {
+    id: "1",
+    name: "My VIP Blackjack Lounge",
+    creator: "JohnDoe",
+    game: "Blackjack",
+    min: 100,
+    max: 10000,
+    startTime: "May 17, 8:00 PM",
+    duration: "2 Hours",
+    status: "LIVE",
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      <Sidebar />
+
+      <main className="flex-1 flex items-center justify-center p-10">
+        <div className="w-full max-w-3xl rounded-3xl border border-pink-500/50 bg-[#100517] p-10 text-center">
+          <div className="mx-auto mb-6 h-28 w-28 rounded-full border border-green-400 bg-green-500/10 flex items-center justify-center text-6xl text-green-400">
+            ✓
+          </div>
+
+          <h1 className="text-4xl font-black text-pink-400 mb-3">
+            Table Created!
+          </h1>
+
+          <p className="text-gray-300 mb-8">
+            Your table is now live and will appear on PGX Casino Creator Lounges.
+          </p>
+
+          <div className="rounded-2xl border border-pink-500/40 bg-black/50 p-5 text-left mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-2xl font-bold">{createdLounge.name}</h2>
+                <p className="text-pink-400">By {createdLounge.creator}</p>
+              </div>
+
+              <span className="px-4 py-2 rounded-full bg-red-600 text-white text-sm font-black">
+                {createdLounge.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm text-gray-300">
+              <div>Game: {createdLounge.game}</div>
+              <div>
+                Stakes: ${createdLounge.min} - ${createdLounge.max}
+              </div>
+              <div>Starts: {createdLounge.startTime}</div>
+              <div>Duration: {createdLounge.duration}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5">
+            <button
+              onClick={() => navigate(`/casino/lounge/${createdLounge.id}`)}
+              className="py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 font-black"
+            >
+              View My Table
+            </button>
+
+            <button
+              onClick={() => navigate("/casino/lounges")}
+              className="py-4 rounded-xl border border-white/20 bg-black/40 font-black"
+            >
+              Back To Lobby
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// 5. FAN FLOW - CREATOR LOUNGE LOBBY
+export function FanCreatorLoungeLobby() {
+  const navigate = useNavigate();
+  const [gameFilter, setGameFilter] = useState("All Games");
+
+  const games = ["All Games", "Slots", "Blackjack", "Roulette", "Baccarat", "Poker"];
+
+  const filteredLounges =
+    gameFilter === "All Games"
+      ? creatorLounges
+      : creatorLounges.filter((lounge) => lounge.game === gameFilter);
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      <Sidebar />
+
+      <main className="flex-1 p-8 bg-[radial-gradient(circle_at_top_right,#321044,transparent_45%)]">
+        <div className="mb-8 rounded-3xl border border-pink-500/30 bg-[#100517]/80 p-8 overflow-hidden relative">
+          <div className="relative z-10 max-w-3xl">
+            <h1 className="text-5xl font-black mb-3">
+              Creator Lounges{" "}
+              <span className="text-pink-500 text-2xl">LIVE NOW</span>
+            </h1>
+
+            <p className="text-gray-300 text-lg">
+              Join the hottest creator-hosted casino rooms. Real people, real games,
+              real fun.
+            </p>
+
+            <div className="grid grid-cols-4 gap-4 mt-8">
+              <StatCard label="Live Lounges" value="128" />
+              <StatCard label="Active Viewers" value="2.7K" />
+              <StatCard label="Total Wagered" value="$284,650" />
+              <StatCard label="Top Creators" value="36" />
+            </div>
+          </div>
+
+          <div className="absolute right-10 top-8 text-[160px] opacity-20">
+            ♠️♥️🎰
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-3">
+            {games.map((game) => (
+              <button
+                key={game}
+                onClick={() => setGameFilter(game)}
+                className={`px-5 py-3 rounded-xl border ${
+                  gameFilter === game
+                    ? "border-pink-500 bg-pink-600 text-white"
+                    : "border-white/10 bg-[#100517] text-gray-300"
+                }`}
+              >
+                {game}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <input
+              placeholder="Search lounges or creators..."
+              className="w-[300px] px-5 py-3 rounded-xl bg-[#100517] border border-white/10 outline-none"
+            />
+
+            <select className="px-5 py-3 rounded-xl bg-[#100517] border border-white/10 outline-none">
+              <option>Most Popular</option>
+              <option>Newest</option>
+              <option>Highest Stakes</option>
+              <option>Lowest Min Bet</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-5">
+          {filteredLounges.map((lounge) => (
+            <div
+              key={lounge.id}
+              className="rounded-2xl overflow-hidden border border-pink-500/40 bg-[#0d0613] hover:scale-[1.02] transition"
+            >
+              <div className="h-[190px] bg-gradient-to-br from-pink-900 via-purple-900 to-black relative">
+                <div className="absolute top-3 left-3 px-3 py-1 rounded-md bg-red-600 font-black text-xs">
+                  LIVE
+                </div>
+
+                <div className="absolute top-3 right-3 px-3 py-1 rounded-md bg-black/70 text-sm">
+                  👁 {lounge.viewers}
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center text-6xl opacity-70">
+                  👑
+                </div>
+              </div>
+
+              <div className="p-5">
+                <h2 className="text-xl font-black">{lounge.name}</h2>
+                <p className="text-pink-400 text-sm">By {lounge.creator}</p>
+
+                <div className="inline-block mt-3 px-3 py-1 rounded-full bg-black/60 text-sm">
+                  {lounge.game}
+                </div>
+
+                <p className="text-gray-300 mt-3 text-sm">
+                  ${lounge.min} Min - ${lounge.max} Max
+                </p>
+
+                <button
+                  onClick={() => navigate(`/casino/lounge/${lounge.id}`)}
+                  className="w-full mt-5 py-3 rounded-xl border border-pink-500 bg-pink-600/30 hover:bg-pink-600 font-black"
+                >
+                  Join Lounge
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-pink-500/30 bg-black/40 p-5">
+      <div className="text-3xl font-black">{value}</div>
+      <div className="text-gray-400 text-sm uppercase mt-1">{label}</div>
+    </div>
+  );
+}
+
+// 6. ENTER CREATOR LOUNGE - GAME ROOM
+export function CreatorLoungeGameRoom() {
+  const { roomId } = useParams();
+  const [panelOpen, setPanelOpen] = useState(true);
+
+  const room =
+    creatorLounges.find((item) => item.id === roomId) || creatorLounges[0];
+
+  return (
+    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
+      <header className="h-[70px] border-b border-pink-500/30 bg-[#08020d] flex items-center justify-between px-6">
+        <div className="text-2xl font-black">
+          <span className="text-pink-500">PlayGround</span>
+          <span className="text-cyan-400">X</span>
+          <span className="text-white ml-3 text-base">• Casino Lounge</span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-2 rounded-full bg-black border border-pink-500/40">
+            {room.name}
+          </div>
+
+          <button
+            onClick={() => setPanelOpen(!panelOpen)}
+            className="px-4 py-2 rounded-xl bg-pink-600 font-bold"
+          >
+            {panelOpen ? "Collapse Panel" : "Open Panel"}
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
+        <section className="flex-1 bg-black">
+          <iframe
+            src={`https://pgxcasino.com/creator-lounge/${room.id}`}
+            className="w-full h-full border-0"
+            allow="fullscreen; autoplay; camera; microphone"
+          />
+        </section>
+
+        {panelOpen && (
+          <aside className="w-[430px] border-l border-pink-500/40 bg-[#09030f] flex flex-col">
+            <div className="p-4 border-b border-white/10">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <h2 className="text-xl font-black text-pink-400">
+                    Creator: {room.creator}
+                  </h2>
+                  <p className="text-gray-400 text-sm">
+                    {room.game} • ${room.min} - ${room.max}
+                  </p>
+                </div>
+
+                <span className="px-3 py-1 rounded-full bg-red-600 text-xs font-black">
+                  LIVE
+                </span>
+              </div>
+
+              <div className="h-[230px] rounded-2xl border border-pink-500/40 bg-gradient-to-br from-purple-900 to-black flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-3">🎥</div>
+                  <div className="font-bold">Creator Video Screen</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 p-4 border-b border-white/10">
+              <button className="py-3 rounded-xl bg-pink-600 font-black">
+                Tip
+              </button>
+              <button className="py-3 rounded-xl bg-purple-600 font-black">
+                Gift
+              </button>
+              <button className="py-3 rounded-xl bg-yellow-500 text-black font-black">
+                React
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-white/10">
+              <h3 className="font-black text-pink-400 mb-3">Top Tips</h3>
+
+              {[
+                ["QueenBee", "$500"],
+                ["HighRoller", "$250"],
+                ["LuckyStar", "$100"],
+              ].map(([name, amount], index) => (
+                <div
+                  key={name}
+                  className="flex justify-between py-2 border-b border-white/5 text-sm"
+                >
+                  <span>
+                    {index + 1}. {name}
+                  </span>
+                  <span className="text-pink-400">{amount}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex-1 flex flex-col p-4">
+              <h3 className="font-black text-pink-400 mb-3">Chat Lounge</h3>
+
+              <div className="flex-1 rounded-xl bg-black/50 border border-white/10 p-3 space-y-3 overflow-y-auto">
+                <ChatMessage name="QueenBee" msg="This game is crazy!" />
+                <ChatMessage name="HighRoller" msg="Big win incoming 🔥" />
+                <ChatMessage name={room.creator} msg="Let’s get those wins!" />
+                <ChatMessage name="LuckyStar" msg="Nice hand bro!" />
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <input
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-3 rounded-xl bg-black border border-white/10 outline-none"
+                />
+
+                <button className="px-5 rounded-xl bg-pink-600 font-black">
+                  Send
+                </button>
+              </div>
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChatMessage({ name, msg }: { name: string; msg: string }) {
+  return (
+    <div className="text-sm">
+      <span className="text-pink-400 font-bold">{name}: </span>
+      <span className="text-gray-200">{msg}</span>
+    </div>
+  );
+}

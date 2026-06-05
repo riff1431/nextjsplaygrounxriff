@@ -96,3 +96,6 @@ txt files/
 *.xlsx
 *.pptx
 *.pdf
+
+# Scratch files (may contain secrets/tokens)
+scratch/

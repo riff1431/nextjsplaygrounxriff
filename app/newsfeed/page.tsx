@@ -471,6 +471,7 @@ export default function NewsFeedPage() {
         { label: "Bar Lounge", icon: <BarDrinkIcon className="w-4 h-4" />, route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8", roomType: "bar-lounge" },
         { label: "Truth or Dare", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8", roomType: "truth-or-dare" },
         { label: "Suga 4 U", icon: <Crown className="w-4 h-4" />, route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8", roomType: "suga-4-u" },
+        { label: "Casino", icon: <Dices className="w-4 h-4" />, route: "/rooms/casino", color: "text-yellow-400", border: "border-yellow-400/95", glow: "shadow-[0_0_18px_rgba(234,179,8,0.85)]", hover: "hover:bg-yellow-500/8", roomType: "casino" },
     ];
 
     return (

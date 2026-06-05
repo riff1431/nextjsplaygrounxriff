@@ -501,7 +501,7 @@ export default function FlashDropsRoomPreview() {
                         {/* Desktop: Left sidebar buttons + 3-column layout */}
                         <div className="hidden lg:flex flex-1 min-h-0 gap-3 px-3 pt-3">
                             {/* Left sidebar — Back + Invite */}
-                            <div className="shrink-0 flex flex-col gap-2 pt-1">
+                            <div className="shrink-0 flex flex-col gap-2 pt-1" data-tour="flashdrop-fan-quick-actions">
                                 <button
                                     onClick={() => router.back()}
                                     className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
@@ -524,7 +524,7 @@ export default function FlashDropsRoomPreview() {
                                 <RoomTourHelpButton tourType="flashdrop_fan" accentHsl="330, 100%, 55%" />
                             </div>
                             {/* Left: Stream + Drop Board */}
-                            <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
+                            <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0" data-tour="flashdrop-fan-live-drop-board">
                                 {/* Live Stream */}
                                 <div className="rounded-xl overflow-hidden fd-neon-border-md shrink-0" style={{ aspectRatio: "16/9" }}>
                                     {roomId && user && hostId ? (
@@ -549,12 +549,12 @@ export default function FlashDropsRoomPreview() {
                             </div>
 
                             {/* Center: Live Chat */}
-                            <div className="flex-[27] min-w-0 min-h-0">
+                            <div className="flex-[27] min-w-0 min-h-0" data-tour="flashdrop-fan-live-chat">
                                 <FlashDropLiveChat roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                             </div>
 
                             {/* Right: Impulse Panel */}
-                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden">
+                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden" data-tour="flashdrop-fan-high-roller-packs">
                                 <ImpulsePanel roomId={roomId} sessionId={urlSessionId} onSpend={requestSpend} />
                             </div>
 

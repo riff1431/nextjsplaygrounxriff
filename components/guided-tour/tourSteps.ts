@@ -204,10 +204,26 @@ const sugaSteps: TourStep[] = [
 const barLoungeCreatorSteps: TourStep[] = [
   {
     target: "bar-room-info",
-    icon: "💰",
-    title: "Room Info",
+    icon: "⬅️",
+    title: "Back / Room Info",
     content:
-      "Shows your current earnings only. Keep an eye on this number throughout your stream to monitor your performance.",
+      "Go back to the session dashboard or minimize your room.",
+    placement: "bottom",
+  },
+  {
+    target: "bar-incoming-button",
+    icon: "📥",
+    title: "Incoming Requests",
+    content:
+      "Click here to see and manage incoming 1-on-1 call requests from fans.",
+    placement: "bottom",
+  },
+  {
+    target: "bar-start-end-room",
+    icon: "🔴",
+    title: "Start / End Room",
+    content:
+      "Go live or end your room here. Your earnings, timer, and fan count are displayed alongside.",
     placement: "bottom",
   },
   {
@@ -219,50 +235,19 @@ const barLoungeCreatorSteps: TourStep[] = [
     placement: "right",
   },
   {
-    target: "bar-incoming-button",
-    icon: "📥",
-    title: "Incoming Requests",
-    content:
-      "Click here to see and manage fan requests to join your VIP table or private session.",
-    placement: "bottom",
-  },
-  {
-    target: "bar-room-controls",
-    icon: "🎛️",
-    title: "Room Controls",
-    content:
-      "Access mute, camera, settings, block users, ban users, clear chat, and other moderation tools.",
-    placement: "top",
-  },
-  {
-    target: "bar-start-end-room",
-    icon: "🔴",
-    title: "Start / End Room",
-    content:
-      "Go live or end your room here. You can pause or stop the room whenever needed.",
-    placement: "left",
-  },
-  {
-    target: "bar-room-timer",
-    icon: "⏱️",
-    title: "Room Timer",
-    content: "Tracks how long you have been live inside this room.",
-    placement: "left",
-  },
-  {
     target: "bar-tips-drinks-guide",
-    icon: "🍹",
-    title: "Tips / Drinks / Requests",
+    icon: "📹",
+    title: "Live Stream / Video Stage",
     content:
-      "Tips are money sent by fans. Drinks are virtual drink sales. Requests are fans asking to join your VIP table or private session.",
-    placement: "left",
+      "Your live video stream is displayed here. Fans watch you live from this view.",
+    placement: "bottom",
   },
   {
     target: "bar-incoming-section",
     icon: "📋",
-    title: "Incoming Requests Section",
+    title: "Requests & Summary",
     content:
-      "Review and respond to fan requests here. Accept, deny, or send a message.",
+      "Review incoming fan requests and see your session summary stats including tips, drinks, and total earnings.",
     placement: "left",
   },
 ];
@@ -617,44 +602,21 @@ const suga4uCreatorSteps: TourStep[] = [
     target: "suga-creator-back-to-rooms",
     icon: "⬅️",
     title: "Back To Rooms",
-    content: "Go back to the list of your rooms.",
+    content: "Go back to the list of your rooms or minimize the session.",
     placement: "bottom",
   },
   {
     target: "suga-creator-incoming-requests",
     icon: "📥",
     title: "Incoming Requests",
-    content: "View and manage all incoming requests from fans.",
-    placement: "bottom",
-  },
-  {
-    target: "suga-creator-earnings",
-    icon: "💰",
-    title: "Earnings",
-    content:
-      "See your total earnings and track your performance live.",
-    placement: "bottom",
-  },
-  {
-    target: "suga-creator-live-fans",
-    icon: "👥",
-    title: "Live Fans",
-    content:
-      "See how many fans are currently watching your live session.",
-    placement: "bottom",
-  },
-  {
-    target: "suga-creator-room-timer",
-    icon: "⏱️",
-    title: "Room Timer",
-    content: "Track how long your live session has been running.",
+    content: "View and manage all incoming 1-on-1 call requests from fans.",
     placement: "bottom",
   },
   {
     target: "suga-creator-go-live-end",
     icon: "🔴",
     title: "Go Live / End",
-    content: "Start your live session or end it when you're done.",
+    content: "Start your live session or end it when you're done. Your earnings and timer appear here too.",
     placement: "bottom",
   },
   {
@@ -666,6 +628,22 @@ const suga4uCreatorSteps: TourStep[] = [
     placement: "right",
   },
   {
+    target: "suga-creator-pending-requests",
+    icon: "📋",
+    title: "Pending Requests",
+    content:
+      "See all pending paid requests from fans. Accept or decline them from here.",
+    placement: "top",
+  },
+  {
+    target: "suga-creator-group-vote",
+    icon: "🗳️",
+    title: "Group Vote",
+    content:
+      "Create a group vote and let fans vote to hit the goal! Add how much a fan pays per vote.",
+    placement: "top",
+  },
+  {
     target: "suga-creator-favorites",
     icon: "🎁",
     title: "Creators Favorites",
@@ -674,28 +652,20 @@ const suga4uCreatorSteps: TourStep[] = [
     placement: "left",
   },
   {
+    target: "suga-creator-summary",
+    icon: "📋",
+    title: "Session Summary",
+    content:
+      "See a summary of your session including earnings, duration, viewers and more.",
+    placement: "top",
+  },
+  {
     target: "suga-creator-secrets",
     icon: "🤫",
     title: "Creator Secrets",
     content:
       "Add special secret requests for exclusive moments with your fans.",
     placement: "left",
-  },
-  {
-    target: "suga-creator-group-vote",
-    icon: "🗳️",
-    title: "Group Vote",
-    content:
-      "Create a group vote and let fans vote to hit the goal! Add how much a fan pays per a vote.",
-    placement: "right",
-  },
-  {
-    target: "suga-creator-summary",
-    icon: "📋",
-    title: "Summary",
-    content:
-      "See a summary of your session including earnings, duration, viewers and more.",
-    placement: "top",
   },
   {
     target: "suga-creator-live-preview",
