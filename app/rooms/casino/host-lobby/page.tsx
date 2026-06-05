@@ -14,6 +14,7 @@ import { cs } from "@/utils/currency";
 interface CreatorLoungeDetails {
     id: string;
     room_id: string;
+    creator_id: string;
     table_name: string;
     creator_name: string;
     game_type: string;
