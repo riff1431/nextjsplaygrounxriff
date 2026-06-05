@@ -34,16 +34,7 @@ export async function GET() {
         splitMap[row.split_key] = row;
     }
 
-    // Dynamic Override: All non-locked splits inherit the dynamic GLOBAL split percentages
-    const globalCreator = splitMap.GLOBAL?.creator_pct ?? 85;
-    const globalPlatform = splitMap.GLOBAL?.platform_pct ?? 15;
 
-    for (const key of Object.keys(splitMap)) {
-        if (key !== 'GLOBAL' && key !== 'SUGA4U_FAVORITES' && key !== 'COMPETITION_TIPS') {
-            splitMap[key].creator_pct = globalCreator;
-            splitMap[key].platform_pct = globalPlatform;
-        }
-    }
 
     return NextResponse.json({
         splits: splitMap,

@@ -54,7 +54,7 @@ const SECTION_META: Record<string, { icon: React.ReactNode; color: string; bgCol
     COMPETITION_TIPS: { icon: <Shield size={15} />,  color: "hsl(150,80%,55%)",  bgColor: "rgba(72,187,120,0.1)",  section: "Exceptions" },
 };
 
-const SECTION_ORDER = ["Global"];
+const SECTION_ORDER = ["Global", "Public Room", "Private Room", "Exceptions"];
 
 // ─── Mini Donut Chart ─────────────────────────────────────────────────────────
 function DonutChart({ creator, platform }: { creator: number; platform: number }) {

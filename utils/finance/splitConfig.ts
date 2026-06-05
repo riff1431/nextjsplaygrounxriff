@@ -111,19 +111,6 @@ export async function getSplitConfig(splitKey: SplitType): Promise<LiveSplitConf
             };
         }
 
-        // Fully Dynamic Global Split override:
-        // All non-locked splits (everything except SUGA4U_FAVORITES and COMPETITION_TIPS)
-        // dynamically inherit the GLOBAL creator/platform split percentages.
-        const globalConfig = newCache['GLOBAL'];
-        if (globalConfig) {
-            for (const key of Object.keys(newCache)) {
-                if (key !== 'GLOBAL' && key !== 'SUGA4U_FAVORITES' && key !== 'COMPETITION_TIPS') {
-                    newCache[key].creator = globalConfig.creator;
-                    newCache[key].platform = globalConfig.platform;
-                }
-            }
-        }
-
         _splitCache = newCache;
         _splitCacheExpiry = now + CACHE_TTL_MS;
 
@@ -145,17 +132,9 @@ function staticFallback(splitKey: SplitType): LiveSplitConfig {
     const s = SPLIT_CONFIG[splitKey];
     if (!s) return { creator: 85, platform: 15 };
 
-    // If not locked exceptions, inherit the GLOBAL fallback split percentages
-    let creator = s.creator;
-    let platform = s.platform;
-    if (splitKey !== 'GLOBAL' && splitKey !== 'SUGA4U_FAVORITES' && splitKey !== 'COMPETITION_TIPS') {
-        creator = SPLIT_CONFIG.GLOBAL.creator;
-        platform = SPLIT_CONFIG.GLOBAL.platform;
-    }
-
     return {
-        creator: creator,
-        platform: platform,
+        creator: s.creator,
+        platform: s.platform,
         entryFee: (s as any).entryFee ?? null,
         rate: (s as any).rate ?? null,
         min: (s as any).min ?? null,

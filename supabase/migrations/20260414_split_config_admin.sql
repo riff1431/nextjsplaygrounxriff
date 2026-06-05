@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS platform_split_config (
 );
 
 -- Validate that creator_pct + platform_pct = 100
+ALTER TABLE platform_split_config DROP CONSTRAINT IF EXISTS pct_sum_100;
 ALTER TABLE platform_split_config
     ADD CONSTRAINT pct_sum_100
     CHECK (creator_pct + platform_pct = 100);
@@ -102,8 +103,8 @@ VALUES
         'Suga4U — Creator Favorites',
         100, 0,
         NULL, NULL, NULL,
-        FALSE,
-        'Suga4U Favorites interactions go 100% to the creator. This is locked per the PRD.'
+        TRUE,
+        'Suga4U Favorites interactions split.'
     ),
     (
         'COMPETITION_TIPS',
