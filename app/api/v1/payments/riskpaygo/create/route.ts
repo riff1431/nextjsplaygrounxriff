@@ -23,6 +23,7 @@ export async function POST(req: Request) {
         const {
             first_name,
             last_name,
+            email,
             country_of_residence,
             phone,
             date_of_birth,
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
             post_code
         } = customerDetails;
 
-        if (!first_name || !last_name || !country_of_residence || !phone || !date_of_birth) {
+        if (!first_name || !last_name || !email || !country_of_residence || !phone || !date_of_birth) {
             return NextResponse.json({ error: 'Missing required customer details.' }, { status: 400 });
         }
 
@@ -148,6 +149,7 @@ export async function POST(req: Request) {
             customer_details: {
                 first_name,
                 last_name,
+                email,
                 country_of_residence,
                 phone,
                 date_of_birth,

@@ -32,6 +32,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
     // RiskPayGo billing details
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [email, setEmail] = useState("");
     const [country, setCountry] = useState("US");
     const [phone, setPhone] = useState("");
     const [dateOfBirth, setDateOfBirth] = useState("");
@@ -48,6 +49,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
             setProofFile(null);
             setFirstName("");
             setLastName("");
+            setEmail("");
             setCountry("US");
             setPhone("");
             setDateOfBirth("");
@@ -58,6 +60,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
 
     useEffect(() => {
         if (isOpen && user) {
+            if (user.email) setEmail(user.email);
             const fetchProfile = async () => {
                 try {
                     const { data } = await supabase
@@ -109,7 +112,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
         e.preventDefault();
         if (!amount) return;
 
-        if (!firstName.trim() || !lastName.trim() || !country || !phone.trim() || !dateOfBirth) {
+        if (!firstName.trim() || !lastName.trim() || !email.trim() || !country || !phone.trim() || !dateOfBirth) {
             alert("Please fill in all required customer details.");
             return;
         }
@@ -126,6 +129,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                 customerDetails: {
                     first_name: firstName.trim(),
                     last_name: lastName.trim(),
+                    email: email.trim(),
                     country_of_residence: country,
                     phone: phone.trim(),
                     date_of_birth: dateOfBirth,
@@ -504,6 +508,18 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                             className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1 block">Email Address</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="john.smith@example.com"
+                                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 text-sm transition"
+                                    />
                                 </div>
 
                                 <div>

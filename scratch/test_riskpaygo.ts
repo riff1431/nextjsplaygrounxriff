@@ -49,6 +49,7 @@ async function run() {
         customer_details: {
             first_name: "TestUS",
             last_name: "Admin",
+            email: "admin.test@example.com",
             country_of_residence: "US",
             state_of_residence: "FL",
             post_code: "33101",
@@ -97,6 +98,7 @@ async function run() {
         customer_details: {
             first_name: "TestGB",
             last_name: "Admin",
+            email: "admin.test@example.com",
             country_of_residence: "GB",
             phone: "+442002001234",
             date_of_birth: "1990-01-15"

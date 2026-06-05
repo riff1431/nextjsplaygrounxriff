@@ -97,6 +97,7 @@ export async function POST(req: Request) {
             customer_details: {
                 first_name: 'Admin',
                 last_name: 'Test',
+                email: 'admin.test@example.com',
                 country_of_residence: 'US',
                 state_of_residence: 'FL',
                 post_code: '33101',
