@@ -32,6 +32,7 @@ import CustomRequestModal from "@/components/rooms/suga4u/CustomRequestModal";
 
 import { createClient } from "@/utils/supabase/client";
 import { cs } from "@/utils/currency";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -639,6 +640,7 @@ const Suga4URoom = () => {
                                 </button>
                             </div>
                             <div className="flex items-center gap-2">
+                                <RoomTourHelpButton tourType="suga4u_fan" accentHsl="340, 75%, 55%" />
                                 <div className="relative">
                                     <button
                                         onClick={toggleIncomingPanel}

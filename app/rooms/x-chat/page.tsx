@@ -15,6 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { cs } from "@/utils/currency";
 
 const LiveStreamWrapper = dynamic(
@@ -772,6 +773,7 @@ const XChatRoom = () => {
                             </h1>
                         </div>
                         <div className="xchat-header-right">
+                            <RoomTourHelpButton tourType="xchat_fan" accentHsl="45, 90%, 55%" />
                             {renderStatus()}
                             {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
                             <WalletPill />

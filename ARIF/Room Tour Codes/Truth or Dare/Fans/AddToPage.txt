@@ -1,0 +1,13 @@
+// Add To Page
+
+import TruthOrDareFanTour from "@/components/tours/TruthOrDareFanTour";
+
+export default function TruthOrDareFanRoom({ user }) {
+  return (
+    <>
+      <TruthOrDareFanTour user={user} />
+
+      {/* Existing Truth or Dare Fan Room UI */}
+    </>
+  );
+}

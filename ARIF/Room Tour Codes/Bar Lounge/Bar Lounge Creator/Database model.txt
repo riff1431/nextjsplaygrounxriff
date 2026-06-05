@@ -1,0 +1,11 @@
+model UserRoomTour {
+  id          String   @id @default(cuid())
+  userId      String
+  tourName    String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tourName])
+}

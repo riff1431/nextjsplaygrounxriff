@@ -28,6 +28,7 @@ import ConfessionWall from "@/components/rooms/confessions/ConfessionWall";
 import RequestConfession from "@/components/rooms/confessions/RequestConfession";
 import LiveChatBox from "@/components/rooms/confessions/LiveChatBox";
 import { cs } from "@/utils/currency";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 
 /* ----------------------------- Tiny UI helpers ---------------------------- */
@@ -751,6 +752,7 @@ function ConfessionsRoom() {
                             </div>
 
                             <div className="flex items-center gap-3">
+                                <RoomTourHelpButton tourType="confession_fan" accentHsl="350, 80%, 55%" />
                                 <button
                                     onClick={() => setShowInviteModal(true)}
                                     className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-bold transition-all border border-primary/30 hover:scale-105"

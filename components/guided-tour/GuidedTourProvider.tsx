@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
-import { tourConfigs, type TourType, type TourStep } from "./tourSteps";
+import { tourConfigs, type TourType, type TourStep, isRoomTour } from "./tourSteps";
 
 // ---------------------------------------------------------------------------
 // Context types
@@ -115,13 +115,23 @@ export function GuidedTourProvider({
     async (tourType: TourType) => {
       if (!user) return;
       try {
-        await supabase
-          .from("profiles")
-          .update({
-            guided_tour_completed: true,
-            guided_tour_type: tourType,
-          })
-          .eq("id", user.id);
+        if (isRoomTour(tourType)) {
+          // Room-specific tours → dedicated table via API
+          await fetch("/api/v1/rooms/tour/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tourName: tourType }),
+          });
+        } else {
+          // Global onboarding tours → profiles table
+          await supabase
+            .from("profiles")
+            .update({
+              guided_tour_completed: true,
+              guided_tour_type: tourType,
+            })
+            .eq("id", user.id);
+        }
       } catch (err) {
         console.warn("Failed to persist tour completion:", err);
       }

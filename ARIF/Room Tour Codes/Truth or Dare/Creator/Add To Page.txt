@@ -1,0 +1,11 @@
+import TruthOrDareCreatorTour from "@/components/tours/TruthOrDareCreatorTour";
+
+export default function TruthOrDareCreatorRoom({ user }) {
+  return (
+    <>
+      <TruthOrDareCreatorTour user={user} />
+
+      {/* Existing Truth Or Dare Creator Room UI */}
+    </>
+  );
+}

@@ -54,6 +54,7 @@ import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 import dynamic from 'next/dynamic';
 import { cs } from "@/utils/currency";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 const LiveStreamWrapper = dynamic<any>(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 const QuestionCountdown = dynamic<any>(() => import('./components/QuestionCountdown'), { ssr: false });
 const FanAnswerModal = dynamic<any>(() => import('./components/FanAnswerModal'), { ssr: false });
@@ -1294,6 +1295,7 @@ function TruthOrDareContent() {
                         </AnimatePresence>
                     </div>
 
+                    <RoomTourHelpButton tourType="truth_or_dare_fan" accentHsl="260, 80%, 55%" />
                     <WalletPill compact={true} />
                 </div>
             </div>

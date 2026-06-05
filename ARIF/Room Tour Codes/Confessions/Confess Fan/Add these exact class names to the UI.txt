@@ -1,0 +1,23 @@
+1. 1 on 1 & Global
+confession-send-to
+
+2. All Creator Confessions
+confession-all-creator-confessions
+
+3. Request Confession
+confession-request-builder
+
+4. Invite / Incoming
+confession-invite-incoming
+
+5. Live Chat
+confession-live-chat
+
+6. Creator Spotlight
+confession-creator-spotlight
+
+7. Send Request
+confession-send-request
+
+8. My Requests List
+confession-my-requests

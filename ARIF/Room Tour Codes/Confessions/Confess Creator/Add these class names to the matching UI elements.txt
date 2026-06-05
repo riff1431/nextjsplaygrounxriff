@@ -1,0 +1,26 @@
+My Requests tab:
+confession-my-requests
+
+Global Requests tab:
+confession-global-requests
+
+Pending Requests table:
+confession-pending-requests
+
+Earnings and live fans box:
+confession-earnings-live-fans
+
+Start / end room button:
+confession-start-end-room
+
+Random Request section:
+confession-random-request
+
+Confession Wall section:
+confession-wall
+
+Summary panel:
+confession-summary-panel
+
+Live Chat panel:
+confession-live-chat

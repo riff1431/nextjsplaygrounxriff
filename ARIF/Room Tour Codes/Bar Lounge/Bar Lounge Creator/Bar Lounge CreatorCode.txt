@@ -1,0 +1,160 @@
+// components/tours/BarLoungeCreatorTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function BarLoungeCreatorTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".bar-room-info",
+      title: "1. Room Info",
+      content: "Shows your current earnings only.",
+      placement: "bottom",
+    },
+    {
+      target: ".bar-lounge-chat",
+      title: "2. Lounge Chat",
+      content:
+        "This is your main chat with fans. Greet them, chat, answer questions, and build the vibe.",
+      placement: "right",
+    },
+    {
+      target: ".bar-incoming-button",
+      title: "3. Incoming Requests",
+      content:
+        "Click here to see and manage fan requests to join your VIP table or private session.",
+      placement: "bottom",
+    },
+    {
+      target: ".bar-room-controls",
+      title: "4. Room Controls",
+      content:
+        "Access mute, camera, settings, block users, ban users, clear chat, and other moderation tools.",
+      placement: "top",
+    },
+    {
+      target: ".bar-start-end-room",
+      title: "5. Start / End Room",
+      content:
+        "Go live or end your room here. You can pause or stop the room whenever needed.",
+      placement: "left",
+    },
+    {
+      target: ".bar-room-timer",
+      title: "6. Room Timer",
+      content:
+        "Tracks how long you have been live inside this room.",
+      placement: "left",
+    },
+    {
+      target: ".bar-tips-drinks-guide",
+      title: "7. Tips / Drinks / Requests Guide",
+      content:
+        "Tips are money sent by fans. Drinks are virtual drink sales. Requests are fans asking to join your VIP table or private session.",
+      placement: "left",
+    },
+    {
+      target: ".bar-incoming-section",
+      title: "8. Incoming Requests Section",
+      content:
+        "Review and respond to fan requests here. Accept, deny, or send a message.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.barLoungeTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "bar_lounge_creator",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

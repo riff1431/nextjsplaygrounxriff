@@ -27,6 +27,7 @@ import dynamic from "next/dynamic";
 import { cs } from "@/utils/currency";
 const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
 
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
@@ -1339,6 +1340,7 @@ function TruthOrDareCreatorContent() {
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                    <RoomTourHelpButton tourType="truth_or_dare_creator" accentHsl="330, 80%, 55%" />
                     {sessionActive && isInStudio && isSessionLive && (
                         <SessionLiveControls
                             sessionId={activeSessionId || ""}

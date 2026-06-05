@@ -1,0 +1,25 @@
+// Class Names To Add
+
+suga-creator-back-to-rooms
+
+suga-creator-incoming-requests
+
+suga-creator-earnings
+
+suga-creator-live-fans
+
+suga-creator-room-timer
+
+suga-creator-go-live-end
+
+suga-creator-live-chat
+
+suga-creator-favorites
+
+suga-creator-secrets
+
+suga-creator-group-vote
+
+suga-creator-summary
+
+suga-creator-live-preview

@@ -1,0 +1,11 @@
+import ConfessionFanTour from "@/components/tours/ConfessionFanTour";
+
+export default function ConfessionFanRoom({ user }) {
+  return (
+    <>
+      <ConfessionFanTour user={user} />
+
+      {/* Existing page */}
+    </>
+  );
+}

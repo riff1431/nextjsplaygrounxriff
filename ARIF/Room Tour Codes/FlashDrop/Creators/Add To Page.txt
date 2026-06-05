@@ -1,0 +1,11 @@
+import FlashDropCreatorTour from "@/components/tours/FlashDropCreatorTour";
+
+export default function FlashDropCreatorRoom({ user }) {
+  return (
+    <>
+      <FlashDropCreatorTour user={user} />
+
+      {/* Existing Flash Drop Creator Room UI */}
+    </>
+  );
+}

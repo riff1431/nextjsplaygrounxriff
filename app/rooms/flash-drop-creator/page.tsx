@@ -17,6 +17,7 @@ import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import "./flashdrop-creator.css";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -165,7 +166,8 @@ function FlashdropCreatorStudio() {
                     <h1 className="font-display text-lg sm:text-2xl md:text-4xl font-black neon-text tracking-widest text-center w-full truncate px-16 sm:px-24">
                         Flash Drop — Creator Room
                     </h1>
-                    <div className="absolute right-0 z-50">
+                    <div className="absolute right-0 z-50 flex items-center gap-2">
+                        <RoomTourHelpButton tourType="flashdrop_creator" accentHsl="170, 80%, 50%" />
                         <SessionLiveControls
                             sessionId={sessionId!}
                             onEnd={() => router.push("/rooms/flash-drop-creator")}
@@ -179,7 +181,7 @@ function FlashdropCreatorStudio() {
                     {/* Desktop/Tablet: Grid layout */}
                     <div className="hidden lg:flex gap-3 h-full min-h-0">
                         {/* 1st: Summary Box + Live Drop Board */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden">
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden flashdrop-summary-box">
                             <SummaryBox roomId={roomId} sessionId={sessionId} />
                             <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                         </div>
@@ -224,7 +226,7 @@ function FlashdropCreatorStudio() {
                         </div>
 
                         {/* 4th: Live Chat */}
-                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                        <div className="flex-1 min-w-0 flex flex-col min-h-0 glass-panel rounded-xl overflow-hidden flashdrop-live-chat" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
                             <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                 <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(170 80% 45%))' }}>
                                     <MessageSquare size={10} className="text-white" />

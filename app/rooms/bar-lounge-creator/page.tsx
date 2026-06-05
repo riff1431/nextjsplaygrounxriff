@@ -18,6 +18,7 @@ import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCallCreatorModal";
 import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const BAR_LOUNGE_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
@@ -186,6 +187,7 @@ const CreatorBarLoungeInner = () => {
                     </p>
                 </div>
                 <div className="absolute right-2 sm:right-4 flex items-center gap-1.5 sm:gap-2">
+                    <RoomTourHelpButton tourType="bar_lounge_creator" accentHsl="45, 90%, 55%" />
                     {/* Incoming 1-on-1 calls */}
                     <div className="relative" data-incoming-btn>
                         <button
@@ -233,7 +235,7 @@ const CreatorBarLoungeInner = () => {
                 {/* Desktop: 3-col grid */}
                 <div className="hidden lg:grid w-full h-full grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
                     {/* Left - Chat */}
-                    <div className="h-full flex min-h-[400px]">
+                    <div className="h-full flex min-h-[400px] bar-lounge-chat">
                         <LoungeChat roomId={roomId} sessionId={sessionId} />
                     </div>
 
@@ -245,7 +247,7 @@ const CreatorBarLoungeInner = () => {
                     </div>
 
                     {/* Right - Requests & Summary */}
-                    <div className="flex flex-col gap-4 h-full min-h-[400px]">
+                    <div className="flex flex-col gap-4 h-full min-h-[400px] bar-incoming-section">
                         <div className="flex-1 min-h-0">
                             <IncomingRequests
                                 roomId={roomId}

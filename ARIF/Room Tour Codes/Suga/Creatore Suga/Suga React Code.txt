@@ -1,0 +1,181 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function Suga4UCreatorTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".suga-creator-back-to-rooms",
+      title: "1. Back To Rooms",
+      content: "Go back to the list of your rooms.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-incoming-requests",
+      title: "2. Incoming Requests",
+      content: "View and manage all incoming requests from fans.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-earnings",
+      title: "3. Earnings",
+      content: "See your total earnings and track your performance live.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-live-fans",
+      title: "4. Live Fans",
+      content: "See how many fans are currently watching your live session.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-room-timer",
+      title: "5. Room Timer",
+      content: "Track how long your live session has been running.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-go-live-end",
+      title: "6. Go Live / End",
+      content: "Start your live session or end it when you're done.",
+      placement: "bottom",
+    },
+    {
+      target: ".suga-creator-live-chat",
+      title: "7. Live Chat",
+      content:
+        "Chat with your fans in real-time. Build connections and keep the room active.",
+      placement: "right",
+    },
+    {
+      target: ".suga-creator-favorites",
+      title: "8. Creators Favorites",
+      content:
+        "Create your Suga Gifts you would like to receive from fans. Add name, item, link and pic, and persuade fans to buy which you want!",
+      placement: "left",
+    },
+    {
+      target: ".suga-creator-secrets",
+      title: "9. Creator Secrets",
+      content:
+        "Add special secret requests for exclusive moments with your fans.",
+      placement: "left",
+    },
+    {
+      target: ".suga-creator-group-vote",
+      title: "10. Group Vote",
+      content:
+        "Create a group vote and let fans vote to hit the goal! Add how much a fan pays per a vote.",
+      placement: "right",
+    },
+    {
+      target: ".suga-creator-summary",
+      title: "11. Summary",
+      content:
+        "See a summary of your session including earnings, duration, viewers and more.",
+      placement: "top",
+    },
+    {
+      target: ".suga-creator-live-preview",
+      title: "12. Live Preview",
+      content:
+        "See your live camera preview before and during your stream.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.suga4UCreatorTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "suga4u_creator",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

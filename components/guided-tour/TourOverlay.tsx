@@ -25,7 +25,7 @@ interface Rect {
 type Placement = "top" | "bottom" | "left" | "right";
 
 const PADDING = 10; // px of breathing room around the target
-const TOOLTIP_GAP = 16; // gap between spotlight and tooltip
+const TOOLTIP_GAP = 14; // gap between spotlight and tooltip
 const ARROW_SIZE = 10;
 
 function getTargetRect(target: string): Rect | null {
@@ -34,6 +34,10 @@ function getTargetRect(target: string): Rect | null {
   // Fallback: look for data-tour-match="<target>" (allows one element to serve multiple tours)
   if (!el) {
     el = document.querySelector(`[data-tour-match="${target}"]`);
+  }
+  // Fallback: look for CSS class name (room tours use class-based targets like "bar-room-info")
+  if (!el) {
+    el = document.querySelector(`.${target}`);
   }
   if (!el) return null;
   const r = el.getBoundingClientRect();
@@ -45,6 +49,21 @@ function getTargetRect(target: string): Rect | null {
     bottom: r.bottom + PADDING,
     right: r.right + PADDING,
   };
+}
+
+/** Scroll the tour target element into view if it's off-screen */
+function scrollTargetIntoView(target: string): void {
+  let el =
+    document.querySelector(`[data-tour="${target}"]`) ||
+    document.querySelector(`[data-tour-match="${target}"]`) ||
+    document.querySelector(`.${target}`);
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const vh = window.innerHeight;
+  // If element is off-screen or partially hidden, scroll it into view
+  if (r.top < 0 || r.bottom > vh || r.top > vh * 0.75) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 }
 
 function resolvePlacement(
@@ -274,6 +293,9 @@ export default function TourOverlay() {
   useEffect(() => {
     if (!step || !activeTour) return;
 
+    // Scroll target into view first (important on mobile where elements may be off-screen)
+    scrollTargetIntoView(step.target);
+
     let attempts = 0;
     const maxAttempts = 5;
     const retryInterval = 400; // ms between retries
@@ -286,6 +308,8 @@ export default function TourOverlay() {
       }
       attempts++;
       if (attempts < maxAttempts) {
+        // Try scrolling again on retry
+        scrollTargetIntoView(step.target);
         setTimeout(tryFind, retryInterval);
       } else {
         // Target not found after retries — skip this step
@@ -294,7 +318,8 @@ export default function TourOverlay() {
       }
     };
 
-    tryFind();
+    // Give scroll animation time to settle
+    setTimeout(tryFind, 200);
 
     // Re-measure on scroll/resize
     window.addEventListener("scroll", updateRect, true);
@@ -325,15 +350,18 @@ export default function TourOverlay() {
     return () => window.removeEventListener("keydown", handler);
   }, [activeTour, nextStep, prevStep, skipTour]);
 
-  // Lock body scroll when tour is active
+  // Lock body scroll when tour is active — use CSS class approach for iOS compat
   useEffect(() => {
     if (activeTour) {
-      document.body.style.overflow = "hidden";
+      document.documentElement.classList.add("tour-active");
+      document.body.classList.add("tour-active");
     } else {
-      document.body.style.overflow = "";
+      document.documentElement.classList.remove("tour-active");
+      document.body.classList.remove("tour-active");
     }
     return () => {
-      document.body.style.overflow = "";
+      document.documentElement.classList.remove("tour-active");
+      document.body.classList.remove("tour-active");
     };
   }, [activeTour]);
 
@@ -344,6 +372,9 @@ export default function TourOverlay() {
 
   // Nothing active
   if (!activeTour || !step) return null;
+
+  // ── Desktop tooltip width adapts to viewport ─────────────────────────
+  const desktopTooltipWidth = isMobile ? "100%" : Math.min(380, window.innerWidth - 32);
 
   // Compute tooltip placement & position
   const placement = targetRect
@@ -365,6 +396,9 @@ export default function TourOverlay() {
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
+
+  // ── Progress: show dots for ≤8 steps, fraction for more ──────────────
+  const showDotsProgress = totalSteps <= 8;
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -397,12 +431,17 @@ export default function TourOverlay() {
             "z-[10000]",
             isMobile
               ? "fixed bottom-0 left-0 right-0 rounded-t-3xl"
-              : "fixed rounded-2xl max-w-[380px] w-[380px]"
+              : "fixed rounded-2xl"
           )}
           style={
             isMobile
               ? {}
-              : { top: tooltipPos.top, left: tooltipPos.left }
+              : {
+                  top: tooltipPos.top,
+                  left: tooltipPos.left,
+                  maxWidth: desktopTooltipWidth,
+                  width: desktopTooltipWidth,
+                }
           }
           initial={isMobile ? { y: "100%" } : { opacity: 0, y: 12, scale: 0.96 }}
           animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
@@ -415,8 +454,13 @@ export default function TourOverlay() {
               "relative border bg-black/90 backdrop-blur-xl overflow-hidden",
               "border-pink-500/40",
               "shadow-[0_0_40px_rgba(236,72,153,0.25),0_0_100px_rgba(236,72,153,0.08)]",
-              isMobile ? "rounded-t-3xl pb-8" : "rounded-2xl"
+              isMobile ? "rounded-t-3xl" : "rounded-2xl"
             )}
+            style={
+              isMobile
+                ? { paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }
+                : {}
+            }
           >
             {/* Ambient glow */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-pink-500/10 blur-[60px] pointer-events-none" />
@@ -425,18 +469,27 @@ export default function TourOverlay() {
             {/* Mobile drag handle */}
             {isMobile && (
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-white/20" />
+                <div className="w-10 h-1.5 rounded-full bg-white/25" />
               </div>
             )}
 
             {/* Header */}
-            <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/10 border border-pink-500/30 flex items-center justify-center text-xl">
+            <div className={cx(
+              "flex items-center justify-between",
+              isMobile ? "px-4 pt-3 pb-2" : "px-5 pt-4 pb-2"
+            )}>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className={cx(
+                  "rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/10 border border-pink-500/30 flex items-center justify-center text-xl flex-shrink-0",
+                  isMobile ? "w-11 h-11" : "w-10 h-10"
+                )}>
                   {step.icon}
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-white leading-tight">
+                <div className="min-w-0 flex-1">
+                  <h3 className={cx(
+                    "font-bold text-white leading-tight",
+                    isMobile ? "text-[15px]" : "text-base"
+                  )}>
                     {step.title}
                   </h3>
                   <span className="text-[10px] uppercase tracking-widest text-pink-300/60 font-semibold">
@@ -446,43 +499,81 @@ export default function TourOverlay() {
               </div>
               <button
                 onClick={skipTour}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 transition"
+                className={cx(
+                  "rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 transition flex-shrink-0",
+                  isMobile ? "p-2.5 -mr-1" : "p-1.5"
+                )}
                 title="Skip Tour"
               >
-                <X className="w-4 h-4" />
+                <X className={isMobile ? "w-5 h-5" : "w-4 h-4"} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="px-5 pb-4">
-              <p className="text-sm text-gray-300 leading-relaxed">
+            <div className={isMobile ? "px-4 pb-4" : "px-5 pb-4"}>
+              <p className={cx(
+                "text-gray-300 leading-relaxed",
+                isMobile ? "text-[13px]" : "text-sm"
+              )}>
                 {step.content}
               </p>
             </div>
 
-            {/* Progress dots */}
-            <div className="px-5 pb-3 flex items-center justify-center gap-1.5">
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className={cx(
-                    "h-1.5 rounded-full transition-all duration-300",
-                    i === currentStep
-                      ? "bg-pink-500 w-6 shadow-[0_0_8px_rgba(236,72,153,0.8)]"
-                      : i < currentStep
-                        ? "bg-pink-500/50 w-1.5"
-                        : "bg-white/15 w-1.5"
-                  )}
-                  layout
-                />
-              ))}
+            {/* Progress indicator */}
+            <div className={cx(
+              "flex items-center justify-center",
+              isMobile ? "px-4 pb-3" : "px-5 pb-3",
+              showDotsProgress ? "gap-1.5" : "gap-0"
+            )}>
+              {showDotsProgress ? (
+                // Dot indicators for ≤ 8 steps
+                Array.from({ length: totalSteps }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className={cx(
+                      "rounded-full transition-all duration-300",
+                      i === currentStep
+                        ? "bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.8)]"
+                        : i < currentStep
+                          ? "bg-pink-500/50"
+                          : "bg-white/15",
+                      isMobile
+                        ? (i === currentStep ? "h-2 w-7" : "h-2 w-2")
+                        : (i === currentStep ? "h-1.5 w-6" : "h-1.5 w-1.5")
+                    )}
+                    layout
+                  />
+                ))
+              ) : (
+                // Progress bar + fraction for > 8 steps
+                <div className="flex items-center gap-2.5 w-full max-w-[200px]">
+                  <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-pink-600 to-pink-400"
+                      style={{ boxShadow: "0 0 8px rgba(236,72,153,0.6)" }}
+                      initial={false}
+                      animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-white/40 font-semibold tabular-nums flex-shrink-0">
+                    {currentStep + 1}/{totalSteps}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Navigation buttons */}
-            <div className="px-5 pb-5 flex items-center justify-between gap-3">
+            <div className={cx(
+              "flex items-center justify-between",
+              isMobile ? "px-4 pb-4 gap-2" : "px-5 pb-5 gap-3"
+            )}>
               <button
                 onClick={skipTour}
-                className="text-xs text-gray-500 hover:text-gray-300 transition px-2 py-1"
+                className={cx(
+                  "text-gray-500 hover:text-gray-300 transition",
+                  isMobile ? "text-[13px] px-2 py-2" : "text-xs px-2 py-1"
+                )}
               >
                 Skip Tour
               </button>
@@ -491,9 +582,14 @@ export default function TourOverlay() {
                 {!isFirstStep && (
                   <button
                     onClick={prevStep}
-                    className="flex items-center gap-1 px-3 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-sm transition"
+                    className={cx(
+                      "flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition",
+                      isMobile
+                        ? "px-4 py-2.5 text-[13px] min-h-[44px]"
+                        : "px-3 py-2 text-sm"
+                    )}
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <ChevronLeft className={isMobile ? "w-4 h-4" : "w-3.5 h-3.5"} />
                     Back
                   </button>
                 )}
@@ -501,14 +597,18 @@ export default function TourOverlay() {
                 <button
                   onClick={nextStep}
                   className={cx(
-                    "flex items-center gap-1 px-5 py-2 rounded-xl text-sm font-semibold transition",
+                    "flex items-center gap-1 rounded-xl font-semibold transition",
                     "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400",
                     "text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]",
-                    "hover:shadow-[0_0_30px_rgba(236,72,153,0.6)]"
+                    "hover:shadow-[0_0_30px_rgba(236,72,153,0.6)]",
+                    "active:scale-95",
+                    isMobile
+                      ? "px-6 py-2.5 text-[13px] min-h-[44px]"
+                      : "px-5 py-2 text-sm"
                   )}
                 >
                   {isLastStep ? "Finish" : "Next"}
-                  {!isLastStep && <ChevronRight className="w-3.5 h-3.5" />}
+                  {!isLastStep && <ChevronRight className={isMobile ? "w-4 h-4" : "w-3.5 h-3.5"} />}
                 </button>
               </div>
             </div>

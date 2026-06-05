@@ -1,0 +1,11 @@
+import BarLoungeFanTour from "@/components/tours/BarLoungeFanTour";
+
+export default function BarLoungeFanRoom({ user }) {
+  return (
+    <>
+      <BarLoungeFanTour user={user} />
+
+      {/* Existing Bar Lounge Fan Room UI */}
+    </>
+  );
+}

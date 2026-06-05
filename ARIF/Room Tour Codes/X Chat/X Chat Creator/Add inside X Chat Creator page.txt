@@ -1,0 +1,13 @@
+// Add inside X Chat Creator page
+
+import XChatCreatorTour from "@/components/tours/XChatCreatorTour";
+
+export default function XChatCreatorRoom({ user }) {
+  return (
+    <>
+      <XChatCreatorTour user={user} />
+
+      {/* Existing X Chat Creator UI */}
+    </>
+  );
+}

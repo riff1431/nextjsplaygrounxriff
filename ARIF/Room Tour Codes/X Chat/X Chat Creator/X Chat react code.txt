@@ -1,0 +1,147 @@
+// components/tours/XChatCreatorTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function XChatCreatorTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".xchat-creator-live-chat-panel",
+      title: "1. Live Chat Panel",
+      content:
+        "See all messages from fans in real-time. Switch between All, Paid, and Priority messages.",
+      placement: "right",
+    },
+    {
+      target: ".xchat-creator-incoming-requests",
+      title: "2. Incoming Requests",
+      content:
+        "All content requests from fans will appear here. Click to view and respond.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-creator-summary-stats",
+      title: "3. Summary Stats",
+      content:
+        "See your live session statistics including reactions, stickers, paid messages, fans, and requests.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-creator-earned-amount",
+      title: "4. Earned Amount",
+      content:
+        "See the total amount you have earned from this session.",
+      placement: "bottom",
+    },
+    {
+      target: ".xchat-creator-live-fans",
+      title: "5. Live Fans",
+      content:
+        "See the total number of fans currently watching you live.",
+      placement: "bottom",
+    },
+    {
+      target: ".xchat-creator-timer-control",
+      title: "6. Timer & Control",
+      content:
+        "This shows your live time. Click the green button to start your X Chat session.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.xChatCreatorTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "xchat_creator",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#f5b400",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(245, 180, 0, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(245, 180, 0, 0.8)",
+          boxShadow:
+            "0 0 30px rgba(245, 180, 0, 0.45), 0 0 55px rgba(255, 193, 7, 0.25)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(45,30,5,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ffd34d",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #f5b400, #ffdd55)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#111111",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

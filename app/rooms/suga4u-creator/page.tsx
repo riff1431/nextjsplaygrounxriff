@@ -25,6 +25,7 @@ import { cs } from "@/utils/currency";
 import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallCreatorModal from "@/components/rooms/truth-or-dare-creator/GroupCallCreatorModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -223,6 +224,7 @@ const Suga4UCreatorPage = () => {
                         <ArrowLeft className="w-4 h-4" />
                     </button>
                     <div className="flex items-center gap-1.5 sm:gap-2">
+                        <RoomTourHelpButton tourType="suga4u_creator" accentHsl="340, 75%, 55%" />
                         {/* Invite button */}
                         <button
                             onClick={() => setShowInviteModal(true)}
@@ -272,7 +274,7 @@ const Suga4UCreatorPage = () => {
                     {/* Desktop: 4-col grid */}
                     <div className="hidden lg:grid grid-cols-4 gap-4 h-full">
                         {/* Left column: Live Chat (Full Height) */}
-                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-live-chat">
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
@@ -292,7 +294,7 @@ const Suga4UCreatorPage = () => {
                         </div>
 
                         {/* Column 3: Creators Favorites + Session Summary */}
-                        <div className="col-span-1 flex flex-col gap-4 min-h-0">
+                        <div className="col-span-1 flex flex-col gap-4 min-h-0 suga-creator-favorites">
                             <div className="flex-1 min-h-0 flex flex-col">
                                 <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>

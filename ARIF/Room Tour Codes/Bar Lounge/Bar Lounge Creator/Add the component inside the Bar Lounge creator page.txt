@@ -1,0 +1,11 @@
+import BarLoungeCreatorTour from "@/components/tours/BarLoungeCreatorTour";
+
+export default function BarLoungeCreatorRoom({ user }) {
+  return (
+    <>
+      <BarLoungeCreatorTour user={user} />
+
+      {/* Existing Bar Lounge room page */}
+    </>
+  );
+}

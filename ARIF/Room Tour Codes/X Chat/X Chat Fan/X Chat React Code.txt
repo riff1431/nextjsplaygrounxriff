@@ -1,0 +1,174 @@
+// components/tours/XChatFanTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function XChatFanTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".xchat-fan-back",
+      title: "1. Back",
+      content: "Click to go back to the previous screen.",
+      placement: "right",
+    },
+    {
+      target: ".xchat-fan-invite",
+      title: "2. Invite",
+      content:
+        "Invite more fans to join this room and be part of the conversation.",
+      placement: "right",
+    },
+    {
+      target: ".xchat-fan-video-area",
+      title: "3. Video Area",
+      content:
+        "Watch the creator live stream here. The video will be displayed in this section.",
+      placement: "bottom",
+    },
+    {
+      target: ".xchat-fan-paid-reactions",
+      title: "4. Paid Reactions",
+      content:
+        "Send paid reactions to show your support and get noticed by the creator.",
+      placement: "right",
+    },
+    {
+      target: ".xchat-fan-visibility-boosts",
+      title: "5. Visibility Boosts",
+      content:
+        "Use boosts to highlight your messages and stand out in the chat.",
+      placement: "right",
+    },
+    {
+      target: ".xchat-fan-paid-stickers",
+      title: "6. Paid Stickers",
+      content:
+        "Send paid stickers to express yourself and grab the creator’s attention.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-fan-direct-access",
+      title: "7. Direct Access",
+      content:
+        "Send special requests directly to the creator, including private questions, outfit changes, or topic choices.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-fan-chat-filters",
+      title: "8. Chat Filter Tabs",
+      content:
+        "Filter messages between All, Paid, and Priority messages.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-fan-chat-messages",
+      title: "9. Live Chat",
+      content:
+        "View all messages from the creator and other fans in real-time.",
+      placement: "left",
+    },
+    {
+      target: ".xchat-fan-top-bar",
+      title: "10. Top Bar",
+      content:
+        "See incoming requests and your wallet balance or earnings.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.xChatFanTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "xchat_fan",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#f5b400",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(245, 180, 0, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(245, 180, 0, 0.8)",
+          boxShadow:
+            "0 0 30px rgba(245, 180, 0, 0.45), 0 0 55px rgba(255, 193, 7, 0.25)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(45,30,5,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ffd34d",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #f5b400, #ffdd55)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#111111",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

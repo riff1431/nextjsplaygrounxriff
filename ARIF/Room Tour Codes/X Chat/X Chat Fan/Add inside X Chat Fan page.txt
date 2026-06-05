@@ -1,0 +1,13 @@
+// Add inside X Chat Fan page
+
+import XChatFanTour from "@/components/tours/XChatFanTour";
+
+export default function XChatFanRoom({ user }) {
+  return (
+    <>
+      <XChatFanTour user={user} />
+
+      {/* Existing X Chat Fan UI */}
+    </>
+  );
+}

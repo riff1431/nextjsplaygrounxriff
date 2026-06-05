@@ -1,0 +1,11 @@
+import FlashDropFanTour from "@/components/tours/FlashDropFanTour";
+
+export default function FlashDropFanRoom({ user }) {
+  return (
+    <>
+      <FlashDropFanTour user={user} />
+
+      {/* Existing FlashDrop Fan Room UI */}
+    </>
+  );
+}

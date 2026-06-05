@@ -19,6 +19,7 @@ import IncomingNotifications from "@/components/rooms/flash-drops/IncomingNotifi
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { cs } from "@/utils/currency";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -520,6 +521,7 @@ export default function FlashDropsRoomPreview() {
                                 {roomId && user && (
                                     <IncomingNotifications roomId={roomId} sessionId={urlSessionId} />
                                 )}
+                                <RoomTourHelpButton tourType="flashdrop_fan" accentHsl="330, 100%, 55%" />
                             </div>
                             {/* Left: Stream + Drop Board */}
                             <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">

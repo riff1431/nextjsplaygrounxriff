@@ -15,6 +15,7 @@ import InviteModal from "@/components/rooms/InviteModal";
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -203,7 +204,8 @@ const XChatCreatorPage = () => {
                         >
                             <span className="hidden sm:inline">Creators View for </span>X Chat
                         </h1>
-                        <div className="absolute right-2 sm:right-4">
+                        <div className="absolute right-2 sm:right-4 flex items-center gap-2">
+                            <RoomTourHelpButton tourType="xchat_creator" accentHsl="45, 90%, 55%" />
                             <SessionLiveControls
                                 sessionId={sessionId!}
                                 onEnd={() => router.push("/rooms/x-chat-creator")}
@@ -217,7 +219,7 @@ const XChatCreatorPage = () => {
                         {/* Desktop: 3-col grid */}
                         <div className="hidden lg:grid grid-cols-[400px_1fr_400px] gap-3 h-full">
                             {/* Left - Live Chat */}
-                            <div className="flex min-h-0">
+                            <div className="flex min-h-0 xchat-creator-live-chat-panel">
                                 <LiveChat roomId={roomId} sessionId={sessionId} />
                             </div>
 
@@ -263,7 +265,7 @@ const XChatCreatorPage = () => {
                             </div>
 
                             {/* Right - Requests + Summary */}
-                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
+                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin xchat-creator-incoming-requests">
                                 <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 <SummaryPanel roomId={roomId} sessionId={sessionId} />
                             </div>

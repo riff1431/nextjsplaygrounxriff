@@ -1,0 +1,166 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function TruthOrDareFanTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".tod-fan-live-stream",
+      title: "1. Live Stream Preview",
+      content:
+        "Watch the creator live in real-time. See the live status, creator video preview, number of viewers, and room atmosphere.",
+      placement: "right",
+    },
+    {
+      target: ".tod-fan-top-fans",
+      title: "2. Truth & Dare Top Fans",
+      content:
+        "This displays the top fan for Truth and the top fan for Dare in this room.",
+      placement: "left",
+    },
+    {
+      target: ".tod-fan-gifts",
+      title: "3. Gifts",
+      content:
+        "Send gifts to support the creator and get noticed in the room.",
+      placement: "left",
+    },
+    {
+      target: ".tod-fan-tip-creator",
+      title: "4. Tip Creator",
+      content:
+        "Show your appreciation by sending a tip directly to the creator.",
+      placement: "left",
+    },
+    {
+      target: ".tod-fan-vote-goals",
+      title: "5. Vote Together To Unlock Goals",
+      content:
+        "Fans vote together to unlock fun Truth or Dare goals and challenges.",
+      placement: "left",
+    },
+    {
+      target: ".tod-fan-live-chat",
+      title: "6. Live Chat",
+      content:
+        "Chat with other fans in real-time. Share reactions, talk, and have fun together.",
+      placement: "left",
+    },
+    {
+      target: ".tod-fan-system-dares",
+      title: "7. System Dares",
+      content:
+        "Browse and vote for Dare categories with different intensity levels.",
+      placement: "top",
+    },
+    {
+      target: ".tod-fan-system-truths",
+      title: "8. System Truths",
+      content:
+        "Browse and vote for Truth categories with different intensity levels.",
+      placement: "top",
+    },
+    {
+      target: ".tod-fan-custom-requests",
+      title: "9. Custom Requests",
+      content:
+        "Submit your own custom Truth or Dare request for the creator to complete.",
+      placement: "top",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.truthOrDareFanTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "truth_or_dare_fan",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

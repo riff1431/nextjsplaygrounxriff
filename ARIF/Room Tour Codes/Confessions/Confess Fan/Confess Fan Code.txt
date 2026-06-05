@@ -1,0 +1,136 @@
+// components/tours/ConfessionFanTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function ConfessionFanTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".confession-send-to",
+      title: "1. 1 on 1 & Global",
+      content:
+        "Choose where your confession request goes. Send it directly to one creator using 1 on 1, or make it visible to all creators using Global.",
+      placement: "right",
+    },
+    {
+      target: ".confession-all-creator-confessions",
+      title: "2. All Creator Confessions",
+      content:
+        "Browse confessions created by creators. Use filters to find confessions that match your interests, mood, or preferred category.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-request-builder",
+      title: "3. Request Confession",
+      content:
+        "Create a confession request using text, image, or video. Add your offer amount and topic prompt to guide the creator.",
+      placement: "left",
+    },
+    {
+      target: ".confession-invite-incoming",
+      title: "4. Invite / Incoming",
+      content:
+        "Invite friends into the room and view incoming notifications, responses, approvals, and room activities.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-live-chat",
+      title: "5. Live Chat",
+      content:
+        "Chat with the creator and other fans in real-time. Send messages, react to confessions, and join the conversation.",
+      placement: "right",
+    },
+    {
+      target: ".confession-creator-spotlight",
+      title: "6. Creator Spotlight",
+      content:
+        "View the creator currently hosting the room. See their profile, live status, and stay updated on their activity.",
+      placement: "top",
+    },
+    {
+      target: ".confession-send-request",
+      title: "7. Send Request",
+      content:
+        "Submit your confession request to the creator or all creators. You can choose to send it publicly or anonymously.",
+      placement: "left",
+    },
+    {
+      target: ".confession-my-requests",
+      title: "8. My Requests List",
+      content:
+        "View confession requests you have already submitted and track their status, responses, and outcomes.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.confessionFanTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "confession_fan",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0,0,0,0.78)",
+          spotlightShadow: "0 0 35px rgba(255,47,179,0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255,47,179,0.7)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+      }}
+    />
+  );
+}

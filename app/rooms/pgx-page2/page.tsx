@@ -17,6 +17,7 @@ import EmojiPicker from "@/components/common/EmojiPicker";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
@@ -708,6 +709,7 @@ function PgxPage2Inner() {
                     </button>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <RoomTourHelpButton tourType="bar_lounge_fan" accentHsl="42, 90%, 55%" />
                     {/* Incoming Button */}
                     <div style={{ position: "relative" }}>
                         <button

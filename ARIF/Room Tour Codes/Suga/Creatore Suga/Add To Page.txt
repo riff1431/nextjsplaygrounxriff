@@ -1,0 +1,13 @@
+// Add To Page
+
+import Suga4UCreatorTour from "@/components/tours/Suga4UCreatorTour";
+
+export default function Suga4UCreatorRoom({ user }) {
+  return (
+    <>
+      <Suga4UCreatorTour user={user} />
+
+      {/* Existing Suga 4U Creator Room UI */}
+    </>
+  );
+}

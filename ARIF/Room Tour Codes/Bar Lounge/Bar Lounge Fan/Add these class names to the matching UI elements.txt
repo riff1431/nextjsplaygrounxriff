@@ -1,0 +1,23 @@
+Wallet balance:
+fan-wallet-balance
+
+Incoming button:
+fan-incoming-button
+
+Buy A Drink menu:
+fan-buy-drink-menu
+
+VIP Lounge card:
+fan-vip-lounge
+
+Private 1-On-1 button:
+fan-private-one-on-one
+
+Lounge Chat panel:
+fan-lounge-chat
+
+Custom Tip input/button section:
+fan-custom-tip
+
+Pin Name button:
+fan-pin-name

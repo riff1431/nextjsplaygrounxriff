@@ -1,0 +1,161 @@
+// components/tours/BarLoungeFanTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function BarLoungeFanTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".fan-wallet-balance",
+      title: "1. Wallet Balance",
+      content:
+        "Shows your current PlayGroundX wallet balance. Top up your wallet to keep interacting inside the room.",
+      placement: "left",
+    },
+    {
+      target: ".fan-incoming-button",
+      title: "2. Incoming",
+      content:
+        "Shows creator invitations, VIP approvals, and room notifications. Check this regularly.",
+      placement: "left",
+    },
+    {
+      target: ".fan-buy-drink-menu",
+      title: "3. Buy A Drink",
+      content:
+        "Purchase virtual drinks for the creator. Sending drinks helps support the creator and helps you get noticed.",
+      placement: "right",
+    },
+    {
+      target: ".fan-vip-lounge",
+      title: "4. VIP Lounge",
+      content:
+        "Upgrade to VIP for exclusive content, premium access, special privileges, and more attention from the creator.",
+      placement: "right",
+    },
+    {
+      target: ".fan-private-one-on-one",
+      title: "5. Private 1-On-1",
+      content:
+        "Request a private video call with the creator. If approved, you will be moved into a private session.",
+      placement: "top",
+    },
+    {
+      target: ".fan-lounge-chat",
+      title: "6. Lounge Chat",
+      content:
+        "Chat live with the creator and other fans. Introduce yourself, ask questions, and engage respectfully.",
+      placement: "left",
+    },
+    {
+      target: ".fan-custom-tip",
+      title: "7. Custom Tip",
+      content:
+        "Send any amount directly to the creator. Enter your amount and click Tip Now. Tips help you get noticed more.",
+      placement: "top",
+    },
+    {
+      target: ".fan-pin-name",
+      title: "8. Pin Your Name",
+      content:
+        "Pin your name to the top of the chat. This helps you stay visible and get noticed by the creator and other fans.",
+      placement: "top",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.barLoungeFanTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "bar_lounge_fan",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

@@ -1,0 +1,36 @@
+// app/api/user/complete-room-tour/route.js
+
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export async function POST(req) {
+  try {
+    const body = await req.json();
+
+    await db.userRoomTour.upsert({
+      where: {
+        userId_tourName: {
+          userId: body.userId,
+          tourName: body.tourName,
+        },
+      },
+      update: {
+        completed: true,
+        completedAt: new Date(),
+      },
+      create: {
+        userId: body.userId,
+        tourName: body.tourName,
+        completed: true,
+        completedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}

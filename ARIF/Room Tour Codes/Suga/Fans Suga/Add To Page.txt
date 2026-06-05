@@ -1,0 +1,13 @@
+// Add To Page
+
+import Suga4UFanTour from "@/components/tours/Suga4UFanTour";
+
+export default function Suga4UFanRoom({ user }) {
+  return (
+    <>
+      <Suga4UFanTour user={user} />
+
+      {/* Existing Suga 4U Fan Room UI */}
+    </>
+  );
+}

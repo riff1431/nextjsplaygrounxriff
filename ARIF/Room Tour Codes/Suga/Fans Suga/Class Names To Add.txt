@@ -1,0 +1,21 @@
+// Class Names To Add
+
+suga-fan-back-to-rooms
+
+suga-fan-invite
+
+suga-fan-incoming-from-creator
+
+suga-fan-creator-info
+
+suga-fan-paid-requests
+
+suga-fan-send-gifts
+
+suga-fan-special-actions
+
+suga-fan-creator-secrets
+
+suga-fan-creator-favorites
+
+suga-fan-group-votes

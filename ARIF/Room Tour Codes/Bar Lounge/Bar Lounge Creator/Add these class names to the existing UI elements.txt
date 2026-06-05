@@ -1,0 +1,23 @@
+Current earnings / wallet info:
+bar-room-info
+
+Left lounge chat panel:
+bar-lounge-chat
+
+Top Incoming button:
+bar-incoming-button
+
+Bottom camera / mic / settings controls:
+bar-room-controls
+
+Green play / stop button:
+bar-start-end-room
+
+Top room timer:
+bar-room-timer
+
+Tips / drinks / requests guide:
+bar-tips-drinks-guide
+
+Right incoming requests panel:
+bar-incoming-section

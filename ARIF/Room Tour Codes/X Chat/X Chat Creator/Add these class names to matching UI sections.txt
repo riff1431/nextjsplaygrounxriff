@@ -1,0 +1,13 @@
+<!-- Add these class names to matching UI sections -->
+
+xchat-creator-live-chat-panel
+
+xchat-creator-incoming-requests
+
+xchat-creator-summary-stats
+
+xchat-creator-earned-amount
+
+xchat-creator-live-fans
+
+xchat-creator-timer-control

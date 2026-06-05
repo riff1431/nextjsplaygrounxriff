@@ -14,6 +14,7 @@ import RoomSessionDashboard from "@/components/rooms/shared/RoomSessionDashboard
 import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const CONFESSIONS_TABS: MobileStudioTab[] = [
     { id: "sidebar", label: "Sidebar", icon: <LayoutList className="w-5 h-5" /> },
@@ -174,6 +175,7 @@ const ConfessionsCreatorPage = () => {
                         <ConfessionsTopBar onBack={() => setShowExitModal(true)} />
                     </div>
                     <div className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 sm:gap-4">
+                        <RoomTourHelpButton tourType="confession_creator" accentHsl="280, 70%, 60%" />
                         {isWrongUser && (
                             <div className="bg-red-500/20 text-red-500 border border-red-500 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold animate-pulse flex items-center gap-1 sm:gap-2">
                                 <span>⚠️</span>
@@ -192,7 +194,7 @@ const ConfessionsCreatorPage = () => {
                 {/* Main content — responsive 3-col → mobile: content on top + tabs below */}
                 <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 lg:overflow-hidden xl:mx-40 min-h-0">
                     {/* Left Sidebar — visible on lg+, or when "sidebar" tab active on mobile */}
-                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0`}>
+                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-my-requests`}>
                         <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
                     </div>
 
@@ -204,7 +206,7 @@ const ConfessionsCreatorPage = () => {
                     </div>
 
                     {/* Live Chat — visible on lg+, or when "chat" tab active on mobile */}
-                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0`}>
+                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-live-chat`}>
                         <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>

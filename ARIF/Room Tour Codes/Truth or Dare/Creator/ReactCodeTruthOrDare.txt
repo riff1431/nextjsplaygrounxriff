@@ -1,0 +1,159 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function TruthOrDareCreatorTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".tod-live-stream",
+      title: "1. Live Stream Preview",
+      content:
+        "See your live stream preview in real-time. Monitor your live status and viewer count while hosting your Truth or Dare room.",
+      placement: "right",
+    },
+    {
+      target: ".tod-invite-creators",
+      title: "2. Invite Creator Slots",
+      content:
+        "Invite up to 4 co-creators to join your room. Click the + icon to bring creators into the Truth or Dare session.",
+      placement: "bottom",
+    },
+    {
+      target: ".tod-room-earnings",
+      title: "3. Room Earnings",
+      content:
+        "Track your total earnings, tips, truth earnings, dare earnings, and custom request earnings during the live session.",
+      placement: "right",
+    },
+    {
+      target: ".tod-group-vote",
+      title: "4. Group Vote",
+      content:
+        "Let fans vote between Truth or Dare. Add a prompt, set vote duration, set how many votes are needed, set how much fans pay per vote, then start the vote.",
+      placement: "top",
+    },
+    {
+      target: ".tod-incoming-requests",
+      title: "5. Incoming Requests",
+      content:
+        "View and manage incoming Random System Truth or Dares; and Custom requests from fans. Review requests and handle them during your stream.",
+      placement: "left",
+    },
+    {
+      target: ".tod-live-chat",
+      title: "6. Live Chat",
+      content:
+        "Chat with your fans in real-time. View messages instantly, respond to your audience, and keep the room active.",
+      placement: "left",
+    },
+    {
+      target: ".tod-room-timer",
+      title: "7. Room Timer",
+      content:
+        "Track how long your Truth or Dare session has been running in real-time.",
+      placement: "bottom",
+    },
+    {
+      target: ".tod-go-live-button",
+      title: "8. Go Live / End Session",
+      content:
+        "When offline, click Go Live to start your Truth or Dare room. Once live, this button changes to End so you can finish the session.",
+      placement: "bottom",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.truthOrDareCreatorTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "truth_or_dare_creator",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

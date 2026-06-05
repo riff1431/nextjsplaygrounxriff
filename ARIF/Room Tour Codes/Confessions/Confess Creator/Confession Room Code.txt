@@ -1,0 +1,168 @@
+// components/tours/ConfessionCreatorTour.jsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Joyride, { STATUS } from "react-joyride";
+
+export default function ConfessionCreatorTour({ user }) {
+  const [runTour, setRunTour] = useState(false);
+
+  const steps = [
+    {
+      target: ".confession-my-requests",
+      title: "1. My Requests",
+      content:
+        "View confession requests submitted directly to you by fans. Review, accept, reject, or respond.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-global-requests",
+      title: "2. Global Requests",
+      content:
+        "Browse public confession requests submitted by all users. Choose which confessions you want to react to or discuss.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-pending-requests",
+      title: "3. Pending Requests",
+      content:
+        "This section displays confession requests waiting for your action. Review the fan, confession, amount offered, and decide whether to proceed.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-earnings-live-fans",
+      title: "4. Earnings & Live Fans",
+      content:
+        "Track your earnings and current live fan count in real-time.",
+      placement: "bottom",
+    },
+    {
+      target: ".confession-start-end-room",
+      title: "5. Start / End Room",
+      content:
+        "Start your Confession Room when ready and end it when your session is complete.",
+      placement: "left",
+    },
+    {
+      target: ".confession-random-request",
+      title: "6. Create Random Confession",
+      content:
+        "Create a random confession to display publicly on the Fan view.",
+      placement: "right",
+    },
+    {
+      target: ".confession-wall",
+      title: "7. Confession Wall",
+      content:
+        "View and manage confession posts displayed publicly within your room. Popular confessions can generate more engagement and tips.",
+      placement: "right",
+    },
+    {
+      target: ".confession-summary-panel",
+      title: "8. Summary Panel",
+      content:
+        "Track room performance including total fans, total confessions, reaction tips, and total earnings.",
+      placement: "right",
+    },
+    {
+      target: ".confession-live-chat",
+      title: "9. Live Chat",
+      content:
+        "Chat with fans in real-time. Ask questions, react to confessions, and build engagement.",
+      placement: "left",
+    },
+  ];
+
+  useEffect(() => {
+    if (!user?.confessionCreatorTourCompleted) {
+      const timer = setTimeout(() => {
+        setRunTour(true);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleTourCallback = async (data) => {
+    const finishedStatuses = [STATUS.FINISHED, STATUS.SKIPPED];
+
+    if (finishedStatuses.includes(data.status)) {
+      setRunTour(false);
+
+      await fetch("/api/user/complete-room-tour", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          tourName: "confession_creator",
+        }),
+      });
+    }
+  };
+
+  return (
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showSkipButton
+      showProgress
+      disableOverlayClose
+      spotlightClicks
+      callback={handleTourCallback}
+      locale={{
+        back: "Back",
+        close: "Close",
+        last: "Finish Tour",
+        next: "Next",
+        skip: "Skip Tour",
+      }}
+      styles={{
+        options: {
+          zIndex: 999999,
+          backgroundColor: "#120814",
+          textColor: "#ffffff",
+          primaryColor: "#ff2fb3",
+          arrowColor: "#120814",
+          overlayColor: "rgba(0, 0, 0, 0.78)",
+          spotlightShadow: "0 0 35px rgba(255, 47, 179, 0.9)",
+        },
+        tooltip: {
+          borderRadius: "18px",
+          padding: "18px",
+          border: "1px solid rgba(255, 47, 179, 0.7)",
+          boxShadow:
+            "0 0 30px rgba(255, 47, 179, 0.4), 0 0 55px rgba(255, 193, 7, 0.18)",
+          background:
+            "linear-gradient(135deg, rgba(18,8,20,0.98), rgba(40,10,35,0.98))",
+        },
+        tooltipTitle: {
+          color: "#ff4fd8",
+          fontSize: "18px",
+          fontWeight: "800",
+        },
+        tooltipContent: {
+          color: "#ffffff",
+          fontSize: "14px",
+          lineHeight: "1.6",
+        },
+        buttonNext: {
+          background: "linear-gradient(90deg, #ff2fb3, #ffb000)",
+          borderRadius: "999px",
+          padding: "10px 18px",
+          fontWeight: "800",
+          color: "#ffffff",
+        },
+        buttonBack: {
+          color: "#ffffff",
+        },
+        buttonSkip: {
+          color: "#cfc2d8",
+        },
+      }}
+    />
+  );
+}

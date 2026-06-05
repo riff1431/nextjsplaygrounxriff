@@ -1,0 +1,11 @@
+import ConfessionCreatorTour from "@/components/tours/ConfessionCreatorTour";
+
+export default function ConfessionCreatorRoom({ user }) {
+  return (
+    <>
+      <ConfessionCreatorTour user={user} />
+
+      {/* Existing Confession Room Creator UI */}
+    </>
+  );
+}
