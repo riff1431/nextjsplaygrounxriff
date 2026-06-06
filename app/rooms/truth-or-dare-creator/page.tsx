@@ -449,10 +449,9 @@ function TruthOrDareCreatorContent() {
                 setDoubleDareArmed(!!g.is_double_dare_armed);
                 if (g.replay_until) setReplayUntil(new Date(g.replay_until).getTime());
 
-                // Session Info — Always land on dashboard first.
-                // Store session info but do NOT auto-activate the studio.
-                // Creator must explicitly click "Rejoin" to enter the studio.
+                let hasActiveSession = false;
                 if (g.status === 'active' || g.status === 'pending') {
+                    hasActiveSession = true;
                     setSessionInfo({
                         title: g.session_title || "Truth or Dare Session",
                         isPrivate: g.is_private || false,
@@ -467,20 +466,28 @@ function TruthOrDareCreatorContent() {
                         if (activeSession) {
                             setActiveSessionId(activeSession.id);
                             setActiveSessionStartedAt(activeSession.started_at || activeSession.created_at || new Date().toISOString());
+                            
+                            // Auto-resume active session on page refresh/load
+                            setSessionActive(true);
+                            setIsSessionLive(activeSession.status === 'active');
+                            setIsBroadcasting(activeSession.status === 'active');
+                            setIsInStudio(true);
                         } else {
                             setActiveSessionId(null);
                             setActiveSessionStartedAt(null);
+                            hasActiveSession = false;
                         }
                     } catch (e) {
                         console.error('Failed to fetch active session:', e);
+                        hasActiveSession = false;
                     }
                 } else {
                     setActiveSessionId(null);
                     setActiveSessionStartedAt(null);
                 }
-                // For normal host mode, always show dashboard first on page load.
+                // For normal host mode, always show dashboard first on page load unless auto-resuming.
                 // For collab mode (skipDashboardReset=true), keep the studio active.
-                if (!skipDashboardReset) {
+                if (!skipDashboardReset && !hasActiveSession) {
                     setSessionActive(false);
                     setIsInStudio(false);
                     setShowStartModal(false);

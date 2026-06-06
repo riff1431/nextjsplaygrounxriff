@@ -314,13 +314,14 @@ export default function TruthOrDareCreatorRoom() {
                 }
             }
 
-            // Find first room hosted by user
+            // Find first room hosted by user of type 'truth-or-dare'
             const { data: room } = await supabase
                 .from('rooms')
                 .select('id')
                 .eq('host_id', user.id)
+                .eq('type', 'truth-or-dare')
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             let targetRoomId = room?.id;
 
@@ -328,7 +329,7 @@ export default function TruthOrDareCreatorRoom() {
                 // Auto-create room for demo if missing
                 const { data: newRoom } = await supabase
                     .from('rooms')
-                    .insert([{ host_id: user.id, title: "Truth or Dare Room", status: "live" }])
+                    .insert([{ host_id: user.id, title: "Truth or Dare Room", status: "live", type: "truth-or-dare" }])
                     .select()
                     .single();
                 targetRoomId = newRoom?.id;

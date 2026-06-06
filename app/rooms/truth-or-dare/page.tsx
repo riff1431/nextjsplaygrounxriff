@@ -98,7 +98,7 @@ const TIP_AMOUNTS = [5, 10, 25, 50] as const;
 const TOD_FAN_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
     { id: "play", label: "Play", icon: <Play className="w-5 h-5" /> },
-    { id: "games", label: "Games", icon: <Trophy className="w-5 h-5" /> },
+    { id: "notifications", label: "Notifications", icon: <Bell className="w-5 h-5" /> },
     { id: "voting", label: "Voting", icon: <Vote className="w-5 h-5" /> },
     { id: "info", label: "Info", icon: <Users className="w-5 h-5" /> },
 ];
@@ -156,15 +156,14 @@ function TruthOrDareContent() {
     const [mobileTab, setMobileTab] = useState("chat");
     const [chatUnread, setChatUnread] = useState(0);
     const [playUnread, setPlayUnread] = useState(0);
-    const [gamesUnread, setGamesUnread] = useState(0);
 
     const { activeTour, currentStep } = useGuidedTour();
 
     useEffect(() => {
         if (activeTour === "truth_or_dare_fan") {
-            if (currentStep === 1) setMobileTab("games");
-            else if (currentStep === 2) setMobileTab("games");
-            else if (currentStep === 3) setMobileTab("games");
+            if (currentStep === 1) setMobileTab("play");
+            else if (currentStep === 2) setMobileTab("info");
+            else if (currentStep === 3) setMobileTab("play");
             else if (currentStep === 4) setMobileTab("voting");
             else if (currentStep === 5) setMobileTab("chat");
             else if (currentStep === 6) setMobileTab("play");
@@ -178,7 +177,7 @@ function TruthOrDareContent() {
         activeTabRef.current = mobileTab;
         if (mobileTab === "chat") setChatUnread(0);
         if (mobileTab === "play") setPlayUnread(0);
-        if (mobileTab === "games") setGamesUnread(0);
+        if (mobileTab === "notifications") setUnseenCount(0);
     }, [mobileTab]);
 
     const [userName, setUserName] = useState<string>('Anonymous');
@@ -186,6 +185,7 @@ function TruthOrDareContent() {
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [currentSessionStartedAt, setCurrentSessionStartedAt] = useState<string | null>(null);
     const [collabCreators, setCollabCreators] = useState<any[]>([]);
+    const [accessRefreshTrigger, setAccessRefreshTrigger] = useState(0);
 
     // Group Call State
     const groupCall = useGroupCall(roomId, userId, "fan");
@@ -402,7 +402,7 @@ function TruthOrDareContent() {
             }
         }
         checkAccess();
-    }, [roomId, supabase]);
+    }, [roomId, supabase, accessRefreshTrigger]);
 
     // Session Status Gating — check truth_dare_sessions for pending (pre-live) state
     useEffect(() => {
@@ -439,13 +439,10 @@ function TruthOrDareContent() {
                 const newData = payload.new as any;
                 if (newData.status === 'ended') {
                     setSessionStatus('ended');
-                } else if (newData.status === 'active') {
-                    setSessionStatus('active');
-                } else if (newData.status === 'pending') {
-                    setSessionStatus('pending');
-                }
-                if (activeTabRef.current !== "games") {
-                    setGamesUnread(prev => prev + 1);
+                    setActiveSessionId(null);
+                } else {
+                    setSessionStatus(newData.status as any);
+                    setAccessRefreshTrigger(prev => prev + 1);
                 }
             })
             .subscribe();
@@ -682,7 +679,7 @@ function TruthOrDareContent() {
                 supabase.removeChannel(presenceChannel);
             }
         };
-    }, [roomId, sessionId, userId, userName, userAvatar, supabase, scrollChatToBottom, currentSessionStartedAt]);
+    }, [roomId, sessionId, activeSessionId, userId, userName, userAvatar, supabase, scrollChatToBottom, currentSessionStartedAt]);
 
     // Calculate and subscribe to Top Spenders (Truth King / Dare King)
     useEffect(() => {
@@ -813,7 +810,7 @@ function TruthOrDareContent() {
         return () => {
             supabase.removeChannel(topSpenderChannel);
         };
-    }, [roomId, sessionId, supabase]);
+    }, [roomId, sessionId, activeSessionId, supabase]);
 
     /* ── Incoming activity tracking ─── */
     useEffect(() => {
@@ -876,7 +873,7 @@ function TruthOrDareContent() {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, userId, supabase, showIncomingPanel]);
+    }, [roomId, activeSessionId, userId, supabase, showIncomingPanel]);
 
     const toggleIncomingPanel = () => {
         setShowIncomingPanel(prev => !prev);
@@ -917,15 +914,16 @@ function TruthOrDareContent() {
     };
 
     // Chat send handler
-    const handleChatSend = async () => {
-        if (!chatInput.trim() || !roomId || !userId || chatSending) return;
+    const handleChatSend = async (overrideMessage?: string) => {
+        const messageToSend = (overrideMessage !== undefined ? overrideMessage : chatInput).trim();
+        if (!messageToSend || !roomId || !userId || chatSending) return;
         setChatSending(true);
 
         const chatPayload: Record<string, any> = {
             room_id: roomId,
             user_id: userId,
             username: userName,
-            message: chatInput.trim(),
+            message: messageToSend,
             session_id: activeSessionId || null,
         };
         let { error } = await supabase.from('chat_messages').insert(chatPayload);
@@ -938,7 +936,9 @@ function TruthOrDareContent() {
         if (error) {
             toast.error('Failed to send message');
         } else {
-            setChatInput('');
+            if (overrideMessage === undefined) {
+                setChatInput('');
+            }
         }
         setChatSending(false);
     };
@@ -1180,7 +1180,7 @@ function TruthOrDareContent() {
     const mappedTabs = TOD_FAN_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "play") return { ...tab, badge: playUnread };
-        if (tab.id === "games") return { ...tab, badge: gamesUnread };
+        if (tab.id === "notifications") return { ...tab, badge: unseenCount };
         return tab;
     });
 
@@ -1734,7 +1734,7 @@ function TruthOrDareContent() {
                                         position="top"
                                     />
                                     <button
-                                        onClick={handleChatSend}
+                                        onClick={() => handleChatSend()}
                                         disabled={!chatInput.trim() || !userId || chatSending}
                                         className="p-2 rounded-lg bg-pink-600/20 hover:bg-pink-600/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
@@ -1784,25 +1784,31 @@ function TruthOrDareContent() {
                 {/* 2. Reactions & Tip Creator Row — fixed below video */}
                 <div className="flex gap-2 shrink-0">
                     {/* Reactions (60%) */}
-                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2.5 flex justify-between gap-1" data-tour="tod-fan-gifts">
-                        {[
-                            { name: "Kiss", emoji: "💋", price: 10 },
-                            { name: "Love", emoji: "❤️", price: 20 },
-                            { name: "Spicy", emoji: "🔥", price: 30 },
-                            { name: "Dark", emoji: "🖤", price: 40 },
-                        ].map((r) => (
-                            <button
-                                key={`reaction-mobile-${r.name}`}
-                                onClick={() => openConfirmation('reaction', r.name, "", r.price)}
-                                className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl bg-purple-500/10 border border-purple-500/15 transition-all group active:scale-95 shadow-[0_2px_8px_rgba(168,85,247,0.1)]"
-                            >
-                                <span className="text-lg group-hover:scale-120 transition-transform">{r.emoji}</span>
-                                <div className="flex flex-col items-center leading-none mt-1">
-                                    <span className="text-[10px] uppercase font-black tracking-tighter text-purple-200">{r.name}</span>
-                                    <span className="text-[11px] font-black text-white/50 mt-0.5">{cs()}{r.price}</span>
-                                </div>
-                            </button>
-                        ))}
+                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_2px_8px_rgba(168,85,247,0.05)]" data-tour="tod-fan-gifts">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <Flame className="w-3 h-3 text-purple-400" />
+                            <h3 className="text-xs font-black text-white uppercase tracking-wider">Reactions</h3>
+                        </div>
+                        <div className="flex justify-between gap-1">
+                            {[
+                                { name: "Kiss", emoji: "💋", price: 10 },
+                                { name: "Love", emoji: "❤️", price: 20 },
+                                { name: "Spicy", emoji: "🔥", price: 30 },
+                                { name: "Dark", emoji: "🖤", price: 40 },
+                            ].map((r) => (
+                                <button
+                                    key={`reaction-mobile-${r.name}`}
+                                    onClick={() => openConfirmation('reaction', r.name, "", r.price)}
+                                    className="flex-1 flex flex-col items-center gap-1.5 py-2 rounded-xl bg-purple-500/10 border border-purple-500/15 transition-all group active:scale-95 shadow-[0_2px_8px_rgba(168,85,247,0.1)]"
+                                >
+                                    <span className="text-lg group-hover:scale-120 transition-transform">{r.emoji}</span>
+                                    <div className="flex flex-col items-center leading-none mt-1">
+                                        <span className="text-[10px] uppercase font-black tracking-tighter text-purple-200">{r.name}</span>
+                                        <span className="text-[11px] font-black text-white/50 mt-0.5">{cs()}{r.price}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Tip Creator (40%) */}
@@ -1900,7 +1906,7 @@ function TruthOrDareContent() {
                                     className="flex-1 bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder:text-gray-500 focus:border-white/25 transition-all outline-none"
                                 />
                                 <button
-                                    onClick={handleChatSend}
+                                    onClick={() => handleChatSend()}
                                     disabled={!chatInput.trim() || !userId || chatSending}
                                     className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-colors disabled:opacity-40"
                                 >
@@ -1908,8 +1914,7 @@ function TruthOrDareContent() {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        setChatInput("🔥");
-                                        setTimeout(handleChatSend, 50);
+                                        handleChatSend("🔥");
                                     }}
                                     disabled={!userId}
                                     className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors"
@@ -2031,9 +2036,115 @@ function TruthOrDareContent() {
                     </div>
                 )}
 
-                {mobileTab === "games" && (
-                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
-                        {/* Stacked Kings */}
+                {mobileTab === "notifications" && (
+                    <div className="w-full flex-1 min-h-0 flex flex-col bg-[#0b080f]/50 border border-white/5 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between bg-white/5 shrink-0">
+                            <h3 className="text-xs font-black text-white flex items-center gap-1.5 uppercase tracking-widest">
+                                <div className="w-1 h-3.5 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                                Notifications
+                            </h3>
+                            <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">My Activity</span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2.5 scrollbar-none">
+                            {incomingItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                                        <Zap className="w-5 h-5 text-white/20 animate-pulse" />
+                                    </div>
+                                    <p className="text-xs text-white/40 uppercase tracking-wider">No recent activity</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    {incomingItems.map((item) => {
+                                        const emoji = incomingTypeEmoji(item.type);
+                                        const sc = incomingStatusColor(item.status);
+                                        const isAnswered = item.status === 'answered' || item.status === 'completed' || !!item.creator_response;
+                                        return (
+                                            <div 
+                                                key={`noti-mobile-${item.id}`}
+                                                className={`flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group active:scale-98 text-left ${
+                                                    isAnswered ? 'cursor-pointer hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]' : ''
+                                                }`}
+                                                style={{ 
+                                                    background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
+                                                    border: `1px solid ${sc.border}`
+                                                }}
+                                                onClick={() => {
+                                                    if (isAnswered) {
+                                                        setAnswerNotification({
+                                                            fanName: item.fan_name || "You",
+                                                            type: item.type,
+                                                            tier: item.tier || "bronze",
+                                                            content: item.content,
+                                                            creatorResponse: item.creator_response || ""
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                        <span className="text-xs font-bold text-white truncate">
+                                                            {item.content || (item.type.includes('truth') ? 'Truth' : item.type.includes('dare') ? 'Dare' : 'Request')}
+                                                        </span>
+                                                        <span className="text-[10px] font-black text-purple-400">{cs()}{item.amount}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span 
+                                                            className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
+                                                            style={{ 
+                                                                borderColor: sc.border,
+                                                                color: sc.text,
+                                                                background: `${sc.border}10`
+                                                            }}
+                                                        >
+                                                            {item.status}
+                                                        </span>
+                                                        <span className="text-[9px] text-white/30 flex items-center gap-1">
+                                                            <Clock className="w-2.5 h-2.5" />
+                                                            {formatTimeAgo(item.created_at)}
+                                                        </span>
+                                                    </div>
+                                                    {isAnswered && (
+                                                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-400/20 px-2 py-0.5 rounded-md w-max">
+                                                            <span>💬</span>
+                                                            <span className="animate-pulse">Tap to view response</span>
+                                                        </div>
+                                                    )}
+                                                    {item.type === "group_call" && item.status === "calling" && (
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                groupCall.acceptCall();
+                                                            }}
+                                                            className="mt-2 w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                                                        >
+                                                            <Video className="w-3.5 h-3.5" />
+                                                            Accept Call
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {mobileTab === "voting" && roomId && (
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3" data-tour="tod-fan-vote-goals">
+                        <GroupVotePanel
+                            roomId={roomId}
+                            currentUserId={userId || undefined}
+                        />
+                    </div>
+                )}
+
+                {mobileTab === "info" && (
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
+                        {/* Stacked Kings (Top Fans) */}
                         <div className="grid grid-cols-2 gap-3 shrink-0" data-tour="tod-fan-top-fans">
                             {/* Dare King Card */}
                             <div className="bg-[#1a0f18]/80 border border-red-500/15 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(255,42,109,0.05)]">
@@ -2081,20 +2192,7 @@ function TruthOrDareContent() {
                                 </span>
                             </div>
                         </div>
-                    </div>
-                )}
 
-                {mobileTab === "voting" && roomId && (
-                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3" data-tour="tod-fan-vote-goals">
-                        <GroupVotePanel
-                            roomId={roomId}
-                            currentUserId={userId || undefined}
-                        />
-                    </div>
-                )}
-
-                {mobileTab === "info" && (
-                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
                         <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-4 flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full overflow-hidden border border-purple-500/30 bg-black/40 flex items-center justify-center">
