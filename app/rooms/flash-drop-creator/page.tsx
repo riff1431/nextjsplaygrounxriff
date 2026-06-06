@@ -23,11 +23,11 @@ const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWra
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const FLASH_DROP_TABS: MobileStudioTab[] = [
-    { id: "summary", label: "Summary", icon: <TrendingUp className="w-5 h-5" /> },
+    { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
     { id: "drops", label: "Drops", icon: <Sparkles className="w-5 h-5" /> },
     { id: "packs", label: "Packs", icon: <Package className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <ClipboardList className="w-5 h-5" /> },
-    { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
+    { id: "summary", label: "Summary", icon: <TrendingUp className="w-5 h-5" /> },
 ];
 
 function FlashdropCreatorStudio() {
@@ -38,7 +38,7 @@ function FlashdropCreatorStudio() {
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [mobileTab, setMobileTab] = useState("summary");
+    const [mobileTab, setMobileTab] = useState("chat");
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
@@ -157,18 +157,19 @@ function FlashdropCreatorStudio() {
 
             <div className="relative z-10 px-2 sm:px-3 py-2 flex flex-col gap-2 sm:gap-3 h-full overflow-hidden">
                 {/* Top Bar */}
-                <div className="flex items-center shrink-0 relative min-h-[44px]">
+                <div className="flex items-center justify-between shrink-0 gap-2 min-h-[44px] border-b border-white/[0.06] pb-2 relative z-50">
                     <button
                         onClick={() => setShowExitModal(true)}
-                        className="glass-card rounded-lg px-2.5 sm:px-3 py-2 hover:bg-primary/20 transition-colors absolute left-0 flex items-center gap-1.5 sm:gap-2 cursor-pointer z-50"
+                        className="glass-card rounded-lg px-2.5 sm:px-3 py-2 hover:bg-primary/20 transition-colors flex items-center gap-1.5 sm:gap-2 cursor-pointer"
                     >
                         <ArrowLeft className="text-primary" size={18} />
                         <span className="text-xs font-bold text-primary hidden sm:block">Back</span>
                     </button>
-                    <h1 className="font-display text-lg sm:text-2xl md:text-4xl font-black neon-text tracking-widest text-center w-full truncate px-16 sm:px-24">
-                        Flash Drop — Creator Room
+                    <h1 className="font-display text-sm sm:text-lg md:text-2xl font-black neon-text tracking-widest text-center flex-1 min-w-0 truncate px-1 sm:px-2">
+                        <span className="inline sm:hidden">Flash Drop</span>
+                        <span className="hidden sm:inline">Flash Drop — Creator Room</span>
                     </h1>
-                    <div className="absolute right-0 z-50 flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <RoomTourHelpButton tourType="flashdrop_creator" accentHsl="170, 80%, 50%" />
                         <div data-tour="flashdrop-live-stream">
                             <SessionLiveControls

@@ -364,7 +364,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
             )}
 
             {/* Controls Overlay */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 <button
                     onClick={() => setMicOn(!micOn)}
                     className={`p-2 rounded-full ${micOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'}`}
