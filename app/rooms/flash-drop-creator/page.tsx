@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, MessageSquare, ClipboardList, BarChart3, Video } from "lucide-react";
+import { ArrowLeft, MessageSquare, ClipboardList, BarChart3, Video, TrendingUp, Sparkles, Package } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
 import LiveDropBoard from "@/components/rooms/flashdrop-creator/LiveDropBoard";
@@ -23,7 +23,9 @@ const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWra
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 
 const FLASH_DROP_TABS: MobileStudioTab[] = [
-    { id: "board", label: "Board", icon: <BarChart3 className="w-5 h-5" /> },
+    { id: "summary", label: "Summary", icon: <TrendingUp className="w-5 h-5" /> },
+    { id: "drops", label: "Drops", icon: <Sparkles className="w-5 h-5" /> },
+    { id: "packs", label: "Packs", icon: <Package className="w-5 h-5" /> },
     { id: "requests", label: "Requests", icon: <ClipboardList className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
 ];
@@ -36,7 +38,7 @@ function FlashdropCreatorStudio() {
     const supabase = createClient();
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [mobileTab, setMobileTab] = useState("board");
+    const [mobileTab, setMobileTab] = useState("summary");
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
@@ -268,11 +270,23 @@ function FlashdropCreatorStudio() {
                         </div>
 
                         {/* Tab content below stream */}
-                        {/* Board tab */}
-                        {mobileTab === "board" && (
+                        {/* Summary tab */}
+                        {mobileTab === "summary" && (
                             <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <SummaryBox roomId={roomId} sessionId={sessionId} />
+                            </div>
+                        )}
+
+                        {/* Drops tab */}
+                        {mobileTab === "drops" && (
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
+                            </div>
+                        )}
+
+                        {/* Packs tab */}
+                        {mobileTab === "packs" && (
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <HighRollerPacks roomId={roomId} sessionId={sessionId} />
                             </div>
                         )}
