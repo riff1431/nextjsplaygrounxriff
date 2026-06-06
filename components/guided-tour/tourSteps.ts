@@ -286,11 +286,19 @@ const barLoungeCreatorSteps: TourStep[] = [
     placement: "bottom",
   },
   {
-    target: "bar-incoming-section",
-    icon: "📋",
-    title: "Requests & Summary",
+    target: "bar-incoming-requests",
+    icon: "📥",
+    title: "Incoming Requests Panel",
     content:
-      "Review incoming fan requests and see your session summary stats including tips, drinks, and total earnings.",
+      "Review and respond to incoming calls and custom requests from fans.",
+    placement: "left",
+  },
+  {
+    target: "bar-summary-stats",
+    icon: "📊",
+    title: "Summary Panel",
+    content:
+      "See your session summary stats including tips, drinks, and total earnings.",
     placement: "left",
   },
 ];

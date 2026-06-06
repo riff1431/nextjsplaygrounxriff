@@ -19,6 +19,7 @@ import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
@@ -184,6 +185,17 @@ function PgxPage2Inner() {
     const [isChatFocused, setIsChatFocused] = useState(false);
 
     const [mobileTab, setMobileTab] = useState<"chat" | "drinks" | "upgrades">("chat");
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "bar_lounge_fan") {
+            if (currentStep === 2) setMobileTab("drinks");
+            else if (currentStep === 3) setMobileTab("upgrades");
+            else if (currentStep === 5) setMobileTab("chat");
+            else if (currentStep === 7) setMobileTab("upgrades");
+        }
+    }, [activeTour, currentStep]);
     const [chatUnread, setChatUnread] = useState(0);
     const activeMobileTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -1269,6 +1281,7 @@ function PgxPage2Inner() {
                                     display: "flex", alignItems: "center", justifyContent: "space-between"
                                 }}
                                 className="pg2-btn-glow"
+                                data-tour="fan-private-one-on-one"
                                 onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
                             >
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1387,6 +1400,7 @@ function PgxPage2Inner() {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <button
                             onClick={toggleIncomingPanel}
+                            data-tour="fan-incoming-button"
                             style={{
                                 position: "relative",
                                 padding: "8px 12px",
@@ -1489,7 +1503,9 @@ function PgxPage2Inner() {
                         )}
 
                         {/* Mobile Wallet pill matching mockup */}
-                        <WalletPill compact className="mobile-wallet-pill-custom" />
+                        <div data-tour="fan-wallet-balance">
+                            <WalletPill compact className="mobile-wallet-pill-custom" />
+                        </div>
                     </div>
                 </div>
 
@@ -1566,6 +1582,7 @@ function PgxPage2Inner() {
                 <div className="flex-grow flex-1 min-h-0 flex flex-col overflow-hidden mb-1">
                     {mobileTab === "chat" && (
                         <div
+                            data-tour="fan-lounge-chat"
                             style={{
                                 background: "hsla(270,40%,10%,0.6)",
                                 border: `1.5px solid hsla(280,60%,45%,0.25)`,
@@ -1743,6 +1760,7 @@ function PgxPage2Inner() {
 
                     {mobileTab === "drinks" && (
                         <div
+                            data-tour="fan-buy-drink-menu"
                             style={{
                                 background: "hsla(270,40%,10%,0.6)",
                                 border: `1.5px solid hsla(280,60%,45%,0.25)`,
@@ -1859,7 +1877,7 @@ function PgxPage2Inner() {
                                         minHeight: "150px",
                                         position: "relative",
                                         overflow: "hidden"
-                                    }}>
+                                    }} data-tour="fan-vip-lounge">
                                         <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "8px" }}>
                                             <Crown style={{ width: "14px", height: "14px", color: GOLD }} />
                                             <span style={{ fontSize: "11px", fontWeight: 800, color: GOLD, textTransform: "uppercase" }}>VIP Lounge</span>
@@ -2004,7 +2022,7 @@ function PgxPage2Inner() {
                                     borderRadius: "14px",
                                     padding: "8px 12px",
                                     boxShadow: `0 0 10px hsla(42,90%,55%,0.15)`
-                                }}>
+                                }} data-tour="fan-pin-name">
                                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <span style={{ fontSize: "14px" }}>🔥</span>
                                         <span style={{ fontSize: "11px", fontWeight: 800, color: GOLD, textTransform: "uppercase", letterSpacing: "0.5px" }}>Pin Name to Top 10 mins</span>
@@ -2058,7 +2076,7 @@ function PgxPage2Inner() {
                         boxShadow: "0 -8px 24px rgba(0,0,0,0.5)"
                     }}>
                         {/* Custom Tip */}
-                        <div style={{
+                        <div data-tour="fan-custom-tip" style={{
                             display: "flex",
                             alignItems: "center",
                             gap: "4px",
@@ -2112,6 +2130,7 @@ function PgxPage2Inner() {
 
                         {/* Private 1-on-1 */}
                         <button
+                            data-tour="fan-private-one-on-one"
                             onClick={() => !buying && !privateCall.callState && setShowPrivateCallConfirm(true)}
                             disabled={!!buying || !!privateCall.callState}
                             style={{

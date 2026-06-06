@@ -19,6 +19,7 @@ import PrivateCallCreatorModal from "@/components/rooms/suga4u-creator/PrivateCa
 import S4uIncomingCallsPanel from "@/components/rooms/suga4u-creator/S4uIncomingCallsPanel";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const BAR_LOUNGE_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
@@ -41,6 +42,16 @@ const CreatorBarLoungeInner = () => {
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
     const [summaryUnread, setSummaryUnread] = useState(false);
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "bar_lounge_creator") {
+            if (currentStep === 3) setMobileTab("chat");
+            else if (currentStep === 5) setMobileTab("requests");
+            else if (currentStep === 6) setMobileTab("summary");
+        }
+    }, [activeTour, currentStep]);
 
     const activeTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -260,8 +271,8 @@ const CreatorBarLoungeInner = () => {
                     </div>
 
                     {/* Right - Requests & Summary */}
-                    <div className="flex flex-col gap-4 h-full min-h-[400px] bar-incoming-section" data-tour="bar-incoming-section">
-                        <div className="flex-1 min-h-0">
+                    <div className="flex flex-col gap-4 h-full min-h-[400px] bar-incoming-section">
+                        <div className="flex-1 min-h-0" data-tour="bar-incoming-requests">
                             <IncomingRequests
                                 roomId={roomId}
                                 sessionId={sessionId}
@@ -270,26 +281,28 @@ const CreatorBarLoungeInner = () => {
                                 onDeclinePrivateCall={privateCall.declineCall}
                             />
                         </div>
-                        <SummaryPanel roomId={roomId} sessionId={sessionId} />
+                        <div data-tour="bar-summary-stats">
+                            <SummaryPanel roomId={roomId} sessionId={sessionId} />
+                        </div>
                     </div>
                 </div>
 
                 {/* Mobile: Stream always on top + tab content below */}
                 <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                     {/* Video — always visible at top */}
-                    <div className="w-full shrink-0 aspect-video max-w-[600px] mx-auto rounded-xl overflow-hidden border border-[hsla(45,90%,55%,0.2)]">
+                    <div className="w-full shrink-0 aspect-video max-w-[600px] mx-auto rounded-xl overflow-hidden border border-[hsla(45,90%,55%,0.2)]" data-tour="bar-tips-drinks-guide">
                         <VideoStage roomId={roomId} />
                     </div>
 
                     {/* Tab content below stream */}
                     {mobileTab === "chat" && (
-                        <div className="w-full flex-1 min-h-0">
+                        <div className="w-full flex-1 min-h-0" data-tour="bar-lounge-chat">
                             <LoungeChat roomId={roomId} sessionId={sessionId} />
                         </div>
                     )}
 
                     {mobileTab === "requests" && (
-                        <div className="w-full flex-1 min-h-0">
+                        <div className="w-full flex-1 min-h-0" data-tour="bar-incoming-requests">
                             <IncomingRequests
                                 roomId={roomId}
                                 sessionId={sessionId}
@@ -301,7 +314,7 @@ const CreatorBarLoungeInner = () => {
                     )}
 
                     {mobileTab === "summary" && (
-                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4">
+                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4" data-tour="bar-summary-stats">
                             <SummaryPanel roomId={roomId} sessionId={sessionId} />
                         </div>
                     )}
