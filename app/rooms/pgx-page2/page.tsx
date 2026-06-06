@@ -964,39 +964,41 @@ function PgxPage2Inner() {
                 <div style={{ maxWidth: "80rem", margin: "0 auto", display: "grid", gridTemplateColumns: "320px 1fr 350px", gap: "24px", height: "calc(100vh - 3rem)" }}>
 
                     {/* ═══ LEFT: Drink Menu ═══ */}
-                    <div className="pg2-scroll" style={{ overflowY: "auto" }} data-tour="fan-buy-drink-menu">
+                    <div className="pg2-scroll" style={{ overflowY: "auto" }}>
                         <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                                <Wine className="pg2-glow-pulse" style={{ width: "20px", height: "12px", color: PURPLE }} />
-                                <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Buy a Drink</h2>
-                            </div>
-                            <p style={{ color: MUTED, fontSize: "12px", margin: "0 0 0 0" }}>for {creatorName}</p>
+                            <div data-tour="fan-buy-drink-menu" style={{ display: "flex", flexDirection: "column" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                    <Wine className="pg2-glow-pulse" style={{ width: "20px", height: "12px", color: PURPLE }} />
+                                    <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Buy a Drink</h2>
+                                </div>
+                                <p style={{ color: MUTED, fontSize: "12px", margin: "0 0 0 0" }}>for {creatorName}</p>
 
-                            {/* Drink list */}
-                            <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "8px" }}>
-                                <h3 style={{ fontSize: "11px", fontWeight: 600, color: MUTED, marginBottom: "6px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 0 }}>Drink Menu</h3>
-                                <div>
-                                    {drinks.slice(0, 9).map((drink: any) => {
-                                        const id = drink.id || drink.name;
-                                        const isThisBuying = buying === id;
-                                        return (
-                                            <div
-                                                key={id}
-                                                className="pg2-drink-item"
-                                                style={{ ...drinkItem, opacity: buying && !isThisBuying ? 0.6 : 1, marginBottom: "4px" }}
-                                                onClick={() => !buying && handleDrinkTip(drink)}
-                                            >
-                                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                    <span style={{ fontSize: "15px" }}>{drink.icon}</span>
-                                                    <span style={{ color: FG, fontWeight: 500, fontSize: "12px" }}>{drink.name}</span>
+                                {/* Drink list */}
+                                <div style={{ borderTop: "1px solid hsla(280,40%,30%,0.3)", paddingTop: "8px", marginTop: "8px" }}>
+                                    <h3 style={{ fontSize: "11px", fontWeight: 600, color: MUTED, marginBottom: "6px", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 0 }}>Drink Menu</h3>
+                                    <div>
+                                        {drinks.slice(0, 9).map((drink: any) => {
+                                            const id = drink.id || drink.name;
+                                            const isThisBuying = buying === id;
+                                            return (
+                                                <div
+                                                    key={id}
+                                                    className="pg2-drink-item"
+                                                    style={{ ...drinkItem, opacity: buying && !isThisBuying ? 0.6 : 1, marginBottom: "4px" }}
+                                                    onClick={() => !buying && handleDrinkTip(drink)}
+                                                >
+                                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                        <span style={{ fontSize: "15px" }}>{drink.icon}</span>
+                                                        <span style={{ color: FG, fontWeight: 500, fontSize: "12px" }}>{drink.name}</span>
+                                                    </div>
+                                                    {isThisBuying
+                                                        ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
+                                                        : <span style={{ color: GOLD, fontWeight: 600 }}>{cs()}{drink.price}</span>
+                                                    }
                                                 </div>
-                                                {isThisBuying
-                                                    ? <Loader2 style={{ width: "14px", height: "14px", color: GOLD, animation: "spin 1s linear infinite" }} />
-                                                    : <span style={{ color: GOLD, fontWeight: 600 }}>{cs()}{drink.price}</span>
-                                                }
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
 

@@ -513,7 +513,7 @@ export default function FlashDropsRoomPreview() {
                         {/* Desktop: Left sidebar buttons + 3-column layout */}
                         <div className="hidden lg:flex flex-1 min-h-0 gap-3 px-3 pt-3">
                             {/* Left sidebar — Back + Invite */}
-                            <div className="shrink-0 flex flex-col gap-2 pt-1" data-tour="flashdrop-fan-quick-actions">
+                            <div className="shrink-0 flex flex-col gap-2 pt-1 h-fit" data-tour="flashdrop-fan-quick-actions">
                                 <button
                                     onClick={() => router.back()}
                                     className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all"
