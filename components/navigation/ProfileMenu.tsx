@@ -338,13 +338,15 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
 
                     {helpExpanded && (
                         <div className="ml-3 pl-4 border-l border-white/5 space-y-0.5">
-                            <button
-                                onClick={() => { setIsOpen(false); startTour('fan'); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
-                            >
-                                <RotateCcw className="w-3 h-3" />
-                                Restart Fan Tour
-                            </button>
+                            {role !== 'creator' && (
+                                <button
+                                    onClick={() => { setIsOpen(false); startTour('fan'); }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
+                                >
+                                    <RotateCcw className="w-3 h-3" />
+                                    Restart Fan Tour
+                                </button>
+                            )}
                             {role === 'creator' && (
                                 <button
                                     onClick={() => { setIsOpen(false); startTour('creator'); }}
@@ -354,13 +356,6 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                                     Restart Creator Tour
                                 </button>
                             )}
-                            <button
-                                onClick={() => { setIsOpen(false); startTour('suga'); }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors text-xs"
-                            >
-                                <RotateCcw className="w-3 h-3" />
-                                Restart Suga Tour
-                            </button>
 
                             <div className="my-1.5 h-px bg-white/5" />
 
