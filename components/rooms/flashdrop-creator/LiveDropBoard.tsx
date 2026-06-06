@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, Zap, Image, Video, Upload, Loader2, Rocket, ChevronDown } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -62,6 +63,10 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
     const [mediaFile, setMediaFile] = useState<File | null>(null);
     const [mediaPreview, setMediaPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Form state
     const [form, setForm] = useState({
@@ -446,14 +451,14 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
             </div>
 
             {/* Add Drop Modal */}
-            {showModal && (
+            {showModal && mounted && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
                     style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)' }}
                     onClick={() => setShowModal(false)}
                 >
                     <div
-                        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[90vh]"
                         style={{
                             background: 'linear-gradient(145deg, hsl(270 30% 10%), hsl(330 20% 7%))',
                             border: '1px solid rgba(255,255,255,0.08)',
@@ -478,7 +483,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                         </div>
 
                         {/* Modal body — scrollable */}
-                        <form onSubmit={handleAddDrop} className="flex flex-col gap-4 px-5 py-4 overflow-y-auto themed-scrollbar">
+                        <form onSubmit={handleAddDrop} className="flex-1 min-h-0 flex flex-col gap-4 px-5 py-4 overflow-y-auto themed-scrollbar pb-10 sm:pb-4">
                             {/* Title */}
                             <div>
                                 <label className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/35 mb-1.5 block">Title <span style={{ color: 'hsl(330 100% 60%)' }}>*</span></label>
@@ -632,7 +637,7 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                         </form>
 
                         {/* Modal footer */}
-                        <div className="flex gap-2.5 px-5 py-4 border-t border-white/[0.06] shrink-0">
+                        <div className="flex gap-2.5 px-5 py-4 border-t border-white/[0.06] shrink-0 bg-black/20 backdrop-blur-md pb-6 sm:pb-4">
                             <button
                                 type="button"
                                 onClick={() => setShowModal(false)}
@@ -663,7 +668,8 @@ export default function LiveDropBoard({ roomId, sessionId }: LiveDropBoardProps)
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

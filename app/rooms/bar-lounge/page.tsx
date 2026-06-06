@@ -95,6 +95,27 @@ export default function BarLoungeRoom() {
     const [pendingEntrySession, setPendingEntrySession] = useState<Room | null>(null);
     const [chatInput, setChatInput] = useState("");
     const [mobileTab, setMobileTab] = useState("chat");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [drinksUnread, setDrinksUnread] = useState(false);
+    const [gamesUnread, setGamesUnread] = useState(false);
+
+    const activeTabRef = useRef(mobileTab);
+    useEffect(() => {
+        activeTabRef.current = mobileTab;
+        if (mobileTab === "chat") setChatUnread(0);
+        if (mobileTab === "drinks") setDrinksUnread(false);
+        if (mobileTab === "games") setGamesUnread(false);
+    }, [mobileTab]);
+
+    const prevMsgLength = useRef(0);
+    useEffect(() => {
+        if (messages.length > prevMsgLength.current) {
+            if (prevMsgLength.current > 0 && activeTabRef.current !== "chat") {
+                setChatUnread(prev => prev + (messages.length - prevMsgLength.current));
+            }
+        }
+        prevMsgLength.current = messages.length;
+    }, [messages]);
 
     const [drinks, setDrinks] = useState<any[]>([]);
     const [spinOutcomes, setSpinOutcomes] = useState<any[]>([]);
@@ -575,6 +596,13 @@ export default function BarLoungeRoom() {
     const creatorName = hostProfile?.full_name || hostProfile?.handle || "Creator";
     const sessionTitle = activeSessions.find(s => s.id === roomId)?.title || "";
 
+    const mappedTabs = BAR_LOUNGE_FAN_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "drinks") return { ...tab, badge: drinksUnread };
+        if (tab.id === "games") return { ...tab, badge: gamesUnread };
+        return tab;
+    });
+
     return (
         <div className="relative h-[100dvh] w-screen overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif", color: C.fg, background: C.bg }}>
             <style dangerouslySetInnerHTML={{__html: `
@@ -987,7 +1015,7 @@ export default function BarLoungeRoom() {
             {/* Mobile Tab Bar */}
             <div className="lg:hidden">
                 <MobileStudioTabs
-                    tabs={BAR_LOUNGE_FAN_TABS}
+                    tabs={mappedTabs}
                     activeTab={mobileTab}
                     onTabChange={setMobileTab}
                     accentHsl="42, 90%, 55%"

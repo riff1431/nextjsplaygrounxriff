@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, MessageSquare, ClipboardList, BarChart3, Video, TrendingUp, Sparkles, Package } from "lucide-react";
@@ -42,16 +42,19 @@ function FlashdropCreatorStudio() {
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [summaryUnread, setSummaryUnread] = useState(false);
 
+    const activeTabRef = useRef(mobileTab);
     useEffect(() => {
+        activeTabRef.current = mobileTab;
         if (mobileTab === "chat") {
             setChatUnread(0);
         }
-    }, [mobileTab]);
-
-    useEffect(() => {
         if (mobileTab === "requests") {
             setRequestsUnread(0);
+        }
+        if (mobileTab === "summary") {
+            setSummaryUnread(false);
         }
     }, [mobileTab]);
 
@@ -81,7 +84,7 @@ function FlashdropCreatorStudio() {
                 (payload) => {
                     const newMsg = payload.new as any;
                     if (sessionId && newMsg.session_id !== sessionId) return;
-                    if (mobileTab !== "chat") {
+                    if (activeTabRef.current !== "chat") {
                         setChatUnread((prev) => prev + 1);
                     }
                 }
@@ -89,7 +92,10 @@ function FlashdropCreatorStudio() {
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "flash_drop_requests", filter: `room_id=eq.${roomId}` },
-                async () => {
+                async (payload) => {
+                    if (payload.eventType === "INSERT" && activeTabRef.current !== "summary") {
+                        setSummaryUnread(true);
+                    }
                     let q = supabase
                         .from("flash_drop_requests")
                         .select("id, content")
@@ -108,11 +114,12 @@ function FlashdropCreatorStudio() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, sessionId, mobileTab]);
+    }, [roomId, sessionId]);
 
     const mappedTabs = FLASH_DROP_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        if (tab.id === "summary") return { ...tab, badge: summaryUnread };
         return tab;
     });
 

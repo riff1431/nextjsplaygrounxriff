@@ -26,6 +26,8 @@ import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { MessageSquare } from "lucide-react";
+import { useAvatarMap } from "@/hooks/useAvatarMap";
+import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const SUGA4U_FAN_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
@@ -73,14 +75,120 @@ const Suga4URoom = () => {
 
     // Session Status Gating
     const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+    const [watcherCount, setWatcherCount] = useState<number>(0);
+
+    // Watcher count fetcher & subscription
+    useEffect(() => {
+        if (!roomId) return;
+
+        async function fetchWatcherCount() {
+            const { data } = await supabase
+                .from('room_participants')
+                .select('user_id')
+                .eq('room_id', roomId);
+            const unique = new Set((data || []).map((p: any) => p.user_id).filter(Boolean));
+            setWatcherCount(unique.size);
+        }
+
+        fetchWatcherCount();
+
+        const channel = supabase
+            .channel(`suga-participants-fan-${roomId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'room_participants',
+                filter: `room_id=eq.${roomId}`,
+            }, () => {
+                fetchWatcherCount();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, supabase]);
+
+    const participantJoinedRef = useRef(false);
+    useEffect(() => {
+        if (!roomId || !user) return;
+
+        const joinRoom = async () => {
+            if (participantJoinedRef.current) return;
+            const { error } = await supabase
+                .from("room_participants")
+                .insert({ room_id: roomId, user_id: user.id });
+            if (error && error.code !== "23505") { // Ignore duplicate key
+                console.error("Error joining room_participants:", error);
+            } else {
+                participantJoinedRef.current = true;
+            }
+        };
+
+        joinRoom();
+
+        return () => {
+            if (!participantJoinedRef.current) return;
+            supabase
+                .from("room_participants")
+                .delete()
+                .match({ room_id: roomId, user_id: user.id })
+                .then(() => { participantJoinedRef.current = false; });
+        };
+    }, [roomId, user, supabase]);
 
     // ── MOBILE LAYOUT STATE AND LOGIC INTEGRATIONS ─────────────────────────
     const suga = useSuga4U(roomId, urlSessionId);
+    const fanIds = React.useMemo(() => suga.activity.map(a => a.fanId).filter(Boolean) as string[], [suga.activity]);
+    const avatarMap = useAvatarMap(fanIds);
     const { balance, pay } = useWallet();
 
     const [activeMobileFavTab, setActiveMobileFavTab] = useState("ALL");
     const [activeMobileSecTab, setActiveMobileSecTab] = useState("ALL");
     const [mobileTab, setMobileTab] = useState<string>("chat");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [requestsUnread, setRequestsUnread] = useState(0);
+    const [secretsUnread, setSecretsUnread] = useState(0);
+
+    const activeTabRef = useRef(mobileTab);
+    useEffect(() => {
+        activeTabRef.current = mobileTab;
+        if (mobileTab === "chat") setChatUnread(0);
+        if (mobileTab === "requests") setRequestsUnread(0);
+        if (mobileTab === "secrets") setSecretsUnread(0);
+    }, [mobileTab]);
+
+    const prevActivityLen = useRef(0);
+    useEffect(() => {
+        if (suga.activity.length > prevActivityLen.current) {
+            if (prevActivityLen.current > 0 && activeTabRef.current !== "chat") {
+                const added = suga.activity.slice(0, suga.activity.length - prevActivityLen.current);
+                const newChats = added.filter(e => e.type === "CHAT").length;
+                if (newChats > 0) {
+                    setChatUnread(prev => prev + newChats);
+                }
+            }
+        }
+        prevActivityLen.current = suga.activity.length;
+    }, [suga.activity]);
+
+    const prevRequestsLen = useRef(0);
+    useEffect(() => {
+        if (suga.requests.length > prevRequestsLen.current) {
+            if (prevRequestsLen.current > 0 && activeTabRef.current !== "requests") {
+                setRequestsUnread(prev => prev + (suga.requests.length - prevRequestsLen.current));
+            }
+        }
+        prevRequestsLen.current = suga.requests.length;
+    }, [suga.requests]);
+
+    const prevSecretsLen = useRef(0);
+    useEffect(() => {
+        if (suga.secrets.length > prevSecretsLen.current) {
+            if (prevSecretsLen.current > 0 && activeTabRef.current !== "secrets") {
+                setSecretsUnread(prev => prev + (suga.secrets.length - prevSecretsLen.current));
+            }
+        }
+        prevSecretsLen.current = suga.secrets.length;
+    }, [suga.secrets]);
 
     // Persisted revealed mobile favorites tracking
     const [revealedMobileFavIds, setRevealedMobileFavIds] = useState<Set<string>>(new Set());
@@ -890,26 +998,49 @@ const Suga4URoom = () => {
                         
                         {/* Mobile Header */}
                         <header className="flex items-center justify-between px-4 py-3 bg-[#110113]/90 border-b border-pink-500/10 backdrop-blur-md shrink-0 z-50">
-                            <div className="flex items-center gap-2.5">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => router.back()}
-                                    className="w-8 h-8 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all"
+                                    className="w-9 h-9 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all"
                                 >
-                                    <ArrowLeft className="w-4 h-4" />
+                                    <ArrowLeft className="w-5 h-5" />
                                 </button>
-                                <div>
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-xs">💖💖</span>
-                                        <span className="font-extrabold text-xs text-yellow-400 tracking-wider font-sans uppercase">SUGA4U</span>
+                                
+                                <div className="flex items-center gap-2.5">
+                                    <div className="relative">
+                                        <div className="absolute -inset-0.5 rounded-full bg-pink-500/50 opacity-75 blur-[2px] animate-pulse" />
+                                        {hostAvatar ? (
+                                            <img
+                                                src={hostAvatar}
+                                                alt={hostName}
+                                                className="relative w-9 h-9 rounded-full object-cover border border-pink-500/80"
+                                            />
+                                        ) : (
+                                            <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center border border-pink-500/80 text-[11px] font-black text-white">
+                                                {hostName ? hostName.slice(0, 2).toUpperCase() : "SU"}
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-[8px] font-bold text-yellow-500/70 tracking-widest uppercase">PREMIUM SUGA EXPERIENCE</p>
+                                    <div className="flex flex-col min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <h1 className="font-extrabold text-sm text-white tracking-wide truncate max-w-[120px] uppercase font-sans">
+                                                {hostName}
+                                            </h1>
+                                            <span className="flex items-center gap-0.5 bg-pink-500/20 text-pink-400 text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm border border-pink-500/30 animate-pulse uppercase tracking-wider">
+                                                LIVE
+                                            </span>
+                                        </div>
+                                        <p className="text-[9px] font-bold text-yellow-500/70 tracking-wider uppercase truncate max-w-[150px]">
+                                            PREMIUM SUGA EXPERIENCE
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setShowInviteModal(true)}
-                                className="px-3 py-1 bg-gradient-to-r from-pink-600 to-pink-500 text-[10px] font-black text-white flex items-center gap-1 rounded-full shadow-md shadow-pink-500/20 active:scale-95 transition-all"
+                                className="px-3.5 py-1.5 bg-gradient-to-r from-pink-600 to-pink-500 text-xs font-black text-white flex items-center gap-1.5 rounded-full shadow-md shadow-pink-500/20 active:scale-95 transition-all"
                             >
-                                <UserPlus size={11} className="stroke-[3]" />
+                                <UserPlus size={13} className="stroke-[3]" />
                                 Invite
                             </button>
                         </header>
@@ -917,42 +1048,44 @@ const Suga4URoom = () => {
                         {/* Status bar */}
                         <div className="flex items-center justify-between px-4 py-2.5 bg-[#0a010c] border-b border-pink-500/5 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1.5 bg-pink-500/15 border border-pink-500/30 px-2.5 py-1 rounded-full">
+                                <div className="flex items-center gap-1.5 bg-pink-500/15 border border-pink-500/30 px-3 py-1.5 rounded-full">
                                     <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-                                    <span className="text-[10px] font-extrabold text-pink-400 uppercase tracking-wider">LIVE</span>
+                                    <span className="text-xs font-extrabold text-pink-400 uppercase tracking-wider">LIVE</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-[10px] text-white/70 font-semibold uppercase tracking-wider">
-                                    <span>👁️</span> 1.2K
+                                <div className="flex items-center gap-1.5 text-xs text-white/70 font-semibold uppercase tracking-wider">
+                                    <span>👁️</span> {watcherCount}
                                 </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
                                 <div className="relative">
                                     <button
                                         onClick={toggleIncomingPanel}
-                                        className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold transition-all border ${
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all border ${
                                             showIncomingPanel
                                                 ? 'bg-pink-500/30 border-pink-400 text-white'
                                                 : 'bg-pink-500/10 border-pink-500/20 text-pink-400'
                                         }`}
                                     >
-                                        <Bell className="w-3 h-3" />
+                                        <Bell className="w-3.5 h-3.5" />
                                         Incoming
                                         {unseenCount > 0 && (
-                                            <span className="ml-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-pink-500 text-white text-[8px] font-black px-0.5">
+                                            <span className="ml-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-pink-500 text-white text-[9px] font-black px-0.5 animate-pulse">
                                                 {unseenCount}
                                             </span>
                                         )}
                                     </button>
                                 </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 bg-[#19041a] border border-yellow-500/30 rounded-full pl-2 pr-1 py-0.5 shadow-sm">
-                                <span className="text-[10px] text-yellow-400 font-extrabold">🔑</span>
-                                <span className="text-[10px] text-yellow-400 font-black tracking-wide">{cs()}{balance}</span>
-                                <button
-                                    onClick={() => router.push("/account/membership")}
-                                    className="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center text-black text-[10px] font-black ml-1 shadow-sm active:scale-95 transition-all"
-                                >
-                                    +
-                                </button>
+
+                                <div className="flex items-center gap-1.5 bg-[#19041a] border border-yellow-500/30 rounded-full pl-3 pr-1 py-0.5 shadow-sm">
+                                    <span className="text-xs text-yellow-400 font-black tracking-wide">{cs()}{balance}</span>
+                                    <button
+                                        onClick={() => router.push("/account/wallet")}
+                                        className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center text-black text-xs font-black ml-1 shadow-sm active:scale-95 transition-all"
+                                    >
+                                        +
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -975,15 +1108,15 @@ const Suga4URoom = () => {
                                     </div>
                                 )}
                                 
-                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-red-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wider">
-                                    <span className="w-1 h-1 rounded-full bg-white animate-ping" />
+                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 bg-red-600 text-white font-extrabold text-[11px] px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                                     LIVE
                                 </div>
-                                <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded-md text-[9px] font-bold text-white/90 flex items-center gap-1">
+                                <div className="absolute top-2.5 right-2.5 bg-black/50 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-bold text-white/90 flex items-center gap-1">
                                     <span>📶</span> 1
                                 </div>
-                                <div className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-sm px-2.5 py-0.5 rounded-full text-[9px] font-bold text-white/95 flex items-center gap-1 shadow-sm">
-                                    <span>👥</span> 0 Watching
+                                <div className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full text-[11px] font-bold text-white/95 flex items-center gap-1 shadow-sm">
+                                    <span>👥</span> {watcherCount} Watching
                                 </div>
                             </div>
                         </div>
@@ -993,36 +1126,43 @@ const Suga4URoom = () => {
                             
                             {/* CHAT TAB */}
                             {mobileTab === "chat" && (
-                                <div className="h-full flex flex-col bg-[#0e020f]/80 border border-pink-500/10 rounded-2xl p-3 shadow-inner shadow-black/40 min-h-0 flex-1">
-                                    <div className="flex items-center justify-between pb-2 border-b border-pink-500/5 mb-2 shrink-0">
-                                        <span className="text-[10px] font-black text-pink-500 tracking-widest flex items-center gap-1.5">
+                                <div className="h-full flex flex-col bg-[#0e020f]/80 border border-pink-500/10 rounded-2xl p-3.5 shadow-inner shadow-black/40 min-h-0 flex-1">
+                                    <div className="flex items-center justify-between pb-2 border-b border-pink-500/5 mb-2.5 shrink-0">
+                                        <span className="text-xs font-black text-pink-500 tracking-widest flex items-center gap-1.5">
                                             <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
                                             LIVE CHAT
                                         </span>
-                                        <span className="text-[8px] font-extrabold bg-pink-500/20 text-pink-400 border border-pink-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                                            1 Online
+                                        <span className="text-[10px] font-extrabold bg-pink-500/20 text-pink-400 border border-pink-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                            {watcherCount} Online
                                         </span>
                                     </div>
 
-                                    <div className="mb-2 shrink-0">
-                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 flex items-center justify-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                            <span className="text-[9px] font-bold text-emerald-400">You are now LIVE! 🔴</span>
+                                    <div className="mb-2.5 shrink-0">
+                                        <div className="bg-pink-500/10 border border-pink-500/20 rounded-full px-4 py-2 flex items-center justify-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-ping" />
+                                            <span className="text-xs font-bold text-pink-400">{hostName} is now LIVE! 🔴</span>
                                         </div>
                                     </div>
 
-                                    <div ref={mobileChatScrollRef} className="flex-grow flex-1 overflow-y-auto space-y-2.5 pr-0.5 scrollbar-none min-h-0">
+                                    <div ref={mobileChatScrollRef} className="flex-grow flex-1 overflow-y-auto space-y-3 pr-0.5 scrollbar-none min-h-0">
                                         {suga.activity.length === 0 ? (
-                                            <div className="h-full flex items-center justify-center text-white/30 text-[10px] italic">
+                                            <div className="h-full flex items-center justify-center text-white/30 text-xs italic">
                                                 Welcome to the room! Send a message.
                                             </div>
                                         ) : (
                                             [...suga.activity].reverse().map((m) => {
                                                 const isMsgHighlight = ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK', 'LINK_REVEAL', 'BUY_FOR_HER'].includes(m.type);
+                                                const formatMessageTime = (ts: number) => {
+                                                    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                };
                                                 return (
-                                                    <div key={m.id} className="flex items-start gap-2 text-[10px]">
-                                                        <div className="w-5 h-5 rounded-full bg-pink-500/10 flex-shrink-0 flex items-center justify-center overflow-hidden border border-pink-500/20 shadow-sm">
-                                                            <span className="text-[9px]">👤</span>
+                                                    <div key={m.id} className="flex items-start gap-2.5 text-xs">
+                                                        <div className="w-7 h-7 rounded-full bg-pink-500/10 flex-shrink-0 flex items-center justify-center overflow-hidden border border-pink-500/20 shadow-sm">
+                                                            {m.fanId && avatarMap[m.fanId] ? (
+                                                                <img src={avatarMap[m.fanId]} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <span className="text-xs">{['TIP', 'LINK_REVEAL', 'BUY_FOR_HER', 'SECRET_UNLOCK'].includes(m.type) ? "💰" : "👤"}</span>
+                                                            )}
                                                         </div>
                                                         
                                                         <div className="flex-1 min-w-0">
@@ -1032,14 +1172,14 @@ const Suga4URoom = () => {
                                                                         {m.fanName}
                                                                     </span>
                                                                     {m.type === 'TIP' && (
-                                                                        <span className="text-[8px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-1 rounded-sm uppercase font-black">
+                                                                        <span className="text-[9px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-1 rounded-sm uppercase font-black">
                                                                             VIP
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <span className="text-[8px] text-white/35 shrink-0">10:30 PM</span>
+                                                                <span className="text-[10px] text-white/35 shrink-0">{formatMessageTime(m.ts)}</span>
                                                             </div>
-                                                            <p className="text-white/80 leading-snug break-words">
+                                                            <p className="text-white/95 leading-snug break-words">
                                                                 {m.type === 'TIP' && <span>tipped <span className="text-yellow-400 font-bold">{cs()}{m.amount}</span>!</span>}
                                                                 {m.type === 'LINK_REVEAL' && <span>revealed a favourite!</span>}
                                                                 {m.type === 'BUY_FOR_HER' && <span>purchased a favourite!</span>}
@@ -1047,7 +1187,7 @@ const Suga4URoom = () => {
                                                                 {m.type === 'PAID_REQUEST' && <span>requested: {m.label} (${m.amount})</span>}
                                                                 {m.type === 'OFFER_CLAIM' && <span>claimed offer: {m.label}</span>}
                                                                 {m.type === 'CHAT' && <span>{m.label}</span>}
-                                                                {isMsgHighlight && <Heart className="inline w-2.5 h-2.5 text-pink fill-pink ml-1" />}
+                                                                {isMsgHighlight && <Heart className="inline w-3 h-3 text-pink fill-pink ml-1" />}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1056,9 +1196,9 @@ const Suga4URoom = () => {
                                         )}
                                     </div>
 
-                                    <div className="mt-2.5 flex items-center gap-1.5 shrink-0 relative">
-                                        <div className="flex-1 bg-[#160618] border border-pink-500/15 rounded-full px-3 py-1.5 flex items-center gap-2">
-                                            <button className="text-[12px] opacity-75 hover:opacity-100 transition-opacity">
+                                    <div className="mt-3.5 flex items-center gap-2 shrink-0 relative">
+                                        <div className="flex-1 bg-[#160618] border border-pink-500/15 rounded-full px-4 py-2.5 flex items-center gap-2">
+                                            <button className="text-base opacity-75 hover:opacity-100 transition-opacity">
                                                 😊
                                             </button>
                                             <input
@@ -1067,23 +1207,16 @@ const Suga4URoom = () => {
                                                 onChange={(e) => setMobileChatInput(e.target.value)}
                                                 onKeyPress={(e) => e.key === "Enter" && handleMobileChatSend()}
                                                 placeholder="Type a message..."
-                                                className="flex-1 bg-transparent text-[10px] outline-none text-white placeholder-white/40 font-medium"
+                                                className="flex-1 bg-transparent text-xs outline-none text-white placeholder-white/40 font-medium"
                                             />
                                         </div>
                                         
                                         <button
                                             onClick={handleMobileChatSend}
                                             disabled={!roomId}
-                                            className="w-7 h-7 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white transition-colors active:scale-95 shadow-md shadow-pink-500/25 disabled:opacity-50 shrink-0"
+                                            className="w-9 h-9 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white transition-colors active:scale-95 shadow-md shadow-pink-500/25 disabled:opacity-50 shrink-0"
                                         >
-                                            <Send className="w-3.5 h-3.5" />
-                                        </button>
-
-                                        <button
-                                            onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
-                                            className="w-7 h-7 rounded-full bg-[#18051a] hover:bg-[#250829] flex items-center justify-center border border-pink-500/25 text-pink-400 transition-colors active:scale-95 shadow-md shrink-0"
-                                        >
-                                            🎁
+                                            <Send className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
@@ -1091,16 +1224,16 @@ const Suga4URoom = () => {
 
                             {/* REQUESTS TAB */}
                             {mobileTab === "requests" && (
-                                <div className="space-y-3">
-                                    <div className="border border-pink-500/15 rounded-2xl bg-[#130214]/65 p-3 flex flex-col gap-3.5 shadow-md shadow-pink-500/[0.02]">
-                                        <div className="grid grid-cols-2 text-[10px] font-extrabold tracking-widest text-pink-500/60 uppercase">
+                                <div className="space-y-4">
+                                    <div className="border border-pink-500/15 rounded-2xl bg-[#130214]/65 p-4 flex flex-col gap-4 shadow-md shadow-pink-500/[0.02]">
+                                        <div className="grid grid-cols-2 text-xs font-black tracking-widest text-pink-500/60 uppercase">
                                             <div>PAID REQUEST</div>
-                                            <div className="pl-2">SUGA GIFTS</div>
+                                            <div className="pl-4">SUGA GIFTS</div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3 divide-x divide-pink-500/10">
+                                        <div className="grid grid-cols-2 gap-4 divide-x divide-pink-500/10">
                                             {/* Requests Grid */}
-                                            <div className="grid grid-cols-2 gap-1.5 pr-1.5">
+                                            <div className="grid grid-cols-2 gap-2 pr-2">
                                                 {[
                                                     { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
                                                     { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
@@ -1111,17 +1244,17 @@ const Suga4URoom = () => {
                                                         key={r.name}
                                                         onClick={() => handleMobileRequestClick(r)}
                                                         disabled={!roomId || !hostId}
-                                                        className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
+                                                        className="flex flex-col items-center justify-center p-2 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[64px]"
                                                     >
-                                                        <span className="text-[13px]">{r.emoji}</span>
-                                                        <span className="text-[8px] font-extrabold text-white/80 tracking-wide mt-0.5 truncate max-w-full">{r.name}</span>
-                                                        <span className="text-[9px] font-black text-pink-400 mt-0.5">{cs()}{r.price}</span>
+                                                        <span className="text-lg">{r.emoji}</span>
+                                                        <span className="text-[10px] font-extrabold text-white/80 tracking-wide mt-1 truncate max-w-full">{r.name}</span>
+                                                        <span className="text-xs font-black text-pink-400 mt-0.5">{cs()}{r.price}</span>
                                                     </button>
                                                 ))}
                                             </div>
 
                                             {/* Gifts Grid */}
-                                            <div className="grid grid-cols-2 gap-1.5 pl-3">
+                                            <div className="grid grid-cols-2 gap-2 pl-4">
                                                 {[
                                                     { name: "Diamond", amount: 10, emoji: "💎" },
                                                     { name: "Diamonds", amount: 25, emoji: "💎" },
@@ -1132,10 +1265,10 @@ const Suga4URoom = () => {
                                                         key={g.amount}
                                                         onClick={() => handleMobileGiftClick(g)}
                                                         disabled={!roomId || !hostId}
-                                                        className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
+                                                        className="flex flex-col items-center justify-center p-2 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[64px]"
                                                     >
-                                                        <span className="text-[13px]">{g.emoji}</span>
-                                                        <span className="text-[9px] font-black text-pink-400 mt-1">{cs()}{g.amount}</span>
+                                                        <span className="text-lg">{g.emoji}</span>
+                                                        <span className="text-xs font-black text-pink-400 mt-1">{cs()}{g.amount}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -1159,7 +1292,7 @@ const Suga4URoom = () => {
                                             });
                                         }}
                                         disabled={!roomId || !hostId}
-                                        className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-[12px] flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
+                                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
                                     >
                                         👑 Private 1-on-1 {cs()}500
                                     </button>
@@ -1168,21 +1301,21 @@ const Suga4URoom = () => {
 
                             {/* SECRETS TAB */}
                             {mobileTab === "secrets" && (
-                                <div className="space-y-3 pb-4">
+                                <div className="space-y-4 pb-4">
                                     {/* Creator Favorites Section */}
                                     <div className="py-1">
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
+                                            <div className="flex items-center gap-1.5 text-sm font-black tracking-wider text-white">
                                                 <span className="text-yellow-400">★</span> CREATOR FAVORITES
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
+                                        <div className="flex gap-2.5 mb-3 overflow-x-auto scrollbar-none">
                                             {["ALL", "CUTE", "LUXURY", "DREAM"].map((tab) => (
                                                 <button
                                                     key={tab}
                                                     onClick={() => setActiveMobileFavTab(tab)}
-                                                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
+                                                    className={`px-3.5 py-1.5 rounded-full text-[10.5px] font-black tracking-wider transition-all border ${
                                                         activeMobileFavTab === tab
                                                             ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25 font-extrabold'
                                                             : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
@@ -1193,9 +1326,9 @@ const Suga4URoom = () => {
                                             ))}
                                         </div>
 
-                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2">
+                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2.5">
                                             {suga.favorites.length === 0 ? (
-                                                <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
+                                                <div className="w-full py-6 text-center text-white/35 text-xs italic">
                                                     No favorites items found
                                                 </div>
                                             ) : (
@@ -1206,17 +1339,17 @@ const Suga4URoom = () => {
                                                         return (
                                                             <div
                                                                 key={item.id}
-                                                                className="bg-[#130414]/90 border border-pink-500/15 rounded-2xl p-3 flex flex-col justify-between w-[150px] min-h-[140px] flex-shrink-0 snap-start shadow-[0_0_15px_rgba(255,42,109,0.03)]"
+                                                                className="bg-[#130414]/90 border border-pink-500/15 rounded-2xl p-3.5 flex flex-col justify-between w-[165px] min-h-[160px] flex-shrink-0 snap-start shadow-[0_0_15px_rgba(255,42,109,0.03)]"
                                                             >
                                                                 <div className="flex flex-col items-center text-center">
-                                                                    <div className="w-11 h-11 rounded-full bg-pink-500/5 border border-yellow-500/25 flex items-center justify-center text-xl mb-2.5 shadow-inner">
+                                                                    <div className="w-14 h-14 rounded-full bg-pink-500/5 border border-yellow-500/25 flex items-center justify-center text-2xl mb-3 shadow-inner">
                                                                         {item.emoji}
                                                                     </div>
-                                                                    <h4 className="text-[10px] font-black text-white leading-tight line-clamp-2 mb-1">
+                                                                    <h4 className="text-xs font-black text-white leading-tight line-clamp-2 mb-1.5">
                                                                         {item.name}
                                                                     </h4>
                                                                     {isUnlocked && item.description && (
-                                                                        <p className="text-[8px] text-white/50 leading-tight line-clamp-1 mb-2">
+                                                                        <p className="text-[10px] text-white/50 leading-tight line-clamp-1 mb-2.5">
                                                                             {item.description}
                                                                         </p>
                                                                     )}
@@ -1227,7 +1360,7 @@ const Suga4URoom = () => {
                                                                         <div className="flex flex-col gap-1">
                                                                             <button
                                                                                 onClick={() => setSelectedMobileFav(item)}
-                                                                                className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition-colors uppercase animate-pulse"
+                                                                                className="w-full py-1.5 text-[10px] font-black tracking-wider text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition-colors uppercase animate-pulse"
                                                                             >
                                                                                 OPEN
                                                                             </button>
@@ -1236,7 +1369,7 @@ const Suga4URoom = () => {
                                                                                     href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
                                                                                     target="_blank"
                                                                                     rel="noopener noreferrer"
-                                                                                    className="w-full text-center py-1 text-[8px] font-black tracking-wider text-yellow-400 bg-yellow-500/10 border border-yellow-500/35 rounded-lg hover:bg-yellow-500/20 transition-colors uppercase"
+                                                                                    className="w-full text-center py-1.5 text-[10px] font-black tracking-wider text-yellow-400 bg-yellow-500/10 border border-yellow-500/35 rounded-lg hover:bg-yellow-500/20 transition-colors uppercase"
                                                                                 >
                                                                                     Get Link
                                                                                 </a>
@@ -1244,20 +1377,20 @@ const Suga4URoom = () => {
                                                                         </div>
                                                                     ) : (
                                                                         <div className="flex flex-col gap-1">
-                                                                            <span className="text-center text-[10px] font-black text-yellow-500 mb-1">
+                                                                            <span className="text-center text-xs font-black text-yellow-500 mb-1">
                                                                                 {cs()}{item.buy_price}
                                                                             </span>
                                                                             {item.reveal_price !== null && (
                                                                                 <button
                                                                                     onClick={() => handleMobileFavAction(item, 'REVEAL')}
-                                                                                    className="w-full py-1 text-[8px] font-black tracking-wider text-pink-300 bg-pink-500/10 border border-pink-500/25 rounded-lg hover:bg-pink-500/25 transition-colors uppercase"
+                                                                                    className="w-full py-1.5 text-[9.5px] font-black tracking-wider text-pink-300 bg-pink-500/10 border border-pink-500/25 rounded-lg hover:bg-pink-500/25 transition-colors uppercase"
                                                                                 >
                                                                                     REVEAL {cs()}{item.reveal_price}
                                                                                 </button>
                                                                             )}
                                                                             <button
                                                                                 onClick={() => handleMobileFavAction(item, 'BUY')}
-                                                                                className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-[#d4af37] rounded-lg hover:brightness-110 transition-all uppercase"
+                                                                                className="w-full py-1.5 text-[9.5px] font-black tracking-wider text-white bg-[#d4af37] rounded-lg hover:brightness-110 transition-all uppercase"
                                                                             >
                                                                                 BUY FOR HER
                                                                             </button>
@@ -1274,19 +1407,19 @@ const Suga4URoom = () => {
                                     {/* Creator Secrets Section */}
                                     <div className="py-1">
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
+                                            <div className="flex items-center gap-1.5 text-sm font-black tracking-wider text-white">
                                                 <span className="text-yellow-400">🔒</span> CREATOR SECRETS
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
+                                        <div className="flex gap-2.5 mb-3 overflow-x-auto scrollbar-none">
                                             {["ALL", "TEASE", "POSE", "BEHIND_THE_SCENES"].map((tab) => (
                                                 <button
                                                     key={tab}
                                                     onClick={() => {
                                                         setActiveMobileSecTab(tab);
                                                     }}
-                                                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
+                                                    className={`px-3.5 py-1.5 rounded-full text-[10px] font-black tracking-wider transition-all border ${
                                                         activeMobileSecTab === tab
                                                             ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25'
                                                             : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
@@ -1297,9 +1430,9 @@ const Suga4URoom = () => {
                                             ))}
                                         </div>
 
-                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2">
+                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2.5">
                                             {suga.secrets.length === 0 ? (
-                                                <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
+                                                <div className="w-full py-6 text-center text-white/35 text-xs italic">
                                                     No secret media found
                                                 </div>
                                             ) : (
@@ -1321,7 +1454,7 @@ const Suga4URoom = () => {
                                                                         setSelectedMobileSecretMedia(item);
                                                                     }
                                                                 }}
-                                                                className="relative bg-[#130414]/90 border border-pink-500/15 rounded-2xl overflow-hidden w-[140px] h-[110px] flex-shrink-0 snap-start flex flex-col justify-between p-3 cursor-pointer shadow-[0_0_15px_rgba(255,42,109,0.03)]"
+                                                                className="relative bg-[#130414]/90 border border-pink-500/15 rounded-2xl overflow-hidden w-[155px] h-[125px] flex-shrink-0 snap-start flex flex-col justify-between p-3.5 cursor-pointer shadow-[0_0_15px_rgba(255,42,109,0.03)]"
                                                             >
                                                                 {item.media_url && (
                                                                     <div className="absolute inset-0 z-0 bg-black/45">
@@ -1335,23 +1468,23 @@ const Suga4URoom = () => {
 
                                                                 <div className="relative z-10 flex flex-col justify-between h-full w-full">
                                                                     <div className="flex items-center justify-between">
-                                                                        <span className="text-[14px]">
+                                                                        <span className="text-[16px]">
                                                                             {item.category === 'CUTE' ? '🎀' : item.category === 'LUXURY' ? '💎' : '👑'}
                                                                         </span>
                                                                         {isUnlocked ? (
-                                                                            <Eye className="w-3.5 h-3.5 text-emerald-400 drop-shadow animate-pulse" />
+                                                                            <Eye className="w-4 h-4 text-emerald-400 drop-shadow animate-pulse" />
                                                                         ) : (
                                                                             item.media_url && (
-                                                                                <span className="text-white/60 text-[10px]">
-                                                                                    {item.media_type === 'video' ? <Video className="w-3.5 h-3.5" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                                                                                <span className="text-white/60 text-xs">
+                                                                                    {item.media_type === 'video' ? <Video className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                                                                                 </span>
                                                                             )
                                                                         )}
                                                                     </div>
 
                                                                     <div className="mt-1">
-                                                                        {!isUnlocked && <Lock className="w-3.5 h-3.5 mx-auto mb-1 text-yellow-500 drop-shadow" />}
-                                                                        <h4 className="text-[9px] font-black text-white text-center leading-tight line-clamp-2 drop-shadow">
+                                                                        {!isUnlocked && <Lock className="w-4 h-4 mx-auto mb-1 text-yellow-500 drop-shadow" />}
+                                                                        <h4 className="text-[10px] font-black text-white text-center leading-tight line-clamp-2 drop-shadow">
                                                                             {item.name}
                                                                         </h4>
                                                                     </div>
@@ -1362,7 +1495,7 @@ const Suga4URoom = () => {
                                                                                 e.stopPropagation();
                                                                                 handleMobileSecretUnlockPrompt(item);
                                                                             }}
-                                                                            className="w-full mt-1.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold text-[8px] rounded-lg tracking-wider transition-all uppercase"
+                                                                            className="w-full mt-2 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold text-[9.5px] rounded-lg tracking-wider transition-all uppercase"
                                                                         >
                                                                             {cs()}{item.unlock_price} UNLOCK
                                                                         </button>
@@ -1379,30 +1512,30 @@ const Suga4URoom = () => {
 
                             {/* INFO TAB */}
                             {mobileTab === "info" && (
-                                <div className="space-y-3 pb-4">
+                                <div className="space-y-4 pb-4">
                                     <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4">
                                         <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
                                     </div>
 
                                     <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xl">🔑</span>
+                                        <div className="flex items-center gap-3.5">
+                                            <span className="text-2xl">🔑</span>
                                             <div>
-                                                <div className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Wallet Balance</div>
-                                                <div className="text-sm font-black text-yellow-400">{cs()}{balance}</div>
+                                                <div className="text-[11px] text-white/40 font-bold uppercase tracking-wider">Wallet Balance</div>
+                                                <div className="text-base font-black text-yellow-400">{cs()}{balance}</div>
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => router.push("/account/membership")}
-                                            className="px-4 py-1.5 rounded-xl bg-yellow-500 text-black text-xs font-black shadow-md active:scale-95 transition-all uppercase"
+                                            onClick={() => router.push("/account/wallet")}
+                                            className="px-5 py-2.5 rounded-xl bg-yellow-500 text-black text-xs font-black shadow-md active:scale-95 transition-all uppercase"
                                         >
                                             Recharge
                                         </button>
                                     </div>
 
-                                    <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4 space-y-2">
-                                        <h4 className="text-[10px] font-black text-pink-500 uppercase tracking-widest">Suga4U Rules</h4>
-                                        <div className="text-[11px] text-white/60 space-y-1.5 leading-relaxed">
+                                    <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4 space-y-2.5">
+                                        <h4 className="text-xs font-black text-pink-500 uppercase tracking-widest">Suga4U Rules</h4>
+                                        <div className="text-xs text-white/60 space-y-2 leading-relaxed">
                                             <p>• Be respectful to the creator during the live session.</p>
                                             <p>• Paid requests and gifts support the creator directly.</p>
                                             <p>• Private 1-on-1 calls are billed per minute or at a fixed rate.</p>
@@ -1418,10 +1551,10 @@ const Suga4URoom = () => {
                             {/* Rooms Goal Footer Bar */}
                             <div className="px-4 py-2 flex items-center justify-between bg-black/30">
                                 <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] font-black text-yellow-400 tracking-wider flex items-center gap-1">
+                                    <span className="text-[10px] font-black text-yellow-400 tracking-wider flex items-center gap-1">
                                         🎯 ROOM GOAL
                                     </span>
-                                    <span className="text-[10px] font-bold text-white/80">
+                                    <span className="text-xs font-bold text-white/80">
                                         {groupVoteState && groupVoteState.isActive ? (
                                             groupVoteState.current >= groupVoteState.target ? (
                                                 <span className="text-emerald-400 font-extrabold flex items-center gap-1">
@@ -1435,7 +1568,7 @@ const Suga4URoom = () => {
                                         )}
                                     </span>
                                     {groupVoteState && groupVoteState.isActive && groupVoteState.current < groupVoteState.target && (
-                                        <div className="w-32 h-1 bg-black/60 rounded-full overflow-hidden border border-white/5 mt-0.5">
+                                        <div className="w-32 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/5 mt-0.5">
                                             <div
                                                 className="h-full bg-gradient-to-r from-pink-500 to-yellow-500 shadow-sm"
                                                 style={{ width: `${Math.min(100, (groupVoteState.current / groupVoteState.target) * 100)}%` }}
@@ -1449,7 +1582,7 @@ const Suga4URoom = () => {
                                         <button
                                             onClick={handleMobileVote}
                                             disabled={loadingMobileVote}
-                                            className="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[9px] font-black flex items-center gap-1 active:scale-95 transition-all shadow-md uppercase disabled:opacity-50"
+                                            className="px-3.5 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[10px] font-black flex items-center gap-1 active:scale-95 transition-all shadow-md uppercase disabled:opacity-50"
                                         >
                                             <Flame className="w-3 h-3 text-white fill-current" />
                                             Boost {cs()}{groupVoteState.price}
@@ -1457,7 +1590,7 @@ const Suga4URoom = () => {
                                     )}
                                     <button
                                         onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
-                                        className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-600 to-pink-500 flex items-center justify-center text-white active:scale-95 transition-all shadow-lg shadow-pink-500/25 text-sm"
+                                        className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-600 to-pink-500 flex items-center justify-center text-white active:scale-95 transition-all shadow-lg shadow-pink-500/25 text-base"
                                     >
                                         🎁
                                     </button>

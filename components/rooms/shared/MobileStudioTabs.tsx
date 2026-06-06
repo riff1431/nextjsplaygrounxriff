@@ -7,7 +7,7 @@ export interface MobileStudioTab {
     id: string;
     label: string;
     icon: React.ReactNode;
-    badge?: number;
+    badge?: number | boolean;
 }
 
 interface MobileStudioTabsProps {
@@ -124,6 +124,14 @@ export default function MobileStudioTabs({
                     box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
                     animation: mst-pulse 2s ease-in-out infinite;
                 }
+                .mst-badge.dot {
+                    min-width: 8px;
+                    width: 8px;
+                    height: 8px;
+                    padding: 0;
+                    top: 0px;
+                    right: -2px;
+                }
                 @keyframes mst-pulse {
                     0%, 100% { transform: scale(1); }
                     50% { transform: scale(1.1); }
@@ -157,9 +165,9 @@ export default function MobileStudioTabs({
                                     {tab.icon}
                                 </span>
                                 {/* Badge */}
-                                {tab.badge !== undefined && tab.badge > 0 && (
-                                    <span className="mst-badge">
-                                        {tab.badge > 99 ? "99+" : tab.badge}
+                                {tab.badge !== undefined && (typeof tab.badge === "boolean" ? tab.badge : tab.badge > 0) && (
+                                    <span className={`mst-badge ${typeof tab.badge === "boolean" ? "dot" : ""}`}>
+                                        {typeof tab.badge === "number" ? (tab.badge > 99 ? "99+" : tab.badge) : ""}
                                     </span>
                                 )}
                             </div>

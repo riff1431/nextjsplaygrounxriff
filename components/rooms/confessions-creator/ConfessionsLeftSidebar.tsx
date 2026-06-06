@@ -26,7 +26,7 @@ interface Confession {
     created_at: string;
 }
 
-const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | null, roomId?: string | null }) => {
+const ConfessionsLeftSidebar = ({ sessionId, roomId, isMobile }: { sessionId?: string | null, roomId?: string | null, isMobile?: boolean }) => {
     const { user } = useAuth();
     const [stats, setStats] = useState({ fans: 0, confessions: 0, tips: 0, earned: 0 });
     const [viewerCount, setViewerCount] = useState(0);
@@ -272,35 +272,37 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId }: { sessionId?: string | nu
     };
 
     return (
-        <div className="flex flex-col shrink-0 h-full" style={{ width: '360px' }}>
+        <div className="flex flex-col shrink-0 h-full w-full">
             {/* ── FIXED TOP: Video + Summary (never scrolls) ── */}
             <div className="flex flex-col gap-4 shrink-0">
                 {/* Profile Card / Live Stream */}
-                <div className="conf-glass-card overflow-hidden relative shrink-0" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-                    <div className="relative w-full h-full bg-black/40">
-                        {roomId && user ? (
-                            <LiveStreamWrapper
-                                role="host"
-                                appId={APP_ID}
-                                roomId={roomId}
-                                uid={user.id}
-                                hostId={user.id}
-                                hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                hostName={user.user_metadata?.full_name || "Creator"}
-                            />
-                        ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
-                                Connecting to stream...
+                {!isMobile && (
+                    <div className="conf-glass-card overflow-hidden relative shrink-0" style={{ width: '100%', aspectRatio: '1 / 1' }}>
+                        <div className="relative w-full h-full bg-black/40">
+                            {roomId && user ? (
+                                <LiveStreamWrapper
+                                    role="host"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={user.id}
+                                    hostId={user.id}
+                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                    hostName={user.user_metadata?.full_name || "Creator"}
+                                />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
+                                    Connecting to stream...
+                                </div>
+                            )}
+                            <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide pointer-events-none z-10">
+                                LIVE
                             </div>
-                        )}
-                        <div className="absolute top-3 left-3 bg-[hsl(0,85%,55%)] text-white text-xs font-bold px-3 py-1 rounded-md conf-live-pulse tracking-wide pointer-events-none z-10">
-                            LIVE
-                        </div>
-                        <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md pointer-events-none z-10">
-                            Fan:{viewerCount}
+                            <div className="absolute bottom-3 left-3 text-white text-sm font-medium drop-shadow-md pointer-events-none z-10">
+                                Fan:{viewerCount}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Summary */}
                 <div className="conf-glass-card p-4">

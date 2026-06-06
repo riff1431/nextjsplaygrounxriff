@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Video, MessageCircle, Inbox, BarChart3 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -39,10 +39,16 @@ const XChatCreatorPage = () => {
     const [mobileTab, setMobileTab] = useState("chat");
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [summaryUnread, setSummaryUnread] = useState(false);
 
+    const activeTabRef = useRef(mobileTab);
     useEffect(() => {
+        activeTabRef.current = mobileTab;
         if (mobileTab === "chat") {
             setChatUnread(0);
+        }
+        if (mobileTab === "summary") {
+            setSummaryUnread(false);
         }
     }, [mobileTab]);
 
@@ -71,8 +77,22 @@ const XChatCreatorPage = () => {
                 (payload) => {
                     const newMsg = payload.new as any;
                     if (sessionId && newMsg.session_id !== sessionId) return;
-                    if (mobileTab !== "chat") {
+                    if (activeTabRef.current !== "chat") {
                         setChatUnread((prev) => prev + 1);
+                    }
+                    if (newMsg.paid_amount > 0 && activeTabRef.current !== "summary") {
+                        setSummaryUnread(true);
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "x_chat_reactions", filter: `room_id=eq.${roomId}` },
+                (payload) => {
+                    const newRxn = payload.new as any;
+                    if (sessionId && newRxn.session_id !== sessionId) return;
+                    if (activeTabRef.current !== "summary") {
+                        setSummaryUnread(true);
                     }
                 }
             )
@@ -97,11 +117,12 @@ const XChatCreatorPage = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, sessionId, mobileTab]);
+    }, [roomId, sessionId]);
 
     const mappedTabs = XCHAT_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        if (tab.id === "summary") return { ...tab, badge: summaryUnread };
         return tab;
     });
 

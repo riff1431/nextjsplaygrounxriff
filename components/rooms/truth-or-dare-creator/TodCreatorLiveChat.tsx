@@ -147,7 +147,20 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                     // Only add messages from the current session
                     if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
                     if (!sessionId && sessionStartedAt && newMsg.created_at && newMsg.created_at < sessionStartedAt) return;
-                    setMessages((prev) => [...prev, newMsg as ChatMessage]);
+                    setMessages((prev) => {
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        const matchIdx = prev.findIndex(m =>
+                            m.id.startsWith('temp-') &&
+                            m.user_id === newMsg.user_id &&
+                            m.message === newMsg.message
+                        );
+                        if (matchIdx !== -1) {
+                            const next = [...prev];
+                            next[matchIdx] = newMsg;
+                            return next;
+                        }
+                        return [...prev, newMsg as ChatMessage];
+                    });
                     setTimeout(scrollToBottom, 100);
                 }
             )
@@ -165,15 +178,32 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
 
     const handleSend = async () => {
         if (!msg.trim() || !roomId || !myProfile || sending) return;
+
+        const tempId = `temp-${Date.now()}`;
+        const newMsgText = msg.trim();
+        setMsg(""); // Clear input box immediately for responsive UI feedback
         setSending(true);
 
         const chatPayload: Record<string, any> = {
             room_id: roomId,
             user_id: myProfile.id,
             username: myProfile.name,
-            message: msg.trim(),
+            message: newMsgText,
             session_id: sessionId || null,
         };
+
+        const optimisticMsg: ChatMessage = {
+            id: tempId,
+            room_id: roomId,
+            user_id: myProfile.id,
+            username: myProfile.name,
+            message: newMsgText,
+            created_at: new Date().toISOString()
+        };
+
+        setMessages(prev => [...prev, optimisticMsg]);
+        setTimeout(scrollToBottom, 100);
+
         let { error } = await supabase.from("chat_messages").insert(chatPayload);
         // If session_id column doesn't exist yet, retry without it
         if (error && error.message?.includes('session_id')) {
@@ -183,8 +213,8 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
 
         if (error) {
             toast.error("Failed to send message: " + error.message);
-        } else {
-            setMsg("");
+            // Remove the optimistic message on failure
+            setMessages(prev => prev.filter(m => m.id !== tempId));
         }
         setSending(false);
     };
@@ -240,7 +270,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
     const avatarMap = useAvatarMap(chatUserIds);
 
     return (
-        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-4 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
+        <div className="tod-creator-panel-bg rounded-xl tod-creator-neon-border-blue p-3 flex flex-col h-full overflow-hidden pgx-chat-wrapper">
             <div className="flex items-center justify-between mb-3 shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="tod-creator-text-neon-yellow text-sm font-bold">●</span>
@@ -254,7 +284,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
 
             <div
                 ref={scrollRef}
-                className="flex-1 space-y-3 overflow-y-auto pr-1 min-h-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                className="flex-1 space-y-2 overflow-y-auto pr-1 min-h-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
             >
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
@@ -281,7 +311,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                                                 {formatTime(item.timestamp)}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-white/80 mt-0.5 break-words max-w-[200px] leading-snug">
+                                        <p className="text-sm text-white/80 mt-0.5 break-words w-full leading-snug">
                                             {item.type === 'reaction' ? `sent ${item.message || 'a reaction'}` : `sent a ${cs()}${item.amount} tip`}
                                         </p>
                                     </div>
@@ -316,7 +346,7 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-white/80 mt-0.5 break-words max-w-[200px] leading-snug">
+                                    <p className="text-sm text-white/80 mt-0.5 break-words w-full leading-snug">
                                         {m.message}
                                     </p>
                                 </div>
@@ -326,15 +356,15 @@ const TodCreatorLiveChat = ({ roomId, sessionStartedAt, sessionId, viewerCount =
                 )}
             </div>
 
-            <div className="mt-3 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2 shrink-0">
+            <div className="mt-2 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-2.5 py-1.5 shrink-0">
                 
                         <div className="relative flex items-center">
                             <button
                                 type="button"
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-white/10"
                             >
-                                <Smile className="w-5 h-5 text-white/70" />
+                                <Smile className="w-4.5 h-4.5 text-white/70" />
                             </button>
                             {showEmojiPicker && (
                                 <div ref={emojiPickerRef} className="absolute bottom-[calc(100%+8px)] left-0 mb-2 z-50">

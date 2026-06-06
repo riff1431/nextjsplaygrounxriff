@@ -44,13 +44,14 @@ const RequestTable = ({
     };
 
     return (
-        <div className="conf-glass-card p-5 flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="conf-font-cinzel text-white text-xl font-semibold">{title}</h2>
-                {subtitle && <span className="text-white/60 text-sm">{subtitle}</span>}
+        <div className="conf-glass-card p-4 sm:p-5 flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                <h2 className="conf-font-cinzel text-white text-base sm:text-xl font-semibold">{title}</h2>
+                {subtitle && <span className="text-white/60 text-xs sm:text-sm">{subtitle}</span>}
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop View: Table (hidden on mobile) */}
+            <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="text-white/60 border-b border-white/20">
@@ -104,6 +105,60 @@ const RequestTable = ({
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile View: Card List (hidden on tablet/desktop) */}
+            <div className="block sm:hidden space-y-3">
+                {rows.length === 0 ? (
+                    <div className="text-center py-6 text-white/40 text-xs italic">No requests</div>
+                ) : rows.map((row) => (
+                    <div key={row.id} className="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2.5">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <span className="text-xs font-bold text-white block">
+                                    {row.is_anonymous ? "🔒 Anonymous" : row.fan_name || row.fan}
+                                </span>
+                                {row.created_at && (
+                                    <span className="text-[9px] text-white/40 block mt-0.5">
+                                        {new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-xs font-black text-amber-400">${row.amount}</span>
+                        </div>
+                        
+                        <p className="text-xs text-white/70 leading-normal break-words bg-black/25 p-2 py-1.5 rounded-lg border border-white/5">
+                            {row.topic || row.confession}
+                        </p>
+
+                        <div className="flex gap-2 justify-end mt-1">
+                            {row.status === "in_progress" || decisions[row.id] === "in_progress" ? (
+                                <span className="text-xs text-blue-400 font-bold">In Progress</span>
+                            ) : row.status === "delivered" ? (
+                                <span className="text-xs text-emerald-400 font-bold">Delivered</span>
+                            ) : row.status === "completed" ? (
+                                <span className="text-xs text-emerald-400 font-bold">✓ Completed</span>
+                            ) : decisions[row.id] === "rejected" || row.status === "rejected" ? (
+                                <span className="text-xs text-red-400 font-bold">Declined</span>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => handleReject(row.id)}
+                                        className="flex-1 py-1.5 rounded-lg border border-white/20 hover:border-white text-white font-bold text-xs transition active:scale-95 text-center"
+                                    >
+                                        DECLINE
+                                    </button>
+                                    <button
+                                        onClick={() => onAcceptAndDeliver?.(row)}
+                                        className="flex-1 py-1.5 rounded-lg bg-[hsl(40,80%,55%)] hover:bg-[hsl(40,80%_60%)] text-black font-extrabold text-xs transition active:scale-95 text-center shadow-md shadow-amber-950/20"
+                                    >
+                                        ACCEPT
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -27,12 +27,12 @@ import dynamic from "next/dynamic";
 import { cs } from "@/utils/currency";
 const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
-import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
 
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
-    { id: "requests", label: "Requests", icon: <InboxIcon className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
+    { id: "requests", label: "Requests", icon: <InboxIcon className="w-5 h-5" /> },
+    { id: "voting", label: "Voting", icon: <Vote className="w-5 h-5" /> },
     { id: "summary", label: "Summary", icon: <BarChart3 className="w-5 h-5" /> },
 ];
 
@@ -155,13 +155,22 @@ function TruthOrDareCreatorContent() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [slotInvites, setSlotInvites] = useState<any[]>([]);
     const [countdown, setCountdown] = useState<number | null>(null);
-    const [mobileStudioTab, setMobileStudioTab] = useState("requests");
+    const [mobileStudioTab, setMobileStudioTab] = useState("chat");
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [summaryUnread, setSummaryUnread] = useState(false);
 
+    const activeTabRef = useRef(mobileStudioTab);
     useEffect(() => {
+        activeTabRef.current = mobileStudioTab;
         if (mobileStudioTab === "chat") {
             setChatUnread(0);
+        }
+        if (mobileStudioTab === "requests") {
+            setRequestsUnread(0);
+        }
+        if (mobileStudioTab === "summary") {
+            setSummaryUnread(false);
         }
     }, [mobileStudioTab]);
 
@@ -170,14 +179,14 @@ function TruthOrDareCreatorContent() {
 
         const fetchInitialCounts = async () => {
             let q = supabase
-                .from("truth_dare_requests")
+                .from("truth_dare_queue")
                 .select("id", { count: "exact", head: true })
                 .eq("room_id", roomId)
-                .eq("status", "pending");
+                .eq("is_served", false);
             if (activeSessionId) q = q.eq("session_id", activeSessionId);
             const { count } = await q;
             if (count !== null) {
-                setRequestsUnread(count);
+                setRequestsUnread(activeTabRef.current === "requests" ? 0 : count);
             }
         };
         fetchInitialCounts();
@@ -190,7 +199,7 @@ function TruthOrDareCreatorContent() {
                 (payload) => {
                     const newMsg = payload.new as any;
                     if (activeSessionId && newMsg.session_id !== activeSessionId) return;
-                    if (mobileStudioTab !== "chat") {
+                    if (activeTabRef.current !== "chat") {
                         setChatUnread((prev) => prev + 1);
                     }
                 }
@@ -199,15 +208,8 @@ function TruthOrDareCreatorContent() {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "truth_dare_requests", filter: `room_id=eq.${roomId}` },
                 async () => {
-                    let q = supabase
-                        .from("truth_dare_requests")
-                        .select("id", { count: "exact", head: true })
-                        .eq("room_id", roomId)
-                        .eq("status", "pending");
-                    if (activeSessionId) q = q.eq("session_id", activeSessionId);
-                    const { count } = await q;
-                    if (count !== null) {
-                        setRequestsUnread(count);
+                    if (activeTabRef.current !== "summary") {
+                        setSummaryUnread(true);
                     }
                 }
             )
@@ -216,11 +218,12 @@ function TruthOrDareCreatorContent() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, activeSessionId, mobileStudioTab]);
+    }, [roomId, activeSessionId]);
 
     const mappedTabs = TOD_STUDIO_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        if (tab.id === "summary") return { ...tab, badge: summaryUnread };
         return tab;
     });
     // Agora remote users from the host's CreatorStream — used to render collab streams in invite slots
@@ -476,11 +479,13 @@ function TruthOrDareCreatorContent() {
             const qData = await qRes.json();
             if (qData.queue) {
                 // Map DB queue to local type if needed, or assume match
-                setQueue(qData.queue.map((i: any) => ({
+                const mappedQueue = qData.queue.map((i: any) => ({
                     ...i,
                     createdAt: new Date(i.created_at).getTime(),
                     fanName: i.fan_name
-                })));
+                }));
+                setQueue(mappedQueue);
+                setRequestsUnread(activeTabRef.current === "requests" ? 0 : mappedQueue.length);
             }
 
             // Creators populated dynamically from API (room_participants)
@@ -560,6 +565,7 @@ function TruthOrDareCreatorContent() {
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'truth_dare_queue', filter: `room_id=eq.${roomId}` }, (payload) => {
                 const newItem = payload.new as any;
+                if (activeSessionId && newItem.session_id && newItem.session_id !== activeSessionId) return;
                 setQueue(prev => [{
                     id: newItem.id,
                     type: newItem.type,
@@ -568,11 +574,17 @@ function TruthOrDareCreatorContent() {
                     amount: newItem.amount,
                     meta: newItem.meta
                 }, ...prev]);
+                if (activeTabRef.current !== "requests") {
+                    setRequestsUnread(prev => prev + 1);
+                }
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'truth_dare_queue', filter: `room_id=eq.${roomId}` }, (payload) => {
                 const updated = payload.new as any;
                 if (updated.is_served) {
                     setQueue(prev => prev.filter(q => q.id !== updated.id));
+                    if (activeTabRef.current !== "requests") {
+                        setRequestsUnread(prev => Math.max(0, prev - 1));
+                    }
                 }
             })
 
@@ -742,11 +754,11 @@ function TruthOrDareCreatorContent() {
                 if (status === 'SUBSCRIBED') {
                     console.log('✅ Successfully subscribed to room updates');
                     setRealtimeStatus('connected');
-                    toast.success('Real-time connected!', { duration: 2000, position: 'bottom-right' });
+                    toast.success('Real-time connected!', { duration: 2000 });
                 } else if (status === 'CHANNEL_ERROR') {
                     console.error('❌ Channel error - real-time subscription failed');
                     setRealtimeStatus('error');
-                    toast.error('Real-time connection failed', { duration: 5000, position: 'bottom-right' });
+                    toast.error('Real-time connection failed', { duration: 5000 });
                 } else if (status === 'TIMED_OUT') {
                     console.error('⏱️ Subscription timed out');
                     setRealtimeStatus('error');
@@ -1302,10 +1314,10 @@ function TruthOrDareCreatorContent() {
         <div className="tod-creator-theme h-[100dvh] lg:h-screen w-screen flex flex-col items-stretch p-2 lg:p-3 relative overflow-hidden">
             {/* Background Image */}
             <div
-                className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+                className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none z-0"
                 style={{ backgroundImage: "url('/images/truth-or-dare-custom-bg.jpg')" }}
             />
-            <div className="fixed inset-0 bg-black/60" />
+            <div className="fixed inset-0 bg-black/60 pointer-events-none z-0" />
             {/* Content */}
             <div className="relative z-10 flex flex-col items-stretch flex-1 min-h-0">
             {/* Top Bar */}
@@ -1319,11 +1331,15 @@ function TruthOrDareCreatorContent() {
                 </button>
                 <div className="flex items-center gap-2 min-w-0">
                     <h1 className="text-sm sm:text-base lg:text-xl font-bold tod-creator-text-neon-pink flex items-center gap-1.5 truncate">
-                        🎭 <span className="hidden xs:inline">Truth or Dare</span><span className="xs:hidden">ToD</span>
+                        🎭 
+                        <span className={isInStudio ? "hidden sm:inline" : "hidden xs:inline"}>Truth or Dare</span>
+                        {!isInStudio && <span className="xs:hidden">ToD</span>}
                         <span className="hidden sm:inline">— Creator View</span>
                     </h1>
                     <span
-                        className={`px-2 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase border flex items-center gap-1 shrink-0 ${realtimeStatus === 'connected' ? 'border-green-500/40 text-green-300 bg-green-500/10' :
+                        className={`px-2 py-1 rounded-full text-[9px] font-bold tracking-wider uppercase border flex items-center gap-1 shrink-0 ${
+                            isInStudio ? 'hidden sm:flex' : 'flex'
+                        } ${realtimeStatus === 'connected' ? 'border-green-500/40 text-green-300 bg-green-500/10' :
                             realtimeStatus === 'error' ? 'border-red-500/40 text-red-300 bg-red-500/10' :
                                 realtimeStatus === 'closed' ? 'border-gray-500/40 text-gray-300 bg-gray-500/10' :
                                     'border-yellow-500/40 text-yellow-300 bg-yellow-500/10'
@@ -1341,7 +1357,6 @@ function TruthOrDareCreatorContent() {
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <RoomTourHelpButton tourType="truth_or_dare_creator" accentHsl="330, 80%, 55%" />
                     {sessionActive && isInStudio && isSessionLive && (
                         <div data-tour="tod-go-live-button">
                         <SessionLiveControls
@@ -1390,9 +1405,9 @@ function TruthOrDareCreatorContent() {
 
             {/* ─── DASHBOARD (No Active Session) ─── */}
             {!sessionActive ? (
-                <div className="flex-1 flex flex-col items-center justify-start px-2 sm:px-4 py-2 sm:py-4 gap-3 sm:gap-4 max-w-2xl mx-auto w-full overflow-y-auto">
+                <div className="flex-1 flex flex-col items-center justify-start px-2 sm:px-4 py-2 sm:py-4 gap-3 sm:gap-4 max-w-2xl mx-auto w-full overflow-y-auto relative z-20">
                     {/* Start Session Card */}
-                    <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-pink p-4 lg:p-5">
+                    <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-pink p-4 lg:p-5 relative z-20">
                         <div className="flex items-center gap-2.5 mb-4">
                             <div className="w-9 h-9 rounded-lg bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
                                 <span className="text-lg">🎭</span>
@@ -1407,7 +1422,7 @@ function TruthOrDareCreatorContent() {
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Session Title</label>
                                 <input
-                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition relative z-20"
                                     placeholder="e.g. Late Night Truth or Dare 🔥"
                                     value={sessionForm.title}
                                     onChange={(e) => setSessionForm({ ...sessionForm, title: e.target.value })}
@@ -1416,7 +1431,7 @@ function TruthOrDareCreatorContent() {
                             <div>
                                 <label className="text-[10px] text-white/60 font-semibold uppercase tracking-wider mb-1 block">Description (optional)</label>
                                 <textarea
-                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-14"
+                                    className="w-full bg-white/5 rounded-lg px-3 py-3 sm:py-2.5 text-sm text-white placeholder:text-white/30 outline-none border border-white/10 focus:border-pink-500/50 transition resize-none h-14 relative z-20"
                                     placeholder="Tell fans what to expect..."
                                     value={sessionForm.description}
                                     onChange={(e) => setSessionForm({ ...sessionForm, description: e.target.value })}
@@ -1720,11 +1735,11 @@ function TruthOrDareCreatorContent() {
                     )}
 
                     {/* Desktop View */}
-                    <div className="hidden lg:grid grid-cols-[400px_1fr_400px] gap-3 h-full w-full min-h-0">
+                    <div className="hidden lg:grid grid-cols-[1fr_400px_400px] gap-3 h-full w-full min-h-0">
                         {/* LEFT SECTION: Video Grid + Bottom Row — always visible */}
-                        <div className="flex flex-col gap-2 lg:gap-3 w-full min-h-0">
+                        <div className="flex flex-col gap-2 lg:gap-3 w-full h-full min-h-0">
                             {/* 2x2 Video Grid */}
-                            <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }} data-tour="tod-live-stream">
+                            <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden flex-1" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px' }} data-tour="tod-live-stream">
                                 {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
                                 <div className="relative overflow-hidden">
                                     <div className="absolute inset-0">
@@ -1738,6 +1753,7 @@ function TruthOrDareCreatorContent() {
                                                 viewerCount={fans.length}
                                                 onRemoteUsersChange={handleRemoteUsersChange}
                                                 isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
+                                                isGrid={true}
                                             />
                                         ) : (
                                             /* Collab creator: show host's remote stream in Slot 1 */
@@ -1749,6 +1765,7 @@ function TruthOrDareCreatorContent() {
                                                 creatorName="Host"
                                                 viewerCount={fans.length}
                                                 remoteHostId={hostCreatorId}
+                                                isGrid={true}
                                             />
                                         )}
                                     </div>
@@ -1766,6 +1783,7 @@ function TruthOrDareCreatorContent() {
                                                 creatorName={me.name}
                                                 viewerCount={0}
                                                 isCollabSelf={true}
+                                                isGrid={true}
                                             />
                                         </div>
                                     </div>
@@ -1938,7 +1956,7 @@ function TruthOrDareCreatorContent() {
                     </div>
 
                     {/* Mobile View */}
-                    <div className="lg:hidden flex flex-col gap-3 pt-2 flex-1 min-h-0 overflow-hidden">
+                    <div className="lg:hidden flex flex-col gap-3 pt-2 pb-20 flex-1 min-h-0 overflow-hidden">
                         {/* Video stage fixed on top */}
                         <div className="w-full shrink-0">
                             <div
@@ -1963,6 +1981,7 @@ function TruthOrDareCreatorContent() {
                                                     viewerCount={fans.length}
                                                     onRemoteUsersChange={handleRemoteUsersChange}
                                                     isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
+                                                    isGrid={true}
                                                 />
                                             ) : (
                                                 <TodCreatorStreamViewer
@@ -1973,6 +1992,7 @@ function TruthOrDareCreatorContent() {
                                                     creatorName="Host"
                                                     viewerCount={fans.length}
                                                     remoteHostId={hostCreatorId}
+                                                    isGrid={true}
                                                 />
                                             )}
                                         </div>
@@ -1989,6 +2009,7 @@ function TruthOrDareCreatorContent() {
                                                     creatorName={me.name}
                                                     viewerCount={0}
                                                     isCollabSelf={true}
+                                                    isGrid={true}
                                                 />
                                             </div>
                                         </div>
@@ -2026,34 +2047,34 @@ function TruthOrDareCreatorContent() {
                                                         </div>
                                                     );
                                                 })() : invite && invite.status !== 'declined' ? (
-                                                    <div className="text-center scale-75 origin-center">
-                                                        <div className={`w-10 h-10 rounded-full mx-auto mb-1 overflow-hidden border-2 ${
+                                                    <div className="flex flex-col items-center justify-center text-center p-2 w-full">
+                                                        <div className={`w-12 h-12 rounded-full mb-1.5 overflow-hidden border-2 ${
                                                             invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
                                                         }`}>
                                                             {invite.invited?.avatar_url ? (
                                                                 <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-xs font-bold">
+                                                                <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-sm font-bold">
                                                                     {(invite.invited?.full_name || invite.invited?.username || '?')[0].toUpperCase()}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <span className="text-[8px] text-white/60 font-medium block truncate max-w-[60px] mx-auto leading-none">
+                                                        <span className="text-[10px] text-white/60 font-medium block truncate max-w-[80px] leading-tight">
                                                             {invite.invited?.full_name || invite.invited?.username || 'Creator'}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center scale-75 origin-center">
+                                                    <div className="flex flex-col items-center justify-center text-center p-2 w-full">
                                                         <div
-                                                            className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center transition-all"
+                                                            className="w-12 h-12 rounded-full mb-1.5 flex items-center justify-center transition-all hover:scale-105"
                                                             style={{
                                                                 background: 'rgba(236,72,153,0.08)',
                                                                 border: '2px dashed rgba(236,72,153,0.25)',
                                                             }}
                                                         >
-                                                            <Plus className="w-4 h-4 text-pink-400/50" />
+                                                            <Plus className="w-5 h-5 text-pink-400/50" />
                                                         </div>
-                                                        <span className="text-[8px] text-white/25 font-medium leading-none">Invite</span>
+                                                        <span className="text-[10px] text-white/25 font-medium leading-tight">Invite</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -2130,16 +2151,21 @@ function TruthOrDareCreatorContent() {
                             </div>
                         )}
 
-                        {mobileStudioTab === "summary" && (
+                        {mobileStudioTab === "voting" && (
                             <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
-                                <div className="min-h-0 shrink-0" data-tour="tod-room-earnings">
-                                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
-                                </div>
                                 <div className="min-h-0 shrink-0" data-tour="tod-group-vote">
                                     <GroupVoteManager 
                                         roomId={roomId} 
                                         onStartCall={(type) => groupCall.initiateCall(type)}
                                     />
+                                </div>
+                            </div>
+                        )}
+
+                        {mobileStudioTab === "summary" && (
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                                <div className="min-h-0 shrink-0" data-tour="tod-room-earnings">
+                                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
                                 </div>
                             </div>
                         )}

@@ -162,7 +162,7 @@ const LiveChatBox = ({ roomId, className, sessionId, variant = "desktop" }: Live
     const nameColors = ["text-[#ec4899]", "text-[#d946ef]", "text-[#c084fc]", "text-[#f472b6]", "text-[#a78bfa]"];
 
     return (
-        <div className={variant === "mobile" ? `flex flex-col bg-transparent w-full ${className || ""}` : `neon-glass-card flex flex-col ${className || ""}`}>
+        <div className={variant === "mobile" ? `flex flex-col bg-transparent w-full h-full ${className || ""}` : `neon-glass-card flex flex-col h-full ${className || ""}`}>
             {/* Header */}
             {variant !== "mobile" && (
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 shrink-0">
@@ -173,7 +173,7 @@ const LiveChatBox = ({ roomId, className, sessionId, variant = "desktop" }: Live
             )}
 
             {/* Messages */}
-            <div ref={scrollRef} className={`flex-1 overflow-y-auto min-h-0 p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar ${variant === "mobile" ? "max-h-[200px]" : "max-h-[500px]"}`}>
+            <div ref={scrollRef} className={`flex-1 overflow-y-auto min-h-0 p-3 space-y-2.5 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] pgx-chat-messages hide-scrollbar`}>
                 {loading ? (
                     <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-white/30" />

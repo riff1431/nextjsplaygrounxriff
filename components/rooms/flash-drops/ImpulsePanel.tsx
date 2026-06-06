@@ -275,7 +275,7 @@ export default function ImpulsePanel({ roomId, sessionId, onSpend }: ImpulsePane
     return (
         <div className="flex flex-col gap-2.5 h-full overflow-y-auto pr-0.5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(330 100% 55% / 0.3) transparent' }}>
             {/* Reactions */}
-            <div className="fd-glass-panel rounded-2xl p-4 border border-white/[0.08]" style={{ background: 'linear-gradient(135deg, hsl(270 50% 4% / 0.7), hsl(330 40% 6% / 0.5))', boxShadow: '0 8px 32px hsl(330 100% 55% / 0.08), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+            <div className="hidden lg:block fd-glass-panel rounded-2xl p-4 border border-white/[0.08]" style={{ background: 'linear-gradient(135deg, hsl(270 50% 4% / 0.7), hsl(330 40% 6% / 0.5))', boxShadow: '0 8px 32px hsl(330 100% 55% / 0.08), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
                 <div className="flex items-center gap-2 mb-3">
                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(330 100% 55%), hsl(300 100% 60%))' }}>
                         <Zap size={10} className="text-white" />

@@ -29,7 +29,7 @@ const VideoStage = ({ roomId }: VideoStageProps) => {
     const { user } = useAuth();
 
     return (
-        <div className="relative flex flex-col items-center justify-end h-full pb-4 xl:pb-8">
+        <div className="relative flex flex-col items-center justify-end h-full pb-0 lg:pb-4 xl:pb-8">
             {/* Floating hearts */}
             <FloatingHeart delay={0} left="10%" />
             <FloatingHeart delay={1} left="25%" />
@@ -39,7 +39,7 @@ const VideoStage = ({ roomId }: VideoStageProps) => {
 
             {/* Video frame */}
             <div
-                className="rounded-xl w-full max-w-[700px] h-[60%] max-h-[500px] flex items-center justify-center relative overflow-hidden shadow-xl"
+                className="rounded-xl w-full max-w-[700px] h-full lg:h-[60%] max-h-[500px] flex items-center justify-center relative overflow-hidden shadow-xl"
                 style={{
                     border: "2px solid hsl(45, 90%, 55%)",
                     boxShadow: "0 0 15px hsla(45, 90%, 55%, 0.3), inset 0 0 15px hsla(45, 90%, 55%, 0.1)",

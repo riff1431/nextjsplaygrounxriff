@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
     MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus, Loader2,
@@ -206,6 +206,7 @@ function ConfessionsRoom() {
     const [loadingWall, setLoadingWall] = useState(false);
     const [myWalletBalance, setMyWalletBalance] = useState(0);
     const [isLive, setIsLive] = useState(false);
+    const [viewerCount, setViewerCount] = useState(1);
 
     // Filter & Search
     const [tierFilter, setTierFilter] = useState<string>('All');
@@ -214,6 +215,17 @@ function ConfessionsRoom() {
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [mobileTab, setMobileTab] = useState<string>("chat");
+    const [chatUnread, setChatUnread] = useState(0);
+    const [wallUnread, setWallUnread] = useState(0);
+    const [requestUnread, setRequestUnread] = useState(0);
+
+    const activeTabRef = useRef(mobileTab);
+    useEffect(() => {
+        activeTabRef.current = mobileTab;
+        if (mobileTab === "chat") setChatUnread(0);
+        if (mobileTab === "wall") setWallUnread(0);
+        if (mobileTab === "request") setRequestUnread(0);
+    }, [mobileTab]);
 
     // Request Form
     const [reqType, setReqType] = useState<'Text' | 'Image' | 'Video'>('Text');
@@ -393,7 +405,12 @@ function ConfessionsRoom() {
             const confessionChannel = supabase
                 .channel('fan-confessions-wall')
                 .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'confessions' },
-                    () => { fetchConfessions(creatorSearch, tierFilter); }
+                    () => {
+                        fetchConfessions(creatorSearch, tierFilter);
+                        if (activeTabRef.current !== "wall") {
+                            setWallUnread(prev => prev + 1);
+                        }
+                    }
                 )
                 .subscribe();
             // Realtime: notifications for delivered requests
@@ -405,6 +422,9 @@ function ConfessionsRoom() {
                             const isError = payload.new.message.includes('declined');
                             showToast(payload.new.message, isError ? 'error' : 'success');
                             fetchRequests();
+                            if (activeTabRef.current !== "request") {
+                                setRequestUnread(prev => prev + 1);
+                            }
                         }
                     }
                 )
@@ -420,6 +440,23 @@ function ConfessionsRoom() {
                             }
                         }
                         fetchRequests();
+                        if (activeTabRef.current !== "request") {
+                            setRequestUnread(prev => prev + 1);
+                        }
+                    }
+                )
+                .subscribe();
+
+            // Realtime: chat messages
+            const chatChannel = supabase
+                .channel(`fan-chat-${roomId}-${urlSessionId || 'all'}`)
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'room_chat_messages', filter: `room_id=eq.${roomId}` },
+                    (payload) => {
+                        const newMsg = payload.new as any;
+                        if (urlSessionId && newMsg.session_id && newMsg.session_id !== urlSessionId) return;
+                        if (activeTabRef.current !== "chat") {
+                            setChatUnread(prev => prev + 1);
+                        }
                     }
                 )
                 .subscribe();
@@ -429,9 +466,31 @@ function ConfessionsRoom() {
                 supabase.removeChannel(confessionChannel); 
                 supabase.removeChannel(notifChannel); 
                 supabase.removeChannel(reqsChannel);
+                supabase.removeChannel(chatChannel);
             };
         }
     }, [user, roomId, urlSessionId]);
+
+    useEffect(() => {
+        if (!user || !roomId) return;
+        const supabase = createClient();
+        const channel = supabase.channel(`presence:${roomId}`, {
+            config: { presence: { key: user.id } },
+        });
+        channel.on("presence", { event: "sync" }, () => {
+            const count = Object.keys(channel.presenceState()).length;
+            setViewerCount(count);
+        });
+        channel.subscribe(async (status) => {
+            if (status === "SUBSCRIBED") {
+                await channel.track({ user_id: user.id, role: "fan" });
+            }
+        });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user, roomId]);
 
     const fetchWallet = async () => {
         await refreshWallet();
@@ -733,6 +792,12 @@ function ConfessionsRoom() {
             </div>
         );
     }
+    const mappedTabs = CONFESSIONS_FAN_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        if (tab.id === "wall") return { ...tab, badge: wallUnread };
+        if (tab.id === "request") return { ...tab, badge: requestUnread };
+        return tab;
+    });
 
     return (
         <ProtectRoute allowedRoles={["fan", "creator"]}>
@@ -872,19 +937,26 @@ function ConfessionsRoom() {
                 {/* ── MOBILE REDESIGN VIEW (matches reference image) ── */}
                 <div className="flex md:hidden relative z-10 h-full flex-col overflow-hidden bg-[#070102]">
                     {/* Header */}
-                    <header className="shrink-0 z-30 border-b border-[#22070c] bg-[#0c0204] px-4 py-3 flex items-center justify-between">
-                        <button onClick={() => router.push("/home")} className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition">
-                            <ArrowLeft size={18} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1.5">
-                            <Heart className="h-4.5 w-4.5 fill-primary text-primary drop-shadow-[0_0_8px_rgba(255,42,109,0.5)]" />
-                            <span className="text-base font-black tracking-tight text-white display-font uppercase">
-                                PlayGround<span className="text-primary drop-shadow-[0_0_10px_rgba(255,42,109,0.5)]">X</span>
-                            </span>
+                    <header className="shrink-0 z-30 border-b border-[#22070c] bg-[#0c0204] px-4 py-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <button onClick={() => router.push("/home")} className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition shrink-0">
+                                <ArrowLeft size={18} />
+                            </button>
+                            {/* Host avatar and name */}
+                            <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-[hsl(320,50%,15%)] border border-rose-500/30 flex items-center justify-center text-xs text-white overflow-hidden shrink-0">
+                                    {hostAvatar ? (
+                                        <img src={hostAvatar} alt="" className="w-full h-full object-cover" />
+                                    ) : (hostStreamName?.charAt(0)?.toUpperCase() || "?")}
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className="text-xs font-bold text-white truncate">{hostStreamName}</h2>
+                                    <span className="text-[9px] text-[#ff2a6d] font-black uppercase tracking-wider block leading-none">Confessions</span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                             <button
                                 onClick={() => setShowInviteModal(true)}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#d50057] text-white text-xs font-bold active:scale-[0.98] transition shadow-[0_0_12px_rgba(213,0,87,0.4)]"
@@ -944,21 +1016,11 @@ function ConfessionsRoom() {
                                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> LIVE
                                 </span>
                                 <span className="flex items-center gap-1 bg-black/50 border border-white/10 px-2 py-0.5 rounded-md text-[9px] font-extrabold text-white/90">
-                                    <Eye className="w-3 h-3 text-white/70" /> 123
+                                    <Eye className="w-3.5 h-3.5 text-white/70" /> {viewerCount}
                                 </span>
                             </div>
 
-                            <button className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/40 hover:bg-black/60 flex items-center justify-center text-white/85 z-20 transition">
-                                <span className="text-sm">⛶</span>
-                            </button>
 
-                            {/* Neon glowing heart overlay bottom left */}
-                            <button 
-                                onClick={() => handleReaction('LOVE', 10)}
-                                className="absolute bottom-3 left-3 w-10 h-10 rounded-full bg-black/40 border border-rose-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(225,29,72,0.4)] z-20 transition active:scale-95 group"
-                            >
-                                <Heart className="w-5 h-5 fill-[#ff2a6d] text-[#ff2a6d] drop-shadow-[0_0_5px_#ff2a6d] group-hover:scale-110 transition-transform" />
-                            </button>
                         </div>
 
                         {/* Reactions & Tips Row */}
@@ -976,7 +1038,7 @@ function ConfessionsRoom() {
                                 >
                                     <span className="text-base">{tip.icon}</span>
                                     <span className="text-[8px] font-black text-white/90 uppercase tracking-wider">{tip.label}</span>
-                                    <span className="text-[8px] text-[#ff2a6d] font-bold">€{tip.price}</span>
+                                    <span className="text-[8px] text-[#ff2a6d] font-bold">{cs()}{tip.price}</span>
                                 </button>
                             ))}
                             <button
@@ -990,15 +1052,15 @@ function ConfessionsRoom() {
                     </div>
 
                     {/* Active Tab panel - takes remaining height */}
-                    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 pb-20">
+                    <div className="flex-1 min-h-0 flex flex-col px-4 py-3 pb-20 overflow-hidden">
                         {mobileTab === "chat" && (
-                            <div className="h-full flex flex-col bg-[#0f0407]/40 border border-white/5 rounded-2xl overflow-hidden p-2.5">
+                            <div className="flex-grow flex-1 min-h-0 flex flex-col bg-[#0f0407]/40 border border-white/5 rounded-2xl overflow-hidden p-2.5">
                                 <LiveChatBox roomId={roomId} sessionId={urlSessionId} variant="mobile" />
                             </div>
                         )}
 
                         {mobileTab === "wall" && (
-                            <div className="w-full flex flex-col gap-3">
+                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-4">
                                 <div className="flex justify-between items-center px-1">
                                     <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">All Confessions</h4>
                                     <button onClick={() => handleTierFilter('All')} className="text-[10px] text-[#ff2a6d] font-bold hover:underline">Clear Filter</button>
@@ -1065,7 +1127,7 @@ function ConfessionsRoom() {
                                                     </span>
                                                     {!isUnlocked ? (
                                                         <span className="text-[9px] bg-[#d50057]/20 text-[#ff4c8a] border border-[#d50057]/30 px-1.5 py-0.5 rounded-md font-extrabold">
-                                                            €{c.price}
+                                                            {cs()}{c.price}
                                                         </span>
                                                     ) : (
                                                         <span className="text-[9px] text-green-400 font-extrabold flex items-center gap-0.5">
@@ -1081,7 +1143,7 @@ function ConfessionsRoom() {
                         )}
 
                         {mobileTab === "request" && (
-                            <div className="w-full flex flex-col gap-4">
+                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4">
                                 <div className="bg-[#0e0204] border border-white/5 rounded-2xl p-4 space-y-4">
                                     <div className="space-y-1.5">
                                         <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">What should they confess?</span>
@@ -1099,7 +1161,7 @@ function ConfessionsRoom() {
                                         <div className="flex-1 space-y-1.5">
                                             <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">Your Offer</span>
                                             <div className="relative">
-                                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#ff2a6d]">€</span>
+                                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#ff2a6d]">{cs()}</span>
                                                 <input
                                                     type="number"
                                                     value={reqAmount || ''}
@@ -1172,7 +1234,7 @@ function ConfessionsRoom() {
                         )}
 
                         {mobileTab === "info" && (
-                            <div className="w-full flex flex-col gap-4">
+                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4">
                                 <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center overflow-hidden border border-white/20">
@@ -1217,7 +1279,7 @@ function ConfessionsRoom() {
                     {/* Mobile Navigation */}
                     <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0c0204]/95 border-t border-[#22070c] backdrop-blur-md">
                         <MobileStudioTabs
-                            tabs={CONFESSIONS_FAN_TABS}
+                            tabs={mappedTabs}
                             activeTab={mobileTab}
                             onTabChange={setMobileTab}
                             accentHsl="350, 80%, 55%"

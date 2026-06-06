@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Phone, Video, MessageCircle, Inbox, BarChart3 } from "lucide-react";
 
@@ -40,10 +40,16 @@ const CreatorBarLoungeInner = () => {
     const [mobileTab, setMobileTab] = useState("chat");
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [summaryUnread, setSummaryUnread] = useState(false);
 
+    const activeTabRef = useRef(mobileTab);
     useEffect(() => {
+        activeTabRef.current = mobileTab;
         if (mobileTab === "chat") {
             setChatUnread(0);
+        }
+        if (mobileTab === "summary") {
+            setSummaryUnread(false);
         }
     }, [mobileTab]);
 
@@ -72,7 +78,7 @@ const CreatorBarLoungeInner = () => {
                 (payload) => {
                     const newMsg = payload.new as any;
                     if (sessionId && newMsg.session_id !== sessionId) return;
-                    if (mobileTab !== "chat") {
+                    if (activeTabRef.current !== "chat") {
                         setChatUnread((prev) => prev + 1);
                     }
                 }
@@ -80,7 +86,10 @@ const CreatorBarLoungeInner = () => {
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "bar_lounge_requests", filter: `room_id=eq.${roomId}` },
-                async () => {
+                async (payload) => {
+                    if (payload.eventType === "INSERT" && activeTabRef.current !== "summary") {
+                        setSummaryUnread(true);
+                    }
                     let q = supabase
                         .from("bar_lounge_requests")
                         .select("id", { count: "exact", head: true })
@@ -98,11 +107,12 @@ const CreatorBarLoungeInner = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, sessionId, mobileTab]);
+    }, [roomId, sessionId]);
 
     const mappedTabs = BAR_LOUNGE_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        if (tab.id === "summary") return { ...tab, badge: summaryUnread };
         return tab;
     });
 

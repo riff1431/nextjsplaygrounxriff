@@ -604,6 +604,30 @@ export default function FlashDropsRoomPreview() {
                                 </div>
                             </div>
 
+                            {/* Reactions bar fixed globally under the stream */}
+                            <div className="shrink-0 px-2 py-1.5 bg-black/45 border border-white/[0.06] rounded-xl backdrop-blur-md">
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                        { label: "Kiss", price: 5, icon: "💋", color: "from-pink-500 to-rose-400" },
+                                        { label: "Hug", price: 10, icon: "🤗", color: "from-sky-500 to-cyan-400" },
+                                        { label: "Heart", price: 25, icon: "💖", color: "from-fuchsia-500 to-purple-500" },
+                                        { label: "Diamond", price: 50, icon: "💎", color: "from-cyan-400 to-blue-500" },
+                                    ].map((btn) => (
+                                        <button
+                                            key={btn.label}
+                                            onClick={() => requestSpend(btn.price, `⚡ Reaction ${btn.label}: ${cs()}${btn.price}`)}
+                                            className="flex items-center justify-center gap-1.5 py-1.5 px-1 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] active:scale-95 transition-all text-xs font-bold"
+                                        >
+                                            <span className="text-base">{btn.icon}</span>
+                                            <div className="flex flex-col items-start leading-none">
+                                                <span className="text-[8px] text-white/40 uppercase tracking-wider">{btn.label}</span>
+                                                <span className="text-[9px] text-primary font-black mt-0.5">{cs()}{btn.price}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Tab Content Box — takes up all remaining height */}
                             <div className="flex-1 min-h-0 overflow-hidden relative">
                                 {mobileTab === "board" && (

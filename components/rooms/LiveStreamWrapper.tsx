@@ -16,9 +16,10 @@ interface LiveStreamWrapperProps {
     collabCreators?: { id: string, name: string, avatarUrl?: string }[];
     /** Callback to expose Agora remote users (only for host role) */
     onRemoteUsersChange?: (users: any[]) => void;
+    isGrid?: boolean;
 }
 
-export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, hostAvatarUrl, hostName, collabCreators, onRemoteUsersChange }: LiveStreamWrapperProps) {
+export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, hostAvatarUrl, hostName, collabCreators, onRemoteUsersChange, isGrid }: LiveStreamWrapperProps) {
     const [client, setClient] = useState<any>(null);
 
     useEffect(() => {
@@ -42,6 +43,7 @@ export default function LiveStreamWrapper({ role, roomId, uid, hostId, appId, ho
                     avatarUrl={hostAvatarUrl}
                     creatorName={hostName}
                     onRemoteUsersChange={onRemoteUsersChange}
+                    isGrid={isGrid}
                 />
             ) : (
                 // For fan, uid is their ID, hostId is who they watch

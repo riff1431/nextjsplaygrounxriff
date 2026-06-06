@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Clock, XCircle, Loader2, UserPlus, Pin, Mic, Megaphone, HelpCircle, Shirt, MessageSquare, Eye, Zap, Info } from "lucide-react";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -133,6 +134,12 @@ const FullscreenIcon = () => (
     </svg>
 );
 
+const XCHAT_FAN_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
+    { id: "boosts", label: "Boosts", icon: <Zap className="w-5 h-5" /> },
+    { id: "info", label: "Info", icon: <Info className="w-5 h-5" /> },
+];
+
 /* ═══════════════════════════════════════════════════════════ */
 const XChatRoom = () => {
     const router = useRouter();
@@ -149,7 +156,7 @@ const XChatRoom = () => {
     const [hostName, setHostName]   = useState("Loading...");
 
     const [isMobile, setIsMobile]   = useState(false);
-    const [activeTab, setActiveTab] = useState<"chat" | "boosts" | "access" | "info">("chat");
+    const [activeTab, setActiveTab] = useState<"chat" | "boosts" | "info">("chat");
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 767);
@@ -157,6 +164,44 @@ const XChatRoom = () => {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
+
+    const [chatUnread, setChatUnread] = useState(0);
+    const activeTabRef = useRef(activeTab);
+
+    useEffect(() => {
+        activeTabRef.current = activeTab;
+        if (activeTab === "chat") {
+            setChatUnread(0);
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (!roomId) return;
+        const channelName = urlSessionId ? `x-chat-unread-${roomId}-${urlSessionId}` : `x-chat-unread-${roomId}`;
+        const channel = supabase.channel(channelName)
+            .on("postgres_changes", {
+                event: "INSERT",
+                schema: "public",
+                table: "x_chat_messages",
+                filter: `room_id=eq.${roomId}`
+            }, (payload) => {
+                const newMsg = payload.new as any;
+                if (urlSessionId && newMsg.session_id && newMsg.session_id !== urlSessionId) return;
+                if (activeTabRef.current !== "chat") {
+                    setChatUnread(prev => prev + 1);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [roomId, urlSessionId]);
+
+    const mappedTabs = XCHAT_FAN_TABS.map(tab => {
+        if (tab.id === "chat") return { ...tab, badge: chatUnread };
+        return tab;
+    });
 
     const [requestStatus, setRequestStatus] = useState<RequestStatus>("none");
     const [requestLoading, setRequestLoading] = useState(false);
@@ -561,6 +606,7 @@ const XChatRoom = () => {
                             
                             {activeTab === "boosts" && (
                                 <div className="mobile-boosts-scroll-area">
+                                    {/* Visibility Boosts */}
                                     <div className="mobile-boost-card">
                                         <div className="mobile-boost-header">
                                             <Eye size={12} className="mobile-boost-header-icon" />
@@ -584,11 +630,8 @@ const XChatRoom = () => {
                                             ))}
                                         </div>
                                     </div>
-                                </div>
-                            )}
 
-                            {activeTab === "access" && (
-                                <div className="mobile-boosts-scroll-area">
+                                    {/* Direct Access */}
                                     <div className="mobile-boost-card">
                                         <div className="mobile-boost-header">
                                             <Zap size={12} className="mobile-boost-header-icon" />
@@ -674,36 +717,12 @@ const XChatRoom = () => {
                     </div>
 
                     {/* PERSISTENT BOTTOM NAVIGATION BAR */}
-                    <nav className="mobile-bottom-nav">
-                        <button 
-                            onClick={() => setActiveTab("chat")} 
-                            className={`mobile-nav-item ${activeTab === "chat" ? "active" : ""}`}
-                        >
-                            <MessageSquare size={18} className="mobile-nav-icon" />
-                            <span className="mobile-nav-label">Chat</span>
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("boosts")} 
-                            className={`mobile-nav-item ${activeTab === "boosts" ? "active" : ""}`}
-                        >
-                            <Eye size={18} className="mobile-nav-icon" />
-                            <span className="mobile-nav-label">Boosts</span>
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("access")} 
-                            className={`mobile-nav-item ${activeTab === "access" ? "active" : ""}`}
-                        >
-                            <Zap size={18} className="mobile-nav-icon" />
-                            <span className="mobile-nav-label">Direct Access</span>
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab("info")} 
-                            className={`mobile-nav-item ${activeTab === "info" ? "active" : ""}`}
-                        >
-                            <Info size={18} className="mobile-nav-icon" />
-                            <span className="mobile-nav-label">Room Info</span>
-                        </button>
-                    </nav>
+                    <MobileStudioTabs
+                        tabs={mappedTabs}
+                        activeTab={activeTab}
+                        onTabChange={(tabId) => setActiveTab(tabId as any)}
+                        accentHsl="45, 90%, 55%"
+                    />
 
                     {/* Spend Confirm Modal */}
                     <SpendConfirmModal

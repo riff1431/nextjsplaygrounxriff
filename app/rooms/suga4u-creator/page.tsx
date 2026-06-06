@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -50,16 +50,19 @@ const Suga4UCreatorPage = () => {
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [favoritesUnread, setFavoritesUnread] = useState(false);
 
+    const activeTabRef = useRef(mobileTab);
     useEffect(() => {
+        activeTabRef.current = mobileTab;
         if (mobileTab === "chat") {
             setChatUnread(0);
         }
-    }, [mobileTab]);
-
-    useEffect(() => {
         if (mobileTab === "requests") {
             setRequestsUnread(0);
+        }
+        if (mobileTab === "favorites") {
+            setFavoritesUnread(false);
         }
     }, [mobileTab]);
 
@@ -88,8 +91,11 @@ const Suga4UCreatorPage = () => {
             }, (payload) => {
                 const newEvent = payload.new as any;
                 if (sessionId && newEvent.session_id !== sessionId) return;
-                if (newEvent.type === "CHAT" && mobileTab !== "chat") {
+                if (newEvent.type === "CHAT" && activeTabRef.current !== "chat") {
                     setChatUnread(prev => prev + 1);
+                }
+                if (["BUY_FOR_HER", "LINK_REVEAL", "SECRET_UNLOCK"].includes(newEvent.type) && activeTabRef.current !== "favorites") {
+                    setFavoritesUnread(true);
                 }
             })
             .on("postgres_changes", {
@@ -112,11 +118,12 @@ const Suga4UCreatorPage = () => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, sessionId, mobileTab]);
+    }, [roomId, sessionId]);
 
     const mappedTabs = SUGA4U_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "requests") return { ...tab, badge: requestsUnread };
+        if (tab.id === "favorites") return { ...tab, badge: favoritesUnread };
         return tab;
     });
 
@@ -217,51 +224,91 @@ const Suga4UCreatorPage = () => {
                 
                 {/* Top Header Row */}
                 <div className="mb-0 shrink-0 flex items-center justify-between min-h-[44px]">
-                    <button
-                        onClick={() => setShowExitModal(true)}
-                        className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
-                        data-tour="suga-creator-back-to-rooms"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                    </button>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                        <RoomTourHelpButton tourType="suga4u_creator" accentHsl="340, 75%, 55%" />
-                        {/* Invite button */}
+                    <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setShowInviteModal(true)}
+                            onClick={() => setShowExitModal(true)}
                             className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
-                            title="Invite fans"
+                            data-tour="suga-creator-back-to-rooms"
                         >
-                            <UserPlus className="w-4 h-4" />
+                            <ArrowLeft className="w-4 h-4" />
                         </button>
-                        {/* Incoming 1-on-1 notifications */}
-                        <div className="relative" data-incoming-btn data-tour="suga-creator-incoming-requests">
-                            <button
-                                onClick={() => setShowIncomingPanel(prev => !prev)}
-                                className="relative h-9 px-2 sm:px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
-                            >
-                                <Phone className="w-3.5 h-3.5" />
-                                <span className="hidden lg:inline">Incoming</span>
-                                {privateCall.pendingCalls.length > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
-                                        {privateCall.pendingCalls.length}
-                                    </span>
+                        
+                        {/* Mobile dynamic creator profile/title */}
+                        <div className="flex lg:hidden items-center gap-2.5">
+                            <div className="relative">
+                                <div className="absolute -inset-0.5 rounded-full bg-pink-500/50 opacity-75 blur-[2px] animate-pulse" />
+                                {user?.user_metadata?.avatar_url ? (
+                                    <img
+                                        src={user.user_metadata.avatar_url}
+                                        alt=""
+                                        className="relative w-9 h-9 rounded-full object-cover border border-pink-500/80"
+                                    />
+                                ) : (
+                                    <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center border border-pink-500/80 text-[11px] font-black text-white">
+                                        {user?.user_metadata?.full_name ? user.user_metadata.full_name.slice(0, 2).toUpperCase() : "CR"}
+                                    </div>
                                 )}
-                            </button>
-                            <S4uIncomingCallsPanel
-                                isOpen={showIncomingPanel}
-                                onClose={() => setShowIncomingPanel(false)}
-                                pendingCalls={privateCall.pendingCalls}
-                                isLoading={privateCall.isLoading}
-                                onAccept={(callId) => {
-                                    privateCall.acceptCall(callId);
-                                    setShowIncomingPanel(false);
-                                }}
-                                onDecline={(callId) => {
-                                    privateCall.declineCall(callId);
-                                }}
-                            />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                    <h1 className="font-extrabold text-sm text-white tracking-wide truncate max-w-[80px] sm:max-w-[120px] uppercase font-sans leading-none">
+                                        {user?.user_metadata?.full_name || "Creator"}
+                                    </h1>
+                                    <span className="flex items-center gap-0.5 bg-pink-500/20 text-pink-400 text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm border border-pink-500/30 animate-pulse uppercase tracking-wider leading-none">
+                                        LIVE
+                                    </span>
+                                </div>
+                                <p className="text-[9px] font-bold text-yellow-500/70 tracking-wider uppercase truncate max-w-[100px] sm:max-w-[150px] leading-none mt-1">
+                                    Suga 4 U
+                                </p>
+                            </div>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                        {/* Hidden on mobile, shown on desktop (lg:flex) */}
+                        <div className="hidden lg:flex items-center gap-1.5 sm:gap-2">
+                            <RoomTourHelpButton tourType="suga4u_creator" accentHsl="340, 75%, 55%" />
+                            
+                            {/* Invite button */}
+                            <button
+                                onClick={() => setShowInviteModal(true)}
+                                className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
+                                title="Invite fans"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                            </button>
+                            
+                            {/* Incoming 1-on-1 notifications */}
+                            <div className="relative" data-incoming-btn data-tour="suga-creator-incoming-requests">
+                                <button
+                                    onClick={() => setShowIncomingPanel(prev => !prev)}
+                                    className="relative h-9 px-2 sm:px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                                >
+                                    <Phone className="w-3.5 h-3.5" />
+                                    <span className="hidden lg:inline">Incoming</span>
+                                    {privateCall.pendingCalls.length > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/50 animate-pulse border-2 border-[#1a1a2e]">
+                                            {privateCall.pendingCalls.length}
+                                        </span>
+                                    )}
+                                </button>
+                                <S4uIncomingCallsPanel
+                                    isOpen={showIncomingPanel}
+                                    onClose={() => setShowIncomingPanel(false)}
+                                    pendingCalls={privateCall.pendingCalls}
+                                    isLoading={privateCall.isLoading}
+                                    onAccept={(callId) => {
+                                        privateCall.acceptCall(callId);
+                                        setShowIncomingPanel(false);
+                                    }}
+                                    onDecline={(callId) => {
+                                        privateCall.declineCall(callId);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Always visible: Timer + End button */}
                         <div data-tour="suga-creator-go-live-end">
                             <SessionLiveControls
                                 sessionId={sessionId!}
@@ -269,6 +316,52 @@ const Suga4UCreatorPage = () => {
                                 accentHsl="340, 75%, 55%"
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* Mobile Sub-Header controls row (shown only on mobile) */}
+                <div className="flex lg:hidden items-center justify-between mt-2 mb-1 bg-black/20 border border-white/5 rounded-2xl p-2 backdrop-blur-md shrink-0">
+                    <div className="flex items-center gap-2">
+                        {/* Invite button */}
+                        <button
+                            onClick={() => setShowInviteModal(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-xs font-black transition-all"
+                            title="Invite fans"
+                        >
+                            <UserPlus className="w-3.5 h-3.5 text-pink-400" />
+                            Invite
+                        </button>
+                        
+                        <RoomTourHelpButton tourType="suga4u_creator" accentHsl="340, 75%, 55%" />
+                    </div>
+
+                    {/* Incoming 1-on-1 notifications */}
+                    <div className="relative" data-incoming-btn>
+                        <button
+                            onClick={() => setShowIncomingPanel(prev => !prev)}
+                            className="relative h-8 px-3 rounded-xl bg-pink-600/80 border border-pink-400/30 flex items-center gap-1.5 text-white text-xs font-semibold hover:bg-pink-500/90 transition-all backdrop-blur-md shadow-lg shadow-pink-900/20"
+                        >
+                            <Phone className="w-3 h-3" />
+                            <span className="text-[11px] font-black">Incoming</span>
+                            {privateCall.pendingCalls.length > 0 && (
+                                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[16px] h-3.5 px-1 rounded-full bg-red-500 text-white text-[8px] font-bold shadow-lg animate-pulse border border-[#1a1a2e]">
+                                    {privateCall.pendingCalls.length}
+                                </span>
+                            )}
+                        </button>
+                        <S4uIncomingCallsPanel
+                            isOpen={showIncomingPanel}
+                            onClose={() => setShowIncomingPanel(false)}
+                            pendingCalls={privateCall.pendingCalls}
+                            isLoading={privateCall.isLoading}
+                            onAccept={(callId) => {
+                                privateCall.acceptCall(callId);
+                                setShowIncomingPanel(false);
+                            }}
+                            onDecline={(callId) => {
+                                privateCall.declineCall(callId);
+                            }}
+                        />
                     </div>
                 </div>
 
