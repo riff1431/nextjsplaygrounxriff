@@ -161,7 +161,7 @@ const CreatorBarLoungeInner = () => {
     // --- Live View ---
     return (
         <div
-            className="min-h-[100dvh] lg:h-[100dvh] w-full bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme overflow-hidden"
+            className="h-[100dvh] w-screen bg-cover bg-center bg-no-repeat relative flex flex-col fd-bar-lounge-creator-theme overflow-hidden"
             style={{ backgroundImage: "url('/rooms/bar-lounge/lounge-bg-v2.png')" }}
         >
             {/* Top Bar */}
@@ -234,7 +234,7 @@ const CreatorBarLoungeInner = () => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-y-auto lg:overflow-hidden pb-20 lg:pb-4">
+            <div className="relative z-10 flex-1 min-h-0 w-full p-2 sm:p-4 max-w-[1600px] mx-auto overflow-hidden flex flex-col pb-20 lg:pb-4">
                 {/* Desktop: 3-col grid */}
                 <div className="hidden lg:grid w-full h-full grid-cols-[320px_1fr_320px] xl:grid-cols-[380px_1fr_380px] 2xl:grid-cols-[420px_1fr_420px] gap-4">
                     {/* Left - Chat */}
@@ -265,21 +265,21 @@ const CreatorBarLoungeInner = () => {
                 </div>
 
                 {/* Mobile: Stream always on top + tab content below */}
-                <div className="lg:hidden flex flex-col gap-3">
+                <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                     {/* Video — always visible at top */}
-                    <div className="w-full shrink-0 aspect-square max-h-[360px] mx-auto rounded-xl overflow-hidden">
+                    <div className="w-full shrink-0 aspect-video max-w-[600px] mx-auto rounded-xl overflow-hidden border border-[hsla(45,90%,55%,0.2)]">
                         <VideoStage roomId={roomId} />
                     </div>
 
                     {/* Tab content below stream */}
                     {mobileTab === "chat" && (
-                        <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
+                        <div className="w-full flex-1 min-h-0">
                             <LoungeChat roomId={roomId} sessionId={sessionId} />
                         </div>
                     )}
 
                     {mobileTab === "requests" && (
-                        <div className="w-full min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
+                        <div className="w-full flex-1 min-h-0">
                             <IncomingRequests
                                 roomId={roomId}
                                 sessionId={sessionId}
@@ -291,7 +291,7 @@ const CreatorBarLoungeInner = () => {
                     )}
 
                     {mobileTab === "summary" && (
-                        <div className="w-full">
+                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4">
                             <SummaryPanel roomId={roomId} sessionId={sessionId} />
                         </div>
                     )}

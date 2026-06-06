@@ -155,7 +155,7 @@ const ConfessionsCreatorPage = () => {
 
     return (
         <div
-            className="conf-theme min-h-[100dvh] lg:h-screen lg:overflow-hidden relative"
+            className="conf-theme h-[100dvh] w-screen overflow-hidden relative"
             style={{
                 backgroundImage: "url('/rooms/confessions-creator-bg.png')",
                 backgroundSize: "cover",
@@ -168,7 +168,7 @@ const ConfessionsCreatorPage = () => {
             <ConfessionsFloatingHearts />
 
             {/* Content */}
-            <div className="relative z-10 flex flex-col h-full min-h-[100dvh] lg:h-screen">
+            <div className="relative z-10 flex flex-col h-full overflow-hidden">
                 {/* Top bar — responsive */}
                 <div className="relative flex items-center shrink-0">
                     <div className="flex-1">
@@ -194,21 +194,19 @@ const ConfessionsCreatorPage = () => {
                 </div>
 
                 {/* Main content — responsive 3-col → mobile: content on top + tabs below */}
-                <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 lg:overflow-hidden xl:mx-40 min-h-0">
-                    {/* Left Sidebar — visible on lg+, or when "sidebar" tab active on mobile */}
-                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-my-requests`} data-tour="confession-my-requests">
+                <div className="flex-1 flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-20 lg:pb-4 overflow-hidden xl:mx-40 min-h-0">
+                    {/* Desktop Center / Mobile Top - Confessions Center Content (Widescreen Video/Feed) */}
+                    <div className="w-full shrink-0 lg:flex-1 lg:min-h-0 aspect-video lg:aspect-auto max-w-[600px] lg:max-w-none mx-auto lg:mx-0 rounded-xl overflow-hidden shadow-lg border border-purple-500/20 order-1 lg:order-2">
+                        <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
+                    </div>
+
+                    {/* Left Sidebar (Mobile: bottom tab "sidebar") */}
+                    <div className={`${mobileTab === "sidebar" ? "flex" : "hidden"} lg:flex flex-col flex-1 lg:flex-none lg:w-[320px] xl:w-[380px] min-h-0 overflow-hidden order-2 lg:order-1 confession-my-requests`} data-tour="confession-my-requests">
                         <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} />
                     </div>
 
-                    {/* Center Content — always visible */}
-                    <div className="flex lg:flex flex-1 flex-col gap-4 min-h-0" data-tour="confession-wall">
-                        <div className="flex-1 min-h-[250px] lg:min-h-0">
-                            <ConfessionsCenterContent variant="confessions" roomId={roomId} sessionId={sessionId} />
-                        </div>
-                    </div>
-
-                    {/* Live Chat — visible on lg+, or when "chat" tab active on mobile */}
-                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col min-h-[300px] lg:min-h-0 confession-live-chat`} data-tour="confession-live-chat">
+                    {/* Live Chat (Mobile: bottom tab "chat") */}
+                    <div className={`${mobileTab === "chat" ? "flex" : "hidden"} lg:flex flex-col flex-1 lg:flex-none lg:w-[320px] xl:w-[380px] min-h-0 overflow-hidden order-3 confession-live-chat`} data-tour="confession-live-chat">
                         <ConfessionsLiveChat roomId={roomId} sessionId={sessionId} />
                     </div>
                 </div>

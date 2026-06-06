@@ -147,13 +147,13 @@ function FlashdropCreatorStudio() {
 
     return (
         <div
-            className="flashdrop-creator-theme min-h-[100dvh] lg:h-screen lg:overflow-hidden bg-background bg-cover bg-center bg-no-repeat relative"
+            className="flashdrop-creator-theme h-[100dvh] w-screen overflow-hidden bg-background bg-cover bg-center bg-no-repeat relative"
             style={{ backgroundImage: "url('/flash-drops/nightclub-bg.png')" }}
         >
             {/* Overlay for readability */}
             <div className="absolute inset-0 bg-background/40" />
 
-            <div className="relative z-10 px-2 sm:px-3 py-2 flex flex-col gap-2 sm:gap-3 min-h-[100dvh] lg:h-screen lg:overflow-hidden">
+            <div className="relative z-10 px-2 sm:px-3 py-2 flex flex-col gap-2 sm:gap-3 h-full overflow-hidden">
                 {/* Top Bar */}
                 <div className="flex items-center shrink-0 relative min-h-[44px]">
                     <button
@@ -179,7 +179,7 @@ function FlashdropCreatorStudio() {
                 </div>
 
                 {/* Main Grid — responsive: 1-col mobile (tabs), 2-col tablet, 4-col desktop */}
-                <div className="flex-1 min-h-0 pb-16 lg:pb-0 overflow-y-auto lg:overflow-hidden">
+                <div className="flex-1 min-h-0 pb-16 lg:pb-0 overflow-hidden flex flex-col">
                     {/* Desktop/Tablet: Grid layout */}
                     <div className="hidden lg:flex gap-3 h-full min-h-0">
                         {/* 1st: Summary Box + Live Drop Board */}
@@ -201,7 +201,7 @@ function FlashdropCreatorStudio() {
                                         hostAvatarUrl={user.user_metadata?.avatar_url || ""}
                                         hostName={user.user_metadata?.full_name || "Creator"}
                                     />
-                                ) : (
+                               ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
                                         Connecting to stream...
                                     </div>
@@ -247,9 +247,9 @@ function FlashdropCreatorStudio() {
                     </div>
 
                     {/* Mobile: Stream always on top + tab content below */}
-                    <div className="lg:hidden flex flex-col gap-3">
+                    <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                         {/* Stream — always visible at top */}
-                        <div className="rounded-xl overflow-hidden shrink-0 aspect-square max-h-[360px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div className="rounded-xl overflow-hidden shrink-0 aspect-video max-w-[600px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
                             {roomId && user ? (
                                 <LiveStreamWrapper
                                     role="host"
@@ -270,7 +270,7 @@ function FlashdropCreatorStudio() {
                         {/* Tab content below stream */}
                         {/* Board tab */}
                         {mobileTab === "board" && (
-                            <div className="flex flex-col gap-3">
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <SummaryBox roomId={roomId} sessionId={sessionId} />
                                 <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                                 <HighRollerPacks roomId={roomId} sessionId={sessionId} />
@@ -279,16 +279,16 @@ function FlashdropCreatorStudio() {
 
                         {/* Requests tab */}
                         {mobileTab === "requests" && (
-                            <div className="glass-panel rounded-xl overflow-hidden min-h-[400px]" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                            <div className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
                                 <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55%), hsl(330 100% 55%))' }}>
                                         <ClipboardList size={10} className="text-white" />
                                     </div>
                                     <span className="text-xs font-black font-display tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 10px hsl(330 100% 55% / 0.3)' }}>Custom Request Drops</span>
                                 </div>
-                                <div className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 200px)" }}>
+                                <div className="flex-1 min-h-0 overflow-hidden">
                                     <DropRequests
-                                        className="border-none rounded-none"
+                                        className="h-full border-none rounded-none"
                                         roomId={roomId ?? undefined}
                                         sessionId={sessionId}
                                     />
@@ -298,14 +298,14 @@ function FlashdropCreatorStudio() {
 
                         {/* Chat tab */}
                         {mobileTab === "chat" && (
-                            <div className="glass-panel rounded-xl overflow-hidden min-h-[400px]" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                            <div className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
                                 <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(170 80% 45%))' }}>
                                         <MessageSquare size={10} className="text-white" />
                                     </div>
                                     <span className="text-xs font-black font-display tracking-wider uppercase" style={{ color: 'hsl(330 100% 75%)', textShadow: '0 0 10px hsl(330 100% 55% / 0.3)' }}>Live Chat</span>
                                 </div>
-                                <div className="overflow-hidden" style={{ height: "calc(100dvh - 200px)" }}>
+                                <div className="flex-1 min-h-0 overflow-hidden">
                                     <FlashDropLiveChat
                                         roomId={roomId}
                                         hostId={user?.id}

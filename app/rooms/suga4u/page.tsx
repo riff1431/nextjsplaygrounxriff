@@ -24,6 +24,15 @@ import { usePrivateCall } from "@/hooks/usePrivateCall";
 import { toast } from "sonner";
 import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import { MessageSquare } from "lucide-react";
+
+const SUGA4U_FAN_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
+    { id: "requests", label: "Requests", icon: <Gift className="w-5 h-5" /> },
+    { id: "secrets", label: "Secrets", icon: <Lock className="w-5 h-5" /> },
+    { id: "info", label: "Info", icon: <UserPlus className="w-5 h-5" /> },
+];
 
 import { useSuga4U, CreatorFavorite, CreatorSecret } from "@/hooks/useSuga4U";
 import { useWallet } from "@/hooks/useWallet";
@@ -71,6 +80,7 @@ const Suga4URoom = () => {
 
     const [activeMobileFavTab, setActiveMobileFavTab] = useState("ALL");
     const [activeMobileSecTab, setActiveMobileSecTab] = useState("ALL");
+    const [mobileTab, setMobileTab] = useState<string>("chat");
 
     // Persisted revealed mobile favorites tracking
     const [revealedMobileFavIds, setRevealedMobileFavIds] = useState<Set<string>>(new Set());
@@ -876,10 +886,10 @@ const Suga4URoom = () => {
                     </div>
 
                     {/* ── MOBILE VIEW ── */}
-                    <div className="flex lg:hidden flex-col h-full overflow-y-auto bg-[#0a0209] text-white pb-24 relative select-none">
+                    <div className="flex lg:hidden flex-col h-full overflow-hidden bg-[#0a0209] text-white relative select-none">
                         
                         {/* Mobile Header */}
-                        <header className="flex items-center justify-between px-4 py-3 bg-[#110113]/90 border-b border-pink-500/10 backdrop-blur-md sticky top-0 z-50">
+                        <header className="flex items-center justify-between px-4 py-3 bg-[#110113]/90 border-b border-pink-500/10 backdrop-blur-md shrink-0 z-50">
                             <div className="flex items-center gap-2.5">
                                 <button
                                     onClick={() => router.back()}
@@ -905,7 +915,7 @@ const Suga4URoom = () => {
                         </header>
 
                         {/* Status bar */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#0a010c] border-b border-pink-500/5">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#0a010c] border-b border-pink-500/5 shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1.5 bg-pink-500/15 border border-pink-500/30 px-2.5 py-1 rounded-full">
                                     <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
@@ -947,7 +957,7 @@ const Suga4URoom = () => {
                         </div>
 
                         {/* Video Player */}
-                        <div className="px-4 py-2 flex-shrink-0">
+                        <div className="px-4 py-2 shrink-0">
                             <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-pink-500/10 bg-black/40 shadow-lg">
                                 {roomId && user && hostId ? (
                                     <LiveStreamWrapper
@@ -978,443 +988,490 @@ const Suga4URoom = () => {
                             </div>
                         </div>
 
-                        {/* Combined Request & Gift Menu */}
-                        <div className="px-4 py-1.5 flex-shrink-0">
-                            <div className="border border-pink-500/15 rounded-2xl bg-[#130214]/65 p-3 flex flex-col gap-3.5 shadow-md shadow-pink-500/[0.02]">
-                                <div className="grid grid-cols-2 text-[10px] font-extrabold tracking-widest text-pink-500/60 uppercase">
-                                    <div>PAID REQUEST</div>
-                                    <div className="pl-2">SUGA GIFTS</div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 divide-x divide-pink-500/10">
-                                    
-                                    {/* Requests Grid */}
-                                    <div className="grid grid-cols-2 gap-1.5 pr-1.5">
-                                        {[
-                                            { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
-                                            { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
-                                            { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋", isCustomRequest: true },
-                                            { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧", isCustomRequest: true },
-                                        ].map((r) => (
-                                            <button
-                                                key={r.name}
-                                                onClick={() => handleMobileRequestClick(r)}
-                                                disabled={!roomId || !hostId}
-                                                className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
-                                            >
-                                                <span className="text-[13px]">{r.emoji}</span>
-                                                <span className="text-[8px] font-extrabold text-white/80 tracking-wide mt-0.5 truncate max-w-full">{r.name}</span>
-                                                <span className="text-[9px] font-black text-pink-400 mt-0.5">{cs()}{r.price}</span>
-                                            </button>
-                                        ))}
+                        {/* Tab Contents Panel */}
+                        <div className="flex-grow flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-3">
+                            
+                            {/* CHAT TAB */}
+                            {mobileTab === "chat" && (
+                                <div className="h-full flex flex-col bg-[#0e020f]/80 border border-pink-500/10 rounded-2xl p-3 shadow-inner shadow-black/40 min-h-0 flex-1">
+                                    <div className="flex items-center justify-between pb-2 border-b border-pink-500/5 mb-2 shrink-0">
+                                        <span className="text-[10px] font-black text-pink-500 tracking-widest flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                                            LIVE CHAT
+                                        </span>
+                                        <span className="text-[8px] font-extrabold bg-pink-500/20 text-pink-400 border border-pink-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                                            1 Online
+                                        </span>
                                     </div>
 
-                                    {/* Gifts Row */}
-                                    <div className="grid grid-cols-2 gap-1.5 pl-3">
-                                        {[
-                                            { name: "Diamond", amount: 10, emoji: "💎" },
-                                            { name: "Diamonds", amount: 25, emoji: "💎" },
-                                            { name: "More Diamonds", amount: 50, emoji: "💎" },
-                                            { name: "Big Money", amount: 100, emoji: "💰" },
-                                        ].map((g) => (
-                                            <button
-                                                key={g.amount}
-                                                onClick={() => handleMobileGiftClick(g)}
-                                                disabled={!roomId || !hostId}
-                                                className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
-                                            >
-                                                <span className="text-[13px]">{g.emoji}</span>
-                                                <span className="text-[9px] font-black text-pink-400 mt-1">{cs()}{g.amount}</span>
+                                    <div className="mb-2 shrink-0">
+                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 flex items-center justify-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                            <span className="text-[9px] font-bold text-emerald-400">You are now LIVE! 🔴</span>
+                                        </div>
+                                    </div>
+
+                                    <div ref={mobileChatScrollRef} className="flex-grow flex-1 overflow-y-auto space-y-2.5 pr-0.5 scrollbar-none min-h-0">
+                                        {suga.activity.length === 0 ? (
+                                            <div className="h-full flex items-center justify-center text-white/30 text-[10px] italic">
+                                                Welcome to the room! Send a message.
+                                            </div>
+                                        ) : (
+                                            [...suga.activity].reverse().map((m) => {
+                                                const isMsgHighlight = ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK', 'LINK_REVEAL', 'BUY_FOR_HER'].includes(m.type);
+                                                return (
+                                                    <div key={m.id} className="flex items-start gap-2 text-[10px]">
+                                                        <div className="w-5 h-5 rounded-full bg-pink-500/10 flex-shrink-0 flex items-center justify-center overflow-hidden border border-pink-500/20 shadow-sm">
+                                                            <span className="text-[9px]">👤</span>
+                                                        </div>
+                                                        
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-baseline justify-between gap-1 mb-0.5">
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className={`font-black tracking-wide ${isMsgHighlight ? "text-yellow-400" : "text-pink-300"}`}>
+                                                                        {m.fanName}
+                                                                    </span>
+                                                                    {m.type === 'TIP' && (
+                                                                        <span className="text-[8px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-1 rounded-sm uppercase font-black">
+                                                                            VIP
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[8px] text-white/35 shrink-0">10:30 PM</span>
+                                                            </div>
+                                                            <p className="text-white/80 leading-snug break-words">
+                                                                {m.type === 'TIP' && <span>tipped <span className="text-yellow-400 font-bold">{cs()}{m.amount}</span>!</span>}
+                                                                {m.type === 'LINK_REVEAL' && <span>revealed a favourite!</span>}
+                                                                {m.type === 'BUY_FOR_HER' && <span>purchased a favourite!</span>}
+                                                                {m.type === 'SECRET_UNLOCK' && <span>revealed a secret!</span>}
+                                                                {m.type === 'PAID_REQUEST' && <span>requested: {m.label} (${m.amount})</span>}
+                                                                {m.type === 'OFFER_CLAIM' && <span>claimed offer: {m.label}</span>}
+                                                                {m.type === 'CHAT' && <span>{m.label}</span>}
+                                                                {isMsgHighlight && <Heart className="inline w-2.5 h-2.5 text-pink fill-pink ml-1" />}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+
+                                    <div className="mt-2.5 flex items-center gap-1.5 shrink-0 relative">
+                                        <div className="flex-1 bg-[#160618] border border-pink-500/15 rounded-full px-3 py-1.5 flex items-center gap-2">
+                                            <button className="text-[12px] opacity-75 hover:opacity-100 transition-opacity">
+                                                😊
                                             </button>
-                                        ))}
+                                            <input
+                                                type="text"
+                                                value={mobileChatInput}
+                                                onChange={(e) => setMobileChatInput(e.target.value)}
+                                                onKeyPress={(e) => e.key === "Enter" && handleMobileChatSend()}
+                                                placeholder="Type a message..."
+                                                className="flex-1 bg-transparent text-[10px] outline-none text-white placeholder-white/40 font-medium"
+                                            />
+                                        </div>
+                                        
+                                        <button
+                                            onClick={handleMobileChatSend}
+                                            disabled={!roomId}
+                                            className="w-7 h-7 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white transition-colors active:scale-95 shadow-md shadow-pink-500/25 disabled:opacity-50 shrink-0"
+                                        >
+                                            <Send className="w-3.5 h-3.5" />
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
+                                            className="w-7 h-7 rounded-full bg-[#18051a] hover:bg-[#250829] flex items-center justify-center border border-pink-500/25 text-pink-400 transition-colors active:scale-95 shadow-md shrink-0"
+                                        >
+                                            🎁
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* REQUESTS TAB */}
+                            {mobileTab === "requests" && (
+                                <div className="space-y-3">
+                                    <div className="border border-pink-500/15 rounded-2xl bg-[#130214]/65 p-3 flex flex-col gap-3.5 shadow-md shadow-pink-500/[0.02]">
+                                        <div className="grid grid-cols-2 text-[10px] font-extrabold tracking-widest text-pink-500/60 uppercase">
+                                            <div>PAID REQUEST</div>
+                                            <div className="pl-2">SUGA GIFTS</div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 divide-x divide-pink-500/10">
+                                            {/* Requests Grid */}
+                                            <div className="grid grid-cols-2 gap-1.5 pr-1.5">
+                                                {[
+                                                    { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
+                                                    { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
+                                                    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋", isCustomRequest: true },
+                                                    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧", isCustomRequest: true },
+                                                ].map((r) => (
+                                                    <button
+                                                        key={r.name}
+                                                        onClick={() => handleMobileRequestClick(r)}
+                                                        disabled={!roomId || !hostId}
+                                                        className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
+                                                    >
+                                                        <span className="text-[13px]">{r.emoji}</span>
+                                                        <span className="text-[8px] font-extrabold text-white/80 tracking-wide mt-0.5 truncate max-w-full">{r.name}</span>
+                                                        <span className="text-[9px] font-black text-pink-400 mt-0.5">{cs()}{r.price}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Gifts Grid */}
+                                            <div className="grid grid-cols-2 gap-1.5 pl-3">
+                                                {[
+                                                    { name: "Diamond", amount: 10, emoji: "💎" },
+                                                    { name: "Diamonds", amount: 25, emoji: "💎" },
+                                                    { name: "More Diamonds", amount: 50, emoji: "💎" },
+                                                    { name: "Big Money", amount: 100, emoji: "💰" },
+                                                ].map((g) => (
+                                                    <button
+                                                        key={g.amount}
+                                                        onClick={() => handleMobileGiftClick(g)}
+                                                        disabled={!roomId || !hostId}
+                                                        className="flex flex-col items-center justify-center p-1.5 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[52px]"
+                                                    >
+                                                        <span className="text-[13px]">{g.emoji}</span>
+                                                        <span className="text-[9px] font-black text-pink-400 mt-1">{cs()}{g.amount}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Private 1-on-1 Button */}
+                                    <button
+                                        onClick={() => {
+                                            if (!roomId || !hostId) return;
+                                            if (balance < 500) {
+                                                toast.error("Insufficient balance");
+                                                return;
+                                            }
+                                            setConfirmMobileAction({
+                                                type: 'PRIVATE_1ON1',
+                                                name: 'Private 1-on-1 Call',
+                                                price: 500,
+                                                emoji: '👑',
+                                                description: `Request a Private 1-on-1 video call with the creator for ${cs()}500?`
+                                            });
+                                        }}
+                                        disabled={!roomId || !hostId}
+                                        className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-[12px] flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
+                                    >
+                                        👑 Private 1-on-1 {cs()}500
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* SECRETS TAB */}
+                            {mobileTab === "secrets" && (
+                                <div className="space-y-3 pb-4">
+                                    {/* Creator Favorites Section */}
+                                    <div className="py-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
+                                                <span className="text-yellow-400">★</span> CREATOR FAVORITES
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
+                                            {["ALL", "CUTE", "LUXURY", "DREAM"].map((tab) => (
+                                                <button
+                                                    key={tab}
+                                                    onClick={() => setActiveMobileFavTab(tab)}
+                                                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
+                                                        activeMobileFavTab === tab
+                                                            ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25 font-extrabold'
+                                                            : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
+                                                    }`}
+                                                >
+                                                    {tab === 'CUTE' ? '🎀 Cute' : tab === 'LUXURY' ? '💎 Luxury' : tab === 'DREAM' ? '👑 Dream' : 'All'}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2">
+                                            {suga.favorites.length === 0 ? (
+                                                <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
+                                                    No favorites items found
+                                                </div>
+                                            ) : (
+                                                suga.favorites
+                                                    .filter(item => activeMobileFavTab === "ALL" || item.category === activeMobileFavTab)
+                                                    .map((item) => {
+                                                        const isUnlocked = revealedMobileFavIds.has(item.id);
+                                                        return (
+                                                            <div
+                                                                key={item.id}
+                                                                className="bg-[#130414]/90 border border-pink-500/15 rounded-2xl p-3 flex flex-col justify-between w-[150px] min-h-[140px] flex-shrink-0 snap-start shadow-[0_0_15px_rgba(255,42,109,0.03)]"
+                                                            >
+                                                                <div className="flex flex-col items-center text-center">
+                                                                    <div className="w-11 h-11 rounded-full bg-pink-500/5 border border-yellow-500/25 flex items-center justify-center text-xl mb-2.5 shadow-inner">
+                                                                        {item.emoji}
+                                                                    </div>
+                                                                    <h4 className="text-[10px] font-black text-white leading-tight line-clamp-2 mb-1">
+                                                                        {item.name}
+                                                                    </h4>
+                                                                    {isUnlocked && item.description && (
+                                                                        <p className="text-[8px] text-white/50 leading-tight line-clamp-1 mb-2">
+                                                                            {item.description}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                
+                                                                <div className="w-full mt-2">
+                                                                    {isUnlocked ? (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <button
+                                                                                onClick={() => setSelectedMobileFav(item)}
+                                                                                className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition-colors uppercase animate-pulse"
+                                                                            >
+                                                                                OPEN
+                                                                            </button>
+                                                                            {item.link && (
+                                                                                <a
+                                                                                    href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="w-full text-center py-1 text-[8px] font-black tracking-wider text-yellow-400 bg-yellow-500/10 border border-yellow-500/35 rounded-lg hover:bg-yellow-500/20 transition-colors uppercase"
+                                                                                >
+                                                                                    Get Link
+                                                                                </a>
+                                                                            )}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <span className="text-center text-[10px] font-black text-yellow-500 mb-1">
+                                                                                {cs()}{item.buy_price}
+                                                                            </span>
+                                                                            {item.reveal_price !== null && (
+                                                                                <button
+                                                                                    onClick={() => handleMobileFavAction(item, 'REVEAL')}
+                                                                                    className="w-full py-1 text-[8px] font-black tracking-wider text-pink-300 bg-pink-500/10 border border-pink-500/25 rounded-lg hover:bg-pink-500/25 transition-colors uppercase"
+                                                                                >
+                                                                                    REVEAL {cs()}{item.reveal_price}
+                                                                                </button>
+                                                                            )}
+                                                                            <button
+                                                                                onClick={() => handleMobileFavAction(item, 'BUY')}
+                                                                                className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-[#d4af37] rounded-lg hover:brightness-110 transition-all uppercase"
+                                                                            >
+                                                                                BUY FOR HER
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Creator Secrets Section */}
+                                    <div className="py-1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
+                                                <span className="text-yellow-400">🔒</span> CREATOR SECRETS
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
+                                            {["ALL", "TEASE", "POSE", "BEHIND_THE_SCENES"].map((tab) => (
+                                                <button
+                                                    key={tab}
+                                                    onClick={() => {
+                                                        setActiveMobileSecTab(tab);
+                                                    }}
+                                                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
+                                                        activeMobileSecTab === tab
+                                                            ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25'
+                                                            : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
+                                                    }`}
+                                                >
+                                                    {tab === 'TEASE' ? '🎀 Tease' : tab === 'POSE' ? '📸 Pose' : tab === 'BEHIND_THE_SCENES' ? '🎬 Behind the Scenes' : 'All'}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-2">
+                                            {suga.secrets.length === 0 ? (
+                                                <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
+                                                    No secret media found
+                                                </div>
+                                            ) : (
+                                                suga.secrets
+                                                    .filter(item => {
+                                                        if (activeMobileSecTab === "ALL") return true;
+                                                        if (activeMobileSecTab === "TEASE" && item.category === "CUTE") return true;
+                                                        if (activeMobileSecTab === "POSE" && item.category === "LUXURY") return true;
+                                                        if (activeMobileSecTab === "BEHIND_THE_SCENES" && item.category === "DREAM") return true;
+                                                        return false;
+                                                    })
+                                                    .map((item) => {
+                                                        const isUnlocked = unlockedMobileSecIds.has(item.id);
+                                                        return (
+                                                            <div
+                                                                key={item.id}
+                                                                onClick={() => {
+                                                                    if (isUnlocked && item.media_url) {
+                                                                        setSelectedMobileSecretMedia(item);
+                                                                    }
+                                                                }}
+                                                                className="relative bg-[#130414]/90 border border-pink-500/15 rounded-2xl overflow-hidden w-[140px] h-[110px] flex-shrink-0 snap-start flex flex-col justify-between p-3 cursor-pointer shadow-[0_0_15px_rgba(255,42,109,0.03)]"
+                                                            >
+                                                                {item.media_url && (
+                                                                    <div className="absolute inset-0 z-0 bg-black/45">
+                                                                        {item.media_type === 'video' ? (
+                                                                            <video src={item.media_url} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'blur-md opacity-40' : 'opacity-100'}`} loop muted playsInline />
+                                                                        ) : (
+                                                                            <img src={item.media_url} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'blur-md opacity-40' : 'opacity-100'}`} alt="" />
+                                                                        )}
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="relative z-10 flex flex-col justify-between h-full w-full">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[14px]">
+                                                                            {item.category === 'CUTE' ? '🎀' : item.category === 'LUXURY' ? '💎' : '👑'}
+                                                                        </span>
+                                                                        {isUnlocked ? (
+                                                                            <Eye className="w-3.5 h-3.5 text-emerald-400 drop-shadow animate-pulse" />
+                                                                        ) : (
+                                                                            item.media_url && (
+                                                                                <span className="text-white/60 text-[10px]">
+                                                                                    {item.media_type === 'video' ? <Video className="w-3.5 h-3.5" /> : <ImageIcon className="w-3.5 h-3.5" />}
+                                                                                </span>
+                                                                            )
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="mt-1">
+                                                                        {!isUnlocked && <Lock className="w-3.5 h-3.5 mx-auto mb-1 text-yellow-500 drop-shadow" />}
+                                                                        <h4 className="text-[9px] font-black text-white text-center leading-tight line-clamp-2 drop-shadow">
+                                                                            {item.name}
+                                                                        </h4>
+                                                                    </div>
+
+                                                                    {!isUnlocked && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleMobileSecretUnlockPrompt(item);
+                                                                            }}
+                                                                            className="w-full mt-1.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold text-[8px] rounded-lg tracking-wider transition-all uppercase"
+                                                                        >
+                                                                            {cs()}{item.unlock_price} UNLOCK
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* INFO TAB */}
+                            {mobileTab === "info" && (
+                                <div className="space-y-3 pb-4">
+                                    <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4">
+                                        <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
+                                    </div>
+
+                                    <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">🔑</span>
+                                            <div>
+                                                <div className="text-[10px] text-white/40 font-bold uppercase tracking-wider">Wallet Balance</div>
+                                                <div className="text-sm font-black text-yellow-400">{cs()}{balance}</div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => router.push("/account/membership")}
+                                            className="px-4 py-1.5 rounded-xl bg-yellow-500 text-black text-xs font-black shadow-md active:scale-95 transition-all uppercase"
+                                        >
+                                            Recharge
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-[#130214]/65 border border-pink-500/15 rounded-2xl p-4 space-y-2">
+                                        <h4 className="text-[10px] font-black text-pink-500 uppercase tracking-widest">Suga4U Rules</h4>
+                                        <div className="text-[11px] text-white/60 space-y-1.5 leading-relaxed">
+                                            <p>• Be respectful to the creator during the live session.</p>
+                                            <p>• Paid requests and gifts support the creator directly.</p>
+                                            <p>• Private 1-on-1 calls are billed per minute or at a fixed rate.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
 
-                        {/* Mobile Live Chat */}
-                        <div className="px-4 py-2 flex flex-col flex-shrink-0">
-                            <div className="border border-pink-500/10 rounded-2xl bg-[#0e020f]/80 p-3 flex flex-col min-h-[220px] max-h-[300px] shadow-inner shadow-black/40">
-                                
-                                <div className="flex items-center justify-between pb-2 border-b border-pink-500/5 mb-2 shrink-0">
-                                    <span className="text-[10px] font-black text-pink-500 tracking-widest flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
-                                        LIVE CHAT
+                        {/* Sticky footer with Room Goal and Mobile Tabs */}
+                        <div className="shrink-0 bg-[#0e0010]/95 border-t border-pink-500/20 z-40 backdrop-blur-md">
+                            {/* Rooms Goal Footer Bar */}
+                            <div className="px-4 py-2 flex items-center justify-between bg-black/30">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[9px] font-black text-yellow-400 tracking-wider flex items-center gap-1">
+                                        🎯 ROOM GOAL
                                     </span>
-                                    <span className="text-[8px] font-extrabold bg-pink-500/20 text-pink-400 border border-pink-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                                        1 Online
+                                    <span className="text-[10px] font-bold text-white/80">
+                                        {groupVoteState && groupVoteState.isActive ? (
+                                            groupVoteState.current >= groupVoteState.target ? (
+                                                <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                                                    ✓ GOAL REACHED!
+                                                </span>
+                                            ) : (
+                                                groupVoteState.label
+                                            )
+                                        ) : (
+                                            "No active goal right now."
+                                        )}
                                     </span>
-                                </div>
-
-                                <div className="mb-2 shrink-0">
-                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 flex items-center justify-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                        <span className="text-[9px] font-bold text-emerald-400">You are now LIVE! 🔴</span>
-                                    </div>
-                                </div>
-
-                                <div ref={mobileChatScrollRef} className="flex-1 overflow-y-auto space-y-2.5 pr-0.5 shrink-0 scrollbar-none">
-                                    {suga.activity.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center text-white/30 text-[10px] italic">
-                                            Welcome to the room! Send a message.
+                                    {groupVoteState && groupVoteState.isActive && groupVoteState.current < groupVoteState.target && (
+                                        <div className="w-32 h-1 bg-black/60 rounded-full overflow-hidden border border-white/5 mt-0.5">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-pink-500 to-yellow-500 shadow-sm"
+                                                style={{ width: `${Math.min(100, (groupVoteState.current / groupVoteState.target) * 100)}%` }}
+                                            />
                                         </div>
-                                    ) : (
-                                        [...suga.activity].reverse().map((m) => {
-                                            const isMsgHighlight = ['TIP', 'PAID_REQUEST', 'OFFER_CLAIM', 'SECRET_UNLOCK', 'LINK_REVEAL', 'BUY_FOR_HER'].includes(m.type);
-                                            return (
-                                                <div key={m.id} className="flex items-start gap-2 text-[10px]">
-                                                    <div className="w-5 h-5 rounded-full bg-pink-500/10 flex-shrink-0 flex items-center justify-center overflow-hidden border border-pink-500/20 shadow-sm">
-                                                        <span className="text-[9px]">👤</span>
-                                                    </div>
-                                                    
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-baseline justify-between gap-1 mb-0.5">
-                                                            <div className="flex items-center gap-1">
-                                                                <span className={`font-black tracking-wide ${isMsgHighlight ? "text-yellow-400" : "text-pink-300"}`}>
-                                                                    {m.fanName}
-                                                                </span>
-                                                                {m.type === 'TIP' && (
-                                                                    <span className="text-[8px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-1 rounded-sm uppercase font-black">
-                                                                        VIP
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <span className="text-[8px] text-white/35 shrink-0">10:30 PM</span>
-                                                        </div>
-                                                        <p className="text-white/80 leading-snug break-words">
-                                                            {m.type === 'TIP' && <span>tipped <span className="text-yellow-400 font-bold">{cs()}{m.amount}</span>!</span>}
-                                                            {m.type === 'LINK_REVEAL' && <span>revealed a favourite!</span>}
-                                                            {m.type === 'BUY_FOR_HER' && <span>purchased a favourite!</span>}
-                                                            {m.type === 'SECRET_UNLOCK' && <span>revealed a secret!</span>}
-                                                            {m.type === 'PAID_REQUEST' && <span>requested: {m.label} (${m.amount})</span>}
-                                                            {m.type === 'OFFER_CLAIM' && <span>claimed offer: {m.label}</span>}
-                                                            {m.type === 'CHAT' && <span>{m.label}</span>}
-                                                            {isMsgHighlight && <Heart className="inline w-2.5 h-2.5 text-pink fill-pink ml-1" />}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
                                     )}
                                 </div>
-
-                                <div className="mt-2.5 flex items-center gap-1.5 shrink-0 relative">
-                                    <div className="flex-1 bg-[#160618] border border-pink-500/15 rounded-full px-3 py-1.5 flex items-center gap-2">
-                                        <button className="text-[12px] opacity-75 hover:opacity-100 transition-opacity">
-                                            😊
+                                
+                                <div className="flex items-center gap-2">
+                                    {groupVoteState && groupVoteState.isActive && groupVoteState.current < groupVoteState.target && (
+                                        <button
+                                            onClick={handleMobileVote}
+                                            disabled={loadingMobileVote}
+                                            className="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[9px] font-black flex items-center gap-1 active:scale-95 transition-all shadow-md uppercase disabled:opacity-50"
+                                        >
+                                            <Flame className="w-3 h-3 text-white fill-current" />
+                                            Boost {cs()}{groupVoteState.price}
                                         </button>
-                                        <input
-                                            type="text"
-                                            value={mobileChatInput}
-                                            onChange={(e) => setMobileChatInput(e.target.value)}
-                                            onKeyPress={(e) => e.key === "Enter" && handleMobileChatSend()}
-                                            placeholder="Type a message..."
-                                            className="flex-1 bg-transparent text-[10px] outline-none text-white placeholder-white/40 font-medium"
-                                        />
-                                    </div>
-                                    
-                                    <button
-                                        onClick={handleMobileChatSend}
-                                        disabled={!roomId}
-                                        className="w-7 h-7 rounded-full bg-pink-500 hover:bg-pink-600 flex items-center justify-center text-white transition-colors active:scale-95 shadow-md shadow-pink-500/25 disabled:opacity-50 shrink-0"
-                                    >
-                                        <Send className="w-3.5 h-3.5" />
-                                    </button>
-
+                                    )}
                                     <button
                                         onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
-                                        className="w-7 h-7 rounded-full bg-[#18051a] hover:bg-[#250829] flex items-center justify-center border border-pink-500/25 text-pink-400 transition-colors active:scale-95 shadow-md shrink-0"
+                                        className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-600 to-pink-500 flex items-center justify-center text-white active:scale-95 transition-all shadow-lg shadow-pink-500/25 text-sm"
                                     >
                                         🎁
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Mobile Navigation Tabs */}
+                            <MobileStudioTabs
+                                tabs={SUGA4U_FAN_TABS}
+                                activeTab={mobileTab}
+                                onTabChange={setMobileTab}
+                                accentHsl="340, 75%, 55%"
+                            />
                         </div>
-
-                        {/* Private 1-on-1 Button */}
-                        <div className="px-4 py-1.5 flex-shrink-0">
-                            <button
-                                onClick={() => {
-                                    if (!roomId || !hostId) return;
-                                    if (balance < 500) {
-                                        toast.error("Insufficient balance");
-                                        return;
-                                    }
-                                    setConfirmMobileAction({
-                                        type: 'PRIVATE_1ON1',
-                                        name: 'Private 1-on-1 Call',
-                                        price: 500,
-                                        emoji: '👑',
-                                        description: `Request a Private 1-on-1 video call with the creator for ${cs()}500?`
-                                    });
-                                }}
-                                disabled={!roomId || !hostId}
-                                className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-[12px] flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
-                            >
-                                👑 Private 1-on-1 {cs()}500
-                            </button>
-                        </div>
-
-                        {/* Creator Favorites Section */}
-                        <div className="py-3 flex-shrink-0">
-                            <div className="flex items-center justify-between px-4 mb-2.5">
-                                <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
-                                    <span className="text-yellow-400">★</span> CREATOR FAVORITES
-                                </div>
-                                <button className="text-[9px] font-black text-pink-500 tracking-wider hover:underline">
-                                    View All &gt;
-                                </button>
-                            </div>
-
-                            <div className="flex gap-2 px-4 mb-3 overflow-x-auto scrollbar-none">
-                                {["ALL", "CUTE", "LUXURY", "DREAM"].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveMobileFavTab(tab)}
-                                        className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
-                                            activeMobileFavTab === tab
-                                                ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25 font-extrabold'
-                                                : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
-                                        }`}
-                                    >
-                                        {tab === 'CUTE' ? '🎀 Cute' : tab === 'LUXURY' ? '💎 Luxury' : tab === 'DREAM' ? '👑 Dream' : 'All'}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="flex gap-3 px-4 overflow-x-auto scrollbar-none snap-x pb-2">
-                                {suga.favorites.length === 0 ? (
-                                    <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
-                                        No favorites items found
-                                    </div>
-                                ) : (
-                                    suga.favorites
-                                        .filter(item => activeMobileFavTab === "ALL" || item.category === activeMobileFavTab)
-                                        .map((item) => {
-                                            const isUnlocked = revealedMobileFavIds.has(item.id);
-                                            return (
-                                                <div
-                                                    key={item.id}
-                                                    className="bg-[#130414]/90 border border-pink-500/15 rounded-2xl p-3 flex flex-col justify-between w-[150px] min-h-[140px] flex-shrink-0 snap-start shadow-[0_0_15px_rgba(255,42,109,0.03)]"
-                                                >
-                                                    <div className="flex flex-col items-center text-center">
-                                                        <div className="w-11 h-11 rounded-full bg-pink-500/5 border border-yellow-500/25 flex items-center justify-center text-xl mb-2.5 shadow-inner">
-                                                            {item.emoji}
-                                                        </div>
-                                                        <h4 className="text-[10px] font-black text-white leading-tight line-clamp-2 mb-1">
-                                                            {item.name}
-                                                        </h4>
-                                                        {isUnlocked && item.description && (
-                                                            <p className="text-[8px] text-white/50 leading-tight line-clamp-1 mb-2">
-                                                                {item.description}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    <div className="w-full mt-2">
-                                                        {isUnlocked ? (
-                                                            <div className="flex flex-col gap-1">
-                                                                <button
-                                                                    onClick={() => setSelectedMobileFav(item)}
-                                                                    className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition-colors uppercase animate-pulse"
-                                                                >
-                                                                    OPEN
-                                                                </button>
-                                                                {item.link && (
-                                                                    <a
-                                                                        href={item.link.startsWith('http') ? item.link : `https://${item.link}`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="w-full text-center py-1 text-[8px] font-black tracking-wider text-yellow-400 bg-yellow-500/10 border border-yellow-500/35 rounded-lg hover:bg-yellow-500/20 transition-colors uppercase"
-                                                                    >
-                                                                        Get Link
-                                                                    </a>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex flex-col gap-1">
-                                                                <span className="text-center text-[10px] font-black text-yellow-500 mb-1">
-                                                                    {cs()}{item.buy_price}
-                                                                </span>
-                                                                {item.reveal_price !== null && (
-                                                                    <button
-                                                                        onClick={() => handleMobileFavAction(item, 'REVEAL')}
-                                                                        className="w-full py-1 text-[8px] font-black tracking-wider text-pink-300 bg-pink-500/10 border border-pink-500/25 rounded-lg hover:bg-pink-500/25 transition-colors uppercase"
-                                                                    >
-                                                                        REVEAL {cs()}{item.reveal_price}
-                                                                    </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => handleMobileFavAction(item, 'BUY')}
-                                                                    className="w-full py-1 text-[8px] font-black tracking-wider text-white bg-[#d4af37] rounded-lg hover:brightness-110 transition-all uppercase"
-                                                                >
-                                                                    BUY FOR HER
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Creator Secrets Section */}
-                        <div className="py-3 flex-shrink-0">
-                            <div className="flex items-center justify-between px-4 mb-2.5">
-                                <div className="flex items-center gap-1.5 text-xs font-black tracking-wider text-white">
-                                    <span className="text-yellow-400">🔒</span> CREATOR SECRETS
-                                </div>
-                                <button className="text-[9px] font-black text-pink-500 tracking-wider hover:underline">
-                                    View All &gt;
-                                </button>
-                            </div>
-
-                            <div className="flex gap-2 px-4 mb-3 overflow-x-auto scrollbar-none">
-                                {["ALL", "TEASE", "POSE", "BEHIND_THE_SCENES"].map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => {
-                                            setActiveMobileSecTab(tab);
-                                        }}
-                                        className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider transition-all border ${
-                                            activeMobileSecTab === tab
-                                                ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/25'
-                                                : 'bg-[#150417] text-pink-300 border-pink-500/15 hover:border-pink-500/35'
-                                        }`}
-                                    >
-                                        {tab === 'TEASE' ? '🎀 Tease' : tab === 'POSE' ? '📸 Pose' : tab === 'BEHIND_THE_SCENES' ? '🎬 Behind the Scenes' : 'All'}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="flex gap-3 px-4 overflow-x-auto scrollbar-none snap-x pb-2">
-                                {suga.secrets.length === 0 ? (
-                                    <div className="w-full py-6 text-center text-white/35 text-[10px] italic">
-                                        No secret media found
-                                    </div>
-                                ) : (
-                                    suga.secrets
-                                        .filter(item => {
-                                            if (activeMobileSecTab === "ALL") return true;
-                                            if (activeMobileSecTab === "TEASE" && item.category === "CUTE") return true;
-                                            if (activeMobileSecTab === "POSE" && item.category === "LUXURY") return true;
-                                            if (activeMobileSecTab === "BEHIND_THE_SCENES" && item.category === "DREAM") return true;
-                                            return false;
-                                        })
-                                        .map((item) => {
-                                            const isUnlocked = unlockedMobileSecIds.has(item.id);
-                                            return (
-                                                <div
-                                                    key={item.id}
-                                                    onClick={() => {
-                                                        if (isUnlocked && item.media_url) {
-                                                            setSelectedMobileSecretMedia(item);
-                                                        }
-                                                    }}
-                                                    className="relative bg-[#130414]/90 border border-pink-500/15 rounded-2xl overflow-hidden w-[140px] h-[110px] flex-shrink-0 snap-start flex flex-col justify-between p-3 cursor-pointer shadow-[0_0_15px_rgba(255,42,109,0.03)]"
-                                                >
-                                                    {item.media_url && (
-                                                        <div className="absolute inset-0 z-0 bg-black/45">
-                                                            {item.media_type === 'video' ? (
-                                                                <video src={item.media_url} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'blur-md opacity-40' : 'opacity-100'}`} loop muted playsInline />
-                                                            ) : (
-                                                                <img src={item.media_url} className={`w-full h-full object-cover transition-all ${!isUnlocked ? 'blur-md opacity-40' : 'opacity-100'}`} alt="" />
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="relative z-10 flex flex-col justify-between h-full w-full">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-[14px]">
-                                                                {item.category === 'CUTE' ? '🎀' : item.category === 'LUXURY' ? '💎' : '👑'}
-                                                            </span>
-                                                            {isUnlocked ? (
-                                                                <Eye className="w-3.5 h-3.5 text-emerald-400 drop-shadow animate-pulse" />
-                                                            ) : (
-                                                                item.media_url && (
-                                                                    <span className="text-white/60 text-[10px]">
-                                                                        {item.media_type === 'video' ? <Video className="w-3.5 h-3.5" /> : <ImageIcon className="w-3.5 h-3.5" />}
-                                                                    </span>
-                                                                )
-                                                            )}
-                                                        </div>
-
-                                                        <div className="mt-1">
-                                                            {!isUnlocked && <Lock className="w-3.5 h-3.5 mx-auto mb-1 text-yellow-500 drop-shadow" />}
-                                                            <h4 className="text-[9px] font-black text-white text-center leading-tight line-clamp-2 drop-shadow">
-                                                                {item.name}
-                                                            </h4>
-                                                        </div>
-
-                                                        {!isUnlocked && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleMobileSecretUnlockPrompt(item);
-                                                                }}
-                                                                className="w-full mt-1.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold text-[8px] rounded-lg tracking-wider transition-all uppercase"
-                                                            >
-                                                                {cs()}{item.unlock_price} UNLOCK
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Rooms Goal Footer Bar */}
-                        <footer className="fixed bottom-0 inset-x-0 bg-[#0e0010]/95 border-t border-pink-500/20 px-4 py-3 flex items-center justify-between z-40 backdrop-blur-md">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-[9px] font-black text-yellow-400 tracking-wider flex items-center gap-1">
-                                    🎯 ROOM GOAL
-                                </span>
-                                <span className="text-[10px] font-bold text-white/80">
-                                    {groupVoteState && groupVoteState.isActive ? (
-                                        groupVoteState.current >= groupVoteState.target ? (
-                                            <span className="text-emerald-400 font-extrabold flex items-center gap-1">
-                                                ✓ GOAL REACHED!
-                                            </span>
-                                        ) : (
-                                            groupVoteState.label
-                                        )
-                                    ) : (
-                                        "No active goal right now."
-                                    )}
-                                </span>
-                                {groupVoteState && groupVoteState.isActive && groupVoteState.current < groupVoteState.target && (
-                                    <div className="w-32 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/5 mt-1">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-pink-500 to-yellow-500 shadow-sm"
-                                            style={{ width: `${Math.min(100, (groupVoteState.current / groupVoteState.target) * 100)}%` }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                                {groupVoteState && groupVoteState.isActive && groupVoteState.current < groupVoteState.target && (
-                                    <button
-                                        onClick={handleMobileVote}
-                                        disabled={loadingMobileVote}
-                                        className="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[9px] font-black flex items-center gap-1 active:scale-95 transition-all shadow-md uppercase disabled:opacity-50"
-                                    >
-                                        <Flame className="w-3 h-3 text-white fill-current" />
-                                        Boost {cs()}{groupVoteState.price}
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
-                                    className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-600 to-pink-500 flex items-center justify-center text-white active:scale-95 transition-all shadow-lg shadow-pink-500/25 text-lg"
-                                >
-                                    🎁
-                                </button>
-                            </div>
-                        </footer>
                     </div>
 
                 </div>

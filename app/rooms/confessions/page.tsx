@@ -17,9 +17,17 @@ import { useWallet } from "@/hooks/useWallet";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+
+const CONFESSIONS_FAN_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageSquareText className="w-5 h-5" /> },
+    { id: "wall", label: "Wall", icon: <Flame className="w-5 h-5" /> },
+    { id: "request", label: "Request", icon: <Gift className="w-5 h-5" /> },
+    { id: "info", label: "Info", icon: <UserRound className="w-5 h-5" /> },
+];
 
 import FloatingHearts from "@/components/rooms/confessions/FloatingHearts";
 import CreatorSpotlight from "@/components/rooms/confessions/CreatorSpotlight";
@@ -205,6 +213,7 @@ function ConfessionsRoom() {
     const [searchDebounce, setSearchDebounce] = useState<ReturnType<typeof setTimeout> | null>(null);
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
+    const [mobileTab, setMobileTab] = useState<string>("chat");
 
     // Request Form
     const [reqType, setReqType] = useState<'Text' | 'Image' | 'Video'>('Text');
@@ -895,9 +904,8 @@ function ConfessionsRoom() {
                         </div>
                     </header>
 
-                    {/* Mobile Scroll Content */}
-                    <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 pb-24 hide-scrollbar">
-                        
+                    {/* Stream & Reactions fixed at top */}
+                    <div className="shrink-0 px-4 pt-3 pb-2 space-y-3 flex flex-col bg-[#0c0204]">
                         {/* Live Video Spotlight */}
                         <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/5 shadow-2xl bg-black/60 shrink-0">
                             {roomId && user && hostId ? (
@@ -953,280 +961,267 @@ function ConfessionsRoom() {
                             </button>
                         </div>
 
-                        {/* Reactions & Tips */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Reactions & Tips</h4>
-                            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
-                                {[
-                                    { icon: "💋", label: "KISS", price: 5 },
-                                    { icon: "💖", label: "LOVE", price: 10 },
-                                    { icon: "🔥", label: "SPICY", price: 20 },
-                                    { icon: "💎", label: "DIAMOND", price: 50 },
-                                ].map((tip, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => handleReaction(tip.label, tip.price)}
-                                        className="flex flex-col items-center justify-center min-w-[76px] py-2.5 rounded-2xl border border-white/5 bg-[#140407] hover:border-rose-500/30 transition active:scale-[0.97]"
-                                    >
-                                        <span className="text-lg mb-1">{tip.icon}</span>
-                                        <span className="text-[9px] font-black text-white/90 uppercase tracking-wider">{tip.label}</span>
-                                        <span className="text-[9px] text-[#ff2a6d] font-bold mt-0.5">€{tip.price}</span>
-                                    </button>
-                                ))}
+                        {/* Reactions & Tips Row */}
+                        <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                            {[
+                                { icon: "💋", label: "KISS", price: 5 },
+                                { icon: "💖", label: "LOVE", price: 10 },
+                                { icon: "🔥", label: "SPICY", price: 20 },
+                                { icon: "💎", label: "DIAMOND", price: 50 },
+                            ].map((tip, idx) => (
                                 <button
-                                    onClick={() => handleReaction('GIFT', 10)}
-                                    className="flex flex-col items-center justify-center min-w-[76px] py-2.5 rounded-2xl border border-dashed border-rose-500/30 bg-[#140407] hover:bg-rose-950/20 transition active:scale-[0.97] group"
+                                    key={idx}
+                                    onClick={() => handleReaction(tip.label, tip.price)}
+                                    className="flex flex-col items-center justify-center min-w-[70px] py-1.5 rounded-xl border border-white/5 bg-[#140407] hover:border-rose-500/30 transition active:scale-[0.97]"
                                 >
-                                    <Gift className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform mb-1.5" />
-                                    <span className="text-[9px] font-black text-rose-300 uppercase tracking-wider">Gift</span>
+                                    <span className="text-base">{tip.icon}</span>
+                                    <span className="text-[8px] font-black text-white/90 uppercase tracking-wider">{tip.label}</span>
+                                    <span className="text-[8px] text-[#ff2a6d] font-bold">€{tip.price}</span>
                                 </button>
-                            </div>
+                            ))}
+                            <button
+                                onClick={() => handleReaction('GIFT', 10)}
+                                className="flex flex-col items-center justify-center min-w-[70px] py-1.5 rounded-xl border border-dashed border-rose-500/30 bg-[#140407] hover:bg-rose-950/20 transition active:scale-[0.97] group"
+                            >
+                                <Gift className="w-3.5 h-3.5 text-rose-400 group-hover:scale-110 transition-transform mb-0.5" />
+                                <span className="text-[8px] font-black text-rose-300 uppercase tracking-wider">Gift</span>
+                            </button>
                         </div>
+                    </div>
 
-                        {/* Live Chat Section */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Live Chat</h4>
-                                <span className="flex items-center gap-1 text-[10px] text-[#ff2a6d] font-bold">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff2a6d] animate-pulse" /> 256
-                                </span>
-                            </div>
-                            <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-2.5">
+                    {/* Active Tab panel - takes remaining height */}
+                    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 pb-20">
+                        {mobileTab === "chat" && (
+                            <div className="h-full flex flex-col bg-[#0f0407]/40 border border-white/5 rounded-2xl overflow-hidden p-2.5">
                                 <LiveChatBox roomId={roomId} sessionId={urlSessionId} variant="mobile" />
                             </div>
-                        </div>
+                        )}
 
-                        {/* All Confessions Section */}
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center px-1">
-                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">All Confessions</h4>
-                                <button onClick={() => handleTierFilter('All')} className="text-[10px] text-[#ff2a6d] font-bold hover:underline">View all</button>
-                            </div>
+                        {mobileTab === "wall" && (
+                            <div className="w-full flex flex-col gap-3">
+                                <div className="flex justify-between items-center px-1">
+                                    <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">All Confessions</h4>
+                                    <button onClick={() => handleTierFilter('All')} className="text-[10px] text-[#ff2a6d] font-bold hover:underline">Clear Filter</button>
+                                </div>
 
-                            {/* Filter Tabs */}
-                            <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                                {['All', 'Spicy', 'Dirty', 'Bedroom', 'Forbidden'].map((tier) => {
-                                    const isActive = tierFilter === tier;
-                                    return (
-                                        <button
-                                            key={tier}
-                                            onClick={() => handleTierFilter(tier)}
-                                            className={cn(
-                                                "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border whitespace-nowrap",
-                                                isActive
-                                                    ? "bg-[#d50057] text-white border-transparent shadow-[0_0_12px_rgba(213,0,87,0.4)]"
-                                                    : "bg-white/5 text-white/50 border-white/10"
-                                            )}
-                                        >
-                                            {tier}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Horizontal Cards Scroll */}
-                            <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-                                {loadingWall && (
-                                    <div className="w-full flex items-center justify-center py-6">
-                                        <Loader2 className="w-5 h-5 animate-spin text-rose-500" />
-                                    </div>
-                                )}
-                                {!loadingWall && confessions.length === 0 && (
-                                    <div className="text-center w-full py-6 text-white/30 text-xs italic">No secrets available</div>
-                                )}
-                                {!loadingWall && confessions.length > 0 && confessions.map((c, i) => {
-                                    const isUnlocked = myUnlocks.has(c.id);
-                                    // Likes count generator
-                                    const likesCount = (c.price * 13 + (c.title?.charCodeAt(0) || 7)) % 140 + 20;
-
-                                    return (
-                                        <div
-                                            key={c.id || i}
-                                            onClick={() => isUnlocked ? setViewConfession(c) : setPurchaseConfession(c)}
-                                            className="min-w-[155px] max-w-[155px] p-3 rounded-2xl bg-[#110103]/60 border border-rose-500/20 flex flex-col justify-between h-[155px] shadow-[0_0_12px_rgba(225,29,72,0.06)] relative group cursor-pointer transition active:scale-[0.98]"
-                                        >
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-5 h-5 rounded-full bg-rose-950 border border-rose-500/30 flex items-center justify-center text-[8px] font-bold text-rose-300">
-                                                        👤
-                                                    </div>
-                                                    <span className="text-[10px] font-bold text-white/90 truncate max-w-[70px]">
-                                                        {c.creator?.full_name || "Anonymous"}
-                                                    </span>
-                                                    <span className="text-[8px] text-white/30 shrink-0 ml-auto">
-                                                        2h ago
-                                                    </span>
-                                                </div>
-                                                <p className="text-[10px] text-white/60 leading-normal line-clamp-3 font-medium">
-                                                    {isUnlocked ? (c.content || c.teaser) : c.teaser}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/5">
-                                                <span className="flex items-center gap-1 text-[9px] text-rose-400 font-bold">
-                                                    💖 {likesCount}
-                                                </span>
-                                                {!isUnlocked ? (
-                                                    <span className="text-[9px] bg-[#d50057]/20 text-[#ff4c8a] border border-[#d50057]/30 px-1.5 py-0.5 rounded-md font-extrabold">
-                                                        €{c.price}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[9px] text-green-400 font-extrabold flex items-center gap-0.5">
-                                                        ✓ Open
-                                                    </span>
+                                {/* Filter Tabs */}
+                                <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                                    {['All', 'Spicy', 'Dirty', 'Bedroom', 'Forbidden'].map((tier) => {
+                                        const isActive = tierFilter === tier;
+                                        return (
+                                            <button
+                                                key={tier}
+                                                onClick={() => handleTierFilter(tier)}
+                                                className={cn(
+                                                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border whitespace-nowrap",
+                                                    isActive
+                                                        ? "bg-[#d50057] text-white border-transparent shadow-[0_0_12px_rgba(213,0,87,0.4)]"
+                                                        : "bg-white/5 text-white/50 border-white/10"
                                                 )}
+                                            >
+                                                {tier}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Grid of Confessions */}
+                                <div className="grid grid-cols-2 gap-3 pb-4">
+                                    {loadingWall && (
+                                        <div className="col-span-2 flex items-center justify-center py-6">
+                                            <Loader2 className="w-5 h-5 animate-spin text-rose-500" />
+                                        </div>
+                                    )}
+                                    {!loadingWall && confessions.length === 0 && (
+                                        <div className="col-span-2 text-center py-6 text-white/30 text-xs italic">No secrets available</div>
+                                    )}
+                                    {!loadingWall && confessions.length > 0 && confessions.map((c, i) => {
+                                        const isUnlocked = myUnlocks.has(c.id);
+                                        const likesCount = (c.price * 13 + (c.title?.charCodeAt(0) || 7)) % 140 + 20;
+
+                                        return (
+                                            <div
+                                                key={c.id || i}
+                                                onClick={() => isUnlocked ? setViewConfession(c) : setPurchaseConfession(c)}
+                                                className="p-3 rounded-2xl bg-[#110103]/60 border border-rose-500/20 flex flex-col justify-between h-[155px] shadow-[0_0_12px_rgba(225,29,72,0.06)] relative group cursor-pointer transition active:scale-[0.98]"
+                                            >
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-5 h-5 rounded-full bg-rose-950 border border-rose-500/30 flex items-center justify-center text-[8px] font-bold text-rose-300">
+                                                            👤
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-white/90 truncate max-w-[70px]">
+                                                            {c.creator?.full_name || "Anonymous"}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] text-white/60 leading-normal line-clamp-3 font-medium">
+                                                        {isUnlocked ? (c.content || c.teaser) : c.teaser}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/5">
+                                                    <span className="flex items-center gap-1 text-[9px] text-rose-400 font-bold">
+                                                        💖 {likesCount}
+                                                    </span>
+                                                    {!isUnlocked ? (
+                                                        <span className="text-[9px] bg-[#d50057]/20 text-[#ff4c8a] border border-[#d50057]/30 px-1.5 py-0.5 rounded-md font-extrabold">
+                                                            €{c.price}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[9px] text-green-400 font-extrabold flex items-center gap-0.5">
+                                                            ✓ Open
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {mobileTab === "request" && (
+                            <div className="w-full flex flex-col gap-4">
+                                <div className="bg-[#0e0204] border border-white/5 rounded-2xl p-4 space-y-4">
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">What should they confess?</span>
+                                        <textarea
+                                            value={reqTopic}
+                                            onChange={(e) => setReqTopic(e.target.value)}
+                                            placeholder="Describe what you'd like to see..."
+                                            maxLength={200}
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 text-xs focus:outline-none focus:border-rose-500/40 transition-all resize-none h-20"
+                                        />
+                                        <div className="text-right text-[9px] text-white/30">{reqTopic.length}/200</div>
+                                    </div>
+
+                                    <div className="flex gap-4">
+                                        <div className="flex-1 space-y-1.5">
+                                            <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">Your Offer</span>
+                                            <div className="relative">
+                                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#ff2a6d]">€</span>
+                                                <input
+                                                    type="number"
+                                                    value={reqAmount || ''}
+                                                    onChange={(e) => setReqAmount(Number(e.target.value))}
+                                                    className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold focus:outline-none focus:border-rose-500/40 transition"
+                                                />
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Request a Confession Form */}
-                        <div className="space-y-3">
-                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Request a Confession</h4>
-                            
-                            <div className="bg-[#0e0204] border border-white/5 rounded-2xl p-4 space-y-4">
-                                <div className="space-y-1.5">
-                                    <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">What should they confess?</span>
-                                    <textarea
-                                        value={reqTopic}
-                                        onChange={(e) => setReqTopic(e.target.value)}
-                                        placeholder="Describe what you'd like to see..."
-                                        maxLength={200}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/20 text-xs focus:outline-none focus:border-rose-500/40 transition-all resize-none h-20"
-                                    />
-                                    <div className="text-right text-[9px] text-white/30">{reqTopic.length}/200</div>
-                                </div>
-
-                                <div className="flex gap-4">
-                                    <div className="flex-1 space-y-1.5">
-                                        <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">Your Offer</span>
-                                        <div className="relative">
-                                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#ff2a6d]">€</span>
-                                            <input
-                                                type="number"
-                                                value={reqAmount || ''}
-                                                onChange={(e) => setReqAmount(Number(e.target.value))}
-                                                className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold focus:outline-none focus:border-rose-500/40 transition"
-                                            />
+                                        <div className="shrink-0 flex items-end">
+                                            <button 
+                                                onClick={() => handleReaction('GIFT', reqAmount)}
+                                                className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 active:scale-95 transition"
+                                            >
+                                                <Gift className="w-4 h-4 text-[#ff2a6d]" />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="shrink-0 flex items-end">
-                                        <button 
-                                            onClick={() => handleReaction('GIFT', reqAmount)}
-                                            className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 active:scale-95 transition"
-                                        >
-                                            <Gift className="w-4 h-4 text-[#ff2a6d]" />
-                                        </button>
-                                    </div>
-                                </div>
 
-                                {/* Custom Toggles inside request confession for completeness */}
-                                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
-                                    <div>
-                                        <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Identity</div>
-                                        <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
-                                            <button onClick={() => setIsAnon(false)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${!isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Public</button>
-                                            <button onClick={() => setIsAnon(true)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Anon</button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Send mode</div>
-                                        <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
-                                            <button onClick={() => setConfessionMode("1on1")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "1on1" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>1on1</button>
-                                            <button onClick={() => setConfessionMode("global")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "global" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Global</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={handleOpenConfirm}
-                                    disabled={isSending || !reqTopic.trim() || reqAmount <= 0}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d50057] to-[#ff2a6d] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(213,0,87,0.3)] disabled:opacity-50 disabled:active:scale-100"
-                                >
-                                    <Send className="w-3.5 h-3.5" />
-                                    {isSending ? "Processing..." : "Send Request"}
-                                </button>
-
-                                <div className="flex justify-between items-center text-[9px] text-white/30 px-1 pt-1">
-                                    <span>{confessionMode === "global" ? "🌐 Visible to ALL creators." : "🔒 Sent directly to host."}</span>
-                                    <span className="font-bold text-[#ff2a6d] uppercase tracking-wider text-right">€{reqAmount} {isAnon ? "Anonymous" : "Public"} • {confessionMode === "1on1" ? "1 on 1" : "Global"}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Top Offers Section */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Top Offers</h4>
-                                <span className="text-[10px] text-[#ff2a6d] font-bold hover:underline">View all</span>
-                            </div>
-
-                            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
-                                {/* Merge actual bids with placeholders for a rich experience */}
-                                {(() => {
-                                    const combinedBids = [
-                                        ...bids.map((b, idx) => ({ rank: idx + 1, name: b.name, amount: b.amount, isMe: b.id === 'me' })),
-                                        { rank: bids.length + 1, name: "AnonKing", amount: 100 },
-                                        { rank: bids.length + 2, name: "SweetSecret", amount: 75 },
-                                        { rank: bids.length + 3, name: "HeartBreaker", amount: 50 },
-                                    ].slice(0, 4);
-
-                                    const rankColors = [
-                                        "bg-amber-400 text-black", // Gold
-                                        "bg-slate-300 text-black", // Silver
-                                        "bg-amber-600 text-white", // Bronze
-                                        "bg-white/10 text-white/55"
-                                    ];
-
-                                    return combinedBids.map((bid, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="flex items-center gap-3 p-3 rounded-2xl bg-[#0f0407] border border-white/5 min-w-[150px] shrink-0"
-                                        >
-                                            <div className={`w-5 h-5 rounded-full ${rankColors[idx] || rankColors[3]} flex items-center justify-center text-[9px] font-black shrink-0`}>
-                                                {idx + 1}
-                                            </div>
-                                            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] shrink-0">
-                                                👤
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-black text-white truncate">{bid.name}</p>
-                                                <p className="text-[9px] text-[#ff2a6d] font-bold">€{bid.amount}</p>
+                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                                        <div>
+                                            <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Identity</div>
+                                            <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
+                                                <button onClick={() => setIsAnon(false)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${!isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Public</button>
+                                                <button onClick={() => setIsAnon(true)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Anon</button>
                                             </div>
                                         </div>
-                                    ));
-                                })()}
-                            </div>
-                        </div>
+                                        <div>
+                                            <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Send mode</div>
+                                            <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
+                                                <button onClick={() => setConfessionMode("1on1")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "1on1" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>1on1</button>
+                                                <button onClick={() => setConfessionMode("global")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "global" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Global</button>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                        {/* Room Info Section */}
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest px-1">Room Info</h4>
-                            
-                            <div className="grid grid-cols-3 gap-2.5">
-                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
-                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Host</span>
-                                    <span className="text-[10px] font-black text-white flex items-center gap-0.5 truncate">
-                                        {hostStreamName || "ConfessorX"} <BadgeCheck className="w-3.5 h-3.5 text-[#ff2a6d] fill-[#ff2a6d] text-white inline shrink-0" />
-                                    </span>
+                                    <button
+                                        onClick={handleOpenConfirm}
+                                        disabled={isSending || !reqTopic.trim() || reqAmount <= 0}
+                                        className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d50057] to-[#ff2a6d] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(213,0,87,0.3)] disabled:opacity-50 disabled:active:scale-100"
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                        {isSending ? "Processing..." : "Send Request"}
+                                    </button>
                                 </div>
-                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
-                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Followers</span>
-                                    <span className="text-[10px] font-black text-white flex items-center gap-0.5">
-                                        12.4K 💎
-                                    </span>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-[#0f0407] border border-white/5 flex flex-col justify-center">
-                                    <span className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Rules</span>
-                                    <span className="text-[9px] font-medium text-white/60 leading-tight line-clamp-2">
-                                        Be respectful and kind
-                                    </span>
+
+                                {/* Active Requests List */}
+                                <div className="space-y-2.5">
+                                    <h5 className="text-xs font-extrabold text-white/40 uppercase tracking-widest px-1">My Requests Status</h5>
+                                    <div className="space-y-2">
+                                        {requests.length === 0 ? (
+                                            <div className="text-center text-white/30 text-xs py-4 bg-white/5 border border-white/10 rounded-2xl italic">No requests placed</div>
+                                        ) : (
+                                            requests.map((req, i) => (
+                                                <div key={req.id || i} className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs gap-2">
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="font-bold text-white truncate">{req.topic}</div>
+                                                        <div className="text-[10px] text-white/40 uppercase font-semibold mt-0.5 tracking-wider">{req.status.replace('_', ' ')}</div>
+                                                    </div>
+                                                    {req.status === 'delivered' ? (
+                                                        <button onClick={() => { setReviewRequest(req); }} className="px-2.5 py-1 rounded-lg bg-[#d50057] hover:opacity-95 text-[10px] text-white font-bold transition">Review</button>
+                                                    ) : (
+                                                        <span className="font-bold text-amber-400">{cs()}{req.amount}</span>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
+                        {mobileTab === "info" && (
+                            <div className="w-full flex flex-col gap-4">
+                                <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center overflow-hidden border border-white/20">
+                                            {hostAvatar ? (
+                                                <img src={hostAvatar} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="font-bold text-white">{hostStreamName[0]?.toUpperCase()}</span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-sm text-white flex items-center gap-1">
+                                                {hostStreamName} <BadgeCheck className="w-4 h-4 text-[#ff2a6d] fill-[#ff2a6d] text-white shrink-0" />
+                                            </h4>
+                                            <span className="text-[9px] text-[#ff2a6d] uppercase tracking-widest font-black">Lounge Host</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-white/60 leading-relaxed">Join {hostStreamName}'s confessions lounge. Share secrets, order dares, or ask for private video/voice responses!</p>
+                                </div>
+
+                                <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <Coins className="text-amber-400 w-5 h-5" />
+                                        <div>
+                                            <h5 className="text-[9px] text-gray-500 uppercase font-black">Wallet Balance</h5>
+                                            <span className="font-bold text-sm text-white">{cs()}{walletBalance}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[#0f0407] border border-white/5 rounded-2xl p-4 space-y-2">
+                                    <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Rules & Details</h4>
+                                    <div className="text-xs text-white/60 space-y-1">
+                                        <p>• Be respectful and kind to the host and other fans.</p>
+                                        <p>• Respect private 1-on-1 response agreements.</p>
+                                        <p>• No harassment or vulgar language in general chat.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mobile Navigation */}
+                    <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0c0204]/95 border-t border-[#22070c] backdrop-blur-md">
+                        <MobileStudioTabs
+                            tabs={CONFESSIONS_FAN_TABS}
+                            activeTab={mobileTab}
+                            onTabChange={setMobileTab}
+                            accentHsl="350, 80%, 55%"
+                        />
                     </div>
 
                     {/* Mobile Sidebar / Drawer Options Menu */}
@@ -1247,7 +1242,7 @@ function ConfessionsRoom() {
                                             <span className="text-xl font-black text-white">{cs()}{walletBalance}</span>
                                         </div>
                                     </div>
-
+                                    
                                     {/* Inbox deliveries */}
                                     <button
                                         onClick={() => { setShowIncomingModal(true); setShowMobileMenu(false); }}
@@ -1263,7 +1258,7 @@ function ConfessionsRoom() {
                                             </span>
                                         )}
                                     </button>
-
+                                    
                                     {/* Active Requests List */}
                                     <div className="space-y-2.5">
                                         <h5 className="text-xs font-extrabold text-white/40 uppercase tracking-widest px-1">My Requests Status</h5>

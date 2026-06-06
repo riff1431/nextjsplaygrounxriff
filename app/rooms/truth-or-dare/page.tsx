@@ -37,6 +37,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import BrandLogo from "@/components/common/BrandLogo";
 import RoomRequestManager from "@/components/rooms/RoomRequestManager"; // New Component
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import InteractionOverlay, { OverlayPrompt } from "@/components/rooms/InteractionOverlay";
 import { playNotificationSound, playSuccessSound, playErrorSound, playMoneySound } from "@/utils/sounds"; // Added playNotificationSound, playMoneySound
 import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVotePanel
@@ -91,6 +92,13 @@ const CROWD_TV_FEES = { truth: 5, dare: 10 } as const;
 const ENTRY_FEE = 10;
 const TIP_AMOUNTS = [5, 10, 25, 50] as const;
 
+const TOD_FAN_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
+    { id: "play", label: "Play", icon: <Play className="w-5 h-5" /> },
+    { id: "games", label: "Games", icon: <Trophy className="w-5 h-5" /> },
+    { id: "info", label: "Info", icon: <Users className="w-5 h-5" /> },
+];
+
 function TruthOrDareContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -141,6 +149,7 @@ function TruthOrDareContent() {
     const [unlocking, setUnlocking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [mobileTab, setMobileTab] = useState("chat");
     const [userName, setUserName] = useState<string>('Anonymous');
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -1647,97 +1656,43 @@ function TruthOrDareContent() {
             </main>
 
             {/* Mobile Redesigned Layout (Screens < lg) */}
-            <main className="lg:hidden relative z-10 flex-1 min-h-0 p-3.5 w-full overflow-y-auto scrollbar-none pb-24 flex flex-col gap-4">
-                {/* 1. Video Stream + Kings Row */}
-                <div className="flex gap-2.5">
-                    {/* Left: Video Player */}
-                    <div className="flex-[7] min-w-0">
-                        <div className="relative w-full aspect-video rounded-2xl border border-white/10 bg-gray-950/40 overflow-hidden shadow-lg backdrop-blur-md">
-                            {roomId ? (
-                                <LiveStreamWrapper
-                                    role="fan"
-                                    appId={APP_ID}
-                                    roomId={roomId}
-                                    uid={userId || 0}
-                                    hostId={hostId || 0}
-                                    hostAvatarUrl={hostAvatarUrl}
-                                    hostName={hostName}
-                                    collabCreators={collabCreators}
-                                />
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 h-full justify-center">
-                                    <Video className="w-5 h-5 text-white/20 animate-pulse" />
-                                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Waiting for host...</span>
-                                </div>
-                            )}
-                            
-                            {/* Live + Viewer Count Overlay */}
-                            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10">
-                                <span className="px-2 py-0.5 bg-[#ff2a6d] text-white text-[7.5px] font-black uppercase tracking-wider rounded-md animate-pulse shadow-[0_0_8px_rgba(255,42,109,0.5)]">
-                                    LIVE
-                                </span>
-                                <span className="px-2 py-0.5 bg-black/60 border border-white/10 text-white/80 text-[7.5px] font-bold rounded-md flex items-center gap-0.5 backdrop-blur-sm">
-                                    <Eye className="w-2.5 h-2.5 text-white/70" />
-                                    1.2K
-                                </span>
-                            </div>
+            <main className="lg:hidden relative z-10 flex-1 min-h-0 px-3 pb-20 pt-2 w-full overflow-hidden flex flex-col gap-3">
+                {/* 1. Video Stream — fixed aspect-video at top */}
+                <div className="w-full shrink-0 aspect-video max-w-[600px] mx-auto rounded-xl overflow-hidden border border-white/10 bg-gray-950/40 shadow-lg relative">
+                    {roomId ? (
+                        <LiveStreamWrapper
+                            role="fan"
+                            appId={APP_ID}
+                            roomId={roomId}
+                            uid={userId || 0}
+                            hostId={hostId || 0}
+                            hostAvatarUrl={hostAvatarUrl}
+                            hostName={hostName}
+                            collabCreators={collabCreators}
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center gap-2 h-full justify-center">
+                            <Video className="w-5 h-5 text-white/20 animate-pulse" />
+                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Waiting for host...</span>
                         </div>
-                    </div>
+                    )}
                     
-                    {/* Right: Stacked Kings */}
-                    <div className="flex-[3] flex flex-col gap-2 min-w-0">
-                        {/* Dare King Card */}
-                        <div className="flex-1 bg-[#1a0f18]/80 border border-red-500/15 rounded-2xl p-2 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(255,42,109,0.05)]">
-                            <span className="text-[7.5px] font-black text-red-400 uppercase tracking-widest flex items-center gap-0.5" style={{ textShadow: '0 0 5px rgba(239,68,68,0.3)' }}>
-                                <CrownIcon className="w-2.5 h-2.5 text-red-500 fill-red-500" />
-                                Dare King
-                            </span>
-                            <div className="relative w-9 h-9 mt-1.5 rounded-full p-0.5 border border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.3)] bg-black/40">
-                                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-                                    {topDareKing?.avatar ? (
-                                        <img src={topDareKing.avatar} alt="Dare King" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <CrownIcon className="w-4 h-4 text-red-500/35" />
-                                    )}
-                                </div>
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#ff2a6d] text-white text-[6.5px] font-black px-1.5 py-0.2 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
-                                    {topDareKing?.total ? `${topDareKing.total}` : "1258"}
-                                </div>
-                            </div>
-                            <span className="text-[9px] font-bold text-red-300 mt-2 truncate w-full max-w-[70px]">
-                                {topDareKing?.name || "John Doe"}
-                            </span>
-                        </div>
-
-                        {/* Truth King Card */}
-                        <div className="flex-1 bg-[#0a111a]/80 border border-cyan-500/15 rounded-2xl p-2 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(5,217,232,0.05)]">
-                            <span className="text-[7.5px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-0.5" style={{ textShadow: '0 0 5px rgba(6,182,212,0.3)' }}>
-                                <CrownIcon className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400" />
-                                Truth King
-                            </span>
-                            <div className="relative w-9 h-9 mt-1.5 rounded-full p-0.5 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)] bg-black/40">
-                                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-                                    {topTruthKing?.avatar ? (
-                                        <img src={topTruthKing.avatar} alt="Truth King" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <CrownIcon className="w-4 h-4 text-cyan-500/35" />
-                                    )}
-                                </div>
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#05d9e8] text-black text-[6.5px] font-black px-1.5 py-0.2 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
-                                    {topTruthKing?.total ? `${topTruthKing.total}` : "1168"}
-                                </div>
-                            </div>
-                            <span className="text-[9px] font-bold text-cyan-300 mt-2 truncate w-full max-w-[70px]">
-                                {topTruthKing?.name || "John Doe"}
-                            </span>
-                        </div>
+                    {/* Live + Viewer Count Overlay */}
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+                        <span className="px-1.5 py-0.5 bg-[#ff2a6d] text-white text-[7px] font-black uppercase tracking-wider rounded animate-pulse shadow-[0_0_8px_rgba(255,42,109,0.5)]">
+                            LIVE
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-black/60 border border-white/10 text-white/80 text-[7px] font-bold rounded flex items-center gap-0.5 backdrop-blur-sm">
+                            <Eye className="w-2 h-2 text-white/70" />
+                            1.2K
+                        </span>
                     </div>
                 </div>
-
-                {/* 2. Reactions & Tip Creator Row */}
-                <div className="flex gap-2.5">
+                
+                {/* 2. Reactions & Tip Creator Row — fixed below video */}
+                <div className="flex gap-2 shrink-0">
                     {/* Reactions (60%) */}
-                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2.5 flex justify-between gap-1.5">
+                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2 flex justify-between gap-1">
                         {[
                             { name: "Kiss", emoji: "💋", price: 10 },
                             { name: "Love", emoji: "❤️", price: 20 },
@@ -1747,246 +1702,361 @@ function TruthOrDareContent() {
                             <button
                                 key={`reaction-mobile-${r.name}`}
                                 onClick={() => openConfirmation('reaction', r.name, "", r.price)}
-                                className="flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/15 transition-all group active:scale-95 shadow-[0_2px_8px_rgba(168,85,247,0.1)]"
+                                className="flex-1 flex flex-col items-center gap-1 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/15 transition-all group active:scale-95 shadow-[0_2px_8px_rgba(168,85,247,0.1)]"
                             >
-                                <span className="text-xl group-hover:scale-120 transition-transform">{r.emoji}</span>
-                                <div className="flex flex-col items-center leading-none mt-1">
-                                    <span className="text-[8px] uppercase font-black tracking-tighter text-purple-200">{r.name}</span>
-                                    <span className="text-[8.5px] font-black text-white/50 mt-1">{cs()}{r.price}</span>
+                                <span className="text-base group-hover:scale-120 transition-transform">{r.emoji}</span>
+                                <div className="flex flex-col items-center leading-none mt-0.5">
+                                    <span className="text-[7px] uppercase font-black tracking-tighter text-purple-200">{r.name}</span>
+                                    <span className="text-[7.5px] font-black text-white/50 mt-0.5">{cs()}{r.price}</span>
                                 </div>
                             </button>
                         ))}
                     </div>
 
                     {/* Tip Creator (40%) */}
-                    <div className="flex-[4] bg-[#091510]/50 border border-emerald-500/15 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_2px_8px_rgba(16,185,129,0.05)]">
-                        <div className="flex items-center gap-1 mb-1.5">
-                            <Send className="w-3 h-3 text-emerald-400" />
-                            <h3 className="text-[8.5px] font-black text-white uppercase tracking-wider">Tip Creator</h3>
+                    <div className="flex-[4] bg-[#091510]/50 border border-emerald-500/15 rounded-2xl p-2 flex flex-col justify-between shadow-[0_2px_8px_rgba(16,185,129,0.05)]">
+                        <div className="flex items-center gap-1 mb-1">
+                            <Send className="w-2.5 h-2.5 text-emerald-400" />
+                            <h3 className="text-[8px] font-black text-white uppercase tracking-wider">Tip Creator</h3>
                         </div>
-                        <div className="grid grid-cols-4 gap-1">
+                        <div className="grid grid-cols-4 gap-0.5">
                             {TIP_AMOUNTS.map((amount) => (
                                 <button
                                     key={`tip-mobile-${amount}`}
                                     disabled={isSubmitting}
                                     onClick={() => openConfirmation('tip', `${cs()}${amount}`, `Tip ${cs()}${amount}`, amount)}
-                                    className="flex flex-col items-center gap-0.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/15 hover:bg-emerald-500/20 transition-all active:scale-95"
+                                    className="flex flex-col items-center gap-0.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/15 hover:bg-emerald-500/20 transition-all active:scale-95"
                                 >
-                                    <span className="text-[10px]">🪙</span>
-                                    <span className="text-[8px] font-black text-emerald-300">{cs()}{amount}</span>
+                                    <span className="text-[8px]">🪙</span>
+                                    <span className="text-[7px] font-black text-emerald-300">{cs()}{amount}</span>
                                 </button>
                             ))}
                         </div>
-                        <p className="text-[5.5px] text-gray-500 text-center mt-1.5 leading-none">Show appreciation — tips go directly to creator</p>
                     </div>
                 </div>
 
-                {/* 3. Live Chat Room */}
-                <div className="bg-[#0b080f]/50 border border-white/5 rounded-2xl flex flex-col overflow-hidden h-[250px] shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
-                    {/* Chat Header */}
-                    <div className="px-3.5 py-2 border-b border-white/5 flex items-center justify-between bg-white/5">
-                        <h3 className="text-[9.5px] font-black text-white flex items-center gap-1.5 uppercase tracking-widest">
-                            <div className="w-0.5 h-3 bg-[#ff2a6d] rounded-full shadow-[0_0_8px_rgba(255,42,109,0.8)]" />
-                            Live Chat Room
-                        </h3>
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 scale-90">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                            <span className="text-[7.5px] font-black text-blue-400 uppercase tracking-wider">{fanCount > 0 ? fanCount : 1} ONLINE</span>
+                {/* 3. Scrollable Tab Content Panels */}
+                {mobileTab === "chat" && (
+                    <div className="w-full flex-1 min-h-0 flex flex-col bg-[#0b080f]/50 border border-white/5 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        {/* Chat Header */}
+                        <div className="px-3.5 py-1.5 border-b border-white/5 flex items-center justify-between bg-white/5 shrink-0">
+                            <h3 className="text-[9px] font-black text-white flex items-center gap-1.5 uppercase tracking-widest">
+                                <div className="w-0.5 h-3 bg-[#ff2a6d] rounded-full shadow-[0_0_8px_rgba(255,42,109,0.8)]" />
+                                Live Chat Room
+                            </h3>
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 scale-90">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                <span className="text-[7px] font-black text-blue-400 uppercase tracking-wider">{fanCount > 0 ? fanCount : 1} ONLINE</span>
+                            </div>
+                        </div>
+
+                        {/* Live Chat Messages Area */}
+                        <div ref={chatScrollRef} className="p-3 flex-1 overflow-y-auto space-y-2.5 scrollbar-none">
+                            {chatMessages.length === 0 ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-white/20 text-[8px] uppercase tracking-wider">No messages yet — say hello!</p>
+                                </div>
+                            ) : (
+                                chatMessages.map((m) => {
+                                    const isMe = m.user_id === userId;
+                                    return (
+                                        <div key={`chat-mobile-${m.id}`} className="flex items-start gap-1.5 text-left">
+                                            <div className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[8px] font-black text-white border ${isMe ? 'bg-pink-600/30 border-pink-400 shadow-[0_0_8px_rgba(219,39,119,0.2)]' : 'bg-purple-600/30 border-purple-400 shadow-[0_0_8px_rgba(147,51,234,0.2)]'}`}>
+                                                {m.username?.charAt(0).toUpperCase() || '?'}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-baseline gap-1 flex-wrap">
+                                                    <span className={`font-black text-[9px] flex items-center gap-0.5 ${isMe ? 'text-pink-400' : 'text-amber-400'}`}>
+                                                        👑 {m.username || 'Anonymous'}
+                                                    </span>
+                                                    <span className="bg-purple-500/20 border border-purple-400/30 text-purple-300 text-[4px] font-black px-1 rounded uppercase scale-90 origin-left">VIP</span>
+                                                    {m.user_id && <UserBadgeDisplay userId={m.user_id} />}
+                                                    <span className="text-[7px] text-white/20 ml-auto shrink-0 font-medium">
+                                                        {formatChatTime(m.created_at)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[9.5px] text-white/80 mt-0.5 break-words leading-relaxed">
+                                                    {m.message}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Message Input */}
+                        <div className="p-2 border-t border-white/5 bg-white/5 shrink-0">
+                            <div className="flex items-center gap-1.5">
+                                <EmojiPicker
+                                    onEmojiSelect={(emoji) => setChatInput(prev => prev + emoji)}
+                                    accentColor="hsl(320, 100%, 65%)"
+                                    position="top"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder={userId ? "Type your message..." : "Sign in to chat"}
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleChatSend();
+                                        }
+                                    }}
+                                    disabled={!userId || !roomId}
+                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl py-1.5 px-3 text-[9px] text-white placeholder:text-gray-500 focus:border-white/25 transition-all outline-none"
+                                />
+                                <button
+                                    onClick={handleChatSend}
+                                    disabled={!chatInput.trim() || !userId || chatSending}
+                                    className="p-1.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-colors disabled:opacity-40"
+                                >
+                                    <Send className="w-3 h-3 text-pink-400" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setChatInput("🔥");
+                                        setTimeout(handleChatSend, 50);
+                                    }}
+                                    disabled={!userId}
+                                    className="p-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors"
+                                >
+                                    <Flame className="w-3 h-3 text-orange-400" />
+                                </button>
+                            </div>
                         </div>
                     </div>
+                )}
 
-                    {/* Live Chat Messages Area */}
-                    <div className="p-3.5 flex-1 overflow-y-auto space-y-3 scrollbar-none">
-                        {chatMessages.length === 0 ? (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-white/20 text-[9px] uppercase tracking-wider">No messages yet — say hello!</p>
+                {mobileTab === "play" && (
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                        {/* System Dares & System Truths */}
+                        <div className="grid grid-cols-2 gap-3 shrink-0">
+                            {/* System Dares */}
+                            <div className="bg-[#180a0a]/30 border border-red-500/15 rounded-2xl p-3 flex flex-col gap-2 shadow-[0_4px_15px_rgba(239,68,68,0.02)]">
+                                <h4 className="text-[9px] font-black text-red-400 uppercase tracking-widest pb-1 border-b border-red-500/10 flex items-center gap-1">
+                                    <span className="w-1 h-1 rounded-full bg-red-500" />
+                                    System Dares
+                                </h4>
+                                <div className="flex flex-col gap-2">
+                                    {dareTiers.map((t) => {
+                                        const badgeColor = t.id === 'bronze' ? 'bg-[#48281a] border border-[#a15c38]/30 text-[#e7a379] shadow-[0_0_8px_rgba(161,92,56,0.15)]' : t.id === 'silver' ? 'bg-[#2d3139] border border-[#717684]/30 text-[#b5bac9] shadow-[0_0_8px_rgba(113,118,132,0.15)]' : 'bg-[#4e3f16] border border-[#c1a03c]/30 text-[#ecd67d] shadow-[0_0_8px_rgba(193,160,60,0.15)]';
+                                        return (
+                                            <button
+                                                key={`dare-mobile-${t.id}`}
+                                                disabled={isSubmitting}
+                                                onClick={() => openConfirmation('system_dare', t.id, "", t.price)}
+                                                className="w-full flex items-center justify-between group active:scale-98 text-left py-1"
+                                            >
+                                                <div className="min-w-0">
+                                                    <span className={`inline-block text-[6.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeColor}`}>
+                                                        {t.label}
+                                                    </span>
+                                                    <p className="text-[7.5px] text-gray-500 truncate mt-0.5 leading-none">{t.desc}</p>
+                                                </div>
+                                                <span className="text-[9px] font-black text-white shrink-0 ml-1">{cs()}{t.price}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        ) : (
-                            chatMessages.map((m) => {
-                                const isMe = m.user_id === userId;
-                                return (
-                                    <div key={`chat-mobile-${m.id}`} className="flex items-start gap-2 text-left">
-                                        <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[9px] font-black text-white border ${isMe ? 'bg-pink-600/30 border-pink-400 shadow-[0_0_8px_rgba(219,39,119,0.2)]' : 'bg-purple-600/30 border-purple-400 shadow-[0_0_8px_rgba(147,51,234,0.2)]'}`}>
-                                            {m.username?.charAt(0).toUpperCase() || '?'}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-baseline gap-1 flex-wrap">
-                                                <span className={`font-black text-[9.5px] flex items-center gap-0.5 ${isMe ? 'text-pink-400' : 'text-amber-400'}`}>
-                                                    👑 {m.username || 'Anonymous'}
-                                                </span>
-                                                <span className="bg-purple-500/20 border border-purple-400/30 text-purple-300 text-[5px] font-black px-1.5 rounded uppercase scale-90 origin-left">VIP</span>
-                                                {m.user_id && <UserBadgeDisplay userId={m.user_id} />}
-                                                <span className="text-[7.5px] text-white/20 ml-auto shrink-0 font-medium">
-                                                    {formatChatTime(m.created_at)}
-                                                </span>
-                                            </div>
-                                            <p className="text-[10px] text-white/80 mt-1 break-words leading-relaxed">
-                                                {m.message}
-                                            </p>
-                                        </div>
+
+                            {/* System Truths */}
+                            <div className="bg-[#0a0f18]/30 border border-cyan-500/15 rounded-2xl p-3 flex flex-col gap-2 shadow-[0_4px_15px_rgba(6,182,212,0.02)]">
+                                <h4 className="text-[9px] font-black text-cyan-400 uppercase tracking-widest pb-1 border-b border-cyan-500/10 flex items-center gap-1">
+                                    <span className="w-1 h-1 rounded-full bg-cyan-500" />
+                                    System Truths
+                                </h4>
+                                <div className="flex flex-col gap-2">
+                                    {truthTiers.map((t) => {
+                                        const badgeColor = t.id === 'bronze' ? 'bg-[#48281a] border border-[#a15c38]/30 text-[#e7a379] shadow-[0_0_8px_rgba(161,92,56,0.15)]' : t.id === 'silver' ? 'bg-[#2d3139] border border-[#717684]/30 text-[#b5bac9] shadow-[0_0_8px_rgba(113,118,132,0.15)]' : 'bg-[#4e3f16] border border-[#c1a03c]/30 text-[#ecd67d] shadow-[0_0_8px_rgba(193,160,60,0.15)]';
+                                        return (
+                                            <button
+                                                key={`truth-mobile-${t.id}`}
+                                                disabled={isSubmitting}
+                                                onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
+                                                className="w-full flex items-center justify-between group active:scale-98 text-left py-1"
+                                            >
+                                                <div className="min-w-0">
+                                                    <span className={`inline-block text-[6.5px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeColor}`}>
+                                                        {t.label}
+                                                    </span>
+                                                    <p className="text-[7.5px] text-gray-500 truncate mt-0.5 leading-none">{t.desc}</p>
+                                                </div>
+                                                <span className="text-[9px] font-black text-white shrink-0 ml-1">{cs()}{t.price}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Requests */}
+                        <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-3 flex flex-col gap-2 shadow-[0_4px_15px_rgba(168,85,247,0.02)] shrink-0">
+                            <h4 className="text-[9px] font-black text-purple-400 uppercase tracking-widest px-0.5">
+                                Custom Requests
+                            </h4>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCustomType("truth")}
+                                    className={`flex-1 py-1.5 rounded-xl text-[8.5px] font-black transition-all ${
+                                        customType === "truth" 
+                                        ? "bg-[#0c1a2f]/80 border border-cyan-500/30 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]" 
+                                        : "bg-cyan-950/10 border border-cyan-500/10 text-cyan-400/50 hover:bg-cyan-500/5"
+                                    }`}
+                                >
+                                    Custom Truth ({cs()}25)
+                                </button>
+                                <button
+                                    onClick={() => setCustomType("dare")}
+                                    className={`flex-1 py-1.5 rounded-xl text-[8.5px] font-black transition-all ${
+                                        customType === "dare" 
+                                        ? "bg-[#250d18]/80 border border-red-500/30 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.25)]" 
+                                        : "bg-red-950/10 border border-red-500/10 text-red-400/50 hover:bg-red-500/5"
+                                    }`}
+                                >
+                                    Custom Dare ({cs()}35)
+                                </button>
+                            </div>
+                            <div className="flex gap-2 items-stretch">
+                                <textarea
+                                    value={customText}
+                                    onChange={(e) => setCustomText(e.target.value)}
+                                    placeholder="Write your custom Truth/Dare here..."
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-xl p-2.5 text-[9px] text-white placeholder:text-gray-600 outline-none resize-none h-12 leading-normal focus:border-white/20 transition-all"
+                                />
+                                <button
+                                    onClick={() => openConfirmation(`custom_${customType}`, null, customText, customType === 'truth' ? 25 : 35)}
+                                    disabled={!customType || !customText.trim() || isSubmitting}
+                                    className="px-3 rounded-xl bg-[#241a08] border border-amber-500/40 text-amber-300 disabled:opacity-40 disabled:border-white/5 disabled:text-gray-600 disabled:bg-black/20 text-[8.5px] font-black flex flex-col items-center justify-center gap-1 hover:bg-amber-500/20 hover:border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-95 select-none shrink-0"
+                                >
+                                    <MessageCircle className="w-3 h-3" />
+                                    <span>Pay & Submit</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {mobileTab === "games" && (
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                        {/* Stacked Kings */}
+                        <div className="grid grid-cols-2 gap-2.5 shrink-0">
+                            {/* Dare King Card */}
+                            <div className="bg-[#1a0f18]/80 border border-red-500/15 rounded-2xl p-3 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(255,42,109,0.05)]">
+                                <span className="text-[7.5px] font-black text-red-400 uppercase tracking-widest flex items-center gap-0.5" style={{ textShadow: '0 0 5px rgba(239,68,68,0.3)' }}>
+                                    <CrownIcon className="w-2.5 h-2.5 text-red-500 fill-red-500" />
+                                    Dare King
+                                </span>
+                                <div className="relative w-9 h-9 mt-1.5 rounded-full p-0.5 border border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.3)] bg-black/40">
+                                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                                        {topDareKing?.avatar ? (
+                                            <img src={topDareKing.avatar} alt="Dare King" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <CrownIcon className="w-4 h-4 text-red-500/35" />
+                                        )}
                                     </div>
-                                );
-                            })
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#ff2a6d] text-white text-[6.5px] font-black px-1.5 py-0.2 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
+                                        {topDareKing?.total ? `${topDareKing.total}` : "0"}
+                                    </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-red-300 mt-2 truncate w-full max-w-[100px]">
+                                    {topDareKing?.name || "-"}
+                                </span>
+                            </div>
+
+                            {/* Truth King Card */}
+                            <div className="bg-[#0a111a]/80 border border-cyan-500/15 rounded-2xl p-3 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(5,217,232,0.05)]">
+                                <span className="text-[7.5px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-0.5" style={{ textShadow: '0 0 5px rgba(6,182,212,0.3)' }}>
+                                    <CrownIcon className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400" />
+                                    Truth King
+                                </span>
+                                <div className="relative w-9 h-9 mt-1.5 rounded-full p-0.5 border border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)] bg-black/40">
+                                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
+                                        {topTruthKing?.avatar ? (
+                                            <img src={topTruthKing.avatar} alt="Truth King" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <CrownIcon className="w-4 h-4 text-cyan-500/35" />
+                                        )}
+                                    </div>
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#05d9e8] text-black text-[6.5px] font-black px-1.5 py-0.2 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
+                                        {topTruthKing?.total ? `${topTruthKing.total}` : "0"}
+                                    </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-cyan-300 mt-2 truncate w-full max-w-[100px]">
+                                    {topTruthKing?.name || "-"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Goals/Group Voting Section */}
+                        {roomId && (
+                            <div className="shrink-0">
+                                <GroupVotePanel
+                                    roomId={roomId}
+                                    currentUserId={userId || undefined}
+                                />
+                            </div>
                         )}
                     </div>
+                )}
 
-                    {/* Message Input */}
-                    <div className="p-2.5 border-t border-white/5 bg-white/5">
-                        <div className="flex items-center gap-2">
-                            <EmojiPicker
-                                onEmojiSelect={(emoji) => setChatInput(prev => prev + emoji)}
-                                accentColor="hsl(320, 100%, 65%)"
-                                position="top"
-                            />
-                            <input
-                                type="text"
-                                placeholder={userId ? "Type your message..." : "Sign in to chat"}
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleChatSend();
-                                    }
-                                }}
-                                disabled={!userId || !roomId}
-                                className="flex-1 bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-[10px] text-white placeholder:text-gray-500 focus:border-white/25 transition-all outline-none"
-                            />
+                {mobileTab === "info" && (
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
+                        <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-4 flex flex-col gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full overflow-hidden border border-purple-500/30 bg-black/40 flex items-center justify-center">
+                                    {hostAvatarUrl ? (
+                                        <img src={hostAvatarUrl} alt={hostName} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xl">🎭</span>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white text-sm">{hostName}</h4>
+                                    <span className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">HOST</span>
+                                </div>
+                            </div>
+                            {sessionInfo && (
+                                <div className="space-y-1">
+                                    <h5 className="font-bold text-xs text-white">{sessionInfo.title}</h5>
+                                    <p className="text-[11px] text-white/60 leading-relaxed">{sessionInfo.desc}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Wallet className="w-5 h-5 text-amber-400" />
+                                <div>
+                                    <h5 className="text-[10px] text-gray-500 uppercase font-black">My Balance</h5>
+                                    <div className="mt-0.5">
+                                        <WalletPill />
+                                    </div>
+                                </div>
+                            </div>
                             <button
-                                onClick={handleChatSend}
-                                disabled={!chatInput.trim() || !userId || chatSending}
-                                className="p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-colors disabled:opacity-40"
+                                onClick={() => setShowInviteModal(true)}
+                                className="px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs tracking-wider uppercase flex items-center gap-1.5 transition-all"
                             >
-                                <Send className="w-3.5 h-3.5 text-pink-400" />
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setChatInput("🔥");
-                                    setTimeout(handleChatSend, 50);
-                                }}
-                                disabled={!userId}
-                                className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-colors"
-                            >
-                                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                                <UserPlus className="w-4 h-4" />
+                                <span>Invite Friend</span>
                             </button>
                         </div>
                     </div>
-                </div>
-
-                {/* 4. System Dares & System Truths */}
-                <div className="grid grid-cols-2 gap-3">
-                    {/* System Dares */}
-                    <div className="bg-[#180a0a]/30 border border-red-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(239,68,68,0.02)]">
-                        <h4 className="text-[9.5px] font-black text-red-400 uppercase tracking-widest pb-1 border-b border-red-500/10 flex items-center gap-1">
-                            <span className="w-1 h-1 rounded-full bg-red-500" />
-                            System Dares
-                        </h4>
-                        <div className="flex flex-col gap-2.5">
-                            {dareTiers.map((t) => {
-                                const badgeColor = t.id === 'bronze' ? 'bg-[#48281a] border border-[#a15c38]/30 text-[#e7a379] shadow-[0_0_8px_rgba(161,92,56,0.15)]' : t.id === 'silver' ? 'bg-[#2d3139] border border-[#717684]/30 text-[#b5bac9] shadow-[0_0_8px_rgba(113,118,132,0.15)]' : 'bg-[#4e3f16] border border-[#c1a03c]/30 text-[#ecd67d] shadow-[0_0_8px_rgba(193,160,60,0.15)]';
-                                return (
-                                    <button
-                                        key={`dare-mobile-${t.id}`}
-                                        disabled={isSubmitting}
-                                        onClick={() => openConfirmation('system_dare', t.id, "", t.price)}
-                                        className="w-full flex items-center justify-between group active:scale-98 text-left py-1"
-                                    >
-                                        <div className="min-w-0">
-                                            <span className={`inline-block text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${badgeColor}`}>
-                                                {t.label}
-                                            </span>
-                                            <p className="text-[8px] text-gray-500 truncate mt-1 leading-none">{t.desc}</p>
-                                        </div>
-                                        <span className="text-[10px] font-black text-white shrink-0 ml-1">{cs()}{t.price}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* System Truths */}
-                    <div className="bg-[#0a0f18]/30 border border-cyan-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(6,182,212,0.02)]">
-                        <h4 className="text-[9.5px] font-black text-cyan-400 uppercase tracking-widest pb-1 border-b border-cyan-500/10 flex items-center gap-1">
-                            <span className="w-1 h-1 rounded-full bg-cyan-500" />
-                            System Truths
-                        </h4>
-                        <div className="flex flex-col gap-2.5">
-                            {truthTiers.map((t) => {
-                                const badgeColor = t.id === 'bronze' ? 'bg-[#48281a] border border-[#a15c38]/30 text-[#e7a379] shadow-[0_0_8px_rgba(161,92,56,0.15)]' : t.id === 'silver' ? 'bg-[#2d3139] border border-[#717684]/30 text-[#b5bac9] shadow-[0_0_8px_rgba(113,118,132,0.15)]' : 'bg-[#4e3f16] border border-[#c1a03c]/30 text-[#ecd67d] shadow-[0_0_8px_rgba(193,160,60,0.15)]';
-                                return (
-                                    <button
-                                        key={`truth-mobile-${t.id}`}
-                                        disabled={isSubmitting}
-                                        onClick={() => openConfirmation('system_truth', t.id, "", t.price)}
-                                        className="w-full flex items-center justify-between group active:scale-98 text-left py-1"
-                                    >
-                                        <div className="min-w-0">
-                                            <span className={`inline-block text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${badgeColor}`}>
-                                                {t.label}
-                                            </span>
-                                            <p className="text-[8px] text-gray-500 truncate mt-1 leading-none">{t.desc}</p>
-                                        </div>
-                                        <span className="text-[10px] font-black text-white shrink-0 ml-1">{cs()}{t.price}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Custom Requests */}
-                <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-3 flex flex-col gap-3 shadow-[0_4px_15px_rgba(168,85,247,0.02)]">
-                    <h4 className="text-[9.5px] font-black text-purple-400 uppercase tracking-widest px-0.5">
-                        Custom Requests
-                    </h4>
-                    <div className="flex gap-2.5">
-                        <button
-                            onClick={() => setCustomType("truth")}
-                            className={`flex-1 py-2 rounded-xl text-[9px] font-black transition-all ${
-                                customType === "truth" 
-                                ? "bg-[#0c1a2f]/80 border border-cyan-500/30 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]" 
-                                : "bg-cyan-950/10 border border-cyan-500/10 text-cyan-400/50 hover:bg-cyan-500/5"
-                            }`}
-                        >
-                            Custom Truth ({cs()}25)
-                        </button>
-                        <button
-                            onClick={() => setCustomType("dare")}
-                            className={`flex-1 py-2 rounded-xl text-[9px] font-black transition-all ${
-                                customType === "dare" 
-                                ? "bg-[#250d18]/80 border border-red-500/30 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.25)]" 
-                                : "bg-red-950/10 border border-red-500/10 text-red-400/50 hover:bg-red-500/5"
-                            }`}
-                        >
-                            Custom Dare ({cs()}35)
-                        </button>
-                    </div>
-                    <div className="flex gap-2.5 items-stretch">
-                        <textarea
-                            value={customText}
-                            onChange={(e) => setCustomText(e.target.value)}
-                            placeholder="Write your custom Truth/Dare here..."
-                            className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-[9.5px] text-white placeholder:text-gray-600 outline-none resize-none h-14 leading-relaxed focus:border-white/20 transition-all"
-                        />
-                        <button
-                            onClick={() => openConfirmation(`custom_${customType}`, null, customText, customType === 'truth' ? 25 : 35)}
-                            disabled={!customType || !customText.trim() || isSubmitting}
-                            className="px-4 rounded-xl bg-[#241a08] border border-amber-500/40 text-amber-300 disabled:opacity-40 disabled:border-white/5 disabled:text-gray-600 disabled:bg-black/20 text-[9px] font-black flex flex-col items-center justify-center gap-1.5 hover:bg-amber-500/20 hover:border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-95 select-none shrink-0"
-                        >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span>Pay & Submit</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* 6. Goals Section */}
-                {roomId && (
-                    <GroupVotePanel
-                        roomId={roomId}
-                        currentUserId={userId || undefined}
-                    />
                 )}
             </main>
+
+            {/* Mobile Tab Bar */}
+            <div className="lg:hidden">
+                <MobileStudioTabs
+                    tabs={TOD_FAN_TABS}
+                    activeTab={mobileTab}
+                    onTabChange={setMobileTab}
+                    accentHsl="320, 100%, 65%"
+                />
+            </div>
             <AnimatePresence>
                 {/* 1. Confirmation Modal */}
                 {confirmModal && confirmModal.isOpen && (

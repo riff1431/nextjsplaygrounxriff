@@ -188,7 +188,7 @@ const Suga4UCreatorPage = () => {
 
     return (
         <div
-            className="s4u-creator-theme min-h-[100dvh] lg:h-screen lg:overflow-hidden relative"
+            className="s4u-creator-theme h-[100dvh] w-screen overflow-hidden relative"
             style={{
                 backgroundImage: "url('/rooms/suga4u-creator-bg.jpeg')",
                 backgroundSize: "cover",
@@ -213,7 +213,7 @@ const Suga4UCreatorPage = () => {
             `}} />
 
             {/* Content */}
-            <div className="relative z-10 p-2 max-w-[1400px] mx-auto flex flex-col min-h-[100dvh] lg:h-screen">
+            <div className="relative z-10 p-2 max-w-[1400px] mx-auto flex flex-col h-full overflow-hidden">
                 
                 {/* Top Header Row */}
                 <div className="mb-0 shrink-0 flex items-center justify-between min-h-[44px]">
@@ -273,7 +273,7 @@ const Suga4UCreatorPage = () => {
                 </div>
 
                 {/* Main grid — responsive */}
-                <div className="flex-1 min-h-0 pt-2 pb-16 lg:pb-2 overflow-y-auto lg:overflow-hidden">
+                <div className="flex-1 min-h-0 pt-2 pb-16 lg:pb-2 overflow-hidden flex flex-col">
                     {/* Desktop: 4-col grid */}
                     <div className="hidden lg:grid grid-cols-4 gap-4 h-full">
                         {/* Left column: Live Chat (Full Height) */}
@@ -336,38 +336,36 @@ const Suga4UCreatorPage = () => {
                     </div>
 
                     {/* Mobile: Stream always on top + tab content below */}
-                    <div className="lg:hidden flex flex-col gap-3">
+                    <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                         {/* Stream — always visible at top */}
-                        <div className="s4u-creator-glass-panel p-3 shrink-0">
-                            <div className="relative rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center aspect-square max-h-[360px] mx-auto">
-                                {roomId && user ? (
-                                    <LiveStreamWrapper
-                                        role="host"
-                                        appId={APP_ID}
-                                        roomId={roomId}
-                                        uid={user.id}
-                                        hostId={user.id}
-                                        hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                        hostName={user.user_metadata?.full_name || "Creator"}
-                                    />
-                                ) : (
-                                    <div className="relative flex flex-col items-center gap-2 text-white/50">
-                                        <span className="text-xs font-semibold">Connecting to stream...</span>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="relative rounded-xl overflow-hidden bg-white/5 border border-white/10 aspect-video max-w-[600px] shrink-0 mx-auto w-full">
+                            {roomId && user ? (
+                                <LiveStreamWrapper
+                                    role="host"
+                                    appId={APP_ID}
+                                    roomId={roomId}
+                                    uid={user.id}
+                                    hostId={user.id}
+                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
+                                    hostName={user.user_metadata?.full_name || "Creator"}
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white/50 text-xs font-semibold">
+                                    Connecting to stream...
+                                </div>
+                            )}
                         </div>
 
                         {/* Tab content below stream */}
                         {mobileTab === "chat" && (
-                            <div className="min-h-[300px]" style={{ height: "calc(100dvh - 360px)" }}>
+                            <div className="w-full flex-1 min-h-0 flex flex-col">
                                 <S4uLiveChat roomId={roomId || undefined} sessionId={sessionId || undefined} />
                             </div>
                         )}
 
                         {mobileTab === "requests" && (
-                            <div className="flex flex-col gap-4">
-                                <div className="min-h-[300px]">
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
+                                <div className="shrink-0">
                                     <S4uPendingRequests roomId={roomId || undefined} sessionId={sessionId || undefined} />
                                 </div>
                                 <S4uCreatorGroupVote
@@ -379,8 +377,8 @@ const Suga4UCreatorPage = () => {
                         )}
 
                         {mobileTab === "favorites" && (
-                            <div className="flex flex-col gap-4">
-                                <div className="min-h-[300px]">
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
+                                <div className="shrink-0">
                                     <S4uCreatorsFavorites roomId={roomId || undefined} sessionId={sessionId || undefined} />
                                 </div>
                                 <S4uCreatorSecrets roomId={roomId || undefined} sessionId={sessionId || undefined} />

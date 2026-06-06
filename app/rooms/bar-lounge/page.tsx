@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import WalletPill from "@/components/common/WalletPill";
+import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import RoomEntryInfoModal, { isRoomEntryDismissed } from "@/components/rooms/shared/RoomEntryInfoModal";
@@ -65,6 +66,13 @@ type Room = {
     profiles?: { handle?: string; avatar_url?: string; full_name?: string };
 };
 
+const BAR_LOUNGE_FAN_TABS: MobileStudioTab[] = [
+    { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
+    { id: "drinks", label: "Drinks", icon: <Wine className="w-5 h-5" /> },
+    { id: "games", label: "Games", icon: <Play className="w-5 h-5" /> },
+    { id: "info", label: "Info", icon: <Users className="w-5 h-5" /> },
+];
+
 export default function BarLoungeRoom() {
     const ENTRY_FEE = 10;
     const router = useRouter();
@@ -86,6 +94,7 @@ export default function BarLoungeRoom() {
     const [showEntryInfo, setShowEntryInfo] = useState(false);
     const [pendingEntrySession, setPendingEntrySession] = useState<Room | null>(null);
     const [chatInput, setChatInput] = useState("");
+    const [mobileTab, setMobileTab] = useState("chat");
 
     const [drinks, setDrinks] = useState<any[]>([]);
     const [spinOutcomes, setSpinOutcomes] = useState<any[]>([]);
@@ -567,8 +576,8 @@ export default function BarLoungeRoom() {
     const sessionTitle = activeSessions.find(s => s.id === roomId)?.title || "";
 
     return (
-        <div className="relative min-h-screen overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif", color: C.fg, background: C.bg }}>
-            <style>{`
+        <div className="relative h-[100dvh] w-screen overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif", color: C.fg, background: C.bg }}>
+            <style dangerouslySetInnerHTML={{__html: `
                 @keyframes blBottleSpin { 0% { transform: rotate(0deg) scale(1); } 60% { transform: rotate(720deg) scale(1.04); } 100% { transform: rotate(1080deg) scale(1); } }
                 @keyframes blSpotlight { 0% { opacity: 0; } 10% { opacity: 1; } 70% { opacity: 0.85; } 100% { opacity: 0; } }
                 @keyframes blConfettiFall { 0% { transform: translateY(-10px) rotate(0deg); } 100% { transform: translateY(110vh) rotate(540deg); } }
@@ -587,7 +596,7 @@ export default function BarLoungeRoom() {
                 .bl-chat-scroll::-webkit-scrollbar { width: 4px; }
                 .bl-chat-scroll::-webkit-scrollbar-track { background: transparent; }
                 .bl-chat-scroll::-webkit-scrollbar-thumb { background: hsla(280,60%,45%,0.3); border-radius: 10px; }
-            `}</style>
+            `}} />
 
             {/* Background */}
             <div className="fixed inset-0 z-0" style={{ backgroundImage: "url(/rooms/bar-lounge/lounge-bg-v2.png)", backgroundSize: "cover", backgroundPosition: "center" }} />
@@ -608,9 +617,9 @@ export default function BarLoungeRoom() {
             )}
 
             {/* Content */}
-            <div className="relative z-20 min-h-screen p-4 lg:p-6">
+            <div className="relative z-20 h-full overflow-hidden flex flex-col p-3 lg:p-6 pb-20 lg:pb-6">
                 {/* Top bar */}
-                <div className="flex items-center justify-between mb-4 max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-4 max-w-7xl mx-auto w-full shrink-0">
                     <div className="flex items-center gap-3">
                         {viewState === 'hosting' ? (
                             <button onClick={endHosting} style={{ ...glassPanel, padding: "8px 16px", borderRadius: "0.75rem", fontSize: "12px", fontWeight: 700, color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -631,10 +640,10 @@ export default function BarLoungeRoom() {
                     </div>
                 </div>
 
-                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr_350px] gap-4 lg:gap-6 lg:h-[calc(100vh-6rem)]">
-
+                {/* Desktop layout */}
+                <div className="hidden lg:grid max-w-7xl mx-auto w-full flex-1 min-h-0 grid-cols-[320px_1fr_350px] gap-6 overflow-hidden">
                     {/* ─── LEFT: Drink Menu ─── */}
-                    <div className="order-2 lg:order-1 overflow-y-auto bl-chat-scroll" style={{ ...glassPanel, padding: "16px", display: "flex", flexDirection: "column" }}>
+                    <div className="overflow-y-auto bl-chat-scroll h-full" style={{ ...glassPanel, padding: "16px", display: "flex", flexDirection: "column" }}>
                         <div className="flex items-center gap-2 mb-1">
                             <Wine className="w-5 h-3 bl-glow-pulse" style={{ color: C.neonPurple }} />
                             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.25rem", fontWeight: 700, color: C.gold, ...glowTextGold }}>Buy a Drink</h2>
@@ -684,9 +693,9 @@ export default function BarLoungeRoom() {
                     </div>
 
                     {/* ─── CENTER: Stream + Tips + Spin ─── */}
-                    <div className="order-1 lg:order-2 flex flex-col overflow-y-auto bl-chat-scroll">
+                    <div className="flex flex-col overflow-y-auto bl-chat-scroll h-full">
                         {/* Stream */}
-                        <div className="relative" style={{ ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem" }}>
+                        <div className="relative shrink-0" style={{ ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem" }}>
                             <div style={{ aspectRatio: "16/9", width: "100%", position: "relative" }}>
                                 {roomId && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
                             </div>
@@ -701,7 +710,7 @@ export default function BarLoungeRoom() {
                         </div>
 
                         {/* Tips */}
-                        <div className="mt-0" style={{ border: `1px solid ${C.borderLight}`, borderRadius: "0.75rem", padding: "24px 64px", paddingTop: "0" }}>
+                        <div className="mt-0 shrink-0" style={{ border: `1px solid ${C.borderLight}`, borderRadius: "0.75rem", padding: "24px 64px", paddingTop: "0" }}>
                             <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: C.fg, textAlign: "center", marginBottom: "12px", marginTop: "12px" }}>
                                 <Zap className="w-5 h-5 inline mr-2" style={{ color: C.gold }} />Tip Now
                             </h3>
@@ -726,7 +735,7 @@ export default function BarLoungeRoom() {
                         </div>
 
                         {/* Spin the Bottle */}
-                        <div className="mt-4" style={{ ...glassPanel, padding: "24px", borderRadius: "0.75rem" }}>
+                        <div className="mt-4 shrink-0" style={{ ...glassPanel, padding: "24px", borderRadius: "0.75rem" }}>
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                     <Sparkles className="w-5 h-5" style={{ color: C.gold }} />
@@ -745,8 +754,8 @@ export default function BarLoungeRoom() {
                     </div>
 
                     {/* ─── RIGHT: Lounge Chat ─── */}
-                    <div className="order-3" style={{ ...glassPanel, padding: "16px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="h-full flex flex-col overflow-hidden" style={{ ...glassPanel, padding: "16px", display: "flex", flexDirection: "column" }}>
+                        <div className="flex items-center justify-between mb-3 shrink-0">
                             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.25rem", fontWeight: 700, color: C.gold, ...glowTextGold }}>Lounge Chat</h2>
                             <span style={liveBadge}>
                                 <span className="w-2 h-2 rounded-full bl-glow-pulse" style={{ background: "hsl(140,70%,55%)" }} />
@@ -772,13 +781,13 @@ export default function BarLoungeRoom() {
                         </div>
 
                         {/* Pin name */}
-                        <div style={{ ...chatMsgStyle, ...glowPink, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", cursor: "pointer" }} onClick={() => confirmPurchase("pin", "Pin Name to Top", 25)}>
+                        <div style={{ ...chatMsgStyle, ...glowPink, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", cursor: "pointer" }} onClick={() => confirmPurchase("pin", "Pin Name to Top", 25)} className="shrink-0">
                             <span style={{ fontSize: "18px" }}>🔥</span>
                             <span className="bl-neon-flicker" style={{ fontSize: "14px", fontWeight: 700, color: C.neonPink }}>PIN NAME TO TOP 10 mins</span>
                             <span style={{ color: C.gold, fontWeight: 700, marginLeft: "auto" }}>+{cs()}25</span>
                         </div>
 
-                        <div className="flex gap-2" style={{ alignItems: "center" }}>
+                        <div className="flex gap-2 shrink-0" style={{ alignItems: "center" }}>
                             <input
                                 type="text"
                                 placeholder="Send a message..."
@@ -799,6 +808,190 @@ export default function BarLoungeRoom() {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile Layout */}
+                <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
+                    {/* Stream — always visible at top */}
+                    <div className="relative w-full aspect-video max-w-[600px] shrink-0 mx-auto rounded-xl overflow-hidden shadow-lg border border-[hsla(42,90%,55%,0.2)] bg-black/40">
+                        {roomId && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
+                        {/* Floating hearts */}
+                        <div className="absolute top-4 right-4 bl-float" style={{ zIndex: 30 }}>
+                            <Heart className="w-6 h-6 bl-glow-pulse" style={{ color: C.neonPink, fill: `${C.neonPink}80`, filter: `drop-shadow(0 0 10px ${C.neonPink}99)` }} />
+                        </div>
+                    </div>
+
+                    {/* Tip Creator Row — fixed below video */}
+                    <div className="shrink-0 flex items-center justify-between gap-3 bg-white/5 border border-white/10 rounded-xl p-2">
+                        <span className="text-[10px] font-black uppercase text-white/50 tracking-wider">Tip Host</span>
+                        <div className="flex gap-1.5 flex-1 justify-end">
+                            {[10, 25, 50].map((amount) => (
+                                <button key={`tip-mobile-${amount}`} className="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold active:scale-95" onClick={() => handleTip(amount)}>
+                                    ${amount}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tab panels */}
+                    {mobileTab === "chat" && (
+                        <div className="w-full flex-1 min-h-0 flex flex-col bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                            <div className="px-3 py-1.5 border-b border-white/10 flex items-center justify-between bg-white/5 shrink-0">
+                                <h3 className="text-[10px] font-black uppercase tracking-wider text-white">Lounge Chat</h3>
+                                <span className="flex items-center gap-1 text-[8px] font-bold text-emerald-400">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+                                </span>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-3 space-y-2 bl-chat-scroll">
+                                {messages.map((msg: any) => (
+                                    <div key={msg.id} style={chatMsgStyle} className="flex items-start gap-1.5">
+                                        <span style={{ fontSize: "14px", flexShrink: 0 }}>{msg.is_system ? "🔔" : "🧑"}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1 flex-wrap">
+                                                <span className="font-bold text-xs text-white">{msg.handle || "Anonymous"}</span>
+                                                {msg.user_id && <UserBadgeDisplay userId={msg.user_id} />}
+                                            </div>
+                                            <span className="text-xs text-white/70 block mt-0.5">{msg.content}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={chatEndRef} />
+                            </div>
+
+                            <div className="p-2 border-t border-white/10 bg-white/5 shrink-0 flex flex-col gap-2">
+                                <div onClick={() => confirmPurchase("pin", "Pin Name to Top", 25)} className="flex items-center justify-between bg-pink-500/10 border border-pink-500/25 rounded-lg px-2.5 py-1.5 cursor-pointer">
+                                    <span className="text-[9px] font-black text-pink-400 tracking-wider">🔥 PIN NAME TO TOP 10 mins</span>
+                                    <span className="text-[9px] font-bold text-amber-400">+{cs()}25</span>
+                                </div>
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="text"
+                                        placeholder="Send a message..."
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                                        className="flex-1 rounded-lg px-3 py-1.5 text-xs outline-none bg-white/5 border border-white/10 text-white"
+                                    />
+                                    <EmojiPicker
+                                        onEmojiSelect={(emoji) => setChatInput((prev) => prev + emoji)}
+                                        accentColor={C.gold}
+                                        position="top"
+                                    />
+                                    <button onClick={handleSendChat} style={{ ...btnGlowStyle, padding: "6px 12px", fontSize: "11px" }}>
+                                        SEND
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {mobileTab === "drinks" && (
+                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col">
+                                <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">Drink Menu</h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {drinks.slice(0, 9).map((drink: any) => (
+                                        <div key={drink.id || drink.name} style={drinkItemStyle} onClick={() => confirmPurchase("drink", drink.name, drink.price, { special: drink.special })}>
+                                            <div className="flex items-center gap-2">
+                                                <span style={{ fontSize: "16px" }}>{drink.icon}</span>
+                                                <span style={{ color: C.fg, fontWeight: 500, fontSize: "13px" }}>{drink.name}</span>
+                                            </div>
+                                            <span style={{ color: C.gold, fontWeight: 600, fontSize: "13px" }}>{cs()}{drink.price}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col gap-2.5">
+                                <h3 className="text-xs font-bold text-white uppercase tracking-wider">VIP Lounge</h3>
+                                <div style={{ ...glassPanel, ...glowGold, padding: "12px", cursor: "pointer" }} onClick={() => confirmPurchase("vip", `VIP Upgrade`, vipPrice)} className="active:scale-95">
+                                    <div className="flex items-center gap-2">
+                                        <Crown className="w-4 h-4 text-amber-400" />
+                                        <span className="font-bold text-xs text-amber-400">Upgrade to VIP - ${vipPrice}</span>
+                                    </div>
+                                </div>
+                                <div style={{ ...glassPanel, padding: "12px", cursor: "pointer" }} onClick={() => confirmPurchase("booth", "Booth Reservation", 300)}>
+                                    <div className="flex items-center gap-2">
+                                        <span style={{ fontSize: "16px" }}>🛋️</span>
+                                        <div>
+                                            <span className="font-bold text-xs text-white">Reserve a Booth</span>
+                                            <span className="text-amber-400 font-bold ml-2 text-xs">{cs()}300</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {mobileTab === "games" && (
+                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider">Spin the Bottle</h3>
+                                    <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] font-black">{cs()}{SPIN_PRICE} PER SPIN</span>
+                                </div>
+                                <div className="rounded-xl p-6 flex items-center justify-center relative overflow-hidden" style={{ background: `${C.bg}66`, border: `1px solid hsla(0,0%,100%,0.05)` }}>
+                                    <div className={`bl-bottle relative z-10 transition-transform ${spinning ? "bl-bottle-spin" : ""}`}>🥂</div>
+                                    {spinResult && !spinning && <div className="absolute inset-0 flex items-center justify-center bg-black/85 backdrop-blur-sm"><div className="text-center p-4"><div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">{spinResult.label}</div><div className="text-[10px] text-white/70 italic">"{spinResult.note}"</div></div></div>}
+                                </div>
+                                <button style={{ ...btnGoldStyle, width: "100%", padding: "12px", marginTop: "16px", borderRadius: "0.5rem", fontSize: "14px", fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }} onClick={doSpin} disabled={spinning}>
+                                    {spinning ? <><Loader2 className="w-4 h-4 animate-spin" /> SPINNING...</> : <>TRY YOUR LUCK <Zap className="w-4 h-4" /></>}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {mobileTab === "info" && (
+                        <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-4">
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-amber-500 to-pink-500 flex items-center justify-center overflow-hidden border border-white/20">
+                                        {hostProfile?.avatar_url ? (
+                                            <img src={hostProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="font-bold text-white">{creatorName[0]?.toUpperCase()}</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm text-white">{creatorName}</h4>
+                                        <span className="text-[9px] text-amber-400 uppercase tracking-widest font-bold">Host</span>
+                                    </div>
+                                </div>
+                                {sessionTitle && (
+                                    <p className="text-xs text-white/60 leading-relaxed mt-1">{sessionTitle}</p>
+                                )}
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">🪙</span>
+                                    <div>
+                                        <h5 className="text-[9px] text-gray-500 uppercase font-black">My Balance</h5>
+                                        <div className="mt-0.5">
+                                            <WalletPill />
+                                        </div>
+                                    </div>
+                                </div>
+                                {viewState !== 'hosting' && (
+                                    <button onClick={() => setViewState("lobby")} className="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold text-xs tracking-wider uppercase flex items-center gap-1.5 transition-all">
+                                        <LogOut className="w-3.5 h-3.5" />
+                                        <span>Exit Lounge</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Mobile Tab Bar */}
+            <div className="lg:hidden">
+                <MobileStudioTabs
+                    tabs={BAR_LOUNGE_FAN_TABS}
+                    activeTab={mobileTab}
+                    onTabChange={setMobileTab}
+                    accentHsl="42, 90%, 55%"
+                />
             </div>
 
             {/* Spend Confirm Modal */}

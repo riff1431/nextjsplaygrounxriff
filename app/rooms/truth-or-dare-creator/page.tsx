@@ -2,7 +2,7 @@
 
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock, Square, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Video, Shield, Users, CheckCircle2, XCircle, Zap, Play, Crown, ArrowLeft, TrendingUp, MessageCircle, Flame, Vote, Sparkles, Plus, Clock, Square, AlertTriangle, BarChart3 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
@@ -33,6 +33,7 @@ import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxI
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
     { id: "requests", label: "Requests", icon: <InboxIcon className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
+    { id: "summary", label: "Summary", icon: <BarChart3 className="w-5 h-5" /> },
 ];
 
 // ---------- Pricing / constants ----------
@@ -1298,7 +1299,7 @@ function TruthOrDareCreatorContent() {
 
 
     return (
-        <div className="tod-creator-theme min-h-screen flex flex-col items-stretch p-2 lg:p-3 relative" style={{ overflowX: 'hidden' }}>
+        <div className="tod-creator-theme h-[100dvh] lg:h-screen w-screen flex flex-col items-stretch p-2 lg:p-3 relative overflow-hidden">
             {/* Background Image */}
             <div
                 className="fixed inset-0 bg-cover bg-center bg-no-repeat"
@@ -1662,7 +1663,7 @@ function TruthOrDareCreatorContent() {
                 </div>
             ) : (
                 /* ─── LIVE STUDIO — Wireframe Layout ─── */
-                <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 min-h-0 relative overflow-y-auto lg:overflow-hidden pb-16 lg:pb-0" style={{ minHeight: 'calc(100dvh - 70px)' }}>
+                <div className="flex-1 flex flex-col gap-2 lg:gap-3 min-h-0 relative overflow-hidden">
 
                     {/* ═══ GO LIVE OVERLAY (Pre-Live State) ═══ */}
                     {!isSessionLive && (
@@ -1718,221 +1719,432 @@ function TruthOrDareCreatorContent() {
                         </div>
                     )}
 
-                    {/* ═══ LEFT SECTION: Video Grid + Bottom Row — always visible ═══ */}
-                    <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[42%] lg:min-w-[380px] shrink-0">
-                        {/* 2x2 Video Grid */}
-                        <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }} data-tour="tod-live-stream">
-                            {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
-                            <div className="relative overflow-hidden">
-                                <div className="absolute inset-0">
-                                    {isHost ? (
-                                        <TodCreatorStreamViewer
-                                            roomId={roomId}
-                                            userId={me.id}
-                                            appId={APP_ID}
-                                            avatarUrl={myAvatarUrl}
-                                            creatorName={me.name}
-                                            viewerCount={fans.length}
-                                            onRemoteUsersChange={handleRemoteUsersChange}
-                                            isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
-                                        />
-                                    ) : (
-                                        /* Collab creator: show host's remote stream in Slot 1 */
-                                        <TodCreatorStreamViewer
-                                            roomId={roomId}
-                                            userId={me.id}
-                                            appId={APP_ID}
-                                            avatarUrl={null}
-                                            creatorName="Host"
-                                            viewerCount={fans.length}
-                                            remoteHostId={hostCreatorId}
-                                        />
-                                    )}
-                                </div>
-                            </div>
-                            {/* Vid Slots 2-4 — Clickable Invite Slots */}
-                            {/* Vid Slot 2: For collab creator, show own camera stream */}
-                            {!isHost && (
-                                <div className="relative overflow-hidden" style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                    {/* Desktop View */}
+                    <div className="hidden lg:grid grid-cols-[400px_1fr_400px] gap-3 h-full w-full min-h-0">
+                        {/* LEFT SECTION: Video Grid + Bottom Row — always visible */}
+                        <div className="flex flex-col gap-2 lg:gap-3 w-full min-h-0">
+                            {/* 2x2 Video Grid */}
+                            <div className="w-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', minHeight: '240px', height: 'clamp(240px, 42vw, 420px)' }} data-tour="tod-live-stream">
+                                {/* Vid 1 — Main Stream (Host shows own cam, Collab shows host's remote stream) */}
+                                <div className="relative overflow-hidden">
                                     <div className="absolute inset-0">
-                                        <TodCreatorStreamViewer
-                                            roomId={roomId}
-                                            userId={me.id}
-                                            appId={APP_ID}
-                                            avatarUrl={myAvatarUrl}
-                                            creatorName={me.name}
-                                            viewerCount={0}
-                                            isCollabSelf={true}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                            {/* Vid Slots 2-4 (Host) or 3-4 (Collab) — Invite Slots */}
-                            {(isHost ? [0, 1, 2] : [0, 1]).map((slotIdx) => {
-                                const invite = slotInvites[slotIdx];
-                                const isAcceptedWithStream = invite?.status === 'accepted' && invite?.invited_creator_id;
-                                const gridSlotIdx = isHost ? slotIdx : slotIdx + 1; // offset for collab (slot 2 is own cam)
-                                const borderStyle = gridSlotIdx === 0
-                                    ? { borderLeft: '1px solid rgba(255,255,255,0.06)' }
-                                    : gridSlotIdx === 1
-                                    ? { borderTop: '1px solid rgba(255,255,255,0.06)' }
-                                    : { borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' };
-                                return (
-                                    <div
-                                        key={`slot-${slotIdx}`}
-                                        className="relative flex items-center justify-center transition-all group"
-                                        style={{
-                                            background: isAcceptedWithStream ? 'rgba(0,0,0,0.6)' : invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
-                                            ...borderStyle,
-                                            cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
-                                        }}
-                                        onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
-                                    >
-                                        {isAcceptedWithStream && isHost ? (() => {
-                                            /* Host view: Show accepted collab creator's REMOTE Agora stream.
-                                               Match the invite to a remote Agora user. Remote users who are
-                                               publishers (collab creators) appear in agoraRemoteUsers. We use
-                                               slotIdx to pick the correct one (first accepted invite → first remote user). */
-                                            const collabRemoteUser = agoraRemoteUsers[slotIdx] || null;
-                                            return (
-                                                <div className="absolute inset-0">
-                                                    <CollabRemoteStream
-                                                        user={collabRemoteUser}
-                                                        avatarUrl={invite.invited?.avatar_url}
-                                                        creatorName={invite.invited?.full_name || invite.invited?.username || 'Collab'}
-                                                    />
-                                                </div>
-                                            );
-                                        })() : invite && invite.status !== 'declined' ? (
-                                            /* Invited creator display (pending or accepted without stream) */
-                                            <div className="text-center">
-                                                <div className={`w-12 h-12 rounded-full mx-auto mb-1.5 overflow-hidden border-2 ${
-                                                    invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
-                                                }`}>
-                                                    {invite.invited?.avatar_url ? (
-                                                        <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-sm font-bold">
-                                                            {(invite.invited?.full_name || invite.invited?.username || '?')[0].toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <span className="text-[10px] text-white/60 font-medium block truncate max-w-[80px] mx-auto">
-                                                    {invite.invited?.full_name || invite.invited?.username || 'Creator'}
-                                                </span>
-                                                <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase mt-0.5 px-1.5 py-0.5 rounded-full ${
-                                                    invite.status === 'accepted'
-                                                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                                                        : 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/25'
-                                                }`}>
-                                                    {invite.status === 'accepted' ? (
-                                                        <><CheckCircle2 className="w-2.5 h-2.5" /> Joined</>
-                                                    ) : (
-                                                        <><Clock className="w-2.5 h-2.5" /> Pending</>
-                                                    )}
-                                                </span>
-                                                <span className="text-[9px] text-pink-400/60 block mt-0.5">{invite.invited_split_pct}% split</span>
-                                            </div>
+                                        {isHost ? (
+                                            <TodCreatorStreamViewer
+                                                roomId={roomId}
+                                                userId={me.id}
+                                                appId={APP_ID}
+                                                avatarUrl={myAvatarUrl}
+                                                creatorName={me.name}
+                                                viewerCount={fans.length}
+                                                onRemoteUsersChange={handleRemoteUsersChange}
+                                                isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
+                                            />
                                         ) : (
-                                            /* Empty invite slot */
-                                            <div className="text-center">
-                                                <div
-                                                    className="w-12 h-12 rounded-full mx-auto mb-1.5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]"
-                                                    style={{
-                                                        background: 'rgba(236,72,153,0.08)',
-                                                        border: '2px dashed rgba(236,72,153,0.25)',
-                                                    }}
-                                                >
-                                                    <Plus className="w-5 h-5 text-pink-400/50 group-hover:text-pink-400 transition" />
-                                                </div>
-                                                <span className="text-[10px] text-white/25 font-medium group-hover:text-pink-300/60 transition">Invite Creator</span>
-                                            </div>
+                                            /* Collab creator: show host's remote stream in Slot 1 */
+                                            <TodCreatorStreamViewer
+                                                roomId={roomId}
+                                                userId={me.id}
+                                                appId={APP_ID}
+                                                avatarUrl={null}
+                                                creatorName="Host"
+                                                viewerCount={fans.length}
+                                                remoteHostId={hostCreatorId}
+                                            />
                                         )}
                                     </div>
-                                );
-                            })}
+                                </div>
+                                {/* Vid Slots 2-4 — Clickable Invite Slots */}
+                                {/* Vid Slot 2: For collab creator, show own camera stream */}
+                                {!isHost && (
+                                    <div className="relative overflow-hidden" style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                                        <div className="absolute inset-0">
+                                            <TodCreatorStreamViewer
+                                                roomId={roomId}
+                                                userId={me.id}
+                                                appId={APP_ID}
+                                                avatarUrl={myAvatarUrl}
+                                                creatorName={me.name}
+                                                viewerCount={0}
+                                                isCollabSelf={true}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Vid Slots 2-4 (Host) or 3-4 (Collab) — Invite Slots */}
+                                {(isHost ? [0, 1, 2] : [0, 1]).map((slotIdx) => {
+                                    const invite = slotInvites[slotIdx];
+                                    const isAcceptedWithStream = invite?.status === 'accepted' && invite?.invited_creator_id;
+                                    const gridSlotIdx = isHost ? slotIdx : slotIdx + 1; // offset for collab (slot 2 is own cam)
+                                    const borderStyle = gridSlotIdx === 0
+                                        ? { borderLeft: '1px solid rgba(255,255,255,0.06)' }
+                                        : gridSlotIdx === 1
+                                        ? { borderTop: '1px solid rgba(255,255,255,0.06)' }
+                                        : { borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' };
+                                    return (
+                                        <div
+                                            key={`slot-${slotIdx}`}
+                                            className="relative flex items-center justify-center transition-all group"
+                                            style={{
+                                                background: isAcceptedWithStream ? 'rgba(0,0,0,0.6)' : invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
+                                                ...borderStyle,
+                                                cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
+                                            }}
+                                            onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
+                                        >
+                                            {isAcceptedWithStream && isHost ? (() => {
+                                                /* Host view: Show accepted collab creator's REMOTE Agora stream.
+                                                   Match the invite to a remote Agora user. Remote users who are
+                                                   publishers (collab creators) appear in agoraRemoteUsers. We use
+                                                   slotIdx to pick the correct one (first accepted invite → first remote user). */
+                                                const collabRemoteUser = agoraRemoteUsers[slotIdx] || null;
+                                                return (
+                                                    <div className="absolute inset-0">
+                                                        <CollabRemoteStream
+                                                            user={collabRemoteUser}
+                                                            avatarUrl={invite.invited?.avatar_url}
+                                                            creatorName={invite.invited?.full_name || invite.invited?.username || 'Collab'}
+                                                        />
+                                                    </div>
+                                                );
+                                            })() : invite && invite.status !== 'declined' ? (
+                                                /* Invited creator display (pending or accepted without stream) */
+                                                <div className="text-center">
+                                                    <div className={`w-12 h-12 rounded-full mx-auto mb-1.5 overflow-hidden border-2 ${
+                                                        invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
+                                                    }`}>
+                                                        {invite.invited?.avatar_url ? (
+                                                            <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-sm font-bold">
+                                                                {(invite.invited?.full_name || invite.invited?.username || '?')[0].toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-white/60 font-medium block truncate max-w-[80px] mx-auto">
+                                                        {invite.invited?.full_name || invite.invited?.username || 'Creator'}
+                                                    </span>
+                                                    <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase mt-0.5 px-1.5 py-0.5 rounded-full ${
+                                                        invite.status === 'accepted'
+                                                            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                                            : 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/25'
+                                                    }`}>
+                                                        {invite.status === 'accepted' ? (
+                                                            <><CheckCircle2 className="w-2.5 h-2.5" /> Joined</>
+                                                        ) : (
+                                                            <><Clock className="w-2.5 h-2.5" /> Pending</>
+                                                        )}
+                                                    </span>
+                                                    <span className="text-[9px] text-pink-400/60 block mt-0.5">{invite.invited_split_pct}% split</span>
+                                                </div>
+                                            ) : (
+                                                /* Empty invite slot */
+                                                <div className="text-center">
+                                                    <div
+                                                        className="w-12 h-12 rounded-full mx-auto mb-1.5 flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+                                                        style={{
+                                                            background: 'rgba(236,72,153,0.08)',
+                                                            border: '2px dashed rgba(236,72,153,0.25)',
+                                                        }}
+                                                    >
+                                                        <Plus className="w-5 h-5 text-pink-400/50 group-hover:text-pink-400 transition" />
+                                                    </div>
+                                                    <span className="text-[10px] text-white/25 font-medium group-hover:text-pink-300/60 transition">Invite Creator</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-3" style={{ minHeight: '160px' }}>
+                                {/* Summary / Earnings */}
+                                <div className="min-h-0 overflow-auto" data-tour="tod-room-earnings">
+                                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
+                                </div>
+                                {/* Group Voting */}
+                                <div className="min-h-0 overflow-auto" data-tour="tod-group-vote">
+                                    <GroupVoteManager 
+                                        roomId={roomId} 
+                                        onStartCall={(type) => groupCall.initiateCall(type)}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Bottom Row: Summary (Earnings) | Group (Voting) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 lg:gap-3" style={{ minHeight: '160px' }}>
-                            {/* Summary / Earnings */}
-                            <div className="min-h-0 overflow-auto" data-tour="tod-room-earnings">
-                                <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
-                            </div>
-                            {/* Group Voting */}
-                            <div className="min-h-0 overflow-auto" data-tour="tod-group-vote">
-                                <GroupVoteManager 
-                                    roomId={roomId} 
-                                    onStartCall={(type) => groupCall.initiateCall(type)}
-                                />
-                            </div>
+                        {/* COL: Incoming Requests (full height) */}
+                        <div className="flex flex-col min-h-0" data-tour="tod-incoming-requests">
+                            <TodCreatorRequestPanel
+                                title="Incoming Requests"
+                                accentColor="pink"
+                                queue={[
+                                    ...queue.filter(q => q.type.includes("DARE") || q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
+                                    ...activityFeed
+                                        .filter(a => a.type === 'dare' || a.type === 'custom_dare' || a.type === 'truth' || a.type === 'custom_truth')
+                                        .filter(a => !queue.some(q => q.id === a.id || q.meta?.request_id === a.id))
+                                        .map(a => ({
+                                            id: a.id,
+                                            type: a.type.includes('custom') ? a.type.toUpperCase() : 'TIER_PURCHASE',
+                                            createdAt: a.timestamp,
+                                            fanName: a.fanName,
+                                            amount: a.amount,
+                                            meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request`, originalType: a.type }
+                                        }))
+                                ] as any}
+                                onServe={serveQueueItem as any}
+                                onDismiss={async (q: any) => {
+                                    try {
+                                        const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/dismiss`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ queueItemId: q.id })
+                                        });
+                                        if (!res.ok) {
+                                            const data = await res.json();
+                                            toast.error(data.error || "Failed to dismiss");
+                                            return;
+                                        }
+                                        setQueue(qq => qq.filter(x => x.id !== q.id && x.meta?.request_id !== q.id && x.id !== q.meta?.request_id));
+                                        setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id));
+                                    } catch (err) {
+                                        console.error("Dismiss error:", err);
+                                        toast.error("Failed to dismiss request");
+                                    }
+                                }}
+                            />
                         </div>
-                    </div>
 
-                    {/* ═══ COL: Incoming Requests (full height) ═══ */}
-                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden ${mobileStudioTab !== "requests" ? "hidden lg:block" : "block"}`} data-tour="tod-incoming-requests">
-                        <TodCreatorRequestPanel
-                            title="Incoming Requests"
-                            accentColor="pink"
-                            queue={[
-                                ...queue.filter(q => q.type.includes("DARE") || q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
-                                ...activityFeed
-                                    .filter(a => a.type === 'dare' || a.type === 'custom_dare' || a.type === 'truth' || a.type === 'custom_truth')
-                                    .filter(a => !queue.some(q => q.id === a.id || q.meta?.request_id === a.id))
+                        {/* COL: Live Chat (full height) */}
+                        <div className="flex flex-col min-h-0" data-tour="tod-live-chat">
+                            <TodCreatorLiveChat 
+                                roomId={roomId} 
+                                sessionStartedAt={activeSessionStartedAt}
+                                sessionId={activeSessionId}
+                                viewerCount={fans.length} 
+                                activityItems={activityFeed
+                                    .filter(a => a.type === 'tip' || a.type === 'reaction')
                                     .map(a => ({
                                         id: a.id,
-                                        type: a.type.includes('custom') ? a.type.toUpperCase() : 'TIER_PURCHASE',
-                                        createdAt: a.timestamp,
                                         fanName: a.fanName,
                                         amount: a.amount,
-                                        meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request`, originalType: a.type }
+                                        type: a.type as 'tip' | 'reaction',
+                                        emoji: a.type === 'reaction' ? getReactionEmoji(a.tier || a.message) : undefined,
+                                        message: a.message,
+                                        timestamp: a.timestamp
                                     }))
-                            ] as any}
-                                // No longer passing tips/reactions to Request Panel
-                            onServe={serveQueueItem as any}
-                            onDismiss={async (q: any) => {
-                                try {
-                                    const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/dismiss`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ queueItemId: q.id })
-                                    });
-                                    if (!res.ok) {
-                                        const data = await res.json();
-                                        toast.error(data.error || "Failed to dismiss");
-                                        return;
-                                    }
-                                    setQueue(qq => qq.filter(x => x.id !== q.id && x.meta?.request_id !== q.id && x.id !== q.meta?.request_id));
-                                    setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id));
-                                } catch (err) {
-                                    console.error("Dismiss error:", err);
-                                    toast.error("Failed to dismiss request");
                                 }
-                            }}
-                        />
+                            />
+                        </div>
                     </div>
 
-                    {/* ═══ COL: Live Chat (full height) ═══ */}
-                    <div className={`w-full lg:flex-[1.5] lg:min-w-[280px] min-h-[300px] lg:min-h-0 lg:overflow-hidden pb-4 lg:pb-0 ${mobileStudioTab !== "chat" ? "hidden lg:block" : "block"}`} data-tour="tod-live-chat">
-                        <TodCreatorLiveChat 
-                            roomId={roomId} 
-                            sessionStartedAt={activeSessionStartedAt}
-                            sessionId={activeSessionId}
-                            viewerCount={fans.length} 
-                            activityItems={activityFeed
-                                .filter(a => a.type === 'tip' || a.type === 'reaction')
-                                .map(a => ({
-                                    id: a.id,
-                                    fanName: a.fanName,
-                                    amount: a.amount,
-                                    type: a.type as 'tip' | 'reaction',
-                                    emoji: a.type === 'reaction' ? getReactionEmoji(a.tier || a.message) : undefined,
-                                    message: a.message,
-                                    timestamp: a.timestamp
-                                }))
-                            }
-                        />
+                    {/* Mobile View */}
+                    <div className="lg:hidden flex flex-col gap-3 pt-2 flex-1 min-h-0 overflow-hidden">
+                        {/* Video stage fixed on top */}
+                        <div className="w-full shrink-0">
+                            <div
+                                className="relative rounded-xl overflow-hidden aspect-video mx-auto max-w-[600px]"
+                                style={{
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    boxShadow: '0 0 30px rgba(236, 72, 153, 0.25), 0 0 60px rgba(236, 72, 153, 0.1)',
+                                }}
+                            >
+                                {/* 2x2 Video Grid */}
+                                <div className="w-full h-full grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden">
+                                    {/* Vid 1 — Main Stream */}
+                                    <div className="relative overflow-hidden">
+                                        <div className="absolute inset-0">
+                                            {isHost ? (
+                                                <TodCreatorStreamViewer
+                                                    roomId={roomId}
+                                                    userId={me.id}
+                                                    appId={APP_ID}
+                                                    avatarUrl={myAvatarUrl}
+                                                    creatorName={me.name}
+                                                    viewerCount={fans.length}
+                                                    onRemoteUsersChange={handleRemoteUsersChange}
+                                                    isPaused={!!groupCall.callState && groupCall.callState.status === 'active'}
+                                                />
+                                            ) : (
+                                                <TodCreatorStreamViewer
+                                                    roomId={roomId}
+                                                    userId={me.id}
+                                                    appId={APP_ID}
+                                                    avatarUrl={null}
+                                                    creatorName="Host"
+                                                    viewerCount={fans.length}
+                                                    remoteHostId={hostCreatorId}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* Vid Slot 2: Collab self-view */}
+                                    {!isHost && (
+                                        <div className="relative overflow-hidden" style={{ borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                                            <div className="absolute inset-0">
+                                                <TodCreatorStreamViewer
+                                                    roomId={roomId}
+                                                    userId={me.id}
+                                                    appId={APP_ID}
+                                                    avatarUrl={myAvatarUrl}
+                                                    creatorName={me.name}
+                                                    viewerCount={0}
+                                                    isCollabSelf={true}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Vid Slots 2-4 (Host) or 3-4 (Collab) — Invite Slots */}
+                                    {(isHost ? [0, 1, 2] : [0, 1]).map((slotIdx) => {
+                                        const invite = slotInvites[slotIdx];
+                                        const isAcceptedWithStream = invite?.status === 'accepted' && invite?.invited_creator_id;
+                                        const gridSlotIdx = isHost ? slotIdx : slotIdx + 1;
+                                        const borderStyle = gridSlotIdx === 0
+                                            ? { borderLeft: '1px solid rgba(255,255,255,0.06)' }
+                                            : gridSlotIdx === 1
+                                            ? { borderTop: '1px solid rgba(255,255,255,0.06)' }
+                                            : { borderTop: '1px solid rgba(255,255,255,0.06)', borderLeft: '1px solid rgba(255,255,255,0.06)' };
+                                        return (
+                                            <div
+                                                key={`slot-mobile-${slotIdx}`}
+                                                className="relative flex items-center justify-center transition-all group"
+                                                style={{
+                                                    background: isAcceptedWithStream ? 'rgba(0,0,0,0.6)' : invite?.status === 'accepted' ? 'rgba(34,197,94,0.08)' : invite?.status === 'pending' ? 'rgba(236,72,153,0.06)' : 'rgba(0,0,0,0.4)',
+                                                    ...borderStyle,
+                                                    cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
+                                                }}
+                                                onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
+                                            >
+                                                {isAcceptedWithStream && isHost ? (() => {
+                                                    const collabRemoteUser = agoraRemoteUsers[slotIdx] || null;
+                                                    return (
+                                                        <div className="absolute inset-0">
+                                                            <CollabRemoteStream
+                                                                user={collabRemoteUser}
+                                                                avatarUrl={invite.invited?.avatar_url}
+                                                                creatorName={invite.invited?.full_name || invite.invited?.username || 'Collab'}
+                                                            />
+                                                        </div>
+                                                    );
+                                                })() : invite && invite.status !== 'declined' ? (
+                                                    <div className="text-center scale-75 origin-center">
+                                                        <div className={`w-10 h-10 rounded-full mx-auto mb-1 overflow-hidden border-2 ${
+                                                            invite.status === 'accepted' ? 'border-green-500/50' : 'border-pink-500/30 animate-pulse'
+                                                        }`}>
+                                                            {invite.invited?.avatar_url ? (
+                                                                <img src={invite.invited.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 flex items-center justify-center text-white/70 text-xs font-bold">
+                                                                    {(invite.invited?.full_name || invite.invited?.username || '?')[0].toUpperCase()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[8px] text-white/60 font-medium block truncate max-w-[60px] mx-auto leading-none">
+                                                            {invite.invited?.full_name || invite.invited?.username || 'Creator'}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center scale-75 origin-center">
+                                                        <div
+                                                            className="w-10 h-10 rounded-full mx-auto mb-1 flex items-center justify-center transition-all"
+                                                            style={{
+                                                                background: 'rgba(236,72,153,0.08)',
+                                                                border: '2px dashed rgba(236,72,153,0.25)',
+                                                            }}
+                                                        >
+                                                            <Plus className="w-4 h-4 text-pink-400/50" />
+                                                        </div>
+                                                        <span className="text-[8px] text-white/25 font-medium leading-none">Invite</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tab Content below stream */}
+                        {mobileStudioTab === "requests" && (
+                            <div className="w-full flex-1 min-h-0">
+                                <TodCreatorRequestPanel
+                                    title="Incoming Requests"
+                                    accentColor="pink"
+                                    queue={[
+                                        ...queue.filter(q => q.type.includes("DARE") || q.type.includes("TRUTH") || (q.type === "TIER_PURCHASE" && q.meta?.tier)),
+                                        ...activityFeed
+                                            .filter(a => a.type === 'dare' || a.type === 'custom_dare' || a.type === 'truth' || a.type === 'custom_truth')
+                                            .filter(a => !queue.some(q => q.id === a.id || q.meta?.request_id === a.id))
+                                            .map(a => ({
+                                                id: a.id,
+                                                type: a.type.includes('custom') ? a.type.toUpperCase() : 'TIER_PURCHASE',
+                                                createdAt: a.timestamp,
+                                                fanName: a.fanName,
+                                                amount: a.amount,
+                                                meta: { tier: a.tier, text: a.message || `${(a.tier || 'bronze').toUpperCase()} Request`, originalType: a.type }
+                                            }))
+                                    ] as any}
+                                    onServe={serveQueueItem as any}
+                                    onDismiss={async (q: any) => {
+                                        try {
+                                            const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/dismiss`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ queueItemId: q.id })
+                                            });
+                                            if (!res.ok) {
+                                                const data = await res.json();
+                                                toast.error(data.error || "Failed to dismiss");
+                                                return;
+                                            }
+                                            setQueue(qq => qq.filter(x => x.id !== q.id && x.meta?.request_id !== q.id && x.id !== q.meta?.request_id));
+                                            setActivityFeed(af => af.filter(x => x.id !== q.id && x.id !== q.meta?.request_id));
+                                        } catch (err) {
+                                            console.error("Dismiss error:", err);
+                                            toast.error("Failed to dismiss request");
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {mobileStudioTab === "chat" && (
+                            <div className="w-full flex-1 min-h-0">
+                                <TodCreatorLiveChat 
+                                    roomId={roomId} 
+                                    sessionStartedAt={activeSessionStartedAt}
+                                    sessionId={activeSessionId}
+                                    viewerCount={fans.length} 
+                                    activityItems={activityFeed
+                                        .filter(a => a.type === 'tip' || a.type === 'reaction')
+                                        .map(a => ({
+                                            id: a.id,
+                                            fanName: a.fanName,
+                                            amount: a.amount,
+                                            type: a.type as 'tip' | 'reaction',
+                                            emoji: a.type === 'reaction' ? getReactionEmoji(a.tier || a.message) : undefined,
+                                            message: a.message,
+                                            timestamp: a.timestamp
+                                        }))
+                                    }
+                                />
+                            </div>
+                        )}
+
+                        {mobileStudioTab === "summary" && (
+                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                                <div className="min-h-0 shrink-0" data-tour="tod-room-earnings">
+                                    <TodCreatorRoomEarnings earnings={sessionEarnings as any} />
+                                </div>
+                                <div className="min-h-0 shrink-0" data-tour="tod-group-vote">
+                                    <GroupVoteManager 
+                                        roomId={roomId} 
+                                        onStartCall={(type) => groupCall.initiateCall(type)}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
+
                     {/* Mobile Tab Bar for Studio — only show when session is live */}
                     {isSessionLive && (
                         <MobileStudioTabs
