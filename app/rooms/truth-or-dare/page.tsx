@@ -1202,7 +1202,10 @@ function TruthOrDareContent() {
                     </button>
                     
                     {/* Glowing Script Logo - Desktop Only */}
-                    <div className="hidden md:flex font-black text-sm sm:text-lg tracking-tight select-none items-center mr-2">
+                    <div 
+                        onClick={() => router.push("/home")}
+                        className="hidden md:flex font-black text-sm sm:text-lg tracking-tight items-center mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+                    >
                         <span className="text-pink-500 italic" style={{ textShadow: '0 0 8px rgba(236,72,153,0.7)' }}>Play</span>
                         <span className="text-white">Ground</span>
                         <span className="text-cyan-400 font-extrabold italic" style={{ textShadow: '0 0 8px rgba(34,211,238,0.7)' }}>X</span>

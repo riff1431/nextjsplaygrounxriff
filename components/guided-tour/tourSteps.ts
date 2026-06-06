@@ -767,7 +767,7 @@ const suga4uFanSteps: TourStep[] = [
     icon: "💳",
     title: "Paid Requests",
     content:
-      "See your paid requests and their status. Creators can approve, decline, or reply to your requests.",
+      "Send paid requests to Creators. They can approve, decline, or reply to your requests.",
     placement: "left",
   },
   {
