@@ -37,6 +37,7 @@ import {
     Flag,
     Home as HomeIcon,
     Dices,
+    HelpCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -61,6 +62,7 @@ import CommentsModal from "@/components/posts/CommentsModal";
 import UnlockPostModal from "@/components/posts/UnlockPostModal";
 import ReportModal from "@/components/common/ReportModal";
 import { formatDistanceToNow } from "date-fns";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 // Local fallback icon so the preview never breaks due to a missing lucide icon export
 function BarDrinkIcon({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) {
@@ -744,6 +746,7 @@ function HomeScreen({
     sortBy,
     setSortBy,
     iframeMenus = [],
+    isMobileView,
 }: {
     onEnterSuga4U: () => void;
     query: string;
@@ -760,6 +763,7 @@ function HomeScreen({
     sortBy: "Recommended" | "Rookie→Elite" | "Elite→Rookie";
     setSortBy: React.Dispatch<React.SetStateAction<"Recommended" | "Rookie→Elite" | "Elite→Rookie">>;
     iframeMenus?: any[];
+    isMobileView: boolean;
 }) {
     const router = useRouter();
     const [activeCat, setActiveCat] = useState("all");
@@ -800,7 +804,7 @@ function HomeScreen({
         <div className="w-full mx-auto px-4 py-4 sm:px-6 sm:py-6">
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 {/* Left rail (always-expanded categories) */}
-                <NeonCard className="hidden lg:flex lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex-col" data-tour="rooms-menu">
+                <NeonCard className="hidden lg:flex lg:w-48 shrink-0 relative overflow-hidden p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-112px)] lg:flex-col">
                     {/* ... (Keep existing Left Rail logic if desired, or simplify? I'll re-include the Navigation Logic safely) ... */}
                     {/* Pitch-black base; ambient smoke sits behind tiles */}
                     <div className="pointer-events-none absolute inset-0 opacity-55">
@@ -809,7 +813,7 @@ function HomeScreen({
 
                     <div className="relative space-y-6 lg:space-y-0 lg:flex lg:flex-col lg:justify-between lg:flex-1">
                         <div className="space-y-6">
-                            <div>
+                            <div data-tour={!isMobileView ? "rooms-menu" : undefined}>
                                 <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 mt-3 px-1">Browse Room</div>
                                 <div className="mt-1 space-y-2">
                                     {CATS.filter((cat) => activeStatuses[cat.roomType] !== false).map((cat) => {
@@ -955,16 +959,16 @@ function HomeScreen({
                         <div className="pt-4 border-t border-white/10 lg:mt-auto">
                             <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">My Account</div>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-1 gap-2">
-                                <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/collections")}>
+                                <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/collections")} data-tour={!isMobileView ? "collections-button" : undefined}>
                                     <Star className="w-4 h-4" /> Collections
                                 </button>
-                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")} data-tour="suggestions-button">
+                                <button className="w-full rounded-xl border border-emerald-500/50 bg-black px-3 py-2 text-sm text-emerald-200 hover:bg-emerald-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/suggestions")} data-tour={!isMobileView ? "suggestions-button" : undefined}>
                                     <MessageSquare className="w-4 h-4" /> Suggestions
                                 </button>
-                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")}>
+                                <button className="w-full rounded-xl border border-blue-500/50 bg-black px-3 py-2 text-sm text-blue-200 hover:bg-blue-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/account/subscription")} data-tour={!isMobileView ? "subscriptions-button" : undefined}>
                                     <Users className="w-4 h-4" /> Subscriptions
                                 </button>
-                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour="newsfeed-button">
+                                <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour={!isMobileView ? "newsfeed-button" : undefined}>
                                     <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                 </button>
                                 <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" title="Log Out" onClick={() => router.push("/")}>
@@ -1064,7 +1068,7 @@ function HomeScreen({
                     </div>
                 </div>
                 {/* Right rail (Cleaned) – Auto-scrolling Creator Feed */}
-                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6" data-tour="creator-feed">
+                <NeonCard className="w-full lg:w-96 shrink-0 p-4 lg:sticky lg:top-6" data-tour={!isMobileView ? "creator-feed" : undefined}>
                     <div className="text-pink-200 text-sm mb-3 font-semibold flex items-center gap-2">
                         <Heart className="w-4 h-4 text-pink-500 fill-pink-500/20" /> Featured Creators
                     </div>
@@ -1144,6 +1148,7 @@ function HomeScreen({
 export default function Home() {
     const router = useRouter();
     const { role, isLoading: authLoading, user } = useAuth();
+    const { startTour } = useGuidedTour();
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [posts, setPosts] = useState<Post[]>([]);
@@ -1156,6 +1161,15 @@ export default function Home() {
     const [membershipPlan, setMembershipPlan] = useState<{ display_name: string, badge_color: string, name: string, badge_icon_url?: string | null } | null>(null);
     const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set());
     const supabase = createClient();
+    const [isMobileView, setIsMobileView] = useState(false);
+
+    // Detect screen size for tour alignment
+    useEffect(() => {
+        const check = () => setIsMobileView(window.innerWidth < 768);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
 
     // Redirect creators to dashboard
     useEffect(() => {
@@ -1679,7 +1693,9 @@ export default function Home() {
                         <Logo onClick={() => router.push("/")} />
 
                         {/* Animated neon handwriting welcome (reveals on load) */}
-                        <div className={cx("hidden md:flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
+                        <div
+                            className={cx("hidden md:flex items-center gap-3", revealWelcome ? "" : "opacity-0")}
+                            data-tour={!isMobileView ? "membership-badge" : undefined}
                         >
                             <div
                                 className={cx(
@@ -1753,7 +1769,7 @@ export default function Home() {
 
                     {/* Top-right: Search + My Profile only */}
                     <div className="order-2 md:order-3 flex items-center gap-1.5 sm:gap-3">
-                        <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2">
+                        <div className="hidden md:flex items-center gap-2 rounded-2xl border border-pink-500/20 bg-black/35 px-3 py-2" data-tour={!isMobileView ? "search-creators" : undefined}>
                             <Search className="w-4 h-4 text-pink-300" />
                             <input
                                 value={homeQuery}
@@ -1781,10 +1797,18 @@ export default function Home() {
                                 )}
                             </button>
                             <button
+                                onClick={() => startTour('fan')}
+                                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 transition"
+                                title="Restart Fan Tour"
+                                data-tour={!isMobileView ? "tour-button" : undefined}
+                            >
+                                <HelpCircle className="w-5 h-5" />
+                            </button>
+                            <button
                                 onClick={() => router.push('/account/messages')}
                                 className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 text-pink-400 hover:text-pink-300 transition"
                                 title="Messages"
-                                data-tour="private-chat"
+                                data-tour={!isMobileView ? "private-chat" : undefined}
                             >
                                 <MessageSquare className="w-5 h-5" />
                             </button>
@@ -1793,7 +1817,7 @@ export default function Home() {
                                 onClick={() => router.push('/account/subscription')}
                                 className="hidden md:flex p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 transition"
                                 title="Subscription"
-                                data-tour="subscription-section"
+                                data-tour={!isMobileView ? "subscription-section" : undefined}
                             >
                                 <Crown className="w-5 h-5" />
                             </button>
@@ -1904,6 +1928,7 @@ export default function Home() {
                     sortBy={sortBy}
                     setSortBy={setSortBy}
                     iframeMenus={iframeMenus}
+                    isMobileView={isMobileView}
                 />
             </div>
 
@@ -1920,15 +1945,29 @@ export default function Home() {
                             <Menu className="w-4.5 h-4.5" />
                         </button>
                         <Logo onClick={() => router.push("/home")} />
-                        <span className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px] hidden min-[450px]:inline-block">
+                        <span
+                            className="text-[#ff007f] font-semibold text-[10px] ml-2 mt-1 shrink-0 truncate max-w-[80px] hidden min-[450px]:inline-block"
+                            data-tour={isMobileView ? "membership-badge" : undefined}
+                        >
                             Welcome {firstName}
                         </span>
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* Tour/Guide button */}
+                        <button
+                            onClick={() => startTour('fan')}
+                            data-tour={isMobileView ? "tour-button" : undefined}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300 transition shrink-0"
+                            title="Restart Fan Tour"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                        </button>
+
                         {/* Messages button */}
                         <button 
                             onClick={() => router.push('/account/messages')}
+                            data-tour={isMobileView ? "private-chat" : undefined}
                             className="w-8 h-8 flex items-center justify-center rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300 transition shrink-0"
                             title="Messages"
                         >
@@ -1951,7 +1990,7 @@ export default function Home() {
 
                 {/* Search & Filter Toggle Row */}
                 <div className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex-1 flex items-center gap-2 bg-[#121218] border border-white/[0.05] rounded-full px-4 py-2 shadow-[inset_0_1.5px_2px_rgba(0,0,0,0.6)]">
+                    <div className="flex-1 flex items-center gap-2 bg-[#121218] border border-white/[0.05] rounded-full px-4 py-2 shadow-[inset_0_1.5px_2px_rgba(0,0,0,0.6)]" data-tour={isMobileView ? "search-creators" : undefined}>
                         <Search className="w-4 h-4 text-zinc-400 shrink-0" />
                         <input
                             value={homeQuery}
@@ -2048,7 +2087,7 @@ export default function Home() {
 
                 {/* Browse Room Category Grid */}
                 <div className="px-4 mt-2">
-                    <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide mb-3 pl-0.5 font-sans">Browse Room</h3>
+                    <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide mb-3 pl-0.5 font-sans" data-tour={isMobileView ? "rooms-menu" : undefined}>Browse Room</h3>
                     <div className="grid grid-cols-3 gap-2.5">
                         {CATS.map((cat) => {
                             const tColorMap = {
@@ -2146,7 +2185,7 @@ export default function Home() {
                 </div>
 
                 {/* Featured Creators Horizontal Slider */}
-                <div className="mt-6">
+                <div className="mt-6" data-tour={isMobileView ? "creator-feed" : undefined}>
                     <div className="px-4 flex items-center justify-between mb-3">
                         <h3 className="text-[13px] font-bold text-zinc-200 tracking-wide pl-0.5">Featured Creators</h3>
                         <button 
@@ -2292,6 +2331,7 @@ export default function Home() {
                     </button>
                     <button 
                         onClick={() => router.push('/account/messages')}
+                        data-tour={isMobileView ? "private-chat" : undefined}
                         className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
                     >
                         <MessageCircle className="w-5 h-5" />
@@ -2299,6 +2339,7 @@ export default function Home() {
                     </button>
                     <button 
                         onClick={() => router.push('/account/collections')}
+                        data-tour={isMobileView ? "collections-button" : undefined}
                         className="flex flex-col items-center justify-center gap-0.5 text-zinc-400 cursor-pointer"
                     >
                         <Heart className="w-5 h-5" />

@@ -28,6 +28,7 @@ import { cs } from "@/utils/currency";
 const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dare-creator/CollabRemoteStream"), { ssr: false });
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
+import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
@@ -600,8 +601,12 @@ function TruthOrDareCreatorContent() {
                 console.log('📊 Room ID check:', { requestRoomId: request.room_id, currentRoomId: roomId });
 
                 // ── SESSION GUARD: Only process requests from the current session ──
-                // Skip requests that belong to a different session
-                if (activeSessionId && request.session_id && request.session_id !== activeSessionId) {
+                // Skip requests that belong to a different session or if there's no active session
+                if (!activeSessionId) {
+                    console.log('⏩ Skipping request: no active session.');
+                    return;
+                }
+                if (request.session_id && request.session_id !== activeSessionId) {
                     console.log('⏩ Skipping request from different session:', request.id, 'session:', request.session_id);
                     return;
                 }
@@ -771,6 +776,10 @@ function TruthOrDareCreatorContent() {
         // Listen for countdown_start broadcast events
         const broadcastChannel = supabase.channel(`room:${roomId}`)
             .on('broadcast', { event: 'countdown_start' }, (payload) => {
+                if (!activeSessionId) {
+                    console.log('⏩ Skipping countdown_start broadcast: no active session.');
+                    return;
+                }
                 console.log('⏱️ Received countdown_start broadcast:', payload);
                 const data = payload.payload;
                 setActiveCountdown({
@@ -786,6 +795,10 @@ function TruthOrDareCreatorContent() {
                 playNotificationSound();
             })
             .on('broadcast', { event: 'question_answered' }, (payload) => {
+                if (!activeSessionId) {
+                    console.log('⏩ Skipping question_answered broadcast: no active session.');
+                    return;
+                }
                 console.log('💰 Question answered, earned:', payload.payload);
                 const data = payload.payload;
                 // Show earnings modal after 3-second delay
@@ -1243,6 +1256,11 @@ function TruthOrDareCreatorContent() {
         setActiveSessionId(null);
         setActiveSessionStartedAt(null);
         setSlotInvites([]);
+        setActiveCountdown(null);
+        setActiveTip(null);
+        setEarningsNotification(null);
+        setOverlayPrompt(null);
+        setShowOverlay(false);
 
         try {
             const res = await fetch(`/api/v1/rooms/${roomId}/truth-or-dare/session`, {
@@ -1357,11 +1375,15 @@ function TruthOrDareCreatorContent() {
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                    {sessionActive && isInStudio && (
+                        <RoomTourHelpButton tourType="truth_or_dare_creator" accentHsl="330, 80%, 55%" />
+                    )}
                     {sessionActive && isInStudio && isSessionLive && (
                         <div data-tour="tod-go-live-button">
                         <SessionLiveControls
                             sessionId={activeSessionId || ""}
                             accentHsl="330, 80%, 55%"
+                            timerDataTour="tod-room-timer"
                             initialLiveStartedAt={sessionActive ? new Date().toISOString() : null}
                             customGoLive={async () => {
                                 if (!sessionActive) {
@@ -1808,6 +1830,7 @@ function TruthOrDareCreatorContent() {
                                                 cursor: invite && invite.status !== 'declined' ? 'default' : 'pointer',
                                             }}
                                             onClick={() => { if (!invite || invite.status === 'declined') setShowInviteModal(true); }}
+                                            data-tour={slotIdx === 0 ? "tod-invite-creators" : undefined}
                                         >
                                             {isAcceptedWithStream && isHost ? (() => {
                                                 /* Host view: Show accepted collab creator's REMOTE Agora stream.
@@ -2198,7 +2221,7 @@ function TruthOrDareCreatorContent() {
             />
 
             {/* Cute Real-time Tip/Reaction Alert Dialog */}
-            {activeTip && (
+            {sessionActive && isInStudio && activeTip && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center pointer-events-none p-4">
                     <div className={`bg-black/80 backdrop-blur-xl border-2 ${activeTip.message?.includes('reaction') ? 'border-purple-500/50 shadow-[0_0_100px_rgba(168,85,247,0.4)]' : 'border-green-500/50 shadow-[0_0_100px_rgba(34,197,94,0.4)]'} rounded-[2rem] p-8 animate-in zoom-in-50 fade-in duration-500 pointer-events-auto relative overflow-hidden max-w-sm w-full text-center`}>
                         <div className="text-3xl font-black text-white mb-1 uppercase drop-shadow-lg">
@@ -2215,41 +2238,47 @@ function TruthOrDareCreatorContent() {
             )}
 
             {/* Creator Countdown Overlay */}
-            <CreatorCountdown
-                request={activeCountdown as any}
-                roomId={roomId || ''}
-                onComplete={(earnedAmount: number) => {
-                    setActiveCountdown(null);
-                    if (earnedAmount > 0) {
-                        setSessionEarnings(prev => ({
-                            ...prev,
-                            total: prev.total + earnedAmount
-                        }));
-                        setTimeout(() => {
-                            setEarningsNotification({
-                                amount: earnedAmount,
-                                fanName: activeCountdown?.fanName || 'Fan',
-                                type: activeCountdown?.type || 'dare',
-                                tier: activeCountdown?.tier
-                            });
-                        }, 500);
-                    }
-                }}
-                onDismiss={() => setActiveCountdown(null)}
-            />
+            {sessionActive && isInStudio && (
+                <CreatorCountdown
+                    request={activeCountdown as any}
+                    roomId={roomId || ''}
+                    onComplete={(earnedAmount: number) => {
+                        setActiveCountdown(null);
+                        if (earnedAmount > 0) {
+                            setSessionEarnings(prev => ({
+                                ...prev,
+                                total: prev.total + earnedAmount
+                            }));
+                            setTimeout(() => {
+                                setEarningsNotification({
+                                    amount: earnedAmount,
+                                    fanName: activeCountdown?.fanName || 'Fan',
+                                    type: activeCountdown?.type || 'dare',
+                                    tier: activeCountdown?.tier
+                                });
+                            }, 500);
+                        }
+                    }}
+                    onDismiss={() => setActiveCountdown(null)}
+                />
+            )}
 
             {/* Overlay */}
-            <InteractionOverlay
-                prompt={overlayPrompt as any}
-                isVisible={showOverlay}
-                onClose={() => setShowOverlay(false)}
-            />
+            {sessionActive && isInStudio && (
+                <InteractionOverlay
+                    prompt={overlayPrompt as any}
+                    isVisible={showOverlay}
+                    onClose={() => setShowOverlay(false)}
+                />
+            )}
 
             {/* Earnings Notification Modal */}
-            <EarningsModal
-                notification={earningsNotification as any}
-                onClose={() => setEarningsNotification(null)}
-            />
+            {sessionActive && isInStudio && (
+                <EarningsModal
+                    notification={earningsNotification as any}
+                    onClose={() => setEarningsNotification(null)}
+                />
+            )}
 
             {/* Group Call Creator Modal */}
             {groupCall.callState && (
@@ -2350,6 +2379,11 @@ function TruthOrDareCreatorContent() {
                                                     setSessionInfo(null);
                                                     setActiveSessionId(null);
                                                     setActiveSessionStartedAt(null);
+                                                    setActiveCountdown(null);
+                                                    setActiveTip(null);
+                                                    setEarningsNotification(null);
+                                                    setOverlayPrompt(null);
+                                                    setShowOverlay(false);
                                                 }
                                                 toast.success(`Session "${pendingEndSession.title}" ended`);
                                             } else {

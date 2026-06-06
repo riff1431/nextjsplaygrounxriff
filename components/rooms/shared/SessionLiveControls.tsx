@@ -14,6 +14,7 @@ interface SessionLiveControlsProps {
     customGoLive?: () => Promise<string | null>;
     customEnd?: () => Promise<void>;
     hideEnd?: boolean;
+    timerDataTour?: string;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -39,6 +40,7 @@ export default function SessionLiveControls({
     customGoLive,
     customEnd,
     hideEnd,
+    timerDataTour,
 }: SessionLiveControlsProps) {
     const [liveStartedAt, setLiveStartedAt] = useState<number | null>(
         initialLiveStartedAt ? new Date(initialLiveStartedAt).getTime() : null
@@ -171,6 +173,7 @@ export default function SessionLiveControls({
 
                 {/* Timer Pill */}
                 <div
+                    data-tour={timerDataTour}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur-md shrink-0"
                     style={{
                         background: isLive ? "rgba(239, 68, 68, 0.12)" : "rgba(255,255,255,0.06)",

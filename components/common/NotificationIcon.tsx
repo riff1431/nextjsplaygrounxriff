@@ -264,6 +264,7 @@ export function NotificationIcon({ role = "fan" }: { role?: "creator" | "fan" })
             {/* Bell button */}
             <button
                 onClick={() => setOpen(!open)}
+                data-tour="notification-button"
                 className={`relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border transition-all duration-300 ${
                     open
                         ? "bg-pink-500/20 border-pink-500/40 text-pink-300 shadow-[0_0_12px_rgba(236,72,153,0.3)]"

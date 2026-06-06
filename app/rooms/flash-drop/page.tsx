@@ -20,6 +20,7 @@ import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { cs } from "@/utils/currency";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -34,6 +35,17 @@ export default function FlashDropsRoomPreview() {
     const [mobileTab, setMobileTab] = useState("board");
     const [chatUnread, setChatUnread] = useState(0);
     const [boardUnread, setBoardUnread] = useState(0);
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "flashdrop_fan") {
+            if (currentStep === 2) setMobileTab("board");
+            else if (currentStep === 3) setMobileTab("chat");
+            else if (currentStep === 5) setMobileTab("impulse");
+            else if (currentStep === 6) setMobileTab("impulse");
+        }
+    }, [activeTour, currentStep]);
 
 
 
@@ -484,7 +496,7 @@ export default function FlashDropsRoomPreview() {
                 {/* Main content */}
                 <div className="relative z-10 flex flex-col h-screen max-w-[1400px] mx-auto w-full">
                     {/* Top ticker bar */}
-                    <div className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
+                    <div data-tour="flashdrop-fan-top-alerts" className="bg-black/65 border-b border-primary/20 overflow-hidden py-1">
                         <div className="flex items-center gap-2 px-4">
                             <div className="fd-ticker-content inline-flex gap-12 text-xs fd-font-tech text-primary/80 flex-1">
                                 {tickerItems.map((item, i) => (
@@ -524,9 +536,9 @@ export default function FlashDropsRoomPreview() {
                                 <RoomTourHelpButton tourType="flashdrop_fan" accentHsl="330, 100%, 55%" />
                             </div>
                             {/* Left: Stream + Drop Board */}
-                            <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0" data-tour="flashdrop-fan-live-drop-board">
+                            <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
                                 {/* Live Stream */}
-                                <div className="rounded-xl overflow-hidden fd-neon-border-md shrink-0" style={{ aspectRatio: "16/9" }}>
+                                <div data-tour="flashdrop-fan-creator-info" className="rounded-xl overflow-hidden fd-neon-border-md shrink-0" style={{ aspectRatio: "16/9" }}>
                                     {roomId && user && hostId ? (
                                         <LiveStreamWrapper
                                             role="fan"
@@ -543,7 +555,7 @@ export default function FlashDropsRoomPreview() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 min-h-0 overflow-hidden">
+                                <div data-tour="flashdrop-fan-live-drop-board" className="flex-1 min-h-0 overflow-hidden">
                                     <LiveDropBoard roomId={roomId} onSpend={requestSpend} drops={drops} loading={loadingDrops} />
                                 </div>
                             </div>
@@ -554,7 +566,7 @@ export default function FlashDropsRoomPreview() {
                             </div>
 
                             {/* Right: Impulse Panel */}
-                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden" data-tour="flashdrop-fan-high-roller-packs">
+                            <div className="flex-[29] min-w-0 min-h-0 flex flex-col overflow-hidden">
                                 <ImpulsePanel roomId={roomId} sessionId={urlSessionId} onSpend={requestSpend} />
                             </div>
 
@@ -563,7 +575,7 @@ export default function FlashDropsRoomPreview() {
                         {/* Mobile: Stream on top, tab content below */}
                         <div className="lg:hidden flex flex-1 flex-col min-h-0 px-2 pt-2 gap-2 overflow-hidden">
                             {/* Stream Wrapper */}
-                            <div className="relative rounded-xl overflow-hidden fd-neon-border-md shrink-0 aspect-video w-full">
+                            <div data-tour="flashdrop-fan-creator-info" className="relative rounded-xl overflow-hidden fd-neon-border-md shrink-0 aspect-video w-full">
                                 {roomId && user && hostId ? (
                                     <LiveStreamWrapper
                                         role="fan"
@@ -605,7 +617,7 @@ export default function FlashDropsRoomPreview() {
                             </div>
 
                             {/* Reactions bar fixed globally under the stream */}
-                            <div className="shrink-0 px-2 py-1.5 bg-black/45 border border-white/[0.06] rounded-xl backdrop-blur-md">
+                            <div data-tour="flashdrop-fan-reactions" className="shrink-0 px-2 py-1.5 bg-black/45 border border-white/[0.06] rounded-xl backdrop-blur-md">
                                 <div className="grid grid-cols-4 gap-2">
                                     {[
                                         { label: "Kiss", price: 5, icon: "💋", color: "from-pink-500 to-rose-400" },
@@ -631,12 +643,12 @@ export default function FlashDropsRoomPreview() {
                             {/* Tab Content Box — takes up all remaining height */}
                             <div className="flex-1 min-h-0 overflow-hidden relative">
                                 {mobileTab === "board" && (
-                                    <div className="h-full flex flex-col overflow-hidden">
+                                    <div data-tour="flashdrop-fan-live-drop-board" className="h-full flex flex-col overflow-hidden">
                                         <LiveDropBoard roomId={roomId} onSpend={requestSpend} drops={drops} loading={loadingDrops} />
                                     </div>
                                 )}
                                 {mobileTab === "chat" && (
-                                    <div className="h-full flex flex-col overflow-hidden">
+                                    <div data-tour="flashdrop-fan-live-chat" className="h-full flex flex-col overflow-hidden">
                                         <FlashDropLiveChat roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
                                     </div>
                                 )}

@@ -53,52 +53,95 @@ export type TourType =
 // ---------------------------------------------------------------------------
 const fanSteps: TourStep[] = [
   {
+    target: "tour-button",
+    icon: "❓",
+    title: "Tour Guide",
+    content: "Whenever you want to restart this tour, just click this Help icon in the header.",
+    placement: "bottom",
+  },
+  {
     target: "wallet-button",
     icon: "💳",
-    title: "Your Wallet",
-    content:
-      "Tap your profile menu to access your Wallet. Add funds for subscriptions, gifts, tips, and paid room access — all managed from here.",
+    title: "Your Wallet & Profile",
+    content: "Access your profile, Kyc Verification status, help resources, and Wallet here. Add coins to your balance to tip creators and unlock special rooms.",
+    placement: "bottom",
+  },
+  {
+    target: "membership-badge",
+    icon: "✨",
+    title: "Membership Badges",
+    content: "Check your user tier status (Bronze, Silver, Gold, VIP) and benefits by clicking on your account badge.",
+    placement: "bottom",
+  },
+  {
+    target: "search-creators",
+    icon: "🔍",
+    title: "Search Creators",
+    content: "Looking for someone specific? Type their name or level in the search bar to find and connect with your favorite creators instantly.",
+    placement: "bottom",
+  },
+  {
+    target: "notification-button",
+    icon: "🔔",
+    title: "Notifications",
+    content: "Stay informed! Here you will get updates on notifications like locks, likes, and messages.",
+    placement: "bottom",
+  },
+  {
+    target: "private-chat",
+    icon: "💬",
+    title: "Messages / Chat",
+    content: "View your private message chats with creators, request VIP conversations, and check updates.",
+    placement: "bottom",
+  },
+  {
+    target: "subscription-section",
+    icon: "👑",
+    title: "VIP Subscriptions",
+    content: "Quickly view your active creator subscriptions and subscribe directly from this section.",
     placement: "bottom",
   },
   {
     target: "rooms-menu",
     icon: "🚀",
-    title: "Browse Rooms",
-    content:
-      "Explore all live room categories — Flash Drops, Confessions, X Chat, Bar Lounge, Truth or Dare, and Suga 4 U. Tap any room to jump in!",
+    title: "Browse Live Rooms",
+    content: "Browse our active live room categories: Confessions, Bar Lounge, Truth or Dare, Suga 4 U, and X Chat. Tap a category to view active creators!",
+    placement: "right",
+  },
+  {
+    target: "collections-button",
+    icon: "⭐",
+    title: "My Collections",
+    content: "View your purchased photos, videos, and unlocked exclusive creator content. All saved securely in your personal collection.",
+    placement: "right",
+  },
+  {
+    target: "subscriptions-button",
+    icon: "👥",
+    title: "My Subscriptions List",
+    content: "View your subscribed creators' lists, followings, and upcoming events.",
+    placement: "right",
+  },
+  {
+    target: "suggestions-button",
+    icon: "💡",
+    title: "Submit Suggestions",
+    content: "We value your input! Share your ideas, bug reports, and features you would like to see on PlayGroundX.",
+    placement: "right",
+  },
+  {
+    target: "newsfeed-button",
+    icon: "📰",
+    title: "NewsFeed",
+    content: "See updates, newly published posts, photos, and status notes from all the creators you follow.",
     placement: "right",
   },
   {
     target: "creator-feed",
     icon: "🔥",
     title: "Featured Creators",
-    content:
-      "Discover top creators on PlayGroundX. This feed showcases featured profiles — tap any creator to visit their profile and see their content.",
+    content: "Browse top trending creators and check out who's currently live, their latest posts, or visit their profile pages.",
     placement: "left",
-  },
-  {
-    target: "subscription-section",
-    icon: "👑",
-    title: "My Subscriptions",
-    content:
-      "View and manage your active creator subscriptions. Subscribe weekly or monthly for exclusive content and room access.",
-    placement: "bottom",
-  },
-  {
-    target: "suggestions-button",
-    icon: "💡",
-    title: "Suggestions",
-    content:
-      "Submit feature suggestions and feedback to help improve PlayGroundX. Your voice matters!",
-    placement: "bottom",
-  },
-  {
-    target: "newsfeed-button",
-    icon: "📰",
-    title: "NewsFeed",
-    content:
-      "Stay updated with the latest posts, announcements, and activity from creators you follow.",
-    placement: "bottom",
   },
 ];
 

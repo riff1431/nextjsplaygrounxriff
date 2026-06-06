@@ -18,6 +18,7 @@ import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import "./flashdrop-creator.css";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -39,6 +40,18 @@ function FlashdropCreatorStudio() {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "flashdrop_creator") {
+            if (currentStep === 0) setMobileTab("summary");
+            else if (currentStep === 1) setMobileTab("drops");
+            else if (currentStep === 3) setMobileTab("packs");
+            else if (currentStep === 4) setMobileTab("requests");
+            else if (currentStep === 5) setMobileTab("chat");
+        }
+    }, [activeTour, currentStep]);
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
@@ -193,14 +206,18 @@ function FlashdropCreatorStudio() {
                     {/* Desktop/Tablet: Grid layout */}
                     <div className="hidden lg:flex gap-3 h-full min-h-0">
                         {/* 1st: Summary Box + Live Drop Board */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden flashdrop-summary-box" data-tour="flashdrop-summary-box">
-                            <SummaryBox roomId={roomId} sessionId={sessionId} />
-                            <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-hidden flashdrop-summary-box">
+                            <div data-tour="flashdrop-summary-box" className="shrink-0">
+                                <SummaryBox roomId={roomId} sessionId={sessionId} />
+                            </div>
+                            <div data-tour="flashdrop-live-drop-board" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                                <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
+                            </div>
                         </div>
 
                         {/* 2nd: Video + High Roller Packs */}
-                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto" data-tour="flashdrop-high-roller-packs">
-                            <div className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
+                            <div data-tour="flashdrop-live-stream" className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                 {roomId && user ? (
                                     <LiveStreamWrapper
                                         role="host"
@@ -211,13 +228,15 @@ function FlashdropCreatorStudio() {
                                         hostAvatarUrl={user.user_metadata?.avatar_url || ""}
                                         hostName={user.user_metadata?.full_name || "Creator"}
                                     />
-                               ) : (
+                                ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-black/40 text-white/40 text-sm">
                                         Connecting to stream...
                                     </div>
                                 )}
                             </div>
-                            <HighRollerPacks roomId={roomId} sessionId={sessionId} />
+                            <div data-tour="flashdrop-high-roller-packs">
+                                <HighRollerPacks roomId={roomId} sessionId={sessionId} />
+                            </div>
                         </div>
 
                         {/* 3rd: Custom Request Drops */}
@@ -259,7 +278,7 @@ function FlashdropCreatorStudio() {
                     {/* Mobile: Stream always on top + tab content below */}
                     <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                         {/* Stream — always visible at top */}
-                        <div className="rounded-xl overflow-hidden shrink-0 aspect-video max-w-[600px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <div data-tour="flashdrop-live-stream" className="rounded-xl overflow-hidden shrink-0 aspect-video max-w-[600px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
                             {roomId && user ? (
                                 <LiveStreamWrapper
                                     role="host"
@@ -280,28 +299,28 @@ function FlashdropCreatorStudio() {
                         {/* Tab content below stream */}
                         {/* Summary tab */}
                         {mobileTab === "summary" && (
-                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                            <div data-tour="flashdrop-summary-box" className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <SummaryBox roomId={roomId} sessionId={sessionId} />
                             </div>
                         )}
 
                         {/* Drops tab */}
                         {mobileTab === "drops" && (
-                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                            <div data-tour="flashdrop-live-drop-board" className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <LiveDropBoard roomId={roomId ?? undefined} sessionId={sessionId} />
                             </div>
                         )}
 
                         {/* Packs tab */}
                         {mobileTab === "packs" && (
-                            <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                            <div data-tour="flashdrop-high-roller-packs" className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                                 <HighRollerPacks roomId={roomId} sessionId={sessionId} />
                             </div>
                         )}
 
                         {/* Requests tab */}
                         {mobileTab === "requests" && (
-                            <div className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                            <div data-tour="flashdrop-custom-request-drops" className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
                                 <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(280 80% 55%), hsl(330 100% 55%))' }}>
                                         <ClipboardList size={10} className="text-white" />
@@ -320,7 +339,7 @@ function FlashdropCreatorStudio() {
 
                         {/* Chat tab */}
                         {mobileTab === "chat" && (
-                            <div className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                            <div data-tour="flashdrop-live-chat" className="glass-panel rounded-xl overflow-hidden w-full flex-1 min-h-0 flex flex-col" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
                                 <div className="flex items-center gap-2 px-4 py-2.5 shrink-0 border-b border-white/[0.06]">
                                     <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(170 80% 45%))' }}>
                                         <MessageSquare size={10} className="text-white" />
