@@ -31,7 +31,8 @@ import {
     LayoutGrid,
     RefreshCw,
     Flame,
-    Dices
+    Dices,
+    Radio
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useAuth } from "@/app/context/AuthContext";
@@ -395,6 +396,7 @@ export default function FeedPage() {
         { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
         { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
         { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
+        { label: "All Live Rooms", key: "alllive", icon: <Radio className="w-4 h-4" />, tone: "blue", route: "/rooms/all-live", roomType: "all-live" },
     ];
 
     // Filter posts dynamically on the client

@@ -1369,7 +1369,7 @@ function ConfessionsRoom() {
                                     </div>
                                 </div>
 
-                                <button onClick={() => router.push("/home")} className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white font-bold text-xs uppercase tracking-widest text-center transition">
+                                <button onClick={() => router.push("/home")} className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white font-bold text-[11px] uppercase tracking-widest text-center transition">
                                     Exit Room
                                 </button>
                             </div>

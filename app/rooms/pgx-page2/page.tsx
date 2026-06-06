@@ -1396,8 +1396,8 @@ function PgxPage2Inner() {
             <div className="mobile-layout-container">
                 {/* Mobile Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", zIndex: 30 }}>
-                    <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "8px 16px", display: "inline-flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, color: `#fff`, cursor: "pointer", border: "1px solid hsla(0,0%,100%,0.1)", background: "hsla(0,0%,100%,0.05)" }}>
-                        <ArrowLeft style={{ width: "16px", height: "16px" }} /> Exit Lounge
+                    <button onClick={() => router.push("/rooms/bar-lounge")} style={{ ...glassPanel, padding: "6px 10px", display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 700, color: `#fff`, cursor: "pointer", border: "1px solid hsla(0,0%,100%,0.1)", background: "hsla(0,0%,100%,0.05)", whiteSpace: "nowrap" }}>
+                        <ArrowLeft style={{ width: "12px", height: "12px" }} /> Exit Lounge
                     </button>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <button
@@ -2156,20 +2156,6 @@ function PgxPage2Inner() {
                             PRIVATE Call - {cs()}{PRIVATE_CALL_PRICE}
                         </button>
 
-                        {/* Billing Status overlay / timer */}
-                        <div style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            background: "rgba(0,0,0,0.4)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: "10px",
-                            padding: "6px 8px"
-                        }}>
-                            <span style={{ fontSize: "10px", color: MUTED }}>⏱️ 0m</span>
-                            <span style={{ fontSize: "10px", color: GOLD, fontWeight: 700 }}>{cs()}0</span>
-                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: MUTED, cursor: "pointer" }}>✕</span>
-                        </div>
                     </div>
                 )}
             </div>

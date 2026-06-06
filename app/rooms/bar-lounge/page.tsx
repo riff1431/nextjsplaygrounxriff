@@ -1001,8 +1001,8 @@ export default function BarLoungeRoom() {
                                     </div>
                                 </div>
                                 {viewState !== 'hosting' && (
-                                    <button onClick={() => setViewState("lobby")} className="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold text-xs tracking-wider uppercase flex items-center gap-1.5 transition-all">
-                                        <LogOut className="w-3.5 h-3.5" />
+                                    <button onClick={() => setViewState("lobby")} className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold text-[10px] tracking-wider uppercase flex items-center gap-1 transition-all whitespace-nowrap">
+                                        <LogOut className="w-3 h-3" />
                                         <span>Exit Lounge</span>
                                     </button>
                                 )}

@@ -23,8 +23,35 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'channelName is required' }, { status: 400 });
         }
 
-        const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
-        const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+        // Try loading config from DB first
+        let appId = null;
+        let appCertificate = null;
+
+        try {
+            const { createClient: createAdminSupabase } = require('@supabase/supabase-js');
+            const supabaseAdmin = createAdminSupabase(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+            const { data } = await supabaseAdmin
+                .from('admin_settings')
+                .select('value')
+                .eq('key', 'agora_config')
+                .single();
+
+            if (data?.value?.appId) {
+                appId = data.value.appId;
+                appCertificate = data.value.appCertificate || null;
+            }
+        } catch (dbErr) {
+            console.warn('[agora-token API] Database configuration load fallback to env:', dbErr);
+        }
+
+        // Fallback to environment variables
+        if (!appId) {
+            appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || null;
+            appCertificate = process.env.AGORA_APP_CERTIFICATE || null;
+        }
 
         if (!appId) {
             return NextResponse.json({ error: 'Agora App ID not configured' }, { status: 500 });
@@ -36,7 +63,7 @@ export async function POST(request: NextRequest) {
         // If no certificate, use "App ID only" mode — return null token + numericUid
         if (!appCertificate) {
             console.warn("Agora App Certificate not found. Using App ID only mode.");
-            return NextResponse.json({ token: null, numericUid });
+            return NextResponse.json({ token: null, numericUid, appId });
         }
 
         // Set role: PUBLISHER (broadcaster) or SUBSCRIBER (audience)
@@ -55,7 +82,7 @@ export async function POST(request: NextRequest) {
             expirationTimeInSeconds
         );
 
-        return NextResponse.json({ token, numericUid });
+        return NextResponse.json({ token, numericUid, appId });
 
     } catch (error: any) {
         console.error("Agora Token Error:", error);

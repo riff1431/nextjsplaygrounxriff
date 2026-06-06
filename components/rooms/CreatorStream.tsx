@@ -47,6 +47,7 @@ function toNumericUid(input: string | number): number {
 export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName, onRemoteUsersChange, isGrid }: CreatorStreamProps) {
     const supabase = createClient();
     const [token, setToken] = useState<string | null | undefined>(undefined);
+    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
     const [numericUid, setNumericUid] = useState<number>(0);
     const [isStreaming, setIsStreaming] = useState(true);
     const client = useRTCClient();
@@ -118,7 +119,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 if (data) {
                     // Match remoteUsers (numeric) to profiles (UUIDs hashed to numeric)
                     const matched = data.filter(p =>
-                        remoteUsers.some(u => Number(u.uid) === toNumericUid(p.id))
+                         remoteUsers.some(u => Number(u.uid) === toNumericUid(p.id))
                     );
                     setFans(matched);
                 }
@@ -207,6 +208,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 } else {
                     setToken(null);
                 }
+                if (data.appId) setDynamicAppId(data.appId);
                 if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e: any) {
                 console.error("Failed to fetch token", e);
@@ -221,7 +223,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     console.log("CreatorStream: Joining with UID:", numericUid);
 
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
         token !== undefined && numericUid > 0
     );
 

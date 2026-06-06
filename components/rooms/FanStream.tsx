@@ -35,6 +35,7 @@ function toNumericUid(input: string | number): number {
 
 export default function FanStream({ appId, channelName, uid, hostId, hostAvatarUrl, hostName, collabCreators, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
+    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
     const [numericUid, setNumericUid] = useState<number>(0);
     const client = useRTCClient();
 
@@ -59,6 +60,7 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                 } else {
                     setToken(null);
                 }
+                if (data.appId) setDynamicAppId(data.appId);
                 if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e) {
                 console.error("FanStream: Failed to fetch token", e);
@@ -81,7 +83,7 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
     // Join as audience — only when token has resolved (null = App ID only, number = with token)
     const isReady = token !== undefined && numericUid > 0;
     useJoin(
-        { appid: appId, channel: channelName, token: token ?? null, uid: numericUid },
+        { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
         isReady
     );
 

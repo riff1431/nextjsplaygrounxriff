@@ -27,6 +27,7 @@ import {
     Banknote,
     DollarSign,
     FileText,
+    Video,
 } from "lucide-react";
 import { NeonCard, NeonButton } from "../../../components/admin/shared/NeonCard";
 import { AdminSectionTitle } from "../../../components/admin/shared/AdminTable";
@@ -63,6 +64,7 @@ import CurrencyManager from "../../../components/admin/settings/CurrencyManager"
 import CampaignsManager from "../../../components/admin/settings/CampaignsManager";
 import IframeMenuManager from "../../../components/admin/settings/IframeMenuManager";
 import EmailSettingsPanel from "../../../components/admin/emails/EmailSettingsPanel";
+import AgoraSettingsPanel from "../../../components/admin/settings/AgoraSettingsPanel";
 
 // Helpers
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -103,7 +105,8 @@ type AdminModule =
     | "creator-earnings" // Creator Earnings panel
     | "currency" // Default Currency
     | "emails" // SMTP and Email logs
-    | "iframe-menus"; // dynamic iframe menus
+    | "iframe-menus" // dynamic iframe menus
+    | "agora"; // Agora Streaming Configuration
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -194,6 +197,7 @@ export default function AdminDashboardPage() {
                 { id: "memberships", label: "Fan Memberships", icon: <Star className="w-4 h-4" />, tone: "amber" },
                 { id: "creator-levels", label: "Creator Levels", icon: <Star className="w-4 h-4" />, tone: "pink" },
                 { id: "iframe-menus", label: "Iframe Menu", icon: <Settings className="w-4 h-4" />, tone: "amber" },
+                { id: "agora", label: "Agora Streaming", icon: <Video className="w-4 h-4" />, tone: "cyan" },
             ]
         },
         {
@@ -372,6 +376,7 @@ export default function AdminDashboardPage() {
                                 <Tile id="bar-lounge" label="Bar Lounge" icon={<Martini className="w-4 h-4" />} tone="pink" desc="Global config" />
                                 <Tile id="currency" label="Default Currency" icon={<Coins className="w-4 h-4" />} tone="green" desc="Set display currency" />
                                 <Tile id="iframe-menus" label="Iframe Menu" icon={<Settings className="w-4 h-4" />} tone="amber" desc="Manage fan & creator menus" />
+                                <Tile id="agora" label="Agora Streaming" icon={<Video className="w-4 h-4" />} tone="cyan" desc="Configure App ID & certificates" />
                                 <Tile id="emails" label="SMTP & Email Logs" icon={<Mail className="w-4 h-4" />} tone="cyan" desc="SMTP servers & logs" />
                                 <Tile id="refunds" label="Refunds" icon={<CreditCard className="w-4 h-4" />} tone="amber" desc="Dispute resolution" />
                                 <Tile id="payouts" label="Payouts" icon={<CreditCard className="w-4 h-4" />} tone="green" desc="Creator payments" />
@@ -410,6 +415,7 @@ export default function AdminDashboardPage() {
                     {bizModule === "currency" && <CurrencyManager />}
                     {bizModule === "iframe-menus" && <IframeMenuManager />}
                     {bizModule === "emails" && <EmailSettingsPanel />}
+                    {bizModule === "agora" && <AgoraSettingsPanel />}
                     {bizModule === "payments" && <PaymentGatewayManager />}
                     {bizModule === "approvals" && <PaymentApprovals />}
                     {bizModule === "users" && <UserManagement />}

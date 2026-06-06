@@ -38,6 +38,7 @@ import {
     Home as HomeIcon,
     Dices,
     HelpCircle,
+    Radio,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -434,6 +435,7 @@ const CATS: Array<{
         { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
         { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
         { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
+        { label: "All Live Rooms", key: "alllive", icon: <Radio className="w-4 h-4" />, tone: "blue", route: "/rooms/all-live", roomType: "all-live" },
         { label: "Casino", key: "casino", icon: <Dices className="w-4 h-4" />, tone: "yellow", route: "/rooms/casino", roomType: "casino" },
     ];
 

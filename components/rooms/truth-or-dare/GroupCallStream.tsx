@@ -116,6 +116,7 @@ function GroupCallStreamInner({
     localDisplayName = 'You', participantFanIds = [], creatorId,
 }: GroupCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
+    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
     const [numericUid, setNumericUid] = useState<number>(0);
     const [micEnabled, setMicEnabled] = useState(true);
     const [camEnabled, setCamEnabled] = useState(true);
@@ -200,6 +201,7 @@ function GroupCallStreamInner({
             .then(data => {
                 if (!mounted) return;
                 if (data.token !== undefined) setToken(data.token);
+                if (data.appId) setDynamicAppId(data.appId);
                 if (data.numericUid) setNumericUid(data.numericUid);
             })
             .catch(() => { if (mounted) { setToken(null); setNumericUid(0); } });
@@ -209,7 +211,7 @@ function GroupCallStreamInner({
     const isReady = token !== undefined && numericUid > 0;
 
     // ── Join + Publish ─────────────────────────────────────────────────────────
-    useJoin({ appid: appId, channel: channelName, token: token ?? null, uid: numericUid }, isReady);
+    useJoin({ appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid }, isReady);
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(Boolean);
     usePublish(tracksToPublish as any, isReady && tracksToPublish.length > 0);
 
