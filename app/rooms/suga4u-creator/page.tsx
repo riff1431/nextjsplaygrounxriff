@@ -26,6 +26,7 @@ import { useGroupCall } from "@/hooks/useGroupCall";
 import GroupCallCreatorModal from "@/components/rooms/truth-or-dare-creator/GroupCallCreatorModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -47,6 +48,19 @@ const Suga4UCreatorPage = () => {
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "suga4u_creator") {
+            if (currentStep === 3) setMobileTab("chat");
+            else if (currentStep === 4) setMobileTab("requests");
+            else if (currentStep === 5) setMobileTab("requests");
+            else if (currentStep === 6) setMobileTab("favorites");
+            else if (currentStep === 7) setMobileTab("requests");
+            else if (currentStep === 8) setMobileTab("favorites");
+        }
+    }, [activeTour, currentStep]);
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);

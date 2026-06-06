@@ -44,6 +44,7 @@ import CustomRequestModal from "@/components/rooms/suga4u/CustomRequestModal";
 import { createClient } from "@/utils/supabase/client";
 import { cs } from "@/utils/currency";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -140,6 +141,19 @@ const Suga4URoom = () => {
     const fanIds = React.useMemo(() => suga.activity.map(a => a.fanId).filter(Boolean) as string[], [suga.activity]);
     const avatarMap = useAvatarMap(fanIds);
     const { balance, pay } = useWallet();
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "suga4u_fan") {
+            if (currentStep === 3) setMobileTab("info");
+            else if (currentStep === 4) setMobileTab("requests");
+            else if (currentStep === 5) setMobileTab("requests");
+            else if (currentStep === 6) setMobileTab("requests");
+            else if (currentStep === 7) setMobileTab("secrets");
+            else if (currentStep === 8) setMobileTab("secrets");
+        }
+    }, [activeTour, currentStep]);
 
     const [activeMobileFavTab, setActiveMobileFavTab] = useState("ALL");
     const [activeMobileSecTab, setActiveMobileSecTab] = useState("ALL");
@@ -979,16 +993,24 @@ const Suga4URoom = () => {
                             </div>
 
                             {/* RIGHT: Options */}
-                            <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll" data-tour="suga-fan-paid-requests">
-                                <PaidRequestMenu roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
-                                <SendSugarGifts roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
-                                <QuickPaidActions
-                                    roomId={roomId}
-                                    hostId={hostId}
-                                    sessionId={urlSessionId}
-                                    initiatePrivateCall={privateCall.initiateCall}
-                                />
-                                <S4uGroupVotePanel roomId={roomId} />
+                            <div className="flex flex-col gap-3 min-h-0 overflow-y-auto chat-scroll">
+                                <div data-tour="suga-fan-paid-requests">
+                                    <PaidRequestMenu roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                </div>
+                                <div data-tour="suga-fan-send-gifts">
+                                    <SendSugarGifts roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                </div>
+                                <div data-tour="suga-fan-special-actions">
+                                    <QuickPaidActions
+                                        roomId={roomId}
+                                        hostId={hostId}
+                                        sessionId={urlSessionId}
+                                        initiatePrivateCall={privateCall.initiateCall}
+                                    />
+                                </div>
+                                <div data-tour="suga-fan-group-votes">
+                                    <S4uGroupVotePanel roomId={roomId} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1233,7 +1255,7 @@ const Suga4URoom = () => {
 
                                         <div className="grid grid-cols-2 gap-4 divide-x divide-pink-500/10">
                                             {/* Requests Grid */}
-                                            <div className="grid grid-cols-2 gap-2 pr-2">
+                                            <div className="grid grid-cols-2 gap-2 pr-2" data-tour="suga-fan-paid-requests">
                                                 {[
                                                     { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
                                                     { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
@@ -1254,7 +1276,7 @@ const Suga4URoom = () => {
                                             </div>
 
                                             {/* Gifts Grid */}
-                                            <div className="grid grid-cols-2 gap-2 pl-4">
+                                            <div className="grid grid-cols-2 gap-2 pl-4" data-tour="suga-fan-send-gifts">
                                                 {[
                                                     { name: "Diamond", amount: 10, emoji: "💎" },
                                                     { name: "Diamonds", amount: 25, emoji: "💎" },
@@ -1276,26 +1298,28 @@ const Suga4URoom = () => {
                                     </div>
 
                                     {/* Private 1-on-1 Button */}
-                                    <button
-                                        onClick={() => {
-                                            if (!roomId || !hostId) return;
-                                            if (balance < 500) {
-                                                toast.error("Insufficient balance");
-                                                return;
-                                            }
-                                            setConfirmMobileAction({
-                                                type: 'PRIVATE_1ON1',
-                                                name: 'Private 1-on-1 Call',
-                                                price: 500,
-                                                emoji: '👑',
-                                                description: `Request a Private 1-on-1 video call with the creator for ${cs()}500?`
-                                            });
-                                        }}
-                                        disabled={!roomId || !hostId}
-                                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
-                                    >
-                                        👑 Private 1-on-1 {cs()}500
-                                    </button>
+                                    <div data-tour="suga-fan-special-actions">
+                                        <button
+                                            onClick={() => {
+                                                if (!roomId || !hostId) return;
+                                                if (balance < 500) {
+                                                    toast.error("Insufficient balance");
+                                                    return;
+                                                }
+                                                setConfirmMobileAction({
+                                                    type: 'PRIVATE_1ON1',
+                                                    name: 'Private 1-on-1 Call',
+                                                    price: 500,
+                                                    emoji: '👑',
+                                                    description: `Request a Private 1-on-1 video call with the creator for ${cs()}500?`
+                                                });
+                                            }}
+                                            disabled={!roomId || !hostId}
+                                            className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
+                                        >
+                                            👑 Private 1-on-1 {cs()}500
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -1303,7 +1327,7 @@ const Suga4URoom = () => {
                             {mobileTab === "secrets" && (
                                 <div className="space-y-4 pb-4">
                                     {/* Creator Favorites Section */}
-                                    <div className="py-1">
+                                    <div className="py-1" data-tour="suga-fan-creator-favorites">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-1.5 text-sm font-black tracking-wider text-white">
                                                 <span className="text-yellow-400">★</span> CREATOR FAVORITES
@@ -1405,7 +1429,7 @@ const Suga4URoom = () => {
                                     </div>
 
                                     {/* Creator Secrets Section */}
-                                    <div className="py-1">
+                                    <div className="py-1" data-tour="suga-fan-creator-secrets">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-1.5 text-sm font-black tracking-wider text-white">
                                                 <span className="text-yellow-400">🔒</span> CREATOR SECRETS
@@ -1549,7 +1573,7 @@ const Suga4URoom = () => {
                         {/* Sticky footer with Room Goal and Mobile Tabs */}
                         <div className="shrink-0 bg-[#0e0010]/95 border-t border-pink-500/20 z-40 backdrop-blur-md">
                             {/* Rooms Goal Footer Bar */}
-                            <div className="px-4 py-2 flex items-center justify-between bg-black/30">
+                            <div className="px-4 py-2 flex items-center justify-between bg-black/30" data-tour="suga-fan-group-votes">
                                 <div className="flex flex-col gap-0.5">
                                     <span className="text-[10px] font-black text-yellow-400 tracking-wider flex items-center gap-1">
                                         🎯 ROOM GOAL

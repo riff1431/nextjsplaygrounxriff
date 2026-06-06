@@ -1183,7 +1183,7 @@ function PgxPage2Inner() {
                     </div>
 
                     {/* ═══ CENTER: Live Stream & Actions ═══ */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }} data-tour="fan-lounge-chat">
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px", overflow: "hidden", height: "100%", paddingBottom: "16px" }}>
 
                         {/* Live stream — 4:3 landscape positioned at the bottom */}
                         <div style={{ width: "100%", marginTop: "auto", flexShrink: 0 }}>
@@ -1238,10 +1238,10 @@ function PgxPage2Inner() {
                         </div>
 
                         {/* Custom Tip and Private 1-on-1 merged into one row */}
-                        <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }} data-tour="fan-custom-tip">
+                        <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }}>
                             
                             {/* Custom Tip row */}
-                            <div style={{ ...glassPanel, flex: 1, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }}>
+                            <div style={{ ...glassPanel, flex: 1, padding: "8px 12px", display: "flex", alignItems: "center", gap: "12px", border: "1px solid hsla(280,60%,45%,0.4)" }} data-tour="fan-custom-tip">
                                 <div style={{ width: "28px", height: "28px", borderRadius: "9999px", background: "hsla(42,90%,55%,0.15)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid hsla(42,90%,55%,0.3)" }}>
                                     <span style={{ fontSize: "14px" }}>💰</span>
                                 </div>
@@ -1308,7 +1308,7 @@ function PgxPage2Inner() {
 
 
                     {/* ═══ RIGHT: Lounge Chat ═══ */}
-                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "hidden", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }}>
+                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0, overflow: "hidden", border: "1px solid hsla(280,40%,30%,0.2)", borderRadius: "0.75rem" }} data-tour="fan-lounge-chat">
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1rem", fontWeight: 700, color: GOLD, ...glowTextGold, margin: 0 }}>Lounge Chat</h2>
                             <span style={liveBadge}>
