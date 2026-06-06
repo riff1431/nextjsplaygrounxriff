@@ -58,6 +58,7 @@ import dynamic from 'next/dynamic';
 import { cs } from "@/utils/currency";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 const LiveStreamWrapper = dynamic<any>(() => import('@/components/rooms/LiveStreamWrapper'), { ssr: false });
 const QuestionCountdown = dynamic<any>(() => import('./components/QuestionCountdown'), { ssr: false });
 const FanAnswerModal = dynamic<any>(() => import('./components/FanAnswerModal'), { ssr: false });
@@ -156,6 +157,21 @@ function TruthOrDareContent() {
     const [chatUnread, setChatUnread] = useState(0);
     const [playUnread, setPlayUnread] = useState(0);
     const [gamesUnread, setGamesUnread] = useState(0);
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "truth_or_dare_fan") {
+            if (currentStep === 1) setMobileTab("games");
+            else if (currentStep === 2) setMobileTab("games");
+            else if (currentStep === 3) setMobileTab("games");
+            else if (currentStep === 4) setMobileTab("voting");
+            else if (currentStep === 5) setMobileTab("chat");
+            else if (currentStep === 6) setMobileTab("play");
+            else if (currentStep === 7) setMobileTab("play");
+            else if (currentStep === 8) setMobileTab("play");
+        }
+    }, [activeTour, currentStep]);
 
     const activeTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -1508,7 +1524,7 @@ function TruthOrDareContent() {
                                 </div>
 
                                 {/* Col 2: System Truths (now on right) */}
-                                <div className="space-y-4">
+                                <div className="space-y-4" data-tour="tod-fan-system-truths">
                                     <h4 className="text-sm font-bold text-blue-400 uppercase tracking-widest pb-2 px-2 bg-blue-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(59,130,246,0.6), 0 0 30px rgba(59,130,246,0.3)' }}>System Truths</h4>
                                     <div className="space-y-3">
                                         {truthTiers.map((t) => (
@@ -1531,7 +1547,7 @@ function TruthOrDareContent() {
                                 </div>
 
                                 {/* Col 3: Custom Requests */}
-                                <div className="space-y-4 col-span-2 sm:col-span-1">
+                                <div className="space-y-4 col-span-2 sm:col-span-1" data-tour="tod-fan-custom-requests">
                                     <h4 className="text-[11px] font-bold text-purple-400 uppercase tracking-widest pb-2 px-2 bg-purple-500/5 rounded-t-lg" style={{ textShadow: '0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)' }}>Custom Requests</h4>
                                     <div className="flex gap-2">
                                         <button
@@ -1569,7 +1585,7 @@ function TruthOrDareContent() {
                     {/* Middle: Kings + Actions + Spinner */}
                     <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-[280px] xl:w-[320px] min-h-0 overflow-y-auto shrink-0 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                         {/* Profiles */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-3" data-tour="tod-fan-top-fans">
                             <ProfileCard
                                 name={topDareKing?.name || "Be first!"}
                                 title="Dare King"
@@ -1634,10 +1650,12 @@ function TruthOrDareContent() {
 
                         {/* Group Voting Section — wired with GroupVotePanel */}
                         {roomId && (
-                            <GroupVotePanel
-                                roomId={roomId}
-                                currentUserId={userId || undefined}
-                            />
+                            <div data-tour="tod-fan-vote-goals">
+                                <GroupVotePanel
+                                    roomId={roomId}
+                                    currentUserId={userId || undefined}
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -1766,7 +1784,7 @@ function TruthOrDareContent() {
                 {/* 2. Reactions & Tip Creator Row — fixed below video */}
                 <div className="flex gap-2 shrink-0">
                     {/* Reactions (60%) */}
-                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2.5 flex justify-between gap-1">
+                    <div className="flex-[6] bg-[#140b1b]/50 border border-purple-500/10 rounded-2xl p-2.5 flex justify-between gap-1" data-tour="tod-fan-gifts">
                         {[
                             { name: "Kiss", emoji: "💋", price: 10 },
                             { name: "Love", emoji: "❤️", price: 20 },
@@ -1788,7 +1806,7 @@ function TruthOrDareContent() {
                     </div>
 
                     {/* Tip Creator (40%) */}
-                    <div className="flex-[4] bg-[#091510]/50 border border-emerald-500/15 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_2px_8px_rgba(16,185,129,0.05)]">
+                    <div className="flex-[4] bg-[#091510]/50 border border-emerald-500/15 rounded-2xl p-2.5 flex flex-col justify-between shadow-[0_2px_8px_rgba(16,185,129,0.05)]" data-tour="tod-fan-tip-creator">
                         <div className="flex items-center gap-1.5 mb-1.5">
                             <Send className="w-3 h-3 text-emerald-400" />
                             <h3 className="text-xs font-black text-white uppercase tracking-wider">Tip Creator</h3>
@@ -1908,7 +1926,7 @@ function TruthOrDareContent() {
                         {/* System Dares & System Truths */}
                         <div className="grid grid-cols-2 gap-3 shrink-0">
                             {/* System Dares */}
-                            <div className="bg-[#180a0a]/30 border border-red-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(239,68,68,0.02)]">
+                            <div className="bg-[#180a0a]/30 border border-red-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(239,68,68,0.02)]" data-tour="tod-fan-system-dares">
                                 <h4 className="text-xs font-black text-red-400 uppercase tracking-widest pb-1 border-b border-red-500/10 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                     System Dares
@@ -1937,7 +1955,7 @@ function TruthOrDareContent() {
                             </div>
 
                             {/* System Truths */}
-                            <div className="bg-[#0a0f18]/30 border border-cyan-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(6,182,212,0.02)]">
+                            <div className="bg-[#0a0f18]/30 border border-cyan-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(6,182,212,0.02)]" data-tour="tod-fan-system-truths">
                                 <h4 className="text-xs font-black text-cyan-400 uppercase tracking-widest pb-1 border-b border-cyan-500/10 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
                                     System Truths
@@ -1967,7 +1985,7 @@ function TruthOrDareContent() {
                         </div>
 
                         {/* Custom Requests */}
-                        <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(168,85,247,0.02)] shrink-0">
+                        <div className="bg-[#120818]/30 border border-purple-500/15 rounded-2xl p-3 flex flex-col gap-2.5 shadow-[0_4px_15px_rgba(168,85,247,0.02)] shrink-0" data-tour="tod-fan-custom-requests">
                             <h4 className="text-xs font-black text-purple-400 uppercase tracking-widest px-0.5">
                                 Custom Requests
                             </h4>
@@ -2016,7 +2034,7 @@ function TruthOrDareContent() {
                 {mobileTab === "games" && (
                     <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
                         {/* Stacked Kings */}
-                        <div className="grid grid-cols-2 gap-3 shrink-0">
+                        <div className="grid grid-cols-2 gap-3 shrink-0" data-tour="tod-fan-top-fans">
                             {/* Dare King Card */}
                             <div className="bg-[#1a0f18]/80 border border-red-500/15 rounded-2xl p-4 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[0_4px_15px_rgba(255,42,109,0.05)]">
                                 <span className="text-xs font-black text-red-400 uppercase tracking-widest flex items-center gap-1" style={{ textShadow: '0 0 5px rgba(239,68,68,0.3)' }}>
@@ -2067,7 +2085,7 @@ function TruthOrDareContent() {
                 )}
 
                 {mobileTab === "voting" && roomId && (
-                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3">
+                    <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4 flex flex-col gap-3" data-tour="tod-fan-vote-goals">
                         <GroupVotePanel
                             roomId={roomId}
                             currentUserId={userId || undefined}

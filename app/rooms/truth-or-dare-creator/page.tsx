@@ -29,6 +29,7 @@ const CollabRemoteStream = dynamic(() => import("@/components/rooms/truth-or-dar
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { Video as VideoIcon, MessageCircle as MessageCircleIcon, Inbox as InboxIcon } from "lucide-react";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const TOD_STUDIO_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircleIcon className="w-5 h-5" /> },
@@ -160,6 +161,17 @@ function TruthOrDareCreatorContent() {
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
     const [summaryUnread, setSummaryUnread] = useState(false);
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "truth_or_dare_creator") {
+            if (currentStep === 2) setMobileStudioTab("summary");
+            else if (currentStep === 3) setMobileStudioTab("voting");
+            else if (currentStep === 4) setMobileStudioTab("requests");
+            else if (currentStep === 5) setMobileStudioTab("chat");
+        }
+    }, [activeTour, currentStep]);
 
     const activeTabRef = useRef(mobileStudioTab);
     useEffect(() => {
@@ -2109,7 +2121,7 @@ function TruthOrDareCreatorContent() {
 
                         {/* Tab Content below stream */}
                         {mobileStudioTab === "requests" && (
-                            <div className="w-full flex-1 min-h-0">
+                            <div className="w-full flex-1 min-h-0" data-tour="tod-incoming-requests">
                                 <TodCreatorRequestPanel
                                     title="Incoming Requests"
                                     accentColor="pink"
@@ -2152,7 +2164,7 @@ function TruthOrDareCreatorContent() {
                         )}
 
                         {mobileStudioTab === "chat" && (
-                            <div className="w-full flex-1 min-h-0">
+                            <div className="w-full flex-1 min-h-0" data-tour="tod-live-chat">
                                 <TodCreatorLiveChat 
                                     roomId={roomId} 
                                     sessionStartedAt={activeSessionStartedAt}
