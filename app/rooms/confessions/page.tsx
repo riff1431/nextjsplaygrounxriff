@@ -18,6 +18,7 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -188,6 +189,19 @@ function ConfessionsRoom() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const { balance: walletBalance, refresh: refreshWallet } = useWallet();
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "confession_fan") {
+            if (currentStep === 0) setMobileTab("request");
+            else if (currentStep === 1) setMobileTab("wall");
+            else if (currentStep === 2) setMobileTab("request");
+            else if (currentStep === 4) setMobileTab("chat");
+            else if (currentStep === 6) setMobileTab("request");
+            else if (currentStep === 7) setMobileTab("request");
+        }
+    }, [activeTour, currentStep]);
 
     // URL params (set when coming from confessions-sessions browse)
     const urlRoomId = searchParams?.get('roomId');
@@ -858,41 +872,45 @@ function ConfessionsRoom() {
                         <div className="flex flex-col lg:flex-row gap-4 xl:gap-6 h-full">
 
                             {/* Left Column */}
-                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[480px] shrink-0 lg:h-full overflow-hidden" data-tour="confession-creator-spotlight">
-                                <CreatorSpotlight
-                                    liveStreamNode={
-                                        roomId && user && hostId ? (
-                                            isLive ? (
-                                                <LiveStreamWrapper
-                                                    role="fan"
-                                                    appId={APP_ID}
-                                                    roomId={roomId}
-                                                    uid={user.id}
-                                                    hostId={hostId}
-                                                    hostAvatarUrl={hostAvatar || ""}
-                                                    hostName={hostStreamName}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center bg-black/80 rounded-2xl relative overflow-hidden">
-                                                    <div className="absolute inset-0 bg-[url('/assets/noise.png')] opacity-20 mix-blend-overlay"></div>
-                                                    <div className="relative z-10 flex flex-col items-center">
-                                                        <div className="w-20 h-20 rounded-full border-2 border-rose-500/30 p-1 mb-4 relative">
-                                                            <div className="absolute inset-0 border-2 border-rose-500 rounded-full animate-ping opacity-20"></div>
-                                                            <img src={hostAvatar || "/default-avatar.png"} alt="Creator" className="w-full h-full rounded-full object-cover grayscale hover:grayscale-0 transition-all duration-500" />
+                            <div className="flex flex-col gap-4 xl:gap-6 w-full lg:w-[480px] shrink-0 lg:h-full overflow-hidden">
+                                <div data-tour="confession-creator-spotlight" className="shrink-0">
+                                    <CreatorSpotlight
+                                        liveStreamNode={
+                                            roomId && user && hostId ? (
+                                                isLive ? (
+                                                    <LiveStreamWrapper
+                                                        role="fan"
+                                                        appId={APP_ID}
+                                                        roomId={roomId}
+                                                        uid={user.id}
+                                                        hostId={hostId}
+                                                        hostAvatarUrl={hostAvatar || ""}
+                                                        hostName={hostStreamName}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-black/80 rounded-2xl relative overflow-hidden">
+                                                        <div className="absolute inset-0 bg-[url('/assets/noise.png')] opacity-20 mix-blend-overlay"></div>
+                                                        <div className="relative z-10 flex flex-col items-center">
+                                                            <div className="w-20 h-20 rounded-full border-2 border-rose-500/30 p-1 mb-4 relative">
+                                                                <div className="absolute inset-0 border-2 border-rose-500 rounded-full animate-ping opacity-20"></div>
+                                                                <img src={hostAvatar || "/default-avatar.png"} alt="Creator" className="w-full h-full rounded-full object-cover grayscale hover:grayscale-0 transition-all duration-500" />
+                                                            </div>
+                                                            <h3 className="text-xl font-black text-white tracking-tight mb-2">Waiting for {hostStreamName}</h3>
+                                                            <p className="text-rose-200/60 text-sm font-medium">Session will begin shortly...</p>
                                                         </div>
-                                                        <h3 className="text-xl font-black text-white tracking-tight mb-2">Waiting for {hostStreamName}</h3>
-                                                        <p className="text-rose-200/60 text-sm font-medium">Session will begin shortly...</p>
                                                     </div>
+                                                )
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-black/50 text-rose-200/40 text-sm">
+                                                    {roomId ? "Connecting to stream..." : "No active session"}
                                                 </div>
                                             )
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-black/50 text-rose-200/40 text-sm">
-                                                {roomId ? "Connecting to stream..." : "No active session"}
-                                            </div>
-                                        )
-                                    }
-                                />
-                                <LiveChatBox roomId={roomId} sessionId={urlSessionId} className="flex-1 min-h-0 w-full" />
+                                        }
+                                    />
+                                </div>
+                                <div data-tour="confession-live-chat" className="flex-1 min-h-0 w-full">
+                                    <LiveChatBox roomId={roomId} sessionId={urlSessionId} className="h-full w-full" />
+                                </div>
                             </div>
 
                             {/* Center Column - wider, independently scrollable */}
@@ -910,25 +928,29 @@ function ConfessionsRoom() {
                             </div>
 
                             {/* Right Column */}
-                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0 lg:h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent" data-tour="confession-request-builder">
-                                <RequestConfession
-                                    reqType={reqType}
-                                    setReqType={setReqType}
-                                    reqAmount={reqAmount}
-                                    setReqAmount={setReqAmount}
-                                    reqTopic={reqTopic}
-                                    setReqTopic={setReqTopic}
-                                    isAnon={isAnon}
-                                    setIsAnon={setIsAnon}
-                                    confessionMode={confessionMode}
-                                    setConfessionMode={setConfessionMode}
-                                    handleOpenConfirm={handleOpenConfirm}
-                                    isSending={isSending}
-                                />
-                                <MyRequests
-                                    requests={requests}
-                                    setReviewRequest={setReviewRequest}
-                                />
+                            <div className="space-y-4 xl:space-y-6 w-full lg:w-[320px] shrink-0 lg:h-full overflow-y-auto scrollbar-thin scrollbar-thumb-rose-500/20 scrollbar-track-transparent">
+                                <div data-tour="confession-request-builder">
+                                    <RequestConfession
+                                        reqType={reqType}
+                                        setReqType={setReqType}
+                                        reqAmount={reqAmount}
+                                        setReqAmount={setReqAmount}
+                                        reqTopic={reqTopic}
+                                        setReqTopic={setReqTopic}
+                                        isAnon={isAnon}
+                                        setIsAnon={setIsAnon}
+                                        confessionMode={confessionMode}
+                                        setConfessionMode={setConfessionMode}
+                                        handleOpenConfirm={handleOpenConfirm}
+                                        isSending={isSending}
+                                    />
+                                </div>
+                                <div data-tour="confession-my-requests">
+                                    <MyRequests
+                                        requests={requests}
+                                        setReviewRequest={setReviewRequest}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </main>
@@ -956,7 +978,7 @@ function ConfessionsRoom() {
                             </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0" data-tour="confession-invite-incoming">
                             <button
                                 onClick={() => setShowInviteModal(true)}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#d50057] text-white text-xs font-bold active:scale-[0.98] transition shadow-[0_0_12px_rgba(213,0,87,0.4)]"
@@ -979,7 +1001,7 @@ function ConfessionsRoom() {
                     {/* Stream & Reactions fixed at top */}
                     <div className="shrink-0 px-4 pt-3 pb-2 space-y-3 flex flex-col bg-[#0c0204]">
                         {/* Live Video Spotlight */}
-                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/5 shadow-2xl bg-black/60 shrink-0">
+                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/5 shadow-2xl bg-black/60 shrink-0" data-tour="confession-creator-spotlight">
                             {roomId && user && hostId ? (
                                 isLive ? (
                                     <LiveStreamWrapper
@@ -1060,7 +1082,7 @@ function ConfessionsRoom() {
                         )}
 
                         {mobileTab === "wall" && (
-                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-4">
+                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-4" data-tour="confession-all-creator-confessions">
                                 <div className="flex justify-between items-center px-1">
                                     <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">All Confessions</h4>
                                     <button onClick={() => handleTierFilter('All')} className="text-[10px] text-[#ff2a6d] font-bold hover:underline">Clear Filter</button>
@@ -1188,7 +1210,7 @@ function ConfessionsRoom() {
                                                 <button onClick={() => setIsAnon(true)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Anon</button>
                                             </div>
                                         </div>
-                                        <div>
+                                        <div data-tour="confession-send-to">
                                             <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Send mode</div>
                                             <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
                                                 <button onClick={() => setConfessionMode("1on1")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "1on1" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>1on1</button>
@@ -1200,6 +1222,7 @@ function ConfessionsRoom() {
                                     <button
                                         onClick={handleOpenConfirm}
                                         disabled={isSending || !reqTopic.trim() || reqAmount <= 0}
+                                        data-tour="confession-send-request"
                                         className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d50057] to-[#ff2a6d] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(213,0,87,0.3)] disabled:opacity-50 disabled:active:scale-100"
                                     >
                                         <Send className="w-3.5 h-3.5" />
@@ -1208,7 +1231,7 @@ function ConfessionsRoom() {
                                 </div>
 
                                 {/* Active Requests List */}
-                                <div className="space-y-2.5">
+                                <div className="space-y-2.5" data-tour="confession-my-requests">
                                     <h5 className="text-xs font-extrabold text-white/40 uppercase tracking-widest px-1">My Requests Status</h5>
                                     <div className="space-y-2">
                                         {requests.length === 0 ? (

@@ -6,6 +6,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
 import CreatorDeliveryModal from "./CreatorDeliveryModal";
 import { cs } from "@/utils/currency";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 interface RequestRow {
     id: string;
@@ -174,6 +175,16 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
     const [deliveryRequest, setDeliveryRequest] = useState<RequestRow | null>(null);
     const [showDeliveryModal, setShowDeliveryModal] = useState(false);
     const [activeView, setActiveView] = useState<"my" | "global">("my");
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "confession_creator") {
+            if (currentStep === 0) setActiveView("my");
+            else if (currentStep === 1) setActiveView("global");
+            else if (currentStep === 2) setActiveView("my");
+        }
+    }, [activeTour, currentStep]);
 
     // Sync roomId from prop when it changes
     useEffect(() => {
@@ -391,6 +402,7 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
                 <div className="conf-glass-card p-1 flex gap-1 shrink-0">
                     <button
                         onClick={() => setActiveView("my")}
+                        data-tour="confession-my-requests"
                         className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                             activeView === "my"
                                 ? "bg-white/15 text-white conf-font-cinzel"
@@ -401,6 +413,7 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
                     </button>
                     <button
                         onClick={() => setActiveView("global")}
+                        data-tour="confession-global-requests"
                         className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all relative ${
                             activeView === "global"
                                 ? "bg-white/15 text-white conf-font-cinzel"
@@ -418,13 +431,15 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
 
                 {activeView === "my" ? (
                     <>
-                        <RequestTable
-                            title="Pending Requests"
-                            subtitle={`${pendingRequests.length} waiting`}
-                            rows={pendingRequests}
-                            onAction={handleAction}
-                            onAcceptAndDeliver={handleAcceptAndDeliver}
-                        />
+                        <div data-tour="confession-pending-requests" className="flex flex-col">
+                            <RequestTable
+                                title="Pending Requests"
+                                subtitle={`${pendingRequests.length} waiting`}
+                                rows={pendingRequests}
+                                onAction={handleAction}
+                                onAcceptAndDeliver={handleAcceptAndDeliver}
+                            />
+                        </div>
                         {activeRequests.length > 0 && (
                             <RequestTable
                                 title="In Progress"

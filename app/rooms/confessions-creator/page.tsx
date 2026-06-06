@@ -16,6 +16,7 @@ import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -37,6 +38,21 @@ const ConfessionsCreatorPage = () => {
     const [mobileTab, setMobileTab] = useState("chat");
     const [isMobile, setIsMobile] = useState(false);
     const router = useRouter();
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "confession_creator") {
+            if (currentStep === 0) setMobileTab("requests");
+            else if (currentStep === 1) setMobileTab("requests");
+            else if (currentStep === 2) setMobileTab("requests");
+            else if (currentStep === 3) setMobileTab("sidebar");
+            else if (currentStep === 5) setMobileTab("sidebar");
+            else if (currentStep === 6) setMobileTab("sidebar");
+            else if (currentStep === 7) setMobileTab("sidebar");
+            else if (currentStep === 8) setMobileTab("chat");
+        }
+    }, [activeTour, currentStep]);
 
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
@@ -246,7 +262,7 @@ const ConfessionsCreatorPage = () => {
                                 </div>
                             )}
                             {mobileTab === "sidebar" && (
-                                <div className="flex-1 flex flex-col min-h-0 overflow-hidden confession-my-requests" data-tour="confession-my-requests">
+                                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                                     <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} isMobile={true} />
                                 </div>
                             )}
@@ -255,7 +271,7 @@ const ConfessionsCreatorPage = () => {
                 ) : (
                     <div className="flex-1 flex flex-row items-stretch gap-4 lg:gap-8 xl:gap-16 px-3 sm:px-4 pb-4 overflow-hidden xl:mx-40 min-h-0 mt-4">
                         {/* Left Sidebar */}
-                        <div className="flex flex-col w-[320px] xl:w-[380px] min-h-0 overflow-hidden confession-my-requests shrink-0" data-tour="confession-my-requests">
+                        <div className="flex flex-col w-[320px] xl:w-[380px] min-h-0 overflow-hidden shrink-0">
                             <ConfessionsLeftSidebar sessionId={sessionId} roomId={roomId} isMobile={false} />
                         </div>
 

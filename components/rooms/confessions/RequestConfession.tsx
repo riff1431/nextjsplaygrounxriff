@@ -105,7 +105,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
             </div>
 
             {/* ── Confession Mode: 1 on 1 vs Global ── */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-tour="confession-send-to">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Send To</span>
                 <div className="flex gap-2.5">
                     <button
@@ -145,6 +145,7 @@ const RequestConfession: React.FC<RequestConfessionProps> = ({
             <button
                 onClick={handleOpenConfirm}
                 disabled={isSending || !reqTopic.trim() || reqAmount <= 0}
+                data-tour="confession-send-request"
                 className="w-full py-3.5 rounded-xl gradient-pink text-primary-foreground font-display font-bold text-sm tracking-wide neon-border hover:opacity-90 transition-opacity flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
             >
                 <Send className="w-4 h-4" />
