@@ -125,8 +125,8 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
     const statRows = [
         { icon: "👍", label: "REACTIONS", value: stats.totalReactions.toLocaleString() },
         { icon: "🎭", label: "STICKERS", value: stats.totalStickers.toLocaleString() },
-        { icon: "💰", label: "PAID MESSAGES (EUR)", value: `${cs()}${stats.totalTips.toLocaleString()}` },
-        { icon: "👥", label: "FANS", value: stats.fans.toLocaleString() },
+        { icon: "💰", label: "PAID MESSAGES (EUR)", value: `${cs()}${stats.totalTips.toLocaleString()}`, tourTag: "xchat-creator-earned-amount" },
+        { icon: "👥", label: "FANS", value: stats.fans.toLocaleString(), tourTag: "xchat-creator-live-fans" },
         { icon: "⭐", label: "REQUESTS", value: stats.totalRequests.toLocaleString() },
     ];
 
@@ -144,7 +144,7 @@ const SummaryPanel = ({ roomId, sessionId }: SummaryPanelProps) => {
             </div>
             <div className="p-4 space-y-0">
                 {statRows.map((stat, i) => (
-                    <div key={i} className="flex justify-between items-center">
+                    <div key={i} className="flex justify-between items-center" data-tour={stat.tourTag}>
                         <div className="flex items-center gap-2">
                             <span>{stat.icon}</span>
                             <span className="text-xs font-semibold tracking-wider text-muted-foreground">

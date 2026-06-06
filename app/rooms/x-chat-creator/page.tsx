@@ -16,6 +16,7 @@ import SessionLiveControls from "@/components/rooms/shared/SessionLiveControls";
 import CreatorExitModal from "@/components/rooms/shared/CreatorExitModal";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -40,6 +41,18 @@ const XChatCreatorPage = () => {
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
     const [summaryUnread, setSummaryUnread] = useState(false);
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "xchat_creator") {
+            if (currentStep === 0) setMobileTab("chat");
+            else if (currentStep === 1) setMobileTab("requests");
+            else if (currentStep === 2) setMobileTab("summary");
+            else if (currentStep === 3) setMobileTab("summary");
+            else if (currentStep === 4) setMobileTab("summary");
+        }
+    }, [activeTour, currentStep]);
 
     const activeTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -215,7 +228,6 @@ const XChatCreatorPage = () => {
                         <button
                             onClick={() => setShowExitModal(true)}
                             className="flex items-center gap-1 text-foreground hover:text-primary transition-colors absolute left-3 sm:left-4"
-                            data-tour="xchat-creator-earned-amount"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             <span className="text-sm hidden sm:inline">Back</span>
@@ -289,9 +301,13 @@ const XChatCreatorPage = () => {
                             </div>
 
                             {/* Right - Requests + Summary */}
-                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin xchat-creator-incoming-requests" data-tour="xchat-creator-incoming-requests">
-                                <IncomingRequests roomId={roomId} sessionId={sessionId} />
-                                <SummaryPanel roomId={roomId} sessionId={sessionId} />
+                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
+                                <div data-tour="xchat-creator-incoming-requests">
+                                    <IncomingRequests roomId={roomId} sessionId={sessionId} />
+                                </div>
+                                <div data-tour="xchat-creator-summary-stats">
+                                    <SummaryPanel roomId={roomId} sessionId={sessionId} />
+                                </div>
                             </div>
                         </div>
 
@@ -335,19 +351,19 @@ const XChatCreatorPage = () => {
 
                             {/* Tab content below stream */}
                             {mobileTab === "chat" && (
-                                <div className="w-full flex-1 min-h-0">
+                                <div className="w-full flex-1 min-h-0" data-tour="xchat-creator-live-chat-panel">
                                     <LiveChat roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
 
                             {mobileTab === "requests" && (
-                                <div className="w-full flex-1 min-h-0">
+                                <div className="w-full flex-1 min-h-0" data-tour="xchat-creator-incoming-requests">
                                     <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}
 
                             {mobileTab === "summary" && (
-                                <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4">
+                                <div className="w-full flex-1 min-h-0 overflow-y-auto pb-4" data-tour="xchat-creator-summary-stats">
                                     <SummaryPanel roomId={roomId} sessionId={sessionId} />
                                 </div>
                             )}

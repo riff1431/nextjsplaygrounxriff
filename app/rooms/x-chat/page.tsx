@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Clock, XCircle, Loader2, UserPlus, Pin, Mic, Megaphone, HelpCircle, Shirt, MessageSquare, Eye, Zap, Info } from "lucide-react";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -149,6 +150,17 @@ const XChatRoom = () => {
     const urlSessionId = searchParams?.get("sessionId");
     const supabase = createClient();
     const { balance, refresh } = useWallet();
+
+    const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (activeTour === "xchat_fan") {
+            if (currentStep === 4) setActiveTab("boosts");
+            else if (currentStep === 6) setActiveTab("boosts");
+            else if (currentStep === 7) setActiveTab("chat");
+            else if (currentStep === 8) setActiveTab("chat");
+        }
+    }, [activeTour, currentStep]);
 
     const [roomId, setRoomId]       = useState<string | null>(urlRoomId || null);
     const [hostId, setHostId]       = useState<string | null>(null);
@@ -497,11 +509,11 @@ const XChatRoom = () => {
                     {/* MOBILE HEADER */}
                     <header className="mobile-header">
                         <div className="mobile-header-left">
-                            <button onClick={() => router.push("/home")} className="mobile-back-btn">
+                            <button onClick={() => router.push("/home")} className="mobile-back-btn" data-tour="xchat-fan-back">
                                 <ArrowLeft size={16} />
                             </button>
                             {roomId && (
-                                <button onClick={() => setShowInviteModal(true)} className="mobile-invite-btn">
+                                <button onClick={() => setShowInviteModal(true)} className="mobile-invite-btn" data-tour="xchat-fan-invite">
                                     <UserPlus size={14} />
                                     <span>Invite</span>
                                 </button>
@@ -517,7 +529,7 @@ const XChatRoom = () => {
                     {/* MOBILE BODY */}
                     <div className="mobile-body">
                         {/* 1. VIDEO stage */}
-                        <div className="mobile-canvas-container">
+                        <div className="mobile-canvas-container" data-tour="xchat-fan-video-area">
                             {roomId && user && hostId ? (
                                 <LiveStreamWrapper
                                     role="fan"
@@ -581,7 +593,7 @@ const XChatRoom = () => {
                         </div>
 
                         {/* 2. REACTIONS & TIPS */}
-                        <div className="mobile-reactions-card">
+                        <div className="mobile-reactions-card" data-tour="xchat-fan-paid-reactions" data-tour-match="xchat-fan-paid-stickers">
                             <span className="mobile-section-label">Reactions & Tips</span>
                             <div className="mobile-reactions-scroll-row">
                                 {allMobileReactions.map(r => (
@@ -607,7 +619,7 @@ const XChatRoom = () => {
                             {activeTab === "boosts" && (
                                 <div className="mobile-boosts-scroll-area">
                                     {/* Visibility Boosts */}
-                                    <div className="mobile-boost-card">
+                                    <div className="mobile-boost-card" data-tour="xchat-fan-visibility-boosts">
                                         <div className="mobile-boost-header">
                                             <Eye size={12} className="mobile-boost-header-icon" />
                                             <span className="mobile-boost-title">Visibility Boosts</span>
@@ -632,7 +644,7 @@ const XChatRoom = () => {
                                     </div>
 
                                     {/* Direct Access */}
-                                    <div className="mobile-boost-card">
+                                    <div className="mobile-boost-card" data-tour="xchat-fan-direct-access">
                                         <div className="mobile-boost-header">
                                             <Zap size={12} className="mobile-boost-header-icon" />
                                             <span className="mobile-boost-title">Direct Access</span>
@@ -867,7 +879,7 @@ const XChatRoom = () => {
                                     </div>
                                 </div>
                                 <div className="xchat-reaction-divider" />
-                                <div className="xchat-reaction-half xchat-reaction-half--right">
+                                <div className="xchat-reaction-half xchat-reaction-half--right" data-tour="xchat-fan-paid-stickers">
                                     <span className="xchat-section-label">Paid Stickers</span>
                                     <div className="xchat-chip-row">
                                         {stickersRow1.map(s => (
@@ -932,7 +944,7 @@ const XChatRoom = () => {
                         </div>
 
                         {/* ── RIGHT PANEL: Chat ──────────────────────── */}
-                        <div className="xchat-right" data-tour="xchat-fan-chat-messages">
+                        <div className="xchat-right">
                             <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} />
                         </div>
 
