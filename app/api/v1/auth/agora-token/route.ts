@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
         const rtcRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
 
         const expirationTimeInSeconds = expireTime || 3600 * 24;
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
         // Build token with numeric UID — reliable, no User Management service needed
         const token = RtcTokenBuilder.buildTokenWithUid(
@@ -78,8 +80,8 @@ export async function POST(request: NextRequest) {
             channelName,
             numericUid,
             rtcRole,
-            expirationTimeInSeconds,
-            expirationTimeInSeconds
+            privilegeExpiredTs,
+            privilegeExpiredTs
         );
 
         return NextResponse.json({ token, numericUid, appId });

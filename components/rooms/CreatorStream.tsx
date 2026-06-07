@@ -47,7 +47,7 @@ function toNumericUid(input: string | number): number {
 export default function CreatorStream({ appId, channelName, uid, avatarUrl, creatorName, onRemoteUsersChange, isGrid }: CreatorStreamProps) {
     const supabase = createClient();
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
+    const [dynamicAppId, setDynamicAppId] = useState<string>("");
     const [numericUid, setNumericUid] = useState<number>(0);
     const [isStreaming, setIsStreaming] = useState(true);
     const [roleSet, setRoleSet] = useState(false);
@@ -229,9 +229,11 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     // Join & Publish
     console.log("CreatorStream: Joining with UID:", numericUid);
 
+    const isReady = token !== undefined && numericUid > 0 && roleSet && dynamicAppId !== "";
+
     useJoin(
         { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
-        token !== undefined && numericUid > 0 && roleSet
+        isReady
     );
 
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);

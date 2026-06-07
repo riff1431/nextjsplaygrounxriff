@@ -35,8 +35,9 @@ function toNumericUid(input: string | number): number {
 
 export default function FanStream({ appId, channelName, uid, hostId, hostAvatarUrl, hostName, collabCreators, onRemoteCountChange }: FanStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined); // undefined = loading
-    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
+    const [dynamicAppId, setDynamicAppId] = useState<string>("");
     const [numericUid, setNumericUid] = useState<number>(0);
+    const [roleSet, setRoleSet] = useState(false);
     const client = useRTCClient();
 
     // Fetch Token + numeric UID
@@ -74,14 +75,20 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
     // Set client role to "audience" so we receive streams without publishing
     useEffect(() => {
         if (client) {
-            client.setClientRole("audience").catch((e: any) =>
-                console.error("FanStream: Failed to set audience role", e)
-            );
+            setRoleSet(false);
+            client.setClientRole("audience")
+                .then(() => {
+                    console.log("FanStream: Role set to AUDIENCE");
+                    setRoleSet(true);
+                })
+                .catch((e: any) => {
+                    console.error("FanStream: Failed to set audience role", e);
+                });
         }
     }, [client]);
 
     // Join as audience — only when token has resolved (null = App ID only, number = with token)
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined && numericUid > 0 && dynamicAppId !== "" && roleSet;
     useJoin(
         { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
         isReady

@@ -55,7 +55,7 @@ class StreamErrorBoundary extends React.Component<{children: React.ReactNode}, {
 
 function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remoteName }: PrivateCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
+    const [dynamicAppId, setDynamicAppId] = useState<string>("");
     const [numericUid, setNumericUid] = useState<number>(0);
     const [roleSet, setRoleSet] = useState(false);
     const client = useRTCClient();
@@ -125,7 +125,7 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
         return () => { mounted = false; };
     }, [channelName, uid]);
 
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined && numericUid > 0 && dynamicAppId !== "";
     
     // Join the channel
     useJoin(

@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
                 const channelName = 'connection-test-channel';
                 const tempUid = 999999;
                 const expirationTimeInSeconds = 3600;
+                const currentTimestamp = Math.floor(Date.now() / 1000);
+                const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
                 token = RtcTokenBuilder.buildTokenWithUid(
                     appId,
@@ -67,8 +69,8 @@ export async function POST(req: NextRequest) {
                     channelName,
                     tempUid,
                     RtcRole.PUBLISHER,
-                    expirationTimeInSeconds,
-                    expirationTimeInSeconds
+                    privilegeExpiredTs,
+                    privilegeExpiredTs
                 );
                 tokenSuccess = true;
             } catch (err: any) {

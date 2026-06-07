@@ -116,7 +116,7 @@ function GroupCallStreamInner({
     localDisplayName = 'You', participantFanIds = [], creatorId,
 }: GroupCallStreamProps) {
     const [token, setToken] = useState<string | null | undefined>(undefined);
-    const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
+    const [dynamicAppId, setDynamicAppId] = useState<string>("");
     const [numericUid, setNumericUid] = useState<number>(0);
     const [micEnabled, setMicEnabled] = useState(true);
     const [camEnabled, setCamEnabled] = useState(true);
@@ -208,7 +208,7 @@ function GroupCallStreamInner({
         return () => { mounted = false; };
     }, [channelName, uid]);
 
-    const isReady = token !== undefined && numericUid > 0;
+    const isReady = token !== undefined && numericUid > 0 && dynamicAppId !== "";
 
     // ── Join + Publish ─────────────────────────────────────────────────────────
     useJoin({ appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid }, isReady);
