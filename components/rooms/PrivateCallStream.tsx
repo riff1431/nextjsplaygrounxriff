@@ -57,12 +57,21 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
     const [token, setToken] = useState<string | null | undefined>(undefined);
     const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
     const [numericUid, setNumericUid] = useState<number>(0);
+    const [roleSet, setRoleSet] = useState(false);
     const client = useRTCClient();
 
     // Ensure we are a host so we can publish
     useEffect(() => {
         if (client) {
-            client.setClientRole("host").catch(console.error);
+            setRoleSet(false);
+            client.setClientRole("host")
+                .then(() => {
+                    console.log("PrivateCallStream: Role set to HOST");
+                    setRoleSet(true);
+                })
+                .catch(err => {
+                    console.error("PrivateCallStream: Failed to set role", err);
+                });
         }
     }, [client]);
 
@@ -121,7 +130,7 @@ function PrivateCallStreamInner({ appId, channelName, uid, remoteAvatarUrl, remo
     // Join the channel
     useJoin(
         { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
-        isReady
+        isReady && roleSet
     );
 
     // Publish local tracks

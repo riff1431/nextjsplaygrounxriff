@@ -50,14 +50,21 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     const [dynamicAppId, setDynamicAppId] = useState<string>(appId);
     const [numericUid, setNumericUid] = useState<number>(0);
     const [isStreaming, setIsStreaming] = useState(true);
+    const [roleSet, setRoleSet] = useState(false);
     const client = useRTCClient();
 
     // Ensure Creator is a Host so they can publish
     useEffect(() => {
         if (client) {
+            setRoleSet(false);
             client.setClientRole("host")
-                .then(() => console.log("CreatorStream: Role set to HOST"))
-                .catch(err => console.error("CreatorStream: Failed to set role", err));
+                .then(() => {
+                    console.log("CreatorStream: Role set to HOST");
+                    setRoleSet(true);
+                })
+                .catch(err => {
+                    console.error("CreatorStream: Failed to set role", err);
+                });
         }
     }, [client]);
 
@@ -224,7 +231,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
 
     useJoin(
         { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
-        token !== undefined && numericUid > 0
+        token !== undefined && numericUid > 0 && roleSet
     );
 
     const tracksToPublish = [localMicrophoneTrack, localCameraTrack].filter(t => t !== null);
@@ -432,9 +439,9 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                     ) : isStreaming && !isConnected ? (
                         <>
                             <span className="px-2 py-1 rounded-md bg-yellow-600/90 text-[10px] font-bold text-white shadow-lg">
-                                {connectionState === 'DISCONNECTED' ? 'CONNECTION FAILED' : connectionState.toUpperCase()}
+                                {!roleSet ? "INITIALIZING..." : connectionState === 'DISCONNECTED' ? 'CONNECTION FAILED' : connectionState.toUpperCase()}
                             </span>
-                            {connectionState === 'DISCONNECTED' && (
+                            {connectionState === 'DISCONNECTED' && roleSet && (
                                 <div className="bg-red-950/90 text-red-200 text-[10px] p-2 rounded-md border border-red-500/50 max-w-[200px] text-right shadow-xl">
                                     <strong>Broadcast Failed:</strong> Could not connect to Agora Edge Servers.<br/>
                                     Please verify your <code>NEXT_PUBLIC_AGORA_APP_ID</code> and Certificate.

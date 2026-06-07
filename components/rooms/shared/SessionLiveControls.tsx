@@ -221,7 +221,6 @@ export default function SessionLiveControls({
                     >
                         <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ fill: "currentColor" }} />
                         <span className="hidden xs:inline">{isLoading ? "Starting…" : "Go Live"}</span>
-                        <span className="xs:hidden">▶</span>
                     </button>
                 ) : !hideEnd ? (
                     <button
