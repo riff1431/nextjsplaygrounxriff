@@ -186,7 +186,6 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     }, [countdown]);
 
     const [error, setError] = useState<string | null>(null);
-
     // Fetch Token
     useEffect(() => {
         let mounted = true;
@@ -218,14 +217,21 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 if (data.appId) setDynamicAppId(data.appId);
                 if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e: any) {
-                console.error("Failed to fetch token", e);
-                if (mounted) setError(e.message || "Failed to load studio token.");
+                console.error("Failed to fetch token, falling back to local App ID:", e);
+                if (mounted) {
+                    if (appId) {
+                        setToken(null);
+                        setDynamicAppId(appId);
+                        setNumericUid(toNumericUid(uid));
+                    } else {
+                        setError(e.message || "Failed to load studio token.");
+                    }
+                }
             }
         }
         if (channelName && uid) fetchToken();
         return () => { mounted = false; };
-    }, [channelName, uid]);
-
+    }, [channelName, uid, appId]);
     // Join & Publish
     console.log("CreatorStream: Joining with UID:", numericUid);
 
@@ -242,14 +248,64 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     // Mute toggles
     const [micOn, setMicOn] = useState(true);
     const [camOn, setCamOn] = useState(true);
+    const [isTogglingMic, setIsTogglingMic] = useState(false);
+    const [isTogglingCam, setIsTogglingCam] = useState(false);
 
+    // Sync microphone track state when track becomes available
     useEffect(() => {
-        if (localMicrophoneTrack) localMicrophoneTrack.setEnabled(micOn);
-    }, [micOn, localMicrophoneTrack]);
+        async function syncMic() {
+            if (localMicrophoneTrack) {
+                try {
+                    await localMicrophoneTrack.setEnabled(micOn);
+                } catch (err) {
+                    console.error("Error setting initial microphone track state:", err);
+                }
+            }
+        }
+        syncMic();
+    }, [localMicrophoneTrack]);
 
+    // Sync camera track state when track becomes available
     useEffect(() => {
-        if (localCameraTrack) localCameraTrack.setEnabled(camOn);
-    }, [camOn, localCameraTrack]);
+        async function syncCam() {
+            if (localCameraTrack) {
+                try {
+                    await localCameraTrack.setEnabled(camOn);
+                } catch (err) {
+                    console.error("Error setting initial camera track state:", err);
+                }
+            }
+        }
+        syncCam();
+    }, [localCameraTrack]);
+
+    const toggleMic = async () => {
+        if (!localMicrophoneTrack || isTogglingMic) return;
+        setIsTogglingMic(true);
+        try {
+            const nextState = !micOn;
+            await localMicrophoneTrack.setEnabled(nextState);
+            setMicOn(nextState);
+        } catch (err) {
+            console.error("Failed to toggle microphone track:", err);
+        } finally {
+            setIsTogglingMic(false);
+        }
+    };
+
+    const toggleCam = async () => {
+        if (!localCameraTrack || isTogglingCam) return;
+        setIsTogglingCam(true);
+        try {
+            const nextState = !camOn;
+            await localCameraTrack.setEnabled(nextState);
+            setCamOn(nextState);
+        } catch (err) {
+            console.error("Failed to toggle camera track:", err);
+        } finally {
+            setIsTogglingCam(false);
+        }
+    };
 
     const vidRef = useRef<HTMLDivElement>(null);
 
@@ -390,8 +446,9 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 : "bottom-4 gap-3 px-4 py-2 lg:opacity-0 lg:group-hover:opacity-100"
             }`}>
                 <button
-                    onClick={() => setMicOn(!micOn)}
-                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${micOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'}`}
+                    onClick={toggleMic}
+                    disabled={!localMicrophoneTrack || isTogglingMic}
+                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${micOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${(!localMicrophoneTrack || isTogglingMic) ? 'opacity-55 cursor-not-allowed' : ''}`}
                 >
                     {micOn ? <Mic className={isGrid ? "w-3 h-3" : "w-4 h-4"} /> : <MicOff className={isGrid ? "w-3 h-3" : "w-4 h-4"} />}
                 </button>
@@ -424,8 +481,9 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 </button>
 
                 <button
-                    onClick={() => setCamOn(!camOn)}
-                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${camOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'}`}
+                    onClick={toggleCam}
+                    disabled={!localCameraTrack || isTogglingCam}
+                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${camOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${(!localCameraTrack || isTogglingCam) ? 'opacity-55 cursor-not-allowed' : ''}`}
                 >
                     {camOn ? <Video className={isGrid ? "w-3 h-3" : "w-4 h-4"} /> : <VideoOff className={isGrid ? "w-3 h-3" : "w-4 h-4"} />}
                 </button>

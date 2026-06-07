@@ -64,13 +64,17 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                 if (data.appId) setDynamicAppId(data.appId);
                 if (data.numericUid) setNumericUid(data.numericUid);
             } catch (e) {
-                console.error("FanStream: Failed to fetch token", e);
-                if (mounted) setToken(null); // default to App ID only
+                console.error("FanStream: Failed to fetch token, falling back to local App ID:", e);
+                if (mounted) {
+                    setToken(null); // default to App ID only
+                    if (appId) setDynamicAppId(appId);
+                    setNumericUid(toNumericUid(uid));
+                }
             }
         }
         if (channelName && uid) fetchToken();
         return () => { mounted = false; };
-    }, [channelName, uid]);
+    }, [channelName, uid, appId]);
 
     // Set client role to "audience" so we receive streams without publishing
     useEffect(() => {

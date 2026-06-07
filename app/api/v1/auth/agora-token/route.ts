@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
         // Try loading config from DB first
         let appId = null;
         let appCertificate = null;
+        let configSource = 'unknown';
 
         try {
             const { createClient: createAdminSupabase } = require('@supabase/supabase-js');
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
             if (data?.value?.appId) {
                 appId = data.value.appId;
                 appCertificate = data.value.appCertificate || null;
+                configSource = 'database';
             }
         } catch (dbErr) {
             console.warn('[agora-token API] Database configuration load fallback to env:', dbErr);
@@ -51,7 +53,11 @@ export async function POST(request: NextRequest) {
         if (!appId) {
             appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || null;
             appCertificate = process.env.AGORA_APP_CERTIFICATE || null;
+            configSource = 'environment_variables';
         }
+
+        const maskedAppId = appId ? `${appId.substring(0, 4)}...${appId.substring(appId.length - 4)}` : 'NULL';
+        console.log(`[agora-token API] Resolved config from [${configSource}]. App ID: ${maskedAppId}, Has Certificate: ${!!appCertificate}`);
 
         if (!appId) {
             return NextResponse.json({ error: 'Agora App ID not configured' }, { status: 500 });
