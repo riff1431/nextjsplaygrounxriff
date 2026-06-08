@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import dynamic from "next/dynamic";
 import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
+import BrandLogo from "@/components/common/BrandLogo";
 import UserProfile from "@/components/rooms/suga4u/UserProfile";
 import S4uGroupVotePanel from "@/components/rooms/suga4u/S4uGroupVotePanel";
 import CreatorSecrets from "@/components/rooms/suga4u/CreatorSecrets";
@@ -78,6 +79,7 @@ const Suga4URoom = () => {
     const [incomingItems, setIncomingItems] = useState<any[]>([]);
     const [unseenCount, setUnseenCount] = useState(0);
     const [previewMedia, setPreviewMedia] = useState<{ url: string; label: string } | null>(null);
+    const [selectedResponse, setSelectedResponse] = useState<any | null>(null);
 
     // Private 1-on-1 call
     const privateCall = usePrivateCall(roomId, user?.id || null, "fan");
@@ -790,8 +792,14 @@ const Suga4URoom = () => {
                                 >
                                     <ArrowLeft className="w-5 h-5" />
                                 </button>
-                                <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
-                                    <SugaLogo />
+                                <div className="flex items-center gap-3">
+                                    <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
+                                        <BrandLogo showBadge={false} />
+                                    </div>
+                                    <div className="h-6 w-[1px] bg-white/20" />
+                                    <div className="hover:opacity-80 transition-opacity cursor-pointer">
+                                        <SugaLogo />
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => setShowInviteModal(true)}
@@ -867,7 +875,15 @@ const Suga4URoom = () => {
                                                                 return (
                                                                     <div
                                                                         key={item.id}
-                                                                        className="flex flex-col gap-1.5 p-3 rounded-xl hover:bg-white/5 transition-all group"
+                                                                        onClick={() => {
+                                                                            if (item.status === 'accepted') {
+                                                                                setSelectedResponse(item);
+                                                                                setShowIncomingPanel(false);
+                                                                            }
+                                                                        }}
+                                                                        className={`flex flex-col gap-1.5 p-3 rounded-xl transition-all group ${
+                                                                            item.status === 'accepted' ? 'cursor-pointer hover:bg-white/10' : 'hover:bg-white/5'
+                                                                        }`}
                                                                         style={{
                                                                             background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
                                                                             border: `1px solid ${sc.border}`
@@ -1114,11 +1130,11 @@ const Suga4URoom = () => {
                                         onClick={toggleIncomingPanel}
                                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold transition-all border ${
                                             showIncomingPanel
-                                                ? 'bg-pink-500/30 border-pink-400 text-white'
-                                                : 'bg-pink-500/10 border-pink-500/20 text-pink-400'
+                                                ? 'bg-pink-500/30 border-pink-400 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
+                                                : 'bg-pink-500/10 border-pink-500/20 text-pink-400 hover:bg-pink-500/15'
                                         }`}
                                     >
-                                        <Bell className="w-3.5 h-3.5" />
+                                        <Bell className={`w-3.5 h-3.5 ${unseenCount > 0 ? 'animate-bounce' : ''}`} />
                                         Incoming
                                         {unseenCount > 0 && (
                                             <span className="ml-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-pink-500 text-white text-[9px] font-black px-0.5 animate-pulse">
@@ -1126,6 +1142,102 @@ const Suga4URoom = () => {
                                             </span>
                                         )}
                                     </button>
+
+                                    <AnimatePresence>
+                                        {showIncomingPanel && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                className="absolute top-full right-[-40px] xs:right-0 mt-3 w-80 max-w-[calc(100vw-32px)] bg-[#16161e]/95 border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-[60]"
+                                            >
+                                                {/* Panel Header */}
+                                                <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center">
+                                                            <Bell className="w-4 h-4 text-pink-400" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-sm font-bold text-white">My Activity</h3>
+                                                            <p className="text-[10px] text-white/40 uppercase tracking-wider">Latest Requests</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => setShowIncomingPanel(false)}
+                                                        className="p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+
+                                                {/* Panel Body */}
+                                                <div className="max-h-[300px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10">
+                                                    {incomingItems.length === 0 ? (
+                                                        <div className="py-12 px-4 text-center">
+                                                            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
+                                                                <Zap className="w-6 h-6 text-white/10" />
+                                                            </div>
+                                                            <p className="text-sm text-white/40">No recent activity</p>
+                                                            <p className="text-[10px] text-white/25 mt-1">Your paid requests will appear here</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-1">
+                                                            {incomingItems.map((item) => {
+                                                                const emoji = incomingTypeEmoji(item.type);
+                                                                const sc = incomingStatusColor(item.status);
+                                                                return (
+                                                                    <div
+                                                                        key={item.id}
+                                                                        onClick={() => {
+                                                                            if (item.status === 'accepted') {
+                                                                                setSelectedResponse(item);
+                                                                                setShowIncomingPanel(false);
+                                                                            }
+                                                                        }}
+                                                                        className={`flex flex-col gap-1.5 p-3 rounded-xl transition-all group ${
+                                                                            item.status === 'accepted' ? 'cursor-pointer hover:bg-white/10' : 'hover:bg-white/5'
+                                                                        }`}
+                                                                        style={{
+                                                                            background: `linear-gradient(90deg, ${sc.bg}, transparent)`,
+                                                                            border: `1px solid ${sc.border}`
+                                                                        }}
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="text-xl group-hover:scale-110 transition-transform">{emoji}</span>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-center justify-between gap-2 mb-0.5">
+                                                                                    <span className="text-xs font-bold text-white truncate">
+                                                                                        {item.label || item.type || 'Request'}
+                                                                                    </span>
+                                                                                    <span className="text-[10px] font-black text-pink-400">{cs()}{item.price || item.amount || 0}</span>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span
+                                                                                        className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border"
+                                                                                        style={{
+                                                                                            borderColor: sc.border,
+                                                                                            color: sc.text,
+                                                                                            background: `${sc.border}10`
+                                                                                        }}
+                                                                                    >
+                                                                                        {item.status}
+                                                                                    </span>
+                                                                                    <span className="text-[9px] text-white/30 flex items-center gap-1">
+                                                                                        <Clock className="w-2.5 h-2.5" />
+                                                                                        {formatTimeAgo(item.created_at)}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
                                 <div className="flex items-center gap-1.5 bg-[#19041a] border border-yellow-500/30 rounded-full pl-3 pr-1 py-0.5 shadow-sm">
@@ -1173,9 +1285,8 @@ const Suga4URoom = () => {
                         </div>
 
                         {/* Quick Tips / Reactions Row (Tipping section shown right after live streaming box) */}
-                        <div className="px-4 py-2 shrink-0 flex items-center justify-between gap-3 bg-[#110113]/60 border-b border-pink-500/10 backdrop-blur-sm">
-                            <span className="text-[10px] font-black text-pink-400 tracking-widest uppercase shrink-0">Send Tip:</span>
-                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none flex-1 justify-end">
+                        <div className="px-4 py-2 shrink-0 flex items-center justify-center bg-[#110113]/60 border-b border-pink-500/10 backdrop-blur-sm">
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none justify-center w-full">
                                 {[
                                     { name: "Diamond", amount: 10 },
                                     { name: "Diamonds", amount: 25 },
@@ -1742,6 +1853,132 @@ const Suga4URoom = () => {
                         onDismiss={groupCall.dismiss}
                     />
                 )}
+
+                {/* Response Detail Modal */}
+                <AnimatePresence>
+                    {selectedResponse && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in"
+                        >
+                            <div
+                                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                                onClick={() => setSelectedResponse(null)}
+                            />
+
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.95, opacity: 0 }}
+                                className="relative z-10 w-full max-w-lg mx-4 rounded-2xl border border-white/10 bg-[#15021a]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                            >
+                                {/* Modal Header */}
+                                <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/5 shrink-0">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400">
+                                            <Bell className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                                                {selectedResponse.label || selectedResponse.type || 'Request'}
+                                            </h3>
+                                            <p className="text-[10px] text-pink-400/70 font-semibold uppercase tracking-widest">Creator Response</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedResponse(null)}
+                                        className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {/* Modal Body */}
+                                <div className="p-5 space-y-4 overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-white/10">
+                                    {/* Section 1: Original Request details */}
+                                    <div className="bg-white/[0.03] rounded-xl p-3 border border-white/5 flex flex-col gap-1.5">
+                                        <div className="flex items-center justify-between text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                                            <span>Paid Request Details</span>
+                                            <span className="text-pink-400 font-black">{cs()}{selectedResponse.price || selectedResponse.amount || 0}</span>
+                                        </div>
+                                        <div className="h-px bg-white/5 my-1" />
+                                        <div className="text-xs text-white/70">
+                                            <span className="font-extrabold text-white">Item:</span> {selectedResponse.label || selectedResponse.type}
+                                        </div>
+                                        {selectedResponse.custom_text && (
+                                            <div className="mt-1 bg-black/30 rounded-lg p-2.5 border-l-2 border-pink-500/40">
+                                                <p className="text-[9px] text-pink-400/60 uppercase tracking-widest font-black mb-0.5">Your Message</p>
+                                                <p className="text-xs text-white/85 italic">&quot;{selectedResponse.custom_text}&quot;</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Section 2: Creator response text */}
+                                    {selectedResponse.response_text && (
+                                        <div className="bg-emerald-500/[0.04] rounded-xl p-3.5 border border-emerald-500/10 flex flex-col gap-2">
+                                            <p className="text-[9px] text-emerald-400/75 uppercase tracking-widest font-black flex items-center gap-1">
+                                                <span>💬</span> Message from Creator
+                                            </p>
+                                            <p className="text-xs text-white/90 leading-relaxed font-medium bg-black/15 rounded-lg p-2.5">
+                                                {selectedResponse.response_text}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Section 3: Creator response media */}
+                                    {selectedResponse.response_media_url && (
+                                        <div className="space-y-2">
+                                            <p className="text-[9px] text-pink-400/80 uppercase tracking-widest font-black flex items-center gap-1 pl-1">
+                                                <span>🎬</span> Delivered Media
+                                            </p>
+                                            <div className="rounded-xl overflow-hidden border border-white/10 bg-black/45 flex items-center justify-center p-1.5 relative group">
+                                                {selectedResponse.response_media_url.match(/\.(mp4|webm|mov|avi)$/i) ||
+                                                 selectedResponse.response_media_url.includes('video') ? (
+                                                    <video
+                                                        src={selectedResponse.response_media_url}
+                                                        controls
+                                                        className="w-full max-h-[35vh] rounded-lg object-contain"
+                                                    />
+                                                ) : (
+                                                    <img
+                                                        src={selectedResponse.response_media_url}
+                                                        alt="Creator response media"
+                                                        className="w-full max-h-[35vh] rounded-lg object-contain"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Modal Footer */}
+                                <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02] flex items-center justify-between shrink-0">
+                                    <span className="text-[9px] text-white/30">Delivered successfully</span>
+                                    <div className="flex items-center gap-2">
+                                        {selectedResponse.response_media_url && (
+                                            <a
+                                                href={selectedResponse.response_media_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] font-extrabold text-white/80 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all text-center"
+                                            >
+                                                Open Media ↗
+                                            </a>
+                                        )}
+                                        <button
+                                            onClick={() => setSelectedResponse(null)}
+                                            className="px-4 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-[11px] font-black text-white active:scale-95 transition-all shadow-md shadow-pink-600/20 uppercase"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Media Preview Modal */}
                 <AnimatePresence>

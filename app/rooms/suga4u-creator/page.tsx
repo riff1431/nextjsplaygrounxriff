@@ -8,6 +8,8 @@ import { useAuth } from "@/app/context/AuthContext";
 import { ArrowLeft, UserPlus, Phone, MessageCircle, Inbox, Star, Video } from "lucide-react";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import BrandLogo from "@/components/common/BrandLogo";
+import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
 import { toast } from "sonner";
 import S4uLiveChat from "@/components/rooms/suga4u-creator/S4uLiveChat";
 import S4uCreatorsFavorites from "@/components/rooms/suga4u-creator/S4uCreatorsFavorites";
@@ -248,7 +250,7 @@ const Suga4UCreatorPage = () => {
                 
                 {/* Top Header Row */}
                 <div className="mb-0 shrink-0 flex items-center justify-between min-h-[44px]">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => setShowExitModal(true)}
                             className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md"
@@ -256,6 +258,15 @@ const Suga4UCreatorPage = () => {
                         >
                             <ArrowLeft className="w-4 h-4" />
                         </button>
+                        <div className="hidden sm:flex items-center gap-3">
+                            <div className="hover:opacity-80 transition-opacity cursor-pointer" onClick={() => router.push("/home")}>
+                                <BrandLogo showBadge={false} />
+                            </div>
+                            <div className="h-6 w-[1px] bg-white/20" />
+                            <div className="hover:opacity-80 transition-opacity cursor-pointer">
+                                <SugaLogo />
+                            </div>
+                        </div>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2">
                         <RoomTourHelpButton tourType="suga4u_creator" accentHsl="340, 75%, 55%" />
