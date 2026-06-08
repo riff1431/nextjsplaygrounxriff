@@ -315,7 +315,12 @@ function PgxPage2Inner() {
                 labelStr.includes("spicy") ||
                 labelStr.includes("dark") ||
                 typeStr.includes("reaction");
-            return !isReaction;
+            const isDrink = 
+                typeStr === "drink" || 
+                typeStr === "champagne" || 
+                typeStr === "vip_bottle" ||
+                typeStr === "vipbottle";
+            return !isReaction && !isDrink;
         });
     }, [incomingItems]);
 
