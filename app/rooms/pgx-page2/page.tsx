@@ -217,7 +217,10 @@ function PgxPage2Inner() {
 
     useEffect(() => {
         if (!roomId) return;
-        const channelName = sessionId ? `lounge-fan-unread-${roomId}-${sessionId}` : `lounge-fan-unread-${roomId}`;
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channelName = sessionId 
+            ? `lounge-fan-unread-${roomId}-${sessionId}-${uniqueId}` 
+            : `lounge-fan-unread-${roomId}-${uniqueId}`;
         const channel = supabase.channel(channelName)
             .on("postgres_changes", {
                 event: "INSERT",
@@ -316,7 +319,8 @@ function PgxPage2Inner() {
         fetchViewerCount();
 
         // Subscribe to changes on public.rooms for real-time viewer count updates
-        const channel = supabase.channel(`room-viewers-${roomId}`)
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channel = supabase.channel(`room-viewers-${roomId}-${uniqueId}`)
             .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomId}` }, (payload) => {
                 const count = payload.new?.viewer_count;
                 if (count !== undefined) {
@@ -345,7 +349,8 @@ function PgxPage2Inner() {
         };
         fetchSessionStatus();
 
-        const channel = supabase.channel(`session-status-${sessionId}`)
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channel = supabase.channel(`session-status-${sessionId}-${uniqueId}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'room_sessions', filter: `id=eq.${sessionId}` }, (payload) => {
                 const newData = payload.new;
                 if (newData.status === 'ended') setSessionStatus('ended');
@@ -470,7 +475,8 @@ function PgxPage2Inner() {
     // Subscribe to request status updates (for VIP/booth accept/decline from creator)
     useEffect(() => {
         if (!roomId || !user) return;
-        const channel = supabase.channel(`bar-req-status-${roomId}-${user.id}`)
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channel = supabase.channel(`bar-req-status-${roomId}-${user.id}-${uniqueId}`)
             .on('postgres_changes', {
                 event: 'UPDATE', schema: 'public', table: 'bar_lounge_requests',
                 filter: `room_id=eq.${roomId}`,
@@ -529,8 +535,9 @@ function PgxPage2Inner() {
         };
         fetchIncoming();
 
+        const uniqueId = Math.random().toString(36).substring(7);
         const channel = supabase
-            .channel(`fan-incoming-${roomId}-${user.id}`)
+            .channel(`fan-incoming-${roomId}-${user.id}-${uniqueId}`)
             .on("postgres_changes", {
                 event: "INSERT",
                 schema: "public",

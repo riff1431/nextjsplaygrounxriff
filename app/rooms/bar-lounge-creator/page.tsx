@@ -81,8 +81,9 @@ const CreatorBarLoungeInner = () => {
         };
         fetchInitialCounts();
 
+        const uniqueId = Math.random().toString(36).substring(7);
         const channel = supabase
-            .channel(`unread-badges-bar-lounge-${roomId}`)
+            .channel(`unread-badges-bar-lounge-${roomId}-${uniqueId}`)
             .on(
                 "postgres_changes",
                 { event: "INSERT", schema: "public", table: "bar_lounge_messages", filter: `room_id=eq.${roomId}` },

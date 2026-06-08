@@ -179,7 +179,8 @@ export default function BarLoungeRoom() {
                 await fetchSessions();
                 if (isMounted) {
                     // Listen to both rooms and room_sessions changes for live updates
-                    roomChannel = supabase.channel('bar-lounge-fan-lobby')
+                    const uniqueId = Math.random().toString(36).substring(7);
+                    roomChannel = supabase.channel(`bar-lounge-fan-lobby-${uniqueId}`)
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: 'type=eq.bar-lounge' }, fetchSessions)
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'room_sessions', filter: 'room_type=eq.bar-lounge' }, fetchSessions)
                         .subscribe();
@@ -288,7 +289,8 @@ export default function BarLoungeRoom() {
 
     useEffect(() => {
         if (!roomId || viewState !== "hosting") return;
-        const channel = supabase.channel("bar_lounge_events_" + roomId)
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channel = supabase.channel("bar_lounge_events_" + roomId + "_" + uniqueId)
             .on("postgres_changes", { event: "INSERT", schema: "public", table: "revenue_events", filter: `room_key=eq.${roomId}` }, (payload) => {
                 const meta = payload.new.metadata || {};
                 if (meta.special === "champagne") pushFx(["confetti", "spotlight"], "🍾 Champagne popped");

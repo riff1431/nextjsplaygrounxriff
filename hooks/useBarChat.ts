@@ -50,7 +50,12 @@ export function useBarChat(roomId: string | null, sessionId?: string | null) {
         load();
 
         // Subscribe to new messages — unique channel per session to avoid cross-session leakage
-        const channelName = sessionId ? `bar-chat-${roomId}-${sessionId}` : `bar-chat-${roomId}`;
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channelName = sessionId 
+            ? `bar-chat-${roomId}-${sessionId}-${uniqueId}` 
+            : `bar-chat-${roomId}-${uniqueId}`;
+        console.log(`[useBarChat] Subscribing to channel: ${channelName}`);
+        
         const channel = supabase
             .channel(channelName)
             .on(
@@ -62,6 +67,7 @@ export function useBarChat(roomId: string | null, sessionId?: string | null) {
                     filter: `room_id=eq.${roomId}`
                 },
                 (payload) => {
+                    console.log("[useBarChat] postgres_changes payload:", payload);
                     const newMsg = payload.new as ChatMessage;
                     // If we're scoped to a session, ignore messages from other sessions
                     if (sessionId && newMsg.session_id && newMsg.session_id !== sessionId) return;
@@ -72,9 +78,12 @@ export function useBarChat(roomId: string | null, sessionId?: string | null) {
                     });
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+                console.log(`[useBarChat] Subscription status for ${channelName}:`, status, err);
+            });
 
         return () => {
+            console.log(`[useBarChat] Unsubscribing from channel: ${channelName}`);
             supabase.removeChannel(channel);
         };
     }, [roomId, sessionId]);
