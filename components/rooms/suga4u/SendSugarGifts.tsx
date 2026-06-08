@@ -5,12 +5,13 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
+import { getSugaIcon, getSugaGlowClass, getSugaCyberpunkStyle } from "@/utils/suga/sugaIcons";
 
 const gifts = [
-    { name: "Diamond", amount: 10, emoji: "💎" },
-    { name: "Diamonds", amount: 25, emoji: "💎" },
-    { name: "More Diamonds", amount: 50, emoji: "💎" },
-    { name: "Big Money", amount: 100, emoji: "💰" },
+    { name: "Diamond", amount: 10 },
+    { name: "Diamonds", amount: 25 },
+    { name: "More Diamonds", amount: 50 },
+    { name: "Big Money", amount: 100 },
 ];
 
 const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
@@ -40,7 +41,13 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
             // Route to pending requests
             await createRequest("GIFT", g.name, `Sent ${g.name}`, g.amount, fanName);
             
-            toast.success(`${g.emoji} Gift sent: ${g.name}`, { description: `${cs()}${g.amount} sent to creator` });
+            toast.success(
+                <span className="flex items-center gap-1.5 font-semibold">
+                    {getSugaIcon("GIFT", g.name)}
+                    <span>Gift sent: {g.name}</span>
+                </span>,
+                { description: `${cs()}${g.amount} sent to creator` }
+            );
         } catch (err) {
             console.error("Failed to send gift:", err);
             toast.error("Failed to send gift");
@@ -56,18 +63,24 @@ const SendSugarGifts = ({ roomId, hostId, sessionId }: { roomId: string | null; 
                 <span className="section-title px-3">Send Suga Gifts</span>
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
-            <div className="grid grid-cols-4 gap-2 mb-2">
-                {gifts.map((g) => (
-                    <button
-                        key={g.amount}
-                        onClick={() => handleGiftClick(g)}
-                        disabled={!roomId || !hostId}
-                        className="neon-border-pink glass-panel py-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
-                    >
-                        <span className="text-lg">{g.emoji}</span>
-                        <p className="text-foreground font-bold text-sm">{cs()}{g.amount}</p>
-                    </button>
-                ))}
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+                {gifts.map((g) => {
+                    const emoji = getSugaIcon("GIFT", g.name);
+                    const { glowClass, bgClass } = getSugaCyberpunkStyle("GIFT", g.name);
+                    return (
+                        <button
+                            key={g.amount}
+                            onClick={() => handleGiftClick(g)}
+                            disabled={!roomId || !hostId}
+                            className={`flex flex-col items-center justify-center p-2 rounded-xl border backdrop-blur-md transition-all duration-300 active:scale-95 disabled:opacity-50 text-center ${bgClass} ${glowClass}`}
+                        >
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/45 border border-white/5 mb-1.5 shadow-inner">
+                                {emoji}
+                            </div>
+                            <span className="font-black text-xs text-white">{cs()}{g.amount}</span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Spend Confirmation Modal */}

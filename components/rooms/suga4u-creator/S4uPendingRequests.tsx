@@ -5,6 +5,7 @@ import { Diamond, MessageSquare } from "lucide-react";
 import { useSuga4U } from "@/hooks/useSuga4U";
 import CreatorRespondModal from "@/components/rooms/suga4u-creator/CreatorRespondModal";
 import { cs } from "@/utils/currency";
+import { getSugaIcon } from "@/utils/suga/sugaIcons";
 
 const CUSTOM_REQUEST_TYPES = ["POSE", "SHOUTOUT", "QUICK_TEASE", "CUSTOM_CLIP", "ACTION"];
 const REACTION_TYPES = ["GIFT"];
@@ -39,12 +40,21 @@ const S4uPendingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?
                 <p className="text-xs text-white/40 text-center py-4">No requests yet</p>
             ) : (
                 <div className="space-y-2 flex-1 overflow-y-auto custom-scroll pr-1">
-                    {visibleRequests.map((req) => (
-                        <div key={req.id} className="flex flex-col gap-1.5 bg-white/5 rounded-lg p-2.5">
-                            {/* Top row: icon + name + price + actions */}
-                            <div className="flex gap-2.5 items-start">
-                                {/* Icon */}
-                                <span className="text-lg shrink-0 mt-0.5">🌸</span>
+                    {visibleRequests.map((req) => {
+                        const emoji = getSugaIcon(req.type, req.label);
+                        const borderColor = req.price >= 100 ? '#eab308' : req.price >= 50 ? '#a855f7' : req.price >= 25 ? '#ec4899' : '#f43f5e';
+                        return (
+                            <div
+                                key={req.id}
+                                className="flex flex-col gap-1.5 bg-white/5 border border-white/5 rounded-lg p-2.5 transition-all duration-300 hover:bg-white/[0.08]"
+                                style={{ borderLeft: `3px solid ${borderColor}` }}
+                            >
+                                {/* Top row: icon + name + price + actions */}
+                                <div className="flex gap-2.5 items-start">
+                                    {/* Icon */}
+                                    <div className="w-8 h-8 rounded-lg bg-black/40 border border-white/5 flex items-center justify-center shrink-0">
+                                        {emoji}
+                                    </div>
                                 
                                 {/* Content Container */}
                                 <div className="flex-1 min-w-0 flex flex-col">
@@ -125,7 +135,8 @@ const S4uPendingRequests = ({ roomId, sessionId }: { roomId?: string; sessionId?
                                 </div>
                             )}
                         </div>
-                    ))}
+                    );
+                    })}
                 </div>
             )}
 

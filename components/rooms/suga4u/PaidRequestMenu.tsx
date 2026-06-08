@@ -6,12 +6,13 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import CustomRequestModal from "@/components/rooms/suga4u/CustomRequestModal";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
+import { getSugaIcon, getSugaGlowClass, getSugaCyberpunkStyle } from "@/utils/suga/sugaIcons";
 
 const quickRequests = [
-    { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
-    { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
-    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋", isCustomRequest: true },
-    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧", isCustomRequest: true },
+    { type: "POSE", name: "Pose", price: 15, isCustomRequest: true },
+    { type: "SHOUTOUT", name: "Shoutout", price: 25, isCustomRequest: true },
+    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, isCustomRequest: true },
+    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, isCustomRequest: true },
 ];
 
 const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null; hostId: string | null; sessionId?: string | null }) => {
@@ -84,7 +85,13 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
             const data = await res.json();
             if (!data.success) throw new Error(data.error || "Failed");
 
-            toast.success(`${r.emoji} Custom request sent: ${r.name}`, { description: `${cs()}${r.price} — your message was delivered` });
+            toast.success(
+                <span className="flex items-center gap-1.5 font-semibold">
+                    {getSugaIcon(r.type, r.name)}
+                    <span>Custom request sent: {r.name}</span>
+                </span>,
+                { description: `${cs()}${r.price} — your message was delivered` }
+            );
         } catch (err) {
             console.error("Failed to send custom request:", err);
             toast.error("Failed to send custom request");
@@ -99,17 +106,26 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                 <div className="h-px flex-1 bg-gold/30" />
             </div>
             <div className="grid grid-cols-2 gap-2">
-                {quickRequests.map((r) => (
-                    <button
-                        key={r.name}
-                        onClick={() => handleRequestClick(r)}
-                        disabled={!roomId || !hostId}
-                        className="neon-border-pink glass-panel py-2 px-3 text-center hover:bg-muted/50 transition-colors bg-transparent disabled:opacity-50"
-                    >
-                        <span className="text-xs block">{r.emoji} {r.name}</span>
-                        <p className="text-pink font-bold text-sm">{cs()}{r.price}</p>
-                    </button>
-                ))}
+                {quickRequests.map((r) => {
+                    const emoji = getSugaIcon(r.type, r.name);
+                    const { glowClass, bgClass } = getSugaCyberpunkStyle(r.type, r.name);
+                    return (
+                        <button
+                            key={r.name}
+                            onClick={() => handleRequestClick(r)}
+                            disabled={!roomId || !hostId}
+                            className={`flex items-center gap-2.5 p-2 rounded-xl border backdrop-blur-md text-left transition-all duration-300 active:scale-95 disabled:opacity-50 ${bgClass} ${glowClass}`}
+                        >
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/45 border border-white/5 shrink-0 shadow-inner">
+                                {emoji}
+                            </div>
+                            <div className="flex flex-col min-w-0 leading-tight">
+                                <span className="text-[10px] font-extrabold tracking-wide text-white/95 uppercase truncate">{r.name}</span>
+                                <span className="font-black text-xs mt-0.5 text-white">{cs()}{r.price}</span>
+                            </div>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Standard Spend Confirmation Modal (Pose, Shoutout) */}
@@ -134,7 +150,7 @@ const PaidRequestMenu = ({ roomId, hostId, sessionId }: { roomId: string | null;
                     onClose={() => setCustomReq(null)}
                     onConfirm={handleCustomRequest}
                     requestName={customReq.name}
-                    requestEmoji={customReq.emoji}
+                    requestEmoji={getSugaIcon(customReq.type, customReq.name)}
                     amount={customReq.price}
                     walletBalance={balance}
                 />

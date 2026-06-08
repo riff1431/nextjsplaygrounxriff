@@ -45,6 +45,7 @@ import { createClient } from "@/utils/supabase/client";
 import { cs } from "@/utils/currency";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
+import { getSugaIcon, getSugaGlowClass, getSugaIconContainerClass, getSugaCyberpunkStyle } from "@/utils/suga/sugaIcons";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
@@ -293,7 +294,7 @@ const Suga4URoom = () => {
         }
     };
 
-    const handleMobileGiftClick = (g: { name: string; amount: number; emoji: string }) => {
+    const handleMobileGiftClick = (g: { name: string; amount: number; emoji: React.ReactNode }) => {
         if (!roomId || !hostId) return;
         setConfirmMobileAction({
             type: 'GIFT',
@@ -304,7 +305,7 @@ const Suga4URoom = () => {
         });
     };
 
-    const handleMobileRequestClick = (r: { type: string; name: string; price: number; emoji: string; isCustomRequest: boolean }) => {
+    const handleMobileRequestClick = (r: { type: string; name: string; price: number; emoji: React.ReactNode; isCustomRequest: boolean }) => {
         if (!roomId || !hostId) return;
         if (r.isCustomRequest) {
             setCustomMobileAction(r);
@@ -333,7 +334,13 @@ const Suga4URoom = () => {
                     return;
                 }
                 await suga.createRequest("GIFT", action.name, `Sent ${action.name}`, action.price, fanName);
-                toast.success(`${action.emoji} Gift sent: ${action.name}`, { description: `${cs()}${action.price} sent to creator` });
+                toast.success(
+                    <span className="flex items-center gap-1.5 font-semibold">
+                        {action.emoji}
+                        <span>Gift sent: {action.name}</span>
+                    </span>,
+                    { description: `${cs()}${action.price} sent to creator` }
+                );
             } else if (action.type === 'REQUEST') {
                 const payment = await pay(hostId, action.price, `Paid Request: ${action.name}`, roomId, 'suga_request');
                 if (!payment.success) {
@@ -341,7 +348,13 @@ const Suga4URoom = () => {
                     return;
                 }
                 await suga.createRequest(action.requestType, action.name, "Custom request from fan mobile view", action.price, fanName);
-                toast.success(`${action.emoji} Request sent: ${action.name}`, { description: `${cs()}${action.price} request submitted` });
+                toast.success(
+                    <span className="flex items-center gap-1.5 font-semibold">
+                        {action.emoji}
+                        <span>Request sent: {action.name}</span>
+                    </span>,
+                    { description: `${cs()}${action.price} request submitted` }
+                );
             } else if (action.type === 'PRIVATE_1ON1') {
                 const payment = await pay(hostId, action.price, `Private 1-on-1 Call Request`, roomId, 'suga_request');
                 if (!payment.success) {
@@ -391,7 +404,13 @@ const Suga4URoom = () => {
             const data = await res.json();
             if (!data.success) throw new Error(data.error || "Failed");
 
-            toast.success(`${r.emoji} Custom request sent: ${r.name}`, { description: `${cs()}${r.price} — your message was delivered` });
+            toast.success(
+                <span className="flex items-center gap-1.5 font-semibold">
+                    {r.emoji}
+                    <span>Custom request sent: {r.name}</span>
+                </span>,
+                { description: `${cs()}${r.price} — your message was delivered` }
+            );
         } catch (err) {
             console.error("Failed to send custom request:", err);
             toast.error("Failed to send custom request");
@@ -1153,6 +1172,33 @@ const Suga4URoom = () => {
                             </div>
                         </div>
 
+                        {/* Quick Tips / Reactions Row (Tipping section shown right after live streaming box) */}
+                        <div className="px-4 py-2 shrink-0 flex items-center justify-between gap-3 bg-[#110113]/60 border-b border-pink-500/10 backdrop-blur-sm">
+                            <span className="text-[10px] font-black text-pink-400 tracking-widest uppercase shrink-0">Send Tip:</span>
+                            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none flex-1 justify-end">
+                                {[
+                                    { name: "Diamond", amount: 10 },
+                                    { name: "Diamonds", amount: 25 },
+                                    { name: "More Diamonds", amount: 50 },
+                                    { name: "Big Money", amount: 100 },
+                                ].map((g) => {
+                                    const emoji = getSugaIcon("GIFT", g.name);
+                                    const { glowClass, bgClass } = getSugaCyberpunkStyle("GIFT", g.name);
+                                    return (
+                                        <button
+                                            key={g.amount}
+                                            onClick={() => handleMobileGiftClick({ ...g, emoji })}
+                                            disabled={!roomId || !hostId}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-full backdrop-blur-md active:scale-95 transition-all text-xs font-bold disabled:opacity-50 shrink-0 ${bgClass} ${glowClass}`}
+                                        >
+                                            <span className="flex items-center justify-center w-4 h-4">{emoji}</span>
+                                            <span className="text-white font-black">{cs()}{g.amount}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* Tab Contents Panel */}
                         <div className="flex-grow flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-3">
                             
@@ -1260,49 +1306,62 @@ const Suga4URoom = () => {
                                     <div className="border border-pink-500/15 rounded-2xl bg-[#130214]/65 p-4 flex flex-col gap-4 shadow-md shadow-pink-500/[0.02]">
                                         <div className="grid grid-cols-2 text-xs font-black tracking-widest text-pink-500/60 uppercase">
                                             <div>PAID REQUEST</div>
-                                            <div className="pl-4">SUGA GIFTS</div>
+                                            <div className="pl-4"></div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4 divide-x divide-pink-500/10">
                                             {/* Requests Grid */}
                                             <div className="grid grid-cols-2 gap-2 pr-2" data-tour="suga-fan-paid-requests">
                                                 {[
-                                                    { type: "POSE", name: "Pose", price: 15, emoji: "📸", isCustomRequest: true },
-                                                    { type: "SHOUTOUT", name: "Shoutout", price: 25, emoji: "✏️", isCustomRequest: true },
-                                                    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, emoji: "💋", isCustomRequest: true },
-                                                    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, emoji: "📧", isCustomRequest: true },
-                                                ].map((r) => (
-                                                    <button
-                                                        key={r.name}
-                                                        onClick={() => handleMobileRequestClick(r)}
-                                                        disabled={!roomId || !hostId}
-                                                        className="flex flex-col items-center justify-center p-2 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[64px]"
-                                                    >
-                                                        <span className="text-lg">{r.emoji}</span>
-                                                        <span className="text-[10px] font-extrabold text-white/80 tracking-wide mt-1 truncate max-w-full">{r.name}</span>
-                                                        <span className="text-xs font-black text-pink-400 mt-0.5">{cs()}{r.price}</span>
-                                                    </button>
-                                                ))}
+                                                    { type: "POSE", name: "Pose", price: 15, isCustomRequest: true },
+                                                    { type: "SHOUTOUT", name: "Shoutout", price: 25, isCustomRequest: true },
+                                                    { type: "QUICK_TEASE", name: "Quick Tease", price: 40, isCustomRequest: true },
+                                                    { type: "CUSTOM_CLIP", name: "Custom Clip", price: 80, isCustomRequest: true },
+                                                ].map((r) => {
+                                                    const emoji = getSugaIcon(r.type, r.name);
+                                                    const { glowClass, bgClass } = getSugaCyberpunkStyle(r.type, r.name);
+                                                    return (
+                                                        <button
+                                                            key={r.name}
+                                                            onClick={() => handleMobileRequestClick({ ...r, emoji })}
+                                                            disabled={!roomId || !hostId}
+                                                            className={`group flex flex-col items-center justify-center p-2 border rounded-xl backdrop-blur-md active:scale-95 transition-all text-center disabled:opacity-50 min-h-[80px] ${bgClass} ${glowClass}`}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/45 border border-white/5 transition-all duration-300 shadow-sm group-hover:scale-110 mb-1 shrink-0">
+                                                                {emoji}
+                                                            </div>
+                                                            <span className="text-[10px] font-extrabold tracking-wide truncate max-w-full text-white/95 uppercase">{r.name}</span>
+                                                            <span className="text-xs font-black mt-0.5 text-white">{cs()}{r.price}</span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
 
                                             {/* Gifts Grid */}
                                             <div className="grid grid-cols-2 gap-2 pl-4" data-tour="suga-fan-send-gifts">
                                                 {[
-                                                    { name: "Diamond", amount: 10, emoji: "💎" },
-                                                    { name: "Diamonds", amount: 25, emoji: "💎" },
-                                                    { name: "More Diamonds", amount: 50, emoji: "💎" },
-                                                    { name: "Big Money", amount: 100, emoji: "💰" },
-                                                ].map((g) => (
-                                                    <button
-                                                        key={g.amount}
-                                                        onClick={() => handleMobileGiftClick(g)}
-                                                        disabled={!roomId || !hostId}
-                                                        className="flex flex-col items-center justify-center p-2 border border-pink-500/15 rounded-xl bg-pink-500/[0.02] hover:bg-pink-500/[0.08] active:scale-95 transition-all text-center disabled:opacity-50 min-h-[64px]"
-                                                    >
-                                                        <span className="text-lg">{g.emoji}</span>
-                                                        <span className="text-xs font-black text-pink-400 mt-1">{cs()}{g.amount}</span>
-                                                    </button>
-                                                ))}
+                                                    { type: "ACTION", name: "Say My Name", price: 20, isCustomRequest: true },
+                                                    { type: "ACTION", name: "Sponsor Room", price: 100, isCustomRequest: true },
+                                                    { type: "ACTION", name: "Voice Note", price: 35, isCustomRequest: true },
+                                                    { type: "ACTION", name: "Photo Drop", price: 45, isCustomRequest: true },
+                                                ].map((r) => {
+                                                    const emoji = getSugaIcon(r.type, r.name);
+                                                    const { glowClass, bgClass } = getSugaCyberpunkStyle(r.type, r.name);
+                                                    return (
+                                                        <button
+                                                            key={r.name}
+                                                            onClick={() => handleMobileRequestClick({ ...r, emoji })}
+                                                            disabled={!roomId || !hostId}
+                                                            className={`group flex flex-col items-center justify-center p-2 border rounded-xl backdrop-blur-md active:scale-95 transition-all text-center disabled:opacity-50 min-h-[80px] ${bgClass} ${glowClass}`}
+                                                        >
+                                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/45 border border-white/5 transition-all duration-300 shadow-sm group-hover:scale-110 mb-1 shrink-0">
+                                                                {emoji}
+                                                            </div>
+                                                            <span className="text-[10px] font-extrabold tracking-wide truncate max-w-full text-white/95 uppercase">{r.name}</span>
+                                                            <span className="text-xs font-black mt-0.5 text-white">{cs()}{r.price}</span>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </div>
@@ -1320,14 +1379,15 @@ const Suga4URoom = () => {
                                                     type: 'PRIVATE_1ON1',
                                                     name: 'Private 1-on-1 Call',
                                                     price: 500,
-                                                    emoji: '👑',
+                                                    emoji: getSugaIcon("PRIVATE_1ON1", "Private 1-on-1"),
                                                     description: `Request a Private 1-on-1 video call with the creator for ${cs()}500?`
                                                 });
                                             }}
                                             disabled={!roomId || !hostId}
-                                            className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-600 to-pink-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-pink-500/35 transition-all text-center tracking-wider uppercase shrink-0"
+                                            className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-500 to-red-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-red-500/25 border border-red-500/40 hover:shadow-red-500/40 transition-all text-center tracking-wider uppercase shrink-0"
                                         >
-                                            👑 Private 1-on-1 {cs()}500
+                                            <span className="flex items-center justify-center w-5 h-5">{getSugaIcon("PRIVATE_1ON1", "Private 1-on-1")}</span>
+                                            <span>Private 1-on-1 {cs()}500</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1623,7 +1683,7 @@ const Suga4URoom = () => {
                                         </button>
                                     )}
                                     <button
-                                        onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: "💎" })}
+                                        onClick={() => handleMobileGiftClick({ name: "Diamonds", amount: 25, emoji: getSugaIcon("GIFT", "Diamonds") })}
                                         className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-600 to-pink-500 flex items-center justify-center text-white active:scale-95 transition-all shadow-lg shadow-pink-500/25 text-base"
                                     >
                                         🎁

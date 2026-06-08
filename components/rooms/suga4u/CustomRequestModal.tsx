@@ -11,7 +11,7 @@ interface CustomRequestModalProps {
     onClose: () => void;
     onConfirm: (customText: string) => Promise<void> | void;
     requestName: string;
-    requestEmoji: string;
+    requestEmoji: React.ReactNode;
     amount: number;
     walletBalance: number;
 }
