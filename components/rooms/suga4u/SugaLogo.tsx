@@ -5,12 +5,12 @@ interface SugaLogoProps {
 }
 
 const SugaLogo = ({ className }: SugaLogoProps) => (
-    <div className={`flex items-center gap-2.5 ${className || ""}`}>
+    <div className={`flex items-center gap-3.5 ${className || ""}`}>
         <div className="relative group flex-shrink-0">
             {/* Outer pulsing ring */}
-            <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-pink-500 to-amber-500 opacity-60 blur-[2px] group-hover:opacity-100 transition duration-500 animate-pulse" />
+            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-pink-500 to-amber-500 opacity-60 blur-[2px] group-hover:opacity-100 transition duration-500 animate-pulse" />
             {/* Image Container */}
-            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-black/40 flex items-center justify-center">
+            <div className="relative w-14 h-14 rounded-full overflow-hidden border border-white/20 bg-black/40 flex items-center justify-center">
                 <img 
                     src="/rooms/suga4u/suga4uimage.png" 
                     alt="Suga 4U" 
@@ -19,11 +19,11 @@ const SugaLogo = ({ className }: SugaLogoProps) => (
             </div>
         </div>
         <div className="flex flex-col justify-center select-none">
-            <h1 className="font-display text-[15px] font-extrabold tracking-wider leading-none">
+            <h1 className="font-display text-[24px] font-black tracking-wider leading-none">
                 <span className="glow-text-pink">SUGA</span>
                 <span className="glow-text-gold">4U</span>
             </h1>
-            <p className="text-[8px] font-semibold text-gold-light tracking-widest uppercase mt-0.5 leading-none">
+            <p className="text-[11px] font-extrabold text-gold-light tracking-widest uppercase mt-1 leading-none">
                 Premium Room
             </p>
         </div>
