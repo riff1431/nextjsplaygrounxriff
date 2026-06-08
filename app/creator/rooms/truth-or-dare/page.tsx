@@ -43,7 +43,7 @@ import { playMoneySound } from "@/utils/sounds";
 import GroupVoteManager from "./components/GroupVoteManager";
 import { cs } from "@/utils/currency";
 
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 // ---------- Pricing / constants (for display; server is source of truth) ----------
 const ENTRY_FEE = 10;

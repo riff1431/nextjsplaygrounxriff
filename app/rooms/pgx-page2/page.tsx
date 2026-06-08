@@ -23,7 +23,7 @@ import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const PrivateCallFanModal = dynamic(() => import("@/components/rooms/suga4u/PrivateCallFanModal"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID ?? "";
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Design tokens — exact from reference index.css
@@ -143,6 +143,16 @@ function PgxPage2Inner() {
     const { user } = useAuth();
     const { balance, pay, refresh: refreshWallet } = useWallet();
     const { toasts, push: showToast } = useToasts();
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 769);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const roomId = searchParams.get("roomId");
     const hostId = searchParams.get("hostId");
@@ -1193,7 +1203,7 @@ function PgxPage2Inner() {
                                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", flexDirection: "column" }}>
 
                                     {/* Real Agora fan stream */}
-                                    {roomId && user ? (
+                                    {roomId && user && isMobile === false ? (
                                         <div style={{ width: "100%", height: "100%", borderRadius: "0.75rem", overflow: "hidden", flex: 1 }}>
                                         <LiveStreamWrapper
                                             role="fan"
@@ -1621,7 +1631,7 @@ function PgxPage2Inner() {
                         background: "#000"
                     }}>
                         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-                            {roomId && user ? (
+                            {roomId && user && isMobile === true ? (
                                 <LiveStreamWrapper
                                     role="fan"
                                     appId={APP_ID}

@@ -21,7 +21,7 @@ import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/Mob
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const CONFESSIONS_FAN_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageSquareText className="w-5 h-5" /> },
@@ -232,6 +232,16 @@ function ConfessionsRoom() {
     const [chatUnread, setChatUnread] = useState(0);
     const [wallUnread, setWallUnread] = useState(0);
     const [requestUnread, setRequestUnread] = useState(0);
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const activeTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -877,7 +887,7 @@ function ConfessionsRoom() {
                                     <CreatorSpotlight
                                         liveStreamNode={
                                             roomId && user && hostId ? (
-                                                isLive ? (
+                                                isLive && isMobile === false ? (
                                                     <LiveStreamWrapper
                                                         role="fan"
                                                         appId={APP_ID}
@@ -1003,7 +1013,7 @@ function ConfessionsRoom() {
                         {/* Live Video Spotlight */}
                         <div className="relative rounded-2xl overflow-hidden aspect-video border border-white/5 shadow-2xl bg-black/60 shrink-0" data-tour="confession-creator-spotlight">
                             {roomId && user && hostId ? (
-                                isLive ? (
+                                isLive && isMobile === true ? (
                                     <LiveStreamWrapper
                                         role="fan"
                                         appId={APP_ID}

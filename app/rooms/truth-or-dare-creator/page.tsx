@@ -39,7 +39,7 @@ const TOD_STUDIO_TABS: MobileStudioTab[] = [
 ];
 
 // ---------- Pricing / constants ----------
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 const CREATOR_SESSION_FEE = 15;
 const TIP_SPLIT_CREATOR = 0.9; // 90/10
 const TIERS = [
@@ -99,6 +99,16 @@ function TruthOrDareCreatorContent() {
     const isHost = !!me.isHost;
     const [isLive, setIsLive] = useState(true);
     const [hostCreatorId, setHostCreatorId] = useState<string | null>(null); // Host user ID (for collab creators to render host's remote stream)
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     // Data State
     const [creators, setCreators] = useState<Creator[]>([]);
@@ -1776,7 +1786,8 @@ function TruthOrDareCreatorContent() {
                     )}
 
                     {/* Desktop View */}
-                    <div className="hidden lg:grid grid-cols-[1fr_400px_400px] gap-3 h-full w-full min-h-0">
+                    {isMobile === false && (
+                        <div className="hidden lg:grid grid-cols-[1fr_400px_400px] gap-3 h-full w-full min-h-0">
                         {/* LEFT SECTION: Video Grid + Bottom Row — always visible */}
                         <div className="flex flex-col gap-2 lg:gap-3 w-full h-full min-h-0">
                             {/* 2x2 Video Grid */}
@@ -1996,9 +2007,11 @@ function TruthOrDareCreatorContent() {
                             />
                         </div>
                     </div>
+                    )}
 
                     {/* Mobile View */}
-                    <div className="lg:hidden flex flex-col gap-3 pt-2 pb-20 flex-1 min-h-0 overflow-hidden">
+                    {isMobile === true && (
+                        <div className="lg:hidden flex flex-col gap-3 pt-2 pb-20 flex-1 min-h-0 overflow-hidden">
                         {/* Video stage fixed on top */}
                         <div className="w-full shrink-0">
                             <div
@@ -2212,9 +2225,10 @@ function TruthOrDareCreatorContent() {
                             </div>
                         )}
                     </div>
+                    )}
 
                     {/* Mobile Tab Bar for Studio — only show when session is live */}
-                    {isSessionLive && (
+                    {isMobile === true && isSessionLive && (
                         <MobileStudioTabs
                             tabs={mappedTabs}
                             activeTab={mobileStudioTab}

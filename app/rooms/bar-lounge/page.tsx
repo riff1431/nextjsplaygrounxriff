@@ -25,7 +25,7 @@ import { cs } from "@/utils/currency";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const supabase = createClient();
 
@@ -98,6 +98,16 @@ export default function BarLoungeRoom() {
     const [chatUnread, setChatUnread] = useState(0);
     const [drinksUnread, setDrinksUnread] = useState(false);
     const [gamesUnread, setGamesUnread] = useState(false);
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const activeTabRef = useRef(mobileTab);
     useEffect(() => {
@@ -725,7 +735,7 @@ export default function BarLoungeRoom() {
                         {/* Stream */}
                         <div className="relative shrink-0" style={{ ...glassPanel, ...glowPurple, overflow: "hidden", borderRadius: "0.75rem" }}>
                             <div style={{ aspectRatio: "16/9", width: "100%", position: "relative" }}>
-                                {roomId && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
+                                {roomId && isMobile === false && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
                             </div>
                             {/* Floating hearts */}
                             <div className="absolute top-10 right-4 bl-float" style={{ zIndex: 30 }}>
@@ -841,7 +851,7 @@ export default function BarLoungeRoom() {
                 <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                     {/* Stream — always visible at top */}
                     <div className="relative w-full aspect-video max-w-[600px] shrink-0 mx-auto rounded-xl overflow-hidden shadow-lg border border-[hsla(42,90%,55%,0.2)] bg-black/40">
-                        {roomId && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
+                        {roomId && isMobile === true && <LiveStreamWrapper role={viewState === "hosting" ? "host" : "fan"} appId={APP_ID} roomId={roomId} uid={user?.id || 0} hostId={hostId || ""} hostAvatarUrl={hostProfile?.avatar_url || ""} hostName={creatorName} />}
                         {/* Floating hearts */}
                         <div className="absolute top-4 right-4 bl-float" style={{ zIndex: 30 }}>
                             <Heart className="w-6 h-6 bl-glow-pulse" style={{ color: C.neonPink, fill: `${C.neonPink}80`, filter: `drop-shadow(0 0 10px ${C.neonPink}99)` }} />

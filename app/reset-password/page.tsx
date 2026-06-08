@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import BrandLogo from "@/components/common/BrandLogo";
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -80,12 +81,8 @@ export default function ResetPasswordPage() {
             >
                 <div className="rounded-2xl bg-neutral-900/80 backdrop-blur-xl border border-white/10 p-8 shadow-2xl">
                     {/* Logo */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            <span className="text-pink-500">Play</span>
-                            <span className="text-white">Ground</span>
-                            <span className="text-cyan-400">X</span>
-                        </h1>
+                    <div className="flex justify-center mb-8">
+                        <BrandLogo showBadge={false} />
                     </div>
 
                     {success ? (

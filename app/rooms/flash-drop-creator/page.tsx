@@ -21,7 +21,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const FLASH_DROP_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
@@ -40,6 +40,16 @@ function FlashdropCreatorStudio() {
     const [roomId, setRoomId] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const { activeTour, currentStep } = useGuidedTour();
 
@@ -218,7 +228,7 @@ function FlashdropCreatorStudio() {
                         {/* 2nd: Video + High Roller Packs */}
                         <div className="flex-1 min-w-0 flex flex-col gap-3 min-h-0 overflow-y-auto">
                             <div data-tour="flashdrop-live-stream" className="rounded-xl overflow-hidden shrink-0" style={{ height: "360px", border: "1px solid rgba(255,255,255,0.1)" }}>
-                                {roomId && user ? (
+                                {roomId && user && isMobile === false ? (
                                     <LiveStreamWrapper
                                         role="host"
                                         appId={APP_ID}
@@ -279,7 +289,7 @@ function FlashdropCreatorStudio() {
                     <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                         {/* Stream — always visible at top */}
                         <div data-tour="flashdrop-live-stream" className="rounded-xl overflow-hidden shrink-0 aspect-video max-w-[600px] mx-auto w-full" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-                            {roomId && user ? (
+                            {roomId && user && isMobile === true ? (
                                 <LiveStreamWrapper
                                     role="host"
                                     appId={APP_ID}

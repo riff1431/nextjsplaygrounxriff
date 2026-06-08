@@ -66,7 +66,7 @@ const FanViewersList = dynamic<any>(() => import('./components/FanViewersList'),
 const BottleSpinner = dynamic<any>(() => import('./components/BottleSpinner').then(mod => mod.BottleSpinner), { ssr: false });
 const ProfileCard = dynamic<any>(() => import('./components/ProfileCard').then(mod => mod.ProfileCard), { ssr: false });
 
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 /**
  * PlayGroundX — Truth or Dare Room (Fan View)
@@ -109,6 +109,16 @@ function TruthOrDareContent() {
     const supabase = createClient();
     const roomId = searchParams.get("roomId");
     const sessionId = searchParams.get("sessionId");
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     // Dynamic Pricing State
     const [truthTiers, setTruthTiers] = useState<{ id: TierId; label: string; price: number; desc: string }[]>([...DEFAULT_TIERS]);
@@ -698,7 +708,9 @@ function TruthOrDareContent() {
 
         const calculateTopSpenders = async () => {
             try {
-                const targetSessionId = sessionId || activeSessionId;
+                // Rely entirely on activeSessionId set by checkAccess.
+                // Do not fallback to sessionId search param which might belong to an old/concluded session.
+                const targetSessionId = activeSessionId;
                 if (!targetSessionId) {
                     // No active session — reset to clean slate
                     setTopDareKing(null);
@@ -707,15 +719,7 @@ function TruthOrDareContent() {
                 }
 
                 // Get the active session's started_at to scope requests
-                let sessionStartedAt: string | null = currentSessionStartedAt;
-                if (!sessionStartedAt) {
-                    const { data: sess } = await supabase
-                        .from('truth_dare_sessions')
-                        .select('started_at, created_at')
-                        .eq('id', targetSessionId)
-                        .single();
-                    sessionStartedAt = sess?.started_at || sess?.created_at || null;
-                }
+                const sessionStartedAt: string | null = currentSessionStartedAt;
 
                 // Fetch requests for this room, scoped to the current session
                 const baseReqQuery = () => supabase
@@ -733,7 +737,9 @@ function TruthOrDareContent() {
                     if (sessionStartedAt) {
                         ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
                     } else {
-                        ({ data: requests, error } = await baseReqQuery());
+                        // If no session started_at is available, do not fallback to fetching all room requests
+                        requests = [];
+                        error = null;
                     }
                 }
 
@@ -1218,14 +1224,12 @@ function TruthOrDareContent() {
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     
-                    {/* Glowing Script Logo - Desktop Only */}
+                    {/* Dynamic Brand Logo - Desktop Only */}
                     <div 
                         onClick={() => router.push("/home")}
-                        className="hidden md:flex font-black text-sm sm:text-lg tracking-tight items-center mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        className="hidden md:flex items-center mr-2 cursor-pointer hover:opacity-80 transition-opacity"
                     >
-                        <span className="text-pink-500 italic" style={{ textShadow: '0 0 8px rgba(236,72,153,0.7)' }}>Play</span>
-                        <span className="text-white">Ground</span>
-                        <span className="text-cyan-400 font-extrabold italic" style={{ textShadow: '0 0 8px rgba(34,211,238,0.7)' }}>X</span>
+                        <BrandLogo showBadge={false} />
                     </div>
 
                     <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
@@ -1495,7 +1499,7 @@ function TruthOrDareContent() {
                             className="relative rounded-2xl lg:rounded-3xl border border-white/10 aspect-video flex items-center justify-center bg-gray-950/40 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md"
                             data-tour="tod-fan-live-stream"
                         >
-                            {roomId ? (
+                            {roomId && isMobile === false ? (
                                 <LiveStreamWrapper
                                     role="fan"
                                     appId={APP_ID}
@@ -1771,7 +1775,7 @@ function TruthOrDareContent() {
             <main className="lg:hidden relative z-10 flex-1 min-h-0 px-3 pb-20 pt-2 w-full overflow-hidden flex flex-col gap-3">
                 {/* 1. Video Stream — fixed aspect-video at top */}
                 <div className="w-full shrink-0 aspect-video max-w-[600px] mx-auto rounded-xl overflow-hidden border border-white/10 bg-gray-950/40 shadow-lg relative">
-                    {roomId ? (
+                    {roomId && isMobile === true ? (
                         <LiveStreamWrapper
                             role="fan"
                             appId={APP_ID}

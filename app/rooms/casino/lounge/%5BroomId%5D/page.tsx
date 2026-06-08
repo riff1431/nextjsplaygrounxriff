@@ -448,7 +448,7 @@ export default function CasinoLoungeRoomPage() {
                                         roomId={roomId}
                                         uid={isCreator ? 1000 : 2000 + Math.floor(Math.random() * 1000)}
                                         hostId={lounge.creator_id}
-                                        appId={process.env.NEXT_PUBLIC_AGORA_APP_ID!}
+                                        appId={process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined}
                                         hostName={lounge.creator_name}
                                         hostAvatarUrl={lounge.creator_avatar_url}
                                     />

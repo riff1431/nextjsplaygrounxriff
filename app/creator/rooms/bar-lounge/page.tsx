@@ -27,7 +27,7 @@ import { cs } from "@/utils/currency";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const supabase = createClient();
 

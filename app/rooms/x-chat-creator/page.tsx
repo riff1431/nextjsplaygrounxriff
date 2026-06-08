@@ -19,7 +19,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const XCHAT_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
@@ -40,6 +40,16 @@ const XChatCreatorPage = () => {
     const [mobileTab, setMobileTab] = useState("chat");
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
     const [summaryUnread, setSummaryUnread] = useState(false);
 
     const { activeTour, currentStep } = useGuidedTour();
@@ -273,7 +283,7 @@ const XChatCreatorPage = () => {
                                         border: '2px solid rgba(255, 215, 0, 0.5)',
                                     }}
                                 >
-                                    {roomId && user ? (
+                                    {roomId && user && isMobile === false ? (
                                         <LiveStreamWrapper
                                             role="host"
                                             appId={APP_ID}
@@ -323,7 +333,7 @@ const XChatCreatorPage = () => {
                                         border: '2px solid rgba(255, 215, 0, 0.5)',
                                     }}
                                 >
-                                    {roomId && user ? (
+                                    {roomId && user && isMobile === true ? (
                                         <LiveStreamWrapper
                                             role="host"
                                             appId={APP_ID}

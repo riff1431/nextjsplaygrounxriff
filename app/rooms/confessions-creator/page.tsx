@@ -19,7 +19,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const CONFESSIONS_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
@@ -36,7 +36,7 @@ const ConfessionsCreatorPage = () => {
     const [isWrongUser, setIsWrongUser] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
     const router = useRouter();
 
     const { activeTour, currentStep } = useGuidedTour();
@@ -224,8 +224,9 @@ const ConfessionsCreatorPage = () => {
                     }
                 />
 
-                {/* Main content */}
-                {isMobile ? (
+                {isMobile === null ? (
+                    <div className="flex-grow flex items-center justify-center text-white/50 text-xs font-semibold">Initializing studio layout...</div>
+                ) : isMobile ? (
                     <div className="flex-1 flex flex-col gap-3 px-3 pb-20 overflow-hidden min-h-0">
                         {/* Mobile Stream — always fixed at top below header */}
                         <div className="w-full shrink-0 aspect-video max-w-[500px] mx-auto rounded-xl overflow-hidden shadow-lg border border-purple-500/20 relative bg-black/40 mt-2">

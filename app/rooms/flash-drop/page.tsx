@@ -23,7 +23,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const FAN_TABS: MobileStudioTab[] = [
     { id: "board", label: "Board", icon: <BarChart3 className="w-5 h-5" /> },
@@ -33,6 +33,16 @@ const FAN_TABS: MobileStudioTab[] = [
 
 export default function FlashDropsRoomPreview() {
     const [mobileTab, setMobileTab] = useState("board");
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
     const [chatUnread, setChatUnread] = useState(0);
     const [boardUnread, setBoardUnread] = useState(0);
 
@@ -539,7 +549,7 @@ export default function FlashDropsRoomPreview() {
                             <div className="flex-[44] min-w-0 flex flex-col gap-2 min-h-0">
                                 {/* Live Stream */}
                                 <div data-tour="flashdrop-fan-creator-info" className="rounded-xl overflow-hidden fd-neon-border-md shrink-0" style={{ aspectRatio: "16/9" }}>
-                                    {roomId && user && hostId ? (
+                                    {roomId && user && hostId && isMobile === false ? (
                                         <LiveStreamWrapper
                                             role="fan"
                                             appId={APP_ID}
@@ -576,7 +586,7 @@ export default function FlashDropsRoomPreview() {
                         <div className="lg:hidden flex flex-1 flex-col min-h-0 px-2 pt-2 gap-2 overflow-hidden">
                             {/* Stream Wrapper */}
                             <div data-tour="flashdrop-fan-creator-info" className="relative rounded-xl overflow-hidden fd-neon-border-md shrink-0 aspect-video w-full">
-                                {roomId && user && hostId ? (
+                                {roomId && user && hostId && isMobile === true ? (
                                     <LiveStreamWrapper
                                         role="fan"
                                         appId={APP_ID}
