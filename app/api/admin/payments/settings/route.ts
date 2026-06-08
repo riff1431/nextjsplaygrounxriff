@@ -61,6 +61,13 @@ export async function POST(req: NextRequest) {
             ? body.riskpaygo.webhookSecret
             : oldConfig.riskpaygo?.webhookSecret || "";
 
+        const finalNowpaymentsApiKey = (body.nowpayments?.apiKey && !body.nowpayments.apiKey.includes('•'))
+            ? body.nowpayments.apiKey
+            : oldConfig.nowpayments?.apiKey || "";
+        const finalNowpaymentsIpnSecret = (body.nowpayments?.ipnSecret && !body.nowpayments.ipnSecret.includes('•'))
+            ? body.nowpayments.ipnSecret
+            : oldConfig.nowpayments?.ipnSecret || "";
+
         const mergedConfig = {
             stripe: {
                 enabled: !!body.stripe?.enabled,
@@ -88,6 +95,12 @@ export async function POST(req: NextRequest) {
                 returnUrl: body.riskpaygo?.returnUrl || oldConfig.riskpaygo?.returnUrl || "",
                 cancelUrl: body.riskpaygo?.cancelUrl || oldConfig.riskpaygo?.cancelUrl || "",
                 mode: body.riskpaygo?.mode || oldConfig.riskpaygo?.mode || "test",
+            },
+            nowpayments: {
+                enabled: !!body.nowpayments?.enabled,
+                apiKey: finalNowpaymentsApiKey,
+                ipnSecret: finalNowpaymentsIpnSecret,
+                mode: body.nowpayments?.mode || oldConfig.nowpayments?.mode || "sandbox",
             }
         };
 
@@ -174,6 +187,24 @@ export async function POST(req: NextRequest) {
             }, { onConflict: 'provider' });
 
         if (riskErr) console.error('[Admin Payments Settings API] Sync riskpaygo error:', riskErr);
+
+        // Sync NOWPayments
+        const { error: nowpaymentsErr } = await adminClient
+            .from('payment_settings')
+            .upsert({
+                provider: 'nowpayments',
+                is_enabled: mergedConfig.nowpayments.enabled,
+                config: {
+                    mode: mergedConfig.nowpayments.mode
+                },
+                secret_config: {
+                    api_key: mergedConfig.nowpayments.apiKey,
+                    ipn_secret: mergedConfig.nowpayments.ipnSecret
+                },
+                updated_at: now
+            }, { onConflict: 'provider' });
+
+        if (nowpaymentsErr) console.error('[Admin Payments Settings API] Sync nowpayments error:', nowpaymentsErr);
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

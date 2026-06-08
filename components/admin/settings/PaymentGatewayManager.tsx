@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, Banknote, Landmark, Save, Eye, EyeOff, Zap, CheckCircle2, XCircle, Loader2, AlertTriangle, ExternalLink, ShieldCheck, Info, FileText, Activity, ShieldAlert, Shield } from "lucide-react";
+import { CreditCard, Banknote, Landmark, Save, Eye, EyeOff, Zap, CheckCircle2, XCircle, Loader2, AlertTriangle, ExternalLink, ShieldCheck, Info, FileText, Activity, ShieldAlert, Shield, Coins } from "lucide-react";
 import { usePayment } from "../../../app/context/PaymentContext";
 import { NeonCard, NeonButton } from "../shared/NeonCard";
 import { AdminSectionTitle } from "../shared/AdminTable";
@@ -25,6 +25,64 @@ interface RiskTestResult {
     status?: number;
 }
 
+interface GatewayField {
+    key: string;
+    label: string;
+    type: 'text' | 'password' | 'select';
+    placeholder?: string;
+    options?: { label: string; value: string }[];
+    required?: boolean;
+}
+
+interface DynamicGatewayDef {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ReactNode;
+    fields: GatewayField[];
+    testConnectionEndpoint: string;
+    colorClass: string;
+    badgeColorClass: string;
+}
+
+const DYNAMIC_GATEWAYS: DynamicGatewayDef[] = [
+    {
+        id: 'nowpayments',
+        name: 'NOWPayments',
+        description: 'Crypto Payment Gateway • Accept Bitcoin, Ethereum, USDT, and 300+ cryptocurrencies',
+        icon: <Coins className="w-5 h-5" />,
+        colorClass: 'bg-amber-500/5 border-amber-500/20 peer-checked:bg-amber-600',
+        badgeColorClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+        fields: [
+            {
+                key: 'apiKey',
+                label: 'API Key',
+                type: 'password',
+                placeholder: 'Enter NOWPayments API Key',
+                required: true
+            },
+            {
+                key: 'ipnSecret',
+                label: 'IPN Secret Key',
+                type: 'password',
+                placeholder: 'Enter Instant Payment Notification Secret Key',
+                required: true
+            },
+            {
+                key: 'mode',
+                label: 'Gateway Environment Mode',
+                type: 'select',
+                options: [
+                    { label: 'Sandbox (Test Mode)', value: 'sandbox' },
+                    { label: 'Production (Live Mode)', value: 'production' }
+                ],
+                required: true
+            }
+        ],
+        testConnectionEndpoint: '/api/v1/payments/nowpayments/test-connection'
+    }
+];
+
 export default function PaymentGatewayManager() {
     const { config, updateConfig, loading } = usePayment();
     const [formData, setFormData] = useState(config);
@@ -43,6 +101,12 @@ export default function PaymentGatewayManager() {
     const [riskConnectionStatus, setRiskConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
     const [generatingTestPayment, setGeneratingTestPayment] = useState(false);
     
+    // Dynamic gateways state
+    const [testingStates, setTestingStates] = useState<Record<string, boolean>>({});
+    const [testResults, setTestResults] = useState<Record<string, any>>({});
+    const [connectionStatuses, setConnectionStatuses] = useState<Record<string, 'unknown' | 'connected' | 'disconnected'>>({});
+    const [showSecretsMap, setShowSecretsMap] = useState<Record<string, boolean>>({});
+    
     // Log drawer states
     const [logs, setLogs] = useState<any[]>([]);
     const [loadingLogs, setLoadingLogs] = useState(false);
@@ -59,6 +123,16 @@ export default function PaymentGatewayManager() {
                     ...prev.riskpaygo,
                     apiToken: config.riskpaygo.apiToken ? "••••••••••••••••" : "",
                     webhookSecret: config.riskpaygo.webhookSecret ? "••••••••••••••••" : ""
+                }
+            }));
+        }
+        if (config?.nowpayments) {
+            setFormData(prev => ({
+                ...prev,
+                nowpayments: {
+                    ...prev.nowpayments,
+                    apiKey: config.nowpayments.apiKey ? "••••••••••••••••" : "",
+                    ipnSecret: config.nowpayments.ipnSecret ? "••••••••••••••••" : ""
                 }
             }));
         }
@@ -141,6 +215,40 @@ export default function PaymentGatewayManager() {
         }
     };
 
+    const handleTestDynamicConnection = async (gatewayId: string, testEndpoint: string, fields: GatewayField[]) => {
+        setTestingStates(prev => ({ ...prev, [gatewayId]: true }));
+        setTestResults(prev => ({ ...prev, [gatewayId]: null }));
+        
+        try {
+            const gatewayData = (formData as any)[gatewayId] || {};
+            const payload: Record<string, any> = {};
+            fields.forEach(field => {
+                payload[field.key] = gatewayData[field.key];
+            });
+
+            const res = await fetch(testEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            setTestResults(prev => ({ ...prev, [gatewayId]: data }));
+            setConnectionStatuses(prev => ({ ...prev, [gatewayId]: data.success ? 'connected' : 'disconnected' }));
+            
+            if (data.success) {
+                toast.success(data.message || `${gatewayId.toUpperCase()} connection successful!`);
+            } else {
+                toast.error(data.error || "Connection test failed");
+            }
+        } catch (err) {
+            setConnectionStatuses(prev => ({ ...prev, [gatewayId]: 'disconnected' }));
+            toast.error(`Failed to run ${gatewayId.toUpperCase()} connection test`);
+        } finally {
+            setTestingStates(prev => ({ ...prev, [gatewayId]: false }));
+        }
+    };
+
     const handleGenerateTestPayment = async () => {
         setGeneratingTestPayment(true);
         try {
@@ -194,8 +302,8 @@ export default function PaymentGatewayManager() {
         }
     };
 
-    const toggleGateway = (gateway: 'stripe' | 'paypal' | 'bank' | 'riskpaygo') => {
-        setFormData(prev => ({
+    const toggleGateway = (gateway: string) => {
+        setFormData((prev: any) => ({
             ...prev,
             [gateway]: { ...prev[gateway], enabled: !prev[gateway].enabled }
         }));
@@ -206,6 +314,9 @@ export default function PaymentGatewayManager() {
         } else if (gateway === 'riskpaygo') {
             setRiskTestResult(null);
             setRiskConnectionStatus('unknown');
+        } else {
+            setTestResults(prev => ({ ...prev, [gateway]: null }));
+            setConnectionStatuses(prev => ({ ...prev, [gateway]: 'unknown' }));
         }
     };
 
@@ -743,6 +854,182 @@ export default function PaymentGatewayManager() {
                         </div>
                     )}
                 </div>
+
+                {/* Dynamic Gateways (e.g. NOWPayments) */}
+                {DYNAMIC_GATEWAYS.map((gateway) => {
+                    const gatewayConfig = (formData as any)[gateway.id] || { enabled: false };
+                    const isEnabled = !!gatewayConfig.enabled;
+                    const connectionStatus = connectionStatuses[gateway.id] || 'unknown';
+                    const isTesting = !!testingStates[gateway.id];
+                    const testResult = testResults[gateway.id];
+                    const showSecrets = !!showSecretsMap[gateway.id];
+
+                    return (
+                        <div key={gateway.id} className={`rounded-2xl border transition-all overflow-hidden ${isEnabled ? gateway.colorClass : 'bg-black/40 border-white/5 opacity-70'}`}>
+                            <div className="p-5">
+                                <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                                            connectionStatus === 'connected' ? 'bg-green-500/20 text-green-400' :
+                                            connectionStatus === 'disconnected' ? 'bg-red-500/20 text-red-400' :
+                                            gateway.badgeColorClass
+                                        }`}>
+                                            {gateway.icon}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="text-sm font-bold text-white">{gateway.name}</div>
+                                                {connectionStatus === 'connected' && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                                                        <CheckCircle2 className="w-3 h-3" /> CONNECTED
+                                                    </span>
+                                                )}
+                                                {connectionStatus === 'disconnected' && isEnabled && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                                                        <XCircle className="w-3 h-3" /> FAILED
+                                                    </span>
+                                                )}
+                                                {gatewayConfig.mode && isEnabled && (
+                                                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                                        {gatewayConfig.mode.toUpperCase()} MODE
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-gray-400">{gateway.description}</div>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" className="sr-only peer" checked={isEnabled} onChange={() => toggleGateway(gateway.id)} />
+                                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                    </label>
+                                </div>
+
+                                {isEnabled && (
+                                    <div className="mt-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        {/* Key Inputs */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {gateway.fields.map((field) => {
+                                                const value = gatewayConfig[field.key] || "";
+                                                return (
+                                                    <div key={field.key}>
+                                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">{field.label}</label>
+                                                        {field.type === 'select' ? (
+                                                            <select
+                                                                className="w-full bg-black/80 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500/50 transition"
+                                                                value={value}
+                                                                onChange={(e) => {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        [gateway.id]: {
+                                                                            ...(prev as any)[gateway.id],
+                                                                            [field.key]: e.target.value
+                                                                        }
+                                                                    }));
+                                                                    setTestResults(prev => ({ ...prev, [gateway.id]: null }));
+                                                                    setConnectionStatuses(prev => ({ ...prev, [gateway.id]: 'unknown' }));
+                                                                }}
+                                                            >
+                                                                {field.options?.map((opt) => (
+                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        ) : field.type === 'password' ? (
+                                                            <div className="relative">
+                                                                <input
+                                                                    type={showSecrets ? "text" : "password"}
+                                                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono pr-10 focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500/50 transition"
+                                                                    value={value}
+                                                                    onChange={(e) => {
+                                                                        setFormData(prev => ({
+                                                                            ...prev,
+                                                                            [gateway.id]: {
+                                                                                ...(prev as any)[gateway.id],
+                                                                                [field.key]: e.target.value
+                                                                            }
+                                                                        }));
+                                                                        setTestResults(prev => ({ ...prev, [gateway.id]: null }));
+                                                                        setConnectionStatuses(prev => ({ ...prev, [gateway.id]: 'unknown' }));
+                                                                    }}
+                                                                    placeholder={field.placeholder}
+                                                                />
+                                                                <button
+                                                                    onClick={() => setShowSecretsMap(prev => ({ ...prev, [gateway.id]: !showSecrets }))}
+                                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                                                                    type="button"
+                                                                >
+                                                                    {showSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <input
+                                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-amber-500/20 focus:border-amber-500/50 transition"
+                                                                value={value}
+                                                                onChange={(e) => {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        [gateway.id]: {
+                                                                            ...(prev as any)[gateway.id],
+                                                                            [field.key]: e.target.value
+                                                                        }
+                                                                    }));
+                                                                    setTestResults(prev => ({ ...prev, [gateway.id]: null }));
+                                                                    setConnectionStatuses(prev => ({ ...prev, [gateway.id]: 'unknown' }));
+                                                                }}
+                                                                placeholder={field.placeholder}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Test Connection + Result */}
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => handleTestDynamicConnection(gateway.id, gateway.testConnectionEndpoint, gateway.fields)}
+                                                disabled={isTesting || !gateway.fields.every(f => !!gatewayConfig[f.key])}
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 hover:border-amber-500/50"
+                                            >
+                                                {isTesting ? (
+                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Testing...</>
+                                                ) : (
+                                                    <><Zap className="w-4 h-4" /> Run Connection Test</>
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* Test Result */}
+                                        {testResult && (
+                                            <div className={`p-3 rounded-xl border animate-in fade-in slide-in-from-top-1 ${
+                                                testResult.success
+                                                    ? 'bg-green-500/5 border-green-500/20'
+                                                    : 'bg-red-500/5 border-red-500/20'
+                                            }`}>
+                                                {testResult.success ? (
+                                                    <div className="flex items-start gap-2">
+                                                        <ShieldCheck className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-green-400">Connection Verified</p>
+                                                            <p className="text-xs text-gray-400 mt-1">{testResult.message || 'Status verified successfully.'}</p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-start gap-2">
+                                                        <XCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-red-400">Connection Failed</p>
+                                                            <p className="text-xs text-red-300/80 mt-0.5">{testResult.error || 'Check configuration keys.'}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Audit Logs Slide-over / Drawer */}

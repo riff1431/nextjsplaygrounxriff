@@ -48,7 +48,7 @@ export default function CreatorDashboard() {
                 // Check role
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('role, avatar_url, username, full_name')
+                    .select('role, avatar_url, username, full_name, bio, location')
                     .eq('id', user.id)
                     .single();
 
@@ -149,6 +149,10 @@ export default function CreatorDashboard() {
         );
     }
 
+    const isProfileIncomplete = !creatorProfile?.username || 
+                                !creatorProfile?.avatar_url || 
+                                !creatorProfile?.full_name;
+
     return (
         <div className="min-h-screen bg-black text-white p-6 md:p-10 pb-20">
             {/* Header */}
@@ -160,6 +164,16 @@ export default function CreatorDashboard() {
                     <p className="text-gray-400 mt-1">Welcome back, @{user?.user_metadata?.username || user?.user_metadata?.full_name || 'Creator'}</p>
                 </div>
                 <div className="flex gap-3">
+                    {isProfileIncomplete && (
+                        <button
+                            onClick={() => router.push('/settings/profile')}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold flex items-center gap-2 animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.8)] border border-pink-400/30 transition-all hover:opacity-95"
+                            title="Complete your profile"
+                        >
+                            <User className="w-4 h-4 shrink-0 animate-bounce" />
+                            <span>Update Profile</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => router.push('/home')}
                         className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white font-medium flex items-center gap-2 transition"

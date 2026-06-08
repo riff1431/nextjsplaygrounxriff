@@ -31,6 +31,12 @@ export interface PaymentConfig {
         cancelUrl: string;
         mode: 'test' | 'live';
     };
+    nowpayments: {
+        enabled: boolean;
+        apiKey: string;
+        ipnSecret: string;
+        mode: 'sandbox' | 'production';
+    };
 }
 
 const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -53,6 +59,12 @@ const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
         returnUrl: "",
         cancelUrl: "",
         mode: "test"
+    },
+    nowpayments: {
+        enabled: false,
+        apiKey: "",
+        ipnSecret: "",
+        mode: "sandbox"
     }
 };
 
@@ -89,6 +101,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                     paypal: { ...prev.paypal, ...data.value.paypal },
                     bank: { ...prev.bank, ...data.value.bank },
                     riskpaygo: { ...prev.riskpaygo, ...data.value.riskpaygo },
+                    nowpayments: { ...prev.nowpayments, ...data.value.nowpayments },
                 }));
                 setLoading(false);
                 return;
@@ -134,6 +147,10 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                             newConfig.riskpaygo.returnUrl = row.config?.return_url || newConfig.riskpaygo.returnUrl;
                             newConfig.riskpaygo.cancelUrl = row.config?.cancel_url || newConfig.riskpaygo.cancelUrl;
                             newConfig.riskpaygo.mode = row.config?.mode || newConfig.riskpaygo.mode;
+                        }
+                        else if (prov === 'nowpayments') {
+                            newConfig.nowpayments.enabled = row.is_enabled;
+                            newConfig.nowpayments.mode = row.config?.mode || newConfig.nowpayments.mode;
                         }
                     });
                     return newConfig;

@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare, CalendarClock } from "lucide-react";
+import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare, CalendarClock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
@@ -83,9 +83,10 @@ export const CsStatsBar = ({
 interface CsDashboardHeaderProps {
     username?: string | null;
     avatarUrl?: string | null;
+    isProfileIncomplete?: boolean;
 }
 
-export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProps) => {
+export const CsDashboardHeader = ({ username, avatarUrl, isProfileIncomplete }: CsDashboardHeaderProps) => {
     const router = useRouter();
     const { user, logout } = useAuth();
     const displayName = username || "Creator";
@@ -109,6 +110,18 @@ export const CsDashboardHeader = ({ username, avatarUrl }: CsDashboardHeaderProp
                 </div>
 
                 <div className="order-2 md:order-3 flex items-center gap-2 shrink-0">
+                    {/* Blinking Update Profile Button */}
+                    {isProfileIncomplete && (
+                        <button
+                            onClick={() => router.push('/settings/profile')}
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.8)] border border-pink-400/30 transition-all hover:opacity-95"
+                            title="Complete your profile"
+                        >
+                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 animate-bounce" />
+                            <span>Update Profile</span>
+                        </button>
+                    )}
+
                     <NotificationIcon role="creator" />
 
                     {/* Messages — icon-only on mobile */}

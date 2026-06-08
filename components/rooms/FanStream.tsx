@@ -12,7 +12,7 @@ import {
 import { VideoOff } from 'lucide-react';
 
 interface FanStreamProps {
-    appId: string;
+    appId?: string;
     channelName: string;
     uid: string | number; // fan's Supabase UUID
     hostId: string | number;

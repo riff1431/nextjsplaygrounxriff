@@ -18,7 +18,7 @@ import ActiveRequestOverlay from './ActiveRequestOverlay';
 import CreatorRequestManager from './CreatorRequestManager';
 
 interface CreatorStreamProps {
-    appId: string;
+    appId?: string;
     channelName: string;
     uid: string | number;
     avatarUrl?: string | null;
@@ -194,6 +194,7 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
                 setError(null);
                 const res = await fetch('/api/v1/auth/agora-token', {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         channelName,
                         role: 'publisher',

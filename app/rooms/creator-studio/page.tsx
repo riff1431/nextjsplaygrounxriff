@@ -18,6 +18,10 @@ const CreatorStudioDashboardPage = () => {
 
     const kycLocked = kycStatus !== "approved";
 
+    const isProfileIncomplete = !profile?.username || 
+                                !profile?.avatar_url || 
+                                !profile?.full_name;
+
     return (
         <div className="cs-theme min-h-screen relative">
             {/* Background */}
@@ -33,6 +37,7 @@ const CreatorStudioDashboardPage = () => {
                     <CsDashboardHeader
                         username={profile?.username}
                         avatarUrl={profile?.avatar_url}
+                        isProfileIncomplete={isProfileIncomplete}
                     />
                 </div>
 

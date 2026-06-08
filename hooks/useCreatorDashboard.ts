@@ -24,6 +24,10 @@ interface RecentRoom {
 interface CreatorProfile {
     username: string | null;
     avatar_url: string | null;
+    full_name: string | null;
+    bio: string | null;
+    location: string | null;
+    cover_url: string | null;
     subscription_price_weekly: number | null;
     subscription_price_monthly: number | null;
 }
@@ -65,7 +69,7 @@ export function useCreatorDashboard(): CreatorDashboardData {
             // 1. Fetch profile
             const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, avatar_url, subscription_price_weekly, subscription_price_monthly")
+                .select("username, avatar_url, full_name, bio, location, cover_url, subscription_price_weekly, subscription_price_monthly")
                 .eq("id", user.id)
                 .single();
 

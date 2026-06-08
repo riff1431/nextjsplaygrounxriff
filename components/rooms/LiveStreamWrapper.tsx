@@ -10,7 +10,7 @@ interface LiveStreamWrapperProps {
     roomId: string; // This is the Channel Name
     uid: string | number; // The CURRENT USER's UID
     hostId: string | number; // The HOST's UID (who we want to watch)
-    appId: string;
+    appId?: string;
     hostAvatarUrl?: string | null; // Creator's avatar URL
     hostName?: string; // Creator's display name
     collabCreators?: { id: string, name: string, avatarUrl?: string }[];

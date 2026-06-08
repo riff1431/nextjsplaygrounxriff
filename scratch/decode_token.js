@@ -1,6 +1,6 @@
 const { AccessToken2 } = require('../node_modules/agora-token/src/AccessToken2.js');
 
-const tokenStr = "007eJxTYGjfEH5bosJo99bYyPywstPablEJR+yE5f9EHXnrbX/i4C4FBnPjRAMjI9PkFPO0NJMUM5NEQ+NEy9RkS6PUVAtDS1PDfn/ZLP6Fcll2jseZGRkYGVgYGBlAfCYwyQwmWaBkSWpxCTtDaXFqkaGRMQCHsCWF";
+const tokenStr = "007eJxTYDBISZ+7V+a81Nyut1wanSt+BB+t9rP6OPPl3IBbzfPP9V9TYEg2M0k2s7BITks0TDaxSDGwTEpOTE22tExONkkzMkkxbGxVy2K8rp4V2abNxMjAyMDCwMgA4jOBSWYwyQImeRhKUotLdJMzEvPyUnO4GIxMDE2MLQ2NDEwAdqor1Q==";
 
 try {
     const at = new AccessToken2();

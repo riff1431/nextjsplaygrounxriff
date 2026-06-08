@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -33,6 +33,7 @@ export default function OnboardingPage() {
     const [loading, setLoading] = useState(true);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
+    const isInitiallyCompletedRef = useRef<boolean | null>(null);
 
     // Determine total steps based on role
     const totalSteps = role === "creator" ? 3 : 2;
@@ -65,6 +66,12 @@ export default function OnboardingPage() {
 
         setProfileData(profile);
 
+        let initiallyCompleted = isInitiallyCompletedRef.current;
+        if (initiallyCompleted === null) {
+            initiallyCompleted = !!profile.onboarding_completed_at;
+            isInitiallyCompletedRef.current = initiallyCompleted;
+        }
+
         // Determine current step based on what's completed
         // Step 1 is done if account_type_id is set OR account_type_skipped is true
         const step1Done = profile.account_type_id || profile.account_type_skipped;
@@ -84,8 +91,14 @@ export default function OnboardingPage() {
             router.push("/home");
             return;
         } else if (profile.role === "creator" && (profile.kyc_status === "approved" || profile.kyc_status === "skipped")) {
-            // Creator is done, redirect
-            router.push("/rooms/creator-studio");
+            // Creator is done. If onboarding was already completed when this page mounted,
+            // they are logging in - send them to the dashboard.
+            // If they just completed it now (fresh signup), send them to settings/profile.
+            if (initiallyCompleted) {
+                router.push("/rooms/creator-studio");
+            } else {
+                router.push("/settings/profile?from=onboarding");
+            }
             return;
         }
 

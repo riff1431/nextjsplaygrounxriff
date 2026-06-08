@@ -81,6 +81,15 @@ export default function EditProfilePage() {
     const [user, setUser] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [fromOnboarding, setFromOnboarding] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            setFromOnboarding(params.get("from") === "onboarding");
+        }
+    }, []);
+
     const [formData, setFormData] = useState({
         full_name: "",
         username: "",
@@ -192,7 +201,11 @@ export default function EditProfilePage() {
 
             if (error) throw error;
             toast.success("Profile updated!");
-            router.refresh();
+            if (fromOnboarding) {
+                router.push("/rooms/creator-studio");
+            } else {
+                router.refresh();
+            }
         } catch (error) {
             console.error("Error updating profile:", error);
             toast.error("Failed to save changes: " + ((error as any).message || "Unknown error"));
@@ -214,6 +227,17 @@ export default function EditProfilePage() {
                         Edit Profile
                     </h1>
                 </div>
+
+                {fromOnboarding && (
+                    <div className="mb-6 p-5 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-200 text-xs sm:text-sm leading-relaxed shadow-[0_0_15px_rgba(236,72,153,0.15)] flex flex-col gap-2">
+                        <span className="font-bold flex items-center gap-1.5 text-pink-300 text-sm">
+                            💡 Welcome to PlayGroundX!
+                        </span>
+                        <p className="text-pink-100/80">
+                            Please take a moment to complete your profile details (Display Name, Username, Bio, Location, and Cover/Avatar images) so your fans can find and connect with you. Once updated, click <strong>Save Changes</strong> to enter your Creator Studio Dashboard.
+                        </p>
+                    </div>
+                )}
 
                 <NeonCard className="p-6 space-y-8">
                     {/* Cover Image Section */}
@@ -340,7 +364,15 @@ export default function EditProfilePage() {
                     </div>
 
                     <div className="pt-4 flex gap-3">
-                        <NeonButton variant="ghost" className="flex-1" onClick={() => router.back()}>Cancel</NeonButton>
+                        <NeonButton variant="ghost" className="flex-1" onClick={() => {
+                            if (fromOnboarding) {
+                                router.push("/rooms/creator-studio");
+                            } else {
+                                router.back();
+                            }
+                        }}>
+                            {fromOnboarding ? "Skip to Dashboard" : "Cancel"}
+                        </NeonButton>
                         <NeonButton variant="pink" className="flex-1" onClick={handleSave} disabled={saving || uploading}>
                             <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}
                         </NeonButton>

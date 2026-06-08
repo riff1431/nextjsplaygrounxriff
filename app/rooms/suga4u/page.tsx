@@ -47,7 +47,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const Suga4URoom = () => {
     const router = useRouter();
@@ -61,6 +61,16 @@ const Suga4URoom = () => {
     const [hostAvatar, setHostAvatar] = React.useState<string | null>(null);
     const [hostName, setHostName] = React.useState("Alexis Rose");
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     // Incoming activity state
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
@@ -945,7 +955,7 @@ const Suga4URoom = () => {
                                 <div className="flex-[1.6] min-h-0">
                                     <div className="glass-panel overflow-hidden flex flex-col h-full bg-transparent border-gold/20">
                                         <div className="relative flex-1 min-h-[200px]">
-                                            {roomId && user && hostId ? (
+                                            {roomId && user && hostId && isMobile === false ? (
                                                 <LiveStreamWrapper
                                                     role="fan"
                                                     appId={APP_ID}
@@ -1114,7 +1124,7 @@ const Suga4URoom = () => {
                         {/* Video Player */}
                         <div className="px-4 py-2 shrink-0">
                             <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-pink-500/10 bg-black/40 shadow-lg">
-                                {roomId && user && hostId ? (
+                                {roomId && user && hostId && isMobile === true ? (
                                     <LiveStreamWrapper
                                         role="fan"
                                         appId={APP_ID}

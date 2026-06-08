@@ -29,7 +29,7 @@ import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
-const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 
 const SUGA4U_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
@@ -48,6 +48,16 @@ const Suga4UCreatorPage = () => {
     const [showIncomingPanel, setShowIncomingPanel] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
+    const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const { activeTour, currentStep } = useGuidedTour();
 
@@ -341,7 +351,7 @@ const Suga4UCreatorPage = () => {
                             <div className="shrink-0" data-tour="suga-creator-live-preview">
                                 <div className="s4u-creator-glass-panel p-4">
                                     <div className="relative rounded-lg overflow-hidden h-48 bg-white/5 border border-white/10 flex items-center justify-center">
-                                        {roomId && user ? (
+                                        {roomId && user && isMobile === false ? (
                                             <LiveStreamWrapper
                                                 role="host"
                                                 appId={APP_ID}
@@ -366,7 +376,7 @@ const Suga4UCreatorPage = () => {
                     <div className="lg:hidden flex flex-col gap-3 flex-1 min-h-0 overflow-hidden w-full">
                         {/* Stream — always visible at top */}
                         <div className="relative rounded-xl overflow-hidden bg-white/5 border border-white/10 aspect-video max-w-[600px] shrink-0 mx-auto w-full">
-                            {roomId && user ? (
+                            {roomId && user && isMobile === true ? (
                                 <LiveStreamWrapper
                                     role="host"
                                     appId={APP_ID}

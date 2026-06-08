@@ -60,6 +60,16 @@ function getDefaultSettings(): PaymentSetting[] {
             },
             created_at: now,
             updated_at: now
+        },
+        {
+            id: 'default-nowpayments',
+            provider: 'nowpayments',
+            is_enabled: false,
+            config: {
+                mode: 'sandbox'
+            },
+            created_at: now,
+            updated_at: now
         }
     ];
 }

@@ -342,12 +342,22 @@ function TruthOrDareContent() {
                 const { sessionStatus: status, access: accessResult, sessionInfo: info, hostId: hId, hostProfile, requestStatus: reqStatus, sessionId: resolvedSessionId, sessionStartedAt: sessStartedAt, collabCreators: collabs } = data;
 
                 // Store active session info for chat scoping
-                if (resolvedSessionId) setActiveSessionId(resolvedSessionId);
-                if (sessStartedAt) setCurrentSessionStartedAt(sessStartedAt);
+                if (resolvedSessionId) {
+                    setActiveSessionId(resolvedSessionId);
+                } else {
+                    setActiveSessionId(null);
+                }
+                if (sessStartedAt) {
+                    setCurrentSessionStartedAt(sessStartedAt);
+                } else {
+                    setCurrentSessionStartedAt(null);
+                }
                 if (collabs) setCollabCreators(collabs);
 
                 setSessionStatus(status as any);
                 if (status === 'ended') {
+                    setActiveSessionId(null);
+                    setCurrentSessionStartedAt(null);
                     setLoading(false);
                     return;
                 }
@@ -440,6 +450,7 @@ function TruthOrDareContent() {
                 if (newData.status === 'ended') {
                     setSessionStatus('ended');
                     setActiveSessionId(null);
+                    setCurrentSessionStartedAt(null);
                 } else {
                     setSessionStatus(newData.status as any);
                     setAccessRefreshTrigger(prev => prev + 1);
@@ -687,13 +698,21 @@ function TruthOrDareContent() {
 
         const calculateTopSpenders = async () => {
             try {
+                const targetSessionId = sessionId || activeSessionId;
+                if (!targetSessionId) {
+                    // No active session — reset to clean slate
+                    setTopDareKing(null);
+                    setTopTruthKing(null);
+                    return;
+                }
+
                 // Get the active session's started_at to scope requests
-                let sessionStartedAt: string | null = null;
-                if (sessionId) {
+                let sessionStartedAt: string | null = currentSessionStartedAt;
+                if (!sessionStartedAt) {
                     const { data: sess } = await supabase
                         .from('truth_dare_sessions')
                         .select('started_at, created_at')
-                        .eq('id', sessionId)
+                        .eq('id', targetSessionId)
                         .single();
                     sessionStartedAt = sess?.started_at || sess?.created_at || null;
                 }
@@ -707,21 +726,15 @@ function TruthOrDareContent() {
                 let requests: any[] | null = null;
                 let error: any = null;
 
-                // Session-scoped: prefer session_id, fall back to timestamp
-                if (activeSessionId) {
-                    ({ data: requests, error } = await baseReqQuery().eq('session_id', activeSessionId));
-                    // If session_id column doesn't exist, fallback to timestamp
-                    if (error && error.message?.includes('session_id')) {
-                        if (sessionStartedAt) {
-                            ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
-                        } else {
-                            ({ data: requests, error } = await baseReqQuery());
-                        }
+                // Session-scoped query
+                ({ data: requests, error } = await baseReqQuery().eq('session_id', targetSessionId));
+                // If session_id column doesn't exist, fallback to timestamp
+                if (error && error.message?.includes('session_id')) {
+                    if (sessionStartedAt) {
+                        ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
+                    } else {
+                        ({ data: requests, error } = await baseReqQuery());
                     }
-                } else if (sessionStartedAt) {
-                    ({ data: requests, error } = await baseReqQuery().gte('created_at', sessionStartedAt));
-                } else {
-                    ({ data: requests, error } = await baseReqQuery());
                 }
 
                 if (error || !requests || requests.length === 0) {
@@ -780,11 +793,15 @@ function TruthOrDareContent() {
                 if (topDare) {
                     const avatar = await fetchAvatar(topDare.id);
                     setTopDareKing({ name: topDare.name, avatar, total: topDare.total });
+                } else {
+                    setTopDareKing(null);
                 }
 
                 if (topTruth) {
                     const avatar = await fetchAvatar(topTruth.id);
                     setTopTruthKing({ name: topTruth.name, avatar, total: topTruth.total });
+                } else {
+                    setTopTruthKing(null);
                 }
 
             } catch (err) {
@@ -810,7 +827,7 @@ function TruthOrDareContent() {
         return () => {
             supabase.removeChannel(topSpenderChannel);
         };
-    }, [roomId, sessionId, activeSessionId, supabase]);
+    }, [roomId, sessionId, activeSessionId, currentSessionStartedAt, supabase]);
 
     /* ── Incoming activity tracking ─── */
     useEffect(() => {

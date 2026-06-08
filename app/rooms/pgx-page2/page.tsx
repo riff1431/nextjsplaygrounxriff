@@ -93,7 +93,7 @@ const DEFAULT_DRINKS = [
 const LOUNGE_FAN_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageCircle className="w-5 h-5" /> },
     { id: "drinks", label: "Drinks", icon: <Wine className="w-5 h-5" /> },
-    { id: "upgrades", label: "VIP / Stats", icon: <Crown className="w-5 h-5" /> },
+    { id: "upgrades", label: "VIP", icon: <Crown className="w-5 h-5" /> },
 ];
 
 /* ── Toast system ─────────────────────────────────────────────────── */
@@ -1239,6 +1239,101 @@ function PgxPage2Inner() {
                         </div>
                         </div>
 
+                        {/* Desktop Reactions & Tips row */}
+                        <div style={{
+                            ...glassPanel,
+                            padding: "12px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                            border: "1px solid hsla(280,60%,45%,0.3)",
+                            flexShrink: 0
+                        }}>
+                            {/* Header */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <Sparkles style={{ width: "14px", height: "14px", color: GOLD }} />
+                                    <span style={{ fontSize: "11px", fontWeight: 800, color: GOLD, textTransform: "uppercase", letterSpacing: "0.5px" }}>Reactions & Tips</span>
+                                </div>
+                                <span style={{ fontSize: "9px", color: MUTED }}>Supported by coins</span>
+                            </div>
+
+                            {/* Buttons Container */}
+                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                                {[
+                                    { name: "💋 Kiss", emoji: "💋", price: 10, label: "Kiss", itemId: "reaction-kiss" },
+                                    { name: "❤️ Love", emoji: "❤️", price: 20, label: "Love", itemId: "reaction-love" },
+                                    { name: "🔥 Spicy", emoji: "🔥", price: 30, label: "Spicy", itemId: "reaction-spicy" },
+                                    { name: "🖤 Dark", emoji: "🖤", price: 40, label: "Dark", itemId: "reaction-dark" }
+                                ].map((item) => (
+                                    <button
+                                        key={item.itemId}
+                                        onClick={() => !buying && doPurchase("tip", item.name, item.price, item.itemId)}
+                                        disabled={!!buying}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            padding: "6px 12px",
+                                            borderRadius: "20px",
+                                            background: "hsla(270,40%,15%,0.4)",
+                                            border: "1px solid hsla(280,60%,45%,0.3)",
+                                            color: FG,
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                            transition: "all 0.2s ease",
+                                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.borderColor = GOLD;
+                                            e.currentTarget.style.background = "hsla(270,40%,25%,0.6)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.borderColor = "hsla(280,60%,45%,0.3)";
+                                            e.currentTarget.style.background = "hsla(270,40%,15%,0.4)";
+                                        }}
+                                    >
+                                        <span style={{ fontSize: "12px" }}>{item.emoji}</span>
+                                        <span>{item.label}</span>
+                                        <span style={{ color: GOLD, fontSize: "10px", fontWeight: 700 }}>{cs()}{item.price}</span>
+                                    </button>
+                                ))}
+
+                                {/* Separator */}
+                                <div style={{ width: "1px", height: "20px", background: "hsla(280,60%,45%,0.2)", margin: "0 4px" }} />
+
+                                {[10, 25, 50].map((amount) => (
+                                    <button
+                                        key={`preset-${amount}`}
+                                        onClick={() => !buying && handleTip(amount)}
+                                        disabled={!!buying}
+                                        style={{
+                                            padding: "6px 12px",
+                                            borderRadius: "20px",
+                                            background: "hsla(270,40%,15%,0.4)",
+                                            border: "1px solid hsla(42,90%,55%,0.3)",
+                                            color: GOLD,
+                                            fontSize: "11px",
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                            transition: "all 0.2s ease"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = "hsla(42,90%,55%,0.15)";
+                                            e.currentTarget.style.boxShadow = `0 0 8px hsla(42,90%,55%,0.3)`;
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = "hsla(270,40%,15%,0.4)";
+                                            e.currentTarget.style.boxShadow = "none";
+                                        }}
+                                    >
+                                        +{cs()}{amount} Tip
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Custom Tip and Private 1-on-1 merged into one row */}
                         <div style={{ display: "flex", flexDirection: "row", gap: "12px", flexShrink: 0 }}>
                             
@@ -1576,6 +1671,84 @@ function PgxPage2Inner() {
                             >
                                 ❤️
                             </span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Mobile Reactions & Tips row */}
+                <div style={{
+                    ...glassPanel,
+                    padding: "8px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    border: "1px solid hsla(280,60%,45%,0.35)",
+                    marginBottom: "10px",
+                    flexShrink: 0
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <Sparkles style={{ width: "12px", height: "12px", color: GOLD }} />
+                            <span style={{ fontSize: "10px", fontWeight: 800, color: GOLD, textTransform: "uppercase", letterSpacing: "0.5px" }}>Reactions & Tips</span>
+                        </div>
+                        <span style={{ fontSize: "8px", color: MUTED }}>Swipe to see all</span>
+                    </div>
+
+                    <div className="pg2-scroll" style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "2px", width: "100%", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+                        {[
+                            { name: "💋 Kiss", emoji: "💋", price: 10, label: "Kiss", itemId: "reaction-kiss" },
+                            { name: "❤️ Love", emoji: "❤️", price: 20, label: "Love", itemId: "reaction-love" },
+                            { name: "🔥 Spicy", emoji: "🔥", price: 30, label: "Spicy", itemId: "reaction-spicy" },
+                            { name: "🖤 Dark", emoji: "🖤", price: 40, label: "Dark", itemId: "reaction-dark" }
+                        ].map((item) => (
+                            <button
+                                key={item.itemId}
+                                onClick={() => !buying && doPurchase("tip", item.name, item.price, item.itemId)}
+                                disabled={!!buying}
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    padding: "5px 10px",
+                                    borderRadius: "14px",
+                                    background: "hsla(270,40%,15%,0.4)",
+                                    border: "1px solid hsla(280,60%,45%,0.25)",
+                                    color: FG,
+                                    fontSize: "10px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0
+                                }}
+                            >
+                                <span>{item.emoji}</span>
+                                <span>{item.label}</span>
+                                <span style={{ color: GOLD, fontSize: "9px", fontWeight: 700 }}>{cs()}{item.price}</span>
+                            </button>
+                        ))}
+
+                        <div style={{ width: "1px", height: "16px", background: "hsla(280,60%,45%,0.2)", alignSelf: "center", flexShrink: 0, margin: "0 2px" }} />
+
+                        {[10, 25, 50].map((amount) => (
+                            <button
+                                key={`preset-${amount}`}
+                                onClick={() => !buying && handleTip(amount)}
+                                disabled={!!buying}
+                                style={{
+                                    padding: "5px 10px",
+                                    borderRadius: "14px",
+                                    background: "hsla(270,40%,15%,0.4)",
+                                    border: "1px solid hsla(42,90%,55%,0.25)",
+                                    color: GOLD,
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0
+                                }}
+                            >
+                                +{cs()}{amount}
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -1974,44 +2147,7 @@ function PgxPage2Inner() {
                                         )}
                                     </div>
 
-                                    {/* SUMMARY STATS CARD */}
-                                    <div style={{
-                                        background: "hsla(270,40%,10%,0.6)",
-                                        border: `1.5px solid hsla(42,90%,55%,0.25)`,
-                                        borderRadius: "16px",
-                                        padding: "12px",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        minHeight: "150px"
-                                    }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "8px" }}>
-                                            <span style={{ fontSize: "12px" }}>⭐</span>
-                                            <span style={{ fontSize: "11px", fontWeight: 800, color: "#fff", textTransform: "uppercase" }}>Summary</span>
-                                        </div>
 
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", flex: 1, alignContent: "center" }}>
-                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                <span style={{ fontSize: "12px" }}>🔥</span>
-                                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Reactions</span>
-                                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>126</span>
-                                            </div>
-                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                <span style={{ fontSize: "12px" }}>💎</span>
-                                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Stickers</span>
-                                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>48</span>
-                                            </div>
-                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                <span style={{ fontSize: "12px" }}>💰</span>
-                                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Paid Messages</span>
-                                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>{cs()}235</span>
-                                            </div>
-                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                <span style={{ fontSize: "12px" }}>👥</span>
-                                                <span style={{ fontSize: "8px", color: MUTED, textTransform: "uppercase", marginTop: "2px" }}>Fans</span>
-                                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#fff" }}>78</span>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 {/* Mobile Pin Name Row */}
