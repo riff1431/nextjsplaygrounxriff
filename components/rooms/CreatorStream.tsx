@@ -252,33 +252,33 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     const [isTogglingMic, setIsTogglingMic] = useState(false);
     const [isTogglingCam, setIsTogglingCam] = useState(false);
 
-    // Sync microphone track state when track becomes available
+    // Sync microphone track state when track becomes available or micOn changes
     useEffect(() => {
         async function syncMic() {
             if (localMicrophoneTrack) {
                 try {
                     await localMicrophoneTrack.setEnabled(micOn);
                 } catch (err) {
-                    console.error("Error setting initial microphone track state:", err);
+                    console.error("Error setting microphone track state:", err);
                 }
             }
         }
         syncMic();
-    }, [localMicrophoneTrack]);
+    }, [localMicrophoneTrack, micOn]);
 
-    // Sync camera track state when track becomes available
+    // Sync camera track state when track becomes available or camOn changes
     useEffect(() => {
         async function syncCam() {
             if (localCameraTrack) {
                 try {
                     await localCameraTrack.setEnabled(camOn);
                 } catch (err) {
-                    console.error("Error setting initial camera track state:", err);
+                    console.error("Error setting camera track state:", err);
                 }
             }
         }
         syncCam();
-    }, [localCameraTrack]);
+    }, [localCameraTrack, camOn]);
 
     const toggleMic = async () => {
         if (!localMicrophoneTrack || isTogglingMic) return;

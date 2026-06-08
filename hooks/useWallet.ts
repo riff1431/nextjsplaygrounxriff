@@ -87,8 +87,12 @@ export function useWallet() {
     useEffect(() => {
         if (!user) return;
 
+        const uniqueId = Math.random().toString(36).substring(7);
+        const channelName = `wallet-${user.id}-${uniqueId}`;
+        console.log(`[useWallet] Subscribing to channel: ${channelName}`);
+
         const channel = supabase
-            .channel(`wallet-${user.id}`)
+            .channel(channelName)
             .on(
                 "postgres_changes" as any,
                 {
@@ -98,6 +102,7 @@ export function useWallet() {
                     filter: `user_id=eq.${user.id}`,
                 },
                 (payload: any) => {
+                    console.log("[useWallet] wallets UPDATE payload:", payload);
                     if (payload.new) {
                         setWallet((prev) => (prev ? { ...prev, ...payload.new } : payload.new));
                     }
@@ -113,13 +118,17 @@ export function useWallet() {
                 },
                 () => {
                     // Re-compute balance from ledger when any new transaction is created
+                    console.log("[useWallet] transactions INSERT payload, fetching wallet");
                     fetchWallet();
                 }
             )
-            .subscribe();
+            .subscribe((status, err) => {
+                console.log(`[useWallet] Subscription status for ${channelName}:`, status, err);
+            });
 
         return () => {
-            channel.unsubscribe();
+            console.log(`[useWallet] Unsubscribing from channel: ${channelName}`);
+            supabase.removeChannel(channel);
         };
     }, [user, supabase, fetchWallet]);
 

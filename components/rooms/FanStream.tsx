@@ -38,6 +38,7 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
     const [dynamicAppId, setDynamicAppId] = useState<string>("");
     const [numericUid, setNumericUid] = useState<number>(0);
     const [roleSet, setRoleSet] = useState(false);
+    const [remoteMuteStates, setRemoteMuteStates] = useState<Record<string | number, { videoMuted: boolean; audioMuted: boolean }>>({});
     const client = useRTCClient();
 
     // Fetch Token + numeric UID
@@ -97,6 +98,41 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
         { appid: dynamicAppId, channel: channelName, token: token ?? null, uid: numericUid },
         isReady
     );
+
+    // Listen to remote user mute/unmute status to force React update dynamically
+    useEffect(() => {
+        if (!client) return;
+
+        const handleMuteVideo = (user: any, muted: boolean) => {
+            console.log(`[FanStream] user-mute-video:`, user.uid, muted);
+            setRemoteMuteStates(prev => ({
+                ...prev,
+                [user.uid]: {
+                    ...prev[user.uid] || { videoMuted: false, audioMuted: false },
+                    videoMuted: muted
+                }
+            }));
+        };
+
+        const handleMuteAudio = (user: any, muted: boolean) => {
+            console.log(`[FanStream] user-mute-audio:`, user.uid, muted);
+            setRemoteMuteStates(prev => ({
+                ...prev,
+                [user.uid]: {
+                    ...prev[user.uid] || { videoMuted: false, audioMuted: false },
+                    audioMuted: muted
+                }
+            }));
+        };
+
+        client.on("user-mute-video", handleMuteVideo);
+        client.on("user-mute-audio", handleMuteAudio);
+
+        return () => {
+            client.off("user-mute-video", handleMuteVideo);
+            client.off("user-mute-audio", handleMuteAudio);
+        };
+    }, [client]);
 
     // All remote broadcasters (host + collab creators)
     const remoteUsers = useRemoteUsers();
@@ -211,7 +247,7 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
                         }}
                     >
                         <RemoteUser user={user} cover="cover" className="w-full h-full" />
-                        {!user.hasVideo && (
+                        {(!user.hasVideo || remoteMuteStates[user.uid]?.videoMuted) && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                                 <VideoOff className="w-8 h-8 text-gray-600" />
                             </div>
@@ -238,7 +274,8 @@ export default function FanStream({ appId, channelName, uid, hostId, hostAvatarU
 
     // ── Single creator layout (original) ──
     const broadcaster = remoteUsers[0] ?? null;
-    const hostHasVideo = broadcaster?.hasVideo ?? false;
+    const hostMuted = broadcaster ? remoteMuteStates[broadcaster.uid]?.videoMuted : false;
+    const hostHasVideo = broadcaster ? (broadcaster.hasVideo && !hostMuted) : false;
 
     return (
         <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden flex items-center justify-center border border-white/5 shadow-2xl">

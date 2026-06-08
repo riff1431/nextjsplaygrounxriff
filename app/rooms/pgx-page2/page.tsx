@@ -305,6 +305,20 @@ function PgxPage2Inner() {
         return messages;
     }, [messages, chatFilter]);
 
+    const filteredIncomingItems = useMemo(() => {
+        return incomingItems.filter((item: any) => {
+            const labelStr = (item.label || "").toLowerCase().trim();
+            const typeStr = (item.type || "").toLowerCase().trim();
+            const isReaction = 
+                labelStr.includes("kiss") ||
+                labelStr.includes("love") ||
+                labelStr.includes("spicy") ||
+                labelStr.includes("dark") ||
+                typeStr.includes("reaction");
+            return !isReaction;
+        });
+    }, [incomingItems]);
+
     const [roomViewerCount, setRoomViewerCount] = useState(123);
 
     useEffect(() => {
@@ -856,7 +870,7 @@ function PgxPage2Inner() {
                                             border: "1px solid hsla(0,80%,50%,0.3)",
                                             color: "hsl(0,80%,65%)",
                                         }}>
-                                            {incomingItems.length}
+                                            {filteredIncomingItems.length}
                                         </span>
                                     </div>
                                     <button
@@ -869,14 +883,14 @@ function PgxPage2Inner() {
 
                                 {/* Panel body */}
                                 <div className="pg2-scroll" style={{ maxHeight: "400px", overflowY: "auto", padding: "8px" }}>
-                                    {incomingItems.length === 0 ? (
+                                    {filteredIncomingItems.length === 0 ? (
                                         <div style={{ padding: "32px 16px", textAlign: "center" }}>
                                             <Bell style={{ width: "32px", height: "32px", color: `${MUTED}44`, margin: "0 auto 12px" }} />
                                             <p style={{ color: MUTED, fontSize: "13px" }}>No activity yet this session</p>
                                             <p style={{ color: `${MUTED}88`, fontSize: "12px", marginTop: "4px" }}>Buy a drink or tip to see your activity here</p>
                                         </div>
                                     ) : (
-                                        incomingItems.map((item: any) => {
+                                        filteredIncomingItems.map((item: any) => {
                                             const emoji = incomingTypeEmoji(item.type);
                                             const sc = incomingStatusColor(item.status);
                                             const isRequest = ["vip", "booth", "custom"].includes(item.type);
@@ -1565,16 +1579,16 @@ function PgxPage2Inner() {
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                         <Bell style={{ width: "16px", height: "16px", color: PINK }} />
                                         <span style={{ fontSize: "14px", fontWeight: 700 }}>My Activity</span>
-                                        <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 6px", borderRadius: "9999px", background: "hsla(320,100%,65%,0.2)", color: PINK }}>{incomingItems.length}</span>
+                                        <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 6px", borderRadius: "9999px", background: "hsla(320,100%,65%,0.2)", color: PINK }}>{filteredIncomingItems.length}</span>
                                     </div>
                                     <button onClick={() => setShowIncomingPanel(false)} style={{ background: "none", border: "none", color: MUTED, cursor: "pointer" }}><X style={{ width: "16px", height: "16px" }} /></button>
                                 </div>
                                 {/* Panel list */}
                                 <div className="pg2-scroll" style={{ maxHeight: "320px", overflowY: "auto", padding: "8px" }}>
-                                    {incomingItems.length === 0 ? (
+                                    {filteredIncomingItems.length === 0 ? (
                                         <div style={{ padding: "24px 16px", textAlign: "center", color: MUTED, fontSize: "12px" }}>No activity yet this session</div>
                                     ) : (
-                                        incomingItems.map((item: any) => {
+                                        filteredIncomingItems.map((item: any) => {
                                             const emoji = incomingTypeEmoji(item.type);
                                             const sc = incomingStatusColor(item.status);
                                             const isRequest = ["vip", "booth", "custom"].includes(item.type);
