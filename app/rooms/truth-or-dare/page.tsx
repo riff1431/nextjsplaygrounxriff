@@ -839,26 +839,31 @@ function TruthOrDareContent() {
     useEffect(() => {
         if (!roomId || !userId) return;
         const fetchIncoming = async () => {
+            if (!activeSessionId) {
+                setIncomingItems([]);
+                return;
+            }
             const baseQuery = () => supabase
                 .from("truth_dare_requests")
                 .select("*")
                 .eq("room_id", roomId)
                 .eq("fan_id", userId)
+                .neq("type", "reaction")
+                .neq("type", "tip")
                 .order("created_at", { ascending: false })
                 .limit(20);
 
             let data: any[] | null = null;
             let error: any = null;
 
-            // Session-scoped: prefer session_id, fall back to no filter
-            if (activeSessionId) {
-                ({ data, error } = await baseQuery().eq("session_id", activeSessionId));
-                // If session_id column doesn't exist, fallback to unfiltered
-                if (error && error.message?.includes('session_id')) {
+            ({ data, error } = await baseQuery().eq("session_id", activeSessionId));
+            // If session_id column doesn't exist, fallback to unfiltered scoped by timestamp
+            if (error && error.message?.includes('session_id')) {
+                if (currentSessionStartedAt) {
+                    ({ data } = await baseQuery().gte("created_at", currentSessionStartedAt));
+                } else {
                     ({ data } = await baseQuery());
                 }
-            } else {
-                ({ data } = await baseQuery());
             }
             if (data) setIncomingItems(data);
         };
@@ -874,6 +879,8 @@ function TruthOrDareContent() {
             }, (payload) => {
                 const item = payload.new as any;
                 if (item.fan_id !== userId) return;
+                if (item.type === 'reaction' || item.type === 'tip') return;
+                if (activeSessionId && item.session_id && item.session_id !== activeSessionId) return;
                 setIncomingItems(prev => [item, ...prev].slice(0, 20));
                 if (!showIncomingPanel) setUnseenCount(prev => prev + 1);
                 if (activeTabRef.current !== "play") {
@@ -888,6 +895,8 @@ function TruthOrDareContent() {
             }, (payload) => {
                 const updated = payload.new as any;
                 if (updated.fan_id !== userId) return;
+                if (updated.type === 'reaction' || updated.type === 'tip') return;
+                if (activeSessionId && updated.session_id && updated.session_id !== activeSessionId) return;
                 setIncomingItems(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
                 if (activeTabRef.current !== "play") {
                     setPlayUnread(prev => prev + 1);
@@ -896,7 +905,7 @@ function TruthOrDareContent() {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [roomId, activeSessionId, userId, supabase, showIncomingPanel]);
+    }, [roomId, activeSessionId, currentSessionStartedAt, userId, supabase, showIncomingPanel]);
 
     const toggleIncomingPanel = () => {
         setShowIncomingPanel(prev => !prev);
@@ -1216,7 +1225,7 @@ function TruthOrDareContent() {
 
             {/* Header - Minimal Style matching screenshot */}
             <div className="relative z-50 pt-2 pb-1.5 px-3 sm:px-4 lg:px-6 flex items-center justify-between shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-md">
-                <div className="pointer-events-auto flex items-center gap-2 sm:gap-4">
+                <div className="pointer-events-auto flex items-center gap-2 sm:gap-3.5">
                     <button
                         onClick={onBack}
                         className="p-1.5 sm:p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all backdrop-blur-md active:scale-95 shrink-0"
@@ -1224,15 +1233,15 @@ function TruthOrDareContent() {
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                     
-                    {/* Dynamic Brand Logo - Desktop Only */}
+                    {/* Dynamic Brand Logo - Responsive Placement */}
                     <div 
                         onClick={() => router.push("/home")}
-                        className="hidden md:flex items-center mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+                        className="hidden sm:flex items-center cursor-pointer hover:opacity-80 transition-opacity [&>img]:!h-7 md:[&>img]:!h-8 shrink-0"
                     >
                         <BrandLogo showBadge={false} />
                     </div>
 
-                    <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
+                    <div className="hidden sm:block w-px h-5 bg-white/10 shrink-0" />
 
                     {/* Dynamic Host Profile Badge */}
                     <div className="flex items-center gap-2 min-w-0">
@@ -1322,7 +1331,7 @@ function TruthOrDareContent() {
 
                                     {/* Panel Body */}
                                     <div className="max-h-[360px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10">
-                                        {incomingItems.length === 0 ? (
+                                        {incomingItems.filter(item => item.type !== 'reaction' && item.type !== 'tip').length === 0 ? (
                                             <div className="py-12 px-4 text-center">
                                                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
                                                     <Zap className="w-6 h-6 text-white/10" />
@@ -1331,7 +1340,7 @@ function TruthOrDareContent() {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col gap-1">
-                                                {incomingItems.map((item) => {
+                                                {incomingItems.filter(item => item.type !== 'reaction' && item.type !== 'tip').map((item) => {
                                                     const emoji = incomingTypeEmoji(item.type);
                                                     const sc = incomingStatusColor(item.status);
                                                     const isAnswered = item.status === 'answered' || item.status === 'completed' || !!item.creator_response;
@@ -2070,7 +2079,7 @@ function TruthOrDareContent() {
                             <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">My Activity</span>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-2.5 scrollbar-none">
-                            {incomingItems.length === 0 ? (
+                            {incomingItems.filter(item => item.type !== 'reaction' && item.type !== 'tip').length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center py-12">
                                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
                                         <Zap className="w-5 h-5 text-white/20 animate-pulse" />
@@ -2079,7 +2088,7 @@ function TruthOrDareContent() {
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-2">
-                                    {incomingItems.map((item) => {
+                                    {incomingItems.filter(item => item.type !== 'reaction' && item.type !== 'tip').map((item) => {
                                         const emoji = incomingTypeEmoji(item.type);
                                         const sc = incomingStatusColor(item.status);
                                         const isAnswered = item.status === 'answered' || item.status === 'completed' || !!item.creator_response;
