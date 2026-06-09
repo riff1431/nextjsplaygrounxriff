@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense, useRef } from "react";
 import {
     ArrowLeft, Video, Lock, Check, X, Mic, UserRound, Menu, Coins,
     MessageSquareText, Flame, Heart, Sparkles, Gift, Search, UserPlus, Loader2,
-    Eye, BadgeCheck, Send
+    Eye, BadgeCheck, Send, Inbox
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
@@ -16,7 +16,6 @@ import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
-import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
@@ -27,6 +26,7 @@ const CONFESSIONS_FAN_TABS: MobileStudioTab[] = [
     { id: "chat", label: "Chat", icon: <MessageSquareText className="w-5 h-5" /> },
     { id: "wall", label: "Wall", icon: <Flame className="w-5 h-5" /> },
     { id: "request", label: "Request", icon: <Gift className="w-5 h-5" /> },
+    { id: "incoming", label: "Incoming", icon: <Inbox className="w-5 h-5" /> },
     { id: "info", label: "Info", icon: <UserRound className="w-5 h-5" /> },
 ];
 
@@ -232,6 +232,7 @@ function ConfessionsRoom() {
     const [chatUnread, setChatUnread] = useState(0);
     const [wallUnread, setWallUnread] = useState(0);
     const [requestUnread, setRequestUnread] = useState(0);
+    const [incomingUnread, setIncomingUnread] = useState(0);
     const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
     useEffect(() => {
@@ -249,7 +250,15 @@ function ConfessionsRoom() {
         if (mobileTab === "chat") setChatUnread(0);
         if (mobileTab === "wall") setWallUnread(0);
         if (mobileTab === "request") setRequestUnread(0);
+        if (mobileTab === "incoming") setIncomingUnread(0);
     }, [mobileTab]);
+
+    useEffect(() => {
+        if (activeTabRef.current !== "incoming") {
+            const deliveredCount = requests.filter(r => r.status === 'delivered').length;
+            setIncomingUnread(deliveredCount);
+        }
+    }, [requests]);
 
     // Request Form
     const [reqType, setReqType] = useState<'Text' | 'Image' | 'Video'>('Text');
@@ -820,6 +829,7 @@ function ConfessionsRoom() {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "wall") return { ...tab, badge: wallUnread };
         if (tab.id === "request") return { ...tab, badge: requestUnread };
+        if (tab.id === "incoming") return { ...tab, badge: incomingUnread };
         return tab;
     });
 
@@ -1137,43 +1147,106 @@ function ConfessionsRoom() {
                                             <div
                                                 key={c.id || i}
                                                 onClick={() => isUnlocked ? setViewConfession(c) : setPurchaseConfession(c)}
-                                                className="p-3 rounded-2xl bg-[#110103]/60 border border-rose-500/20 flex flex-col justify-between h-[155px] shadow-[0_0_12px_rgba(225,29,72,0.06)] relative group cursor-pointer transition active:scale-[0.98]"
+                                                className="p-3 rounded-2xl bg-[#110103]/60 border border-rose-500/20 flex flex-col items-center justify-between min-h-[220px] shadow-[0_0_12px_rgba(225,29,72,0.06)] relative group cursor-pointer transition active:scale-[0.98] hover:border-rose-500/40"
                                             >
-                                                <div className="space-y-1.5">
-                                                    <div className="flex items-center gap-1.5">
+                                                {/* Creator Header */}
+                                                <div className="flex items-center gap-1.5 mb-2.5 w-full shrink-0">
+                                                    {c.creator?.avatar_url || hostAvatar ? (
+                                                        <img
+                                                            src={c.creator?.avatar_url || hostAvatar || ""}
+                                                            alt={c.creator?.full_name || hostStreamName}
+                                                            className="w-5 h-5 rounded-full object-cover border border-rose-500/30"
+                                                        />
+                                                    ) : (
                                                         <div className="w-5 h-5 rounded-full bg-rose-950 border border-rose-500/30 flex items-center justify-center text-[8px] font-bold text-rose-300">
                                                             👤
                                                         </div>
-                                                        <span className="text-[10px] font-bold text-white/90 truncate max-w-[70px]">
-                                                            {c.creator?.full_name || "Anonymous"}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[10px] text-white/60 leading-normal line-clamp-3 font-medium">
-                                                        {isUnlocked ? (c.content || c.teaser) : c.teaser}
-                                                    </p>
+                                                    )}
+                                                    <span className="text-[10px] font-bold text-white/90 truncate max-w-[70px]">
+                                                        {c.creator?.full_name || hostStreamName || "Anonymous"}
+                                                    </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/5">
-                                                    <span className="flex items-center gap-1 text-[9px] text-rose-400 font-bold">
-                                                        💖 {likesCount}
-                                                    </span>
-                                                    {!isUnlocked ? (
-                                                        <span className="text-[9px] bg-[#d50057]/20 text-[#ff4c8a] border border-[#d50057]/30 px-1.5 py-0.5 rounded-md font-extrabold">
-                                                            {cs()}{c.price}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[9px] text-green-400 font-extrabold flex items-center gap-0.5">
-                                                            ✓ Open
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                {!isUnlocked ? (
+                                                    /* ─── Locked State ─── */
+                                                    <>
+                                                        {/* Title & Teaser */}
+                                                        <div className="w-full text-center px-1 space-y-0.5 flex-1 flex flex-col justify-center">
+                                                            <h4 className="text-[11px] font-extrabold text-white tracking-wide line-clamp-1">
+                                                                {c.title}
+                                                            </h4>
+                                                            <p className="text-[9px] text-white/50 leading-normal line-clamp-2 font-medium">
+                                                                {c.teaser || "A locked secret..."}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Big Lock Icon */}
+                                                        <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center my-2 shrink-0 group-hover:scale-105 group-hover:border-rose-500/40 transition-all duration-300">
+                                                            <Lock className="w-5 h-5 text-rose-500/70 group-hover:text-rose-500 transition-colors" />
+                                                        </div>
+
+                                                        {/* Full width Unlock Button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPurchaseConfession(c);
+                                                            }}
+                                                            className="w-full py-1.5 rounded-lg text-[10px] font-extrabold transition-all duration-300 flex items-center justify-center gap-1 mt-auto bg-gradient-to-r from-rose-600 to-pink-500 text-white hover:opacity-90 shadow-[0_4px_12px_rgba(225,29,72,0.25)] shrink-0"
+                                                        >
+                                                            <Heart className="w-3 h-3 fill-current text-white shrink-0" />
+                                                            <span className="text-white drop-shadow-sm font-bold">Unlock {cs()}{c.price}</span>
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    /* ─── Unlocked State ─── */
+                                                    <>
+                                                        {/* Media Preview (if exists) */}
+                                                        {c.media_url && (
+                                                            <div className="w-full h-16 bg-black/40 rounded-lg overflow-hidden mb-2 relative pointer-events-none shrink-0">
+                                                                {c.type === 'Video' || c.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                                                    <video src={c.media_url} className="w-full h-full object-cover opacity-80" />
+                                                                ) : c.type === 'Voice' || c.media_url.match(/\.(mp3|wav|ogg)$/i) ? (
+                                                                    <div className="w-full h-full flex flex-col items-center justify-center opacity-80">
+                                                                        <span className="text-xl mb-0.5">🎙️</span>
+                                                                        <span className="text-[8px] text-white/40">Voice Note</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <img src={c.media_url} alt="" className="w-full h-full object-cover opacity-80" />
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Title, Teaser & Description */}
+                                                        <div className="w-full text-left flex-1 flex flex-col justify-center space-y-0.5 min-h-[45px] mb-2 px-1">
+                                                            <h4 className="text-[11px] font-extrabold text-white tracking-wide line-clamp-1">
+                                                                {c.title}
+                                                            </h4>
+                                                            <p className="text-[9px] text-rose-300/80 font-bold leading-normal line-clamp-1">
+                                                                {c.teaser}
+                                                            </p>
+                                                            <p className="text-[9px] text-white/70 leading-normal line-clamp-2 font-medium">
+                                                                {c.content || "No description provided."}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Unlocked status badge */}
+                                                        <div className="flex items-center justify-between mt-auto pt-1.5 border-t border-white/5 w-full shrink-0">
+                                                            <span className="flex items-center gap-1 text-[9px] text-rose-400 font-bold">
+                                                                💖 {likesCount}
+                                                            </span>
+                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                                                                <span className="text-[9px] font-extrabold text-emerald-400 uppercase tracking-wider">Unlocked</span>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         );
                                     })}
                                 </div>
                             </div>
                         )}
-
                         {mobileTab === "request" && (
                             <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4">
                                 <div className="bg-[#0e0204] border border-white/5 rounded-2xl p-4 space-y-4">
@@ -1262,6 +1335,73 @@ function ConfessionsRoom() {
                                             ))
                                         )}
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {mobileTab === "incoming" && (
+                            <div className="flex-grow flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pb-4">
+                                <div className="flex justify-between items-center px-1">
+                                    <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest">Incoming Deliveries</h4>
+                                    {requests.filter(r => r.status === 'delivered').length > 0 && (
+                                        <span className="text-[10px] text-[#ff2a6d] font-bold">
+                                            {requests.filter(r => r.status === 'delivered').length} New
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3">
+                                    {requests.filter(r => r.status === 'delivered' || r.status === 'completed').length === 0 ? (
+                                        <div className="text-center py-10 text-white/30 text-xs italic bg-white/5 border border-white/10 rounded-2xl">
+                                            No incoming deliveries right now.
+                                        </div>
+                                    ) : (
+                                        requests.filter(r => r.status === 'delivered' || r.status === 'completed').map((req, i) => (
+                                            <div
+                                                key={req.id || i}
+                                                className={cn(
+                                                    "p-4 rounded-2xl border flex flex-col gap-3 transition-all duration-300",
+                                                    req.status === 'completed'
+                                                        ? "bg-green-500/5 border-green-500/20"
+                                                        : "bg-white/5 border-white/10"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn(
+                                                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border",
+                                                        req.status === 'completed'
+                                                            ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                                            : "bg-rose-500/20 text-rose-400 border-rose-500/30"
+                                                    )}>
+                                                        {req.status === 'completed' ? '✅' : '💌'}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-bold text-white truncate">{req.topic}</p>
+                                                        <p className={cn(
+                                                            "text-[10px] font-medium mt-0.5",
+                                                            req.status === 'completed' ? "text-green-400" : "text-rose-400"
+                                                        )}>
+                                                            {req.status === 'completed' ? 'Completed' : 'Delivered'} • {cs()}{req.amount}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => {
+                                                        setReviewRequest(req);
+                                                    }}
+                                                    className={cn(
+                                                        "w-full py-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-[0.98]",
+                                                        req.status === 'completed'
+                                                            ? "bg-green-600/20 border border-green-500/30 hover:bg-green-600/30 text-green-400"
+                                                            : "bg-gradient-to-r from-rose-600 to-pink-500 text-white shadow-[0_4px_12px_rgba(225,29,72,0.25)]"
+                                                    )}
+                                                >
+                                                    {req.status === 'completed' ? 'View Again' : 'Review Delivery'}
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1573,12 +1713,6 @@ function ConfessionsRoom() {
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
 
-                {/* Per-minute billing overlay */}
-                <BillingOverlay
-                    sessionId={urlSessionId}
-                    accentHsl="350, 80%, 55%"
-                    exitRoute="/home"
-                />
 
             </div>
         </ProtectRoute>

@@ -14,13 +14,38 @@ export async function GET(
     // Resolve Room ID (Slug vs UUID)
     let targetRoomId = roomId;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId);
+    let hostId: string | null = null;
 
     if (!isUUID) {
-        const { data: room } = await supabase.from("rooms").select("id").eq("slug", roomId).single();
+        const { data: room } = await supabase.from("rooms").select("id, host_id").eq("slug", roomId).single();
         if (room) {
             targetRoomId = room.id;
+            hostId = room.host_id;
         } else {
             return NextResponse.json({ confessions: [] });
+        }
+    } else {
+        const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).single();
+        if (room) {
+            hostId = room.host_id;
+        }
+    }
+
+    // Fetch creator profile details
+    let creatorProfile: any = null;
+    if (hostId) {
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, full_name, username, avatar_url")
+            .eq("id", hostId)
+            .single();
+        if (profile) {
+            creatorProfile = {
+                id: profile.id,
+                full_name: profile.full_name || profile.username || "Creator",
+                username: profile.username || "",
+                avatar_url: profile.avatar_url || ""
+            };
         }
     }
 
@@ -66,6 +91,7 @@ export async function GET(
             is_unlocked: isUnlocked,
             content: isUnlocked ? c.content : null,
             media_url: isUnlocked ? c.media_url : null,
+            creator: creatorProfile
         };
     });
 
