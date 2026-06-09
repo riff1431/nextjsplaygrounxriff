@@ -168,6 +168,37 @@ const XChatRoom = () => {
     const [hostName, setHostName]   = useState("Loading...");
 
     const [isMobile, setIsMobile]   = useState(false);
+    const [watcherCount, setWatcherCount] = useState<number>(0);
+
+    // Real-time watcher count from room_participants
+    useEffect(() => {
+        if (!roomId) return;
+
+        async function fetchWatcherCount() {
+            const { data } = await supabase
+                .from('room_participants')
+                .select('user_id')
+                .eq('room_id', roomId);
+            const unique = new Set((data || []).map((p: any) => p.user_id).filter(Boolean));
+            setWatcherCount(unique.size);
+        }
+
+        fetchWatcherCount();
+
+        const channel = supabase
+            .channel(`x-chat-participants-${roomId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'room_participants',
+                filter: `room_id=eq.${roomId}`,
+            }, () => {
+                fetchWatcherCount();
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [roomId, supabase]);
     const [activeTab, setActiveTab] = useState<"chat" | "boosts" | "info">("chat");
 
     useEffect(() => {
@@ -576,7 +607,7 @@ const XChatRoom = () => {
                                 </div>
                                 <div className="mobile-viewer-badge">
                                     <Eye size={11} />
-                                    <span>123</span>
+                                    <span>{watcherCount}</span>
                                 </div>
                             </div>
 
@@ -612,7 +643,7 @@ const XChatRoom = () => {
                         <div className="mobile-tab-content-container">
                             {activeTab === "chat" && (
                                 <div className="mobile-chat-container">
-                                    <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} isMobile={true} />
+                                    <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} isMobile={true} viewerCount={watcherCount} />
                                 </div>
                             )}
                             
@@ -945,7 +976,7 @@ const XChatRoom = () => {
 
                         {/* ── RIGHT PANEL: Chat ──────────────────────── */}
                         <div className="xchat-right">
-                            <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} />
+                            <ChatPanel roomId={roomId} hostName={hostName} sessionId={urlSessionId} viewerCount={watcherCount} />
                         </div>
 
                       </div>{/* /xchat-container */}

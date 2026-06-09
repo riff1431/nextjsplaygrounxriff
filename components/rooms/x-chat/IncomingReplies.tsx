@@ -27,6 +27,16 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
     const [replies, setReplies] = useState<XChatRequest[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [selectedReply, setSelectedReply] = useState<XChatRequest | null>(null);
+    const [isMobileSize, setIsMobileSize] = useState(false);
+
+    useEffect(() => {
+        const checkSize = () => {
+            setIsMobileSize(window.innerWidth < 640);
+        };
+        checkSize();
+        window.addEventListener("resize", checkSize);
+        return () => window.removeEventListener("resize", checkSize);
+    }, []);
     const [lastOpenedAt, setLastOpenedAt] = useState<number>(() => {
         if (typeof window !== "undefined") {
             return parseInt(localStorage.getItem(`xchat_incoming_last_opened_${roomId}`) || "0");
@@ -226,70 +236,143 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
             {typeof window !== "undefined" && createPortal(
                 <AnimatePresence>
                     {isOpen && (
-                        <motion.div
-                            ref={dropdownRef}
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.18 }}
-                            style={{
-                                position: "fixed",
-                                top: dropdownPos.top,
-                                right: dropdownPos.right,
-                                zIndex: 99999,
-                                width: "320px",
-                                maxHeight: "450px",
-                            }}
-                            className="overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a2e]/97 backdrop-blur-xl shadow-2xl"
-                        >
-                            {/* Header */}
-                            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 bg-white/5">
-                                <h3 className="text-sm font-bold text-gold">Incoming Replies</h3>
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="text-white/40 hover:text-white transition-colors"
+                        isMobileSize ? (
+                            <div 
+                                className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                                onClick={(e) => {
+                                    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                                        setIsOpen(false);
+                                    }
+                                }}
+                            >
+                                <motion.div
+                                    ref={dropdownRef}
+                                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                                    transition={{ duration: 0.18 }}
+                                    style={{
+                                        width: "100%",
+                                        maxWidth: "360px",
+                                        maxHeight: "80vh",
+                                    }}
+                                    className="overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a2e]/97 backdrop-blur-xl shadow-2xl flex flex-col"
                                 >
-                                    <X size={16} />
-                                </button>
-                            </div>
-
-                            {/* List */}
-                            <div className="overflow-y-auto max-h-[380px] p-2 space-y-2 scrollbar-thin">
-                                {replies.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                                            <Inbox size={20} className="text-white/20" />
-                                        </div>
-                                        <p className="text-sm text-white/40 italic">
-                                            No replies yet. Send a request to the creator!
-                                        </p>
-                                    </div>
-                                ) : (
-                                    replies.map((r) => (
-                                        <div
-                                            key={r.id}
-                                            onClick={() => {
-                                                setSelectedReply(r);
-                                                setIsOpen(false);
-                                            }}
-                                            className="group p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98] cursor-pointer transition-all duration-300"
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 bg-white/5 flex-shrink-0">
+                                        <h3 className="text-sm font-bold text-gold">Incoming Replies</h3>
+                                        <button
+                                            onClick={() => setIsOpen(false)}
+                                            className="text-white/40 hover:text-white transition-colors"
                                         >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-gold/60">
-                                                    Reply to: {r.message}
-                                                </span>
-                                                <span className="text-[9px] text-white/30">
-                                                    {new Date(r.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                                                </span>
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    {/* List */}
+                                    <div className="overflow-y-auto p-3 space-y-2 scrollbar-thin flex-1 min-h-0">
+                                        {replies.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                                                    <Inbox size={20} className="text-white/20" />
+                                                </div>
+                                                <p className="text-sm text-white/40 italic">
+                                                    No replies yet. Send a request to the creator!
+                                                </p>
                                             </div>
-                                            <div className="bg-black/20 rounded-lg p-2.5 border border-white/5">
-                                                {r.creator_reply && renderReplyContent(r.creator_reply)}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
+                                        ) : (
+                                            replies.map((r) => (
+                                                <div
+                                                    key={r.id}
+                                                    onClick={() => {
+                                                        setSelectedReply(r);
+                                                        setIsOpen(false);
+                                                    }}
+                                                    className="group p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98] cursor-pointer transition-all duration-300"
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-gold/60">
+                                                            Reply to: {r.message}
+                                                        </span>
+                                                        <span className="text-[9px] text-white/30">
+                                                            {new Date(r.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                        </span>
+                                                    </div>
+                                                    <div className="bg-black/20 rounded-lg p-2.5 border border-white/5">
+                                                        {r.creator_reply && renderReplyContent(r.creator_reply)}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </motion.div>
                             </div>
-                        </motion.div>
+                        ) : (
+                            <motion.div
+                                ref={dropdownRef}
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                transition={{ duration: 0.18 }}
+                                style={{
+                                    position: "fixed",
+                                    top: dropdownPos.top,
+                                    right: dropdownPos.right,
+                                    zIndex: 99999,
+                                    width: "320px",
+                                    maxHeight: "450px",
+                                }}
+                                className="overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a2e]/97 backdrop-blur-xl shadow-2xl flex flex-col"
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 bg-white/5 flex-shrink-0">
+                                    <h3 className="text-sm font-bold text-gold">Incoming Replies</h3>
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                        className="text-white/40 hover:text-white transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+
+                                {/* List */}
+                                <div className="overflow-y-auto max-h-[380px] p-2 space-y-2 scrollbar-thin flex-1 min-h-0">
+                                    {replies.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                                            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                                                <Inbox size={20} className="text-white/20" />
+                                            </div>
+                                            <p className="text-sm text-white/40 italic">
+                                                No replies yet. Send a request to the creator!
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        replies.map((r) => (
+                                            <div
+                                                key={r.id}
+                                                onClick={() => {
+                                                    setSelectedReply(r);
+                                                    setIsOpen(false);
+                                                }}
+                                                className="group p-3 rounded-xl bg-white/5 border border-white/5 hover:border-gold/30 hover:bg-gold/5 active:scale-[0.98] cursor-pointer transition-all duration-300"
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gold/60">
+                                                        Reply to: {r.message}
+                                                    </span>
+                                                    <span className="text-[9px] text-white/30">
+                                                        {new Date(r.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                    </span>
+                                                </div>
+                                                <div className="bg-black/20 rounded-lg p-2.5 border border-white/5">
+                                                    {r.creator_reply && renderReplyContent(r.creator_reply)}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </motion.div>
+                        )
                     )}
                 </AnimatePresence>,
                 document.body

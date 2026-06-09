@@ -27,9 +27,10 @@ interface ChatPanelProps {
     hostName?: string;
     sessionId?: string | null;
     isMobile?: boolean;
+    viewerCount?: number;
 }
 
-const ChatPanel = ({ roomId, hostName = "Host", sessionId, isMobile = false }: ChatPanelProps) => {
+const ChatPanel = ({ roomId, hostName = "Host", sessionId, isMobile = false, viewerCount = 0 }: ChatPanelProps) => {
     const { user } = useAuth();
     const { messages, sendMessage } = useXChat(roomId, sessionId);
     const { balance, refresh } = useWallet();
@@ -203,7 +204,7 @@ const ChatPanel = ({ roomId, hostName = "Host", sessionId, isMobile = false }: C
                     <span className="mobile-chat-title">Live Chat</span>
                     <span className="mobile-chat-viewer-count flex items-center gap-1">
                         <Users size={12} className="text-gold" />
-                        <span>256</span>
+                        <span>{viewerCount}</span>
                     </span>
                 </div>
 

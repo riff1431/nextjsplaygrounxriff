@@ -256,10 +256,13 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     useEffect(() => {
         async function syncMic() {
             if (localMicrophoneTrack) {
+                setIsTogglingMic(true);
                 try {
                     await localMicrophoneTrack.setEnabled(micOn);
                 } catch (err) {
                     console.error("Error setting microphone track state:", err);
+                } finally {
+                    setIsTogglingMic(false);
                 }
             }
         }
@@ -270,42 +273,27 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     useEffect(() => {
         async function syncCam() {
             if (localCameraTrack) {
+                setIsTogglingCam(true);
                 try {
                     await localCameraTrack.setEnabled(camOn);
                 } catch (err) {
                     console.error("Error setting camera track state:", err);
+                } finally {
+                    setIsTogglingCam(false);
                 }
             }
         }
         syncCam();
     }, [localCameraTrack, camOn]);
 
-    const toggleMic = async () => {
+    const toggleMic = () => {
         if (!localMicrophoneTrack || isTogglingMic) return;
-        setIsTogglingMic(true);
-        try {
-            const nextState = !micOn;
-            await localMicrophoneTrack.setEnabled(nextState);
-            setMicOn(nextState);
-        } catch (err) {
-            console.error("Failed to toggle microphone track:", err);
-        } finally {
-            setIsTogglingMic(false);
-        }
+        setMicOn(prev => !prev);
     };
 
-    const toggleCam = async () => {
+    const toggleCam = () => {
         if (!localCameraTrack || isTogglingCam) return;
-        setIsTogglingCam(true);
-        try {
-            const nextState = !camOn;
-            await localCameraTrack.setEnabled(nextState);
-            setCamOn(nextState);
-        } catch (err) {
-            console.error("Failed to toggle camera track:", err);
-        } finally {
-            setIsTogglingCam(false);
-        }
+        setCamOn(prev => !prev);
     };
 
     const vidRef = useRef<HTMLDivElement>(null);
