@@ -251,6 +251,30 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     const [camOn, setCamOn] = useState(true);
     const [isTogglingMic, setIsTogglingMic] = useState(false);
     const [isTogglingCam, setIsTogglingCam] = useState(false);
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
+    // Fallback stream when camera is on but localCameraTrack is not available
+    useEffect(() => {
+        let stream: MediaStream | null = null;
+        async function startLocalStream() {
+            if (camOn && !localCameraTrack) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
+                    setLocalStream(stream);
+                } catch (err) {
+                    console.error("Failed to get local user media fallback:", err);
+                }
+            } else {
+                setLocalStream(null);
+            }
+        }
+        startLocalStream();
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [camOn, localCameraTrack, micOn]);
 
     // Sync microphone track state when track becomes available or micOn changes
     useEffect(() => {
@@ -287,13 +311,31 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
     }, [localCameraTrack, camOn]);
 
     const toggleMic = () => {
-        if (!localMicrophoneTrack || isTogglingMic) return;
-        setMicOn(prev => !prev);
+        if (isTogglingMic) return;
+        setMicOn(prev => {
+            const next = !prev;
+            if (localMicrophoneTrack) {
+                setIsTogglingMic(true);
+                localMicrophoneTrack.setEnabled(next)
+                    .catch(err => console.error("Error setting mic track", err))
+                    .finally(() => setIsTogglingMic(false));
+            }
+            return next;
+        });
     };
 
     const toggleCam = () => {
-        if (!localCameraTrack || isTogglingCam) return;
-        setCamOn(prev => !prev);
+        if (isTogglingCam) return;
+        setCamOn(prev => {
+            const next = !prev;
+            if (localCameraTrack) {
+                setIsTogglingCam(true);
+                localCameraTrack.setEnabled(next)
+                    .catch(err => console.error("Error setting cam track", err))
+                    .finally(() => setIsTogglingCam(false));
+            }
+            return next;
+        });
     };
 
     const vidRef = useRef<HTMLDivElement>(null);
@@ -347,9 +389,25 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
             {/* Video Surface */}
             <div className="absolute inset-0 z-0">
                 {/* Direct Video Render */}
-                <div ref={vidRef} className="w-full h-full object-cover" />
+                {localCameraTrack && <div ref={vidRef} className="w-full h-full object-cover" />}
 
-                {!camOn && (
+                {/* Fallback Local Video Render */}
+                {!localCameraTrack && localStream && camOn && (
+                    <video
+                        ref={(ref) => {
+                            if (ref && ref.srcObject !== localStream) {
+                                ref.srcObject = localStream;
+                                ref.play().catch(err => console.error("Error playing fallback video:", err));
+                            }
+                        }}
+                        className="w-full h-full object-cover"
+                        playsInline
+                        muted
+                        autoPlay
+                    />
+                )}
+
+                {(!camOn || (!localCameraTrack && !localStream)) && (
                     <div className="absolute inset-0 flex items-center justify-center z-10 overflow-hidden bg-black">
                         {/* Blurred Background with Avatar */}
                         <div className="absolute inset-0">
@@ -436,8 +494,8 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
             }`}>
                 <button
                     onClick={toggleMic}
-                    disabled={!localMicrophoneTrack || isTogglingMic}
-                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${micOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${(!localMicrophoneTrack || isTogglingMic) ? 'opacity-55 cursor-not-allowed' : ''}`}
+                    disabled={isTogglingMic}
+                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${micOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${isTogglingMic ? 'opacity-55 cursor-not-allowed' : ''}`}
                 >
                     {micOn ? <Mic className={isGrid ? "w-3 h-3" : "w-4 h-4"} /> : <MicOff className={isGrid ? "w-3 h-3" : "w-4 h-4"} />}
                 </button>
@@ -471,8 +529,8 @@ export default function CreatorStream({ appId, channelName, uid, avatarUrl, crea
 
                 <button
                     onClick={toggleCam}
-                    disabled={!localCameraTrack || isTogglingCam}
-                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${camOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${(!localCameraTrack || isTogglingCam) ? 'opacity-55 cursor-not-allowed' : ''}`}
+                    disabled={isTogglingCam}
+                    className={`rounded-full transition ${isGrid ? 'p-1.5' : 'p-2'} ${camOn ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-red-500/80 text-white'} ${isTogglingCam ? 'opacity-55 cursor-not-allowed' : ''}`}
                 >
                     {camOn ? <Video className={isGrid ? "w-3 h-3" : "w-4 h-4"} /> : <VideoOff className={isGrid ? "w-3 h-3" : "w-4 h-4"} />}
                 </button>

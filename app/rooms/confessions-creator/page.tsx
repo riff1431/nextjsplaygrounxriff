@@ -37,9 +37,27 @@ const ConfessionsCreatorPage = () => {
     const [showExitModal, setShowExitModal] = useState(false);
     const [mobileTab, setMobileTab] = useState("chat");
     const [isMobile, setIsMobile] = useState<boolean | null>(null);
+    const [creatorAvatar, setCreatorAvatar] = useState<string>("");
+    const [creatorName, setCreatorName] = useState<string>("Creator");
     const router = useRouter();
 
     const { activeTour, currentStep } = useGuidedTour();
+
+    useEffect(() => {
+        if (!user) return;
+        async function fetchProfile() {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("avatar_url, full_name")
+                .eq("id", user.id)
+                .single();
+            if (profile) {
+                setCreatorAvatar(profile.avatar_url || "");
+                setCreatorName(profile.full_name || "Creator");
+            }
+        }
+        fetchProfile();
+    }, [user, supabase]);
 
     useEffect(() => {
         if (activeTour === "confession_creator") {
@@ -237,8 +255,8 @@ const ConfessionsCreatorPage = () => {
                                     roomId={roomId}
                                     uid={user.id}
                                     hostId={user.id}
-                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                    hostName={user.user_metadata?.full_name || "Creator"}
+                                    hostAvatarUrl={creatorAvatar || user.user_metadata?.avatar_url || ""}
+                                    hostName={creatorName || user.user_metadata?.full_name || "Creator"}
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">

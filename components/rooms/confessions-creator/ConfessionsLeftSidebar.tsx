@@ -34,6 +34,25 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId, isMobile }: { sessionId?: s
     const [showAddModal, setShowAddModal] = useState(false);
     const [editConfessionTarget, setEditConfessionTarget] = useState<Confession | null>(null);
     const [viewConfessionTarget, setViewConfessionTarget] = useState<Confession | null>(null);
+    const [creatorAvatar, setCreatorAvatar] = useState<string>("");
+    const [creatorName, setCreatorName] = useState<string>("Creator");
+
+    useEffect(() => {
+        if (!user) return;
+        const supabase = createClient();
+        async function fetchProfile() {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("avatar_url, full_name")
+                .eq("id", user.id)
+                .single();
+            if (profile) {
+                setCreatorAvatar(profile.avatar_url || "");
+                setCreatorName(profile.full_name || "Creator");
+            }
+        }
+        fetchProfile();
+    }, [user]);
 
     const handleDelete = async (id: string) => {
         if (!roomId) return;
@@ -286,8 +305,8 @@ const ConfessionsLeftSidebar = ({ sessionId, roomId, isMobile }: { sessionId?: s
                                     roomId={roomId}
                                     uid={user.id}
                                     hostId={user.id}
-                                    hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                    hostName={user.user_metadata?.full_name || "Creator"}
+                                    hostAvatarUrl={creatorAvatar || user.user_metadata?.avatar_url || ""}
+                                    hostName={creatorName || user.user_metadata?.full_name || "Creator"}
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
