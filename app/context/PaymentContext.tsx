@@ -37,6 +37,17 @@ export interface PaymentConfig {
         ipnSecret: string;
         mode: 'sandbox' | 'production';
     };
+    paygate: {
+        enabled: boolean;
+        apiUrl: string;
+        checkoutUrl: string;
+        usdcAddress: string;
+        affiliateWallet: string;
+        commissionPercent: number;
+        ipnSecret: string;
+        returnUrl: string;
+        cancelUrl: string;
+    };
 }
 
 const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -65,6 +76,17 @@ const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
         apiKey: "",
         ipnSecret: "",
         mode: "sandbox"
+    },
+    paygate: {
+        enabled: false,
+        apiUrl: "https://api.paygate.to",
+        checkoutUrl: "https://checkout.paygate.to",
+        usdcAddress: "",
+        affiliateWallet: "",
+        commissionPercent: 0,
+        ipnSecret: "",
+        returnUrl: "",
+        cancelUrl: ""
     }
 };
 
@@ -102,6 +124,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                     bank: { ...prev.bank, ...data.value.bank },
                     riskpaygo: { ...prev.riskpaygo, ...data.value.riskpaygo },
                     nowpayments: { ...prev.nowpayments, ...data.value.nowpayments },
+                    paygate: { ...prev.paygate, ...data.value.paygate },
                 }));
                 setLoading(false);
                 return;
@@ -151,6 +174,16 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                         else if (prov === 'nowpayments') {
                             newConfig.nowpayments.enabled = row.is_enabled;
                             newConfig.nowpayments.mode = row.config?.mode || newConfig.nowpayments.mode;
+                        }
+                        else if (prov === 'paygate') {
+                            newConfig.paygate.enabled = row.is_enabled;
+                            newConfig.paygate.apiUrl = row.config?.api_url || newConfig.paygate.apiUrl;
+                            newConfig.paygate.checkoutUrl = row.config?.checkout_url || newConfig.paygate.checkoutUrl;
+                            newConfig.paygate.usdcAddress = row.config?.usdc_address || newConfig.paygate.usdcAddress;
+                            newConfig.paygate.affiliateWallet = row.config?.affiliate_wallet || newConfig.paygate.affiliateWallet;
+                            newConfig.paygate.commissionPercent = row.config?.commission_percent || newConfig.paygate.commissionPercent;
+                            newConfig.paygate.returnUrl = row.config?.return_url || newConfig.paygate.returnUrl;
+                            newConfig.paygate.cancelUrl = row.config?.cancel_url || newConfig.paygate.cancelUrl;
                         }
                     });
                     return newConfig;

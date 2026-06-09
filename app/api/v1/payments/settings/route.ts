@@ -70,6 +70,20 @@ function getDefaultSettings(): PaymentSetting[] {
             },
             created_at: now,
             updated_at: now
+        },
+        {
+            id: 'default-paygate',
+            provider: 'paygate',
+            is_enabled: false,
+            config: {
+                api_url: 'https://api.paygate.to',
+                checkout_url: 'https://checkout.paygate.to',
+                commission_percent: 0,
+                return_url: '',
+                cancel_url: ''
+            },
+            created_at: now,
+            updated_at: now
         }
     ];
 }

@@ -68,6 +68,16 @@ export async function POST(req: NextRequest) {
             ? body.nowpayments.ipnSecret
             : oldConfig.nowpayments?.ipnSecret || "";
 
+        const finalPaygateUsdcAddress = (body.paygate?.usdcAddress && !body.paygate.usdcAddress.includes('•'))
+            ? body.paygate.usdcAddress
+            : oldConfig.paygate?.usdcAddress || "";
+        const finalPaygateAffiliateWallet = (body.paygate?.affiliateWallet && !body.paygate.affiliateWallet.includes('•'))
+            ? body.paygate.affiliateWallet
+            : oldConfig.paygate?.affiliateWallet || "";
+        const finalPaygateIpnSecret = (body.paygate?.ipnSecret && !body.paygate.ipnSecret.includes('•'))
+            ? body.paygate.ipnSecret
+            : oldConfig.paygate?.ipnSecret || "";
+
         const mergedConfig = {
             stripe: {
                 enabled: !!body.stripe?.enabled,
@@ -101,6 +111,17 @@ export async function POST(req: NextRequest) {
                 apiKey: finalNowpaymentsApiKey,
                 ipnSecret: finalNowpaymentsIpnSecret,
                 mode: body.nowpayments?.mode || oldConfig.nowpayments?.mode || "sandbox",
+            },
+            paygate: {
+                enabled: !!body.paygate?.enabled,
+                apiUrl: body.paygate?.apiUrl || oldConfig.paygate?.apiUrl || "https://api.paygate.to",
+                checkoutUrl: body.paygate?.checkoutUrl || oldConfig.paygate?.checkoutUrl || "https://checkout.paygate.to",
+                usdcAddress: finalPaygateUsdcAddress,
+                affiliateWallet: finalPaygateAffiliateWallet,
+                commissionPercent: typeof body.paygate?.commissionPercent !== 'undefined' ? Number(body.paygate.commissionPercent) : (oldConfig.paygate?.commissionPercent || 0),
+                ipnSecret: finalPaygateIpnSecret,
+                returnUrl: body.paygate?.returnUrl || oldConfig.paygate?.returnUrl || "",
+                cancelUrl: body.paygate?.cancelUrl || oldConfig.paygate?.cancelUrl || "",
             }
         };
 
@@ -205,6 +226,29 @@ export async function POST(req: NextRequest) {
             }, { onConflict: 'provider' });
 
         if (nowpaymentsErr) console.error('[Admin Payments Settings API] Sync nowpayments error:', nowpaymentsErr);
+
+        // Sync PayGate
+        const { error: paygateErr } = await adminClient
+            .from('payment_settings')
+            .upsert({
+                provider: 'paygate',
+                is_enabled: mergedConfig.paygate.enabled,
+                config: {
+                    api_url: mergedConfig.paygate.apiUrl,
+                    checkout_url: mergedConfig.paygate.checkoutUrl,
+                    commission_percent: mergedConfig.paygate.commissionPercent,
+                    return_url: mergedConfig.paygate.returnUrl,
+                    cancel_url: mergedConfig.paygate.cancelUrl
+                },
+                secret_config: {
+                    usdc_address: mergedConfig.paygate.usdcAddress,
+                    affiliate_wallet: mergedConfig.paygate.affiliateWallet,
+                    ipn_secret: mergedConfig.paygate.ipnSecret
+                },
+                updated_at: now
+            }, { onConflict: 'provider' });
+
+        if (paygateErr) console.error('[Admin Payments Settings API] Sync paygate error:', paygateErr);
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

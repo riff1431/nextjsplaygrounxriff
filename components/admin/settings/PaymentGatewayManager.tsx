@@ -100,6 +100,12 @@ export default function PaymentGatewayManager() {
     const [riskTestResult, setRiskTestResult] = useState<RiskTestResult | null>(null);
     const [riskConnectionStatus, setRiskConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
     const [generatingTestPayment, setGeneratingTestPayment] = useState(false);
+
+    // PayGate states
+    const [showPaygateSecrets, setShowPaygateSecrets] = useState(false);
+    const [testingPaygate, setTestingPaygate] = useState(false);
+    const [paygateTestResult, setPaygateTestResult] = useState<any | null>(null);
+    const [paygateConnectionStatus, setPaygateConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
     
     // Dynamic gateways state
     const [testingStates, setTestingStates] = useState<Record<string, boolean>>({});
@@ -133,6 +139,15 @@ export default function PaymentGatewayManager() {
                     ...prev.nowpayments,
                     apiKey: config.nowpayments.apiKey ? "••••••••••••••••" : "",
                     ipnSecret: config.nowpayments.ipnSecret ? "••••••••••••••••" : ""
+                }
+            }));
+        }
+        if (config?.paygate) {
+            setFormData(prev => ({
+                ...prev,
+                paygate: {
+                    ...prev.paygate,
+                    ipnSecret: config.paygate.ipnSecret ? "••••••••••••••••" : ""
                 }
             }));
         }
@@ -212,6 +227,38 @@ export default function PaymentGatewayManager() {
             toast.error("Failed to run RiskPayGo connection test");
         } finally {
             setTestingRisk(false);
+        }
+    };
+
+    const handleTestPaygateConnection = async () => {
+        setTestingPaygate(true);
+        setPaygateTestResult(null);
+        try {
+            const res = await fetch('/api/v1/payments/paygate/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiUrl: formData.paygate.apiUrl,
+                    checkoutUrl: formData.paygate.checkoutUrl,
+                    usdcAddress: formData.paygate.usdcAddress,
+                    affiliateWallet: formData.paygate.affiliateWallet,
+                    commissionPercent: formData.paygate.commissionPercent,
+                    ipnSecret: formData.paygate.ipnSecret
+                })
+            });
+            const data = await res.json();
+            setPaygateTestResult(data);
+            setPaygateConnectionStatus(data.success ? 'connected' : 'disconnected');
+            if (data.success) {
+                toast.success(data.message || "PayGate connection successful!");
+            } else {
+                toast.error(data.error || "Connection test failed");
+            }
+        } catch (err) {
+            setPaygateConnectionStatus('disconnected');
+            toast.error("Failed to run PayGate connection test");
+        } finally {
+            setTestingPaygate(false);
         }
     };
 
@@ -314,6 +361,9 @@ export default function PaymentGatewayManager() {
         } else if (gateway === 'riskpaygo') {
             setRiskTestResult(null);
             setRiskConnectionStatus('unknown');
+        } else if (gateway === 'paygate') {
+            setPaygateTestResult(null);
+            setPaygateConnectionStatus('unknown');
         } else {
             setTestResults(prev => ({ ...prev, [gateway]: null }));
             setConnectionStatuses(prev => ({ ...prev, [gateway]: 'unknown' }));
@@ -748,6 +798,201 @@ export default function PaymentGatewayManager() {
                                                             Gateway response code: {riskTestResult.status || 500}
                                                         </p>
                                                     )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* PayGate Gateway */}
+                <div className={`rounded-2xl border transition-all overflow-hidden ${formData.paygate?.enabled ? 'bg-violet-500/5 border-violet-500/20' : 'bg-black/40 border-white/5 opacity-70'}`}>
+                    <div className="p-5">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                                    paygateConnectionStatus === 'connected' ? 'bg-green-500/20 text-green-400' :
+                                    paygateConnectionStatus === 'disconnected' ? 'bg-red-500/20 text-red-400' :
+                                    'bg-violet-500/20 text-violet-400'
+                                }`}>
+                                    <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-sm font-bold text-white">PayGate White-Label Gateway</div>
+                                        {paygateConnectionStatus === 'connected' && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                                                <CheckCircle2 className="w-3 h-3" /> CONNECTED
+                                            </span>
+                                        )}
+                                        {paygateConnectionStatus === 'disconnected' && formData.paygate?.enabled && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                                                <XCircle className="w-3 h-3" /> FAILED
+                                            </span>
+                                        )}
+                                        {formData.paygate?.enabled && (
+                                            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full border bg-purple-500/20 text-purple-400 border-purple-500/30">
+                                                ACTIVE
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-gray-400">Zero-KYC White-Label processing • Custom domain routing to USDC wallet</div>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={formData.paygate?.enabled} onChange={() => toggleGateway('paygate')} />
+                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+                            </label>
+                        </div>
+
+                        {formData.paygate?.enabled && (
+                            <div className="mt-5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                {/* Instructions */}
+                                <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/10">
+                                    <div className="flex items-start gap-2">
+                                        <Info className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" />
+                                        <div className="text-xs text-violet-300/80 leading-relaxed">
+                                            <span className="font-semibold text-violet-300 font-bold">Dynamic White-Label:</span> Specify custom domains if you rebrand with Cloudflare Workers (e.g. `https://api.yourdomain.com`). Default fallback endpoints point directly to `api.paygate.to`.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Form Fields */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">API Endpoint URL</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.apiUrl}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, apiUrl: e.target.value } })}
+                                            placeholder="https://api.paygate.to"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Checkout Frontend URL</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.checkoutUrl}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, checkoutUrl: e.target.value } })}
+                                            placeholder="https://checkout.paygate.to"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">USDC Payout Address (Polygon Network)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.usdcAddress}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, usdcAddress: e.target.value } })}
+                                            placeholder="0x..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Affiliate Wallet Address (USDC Polygon)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.affiliateWallet}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, affiliateWallet: e.target.value } })}
+                                            placeholder="0x..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Commission Rate (%)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.commissionPercent}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, commissionPercent: parseFloat(e.target.value) || 0 } })}
+                                            placeholder="0.5"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Webhook IPN Verification Key / Secret</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPaygateSecrets ? "text" : "password"}
+                                                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono pr-10 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                                value={formData.paygate.ipnSecret}
+                                                onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, ipnSecret: e.target.value } })}
+                                                placeholder="Enter IPN Secret signature key"
+                                            />
+                                            <button
+                                                onClick={() => setShowPaygateSecrets(!showPaygateSecrets)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                                                type="button"
+                                            >
+                                                {showPaygateSecrets ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Return URL (Redirect after payment)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.returnUrl}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, returnUrl: e.target.value } })}
+                                            placeholder="https://your-domain.com/account/wallet?status=success"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs text-gray-400 block mb-1.5 font-medium">Cancel URL (Redirect on cancellation)</label>
+                                        <input
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white font-mono focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 focus:outline-none transition"
+                                            value={formData.paygate.cancelUrl}
+                                            onChange={(e) => setFormData({ ...formData, paygate: { ...formData.paygate, cancelUrl: e.target.value } })}
+                                            placeholder="https://your-domain.com/account/wallet?status=cancelled"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Actions Panels */}
+                                <div className="flex flex-wrap items-center gap-3 pt-2">
+                                    <button
+                                        onClick={handleTestPaygateConnection}
+                                        disabled={testingPaygate || !formData.paygate.apiUrl || !formData.paygate.usdcAddress}
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 border border-violet-500/30 hover:border-violet-500/50"
+                                    >
+                                        {testingPaygate ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Verifying Connection...</>
+                                        ) : (
+                                            <><Zap className="w-4 h-4" /> Run Connection Test</>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Test Result Display */}
+                                {paygateTestResult && (
+                                    <div className={`p-4 rounded-xl border animate-in fade-in slide-in-from-top-1 ${
+                                        paygateTestResult.success ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'
+                                    }`}>
+                                        {paygateTestResult.success ? (
+                                            <div className="flex items-start gap-2.5">
+                                                <ShieldCheck className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm font-bold text-green-400">Connection Verified</p>
+                                                    <p className="text-xs text-green-300/80 mt-1 leading-relaxed">
+                                                        {paygateTestResult.message || 'Status verified successfully.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-start gap-2.5">
+                                                <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm font-bold text-red-400">Connection Terminated</p>
+                                                    <p className="text-xs text-red-300/80 mt-1 leading-relaxed">
+                                                        {paygateTestResult.error}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}

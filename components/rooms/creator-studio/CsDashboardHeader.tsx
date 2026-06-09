@@ -114,11 +114,15 @@ export const CsDashboardHeader = ({ username, avatarUrl, isProfileIncomplete }: 
                     {isProfileIncomplete && (
                         <button
                             onClick={() => router.push('/settings/profile')}
-                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.8)] border border-pink-400/30 transition-all hover:opacity-95"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 border border-pink-400/30 transition-all profile-blink-button"
                             title="Complete your profile"
                         >
-                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 animate-bounce" />
+                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                             <span>Update Profile</span>
+                            <span className="relative flex h-2 w-2 shrink-0">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            </span>
                         </button>
                     )}
 

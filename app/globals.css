@@ -3265,3 +3265,34 @@ body {
   }
 }
 
+/* Blinking/pulsating Update Profile Alert Button */
+@keyframes dashboard-profile-blink {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.55), 0 0 0 0px rgba(236, 72, 153, 0);
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(236, 72, 153, 1), 0 0 0 6px rgba(236, 72, 153, 0.25);
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+.profile-blink-button {
+  background-color: #ec4899;
+  background-image: linear-gradient(to right, #ec4899, #8b5cf6);
+  animation: dashboard-profile-blink 1.2s infinite ease-in-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow, opacity;
+}
+
+.profile-blink-button:hover {
+  transform: scale(1.06);
+  animation-play-state: paused; /* Pause animation on hover */
+  opacity: 1;
+  box-shadow: 0 0 30px rgba(236, 72, 153, 1), 0 0 0 10px rgba(236, 72, 153, 0.3);
+  background-image: linear-gradient(to right, #f43f5e, #d946ef);
+}
+
+

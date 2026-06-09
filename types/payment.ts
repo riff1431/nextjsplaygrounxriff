@@ -1,4 +1,4 @@
-export type PaymentProvider = 'stripe' | 'paypal' | 'bank' | 'riskpaygo' | 'nowpayments';
+export type PaymentProvider = 'stripe' | 'paypal' | 'bank' | 'riskpaygo' | 'nowpayments' | 'paygate';
 
 export interface PaymentSetting {
     id: string;
