@@ -36,7 +36,10 @@ const LiveChat = ({ roomId, sessionId }: { roomId: string | null; sessionId?: st
         if (a.type === 'LINK_REVEAL') return <span>revealed a favourite!</span>;
         if (a.type === 'BUY_FOR_HER') return <span>purchased a favourite!</span>;
         if (a.type === 'SECRET_UNLOCK') return <span>revealed a secret!</span>;
-        if (a.type === 'PAID_REQUEST') return <span>requested: {a.label} (${a.amount})</span>;
+        if (a.type === 'PAID_REQUEST') {
+            const isGift = ["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(a.label);
+            return <span>{isGift ? "TIPS" : "requested"}: {a.label} (${a.amount})</span>;
+        }
         if (a.type === 'OFFER_CLAIM') return <span>claimed offer: {a.label}</span>;
         return <span>{a.label}</span>;
     };

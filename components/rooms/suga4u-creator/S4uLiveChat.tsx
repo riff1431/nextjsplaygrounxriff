@@ -55,7 +55,10 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
         if (a.type === 'LINK_REVEAL') return "revealed a favourite!";
         if (a.type === 'BUY_FOR_HER') return "purchased a favourite!";
         if (a.type === 'SECRET_UNLOCK') return "revealed a secret!";
-        if (a.type === 'PAID_REQUEST') return `requested: ${a.label}`;
+        if (a.type === 'PAID_REQUEST') {
+            const isGift = ["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(a.label);
+            return `${isGift ? "TIPS" : "requested"}: ${a.label}`;
+        }
         if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
         return a.label;
     };

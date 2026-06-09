@@ -1407,7 +1407,11 @@ const Suga4URoom = () => {
                                                                 {m.type === 'LINK_REVEAL' && <span>revealed a favourite!</span>}
                                                                 {m.type === 'BUY_FOR_HER' && <span>purchased a favourite!</span>}
                                                                 {m.type === 'SECRET_UNLOCK' && <span>revealed a secret!</span>}
-                                                                {m.type === 'PAID_REQUEST' && <span>requested: {m.label} (${m.amount})</span>}
+                                                                {m.type === 'PAID_REQUEST' && (
+                                                                    <span>
+                                                                        {["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(m.label) ? "TIPS" : "requested"}: {m.label} (${m.amount})
+                                                                    </span>
+                                                                )}
                                                                 {m.type === 'OFFER_CLAIM' && <span>claimed offer: {m.label}</span>}
                                                                 {m.type === 'CHAT' && <span>{m.label}</span>}
                                                                 {isMsgHighlight && <Heart className="inline w-3 h-3 text-pink fill-pink ml-1" />}
