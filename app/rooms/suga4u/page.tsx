@@ -14,7 +14,6 @@ import CreatorSecrets from "@/components/rooms/suga4u/CreatorSecrets";
 import LiveChat from "@/components/rooms/suga4u/LiveChat";
 import CreatorFavorites from "@/components/rooms/suga4u/CreatorFavorites";
 import PaidRequestMenu from "@/components/rooms/suga4u/PaidRequestMenu";
-import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import SendSugarGifts from "@/components/rooms/suga4u/SendSugarGifts";
 import QuickPaidActions from "@/components/rooms/suga4u/QuickPaidActions";
 import InviteModal from "@/components/rooms/InviteModal";
@@ -234,6 +233,35 @@ const Suga4URoom = () => {
 
     // Local unlocked mobile secrets tracking during this session
     const [unlockedMobileSecIds, setUnlockedMobileSecIds] = useState<Set<string>>(new Set());
+
+    // Fetch unlocked secrets from transactions for mobile view
+    useEffect(() => {
+        if (!user || !roomId) return;
+        const fetchUnlockedSecrets = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .select('metadata')
+                    .eq('user_id', user.id)
+                    .eq('type', 'debit')
+                    .eq('status', 'completed')
+                    .eq('metadata->>related_type', 'suga_secret')
+                    .eq('metadata->>room_id', roomId);
+                
+                if (error) throw error;
+                
+                if (data) {
+                    const ids = data
+                        .map(tx => tx.metadata?.related_id)
+                        .filter(Boolean) as string[];
+                    setUnlockedMobileSecIds(new Set(ids));
+                }
+            } catch (err) {
+                console.error("Error fetching unlocked secrets:", err);
+            }
+        };
+        fetchUnlockedSecrets();
+    }, [user, roomId, supabase]);
 
     // Mobile popups / confirm modals
     const [confirmMobileFav, setConfirmMobileFav] = useState<{ item: CreatorFavorite; type: 'BUY' | 'REVEAL' } | null>(null);
@@ -624,6 +652,8 @@ const Suga4URoom = () => {
                 .select('*')
                 .eq('room_id', roomId)
                 .eq('fan_name', user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan')
+                .neq('type', 'GIFT')
+                .neq('type', 'TIP')
                 .order('created_at', { ascending: false })
                 .limit(20);
 
@@ -635,6 +665,8 @@ const Suga4URoom = () => {
                         .select('*')
                         .eq('room_id', roomId)
                         .eq('fan_name', user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan')
+                        .neq('type', 'GIFT')
+                        .neq('type', 'TIP')
                         .order('created_at', { ascending: false })
                         .limit(20);
                     if (fallback) setIncomingItems(fallback);
@@ -657,6 +689,7 @@ const Suga4URoom = () => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const item = payload.new as any;
+                if (item.type === 'GIFT' || item.type === 'TIP') return;
                 const fanName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan';
                 if (item.fan_name !== fanName) return;
                 setIncomingItems(prev => [item, ...prev].slice(0, 20));
@@ -669,6 +702,7 @@ const Suga4URoom = () => {
                 filter: `room_id=eq.${roomId}`,
             }, (payload) => {
                 const updated = payload.new as any;
+                if (updated.type === 'GIFT' || updated.type === 'TIP') return;
                 const fanName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Fan';
                 if (updated.fan_name !== fanName) return;
                 setIncomingItems(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
@@ -2202,12 +2236,7 @@ const Suga4URoom = () => {
                     </div>
                 )}
 
-                {/* Per-minute billing overlay */}
-                <BillingOverlay
-                    sessionId={urlSessionId}
-                    accentHsl="42, 90%, 55%"
-                    exitRoute="/home"
-                />
+
 
             </div>
         </ProtectRoute>

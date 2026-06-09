@@ -6,6 +6,8 @@ import { useWallet } from "@/hooks/useWallet";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
+import { createClient } from "@/utils/supabase/client";
+
 
 const categories = [
     { label: "CUTE", emoji: "🎀" },
@@ -23,6 +25,36 @@ const CreatorSecrets = ({ roomId, hostId, sessionId }: { roomId: string | null; 
     const [unlockedIds, setUnlockedIds] = React.useState<Set<string>>(new Set());
     const [confirmSecret, setConfirmSecret] = React.useState<CreatorSecret | null>(null);
     const [selectedMedia, setSelectedMedia] = React.useState<CreatorSecret | null>(null);
+
+    // Fetch unlocked secrets from transactions database
+    React.useEffect(() => {
+        if (!user || !roomId) return;
+        const fetchUnlockedSecrets = async () => {
+            try {
+                const supabase = createClient();
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .select('metadata')
+                    .eq('user_id', user.id)
+                    .eq('type', 'debit')
+                    .eq('status', 'completed')
+                    .eq('metadata->>related_type', 'suga_secret')
+                    .eq('metadata->>room_id', roomId);
+                
+                if (error) throw error;
+                
+                if (data) {
+                    const ids = data
+                        .map(tx => tx.metadata?.related_id)
+                        .filter(Boolean) as string[];
+                    setUnlockedIds(new Set(ids));
+                }
+            } catch (err) {
+                console.error("Error fetching unlocked secrets:", err);
+            }
+        };
+        fetchUnlockedSecrets();
+    }, [user, roomId]);
 
     const handleUnlockPrompt = (s: CreatorSecret) => {
         if (!roomId || !hostId) return;
