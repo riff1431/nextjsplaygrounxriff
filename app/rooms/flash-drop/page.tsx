@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Video, UserPlus, BarChart3, MessageSquare, Zap } from "lucide-react";
+import { ArrowLeft, Video, UserPlus, BarChart3, MessageSquare, Zap, Inbox } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProtectRoute, useAuth } from "@/app/context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
@@ -28,6 +28,7 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
 const FAN_TABS: MobileStudioTab[] = [
     { id: "board", label: "Board", icon: <BarChart3 className="w-5 h-5" /> },
     { id: "chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
+    { id: "incoming", label: "Incoming", icon: <Inbox className="w-5 h-5" /> },
     { id: "impulse", label: "Impulse", icon: <Zap className="w-5 h-5" /> },
 ];
 
@@ -45,6 +46,7 @@ export default function FlashDropsRoomPreview() {
     }, []);
     const [chatUnread, setChatUnread] = useState(0);
     const [boardUnread, setBoardUnread] = useState(0);
+    const [incomingUnread, setIncomingUnread] = useState(0);
 
     const { activeTour, currentStep } = useGuidedTour();
 
@@ -105,7 +107,13 @@ export default function FlashDropsRoomPreview() {
     }, [mobileTab]);
 
     useEffect(() => {
-        if (!roomId) return;
+        if (mobileTab === "incoming") {
+            setIncomingUnread(0);
+        }
+    }, [mobileTab]);
+
+    useEffect(() => {
+        if (!roomId || !user?.id) return;
         const supabase = createClient();
 
         const channel = supabase
@@ -141,16 +149,28 @@ export default function FlashDropsRoomPreview() {
                     }
                 }
             )
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "flash_drop_requests", filter: `fan_id=eq.${user.id}` },
+                (payload) => {
+                    const req = payload.new as any;
+                    if (urlSessionId && req.session_id && req.session_id !== urlSessionId) return;
+                    if (req.status === 'accepted' && mobileTab !== "incoming") {
+                        setIncomingUnread((prev) => prev + 1);
+                    }
+                }
+            )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [roomId, urlSessionId, mobileTab]);
+    }, [roomId, urlSessionId, mobileTab, user?.id]);
 
     const mappedTabs = FAN_TABS.map(tab => {
         if (tab.id === "chat") return { ...tab, badge: chatUnread };
         if (tab.id === "board") return { ...tab, badge: boardUnread };
+        if (tab.id === "incoming") return { ...tab, badge: incomingUnread };
         return tab;
     });
 
@@ -663,6 +683,11 @@ export default function FlashDropsRoomPreview() {
                                 {mobileTab === "chat" && (
                                     <div data-tour="flashdrop-fan-live-chat" className="h-full flex flex-col overflow-hidden">
                                         <FlashDropLiveChat roomId={roomId} hostId={hostId} sessionId={urlSessionId} />
+                                    </div>
+                                )}
+                                {mobileTab === "incoming" && (
+                                    <div className="h-full flex flex-col overflow-hidden">
+                                        <IncomingNotifications roomId={roomId} sessionId={urlSessionId} inline />
                                     </div>
                                 )}
                                 {mobileTab === "impulse" && (
