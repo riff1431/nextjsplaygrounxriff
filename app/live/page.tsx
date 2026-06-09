@@ -11,7 +11,7 @@ import ProfileMenu from "@/components/navigation/ProfileMenu";
 
 export default function LivePage() {
     const router = useRouter();
-    const { user, role } = useAuth();
+    const { user, role, logout } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const supabase = createClient();
 
@@ -64,7 +64,7 @@ export default function LivePage() {
                             profile={profile}
                             role={role}
                             router={router}
-                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                            onSignOut={logout}
                         />
                     </div>
                 </div>

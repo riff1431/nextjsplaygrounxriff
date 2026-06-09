@@ -768,6 +768,7 @@ function HomeScreen({
     isMobileView: boolean;
 }) {
     const router = useRouter();
+    const { logout } = useAuth();
     const [activeCat, setActiveCat] = useState("all");
     const casinoMenu = useMemo(() => iframeMenus.find(m => m.name.toLowerCase().includes("casino")), [iframeMenus]);
     const otherIframeMenus = useMemo(() => iframeMenus.filter(m => !m.name.toLowerCase().includes("casino")), [iframeMenus]);
@@ -973,7 +974,7 @@ function HomeScreen({
                                 <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => router.push("/newsfeed")} data-tour={!isMobileView ? "newsfeed-button" : undefined}>
                                     <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                 </button>
-                                <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" title="Log Out" onClick={() => router.push("/")}>
+                                <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" title="Log Out" onClick={logout}>
                                     <LogOut className="w-4 h-4" /> Log Out
                                 </button>
                             </div>
@@ -1149,7 +1150,7 @@ function HomeScreen({
 // ---- App shell -------------------------------------------------------------
 export default function Home() {
     const router = useRouter();
-    const { role, isLoading: authLoading, user } = useAuth();
+    const { role, isLoading: authLoading, user, logout } = useAuth();
     const { startTour } = useGuidedTour();
     const [rooms, setRooms] = useState<any[]>([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
@@ -1670,7 +1671,7 @@ export default function Home() {
                                     <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/newsfeed"); }}>
                                         <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                     </button>
-                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); router.push("/"); }}>
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition" onClick={() => { setIsSidebarOpen(false); logout(); }}>
                                         <LogOut className="w-4 h-4" /> Log Out
                                     </button>
                                 </div>
@@ -1828,7 +1829,7 @@ export default function Home() {
                                 profile={currentProfile}
                                 role={role}
                                 router={router}
-                                onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                                onSignOut={logout}
                             />
                         </div>
                     </div>
@@ -1985,7 +1986,7 @@ export default function Home() {
                             profile={currentProfile}
                             role={role}
                             router={router}
-                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                            onSignOut={logout}
                         />
                     </div>
                 </div>

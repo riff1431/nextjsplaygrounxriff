@@ -182,7 +182,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
 export default function FeedPage() {
     const supabase = createClient();
     const router = useRouter();
-    const { user: currentUser, role: userRole, isLoading: authLoading } = useAuth();
+    const { user: currentUser, role: userRole, isLoading: authLoading, logout } = useAuth();
     const { roomSettings: activeStatuses } = useTheme();
 
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -560,7 +560,7 @@ export default function FeedPage() {
                             profile={currentProfile}
                             role={userRole}
                             router={router}
-                            onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                            onSignOut={logout}
                         />
                     </div>
                 </div>
@@ -696,7 +696,7 @@ export default function FeedPage() {
                                     <button className="w-full rounded-xl border border-pink-500/50 bg-black px-3 py-2 text-sm text-pink-200 hover:bg-pink-500/10 inline-flex items-center gap-2 justify-start transition cursor-pointer" onClick={() => router.push("/newsfeed")}>
                                         <Flame className="w-4 h-4 text-pink-400" /> NewsFeed
                                     </button>
-                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition cursor-pointer" onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}>
+                                    <button className="w-full rounded-xl border border-white/20 bg-black px-3 py-2 text-sm text-gray-200 hover:bg-white/10 inline-flex items-center gap-2 justify-start transition cursor-pointer" onClick={logout}>
                                         <LogOut className="w-4 h-4" /> Log Out
                                     </button>
                                 </div>

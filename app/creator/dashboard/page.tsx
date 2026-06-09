@@ -12,6 +12,7 @@ import SubscriptionSettings from "@/components/creator/SubscriptionSettings";
 import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { cs } from "@/utils/currency";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "@/app/context/AuthContext";
 
 // Dashboard Component
 export default function CreatorDashboard() {
@@ -30,10 +31,7 @@ export default function CreatorDashboard() {
     const [profileOpen, setProfileOpen] = useState(false);
     const { roomSettings: activeStatuses } = useTheme();
 
-    const signOut = async () => {
-        await supabase.auth.signOut();
-        router.push('/auth');
-    };
+    const { logout } = useAuth();
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -200,7 +198,7 @@ export default function CreatorDashboard() {
                             profile={creatorProfile || user?.user_metadata || {}}
                             role="creator"
                             router={router}
-                            onSignOut={signOut}
+                            onSignOut={logout}
                         />
                     </div>
                 </div>

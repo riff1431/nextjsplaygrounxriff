@@ -250,7 +250,7 @@ function BarDrinkIcon({ className = "" }: { className?: string }) {
 /* ─── Main Page ─────────────────────────────────────────────── */
 export default function NewsFeedPage() {
     const router = useRouter();
-    const { user, role, isLoading: authLoading } = useAuth();
+    const { user, role, isLoading: authLoading, logout } = useAuth();
     const supabase = createClient();
 
     // State
@@ -716,7 +716,7 @@ export default function NewsFeedPage() {
                                 profile={currentProfile}
                                 role={role}
                                 router={router}
-                                onSignOut={async () => { await supabase.auth.signOut(); router.push("/"); }}
+                                onSignOut={logout}
                             />
                         </div>
                     </div>
