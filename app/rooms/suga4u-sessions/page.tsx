@@ -1,5 +1,6 @@
 "use client";
 import RoomSessionsBrowse from "@/components/rooms/shared/RoomSessionsBrowse";
+import SugaLogo from "@/components/rooms/suga4u/SugaLogo";
 
 export default function Suga4USessionsPage() {
     return (
@@ -12,6 +13,8 @@ export default function Suga4USessionsPage() {
             accentHslSecondary="320, 70%, 50%"
             backgroundImage="/rooms/suga4u/bg1.jpeg"
             backgroundOverlay="rgba(0,0,0,0.45)"
+            className="fd-suga4u-theme"
+            logoNode={<SugaLogo className="scale-90 origin-left" />}
         />
     );
 }

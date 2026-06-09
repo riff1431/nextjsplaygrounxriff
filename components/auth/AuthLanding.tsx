@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { generateUniqueUsername } from "@/utils/usernameGenerator";
 
 import BrandLogo from "@/components/common/BrandLogo";
 import SiteFooter from "@/components/navigation/SiteFooter";
@@ -177,6 +178,7 @@ export default function AuthLanding() {
 
         try {
             const fullName = `${createFirst} ${createLast}`.trim();
+            const generatedUsername = await generateUniqueUsername(supabase, createFirst, createLast);
             const { data, error } = await supabase.auth.signUp({
                 email: createEmail,
                 password: createPassword,
@@ -185,7 +187,8 @@ export default function AuthLanding() {
                         full_name: fullName,
                         role: createRole,
                         phone: createPhone || undefined,
-                        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createEmail}`
+                        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${createEmail}`,
+                        username: generatedUsername
                     }
                 }
             });
@@ -194,6 +197,12 @@ export default function AuthLanding() {
 
             if (data.session) {
                 toast.success("Account created! Redirecting...", { id: toastId });
+
+                // Explicitly update username in profiles table for immediate login
+                await supabase
+                    .from("profiles")
+                    .update({ username: generatedUsername })
+                    .eq("id", data.user?.id);
 
                 // Fire welcome email (non-blocking)
                 fetch("/api/v1/email/send", {

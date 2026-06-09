@@ -215,6 +215,8 @@ const Suga4UCreatorPage = () => {
                 accentHsl="340, 75%, 55%"
                 accentHslSecondary="320, 70%, 50%"
                 backgroundImage="/rooms/suga4u-creator-bg.jpeg"
+                className="fd-suga4u-theme"
+                logoNode={<SugaLogo className="scale-90 origin-left" />}
             />
         );
     }

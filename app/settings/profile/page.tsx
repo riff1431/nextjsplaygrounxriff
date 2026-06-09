@@ -82,11 +82,13 @@ export default function EditProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [fromOnboarding, setFromOnboarding] = useState(false);
+    const [fromDashboard, setFromDashboard] = useState(false);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             setFromOnboarding(params.get("from") === "onboarding");
+            setFromDashboard(params.get("from") === "dashboard");
         }
     }, []);
 
@@ -201,7 +203,7 @@ export default function EditProfilePage() {
 
             if (error) throw error;
             toast.success("Profile updated!");
-            if (fromOnboarding) {
+            if (fromOnboarding || fromDashboard) {
                 router.push("/rooms/creator-studio");
             } else {
                 router.refresh();
@@ -365,13 +367,13 @@ export default function EditProfilePage() {
 
                     <div className="pt-4 flex gap-3">
                         <NeonButton variant="ghost" className="flex-1" onClick={() => {
-                            if (fromOnboarding) {
+                            if (fromOnboarding || fromDashboard) {
                                 router.push("/rooms/creator-studio");
                             } else {
                                 router.back();
                             }
                         }}>
-                            {fromOnboarding ? "Skip to Dashboard" : "Cancel"}
+                            {fromOnboarding ? "Skip to Dashboard" : fromDashboard ? "Back to Dashboard" : "Cancel"}
                         </NeonButton>
                         <NeonButton variant="pink" className="flex-1" onClick={handleSave} disabled={saving || uploading}>
                             <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}

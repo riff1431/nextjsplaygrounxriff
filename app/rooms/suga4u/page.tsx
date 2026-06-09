@@ -762,8 +762,11 @@ const Suga4URoom = () => {
                 <button onClick={() => router.back()} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all z-20">
                     <ArrowLeft size={18} />
                 </button>
-
+ 
                 <div className="relative z-10 flex flex-col items-center">
+                    <div className="mb-6">
+                        <SugaLogo className="scale-110" />
+                    </div>
                     <div className="w-16 h-16 border-4 border-gold/20 border-t-gold rounded-full animate-spin mb-8 shadow-[0_0_30px_hsl(42_90%_55%/0.4)]" />
                     <h1 className="text-2xl md:text-4xl font-black text-gold uppercase tracking-[0.2em] mb-3 text-center px-4 fd-font-tech" style={{ textShadow: '0 0 20px hsla(42, 90%, 55%, 0.5)' }}>
                         Waiting for Suga
@@ -775,7 +778,7 @@ const Suga4URoom = () => {
             </div>
         );
     }
-
+ 
     if (sessionStatus === 'ended') {
         return (
             <div className="h-screen w-full flex flex-col items-center justify-center bg-background text-foreground relative fd-suga4u-theme">
@@ -785,6 +788,9 @@ const Suga4URoom = () => {
                 </div>
                 
                 <div className="relative z-10 flex flex-col items-center bg-white/5 border border-white/10 p-10 rounded-3xl backdrop-blur-md">
+                    <div className="mb-6 opacity-60 grayscale">
+                        <SugaLogo className="scale-110" />
+                    </div>
                     <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
                         <span className="text-2xl">💔</span>
                     </div>

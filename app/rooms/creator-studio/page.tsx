@@ -20,7 +20,10 @@ const CreatorStudioDashboardPage = () => {
 
     const isProfileIncomplete = !profile?.username || 
                                 !profile?.avatar_url || 
-                                !profile?.full_name;
+                                !profile?.full_name ||
+                                !profile?.cover_url ||
+                                !profile?.bio ||
+                                !profile?.location;
 
     return (
         <div className="cs-theme min-h-screen relative">
@@ -35,8 +38,7 @@ const CreatorStudioDashboardPage = () => {
             <div className="relative z-10 p-3 sm:p-4 md:p-8 max-w-[1400px] mx-auto space-y-4 sm:space-y-6">
                 <div data-tour="profile-setup">
                     <CsDashboardHeader
-                        username={profile?.username}
-                        avatarUrl={profile?.avatar_url}
+                        profile={profile}
                         isProfileIncomplete={isProfileIncomplete}
                     />
                 </div>

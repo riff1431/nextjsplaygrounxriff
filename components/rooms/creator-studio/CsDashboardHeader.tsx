@@ -81,15 +81,22 @@ export const CsStatsBar = ({
 };
 
 interface CsDashboardHeaderProps {
-    username?: string | null;
-    avatarUrl?: string | null;
+    profile?: {
+        username: string | null;
+        avatar_url: string | null;
+        full_name: string | null;
+        bio: string | null;
+        location: string | null;
+        cover_url: string | null;
+    } | null;
     isProfileIncomplete?: boolean;
 }
 
-export const CsDashboardHeader = ({ username, avatarUrl, isProfileIncomplete }: CsDashboardHeaderProps) => {
+export const CsDashboardHeader = ({ profile, isProfileIncomplete }: CsDashboardHeaderProps) => {
     const router = useRouter();
     const { user, logout } = useAuth();
-    const displayName = username || "Creator";
+    const displayName = profile?.username || "Creator";
+    const avatarUrl = profile?.avatar_url;
 
     return (
         <>
@@ -101,7 +108,9 @@ export const CsDashboardHeader = ({ username, avatarUrl, isProfileIncomplete }: 
                     <h1 className="text-2xl sm:text-3xl md:text-4xl cs-font-display italic cs-neon-text-pink leading-tight">
                         Creator Studio Dashboard
                     </h1>
-                    <p className="text-white/50 mt-1 text-sm sm:text-base">Welcome back, @{displayName}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-1">
+                        <p className="text-white/50 text-sm sm:text-base">Welcome back, @{displayName}</p>
+                    </div>
                 </div>
 
                 {/* Launch Timer Countdown in top middle */}
@@ -110,21 +119,25 @@ export const CsDashboardHeader = ({ username, avatarUrl, isProfileIncomplete }: 
                 </div>
 
                 <div className="order-2 md:order-3 flex items-center gap-2 shrink-0">
-                    {/* Blinking Update Profile Button */}
-                    {isProfileIncomplete && (
-                        <button
-                            onClick={() => router.push('/settings/profile')}
-                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 border border-pink-400/30 transition-all profile-blink-button"
-                            title="Complete your profile"
-                        >
-                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                            <span>Update Profile</span>
+                    {/* My Profile Button */}
+                    <button
+                        onClick={() => router.push('/settings/profile?from=dashboard')}
+                        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-white font-bold text-xs sm:text-sm flex items-center gap-2 border transition-all ${
+                            isProfileIncomplete 
+                                ? 'profile-blink-button border-pink-400/30' 
+                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-pink-500/30'
+                        }`}
+                        title="My Profile"
+                    >
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                        <span>My Profile</span>
+                        {isProfileIncomplete && (
                             <span className="relative flex h-2 w-2 shrink-0">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                             </span>
-                        </button>
-                    )}
+                        )}
+                    </button>
 
                     <NotificationIcon role="creator" />
 

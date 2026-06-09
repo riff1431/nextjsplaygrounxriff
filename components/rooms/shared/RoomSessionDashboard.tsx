@@ -44,6 +44,8 @@ interface RoomSessionDashboardProps {
     offlineLabel?: string;         // e.g. "Manage Wall Offline"
     offlineDescription?: string;   // e.g. "Add to your permanent collection without broadcasting"
     onSessionStarted?: (session: RoomSession) => void;
+    className?: string;
+    logoNode?: React.ReactNode;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -87,6 +89,8 @@ export default function RoomSessionDashboard({
     offlineLabel = "Manage Offline",
     offlineDescription = "Add permanent content without going live",
     onSessionStarted,
+    className,
+    logoNode,
 }: RoomSessionDashboardProps) {
     const router = useRouter();
     const supabase = createClient();
@@ -249,7 +253,7 @@ export default function RoomSessionDashboard({
 
     return (
         <div
-            className="min-h-screen relative"
+            className={`min-h-screen relative ${className || ""}`}
             style={{
                 backgroundImage: backgroundImage ? `url('${backgroundImage}')` : undefined,
                 backgroundSize: "cover",
@@ -278,24 +282,30 @@ export default function RoomSessionDashboard({
                             <ChevronLeft className="w-[18px] h-[18px]" />
                             <span className="hidden sm:inline">Back</span>
                         </button>
-                        <div className="min-w-0">
-                            <h1
-                                className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3"
-                                style={{
-                                    color: accentColor,
-                                    textShadow: `0 0 20px hsla(${accentHsl}, 0.4)`,
-                                }}
-                            >
-                                <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
-                                <span className="truncate">{roomLabel}</span>
-                            </h1>
-                            <p
-                                className="text-xs sm:text-sm mt-0.5 sm:mt-1"
-                                style={{ color: `hsla(${accentHsl}, 0.6)` }}
-                            >
-                                Manage your live sessions
-                            </p>
-                        </div>
+                        {logoNode ? (
+                            <div className="min-w-0 flex items-center">
+                                {logoNode}
+                            </div>
+                        ) : (
+                            <div className="min-w-0">
+                                <h1
+                                    className="text-2xl sm:text-3xl font-bold flex items-center gap-2 sm:gap-3"
+                                    style={{
+                                        color: accentColor,
+                                        textShadow: `0 0 20px hsla(${accentHsl}, 0.4)`,
+                                    }}
+                                >
+                                    <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
+                                    <span className="truncate">{roomLabel}</span>
+                                </h1>
+                                <p
+                                    className="text-xs sm:text-sm mt-0.5 sm:mt-1"
+                                    style={{ color: `hsla(${accentHsl}, 0.6)` }}
+                                >
+                                    Manage your live sessions
+                                </p>
+                            </div>
+                        )}
                     </div>
                     <WalletPill />
                 </div>

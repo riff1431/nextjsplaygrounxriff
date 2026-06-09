@@ -49,6 +49,8 @@ interface RoomSessionsBrowseProps {
     backRoute?: string;
     backgroundImage?: string;      // optional URL to a bg image
     backgroundOverlay?: string;    // overlay tint, e.g. "rgba(0,0,0,0.55)"
+    className?: string;
+    logoNode?: React.ReactNode;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -76,6 +78,8 @@ export default function RoomSessionsBrowse({
     backRoute,
     backgroundImage,
     backgroundOverlay,
+    className,
+    logoNode,
 }: RoomSessionsBrowseProps) {
     const router = useRouter();
     const supabase = createClient();
@@ -203,6 +207,7 @@ export default function RoomSessionsBrowse({
     /* ──────────────────── RENDER ──────────────────── */
     return (
         <div
+            className={className}
             style={{
                 minHeight: "100vh",
                 backgroundImage: backgroundImage
@@ -283,26 +288,32 @@ export default function RoomSessionsBrowse({
                         >
                             <ArrowLeft style={{ width: 16, height: 16 }} /> Back
                         </button>
-                        <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ fontSize: "26px", filter: `drop-shadow(0 0 5px ${accentLight})` }}>
-                                    {roomEmoji}
-                                </span>
-                                <h1
-                                    style={{
-                                        fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800,
-                                        background: `linear-gradient(135deg, #fff 0%, ${accentColor} 100%)`,
-                                        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                                        letterSpacing: "-0.02em", margin: 0,
-                                    }}
-                                >
-                                    {roomLabel}
-                                </h1>
+                        {logoNode ? (
+                            <div style={{ display: "flex", alignItems: "center" }}>
+                                {logoNode}
                             </div>
-                            <p style={{ fontSize: "12px", color: accentLight, margin: "2px 0 0 36px", letterSpacing: "0.5px" }}>
-                                Browse live sessions • Join the fun
-                            </p>
-                        </div>
+                        ) : (
+                            <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                    <span style={{ fontSize: "26px", filter: `drop-shadow(0 0 5px ${accentLight})` }}>
+                                        {roomEmoji}
+                                    </span>
+                                    <h1
+                                        style={{
+                                            fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800,
+                                            background: `linear-gradient(135deg, #fff 0%, ${accentColor} 100%)`,
+                                            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                                            letterSpacing: "-0.02em", margin: 0,
+                                        }}
+                                    >
+                                        {roomLabel}
+                                    </h1>
+                                </div>
+                                <p style={{ fontSize: "12px", color: accentLight, margin: "2px 0 0 36px", letterSpacing: "0.5px" }}>
+                                    Browse live sessions • Join the fun
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Search + Live Counter */}

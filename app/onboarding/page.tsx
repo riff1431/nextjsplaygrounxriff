@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { createClient } from "@/utils/supabase/client";
+import { generateUniqueUsername } from "@/utils/usernameGenerator";
 
 // Step components
 import AccountTypeStep from "@/components/onboarding/steps/AccountTypeStep";
@@ -23,6 +24,8 @@ interface ProfileData {
     onboarding_completed_at: string | null;
     kyc_status: string;
     role: string;
+    username: string | null;
+    full_name: string | null;
 }
 
 export default function OnboardingPage() {
@@ -54,7 +57,7 @@ export default function OnboardingPage() {
 
         const { data: profile, error } = await supabase
             .from("profiles")
-            .select("account_type_id, account_type_skipped, bank_payment_pending, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role")
+            .select("account_type_id, account_type_skipped, bank_payment_pending, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role, username, full_name")
             .eq("id", user.id)
             .single();
 
@@ -62,6 +65,30 @@ export default function OnboardingPage() {
             console.error("Error fetching profile:", error);
             setLoading(false);
             return;
+        }
+
+        // Auto-generate username if it's missing in the profiles table
+        if (!profile.username) {
+            const metaUsername = user.user_metadata?.username;
+            let finalUsername = metaUsername;
+            
+            if (!finalUsername) {
+                const parts = (profile.full_name || user.user_metadata?.full_name || "New User").split(" ");
+                const firstName = parts[0] || "";
+                const lastName = parts.slice(1).join(" ") || "";
+                finalUsername = await generateUniqueUsername(supabase, firstName, lastName);
+            }
+            
+            const { error: updateError } = await supabase
+                .from("profiles")
+                .update({ username: finalUsername })
+                .eq("id", user.id);
+                
+            if (updateError) {
+                console.error("Error updating missing username:", updateError);
+            } else {
+                profile.username = finalUsername;
+            }
         }
 
         setProfileData(profile);
