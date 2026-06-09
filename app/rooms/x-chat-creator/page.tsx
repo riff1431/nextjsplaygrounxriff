@@ -41,6 +41,24 @@ const XChatCreatorPage = () => {
     const [chatUnread, setChatUnread] = useState(0);
     const [requestsUnread, setRequestsUnread] = useState(0);
     const [isMobile, setIsMobile] = useState<boolean | null>(null);
+    const [creatorAvatar, setCreatorAvatar] = useState<string>("");
+    const [creatorName, setCreatorName] = useState<string>("Creator");
+
+    useEffect(() => {
+        if (!user) return;
+        async function fetchProfile() {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("avatar_url, full_name")
+                .eq("id", user.id)
+                .single();
+            if (profile) {
+                setCreatorAvatar(profile.avatar_url || "");
+                setCreatorName(profile.full_name || "Creator");
+            }
+        }
+        fetchProfile();
+    }, [user, supabase]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -290,8 +308,8 @@ const XChatCreatorPage = () => {
                                             roomId={roomId}
                                             uid={user.id}
                                             hostId={user.id}
-                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                            hostName={user.user_metadata?.full_name || "Creator"}
+                                            hostAvatarUrl={creatorAvatar || user.user_metadata?.avatar_url || ""}
+                                            hostName={creatorName || user.user_metadata?.full_name || "Creator"}
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-black/60">
@@ -302,20 +320,16 @@ const XChatCreatorPage = () => {
                                             />
                                         </div>
                                     )}
-                                    {/* Stat badge */}
-                                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
-                                        <span className="text-red-500 text-sm">❤️</span>
-                                        <span className="text-sm font-bold text-foreground">800</span>
-                                    </div>
+
                                 </motion.div>
                             </div>
 
                             {/* Right - Requests + Summary */}
-                            <div className="flex flex-col gap-1 min-h-0 overflow-y-auto scrollbar-thin">
-                                <div data-tour="xchat-creator-incoming-requests">
+                            <div className="flex flex-col gap-3 h-full min-h-0">
+                                <div className="flex-1 min-h-0 flex flex-col" data-tour="xchat-creator-incoming-requests">
                                     <IncomingRequests roomId={roomId} sessionId={sessionId} />
                                 </div>
-                                <div data-tour="xchat-creator-summary-stats">
+                                <div className="mt-auto shrink-0" data-tour="xchat-creator-summary-stats">
                                     <SummaryPanel roomId={roomId} sessionId={sessionId} />
                                 </div>
                             </div>
@@ -340,8 +354,8 @@ const XChatCreatorPage = () => {
                                             roomId={roomId}
                                             uid={user.id}
                                             hostId={user.id}
-                                            hostAvatarUrl={user.user_metadata?.avatar_url || ""}
-                                            hostName={user.user_metadata?.full_name || "Creator"}
+                                            hostAvatarUrl={creatorAvatar || user.user_metadata?.avatar_url || ""}
+                                            hostName={creatorName || user.user_metadata?.full_name || "Creator"}
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-black/60">
@@ -352,10 +366,7 @@ const XChatCreatorPage = () => {
                                             />
                                         </div>
                                     )}
-                                    <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-background/70 backdrop-blur-sm rounded-full px-3 py-1">
-                                        <span className="text-red-500 text-sm">❤️</span>
-                                        <span className="text-sm font-bold text-foreground">800</span>
-                                    </div>
+
                                 </div>
                             </div>
 
