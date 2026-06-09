@@ -180,11 +180,9 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
 
     useEffect(() => {
         if (activeTour === "confession_creator") {
-            if (currentStep === 0) setActiveView("my");
-            else if (currentStep === 1) setActiveView("global");
-            else if (currentStep === 2) setActiveView("my");
+            setActiveView("my");
         }
-    }, [activeTour, currentStep]);
+    }, [activeTour]);
 
     // Sync roomId from prop when it changes
     useEffect(() => {
@@ -398,73 +396,30 @@ const ConfessionsCenterContent = ({ variant = "confessions", roomId: roomIdProp,
     return (
         <>
             <div className="flex-1 flex flex-col min-w-0 overflow-y-auto pb-4 gap-4">
-                {/* Tab Bar: My Requests vs Global Requests */}
-                <div className="conf-glass-card p-1 flex gap-1 shrink-0">
-                    <button
-                        onClick={() => setActiveView("my")}
-                        data-tour="confession-my-requests"
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                            activeView === "my"
-                                ? "bg-white/15 text-white conf-font-cinzel"
-                                : "text-white/50 hover:text-white/70 hover:bg-white/5"
-                        }`}
-                    >
-                        My Requests
-                    </button>
-                    <button
-                        onClick={() => setActiveView("global")}
-                        data-tour="confession-global-requests"
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all relative ${
-                            activeView === "global"
-                                ? "bg-white/15 text-white conf-font-cinzel"
-                                : "text-white/50 hover:text-white/70 hover:bg-white/5"
-                        }`}
-                    >
-                        Global Requests
-                        {globalRequests.length > 0 && (
-                            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-[hsl(340,80%,55%)] text-white rounded-full">
-                                {globalRequests.length}
-                            </span>
-                        )}
-                    </button>
-                </div>
-
-                {activeView === "my" ? (
-                    <>
-                        <div data-tour="confession-pending-requests" className="flex flex-col">
-                            <RequestTable
-                                title="Pending Requests"
-                                subtitle={`${pendingRequests.length} waiting`}
-                                rows={pendingRequests}
-                                onAction={handleAction}
-                                onAcceptAndDeliver={handleAcceptAndDeliver}
-                            />
-                        </div>
-                        {activeRequests.length > 0 && (
-                            <RequestTable
-                                title="In Progress"
-                                subtitle={`${activeRequests.length} active`}
-                                rows={activeRequests}
-                                onAction={handleAction}
-                                onAcceptAndDeliver={handleAcceptAndDeliver}
-                            />
-                        )}
-                        {resolvedRequests.length > 0 && (
-                            <RequestTable
-                                title="Resolved"
-                                subtitle={`${resolvedRequests.length} completed`}
-                                rows={resolvedRequests}
-                                onAction={handleAction}
-                            />
-                        )}
-                    </>
-                ) : (
+                <div data-tour="confession-pending-requests" className="flex flex-col">
                     <RequestTable
-                        title="Global Requests"
-                        subtitle={`${globalRequests.length} available`}
-                        rows={globalRequests}
+                        title="Pending Requests"
+                        subtitle={`${pendingRequests.length} waiting`}
+                        rows={pendingRequests}
                         onAction={handleAction}
-                        onAcceptAndDeliver={handleGlobalAccept}
+                        onAcceptAndDeliver={handleAcceptAndDeliver}
+                    />
+                </div>
+                {activeRequests.length > 0 && (
+                    <RequestTable
+                        title="In Progress"
+                        subtitle={`${activeRequests.length} active`}
+                        rows={activeRequests}
+                        onAction={handleAction}
+                        onAcceptAndDeliver={handleAcceptAndDeliver}
+                    />
+                )}
+                {resolvedRequests.length > 0 && (
+                    <RequestTable
+                        title="Resolved"
+                        subtitle={`${resolvedRequests.length} completed`}
+                        rows={resolvedRequests}
+                        onAction={handleAction}
                     />
                 )}
             </div>

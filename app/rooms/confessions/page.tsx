@@ -194,12 +194,11 @@ function ConfessionsRoom() {
 
     useEffect(() => {
         if (activeTour === "confession_fan") {
-            if (currentStep === 0) setMobileTab("request");
-            else if (currentStep === 1) setMobileTab("wall");
-            else if (currentStep === 2) setMobileTab("request");
-            else if (currentStep === 4) setMobileTab("chat");
+            if (currentStep === 0) setMobileTab("wall");
+            else if (currentStep === 1) setMobileTab("request");
+            else if (currentStep === 3) setMobileTab("chat");
+            else if (currentStep === 5) setMobileTab("request");
             else if (currentStep === 6) setMobileTab("request");
-            else if (currentStep === 7) setMobileTab("request");
         }
     }, [activeTour, currentStep]);
 
@@ -1285,19 +1284,12 @@ function ConfessionsRoom() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                                    <div className="pt-1 border-t border-white/5">
                                         <div>
                                             <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Identity</div>
                                             <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
                                                 <button onClick={() => setIsAnon(false)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${!isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Public</button>
                                                 <button onClick={() => setIsAnon(true)} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${isAnon ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Anon</button>
-                                            </div>
-                                        </div>
-                                        <div data-tour="confession-send-to">
-                                            <div className="text-[8px] text-white/30 font-bold uppercase tracking-wider mb-1">Send mode</div>
-                                            <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 text-[9px]">
-                                                <button onClick={() => setConfessionMode("1on1")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "1on1" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>1on1</button>
-                                                <button onClick={() => setConfessionMode("global")} className={`flex-1 py-1 rounded-md text-center font-bold transition-all ${confessionMode === "global" ? 'bg-[#d50057] text-white' : 'text-white/50'}`}>Global</button>
                                             </div>
                                         </div>
                                     </div>

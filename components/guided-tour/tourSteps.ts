@@ -385,14 +385,7 @@ const confessionCreatorSteps: TourStep[] = [
       "View confession requests submitted directly to you by fans. Review, accept, reject, or respond.",
     placement: "bottom",
   },
-  {
-    target: "confession-global-requests",
-    icon: "🌍",
-    title: "Global Requests",
-    content:
-      "Browse public confession requests submitted by all users. Choose which confessions you want to react to or discuss.",
-    placement: "bottom",
-  },
+
   {
     target: "confession-pending-requests",
     icon: "⏳",
@@ -455,14 +448,7 @@ const confessionCreatorSteps: TourStep[] = [
 // Confessions Fan — 8 steps
 // ---------------------------------------------------------------------------
 const confessionFanSteps: TourStep[] = [
-  {
-    target: "confession-send-to",
-    icon: "🎯",
-    title: "1 on 1 & Global",
-    content:
-      "Choose where your confession request goes. Send it directly to one creator using 1 on 1, or make it visible to all creators using Global.",
-    placement: "right",
-  },
+
   {
     target: "confession-all-creator-confessions",
     icon: "📖",
@@ -508,7 +494,7 @@ const confessionFanSteps: TourStep[] = [
     icon: "📤",
     title: "Send Request",
     content:
-      "Submit your confession request to the creator or all creators. You can choose to send it publicly or anonymously.",
+      "Submit your confession request to the creator. You can choose to send it publicly or anonymously.",
     placement: "left",
   },
   {
