@@ -22,18 +22,15 @@ interface XChatRequest {
 }
 
 const getToastDescription = (reply: string) => {
-    const lines = reply.split('\n');
-    const processedLines = lines.map(line => {
-        const isLink = line.trim().startsWith('http') || line.trim().startsWith('/api/');
-        if (isLink) {
-            if (line.match(/\.(webm|mp3|wav|m4a)$/i)) return "🎤 [Voice Note]";
-            if (line.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "🖼️ [Image]";
-            if (line.match(/\.(mp4|ogg)$/i)) return "🎥 [Video]";
-            return "📎 [Attachment]";
-        }
-        return line;
+    const urlRegex = /(https?:\/\/[^\s]+|\/api\/[^\s]+)/gi;
+    const formatted = reply.replace(urlRegex, (url) => {
+        const cleanUrl = url.trim();
+        if (cleanUrl.match(/\.(webm|mp3|wav|m4a)(\?|$)/i)) return "🎤 [Voice Note]";
+        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)(\?|$)/i)) return "🖼️ [Image]";
+        if (cleanUrl.match(/\.(mp4|ogg)(\?|$)/i)) return "🎥 [Video]";
+        return "📎 [Attachment]";
     });
-    const joined = processedLines.filter(line => line.trim() !== "").join(' ');
+    const joined = formatted.replace(/\s+/g, ' ').trim();
     return joined.substring(0, 50) + (joined.length > 50 ? "..." : "");
 };
 
