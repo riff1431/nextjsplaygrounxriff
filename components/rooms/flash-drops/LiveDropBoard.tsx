@@ -136,7 +136,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
         <>
         <div className="fd-glass-panel fd-neon-border-md rounded-xl p-3 flex flex-col">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h2 className="fd-font-tech text-xl font-bold text-foreground">Live Drop Board</h2>
                 {(["all", "photos", "videos"] as const).map((tab) => (
                     <button
@@ -170,7 +170,7 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
 
             {/* Grid of drops */}
             {filteredDrops.length > 0 && (
-                <div className="grid grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {filteredDrops.map((drop) => {
                         const isPaid = drop.price > 0;
                         const isUnlocked = unlockedIds.has(drop.id);
@@ -209,8 +209,8 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                                                 />
                                                 {!isLocked && (
                                                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                                        <div className="w-8 h-8 rounded-full bg-primary/80 flex items-center justify-center shadow-[0_0_15px_hsl(330_100%_55%/0.5)]">
-                                                            <Play size={14} className="text-white ml-0.5" fill="white" />
+                                                        <div className="w-6 h-6 rounded-full bg-primary/80 flex items-center justify-center shadow-[0_0_15px_hsl(330_100%_55%/0.5)]">
+                                                            <Play size={10} className="text-white ml-0.5" fill="white" />
                                                         </div>
                                                     </div>
                                                 )}
@@ -225,15 +225,15 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
 
                                         {/* Lock overlay for paid locked drops */}
                                         {isLocked && (
-                                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-1.5">
+                                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-1">
                                                 {isUnlocking ? (
-                                                    <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                                    <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                                                 ) : (
                                                     <>
-                                                        <div className="w-10 h-10 rounded-full bg-primary/30 border border-primary/60 flex items-center justify-center shadow-[0_0_20px_hsl(330_100%_55%/0.4)]">
-                                                            <Lock size={18} className="text-primary drop-shadow-[0_0_6px_hsl(330_100%_55%)]" />
+                                                        <div className="w-8 h-8 rounded-full bg-primary/30 border border-primary/60 flex items-center justify-center shadow-[0_0_20px_hsl(330_100%_55%/0.4)]">
+                                                            <Lock size={12} className="text-primary drop-shadow-[0_0_6px_hsl(330_100%_55%)]" />
                                                         </div>
-                                                        <span className="text-[10px] font-black fd-font-tech text-primary tracking-wider drop-shadow-[0_0_6px_hsl(330_100%_55%/0.6)]">
+                                                        <span className="text-[8px] font-black fd-font-tech text-primary tracking-wider drop-shadow-[0_0_6px_hsl(330_100%_55%/0.6)]">
                                                             TAP TO UNLOCK
                                                         </span>
                                                     </>
@@ -243,26 +243,29 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
 
                                         {/* Unlocked badge */}
                                         {isPaid && isUnlocked && (
-                                            <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/80 backdrop-blur-sm">
-                                                <Unlock size={9} className="text-white" />
-                                                <span className="text-[8px] font-black text-white uppercase tracking-wider">Unlocked</span>
+                                            <div className="absolute bottom-1 left-1 flex items-center gap-1 px-1 py-0.5 rounded bg-green-500/80 backdrop-blur-sm">
+                                                <Unlock size={8} className="text-white" />
+                                                <span className="text-[7px] font-black text-white uppercase tracking-wider">Unlocked</span>
                                             </div>
                                         )}
 
-                                        {/* Rarity badge */}
-                                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-sm ${rarityColor[drop.rarity]}`}>
-                                            {drop.rarity}
-                                        </span>
-                                        {/* Price badge */}
-                                        {isPaid && (
-                                            <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-black fd-font-tech text-white shadow-[0_0_10px_hsl(330_100%_55%/0.4)] ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
-                                                {isUnlocked ? "✓" : `${cs()}${drop.price}`}
+                                        {/* Badges container */}
+                                        <div className="absolute top-1 left-0 right-0 px-1 flex items-center justify-between gap-1 z-10">
+                                            {/* Rarity badge */}
+                                            <span className={`px-1 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-sm truncate max-w-[55%] ${rarityColor[drop.rarity]}`}>
+                                                {drop.rarity}
                                             </span>
-                                        )}
+                                            {/* Price badge */}
+                                            {isPaid && (
+                                                <span className={`px-1 py-0.5 rounded text-[8px] font-black fd-font-tech text-white shadow-[0_0_10px_hsl(330_100%_55%/0.4)] shrink-0 ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
+                                                    {isUnlocked ? "✓" : `${cs()}${drop.price}`}
+                                                </span>
+                                            )}
+                                        </div>
                                         {/* Kind icon */}
                                         {!isLocked && (
-                                            <span className="absolute bottom-1.5 right-1.5 p-1 rounded bg-black/60 backdrop-blur-sm">
-                                                {drop.kind === "Video" ? <Video size={10} className="text-white/70" /> : <Image size={10} className="text-white/70" />}
+                                            <span className="absolute bottom-1 right-1 p-0.5 rounded bg-black/60 backdrop-blur-sm">
+                                                {drop.kind === "Video" ? <Video size={8} className="text-white/70" /> : <Image size={8} className="text-white/70" />}
                                             </span>
                                         )}
                                     </div>
@@ -270,35 +273,40 @@ export default function LiveDropBoard({ roomId, onSpend, drops, loading }: LiveD
                                     /* No media — compact fallback */
                                     <div className="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
                                         {isLocked ? (
-                                            <div className="flex flex-col items-center gap-1.5">
-                                                <Lock size={24} className="text-primary/50" />
-                                                <span className="text-[9px] font-bold text-primary/50 fd-font-tech">LOCKED</span>
+                                            <div className="flex flex-col items-center gap-1">
+                                                <Lock size={16} className="text-primary/50" />
+                                                <span className="text-[8px] font-bold text-primary/50 fd-font-tech">LOCKED</span>
                                             </div>
                                         ) : (
-                                            drop.kind === "Video" ? <Video size={28} className="text-primary/30" /> : <Image size={28} className="text-primary/30" />
+                                            drop.kind === "Video" ? <Video size={16} className="text-primary/30" /> : <Image size={16} className="text-primary/30" />
                                         )}
-                                        <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-sm ${rarityColor[drop.rarity]}`}>
-                                            {drop.rarity}
-                                        </span>
-                                        {isPaid && (
-                                            <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-black fd-font-tech text-white ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
-                                                {isUnlocked ? "✓" : `${cs()}${drop.price}`}
+                                        {/* Badges container */}
+                                        <div className="absolute top-1 left-0 right-0 px-1 flex items-center justify-between gap-1 z-10">
+                                            {/* Rarity badge */}
+                                            <span className={`px-1 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-sm truncate max-w-[55%] ${rarityColor[drop.rarity]}`}>
+                                                {drop.rarity}
                                             </span>
-                                        )}
+                                            {/* Price badge */}
+                                            {isPaid && (
+                                                <span className={`px-1 py-0.5 rounded text-[8px] font-black fd-font-tech text-white shrink-0 ${isUnlocked ? "bg-green-500/80" : "bg-primary/80"}`}>
+                                                    {isUnlocked ? "✓" : `${cs()}${drop.price}`}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
                                 {/* Card info footer */}
-                                <div className="p-2 flex flex-col gap-0.5">
-                                    <span className="fd-font-body font-bold text-sm leading-tight text-foreground truncate">
+                                <div className="p-1.5 flex flex-col gap-0.5">
+                                    <span className="fd-font-body font-bold text-xs leading-tight text-foreground truncate">
                                         {drop.title}
                                     </span>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs text-foreground/50 fd-font-body">
+                                    <div className="flex flex-wrap items-center justify-between gap-x-1 gap-y-0.5">
+                                        <span className="text-[9px] text-foreground/50 fd-font-body whitespace-nowrap">
                                             Ends · {formatCountdown(drop.ends_at)}
                                         </span>
                                         {drop.inventory_remaining < drop.inventory_total && (
-                                            <span className="text-xs text-orange-400/70 fd-font-body">
+                                            <span className="text-[9px] text-orange-400/70 fd-font-body whitespace-nowrap">
                                                 {drop.inventory_remaining} left
                                             </span>
                                         )}

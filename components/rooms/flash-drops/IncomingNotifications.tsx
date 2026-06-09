@@ -29,8 +29,16 @@ export default function IncomingNotifications({ roomId, sessionId }: { roomId: s
     const [unreadCount, setUnreadCount] = useState(0);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
     const [viewingNotification, setViewingNotification] = useState<FlashDropRequest | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 640);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     useEffect(() => {
         if (!user || !roomId) return;
@@ -233,7 +241,14 @@ export default function IncomingNotifications({ roomId, sessionId }: { roomId: s
                             animate={{ opacity: 1, x: 0, scale: 1 }}
                             exit={{ opacity: 0, x: -10, scale: 0.95 }}
                             transition={{ duration: 0.18 }}
-                            style={{
+                            style={isMobile ? {
+                                position: "fixed",
+                                top: dropdownPos.top,
+                                left: "12px",
+                                right: "12px",
+                                zIndex: 99999,
+                                maxHeight: `calc(100vh - ${dropdownPos.top + 24}px)`,
+                            } : {
                                 position: "fixed",
                                 top: dropdownPos.top,
                                 left: dropdownPos.left,

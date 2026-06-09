@@ -1409,7 +1409,11 @@ const Suga4URoom = () => {
                                                                 {m.type === 'SECRET_UNLOCK' && <span>revealed a secret!</span>}
                                                                 {m.type === 'PAID_REQUEST' && (
                                                                     <span>
-                                                                        {["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(m.label) ? "TIPS" : "requested"}: {m.label} (${m.amount})
+                                                                        {["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(m.label) ? (
+                                                                            <span>sent {m.label} ({cs()}{m.amount})</span>
+                                                                        ) : (
+                                                                            <span>requested: {m.label} ({cs()}{m.amount})</span>
+                                                                        )}
                                                                     </span>
                                                                 )}
                                                                 {m.type === 'OFFER_CLAIM' && <span>claimed offer: {m.label}</span>}

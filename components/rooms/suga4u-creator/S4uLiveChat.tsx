@@ -9,6 +9,7 @@ import { useSuga4U, ActivityEvent } from "@/hooks/useSuga4U";
 import { useAuth } from "@/app/context/AuthContext";
 import { useAvatarMap } from "@/hooks/useAvatarMap";
 import UserBadgeDisplay from "@/components/shared/UserBadgeDisplay";
+import { cs } from "@/utils/currency";
 
 const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: string }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -57,7 +58,7 @@ const S4uLiveChat = ({ roomId, sessionId }: { roomId?: string; sessionId?: strin
         if (a.type === 'SECRET_UNLOCK') return "revealed a secret!";
         if (a.type === 'PAID_REQUEST') {
             const isGift = ["Diamond", "Diamonds", "More Diamonds", "Big Money"].includes(a.label);
-            return `${isGift ? "TIPS" : "requested"}: ${a.label}`;
+            return isGift ? `sent ${a.label} (${cs()}${a.amount})` : `requested: ${a.label} (${cs()}${a.amount})`;
         }
         if (a.type === 'OFFER_CLAIM') return `claimed offer: ${a.label}`;
         return a.label;

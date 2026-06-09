@@ -275,21 +275,20 @@ export default function FlashDropLiveChat({
                     // System event messages
                     if (style === "system") {
                         return (
-                            <div key={m.id} className="flex items-center gap-2.5 py-1 my-1">
-                                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
-                                <span
-                                    className="text-[11px] font-bold px-3 py-1 rounded-full shrink-0 backdrop-blur-sm"
+                            <div key={m.id} className="flex items-start w-full">
+                                <div
+                                    className="text-[11px] font-bold px-3 py-1.5 rounded-xl backdrop-blur-sm w-full break-words text-left leading-relaxed"
                                     style={{
                                         background: m.system_type === "drop_new"
-                                            ? "hsl(330 100% 50% / 0.1)"
+                                            ? "hsl(330 100% 50% / 0.08)"
                                             : m.system_type === "drop_ended"
-                                                ? "rgba(255,255,255,0.03)"
-                                                : "hsl(45 100% 50% / 0.08)",
+                                                ? "rgba(255,255,255,0.02)"
+                                                : "hsl(45 100% 50% / 0.06)",
                                         border: `1px solid ${m.system_type === "drop_new"
-                                            ? "hsl(330 100% 55% / 0.2)"
+                                            ? "hsl(330 100% 55% / 0.15)"
                                             : m.system_type === "drop_ended"
-                                                ? "rgba(255,255,255,0.06)"
-                                                : "hsl(45 100% 55% / 0.15)"}`,
+                                                ? "rgba(255,255,255,0.05)"
+                                                : "hsl(45 100% 55% / 0.12)"}`,
                                         color: m.system_type === "drop_new"
                                             ? "hsl(330 100% 70%)"
                                             : m.system_type === "drop_ended"
@@ -298,8 +297,7 @@ export default function FlashDropLiveChat({
                                     }}
                                 >
                                     {m.message}
-                                </span>
-                                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                                </div>
                             </div>
                         );
                     }
@@ -454,7 +452,7 @@ export default function FlashDropLiveChat({
                             placeholder={roomId ? (isCreator ? "Reply to your fans..." : "Say something...") : "No active session..."}
                             disabled={!roomId || sending}
                             maxLength={300}
-                            className="flex-1 text-[15px] px-3 py-2 rounded-xl outline-none transition-all disabled:opacity-40"
+                            className="flex-1 text-base sm:text-sm px-3 py-2 rounded-xl outline-none transition-all disabled:opacity-40"
                             style={{
                                 background: "rgba(255,255,255,0.06)",
                                 border: "1px solid hsl(330 100% 55% / 0.25)",

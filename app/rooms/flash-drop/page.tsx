@@ -584,6 +584,32 @@ export default function FlashDropsRoomPreview() {
 
                         {/* Mobile: Stream on top, tab content below */}
                         <div className="lg:hidden flex flex-1 flex-col min-h-0 px-2 pt-2 gap-2 overflow-hidden">
+                            {/* Mobile Top Navigation Control Bar */}
+                            <div className="flex items-center justify-between p-1 bg-black/30 backdrop-blur-md rounded-xl border border-white/5 shrink-0">
+                                <button
+                                    onClick={() => router.back()}
+                                    className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all text-primary shadow-md"
+                                    title="Go Back"
+                                >
+                                    <ArrowLeft size={16} />
+                                </button>
+                                
+                                <div className="flex items-center gap-2">
+                                    {roomId && (
+                                        <button
+                                            onClick={() => setShowInviteModal(true)}
+                                            className="w-9 h-9 rounded-lg border border-primary/40 bg-primary/10 flex items-center justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary shadow-md"
+                                            title="Invite Friends"
+                                        >
+                                            <UserPlus size={16} />
+                                        </button>
+                                    )}
+                                    {roomId && user && (
+                                        <IncomingNotifications roomId={roomId} sessionId={urlSessionId} />
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Stream Wrapper */}
                             <div data-tour="flashdrop-fan-creator-info" className="relative rounded-xl overflow-hidden fd-neon-border-md shrink-0 aspect-video w-full">
                                 {roomId && user && hostId && isMobile === true ? (
@@ -601,29 +627,6 @@ export default function FlashDropsRoomPreview() {
                                         {roomId ? "Connecting..." : "No active session"}
                                     </div>
                                 )}
-
-                                {/* Floating action buttons on top-left of stream */}
-                                <div className="absolute top-3 left-3 flex flex-col gap-2 z-30">
-                                    <button
-                                        onClick={() => router.back()}
-                                        className="w-9 h-9 rounded-lg border border-primary/40 bg-black/60 flex items-center justify-center hover:bg-primary/20 hover:border-primary/70 transition-all shadow-md"
-                                        title="Go Back"
-                                    >
-                                        <ArrowLeft size={16} className="text-primary" />
-                                    </button>
-                                    {roomId && (
-                                        <button
-                                            onClick={() => setShowInviteModal(true)}
-                                            className="w-9 h-9 rounded-lg border border-primary/40 bg-primary/10 flex items-center justify-center hover:bg-primary/25 hover:border-primary/80 transition-all text-primary shadow-md"
-                                            title="Invite Friends"
-                                        >
-                                            <UserPlus size={16} />
-                                        </button>
-                                    )}
-                                    {roomId && user && (
-                                        <IncomingNotifications roomId={roomId} sessionId={urlSessionId} />
-                                    )}
-                                </div>
                             </div>
 
                             {/* Reactions bar fixed globally under the stream */}
