@@ -21,6 +21,22 @@ interface XChatRequest {
     updated_at: string;
 }
 
+const getToastDescription = (reply: string) => {
+    const lines = reply.split('\n');
+    const processedLines = lines.map(line => {
+        const isLink = line.trim().startsWith('http') || line.trim().startsWith('/api/');
+        if (isLink) {
+            if (line.match(/\.(webm|mp3|wav|m4a)$/i)) return "🎤 [Voice Note]";
+            if (line.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return "🖼️ [Image]";
+            if (line.match(/\.(mp4|ogg)$/i)) return "🎥 [Video]";
+            return "📎 [Attachment]";
+        }
+        return line;
+    });
+    const joined = processedLines.filter(line => line.trim() !== "").join(' ');
+    return joined.substring(0, 50) + (joined.length > 50 ? "..." : "");
+};
+
 export default function IncomingReplies({ roomId, sessionId }: { roomId: string; sessionId?: string | null }) {
     const { user } = useAuth();
     const supabase = createClient();
@@ -99,7 +115,7 @@ export default function IncomingReplies({ roomId, sessionId }: { roomId: string;
                         });
 
                         toast.success("New reply from Creator!", {
-                            description: updated.creator_reply.substring(0, 50) + (updated.creator_reply.length > 50 ? "..." : ""),
+                            description: getToastDescription(updated.creator_reply),
                             icon: <Bell className="text-gold" size={16} />,
                         });
                     }
