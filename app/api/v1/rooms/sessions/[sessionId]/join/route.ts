@@ -38,6 +38,43 @@ export async function POST(
             return NextResponse.json({ error: "You are the creator of this session" }, { status: 400 });
         }
 
+        // Check dynamic minimum wallet balance requirements
+        const { data: globalPricingObj } = await supabase
+            .from("admin_settings")
+            .select("value")
+            .eq("key", "global_pricing")
+            .single();
+        const globalPricing = globalPricingObj?.value || {};
+        const globalBillingEnabled = globalPricing.per_minute_billing_enabled !== false;
+
+        const { data: settings } = await supabase
+            .from("room_settings")
+            .select("*")
+            .eq("room_type", session.room_type || "")
+            .single();
+
+        const billingEnabled = globalBillingEnabled && (settings ? (settings.billing_enabled ?? true) : true);
+
+        if (billingEnabled) {
+            const minWalletRequired = settings && settings.min_wallet_balance !== undefined && settings.min_wallet_balance !== null
+                ? Number(settings.min_wallet_balance)
+                : Number(globalPricing.min_wallet_balance ?? 10);
+
+            // Fetch the fan's wallet balance
+            const { data: fanWallet } = await supabase
+                .from("wallets")
+                .select("balance")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            const balance = fanWallet ? Number(fanWallet.balance || 0) : 0;
+            if (balance < minWalletRequired) {
+                return NextResponse.json({
+                    error: `Insufficient wallet balance to enter this room. Minimum $${minWalletRequired.toFixed(2)} required.`,
+                }, { status: 402 });
+            }
+        }
+
         // 2. Check for existing valid ticket (re-entry without charge)
         const { data: existingTicket } = await supabase
             .from("session_entry_tickets")

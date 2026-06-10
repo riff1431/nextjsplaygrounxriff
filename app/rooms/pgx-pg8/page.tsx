@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cs } from "@/utils/currency";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 
 const contestants = [
     { rank: 1, name: "ALEXA", votes: "8.4k", gradient: "bg-gradient-to-br from-pink-600/60 to-purple-800/60" },
@@ -33,15 +34,18 @@ export default function CompetitionRoom() {
 
                 <div className="relative z-10 mx-auto mx-100 h-full flex flex-col p-3 md:p-4 lg:p-5">
                     {/* Header */}
-                    <header className="py-2 flex-shrink-0 flex items-center">
+                    <header className="py-2 flex-shrink-0 flex items-center justify-between gap-4">
                         <button onClick={() => router.back()} className="flex items-center gap-1 text-foreground/80 hover:text-foreground transition-colors bg-card/40 border border-border rounded-lg px-3 py-1.5 neon-border">
                             <ArrowLeft size={16} />
                             <span className="text-xs font-display tracking-wider">BACK</span>
                         </button>
                         <div className="flex-1 flex justify-center">
-                            <h1 className="font-cursive text-3xl md:text-4xl lg:text-5xl tracking-wide neon-text text-foreground mr-96 pr-40">
+                            <h1 className="font-cursive text-3xl md:text-4xl lg:text-5xl tracking-wide neon-text text-foreground">
                                 Competition Room
                             </h1>
+                        </div>
+                        <div>
+                            <HeaderBillingWidget sessionId={sessionId} accentHsl="290, 80%, 60%" />
                         </div>
                     </header>
 

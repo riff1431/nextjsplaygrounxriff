@@ -168,6 +168,11 @@ export default function CreatorBillingWidget({
                 }
                 .cbw-rate { display:flex; align-items:stretch; }
                 @media (max-width:599px) { .cbw-rate { display:none !important; } }
+                @media (max-width: 479px) {
+                    .cbw-label { display: none !important; }
+                    .cbw-stat-container { padding: 4px 6px !important; min-width: 38px !important; }
+                    .cbw-value { font-size: 12px !important; }
+                }
             `}</style>
 
             {/* ── Main pill ── */}
@@ -306,38 +311,47 @@ function Stat({
     faint?: boolean;
 }) {
     return (
-        <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "6px 13px",
-            gap: 2,
-            cursor: "default",
-            minWidth: 58,
-        }}>
+        <div 
+            className="cbw-stat-container"
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 13px",
+                gap: 2,
+                cursor: "default",
+                minWidth: 58,
+            }}
+        >
             {/* Label */}
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                 {icon}
-                <span style={{
-                    fontSize: 8.5, fontWeight: 600,
-                    color: "rgba(255,255,255,0.4)",
-                    textTransform: "uppercase", letterSpacing: ".7px",
-                    whiteSpace: "nowrap",
-                }}>
+                <span 
+                    className="cbw-label"
+                    style={{
+                        fontSize: 8.5, fontWeight: 600,
+                        color: "rgba(255,255,255,0.4)",
+                        textTransform: "uppercase", letterSpacing: ".7px",
+                        whiteSpace: "nowrap",
+                    }}
+                >
                     {label}
                 </span>
             </div>
             {/* Value */}
             <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <span style={{
-                    fontSize: 16, fontWeight: 800,
-                    color: faint ? "rgba(255,255,255,0.3)" : valueColor,
-                    letterSpacing: "-.2px", lineHeight: 1,
-                    transition: "color .3s",
-                    animation: bump ? "cbw-bump .5s cubic-bezier(.34,1.56,.64,1)" : faint ? "cbw-shimmer 1.5s ease-in-out infinite" : undefined,
-                    whiteSpace: "nowrap",
-                }}>
+                <span 
+                    className="cbw-value"
+                    style={{
+                        fontSize: 16, fontWeight: 800,
+                        color: faint ? "rgba(255,255,255,0.3)" : valueColor,
+                        letterSpacing: "-.2px", lineHeight: 1,
+                        transition: "color .3s",
+                        animation: bump ? "cbw-bump .5s cubic-bezier(.34,1.56,.64,1)" : faint ? "cbw-shimmer 1.5s ease-in-out infinite" : undefined,
+                        whiteSpace: "nowrap",
+                    }}
+                >
                     {value}
                 </span>
                 {!faint && suffix}

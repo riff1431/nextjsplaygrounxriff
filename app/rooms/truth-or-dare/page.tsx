@@ -46,6 +46,7 @@ import GroupVotePanel from "@/components/rooms/GroupVotePanel"; // Added GroupVo
 import WalletPill from "@/components/common/WalletPill";
 import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 import GroupCallFanModal from "@/components/rooms/truth-or-dare/GroupCallFanModal";
 import { useGroupCall } from "@/hooks/useGroupCall";
 import EmojiPicker from "@/components/common/EmojiPicker";
@@ -1428,6 +1429,7 @@ function TruthOrDareContent() {
                     </div>
 
                     <RoomTourHelpButton tourType="truth_or_dare_fan" accentHsl="260, 80%, 55%" />
+                    <HeaderBillingWidget sessionId={sessionId} accentHsl="260, 80%, 55%" />
                     <WalletPill compact={true} />
                 </div>
             </div>

@@ -78,6 +78,8 @@ export async function PUT(request: NextRequest) {
             "private_1on1_duration_seconds",
             "entry_info_section1", "entry_info_section2",
             "entry_info_section3", "entry_info_pro_tip",
+            "free_minutes", "min_wallet_balance", "creator_split_percent",
+            "platform_split_percent", "auto_kick_on_insufficient",
         ];
 
         const filteredUpdates: Record<string, any> = { updated_at: new Date().toISOString() };

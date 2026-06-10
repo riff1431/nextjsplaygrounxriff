@@ -161,6 +161,8 @@ export default function RoomEntryInfoModal({
     // Live billing rate — fetched from room settings
     const [liveCostPerMin, setLiveCostPerMin] = useState<number | null>(null);
     const [liveBillingEnabled, setLiveBillingEnabled] = useState<boolean | null>(null);
+    const [liveFreeMinutes, setLiveFreeMinutes] = useState<number | null>(null);
+    const [liveMinWalletBalance, setLiveMinWalletBalance] = useState<number | null>(null);
 
     const theme = ROOM_THEMES[roomType] || DEFAULT_THEME;
     const accent = accentHsl;
@@ -203,6 +205,8 @@ export default function RoomEntryInfoModal({
                             ? (d.settings.min_private_cost_per_min ?? 0)
                             : (d.settings.public_cost_per_min ?? 0);
                         setLiveCostPerMin(rate);
+                        setLiveFreeMinutes(d.settings.free_minutes ?? 0);
+                        setLiveMinWalletBalance(d.settings.min_wallet_balance ?? 0);
                     }
                 })
                 .catch(() => { /* use prop fallback */ });
@@ -479,6 +483,12 @@ export default function RoomEntryInfoModal({
                                     gap: "6px",
                                     justifyContent: "center",
                                     flexWrap: "wrap",
+                                    background: "rgba(255, 255, 255, 0.03)",
+                                    padding: "8px",
+                                    borderRadius: "12px",
+                                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                                    backdropFilter: "blur(8px)",
+                                    WebkitBackdropFilter: "blur(8px)",
                                 }}>
                                     {showEntry && (
                                         <div style={{
@@ -518,7 +528,49 @@ export default function RoomEntryInfoModal({
                                                 color: accentColor,
                                                 letterSpacing: "0.3px",
                                             }}>
-                                                {cs()}{effectiveRate}/min
+                                                Active rate: {cs()}{effectiveRate}/min
+                                            </span>
+                                        </div>
+                                    )}
+                                    {showRate && liveFreeMinutes !== null && liveFreeMinutes > 0 && (
+                                        <div style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "5px",
+                                            padding: "5px 10px",
+                                            borderRadius: "8px",
+                                            background: "rgba(34,197,94,0.1)",
+                                            border: "1px solid rgba(34,197,94,0.25)",
+                                        }}>
+                                            <span style={{ fontSize: "13px" }}>🎁</span>
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                color: "#4ade80",
+                                                letterSpacing: "0.3px",
+                                            }}>
+                                                First {liveFreeMinutes} min free
+                                            </span>
+                                        </div>
+                                    )}
+                                    {showRate && liveMinWalletBalance !== null && liveMinWalletBalance > 0 && (
+                                        <div style={{
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: "5px",
+                                            padding: "5px 10px",
+                                            borderRadius: "8px",
+                                            background: "rgba(59,130,246,0.1)",
+                                            border: "1px solid rgba(59,130,246,0.25)",
+                                        }}>
+                                            <span style={{ fontSize: "13px" }}>🛡️</span>
+                                            <span style={{
+                                                fontSize: "11px",
+                                                fontWeight: 700,
+                                                color: "#60a5fa",
+                                                letterSpacing: "0.3px",
+                                            }}>
+                                                Min. {cs()}{liveMinWalletBalance} balance required
                                             </span>
                                         </div>
                                     )}

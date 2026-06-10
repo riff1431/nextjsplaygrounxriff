@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import { cs } from "@/utils/currency";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 
 const LiveStreamWrapper = dynamic(
     () => import("@/components/rooms/LiveStreamWrapper"),
@@ -253,6 +254,18 @@ const XChatRoom = () => {
     const [sessionStart, setSessionStart]   = useState<Date | null>(null);
     const [elapsed, setElapsed]             = useState(0);
     const RATE_PER_MIN = 2;
+    const [dynamicRate, setDynamicRate]     = useState<number | null>(null);
+
+    useEffect(() => {
+        const handleUpdate = (e: Event) => {
+            const ev = e as CustomEvent;
+            if (ev.detail && ev.detail.rate !== null) {
+                setDynamicRate(ev.detail.rate);
+            }
+        };
+        window.addEventListener("session-billing-update", handleUpdate);
+        return () => window.removeEventListener("session-billing-update", handleUpdate);
+    }, []);
 
     const [showInviteModal, setShowInviteModal] = useState(false);
 
@@ -352,11 +365,17 @@ const XChatRoom = () => {
 
         (async () => {
             let query = supabase.from("x_chat_requests")
-                .select("id, status").eq("room_id", roomId).eq("fan_id", user.id)
+                .select("id, status, updated_at").eq("room_id", roomId).eq("fan_id", user.id)
                 .order("created_at", { ascending: false }).limit(1);
             if (urlSessionId) query = query.eq("session_id", urlSessionId);
             const { data: ex } = await query.single();
-            if (ex) setRequestStatus(ex.status as RequestStatus);
+            if (ex) {
+                setRequestStatus(ex.status as RequestStatus);
+                if (ex.status === "accepted") {
+                    setSessionActive(true);
+                    setSessionStart(ex.updated_at ? new Date(ex.updated_at) : new Date());
+                }
+            }
         })();
         const ch = supabase.channel(`xchat-req-${roomId}-${user.id}-${urlSessionId || 'all'}`)
             .on("postgres_changes", {
@@ -368,6 +387,13 @@ const XChatRoom = () => {
                     // Only update if belongs to current session
                     if (urlSessionId && u.session_id !== urlSessionId) return;
                     setRequestStatus(u.status);
+                    if (u.status === "accepted") {
+                        setSessionActive(true);
+                        setSessionStart(u.updated_at ? new Date(u.updated_at) : new Date());
+                    } else {
+                        setSessionActive(false);
+                        setSessionStart(null);
+                    }
                 }
             }).subscribe();
         return () => { supabase.removeChannel(ch); };
@@ -384,7 +410,7 @@ const XChatRoom = () => {
     const formatTime = (s: number) =>
         `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-    const runningCharge = Math.ceil(elapsed / 60) * RATE_PER_MIN;
+    const runningCharge = Math.ceil(elapsed / 60) * (dynamicRate ?? RATE_PER_MIN);
 
     /* ── actions ────────────────────────────────────────── */
     const sendRequest = async () => {
@@ -553,6 +579,7 @@ const XChatRoom = () => {
                         <div className="mobile-header-right">
                             {renderStatus()}
                             {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
+                            <HeaderBillingWidget sessionId={urlSessionId} accentHsl="45, 90%, 55%" />
                             <WalletPill />
                         </div>
                     </header>
@@ -838,6 +865,7 @@ const XChatRoom = () => {
                             <RoomTourHelpButton tourType="xchat_fan" accentHsl="45, 90%, 55%" />
                             {renderStatus()}
                             {roomId && <IncomingReplies roomId={roomId} sessionId={urlSessionId} />}
+                            <HeaderBillingWidget sessionId={urlSessionId} accentHsl="45, 90%, 55%" />
                             <WalletPill />
                         </div>
                     </header>

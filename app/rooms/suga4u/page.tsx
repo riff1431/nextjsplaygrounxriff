@@ -20,6 +20,8 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import WalletPill from "@/components/common/WalletPill";
 import PrivateCallFanModal from "@/components/rooms/suga4u/PrivateCallFanModal";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 import { usePrivateCall } from "@/hooks/usePrivateCall";
 import { toast } from "sonner";
 import { useGroupCall } from "@/hooks/useGroupCall";
@@ -1016,6 +1018,7 @@ const Suga4URoom = () => {
                                     </AnimatePresence>
                                 </div>
 
+                                <HeaderBillingWidget sessionId={urlSessionId} accentHsl="150, 80%, 50%" />
                                 <WalletPill />
                                 <div data-tour="suga-fan-creator-info">
                                     <UserProfile name={hostName} avatarUrl={hostAvatar} hostId={hostId} />
@@ -2249,8 +2252,11 @@ const Suga4URoom = () => {
                         </div>
                     </div>
                 )}
-
-
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="330, 80%, 55%"
+                    exitRoute="/home"
+                />
 
             </div>
         </ProtectRoute>

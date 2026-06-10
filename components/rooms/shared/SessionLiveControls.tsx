@@ -151,14 +151,10 @@ export default function SessionLiveControls({
                     justify-content: flex-end;
                     font-family: 'Inter', sans-serif;
                 }
-                /* Show billing on all screens ≥ 480px */
+                /* Show billing on all screens */
                 .slc-billing {
                     display: flex;
                     align-items: center;
-                }
-                /* Hide only on very small mobile */
-                @media (max-width: 479px) {
-                    .slc-billing { display: none; }
                 }
             `}</style>
 

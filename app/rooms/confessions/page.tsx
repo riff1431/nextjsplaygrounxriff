@@ -18,6 +18,8 @@ import InviteModal from "@/components/rooms/InviteModal";
 import InvitationPopup from "@/components/rooms/InvitationPopup";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || undefined;
@@ -860,6 +862,7 @@ function ConfessionsRoom() {
 
                             <div className="flex items-center gap-3" data-tour="confession-invite-incoming">
                                 <RoomTourHelpButton tourType="confession_fan" accentHsl="350, 80%, 55%" />
+                                <HeaderBillingWidget sessionId={urlSessionId} accentHsl="350, 80%, 55%" />
                                 <button
                                     onClick={() => setShowInviteModal(true)}
                                     className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 bg-primary/15 hover:bg-primary/25 text-primary text-sm font-bold transition-all border border-primary/30 hover:scale-105"
@@ -998,6 +1001,7 @@ function ConfessionsRoom() {
                         </div>
                         
                         <div className="flex items-center gap-2 shrink-0" data-tour="confession-invite-incoming">
+                            <HeaderBillingWidget sessionId={urlSessionId} accentHsl="350, 80%, 55%" />
                             <button
                                 onClick={() => setShowInviteModal(true)}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#d50057] text-white text-xs font-bold active:scale-[0.98] transition shadow-[0_0_12px_rgba(213,0,87,0.4)]"
@@ -1705,6 +1709,11 @@ function ConfessionsRoom() {
                 {/* Invitation Popup (receiver side) */}
                 <InvitationPopup />
 
+                <BillingOverlay
+                    sessionId={urlSessionId}
+                    accentHsl="330, 85%, 55%"
+                    exitRoute="/home"
+                />
 
             </div>
         </ProtectRoute>

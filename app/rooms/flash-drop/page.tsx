@@ -10,6 +10,7 @@ import LiveDropBoard from "@/components/rooms/flash-drops/LiveDropBoard";
 import ImpulsePanel from "@/components/rooms/flash-drops/ImpulsePanel";
 import FlashDropLiveChat from "@/components/rooms/flash-drops/FlashDropLiveChat";
 import WalletPill from "@/components/common/WalletPill";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 import SpendConfirmModal from "@/components/common/SpendConfirmModal";
 import { useWallet } from "@/hooks/useWallet";
 import { toast as sonnerToast } from "sonner";
@@ -533,6 +534,7 @@ export default function FlashDropsRoomPreview() {
                                     <span key={i} className="shrink-0">{item}</span>
                                 ))}
                             </div>
+                            <HeaderBillingWidget sessionId={urlSessionId} accentHsl="330, 100%, 55%" />
                             <WalletPill compact />
                         </div>
                     </div>

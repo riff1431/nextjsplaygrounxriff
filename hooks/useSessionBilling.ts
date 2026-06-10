@@ -15,6 +15,8 @@ interface BillingState {
     billingEnabled: boolean;
     /** Seconds remaining until the next charge (0-60, counts down live) */
     secondsUntilNextCharge: number;
+    /** Free minutes allowed in this session */
+    freeMinutes: number;
 }
 
 /**
@@ -44,6 +46,7 @@ export function useSessionBilling(sessionId: string | null) {
         rate: null,
         billingEnabled: true,
         secondsUntilNextCharge: 60,
+        freeMinutes: 1,
     });
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -88,6 +91,7 @@ export function useSessionBilling(sessionId: string | null) {
                     minutesBilled: data.total_minutes || prev.minutesBilled,
                     totalBilled: data.total_billed || prev.totalBilled,
                     lastBalance: data.new_balance !== undefined ? data.new_balance : prev.lastBalance,
+                    freeMinutes: data.free_minutes ?? prev.freeMinutes,
                 }));
             }
         } catch {
@@ -173,6 +177,25 @@ export function useSessionBilling(sessionId: string | null) {
         clearCountdown();
         setState(prev => ({ ...prev, isActive: false, secondsUntilNextCharge: 60 }));
     }, [clearCountdown]);
+
+    // Dispatch state update custom events for header syncing
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const detail = {
+                isActive: state.isActive,
+                minutesBilled: state.minutesBilled,
+                totalBilled: state.totalBilled,
+                rate: state.rate,
+                billingEnabled: state.billingEnabled,
+                secondsUntilNextCharge: state.secondsUntilNextCharge,
+                lastBalance: state.lastBalance,
+                error: state.error,
+                autoEjected: state.autoEjected,
+                freeMinutes: state.freeMinutes,
+            };
+            window.dispatchEvent(new CustomEvent("session-billing-update", { detail }));
+        }
+    }, [state]);
 
     // Cleanup on unmount
     useEffect(() => {

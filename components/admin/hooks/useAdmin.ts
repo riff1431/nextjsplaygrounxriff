@@ -6,6 +6,11 @@ export interface GlobalPricing {
     entry_fee: number;
     free_minutes: number;
     rate_per_minute: number;
+    per_minute_billing_enabled?: boolean;
+    creator_split_percent?: number;
+    platform_split_percent?: number;
+    auto_kick_on_insufficient?: boolean;
+    min_wallet_balance?: number;
     // System Prompt Pricing
     system_truth_bronze?: number;
     system_truth_silver?: number;

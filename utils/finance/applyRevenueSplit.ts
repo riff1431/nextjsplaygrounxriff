@@ -64,6 +64,10 @@ export interface ApplyRevenueSplitParams {
     relatedId?: string | null;
     /** Earnings category for the creator_earnings_ledger */
     earningsCategory?: EarningsCategory;
+    /** Override creator share percentage */
+    creatorPctOverride?: number | null;
+    /** Override platform share percentage */
+    platformPctOverride?: number | null;
 }
 
 /**
@@ -97,6 +101,8 @@ export async function applyRevenueSplit(
         relatedType,
         relatedId,
         earningsCategory,
+        creatorPctOverride,
+        platformPctOverride,
     } = params;
 
     // Fetch live config from DB (falls back to static constants if DB unavailable)
@@ -105,8 +111,12 @@ export async function applyRevenueSplit(
         return { success: false, error: `Unknown split type: ${splitType}`, grossAmount, creatorShare: 0, platformShare: 0 };
     }
 
-    const creatorPct = config.creator;
-    const platformPct = config.platform;
+    const creatorPct = creatorPctOverride !== undefined && creatorPctOverride !== null 
+        ? creatorPctOverride 
+        : config.creator;
+    const platformPct = platformPctOverride !== undefined && platformPctOverride !== null 
+        ? platformPctOverride 
+        : config.platform;
 
     const creatorShare = round2(grossAmount * (creatorPct / 100));
     const platformShare = round2(grossAmount - creatorShare); // remainder to platform

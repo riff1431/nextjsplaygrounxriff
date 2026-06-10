@@ -19,6 +19,7 @@ import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
 import { cs } from "@/utils/currency";
 import RoomTourHelpButton from "@/components/rooms/shared/RoomTourHelpButton";
 import MobileStudioTabs, { MobileStudioTab } from "@/components/rooms/shared/MobileStudioTabs";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
@@ -989,7 +990,8 @@ function PgxPage2Inner() {
                             </div>
                         )}
                     </div>
-                    <div data-tour="fan-wallet-balance">
+                    <div data-tour="fan-wallet-balance" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <HeaderBillingWidget sessionId={sessionId} accentHsl="280, 80%, 60%" />
                         <WalletPill />
                     </div>
                 </div>
@@ -1636,7 +1638,8 @@ function PgxPage2Inner() {
                         )}
 
                         {/* Mobile Wallet pill matching mockup */}
-                        <div data-tour="fan-wallet-balance">
+                        <div data-tour="fan-wallet-balance" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <HeaderBillingWidget sessionId={sessionId} accentHsl="280, 80%, 60%" />
                             <WalletPill compact className="mobile-wallet-pill-custom" />
                         </div>
                     </div>

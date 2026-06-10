@@ -10,6 +10,8 @@ import { Loader2, ArrowLeft, Send, Sparkles, Gift, Coins, Eye, PanelRightClose, 
 import { toast } from "sonner";
 import { cs } from "@/utils/currency";
 import BrandLogo from "@/components/common/BrandLogo";
+import BillingOverlay from "@/components/rooms/shared/BillingOverlay";
+import HeaderBillingWidget from "@/components/rooms/shared/HeaderBillingWidget";
 
 const LiveStreamWrapper = dynamic(() => import("@/components/rooms/LiveStreamWrapper"), { ssr: false });
 
@@ -81,11 +83,28 @@ export default function CasinoLoungeRoomPage() {
     const [panelOpen, setPanelOpen] = useState(true);
     const [sessionEnded, setSessionEnded] = useState(false);
     const [viewerCount, setViewerCount] = useState(1);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
     // Chat
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState("");
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Fetch active session from room_sessions
+    useEffect(() => {
+        if (!lounge) return;
+        const fetchActiveSession = async () => {
+            const { data } = await supabase
+                .from("room_sessions")
+                .select("id")
+                .eq("room_id", lounge.room_id)
+                .eq("status", "active")
+                .limit(1)
+                .maybeSingle();
+            if (data) setActiveSessionId(data.id);
+        };
+        fetchActiveSession();
+    }, [lounge, supabase]);
 
     // Summary Cards (simulation)
     const [fansWatching, setFansWatching] = useState(128);
@@ -379,6 +398,10 @@ export default function CasinoLoungeRoomPage() {
                         </div>
                     )}
 
+                    {!isCreator && activeSessionId && (
+                        <HeaderBillingWidget sessionId={activeSessionId} accentHsl="280, 80%, 60%" />
+                    )}
+
                     {!sessionEnded && (
                         <div className="flex items-center gap-3 border-l border-white/10 pl-5">
                             <span className="h-2 w-2 rounded-full bg-red-600 animate-ping" />
@@ -586,6 +609,14 @@ export default function CasinoLoungeRoomPage() {
                     >
                         <PanelRightOpen className="w-5 h-5" />
                     </button>
+                )}
+
+                {!isCreator && activeSessionId && (
+                    <BillingOverlay
+                        sessionId={activeSessionId}
+                        accentHsl="280, 80%, 60%"
+                        exitRoute="/rooms/casino/lounges"
+                    />
                 )}
             </div>
         </div>

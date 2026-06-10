@@ -31,6 +31,11 @@ interface RoomSetting {
     custom_requests_enabled: boolean;
     sort_order: number;
     private_1on1_duration_seconds?: number;
+    free_minutes?: number;
+    min_wallet_balance?: number;
+    creator_split_percent?: number;
+    platform_split_percent?: number;
+    auto_kick_on_insufficient?: boolean;
     entry_info_section1?: InfoSection;
     entry_info_section2?: InfoSection;
     entry_info_section3?: InfoSection;
@@ -246,6 +251,85 @@ export default function AdminRoomSettingsPage() {
                                     )}
                                 </div>
 
+                                {/* Per-Minute Billing Controls */}
+                                <div>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Free Minutes</label>
+                                    <input
+                                        type="number"
+                                        value={s.free_minutes ?? 1}
+                                        min={0}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, free_minutes: val } : item));
+                                        }}
+                                        onBlur={(e) => {
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { free_minutes: val } as any);
+                                        }}
+                                        style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Min Wallet Balance Required ({cs()})</label>
+                                    <input
+                                        type="number"
+                                        value={s.min_wallet_balance ?? 10}
+                                        min={0}
+                                        onChange={(e) => {
+                                            const val = Number(e.target.value);
+                                            setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, min_wallet_balance: val } : item));
+                                        }}
+                                        onBlur={(e) => {
+                                            const val = Number(e.target.value);
+                                            updateSetting(s.room_type, { min_wallet_balance: val } as any);
+                                        }}
+                                        style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", fontWeight: 600, display: "block", marginBottom: "4px" }}>Revenue Split (Creator / Platform %)</label>
+                                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                                        <input
+                                            type="number"
+                                            value={s.creator_split_percent ?? 85}
+                                            min={0}
+                                            max={100}
+                                            onChange={(e) => {
+                                                const val = Number(e.target.value);
+                                                setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, creator_split_percent: val } : item));
+                                            }}
+                                            onBlur={(e) => {
+                                                const val = Number(e.target.value);
+                                                updateSetting(s.room_type, { creator_split_percent: val } as any);
+                                            }}
+                                            style={{ width: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                            placeholder="Creator %"
+                                        />
+                                        <span style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
+                                        <input
+                                            type="number"
+                                            value={s.platform_split_percent ?? 15}
+                                            min={0}
+                                            max={100}
+                                            onChange={(e) => {
+                                                const val = Number(e.target.value);
+                                                setSettings((prev) => prev.map((item) => item.room_type === s.room_type ? { ...item, platform_split_percent: val } : item));
+                                            }}
+                                            onBlur={(e) => {
+                                                const val = Number(e.target.value);
+                                                updateSetting(s.room_type, { platform_split_percent: val } as any);
+                                            }}
+                                            style={{ width: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                            placeholder="Platform %"
+                                        />
+                                    </div>
+                                    {((s.creator_split_percent ?? 85) + (s.platform_split_percent ?? 15) !== 100) && (
+                                        <div style={{ marginTop: "4px", fontSize: "10px", color: "hsl(0, 85%, 65%)" }}>
+                                            ⚠️ Splits must sum to 100% (currently {(s.creator_split_percent ?? 85) + (s.platform_split_percent ?? 15)}%)
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Toggles */}
                                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -267,6 +351,10 @@ export default function AdminRoomSettingsPage() {
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Per-Min Billing</span>
                                         <Toggle value={s.billing_enabled ?? true} onChange={(v) => updateSetting(s.room_type, { billing_enabled: v } as any)} />
+                                    </div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Auto Kick</span>
+                                        <Toggle value={s.auto_kick_on_insufficient ?? true} onChange={(v) => updateSetting(s.room_type, { auto_kick_on_insufficient: v } as any)} />
                                     </div>
                                 </div>
                             </div>

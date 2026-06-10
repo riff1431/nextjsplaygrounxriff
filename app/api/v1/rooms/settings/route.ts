@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
             .select(
                 "room_type, display_name, is_active, public_entry_fee, min_private_entry_fee, " +
                 "public_cost_per_min, min_private_cost_per_min, billing_enabled, " +
-                "public_sessions_enabled, private_sessions_enabled"
+                "public_sessions_enabled, private_sessions_enabled, " +
+                "free_minutes, min_wallet_balance, creator_split_percent, platform_split_percent, auto_kick_on_insufficient"
             )
             .eq("room_type", roomType)
             .single();
