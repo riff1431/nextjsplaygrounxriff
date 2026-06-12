@@ -1,0 +1,157 @@
+import React, { useEffect, useRef, useState } from "react";
+
+export default function PerMinuteBillingRoom({
+  fanId,
+  creatorId,
+  roomId,
+  roomName = "Truth or Dare",
+  walletBalance = 50,
+}) {
+  const [billingActive, setBillingActive] = useState(false);
+  const [secondsInside, setSecondsInside] = useState(0);
+  const [chargedMinutes, setChargedMinutes] = useState(0);
+  const [balance, setBalance] = useState(walletBalance);
+  const [roomAccess, setRoomAccess] = useState(true);
+  const [message, setMessage] = useState("");
+
+  const timerRef = useRef(null);
+
+  const adminBillingSettings = {
+    perMinuteBillingEnabled: true,
+    freeSeconds: 60,
+    ratePerMinute: 2,
+    minimumWalletRequired: 10,
+    creatorSplitPercent: 85,
+    platformSplitPercent: 15,
+    autoKickIfInsufficientBalance: true,
+    billingIntervalSeconds: 60,
+  };
+
+  useEffect(() => {
+    if (!adminBillingSettings.perMinuteBillingEnabled) {
+      setMessage("Per-minute billing is OFF. Fan entered normally.");
+      return;
+    }
+
+    if (balance < adminBillingSettings.minimumWalletRequired) {
+      setRoomAccess(false);
+      setMessage("Insufficient wallet balance. Please top up to enter.");
+      return;
+    }
+
+    setBillingActive(true);
+    setMessage("Fan entered room. First 1 minute is free.");
+
+    timerRef.current = setInterval(() => {
+      setSecondsInside((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!billingActive || !roomAccess) return;
+
+    const billableSeconds = secondsInside - adminBillingSettings.freeSeconds;
+
+    if (billableSeconds < 0) return;
+
+    const billableMinutes = Math.floor(
+      billableSeconds / adminBillingSettings.billingIntervalSeconds
+    ) + 1;
+
+    if (billableMinutes > chargedMinutes) {
+      chargeFanMinute();
+    }
+  }, [secondsInside]);
+
+  const chargeFanMinute = async () => {
+    const amount = adminBillingSettings.ratePerMinute;
+
+    if (balance < amount) {
+      if (adminBillingSettings.autoKickIfInsufficientBalance) {
+        setRoomAccess(false);
+        setBillingActive(false);
+        clearInterval(timerRef.current);
+        setMessage("Fan removed from room due to insufficient wallet balance.");
+      }
+      return;
+    }
+
+    const creatorEarning =
+      (amount * adminBillingSettings.creatorSplitPercent) / 100;
+
+    const platformEarning =
+      (amount * adminBillingSettings.platformSplitPercent) / 100;
+
+    setBalance((prev) => prev - amount);
+    setChargedMinutes((prev) => prev + 1);
+
+    await saveBillingTransaction({
+      fanId,
+      creatorId,
+      roomId,
+      roomName,
+      amount,
+      creatorEarning,
+      platformEarning,
+      chargedMinute: chargedMinutes + 1,
+    });
+
+    setMessage(`Charged $${amount} for minute ${chargedMinutes + 1}.`);
+  };
+
+  const saveBillingTransaction = async (data) => {
+    console.log("Billing transaction saved:", data);
+
+    /*
+    Example backend call:
+
+    await fetch("/api/room-billing/charge-minute", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    */
+  };
+
+  const leaveRoom = () => {
+    setBillingActive(false);
+    setRoomAccess(false);
+    clearInterval(timerRef.current);
+    setMessage("Fan left room. Billing stopped.");
+  };
+
+  if (!roomAccess) {
+    return (
+      <div className="billing-card">
+        <h2>{roomName}</h2>
+        <p>{message}</p>
+        <p>Wallet Balance: ${balance.toFixed(2)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="billing-card">
+      <h2>{roomName}</h2>
+
+      <p>Fan ID: {fanId}</p>
+      <p>Creator ID: {creatorId}</p>
+
+      <hr />
+
+      <p>Time Inside Room: {secondsInside}s</p>
+      <p>Free First Minute: Yes</p>
+      <p>Rate Per Minute: ${adminBillingSettings.ratePerMinute}</p>
+      <p>Charged Minutes: {chargedMinutes}</p>
+      <p>Wallet Balance: ${balance.toFixed(2)}</p>
+
+      <p>{message}</p>
+
+      <button onClick={leaveRoom}>Leave Room</button>
+    </div>
+  );
+}

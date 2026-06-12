@@ -1,0 +1,23 @@
+.billing-card {
+  background: #111;
+  color: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  max-width: 420px;
+  border: 1px solid #ff2bd6;
+  font-family: Arial, sans-serif;
+}
+
+.billing-card h2 {
+  color: #ff2bd6;
+}
+
+.billing-card button {
+  background: #ff2bd6;
+  color: #fff;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}

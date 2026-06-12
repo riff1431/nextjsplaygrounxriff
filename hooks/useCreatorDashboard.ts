@@ -43,7 +43,7 @@ interface CreatorDashboardData {
 }
 
 export function useCreatorDashboard(): CreatorDashboardData {
-    const { user } = useAuth();
+    const { user, role } = useAuth();
     const supabase = createClient();
 
     const [profile, setProfile] = useState<CreatorProfile | null>(null);
@@ -197,7 +197,7 @@ export function useCreatorDashboard(): CreatorDashboardData {
 
     useEffect(() => {
         fetchDashboard();
-    }, [fetchDashboard]);
+    }, [fetchDashboard, role]);
 
     // Active real-time sync for tips and gifts
     useEffect(() => {

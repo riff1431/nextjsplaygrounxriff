@@ -20,7 +20,7 @@ export default function LivePage() {
             if (!user) return;
             const { data } = await supabase
                 .from('profiles')
-                .select('username, full_name, avatar_url')
+                .select('username, full_name, avatar_url, is_creator')
                 .eq('id', user.id)
                 .single();
 

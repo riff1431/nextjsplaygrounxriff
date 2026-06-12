@@ -57,7 +57,7 @@ export default function OnboardingGuard({ children }: Props) {
         try {
             const { data: profile, error } = await supabase
                 .from("profiles")
-                .select("onboarding_completed_at, kyc_status, role")
+                .select("onboarding_completed_at, kyc_status, role, is_creator")
                 .eq("id", user.id)
                 .single();
 
@@ -78,6 +78,11 @@ export default function OnboardingGuard({ children }: Props) {
 
             // Fan users: check if onboarding is completed
             if (profile.role === "fan") {
+                if (profile.is_creator) {
+                    setAllowed(true);
+                    setChecking(false);
+                    return;
+                }
                 if (!profile.onboarding_completed_at) {
                     router.push("/onboarding");
                     return;

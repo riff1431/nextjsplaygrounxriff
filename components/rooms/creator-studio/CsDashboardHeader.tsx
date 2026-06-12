@@ -1,6 +1,6 @@
 "use client";
 
-import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare, CalendarClock, User } from "lucide-react";
+import { DollarSign, Gift, Users, Play, Star, Lock, Bell, ChevronDown, ArrowLeft, MessageSquare, CalendarClock, User, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ProfileMenu from "@/components/navigation/ProfileMenu";
@@ -8,6 +8,7 @@ import { NotificationIcon } from "@/components/common/NotificationIcon";
 import { cs } from "@/utils/currency";
 import LaunchTimer from "@/components/common/LaunchTimer";
 import WelcomePopup from "@/components/common/WelcomePopup";
+import { useGuidedTour } from "@/components/guided-tour/GuidedTourProvider";
 
 interface StatCardProps {
     icon: React.ReactNode;
@@ -95,6 +96,7 @@ interface CsDashboardHeaderProps {
 export const CsDashboardHeader = ({ profile, isProfileIncomplete }: CsDashboardHeaderProps) => {
     const router = useRouter();
     const { user, logout } = useAuth();
+    const { startTour } = useGuidedTour();
     const displayName = profile?.username || "Creator";
     const avatarUrl = profile?.avatar_url;
 
@@ -140,6 +142,16 @@ export const CsDashboardHeader = ({ profile, isProfileIncomplete }: CsDashboardH
                     </button>
 
                     <NotificationIcon role="creator" />
+
+                    {/* Tour/Guide Button */}
+                    <button
+                        onClick={() => startTour('creator')}
+                        className="p-2 sm:px-4 sm:py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 transition"
+                        title="Restart Creator Tour"
+                        data-tour="tour-button"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                    </button>
 
                     {/* Messages — icon-only on mobile */}
                     <button

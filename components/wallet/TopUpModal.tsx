@@ -24,7 +24,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [amount, setAmount] = useState<number>(0);
     const [customAmount, setCustomAmount] = useState("");
-    const [method, setMethod] = useState<"card" | "paypal" | "bank" | "riskpaygo" | "nowpayments" | "paygate" | "">("");
+    const [method, setMethod] = useState<"card" | "paypal" | "bank" | "riskpaygo" | "nowpayments" | "paygate" | "payram" | "">("");
     const [loading, setLoading] = useState(false);
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [showStripeModal, setShowStripeModal] = useState(false);
@@ -219,6 +219,30 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
             } catch (err) {
                 console.error("PayGate creation error:", err);
                 alert("An error occurred trying to connect to PayGate.");
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (method === 'payram') {
+            setLoading(true);
+            try {
+                const res = await fetch('/api/v1/payments/payram/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+                const data = await res.json();
+                if (data.success && data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                    return;
+                } else {
+                    alert(data.error || "Failed to initiate PayRam checkout.");
+                }
+            } catch (err) {
+                console.error("PayRam creation error:", err);
+                alert("An error occurred trying to connect to PayRam.");
             } finally {
                 setLoading(false);
             }
@@ -437,6 +461,25 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         </label>
                                     )}
 
+                                    {/* PayRam Checkout */}
+                                    {config.payram?.enabled && (
+                                        <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
+                                            method === 'payram' 
+                                                ? 'bg-gradient-to-r from-pink-950/20 to-purple-950/20 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.15)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-pink-500/30'
+                                        }`}>
+                                            <input type="radio" name="method" className="hidden" onChange={() => setMethod('payram')} />
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center text-green-400 shrink-0 border border-green-500/10">
+                                                <Wallet className="w-5 h-5 text-green-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-sm text-white">Crypto (PayRam)</div>
+                                                <div className="text-[11px] text-gray-400 truncate">USDT, USDC, BTC, ETH via Self-Hosted PayRam</div>
+                                            </div>
+                                            {method === 'payram' && <div className="p-1 rounded-full bg-pink-500 text-white shrink-0"><Check className="w-3.5 h-3.5 stroke-[3px]" /></div>}
+                                        </label>
+                                    )}
+
                                     {/* PayPal */}
                                     {config.paypal.enabled && (
                                         <label className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all duration-300 ${
@@ -475,7 +518,7 @@ export default function TopUpModal({ isOpen, onClose, onTopUp }: Props) {
                                         </label>
                                     )}
 
-                                    {!config.stripe.enabled && !config.riskpaygo?.enabled && !config.paypal.enabled && !config.bank.enabled && !config.nowpayments?.enabled && !config.paygate?.enabled && (
+                                    {!config.stripe.enabled && !config.riskpaygo?.enabled && !config.paypal.enabled && !config.bank.enabled && !config.nowpayments?.enabled && !config.paygate?.enabled && !config.payram?.enabled && (
                                         <div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
                                             <AlertCircle className="w-6 h-6 text-red-400" />
                                             <span className="text-red-400 text-xs font-semibold">No payment methods configured.</span>

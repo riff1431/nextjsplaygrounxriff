@@ -208,11 +208,11 @@ export default function WalletPage() {
             const params = new URLSearchParams(window.location.search);
             const status = params.get("status");
             const method = params.get("method");
-            if (status === "success" && (method === "riskpaygo" || method === "nowpayments")) {
+            if (status === "success" && (method === "riskpaygo" || method === "nowpayments" || method === "payram")) {
                 toast.success("Wallet top-up successful! Your balance has been updated.");
                 // Clean the URL query params
                 window.history.replaceState({}, document.title, window.location.pathname);
-            } else if (status === "cancelled" && (method === "riskpaygo" || method === "nowpayments")) {
+            } else if (status === "cancelled" && (method === "riskpaygo" || method === "nowpayments" || method === "payram")) {
                 toast.error("Payment cancelled. No funds were added.");
                 window.history.replaceState({}, document.title, window.location.pathname);
             }

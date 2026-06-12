@@ -12,6 +12,7 @@ interface AuthContextType {
     role: UserRole;
     logout: () => Promise<void>;
     isLoading: boolean;
+    updateRole: (newRole: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,9 +31,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 if (session?.user) {
                     setUser(session.user);
-                    // Use metadata first (faster, set on signup)
-                    const metaRole = session.user.user_metadata?.role as UserRole;
-                    setRole(metaRole || "fan");
+                    let activeRole = session.user.user_metadata?.role as UserRole;
+
+                    // Fetch profile to check if originally a creator
+                    const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("role, is_creator")
+                        .eq("id", session.user.id)
+                        .single();
+
+                    if (profile) {
+                        if (profile.is_creator) {
+                            // If they are a creator, check if they switched role in this session/tab
+                            const roleSwitched = typeof window !== "undefined" ? sessionStorage.getItem("role_switched") : null;
+                            if (!roleSwitched) {
+                                // Force back to creator on fresh session/new login
+                                activeRole = "creator";
+                                if (profile.role !== "creator" || (session.user.user_metadata?.role !== "creator")) {
+                                    await supabase
+                                        .from("profiles")
+                                        .update({ role: "creator" })
+                                        .eq("id", session.user.id);
+                                    await supabase.auth.updateUser({
+                                        data: { role: "creator" }
+                                    });
+                                }
+                            } else {
+                                activeRole = profile.role as UserRole;
+                            }
+                        } else {
+                            activeRole = profile.role as UserRole;
+                        }
+                    }
+                    setRole(activeRole || "fan");
                 } else {
                     setUser(null);
                     setRole(null);
@@ -46,14 +77,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         checkUser();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session?.user) {
                 setUser(session.user);
-                const metaRole = session.user.user_metadata?.role as UserRole;
-                setRole(metaRole || "fan");
+                let activeRole = session.user.user_metadata?.role as UserRole;
+
+                if (event === "SIGNED_IN") {
+                    const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("role, is_creator")
+                        .eq("id", session.user.id)
+                        .single();
+
+                    if (profile?.is_creator) {
+                        const roleSwitched = typeof window !== "undefined" ? sessionStorage.getItem("role_switched") : null;
+                        if (!roleSwitched) {
+                            activeRole = "creator";
+                            await supabase
+                                .from("profiles")
+                                .update({ role: "creator" })
+                                .eq("id", session.user.id);
+                            await supabase.auth.updateUser({
+                                data: { role: "creator" }
+                            });
+                        } else {
+                            activeRole = profile.role as UserRole;
+                        }
+                    } else if (profile) {
+                        activeRole = profile.role as UserRole;
+                    }
+                }
+                setRole(activeRole || "fan");
             } else {
                 setUser(null);
                 setRole(null);
+                if (typeof window !== "undefined") {
+                    sessionStorage.removeItem("role_switched");
+                }
             }
             setIsLoading(false);
         });
@@ -65,14 +125,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = async () => {
         await supabase.auth.signOut();
+        if (typeof window !== "undefined") {
+            sessionStorage.removeItem("role_switched");
+        }
         setRole(null);
         setUser(null);
         router.refresh(); // Clear server cookies
         router.push("/auth");
     };
 
+    const updateRole = (newRole: UserRole) => {
+        setRole(newRole);
+        if (user) {
+            setUser({
+                ...user,
+                user_metadata: {
+                    ...user.user_metadata,
+                    role: newRole
+                }
+            });
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, role, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, role, logout, isLoading, updateRole }}>
             {children}
         </AuthContext.Provider>
     );

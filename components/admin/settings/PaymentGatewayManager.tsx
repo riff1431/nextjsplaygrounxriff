@@ -80,6 +80,55 @@ const DYNAMIC_GATEWAYS: DynamicGatewayDef[] = [
             }
         ],
         testConnectionEndpoint: '/api/v1/payments/nowpayments/test-connection'
+    },
+    {
+        id: 'payram',
+        name: 'PayRam',
+        description: 'Self-Hosted Crypto Payment Processor • Accept stablecoins direct to your cold wallet',
+        icon: <Coins className="w-5 h-5" />,
+        colorClass: 'bg-green-500/5 border-green-500/20 peer-checked:bg-green-600',
+        badgeColorClass: 'bg-green-500/20 text-green-400 border-green-500/30',
+        fields: [
+            {
+                key: 'apiUrl',
+                label: 'API Base URL (Self-Hosted Node)',
+                type: 'text',
+                placeholder: 'http://localhost:8080 or https://your-payram-node.com',
+                required: true
+            },
+            {
+                key: 'apiKey',
+                label: 'Merchant API Key',
+                type: 'password',
+                placeholder: 'Enter PayRam API Key',
+                required: true
+            },
+            {
+                key: 'currency',
+                label: 'Target Stablecoin/Crypto',
+                type: 'select',
+                options: [
+                    { label: 'USDT (Tether)', value: 'USDT' },
+                    { label: 'USDC (USD Coin)', value: 'USDC' },
+                    { label: 'BTC (Bitcoin)', value: 'BTC' },
+                    { label: 'ETH (Ethereum)', value: 'ETH' }
+                ],
+                required: true
+            },
+            {
+                key: 'returnUrl',
+                label: 'Return URL (Redirect after payment)',
+                type: 'text',
+                placeholder: 'https://your-domain.com/account/wallet?status=success&method=payram'
+            },
+            {
+                key: 'cancelUrl',
+                label: 'Cancel URL (Redirect on cancellation)',
+                type: 'text',
+                placeholder: 'https://your-domain.com/account/wallet?status=cancelled&method=payram'
+            }
+        ],
+        testConnectionEndpoint: '/api/v1/payments/payram/test-connection'
     }
 ];
 
@@ -148,6 +197,15 @@ export default function PaymentGatewayManager() {
                 paygate: {
                     ...prev.paygate,
                     ipnSecret: config.paygate.ipnSecret ? "••••••••••••••••" : ""
+                }
+            }));
+        }
+        if (config?.payram) {
+            setFormData(prev => ({
+                ...prev,
+                payram: {
+                    ...prev.payram,
+                    apiKey: config.payram.apiKey ? "••••••••••••••••" : ""
                 }
             }));
         }

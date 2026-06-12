@@ -321,7 +321,7 @@ export default function NewsFeedPage() {
         const fetchUserData = async () => {
             const { data: profileData } = await supabase
                 .from("profiles")
-                .select("username, full_name, avatar_url")
+                .select("username, full_name, avatar_url, is_creator")
                 .eq("id", user.id)
                 .single();
             if (profileData) setCurrentProfile(profileData);

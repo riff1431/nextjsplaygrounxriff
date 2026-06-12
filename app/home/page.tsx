@@ -1287,7 +1287,7 @@ export default function Home() {
                 // Fetch profile data (without account_types join to avoid PGRST201 ambiguous FK error)
                 const { data: profileData, error: profileError } = await supabase
                     .from('profiles')
-                    .select('username, full_name, avatar_url, fan_membership_id, account_type_id')
+                    .select('username, full_name, avatar_url, fan_membership_id, account_type_id, is_creator')
                     .eq('id', user.id)
                     .single();
 

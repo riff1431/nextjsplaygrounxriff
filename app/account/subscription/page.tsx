@@ -325,7 +325,7 @@ export default function SubscriptionsPage() {
             // Fetch profile and check role
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('role, subscription_price_weekly, subscription_price_monthly, full_name, avatar_url, username, fan_membership_id, account_type_id')
+                .select('role, subscription_price_weekly, subscription_price_monthly, full_name, avatar_url, username, fan_membership_id, account_type_id, is_creator')
                 .eq('id', currentUser.id)
                 .single();
 

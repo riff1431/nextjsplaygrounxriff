@@ -10,6 +10,7 @@ import HelpGuideModal from "@/components/guided-tour/HelpGuideModal";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
+import { useAuth } from "@/app/context/AuthContext";
 
 function cx(...parts: Array<string | false | null | undefined>) {
     return parts.filter(Boolean).join(" ");
@@ -17,10 +18,59 @@ function cx(...parts: Array<string | false | null | undefined>) {
 
 export default function ProfileMenu({ user, profile, role, router, onSignOut }: any) {
     const supabase = createClient();
+    const { updateRole } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [isSwitchingRole, setIsSwitchingRole] = useState(false);
     const [iframeMenus, setIframeMenus] = useState<any[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const { isPending: isKycPending } = useKycStatus();
+
+    const handleSwitchRole = async () => {
+        if (!user || isSwitchingRole) return;
+        setIsSwitchingRole(true);
+        const newRole = role === "creator" ? "fan" : "creator";
+        const toastId = toast.loading(`Switching to ${newRole === "creator" ? "Creator" : "Fan"} profile...`);
+
+        try {
+            // 1. Update profiles table role
+            const { error: profileError } = await supabase
+                .from("profiles")
+                .update({ role: newRole })
+                .eq("id", user.id);
+
+            if (profileError) throw profileError;
+
+            // 2. Update auth user metadata
+            const { error: authError } = await supabase.auth.updateUser({
+                data: { role: newRole }
+            });
+
+            if (authError) throw authError;
+
+            // 3. Update React context role state
+            updateRole(newRole);
+
+            // Track that the role was explicitly switched in this session
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("role_switched", "true");
+            }
+
+            toast.success(`Switched to ${newRole === "creator" ? "Creator Hub" : "Fan View"}! ${newRole === "creator" ? "👑" : "🕶️"}`, { id: toastId });
+            setIsOpen(false);
+
+            // 4. Redirect
+            if (newRole === "creator") {
+                router.push("/rooms/creator-studio");
+            } else {
+                router.push("/home");
+            }
+        } catch (err: any) {
+            console.error("Failed to switch profile:", err);
+            toast.error(err.message || "Failed to switch profiles", { id: toastId });
+        } finally {
+            setIsSwitchingRole(false);
+        }
+    };
 
     // Fetch and subscribe to dynamic iframe menus matching user role
     useEffect(() => {
@@ -215,6 +265,65 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                 </div>
             </div>
 
+            {/* Profile Switcher Section */}
+            {(role === "creator" || profile?.is_creator) && (
+                <div className="px-5 py-3 border-b border-white/5 bg-white/[0.01]">
+                    <button
+                        onClick={handleSwitchRole}
+                        disabled={isSwitchingRole}
+                        className={cx(
+                            "w-full flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 group relative overflow-hidden text-left",
+                            role === "creator"
+                                ? "border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 hover:border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.05)] cursor-pointer"
+                                : "border-pink-500/20 bg-pink-500/5 hover:bg-pink-500/10 hover:border-pink-500/40 shadow-[0_0_15px_rgba(236,72,153,0.05)] cursor-pointer"
+                        )}
+                    >
+                        {/* Glow effect on hover */}
+                        <div className={cx(
+                            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none blur-md",
+                            role === "creator" ? "bg-cyan-500/10" : "bg-pink-500/10"
+                        )} />
+
+                        <div className="relative z-10 flex items-center gap-3">
+                            <div className={cx(
+                                "p-2 rounded-xl border transition-all duration-300",
+                                role === "creator"
+                                    ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-400 group-hover:scale-110"
+                                    : "bg-pink-500/10 border-pink-500/20 text-pink-400 group-hover:scale-110"
+                            )}>
+                                {role === "creator" ? <User className="w-4 h-4" /> : <Crown className="w-4 h-4" />}
+                            </div>
+                            <div className="text-left">
+                                <span className="block text-xs font-semibold text-white">
+                                    {role === "creator" ? "Switch to Fan View" : "Switch to Creator Hub"}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 leading-none block mt-0.5 font-sans">
+                                    {role === "creator" ? "Browse & support other creators" : "Go live & manage your studio"}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className={cx(
+                            "p-1.5 rounded-full border transition-transform duration-500",
+                            role === "creator"
+                                ? "border-cyan-500/10 text-cyan-400 group-hover:rotate-180"
+                                : "border-pink-500/10 text-pink-400 group-hover:rotate-180"
+                        )}>
+                            {isSwitchingRole ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                    <path d="M16 16h5v5" />
+                                </svg>
+                            )}
+                        </div>
+                    </button>
+                </div>
+            )}
+
             {/* Quick Actions */}
             <div className="p-3 grid grid-cols-2 gap-2">
                 {isKycPending ? (
@@ -303,6 +412,18 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
                         <Settings className={cx("w-4 h-4", isKycPending ? "text-gray-600" : "text-gray-500 group-hover:text-cyan-400 transition-colors")} />,
                         "/settings/profile",
                         isKycPending
+                    )}
+
+                    {/* Switch Profile — always accessible if creator */}
+                    {(role === "creator" || profile?.is_creator) && (
+                        <button
+                            onClick={handleSwitchRole}
+                            disabled={isSwitchingRole}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-gray-300 hover:text-white transition-colors text-sm group cursor-pointer"
+                        >
+                            <User className="w-4 h-4 text-gray-500 group-hover:text-pink-400 transition-colors" />
+                            {role === "creator" ? "Switch to Fan Profile" : "Switch to Creator Profile"}
+                        </button>
                     )}
 
                     {/* Dynamic Iframe Menus */}

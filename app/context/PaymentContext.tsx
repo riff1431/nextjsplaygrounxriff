@@ -48,6 +48,14 @@ export interface PaymentConfig {
         returnUrl: string;
         cancelUrl: string;
     };
+    payram: {
+        enabled: boolean;
+        apiUrl: string;
+        apiKey: string;
+        currency: string;
+        returnUrl: string;
+        cancelUrl: string;
+    };
 }
 
 const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
@@ -85,6 +93,14 @@ const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
         affiliateWallet: "",
         commissionPercent: 0,
         ipnSecret: "",
+        returnUrl: "",
+        cancelUrl: ""
+    },
+    payram: {
+        enabled: false,
+        apiUrl: "http://localhost:8080",
+        apiKey: "",
+        currency: "USDT",
         returnUrl: "",
         cancelUrl: ""
     }
@@ -125,6 +141,7 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                     riskpaygo: { ...prev.riskpaygo, ...data.value.riskpaygo },
                     nowpayments: { ...prev.nowpayments, ...data.value.nowpayments },
                     paygate: { ...prev.paygate, ...data.value.paygate },
+                    payram: { ...prev.payram, ...data.value.payram },
                 }));
                 setLoading(false);
                 return;
@@ -184,6 +201,13 @@ export function PaymentProvider({ children }: { children: React.ReactNode }) {
                             newConfig.paygate.commissionPercent = row.config?.commission_percent || newConfig.paygate.commissionPercent;
                             newConfig.paygate.returnUrl = row.config?.return_url || newConfig.paygate.returnUrl;
                             newConfig.paygate.cancelUrl = row.config?.cancel_url || newConfig.paygate.cancelUrl;
+                        }
+                        else if (prov === 'payram') {
+                            newConfig.payram.enabled = row.is_enabled;
+                            newConfig.payram.apiUrl = row.config?.api_url || newConfig.payram.apiUrl;
+                            newConfig.payram.currency = row.config?.currency || newConfig.payram.currency;
+                            newConfig.payram.returnUrl = row.config?.return_url || newConfig.payram.returnUrl;
+                            newConfig.payram.cancelUrl = row.config?.cancel_url || newConfig.payram.cancelUrl;
                         }
                     });
                     return newConfig;

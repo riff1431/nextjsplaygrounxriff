@@ -57,7 +57,7 @@ export default function OnboardingPage() {
 
         const { data: profile, error } = await supabase
             .from("profiles")
-            .select("account_type_id, account_type_skipped, bank_payment_pending, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role, username, full_name")
+            .select("account_type_id, account_type_skipped, bank_payment_pending, fan_membership_id, creator_level_id, onboarding_completed_at, kyc_status, role, username, full_name, is_creator")
             .eq("id", user.id)
             .single();
 
@@ -102,6 +102,11 @@ export default function OnboardingPage() {
         // Determine current step based on what's completed
         // Step 1 is done if account_type_id is set OR account_type_skipped is true
         const step1Done = profile.account_type_id || profile.account_type_skipped;
+
+        if (profile.is_creator && profile.role === "fan") {
+            router.push("/home");
+            return;
+        }
 
         if (!step1Done) {
             setCurrentStep(1);

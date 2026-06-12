@@ -78,6 +78,10 @@ export async function POST(req: NextRequest) {
             ? body.paygate.ipnSecret
             : oldConfig.paygate?.ipnSecret || "";
 
+        const finalPayramApiKey = (body.payram?.apiKey && !body.payram.apiKey.includes('•'))
+            ? body.payram.apiKey
+            : oldConfig.payram?.apiKey || "";
+
         const mergedConfig = {
             stripe: {
                 enabled: !!body.stripe?.enabled,
@@ -122,6 +126,14 @@ export async function POST(req: NextRequest) {
                 ipnSecret: finalPaygateIpnSecret,
                 returnUrl: body.paygate?.returnUrl || oldConfig.paygate?.returnUrl || "",
                 cancelUrl: body.paygate?.cancelUrl || oldConfig.paygate?.cancelUrl || "",
+            },
+            payram: {
+                enabled: !!body.payram?.enabled,
+                apiUrl: body.payram?.apiUrl || oldConfig.payram?.apiUrl || "http://localhost:8080",
+                apiKey: finalPayramApiKey,
+                currency: body.payram?.currency || oldConfig.payram?.currency || "USDT",
+                returnUrl: body.payram?.returnUrl || oldConfig.payram?.returnUrl || "",
+                cancelUrl: body.payram?.cancelUrl || oldConfig.payram?.cancelUrl || "",
             }
         };
 
@@ -249,6 +261,26 @@ export async function POST(req: NextRequest) {
             }, { onConflict: 'provider' });
 
         if (paygateErr) console.error('[Admin Payments Settings API] Sync paygate error:', paygateErr);
+
+        // Sync PayRam
+        const { error: payramErr } = await adminClient
+            .from('payment_settings')
+            .upsert({
+                provider: 'payram',
+                is_enabled: mergedConfig.payram.enabled,
+                config: {
+                    api_url: mergedConfig.payram.apiUrl,
+                    currency: mergedConfig.payram.currency,
+                    return_url: mergedConfig.payram.returnUrl,
+                    cancel_url: mergedConfig.payram.cancelUrl
+                },
+                secret_config: {
+                    api_key: mergedConfig.payram.apiKey
+                },
+                updated_at: now
+            }, { onConflict: 'provider' });
+
+        if (payramErr) console.error('[Admin Payments Settings API] Sync payram error:', payramErr);
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

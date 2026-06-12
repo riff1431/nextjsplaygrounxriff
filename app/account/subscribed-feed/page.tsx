@@ -216,7 +216,7 @@ export default function FeedPage() {
             // Fetch profile and check role
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('role, full_name, avatar_url, username, fan_membership_id, account_type_id')
+                .select('role, full_name, avatar_url, username, fan_membership_id, account_type_id, is_creator')
                 .eq('id', currentUser.id)
                 .single();
 
