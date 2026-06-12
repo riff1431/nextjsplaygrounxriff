@@ -465,14 +465,14 @@ export default function NewsFeedPage() {
     ];
 
     const ROOM_LINKS = [
-        { label: "Flash Drops", icon: <Sparkles className="w-4 h-4" />, route: "/rooms/flash-drop-sessions", color: "text-cyan-300", border: "border-cyan-300/90", glow: "shadow-[0_0_18px_rgba(0,230,255,0.85)]", hover: "hover:bg-cyan-500/8", roomType: "flash-drop" },
-        { label: "Confessions", icon: <Lock className="w-4 h-4" />, route: "/rooms/confessions-browse", color: "text-rose-400", border: "border-rose-400/90", glow: "shadow-[0_0_18px_rgba(255,55,95,0.85)]", hover: "hover:bg-rose-500/8", roomType: "confessions" },
-        { label: "X Chat", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/x-chat-sessions", color: "text-lime-300", border: "border-lime-300/90", glow: "shadow-[0_0_18px_rgba(200,255,0,0.85)]", hover: "hover:bg-lime-500/8", roomType: "x-chat" },
-        { label: "Bar Lounge", icon: <BarDrinkIcon className="w-4 h-4" />, route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8", roomType: "bar-lounge" },
-        { label: "Truth or Dare", icon: <MessageCircle className="w-4 h-4" />, route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8", roomType: "truth-or-dare" },
-        { label: "Suga 4 U", icon: <Crown className="w-4 h-4" />, route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8", roomType: "suga-4-u" },
+        { label: "Flash Drops", icon: "/rooms/icons/flash-drops.png", route: "/rooms/flash-drop-sessions", color: "text-cyan-300", border: "border-cyan-300/90", glow: "shadow-[0_0_18px_rgba(0,230,255,0.85)]", hover: "hover:bg-cyan-500/8", roomType: "flash-drop" },
+        { label: "Confessions", icon: "/rooms/icons/confessions.png", route: "/rooms/confessions-browse", color: "text-rose-400", border: "border-rose-400/90", glow: "shadow-[0_0_18px_rgba(255,55,95,0.85)]", hover: "hover:bg-rose-500/8", roomType: "confessions" },
+        { label: "X Chat", icon: "/rooms/icons/x-chat.png", route: "/rooms/x-chat-sessions", color: "text-lime-300", border: "border-lime-300/90", glow: "shadow-[0_0_18px_rgba(200,255,0,0.85)]", hover: "hover:bg-lime-500/8", roomType: "x-chat" },
+        { label: "Bar Lounge", icon: "/rooms/icons/bar-lounge.png", route: "/rooms/bar-lounge", color: "text-violet-400", border: "border-violet-400/90", glow: "shadow-[0_0_18px_rgba(170,80,255,0.85)]", hover: "hover:bg-violet-500/8", roomType: "bar-lounge" },
+        { label: "Truth or Dare", icon: "/rooms/icons/truth-or-dare.png", route: "/rooms/truth-or-dare-sessions", color: "text-emerald-400", border: "border-emerald-400/90", glow: "shadow-[0_0_18px_rgba(0,255,170,0.85)]", hover: "hover:bg-emerald-500/8", roomType: "truth-or-dare" },
+        { label: "Suga 4 U", icon: "/rooms/icons/suga4u.png", route: "/rooms/suga4u-sessions", color: "text-pink-400", border: "border-pink-400/90", glow: "shadow-[0_0_18px_rgba(236,72,153,0.85)]", hover: "hover:bg-pink-500/8", roomType: "suga-4-u" },
         { label: "All Live Rooms", icon: <Radio className="w-4 h-4" />, route: "/rooms/all-live", color: "text-cyan-400", border: "border-cyan-400/90", glow: "shadow-[0_0_18px_rgba(34,211,238,0.85)]", hover: "hover:bg-cyan-500/8", roomType: "all-live" },
-        { label: "Casino", icon: <Dices className="w-4 h-4" />, route: "/rooms/casino", color: "text-yellow-400", border: "border-yellow-400/95", glow: "shadow-[0_0_18px_rgba(234,179,8,0.85)]", hover: "hover:bg-yellow-500/8", roomType: "casino" },
+        { label: "Casino", icon: "/rooms/icons/casino.png", route: "/rooms/casino", color: "text-yellow-400", border: "border-yellow-400/95", glow: "shadow-[0_0_18px_rgba(234,179,8,0.85)]", hover: "hover:bg-yellow-500/8", roomType: "casino" },
     ];
 
     return (
@@ -555,7 +555,13 @@ export default function NewsFeedPage() {
                                                     >
                                                         <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", room.color)}>
                                                             <span className="inline-flex items-center gap-2">
-                                                                <span>{room.icon}</span>
+                                                                <span>
+                                                                    {typeof room.icon === 'string' ? (
+                                                                        <img src={room.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                                    ) : (
+                                                                        room.icon
+                                                                    )}
+                                                                </span>
                                                                 <span className="truncate neon-deep">{room.label}</span>
                                                             </span>
                                                         </span>
@@ -752,7 +758,13 @@ export default function NewsFeedPage() {
                                                     >
                                                         <span className={cn("inline-flex items-center gap-2 w-full justify-between neon-flicker", room.color)}>
                                                             <span className="inline-flex items-center gap-2">
-                                                                <span>{room.icon}</span>
+                                                                <span>
+                                                                    {typeof room.icon === 'string' ? (
+                                                                        <img src={room.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                                    ) : (
+                                                                        room.icon
+                                                                    )}
+                                                                </span>
                                                                 <span className="truncate neon-deep">{room.label}</span>
                                                             </span>
                                                         </span>

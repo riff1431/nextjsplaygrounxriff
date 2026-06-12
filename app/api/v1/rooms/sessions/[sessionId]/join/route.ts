@@ -111,7 +111,7 @@ export async function POST(
         const entryFee = Number(session.entry_fee) || 0;
         if (entryFee > 0) {
             // Determine split type: private sessions = 50/50, public = 0/100
-            const isPrivate = session.session_type === 'private' || session.is_private;
+            const isPrivate = session.session_type === 'private';
             const splitType = isPrivate ? 'PRIVATE_ENTRY' : 'PUBLIC_ENTRY';
 
             const splitResult = await applyRevenueSplit({

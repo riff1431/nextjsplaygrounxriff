@@ -390,12 +390,12 @@ export default function FeedPage() {
     const tierLabel = fanTier === "VIP" ? "VIP" : fanTier;
 
     const CATS = [
-        { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
-        { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
-        { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
-        { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
-        { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
-        { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
+        { label: "Flash Drops", key: "drops", icon: "/rooms/icons/flash-drops.png", tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
+        { label: "Confessions", key: "conf", icon: "/rooms/icons/confessions.png", tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
+        { label: "X Chat", key: "xchat", icon: "/rooms/icons/x-chat.png", tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
+        { label: "Bar Lounge", key: "bar", icon: "/rooms/icons/bar-lounge.png", tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
+        { label: "Truth or Dare", key: "truth", icon: "/rooms/icons/truth-or-dare.png", tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
+        { label: "Suga 4 U", key: "suga4u", icon: "/rooms/icons/suga4u.png", tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u" },
         { label: "All Live Rooms", key: "alllive", icon: <Radio className="w-4 h-4" />, tone: "blue", route: "/rooms/all-live", roomType: "all-live" },
     ];
 
@@ -608,7 +608,13 @@ export default function FeedPage() {
                                                         )}
                                                     >
                                                         <span className="inline-flex items-center gap-2">
-                                                            <span className={t.icon}>{cat.icon}</span>
+                                                            <span className={t.icon}>
+                                                                {typeof cat.icon === 'string' ? (
+                                                                    <img src={cat.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                                ) : (
+                                                                    cat.icon
+                                                                )}
+                                                            </span>
                                                             <span className="truncate neon-deep">{cat.label}</span>
                                                         </span>
                                                     </span>

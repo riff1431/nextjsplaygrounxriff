@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { DynamicIcon } from "@/components/admin/settings/IframeMenuManager";
 
 interface StudioCardProps {
-    icon: React.ReactNode;
+    icon: React.ReactNode | string;
     title: string;
     description: string;
     borderColor: string;
@@ -39,7 +39,13 @@ const StudioCard = ({ icon, title, description, borderColor, comingSoon, veryNew
                 borderLeftWidth: "3px" 
             }}
         >
-            <div className="shrink-0 mt-0.5" style={{ color: isDisabled ? "rgba(255,255,255,0.3)" : borderColor }}>{icon}</div>
+            <div className="shrink-0 mt-0.5" style={{ color: isDisabled ? "rgba(255,255,255,0.3)" : borderColor }}>
+                {typeof icon === 'string' ? (
+                    <img src={icon} alt="" className="w-5 h-5 object-contain shrink-0" style={{ filter: isDisabled ? "grayscale(1) opacity(0.3)" : undefined }} />
+                ) : (
+                    icon
+                )}
+            </div>
             <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
@@ -137,14 +143,14 @@ export const CsCreatorStudio = ({ kycLocked }: { kycLocked?: boolean }) => {
     }, []);
 
     const staticCards: StudioCardProps[] = [
-        { icon: <MessageSquare size={20} />, title: "Confessions Studio", description: "Manage backlog, publish text/voice/video confessions.", borderColor: "hsl(45, 100%, 55%)", link: "/rooms/confessions-creator", roomType: "confessions" },
-        { icon: <Monitor size={20} />, title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", link: "/rooms/x-chat-creator", roomType: "x-chat" },
-        { icon: <Zap size={20} />, title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", link: "/rooms/flash-drop-creator", roomType: "flash-drop" },
-        { icon: <Tv size={20} />, title: "Bar Lounge", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)", link: "/rooms/bar-lounge-creator", roomType: "bar-lounge" },
-        { icon: <Gamepad2 size={20} />, title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)", link: "/rooms/truth-or-dare-creator", roomType: "truth-or-dare" },
-        { icon: <Heart size={20} />, title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", link: "/rooms/suga4u-creator", roomType: "suga-4-u" },
-        { icon: <Dices size={20} />, title: "Casino Lounge", description: "Host live table games and chat with players.", borderColor: "hsl(45, 95%, 50%)", link: "/rooms/casino", roomType: "casino" },
-        { icon: <Trophy size={20} />, title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", link: "/coming-soon", roomType: "competition" },
+        { icon: "/rooms/icons/confessions.png", title: "Confessions Studio", description: "Manage backlog, publish text/voice/video confessions.", borderColor: "hsl(45, 100%, 55%)", link: "/rooms/confessions-creator", roomType: "confessions" },
+        { icon: "/rooms/icons/x-chat.png", title: "X Chat Console", description: "Moderate live chat, set slow mode, answer priority DMs.", borderColor: "hsl(280, 100%, 65%)", link: "/rooms/x-chat-creator", roomType: "x-chat" },
+        { icon: "/rooms/icons/flash-drops.png", title: "Flash Drops", description: "Schedule limited time drops, monitor sales.", borderColor: "hsl(0, 90%, 55%)", link: "/rooms/flash-drop-creator", roomType: "flash-drop" },
+        { icon: "/rooms/icons/bar-lounge.png", title: "Bar Lounge", description: "Manage VIP tables and drink menu.", borderColor: "hsl(320, 100%, 60%)", link: "/rooms/bar-lounge-creator", roomType: "bar-lounge" },
+        { icon: "/rooms/icons/truth-or-dare.png", title: "Truth or Dare", description: "Control camera slots, prompt queue.", borderColor: "hsl(180, 100%, 50%)", link: "/rooms/truth-or-dare-creator", roomType: "truth-or-dare" },
+        { icon: "/rooms/icons/suga4u.png", title: "Suga 4 U", description: "Manage sponsorships and badge tiers.", borderColor: "hsl(25, 100%, 55%)", link: "/rooms/suga4u-creator", roomType: "suga-4-u" },
+        { icon: "/rooms/icons/casino.png", title: "Casino Lounge", description: "Host live table games and chat with players.", borderColor: "hsl(45, 95%, 50%)", link: "/rooms/casino", roomType: "casino" },
+        { icon: "/rooms/icons/competitions.png", title: "Competition Manager", description: "Create battles, manage brackets & prizes.", borderColor: "hsl(330, 90%, 60%)", link: "/coming-soon", roomType: "competition" },
     ];
 
     const colorMap: Record<string, string> = {

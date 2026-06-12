@@ -27,7 +27,7 @@ export async function POST(
         // Get session
         const { data: session } = await supabase
             .from("room_sessions")
-            .select("id, creator_id, room_id, title, status, session_type, is_private, cost_per_min, room_type")
+            .select("id, creator_id, room_id, title, status, session_type, cost_per_min, room_type")
             .eq("id", sessionId)
             .single();
 
@@ -73,7 +73,7 @@ export async function POST(
         const minuteNumber = (lastBilling?.minute_number || 0) + 1;
 
         // Determine rate
-        const isPrivate = session.session_type === 'private' || session.is_private;
+        const isPrivate = session.session_type === 'private';
         const minPrivateRate = settings ? Number(settings.min_private_cost_per_min) : 5;
         const publicRate = settings ? Number(settings.public_cost_per_min) : 2;
         const roomRate = isPrivate
@@ -194,7 +194,7 @@ export async function GET(
         // Fetch session to determine rate
         const { data: session } = await supabase
             .from("room_sessions")
-            .select("id, session_type, is_private, cost_per_min, room_type, creator_id, room_id")
+            .select("id, session_type, cost_per_min, room_type, creator_id, room_id")
             .eq("id", sessionId)
             .single();
 
@@ -230,7 +230,7 @@ export async function GET(
             platformSplitPercent = settings ? Number(settings.platform_split_percent ?? 15) : 15;
             autoKickOnInsufficient = settings ? (settings.auto_kick_on_insufficient ?? true) : true;
 
-            const isPrivate = session.session_type === 'private' || session.is_private;
+            const isPrivate = session.session_type === 'private';
             const minPrivateRate = settings ? Number(settings.min_private_cost_per_min) : 5;
             const publicRate = settings ? Number(settings.public_cost_per_min) : 2;
 

@@ -290,12 +290,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/confessions-creator')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Lock className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/confessions.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">
                                         {isInactive ? "Disabled" : "Very New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'}`}>
-                                        <Lock className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/confessions.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Confessions Studio</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage backlog, publish text/voice/video confessions.</p>
@@ -311,12 +311,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/x-chat-creator')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-yellow-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><MessageSquare className="w-12 h-12 text-gray-800 group-hover:text-yellow-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/x-chat.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">
                                         {isInactive ? "Disabled" : "New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white'}`}>
-                                        <MessageSquare className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/x-chat.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">X Chat Console</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Moderate live chat, set slow mode, answer priority DMs.</p>
@@ -332,12 +332,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/flash-drop-creator')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-blue-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Zap className="w-12 h-12 text-gray-800 group-hover:text-blue-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/flash-drops.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-bold uppercase tracking-wide border border-blue-500/30">
                                         {isInactive ? "Disabled" : "New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white'}`}>
-                                        <Zap className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/flash-drops.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Flash Drops</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Schedule limited-time drops and monitor sales.</p>
@@ -353,12 +353,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/bar-lounge-creator')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-purple-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Wine className="w-12 h-12 text-gray-800 group-hover:text-purple-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/bar-lounge.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium uppercase tracking-wide border border-green-500/30">
                                         {isInactive ? "Disabled" : "New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white'}`}>
-                                        <Wine className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/bar-lounge.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Bar Lounge (Host)</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage VIP tables and drink menu.</p>
@@ -374,14 +374,14 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/creator/rooms/truth-or-dare')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-green-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Video className="w-12 h-12 text-gray-800 group-hover:text-green-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/truth-or-dare.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     {isInactive && (
                                         <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-red-950/40 border border-red-900/30 text-red-400 font-bold uppercase tracking-wide">
                                             Disabled
                                         </span>
                                     )}
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white'}`}>
-                                        <Video className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/truth-or-dare.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Truth or Dare</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Control camera slots and prompt queue.</p>
@@ -397,12 +397,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/suga4u-pg12-creator')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-pink-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Crown className="w-12 h-12 text-gray-800 group-hover:text-pink-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/suga4u.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold uppercase tracking-wide border border-pink-500/30">
                                         {isInactive ? "Disabled" : "New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'}`}>
-                                        <Crown className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-pink-500/20 text-pink-400 group-hover:bg-pink-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/suga4u.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Suga 4 U</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Manage sponsorships and badge tiers.</p>
@@ -418,12 +418,12 @@ export default function CreatorDashboard() {
                                     onClick={() => !isInactive && router.push('/rooms/fans-competitions')} 
                                     className={`group text-left p-6 rounded-3xl border transition relative overflow-hidden col-span-1 md:col-span-2 lg:col-span-2 ${isInactive ? 'bg-gray-900/10 border-white/5 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-gray-900/40 border-white/5 hover:border-orange-500/50 hover:bg-gray-900/60'}`}
                                 >
-                                    <div className="absolute top-0 right-0 p-4 opacity-50"><Trophy className="w-12 h-12 text-gray-800 group-hover:text-orange-900/50 transition transform group-hover:scale-110" /></div>
+                                    <div className="absolute top-0 right-0 p-4 opacity-15"><img src="/rooms/icons/competitions.png" alt="" className="w-12 h-12 object-contain shrink-0 transition transform group-hover:scale-110" style={{ filter: isInactive ? "grayscale(1)" : undefined }} /></div>
                                     <span className="absolute top-3 right-3 text-[9px] px-2 py-0.5 rounded-full bg-[hsl(330,90%,55%)]/20 text-[hsl(330,90%,55%)] font-bold uppercase tracking-wide border border-[hsl(330,90%,55%)]/30 shadow-[0_0_8px_hsl(330,90%,55%,0.6)]">
                                         {isInactive ? "Disabled" : "Very New"}
                                     </span>
-                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white'}`}>
-                                        <Trophy className="w-6 h-6" />
+                                    <div className={`p-3 w-fit rounded-xl mb-4 transition ${isInactive ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white'} flex items-center justify-center w-12 h-12`}>
+                                        <img src="/rooms/icons/competitions.png" alt="" className="w-6 h-6 object-contain shrink-0" style={{ filter: isInactive ? "grayscale(1) opacity(0.3)" : undefined }} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-100 mb-1">Competition Manager</h3>
                                     <p className="text-sm text-gray-400 group-hover:text-gray-300 transition">Create battles, manage brackets & prizes.</p>

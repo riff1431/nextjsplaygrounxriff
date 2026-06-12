@@ -421,7 +421,7 @@ function CreatorTile({ creator, onOpen }: { creator: CreatorCard; onOpen: () => 
 const CATS: Array<{
     label: string;
     key: string;
-    icon: React.ReactNode;
+    icon: React.ReactNode | string;
     tone: "pink" | "green" | "purple" | "red" | "blue" | "yellow";
     primary?: boolean;
     route: string;
@@ -429,14 +429,14 @@ const CATS: Array<{
     roomType: string;
     dataTour?: string;
 }> = [
-        { label: "Flash Drops", key: "drops", icon: <Sparkles className="w-4 h-4" />, tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
-        { label: "Confessions", key: "conf", icon: <Lock className="w-4 h-4" />, tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
-        { label: "X Chat", key: "xchat", icon: <MessageCircle className="w-4 h-4" />, tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
-        { label: "Bar Lounge", key: "bar", icon: <BarDrinkIcon className="w-4 h-4" />, tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
-        { label: "Truth or Dare", key: "truth", icon: <MessageCircle className="w-4 h-4" />, tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
-        { label: "Suga 4 U", key: "suga4u", icon: <Crown className="w-4 h-4" />, tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
+        { label: "Flash Drops", key: "drops", icon: "/rooms/icons/flash-drops.png", tone: "blue", route: "/rooms/flash-drop-sessions", roomType: "flash-drop" },
+        { label: "Confessions", key: "conf", icon: "/rooms/icons/confessions.png", tone: "red", route: "/rooms/confessions-browse", roomType: "confessions" },
+        { label: "X Chat", key: "xchat", icon: "/rooms/icons/x-chat.png", tone: "yellow", route: "/rooms/x-chat-sessions", roomType: "x-chat" },
+        { label: "Bar Lounge", key: "bar", icon: "/rooms/icons/bar-lounge.png", tone: "purple", route: "/rooms/bar-lounge", roomType: "bar-lounge" },
+        { label: "Truth or Dare", key: "truth", icon: "/rooms/icons/truth-or-dare.png", tone: "green", route: "/rooms/truth-or-dare-sessions", roomType: "truth-or-dare" },
+        { label: "Suga 4 U", key: "suga4u", icon: "/rooms/icons/suga4u.png", tone: "pink", primary: true, route: "/rooms/suga4u-sessions", roomType: "suga-4-u", dataTour: "role-selection" },
         { label: "All Live Rooms", key: "alllive", icon: <Radio className="w-4 h-4" />, tone: "blue", route: "/rooms/all-live", roomType: "all-live" },
-        { label: "Casino", key: "casino", icon: <Dices className="w-4 h-4" />, tone: "yellow", route: "/rooms/casino", roomType: "casino" },
+        { label: "Casino", key: "casino", icon: "/rooms/icons/casino.png", tone: "yellow", route: "/rooms/casino", roomType: "casino" },
     ];
 
 // ---- Mobile Compact Post Card Component -----------------------------------
@@ -847,7 +847,13 @@ function HomeScreen({
                                                     )}
                                                 >
                                                     <span className="inline-flex items-center gap-2">
-                                                        <span className={t.icon}>{cat.icon}</span>
+                                                        <span className={t.icon}>
+                                                            {typeof cat.icon === 'string' ? (
+                                                                <img src={cat.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                            ) : (
+                                                                cat.icon
+                                                            )}
+                                                        </span>
                                                         <span className="truncate neon-deep">{cat.label}</span>
                                                     </span>
                                                     {cat.comingSoon && (
@@ -1584,7 +1590,13 @@ export default function Home() {
                                                         )}
                                                     >
                                                         <span className="inline-flex items-center gap-2">
-                                                            <span className={t.icon}>{cat.icon}</span>
+                                                            <span className={t.icon}>
+                                                                {typeof cat.icon === 'string' ? (
+                                                                    <img src={cat.icon} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                                                ) : (
+                                                                    cat.icon
+                                                                )}
+                                                            </span>
                                                             <span className="truncate neon-deep">{cat.label}</span>
                                                         </span>
                                                     </span>
@@ -2144,22 +2156,21 @@ export default function Home() {
                                 iconStyle: {}
                             };
 
-                            const getCustomIcon = (key: string) => {
-                                if (key === "drops") return <Gift className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
-                                if (key === "conf") return <Lock className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
-                                if (key === "xchat") return <MessageCircle className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
-                                if (key === "bar") return <BarDrinkIcon className={`w-8 h-8 ${tColorMap.text}`} style={tColorMap.iconStyle} />;
-                                if (key === "truth") {
+                            const getCustomIcon = (c: typeof CATS[number]) => {
+                                if (typeof c.icon === 'string') {
                                     return (
-                                        <svg className={`w-8 h-8 ${tColorMap.text}`} style={tColorMap.iconStyle} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M9.5 5.5C6.5 5.5 4 8 4 11C4 14.5 6.5 16.5 9.5 16.5C12.5 16.5 15 14.5 15 11C15 8 12.5 5.5 9.5 5.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                            <path d="M7 9H7.01M12 9H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-                                            <path d="M8.5 12.5C8.5 12.5 9 13.3 9.5 13.3C10 13.3 10.5 12.5 10.5 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                                            <path d="M14.5 7.5C17.5 7.5 20 10 20 13C20 16.5 17.5 18.5 14.5 18.5C11.5 18.5 9 16.5 9 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3"/>
-                                        </svg>
+                                        <img 
+                                            src={c.icon} 
+                                            alt="" 
+                                            className="w-10 h-10 object-contain shrink-0" 
+                                            style={tColorMap.iconStyle} 
+                                        />
                                     );
                                 }
-                                return <Crown className={`w-8 h-8 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                if (c.key === "alllive") {
+                                    return <Radio className={`w-10 h-10 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                }
+                                return c.icon;
                             };
 
                             return (
@@ -2176,7 +2187,7 @@ export default function Home() {
                                     }}
                                 >
                                     <div className="flex-1 flex items-center justify-center transition-transform duration-300 group-active:scale-110">
-                                        {getCustomIcon(cat.key)}
+                                        {getCustomIcon(cat)}
                                     </div>
                                     <span className="text-[10px] font-semibold text-zinc-300 group-active:text-white tracking-tight leading-none text-center pb-1 transition-colors duration-200">
                                         {cat.label}

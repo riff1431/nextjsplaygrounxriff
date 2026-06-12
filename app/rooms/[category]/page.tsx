@@ -30,14 +30,14 @@ function BarDrinkIcon({ className = "" }: { className?: string }) {
     );
 }
 
-const CATEGORIES: Record<string, { label: string; icon: any; tone: string }> = {
-    "flash-drop": { label: "Flash Drops", icon: Sparkles, tone: "blue" },
-    "confessions": { label: "Confessions", icon: Lock, tone: "red" },
-    "x-chat": { label: "X Chat", icon: MessageCircle, tone: "yellow" },
-    "bar-lounge": { label: "Bar Lounge", icon: BarDrinkIcon, tone: "purple" },
-    "truth-or-dare": { label: "Truth or Dare", icon: Video, tone: "green" },
-    "competition": { label: "Competitions", icon: Trophy, tone: "orange" },
-    "suga-4-u": { label: "Suga 4 U", icon: Crown, tone: "pink" },
+const CATEGORIES: Record<string, { label: string; icon: string | any; tone: string }> = {
+    "flash-drop": { label: "Flash Drops", icon: "/rooms/icons/flash-drops.png", tone: "blue" },
+    "confessions": { label: "Confessions", icon: "/rooms/icons/confessions.png", tone: "red" },
+    "x-chat": { label: "X Chat", icon: "/rooms/icons/x-chat.png", tone: "yellow" },
+    "bar-lounge": { label: "Bar Lounge", icon: "/rooms/icons/bar-lounge.png", tone: "purple" },
+    "truth-or-dare": { label: "Truth or Dare", icon: "/rooms/icons/truth-or-dare.png", tone: "green" },
+    "competition": { label: "Competitions", icon: "/rooms/icons/competitions.png", tone: "orange" },
+    "suga-4-u": { label: "Suga 4 U", icon: "/rooms/icons/suga4u.png", tone: "pink" },
 };
 
 export default function RoomCategoryPage({ params: paramsPromise }: { params: any }) {
@@ -84,8 +84,12 @@ export default function RoomCategoryPage({ params: paramsPromise }: { params: an
                         <ArrowLeft className="w-6 h-6" />
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl bg-${categoryInfo.tone}-500/20 text-${categoryInfo.tone}-500`}>
-                            <Icon className="w-6 h-6" />
+                        <div className={`p-2 rounded-xl bg-${categoryInfo.tone}-500/20 text-${categoryInfo.tone}-500 flex items-center justify-center w-10 h-10`}>
+                            {typeof categoryInfo.icon === 'string' ? (
+                                <img src={categoryInfo.icon} alt="" className="w-6 h-6 object-contain" />
+                            ) : (
+                                <Icon className="w-6 h-6" />
+                            )}
                         </div>
                         <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                             {categoryInfo.label}
@@ -100,7 +104,11 @@ export default function RoomCategoryPage({ params: paramsPromise }: { params: an
                     </div>
                 ) : rooms.length === 0 ? (
                     <NeonCard className="p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
-                        <Icon className="w-16 h-16 text-gray-700 mb-4" />
+                        {typeof categoryInfo.icon === 'string' ? (
+                            <img src={categoryInfo.icon} alt="" className="w-16 h-16 object-contain opacity-25 mb-4" />
+                        ) : (
+                            <Icon className="w-16 h-16 text-gray-700 mb-4" />
+                        )}
                         <h3 className="text-xl font-bold text-gray-300 mb-2">No active rooms</h3>
                         <p className="text-gray-500 max-w-sm mb-6">
                             There are currently no live {categoryInfo.label} rooms. Check back later!

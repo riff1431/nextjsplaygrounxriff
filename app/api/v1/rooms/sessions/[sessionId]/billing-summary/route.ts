@@ -25,7 +25,7 @@ export async function GET(
         // ── 1. Session lookup via cookie client ───────────────────────
         const { data: session } = await supabase
             .from("room_sessions")
-            .select("id, creator_id, room_type, session_type, is_private, cost_per_min, status")
+            .select("id, creator_id, room_type, session_type, cost_per_min, status")
             .eq("id", sessionId)
             .maybeSingle();                  // maybeSingle → no error if 0 rows
 
@@ -33,7 +33,7 @@ export async function GET(
         const effectiveSession = session ?? await (async () => {
             const { data } = await adminClient
                 .from("room_sessions")
-                .select("id, creator_id, room_type, session_type, is_private, cost_per_min, status")
+                .select("id, creator_id, room_type, session_type, cost_per_min, status")
                 .eq("id", sessionId)
                 .maybeSingle();
             return data;
@@ -51,7 +51,7 @@ export async function GET(
             .maybeSingle();
 
         const billingEnabled = settings ? (settings.billing_enabled ?? true) : true;
-        const isPrivate = effectiveSession.session_type === "private" || effectiveSession.is_private;
+        const isPrivate = effectiveSession.session_type === "private";
         const publicRate = settings ? Number(settings.public_cost_per_min) : 2;
         const minPrivateRate = settings ? Number(settings.min_private_cost_per_min) : 5;
         const effectiveRate = !billingEnabled
