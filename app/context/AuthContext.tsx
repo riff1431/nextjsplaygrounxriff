@@ -25,15 +25,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
 
     useEffect(() => {
-        const checkUser = async () => {
+        let isMounted = true;
+        let authListener: any = null;
+
+        const initializeAuth = async () => {
             try {
+                // 1. Get initial session
                 const { data: { session } } = await supabase.auth.getSession();
 
-                if (session?.user) {
-                    setUser(session.user);
+                if (!session?.user) {
+                    if (isMounted) {
+                        setUser(null);
+                        setRole(null);
+                        setIsLoading(false);
+                    }
+                } else {
                     let activeRole = session.user.user_metadata?.role as UserRole;
 
-                    // Fetch profile to check if originally a creator
+                    // Fetch profile to verify role and if originally a creator
                     const { data: profile } = await supabase
                         .from("profiles")
                         .select("role, is_creator")
@@ -42,19 +51,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     if (profile) {
                         if (profile.is_creator) {
-                            // If they are a creator, check if they switched role in this session/tab
                             const roleSwitched = typeof window !== "undefined" ? sessionStorage.getItem("role_switched") : null;
                             if (!roleSwitched) {
-                                // Force back to creator on fresh session/new login
+                                // If they are a creator, force back to creator on new session/tab/login
                                 activeRole = "creator";
-                                if (profile.role !== "creator" || (session.user.user_metadata?.role !== "creator")) {
-                                    await supabase
-                                        .from("profiles")
-                                        .update({ role: "creator" })
-                                        .eq("id", session.user.id);
-                                    await supabase.auth.updateUser({
-                                        data: { role: "creator" }
-                                    });
+
+                                // Sync database and metadata if they don't match creator
+                                if (profile.role !== "creator" || session.user.user_metadata?.role !== "creator") {
+                                    try {
+                                        if (profile.role !== "creator") {
+                                            await supabase
+                                                .from("profiles")
+                                                .update({ role: "creator" })
+                                                .eq("id", session.user.id);
+                                        }
+                                        if (session.user.user_metadata?.role !== "creator") {
+                                            await supabase.auth.updateUser({
+                                                data: { role: "creator" }
+                                            });
+                                        }
+                                    } catch (err) {
+                                        console.error("Failed to sync creator role:", err);
+                                    }
                                 }
                             } else {
                                 activeRole = profile.role as UserRole;
@@ -63,63 +81,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             activeRole = profile.role as UserRole;
                         }
                     }
-                    setRole(activeRole || "fan");
-                } else {
-                    setUser(null);
-                    setRole(null);
+
+                    if (isMounted) {
+                        setUser(session.user);
+                        setRole(activeRole || "fan");
+                        setIsLoading(false);
+                    }
                 }
             } catch (error) {
-                console.error("Auth check failed:", error);
-            } finally {
-                setIsLoading(false);
+                console.error("Auth initialization failed:", error);
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+
+            // 2. Subscribe to auth changes after initial session is loaded
+            if (isMounted) {
+                const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                    if (!session?.user) {
+                        if (isMounted) {
+                            setUser(null);
+                            setRole(null);
+                            if (typeof window !== "undefined") {
+                                sessionStorage.removeItem("role_switched");
+                            }
+                        }
+                    } else {
+                        // For any auth event, update the user state.
+                        // If it's a SIGNED_IN event, sync role
+                        if (event === "SIGNED_IN") {
+                            let activeRole = session.user.user_metadata?.role as UserRole;
+                            const { data: profile } = await supabase
+                                .from("profiles")
+                                .select("role, is_creator")
+                                .eq("id", session.user.id)
+                                .single();
+
+                            if (profile) {
+                                if (profile.is_creator) {
+                                    const roleSwitched = typeof window !== "undefined" ? sessionStorage.getItem("role_switched") : null;
+                                    if (!roleSwitched) {
+                                        activeRole = "creator";
+                                        if (profile.role !== "creator" || session.user.user_metadata?.role !== "creator") {
+                                            try {
+                                                if (profile.role !== "creator") {
+                                                    await supabase
+                                                        .from("profiles")
+                                                        .update({ role: "creator" })
+                                                        .eq("id", session.user.id);
+                                                }
+                                                if (session.user.user_metadata?.role !== "creator") {
+                                                    await supabase.auth.updateUser({
+                                                        data: { role: "creator" }
+                                                    });
+                                                }
+                                            } catch (err) {
+                                                console.error("Failed to sync creator role:", err);
+                                            }
+                                        }
+                                    } else {
+                                        activeRole = profile.role as UserRole;
+                                    }
+                                } else {
+                                    activeRole = profile.role as UserRole;
+                                }
+                            }
+                            if (isMounted) {
+                                setUser(session.user);
+                                setRole(activeRole || "fan");
+                            }
+                        } else {
+                            // For other events (like USER_UPDATED), just update user state and keep existing/new metadata role
+                            if (isMounted) {
+                                setUser(session.user);
+                                const metadataRole = session.user.user_metadata?.role as UserRole;
+                                if (metadataRole) {
+                                    setRole(metadataRole);
+                                }
+                            }
+                        }
+                    }
+                });
+                authListener = subscription;
             }
         };
 
-        checkUser();
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session?.user) {
-                setUser(session.user);
-                let activeRole = session.user.user_metadata?.role as UserRole;
-
-                if (event === "SIGNED_IN") {
-                    const { data: profile } = await supabase
-                        .from("profiles")
-                        .select("role, is_creator")
-                        .eq("id", session.user.id)
-                        .single();
-
-                    if (profile?.is_creator) {
-                        const roleSwitched = typeof window !== "undefined" ? sessionStorage.getItem("role_switched") : null;
-                        if (!roleSwitched) {
-                            activeRole = "creator";
-                            await supabase
-                                .from("profiles")
-                                .update({ role: "creator" })
-                                .eq("id", session.user.id);
-                            await supabase.auth.updateUser({
-                                data: { role: "creator" }
-                            });
-                        } else {
-                            activeRole = profile.role as UserRole;
-                        }
-                    } else if (profile) {
-                        activeRole = profile.role as UserRole;
-                    }
-                }
-                setRole(activeRole || "fan");
-            } else {
-                setUser(null);
-                setRole(null);
-                if (typeof window !== "undefined") {
-                    sessionStorage.removeItem("role_switched");
-                }
-            }
-            setIsLoading(false);
-        });
+        initializeAuth();
 
         return () => {
-            subscription.unsubscribe();
+            isMounted = false;
+            if (authListener) {
+                authListener.unsubscribe();
+            }
         };
     }, []);
 

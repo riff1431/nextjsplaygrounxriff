@@ -30,6 +30,11 @@ const CreatorStudioDashboardPage = () => {
         }
 
         const handleRoleSync = async () => {
+            if (typeof window !== "undefined" && sessionStorage.getItem("switching_to_fan") === "true") {
+                console.log("Switching to fan view is in progress, skipping auto-switch");
+                return;
+            }
+
             const { data: profileData } = await supabase
                 .from("profiles")
                 .select("role, is_creator")
@@ -73,7 +78,7 @@ const CreatorStudioDashboardPage = () => {
         };
 
         handleRoleSync();
-    }, [user, authLoading, role, router, supabase, updateRole]);
+    }, [user, authLoading, router, supabase, updateRole]);
 
     const kycLocked = kycStatus !== "approved";
 

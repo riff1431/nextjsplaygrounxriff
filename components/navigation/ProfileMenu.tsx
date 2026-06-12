@@ -26,9 +26,18 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
     const { isPending: isKycPending } = useKycStatus();
 
     const handleSwitchRole = async () => {
+        const newRole = role === "creator" ? "fan" : "creator";
+        // Set role_switched in sessionStorage immediately BEFORE any async operations
+        // to prevent the auth state change listener from auto-reverting the role during updates.
+        if (typeof window !== "undefined") {
+            sessionStorage.setItem("role_switched", "true");
+            if (newRole === "fan") {
+                sessionStorage.setItem("switching_to_fan", "true");
+            }
+        }
+
         if (!user || isSwitchingRole) return;
         setIsSwitchingRole(true);
-        const newRole = role === "creator" ? "fan" : "creator";
         const toastId = toast.loading(`Switching to ${newRole === "creator" ? "Creator" : "Fan"} profile...`);
 
         try {
@@ -50,11 +59,6 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
             // 3. Update React context role state
             updateRole(newRole);
 
-            // Track that the role was explicitly switched in this session
-            if (typeof window !== "undefined") {
-                sessionStorage.setItem("role_switched", "true");
-            }
-
             toast.success(`Switched to ${newRole === "creator" ? "Creator Hub" : "Fan View"}! ${newRole === "creator" ? "👑" : "🕶️"}`, { id: toastId });
             setIsOpen(false);
 
@@ -66,6 +70,10 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
             }
         } catch (err: any) {
             console.error("Failed to switch profile:", err);
+            // Revert sessionStorage flag on failure
+            if (typeof window !== "undefined") {
+                sessionStorage.removeItem("role_switched");
+            }
             toast.error(err.message || "Failed to switch profiles", { id: toastId });
         } finally {
             setIsSwitchingRole(false);
@@ -74,6 +82,9 @@ export default function ProfileMenu({ user, profile, role, router, onSignOut }: 
 
     // Fetch and subscribe to dynamic iframe menus matching user role
     useEffect(() => {
+        if (role === "fan" && typeof window !== "undefined") {
+            sessionStorage.removeItem("switching_to_fan");
+        }
         const fetchIframeMenus = async () => {
             const { data, error } = await supabase
                 .from("iframe_menus")
