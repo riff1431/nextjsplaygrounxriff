@@ -269,7 +269,17 @@ export default function TruthOrDareSessionsBrowse() {
                         </button>
                         <div style={{ minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span style={{ fontSize: "22px", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.5))", flexShrink: 0 }}>🎭</span>
+                                <img
+                                    src="/rooms/icons/truth-or-dare.png"
+                                    alt="Truth & Dare"
+                                    style={{
+                                        width: "28px",
+                                        height: "28px",
+                                        objectFit: "contain",
+                                        filter: "drop-shadow(0 0 5px rgba(236,72,153,0.5))",
+                                        flexShrink: 0
+                                    }}
+                                />
                                 <h1 style={{
                                     fontSize: "clamp(16px, 4vw, 24px)", fontWeight: 800,
                                     background: "linear-gradient(135deg, #fff 0%, #fbcfe8 50%, #ec4899 100%)",
@@ -427,7 +437,16 @@ export default function TruthOrDareSessionsBrowse() {
                             boxShadow: "0 0 40px rgba(236,72,153,0.1)",
                             display: "flex", alignItems: "center", justifyContent: "center",
                         }}>
-                            <span style={{ fontSize: "48px", filter: "drop-shadow(0 0 10px rgba(236,72,153,0.4))" }}>🎭</span>
+                            <img
+                                src="/rooms/icons/truth-or-dare.png"
+                                alt="Truth & Dare"
+                                style={{
+                                    width: "64px",
+                                    height: "64px",
+                                    objectFit: "contain",
+                                    filter: "drop-shadow(0 0 10px rgba(236,72,153,0.4))"
+                                }}
+                            />
                             <div style={{
                                 position: "absolute", top: -4, right: -4,
                                 width: 24, height: 24, borderRadius: "50%",

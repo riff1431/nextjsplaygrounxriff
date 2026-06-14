@@ -1378,7 +1378,11 @@ function TruthOrDareCreatorContent() {
                 </button>
                 <div className="flex items-center gap-2 min-w-0">
                     <h1 className="text-sm sm:text-base lg:text-xl font-bold tod-creator-text-neon-pink flex items-center gap-1.5 truncate">
-                        🎭 
+                        <img
+                            src="/rooms/icons/truth-or-dare.png"
+                            alt="Truth or Dare"
+                            className="w-5 h-5 object-contain"
+                        />
                         <span className={isInStudio ? "hidden sm:inline" : "hidden xs:inline"}>Truth or Dare</span>
                         {!isInStudio && <span className="xs:hidden">ToD</span>}
                         <span className="hidden sm:inline">— Creator View</span>
@@ -1461,7 +1465,11 @@ function TruthOrDareCreatorContent() {
                     <div className="w-full tod-creator-panel-bg rounded-xl tod-creator-neon-border-pink p-4 lg:p-5 relative z-20">
                         <div className="flex items-center gap-2.5 mb-4">
                             <div className="w-9 h-9 rounded-lg bg-pink-500/20 border border-pink-500/30 flex items-center justify-center">
-                                <span className="text-lg">🎭</span>
+                                <img
+                                    src="/rooms/icons/truth-or-dare.png"
+                                    alt="Truth or Dare"
+                                    className="w-5 h-5 object-contain"
+                                />
                             </div>
                             <div>
                                 <h2 className="text-base font-bold text-white leading-tight">Start a New Session</h2>
@@ -1739,7 +1747,11 @@ function TruthOrDareCreatorContent() {
                                 <div className="relative">
                                     <div className="absolute inset-0 w-28 h-28 rounded-full border-2 border-pink-500/40 animate-ping" />
                                     <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-600/20 to-purple-600/20 border-2 border-pink-500/50 flex items-center justify-center" style={{ boxShadow: '0 0 60px hsla(330, 100%, 60%, 0.3)' }}>
-                                        <span className="text-4xl">🎭</span>
+                                        <img
+                                            src="/rooms/icons/truth-or-dare.png"
+                                            alt="Truth or Dare"
+                                            className="w-16 h-16 object-contain"
+                                        />
                                     </div>
                                 </div>
 
