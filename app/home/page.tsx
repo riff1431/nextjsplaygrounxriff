@@ -2157,18 +2157,22 @@ export default function Home() {
                             };
 
                             const getCustomIcon = (c: typeof CATS[number]) => {
+                                const size90Keys = ["drops", "conf", "xchat", "truth", "suga4u", "casino"];
+                                const is90 = size90Keys.includes(c.key);
+                                const sizeClass = is90 ? "w-[90px] h-[90px]" : "w-[80px] h-[80px]";
+
                                 if (typeof c.icon === 'string') {
                                     return (
                                         <img 
                                             src={c.icon} 
                                             alt="" 
-                                            className="w-[80px] h-[80px] object-contain shrink-0" 
+                                            className={`${sizeClass} object-contain shrink-0`} 
                                             style={tColorMap.iconStyle} 
                                         />
                                     );
                                 }
                                 if (c.key === "alllive") {
-                                    return <Radio className={`w-[80px] h-[80px] ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                    return <Radio className={`${sizeClass} ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
                                 }
                                 return c.icon;
                             };
@@ -2178,7 +2182,7 @@ export default function Home() {
                                     key={`mobile-room-${cat.key}`}
                                     onClick={() => router.push(cat.route)}
                                     className={cx(
-                                        "min-h-[112px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
+                                        "min-h-[120px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
                                         tColorMap.border,
                                         tColorMap.glow
                                     )}
