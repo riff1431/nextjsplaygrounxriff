@@ -331,9 +331,14 @@ export default function AllLiveRoomsBrowse() {
                         </button>
                         <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <span style={{ fontSize: "26px", filter: "drop-shadow(0 0 5px rgba(59,130,246,0.6))" }}>
-                                    🌐
-                                </span>
+                                <Radio 
+                                    style={{ 
+                                        width: "28px", 
+                                        height: "28px", 
+                                        color: "#3b82f6",
+                                        filter: "drop-shadow(0 0 5px rgba(59,130,246,0.6))" 
+                                    }} 
+                                />
                                 <h1
                                     style={{
                                         fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800,
