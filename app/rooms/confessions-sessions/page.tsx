@@ -6,6 +6,7 @@ export default function ConfessionsSessionsPage() {
         <RoomSessionsBrowse
             roomType="confessions"
             roomEmoji="💜"
+            roomIcon="/rooms/icons/confessions.png"
             roomLabel="Confessions"
             fanPageRoute="/rooms/confessions"
             accentHsl="340, 82%, 52%"

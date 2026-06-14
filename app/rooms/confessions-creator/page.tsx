@@ -193,6 +193,7 @@ const ConfessionsCreatorPage = () => {
             <RoomSessionDashboard
                 roomType="confessions"
                 roomEmoji="💜"
+                roomIcon="/rooms/icons/confessions.png"
                 roomLabel="Confessions"
                 creatorPageRoute="/rooms/confessions-creator"
                 accentHsl="280, 70%, 60%"
