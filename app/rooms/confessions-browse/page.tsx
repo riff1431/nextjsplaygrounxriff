@@ -332,10 +332,14 @@ function FanConfessionsBrowseInner() {
                             </button>
 
                             <div className="flex items-center gap-2.5">
-                                {/* Animated heart icon */}
+                                {/* Animated confessions icon */}
                                 <div className="relative">
                                     <div className="absolute inset-0 bg-rose-500/30 rounded-full blur-lg animate-pulse" />
-                                    <Heart className="relative w-5 h-5 text-rose-400 fill-rose-500/40" />
+                                    <img
+                                        src="/rooms/icons/confessions.png"
+                                        alt="Confessions"
+                                        className="relative w-5 h-5 object-contain"
+                                    />
                                 </div>
                                 <div>
                                     <h1 className="text-base font-black tracking-tight leading-none">
@@ -364,7 +368,11 @@ function FanConfessionsBrowseInner() {
                         {/* ── Enter Session CTA (Top) ────────────────── */}
                         <div className="mb-8 rounded-3xl border border-rose-500/15 bg-gradient-to-br from-rose-950/40 via-black/40 to-purple-950/30 p-8 text-center backdrop-blur-sm">
                             <div className="flex justify-center mb-4 gap-2">
-                                <Heart className="w-5 h-5 text-rose-400 fill-rose-500/30 animate-pulse" />
+                                <img
+                                    src="/rooms/icons/confessions.png"
+                                    alt="Confessions"
+                                    className="w-5 h-5 object-contain animate-pulse"
+                                />
                                 <Flame className="w-5 h-5 text-orange-400" />
                             </div>
                             <h3 className="text-white font-black text-lg mb-2">Want to make your own confession?</h3>
