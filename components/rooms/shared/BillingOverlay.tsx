@@ -2,18 +2,15 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Wallet, AlertTriangle, X, Timer } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useSessionBilling } from "@/hooks/useSessionBilling";
 import { cs } from "@/utils/currency";
 
 /* ═══════════════════════════════════════════════════════════
    BillingOverlay — Per-minute billing UI for fan watching pages
    ─────────────────────────────────────────────────────────
-   • Shows a compact floating pill with minutes / total spent / rate
-   • Shows real-time countdown until next charge
-   • Shows estimated remaining time based on balance
-   • Warns when balance is low (< 2 minutes remaining)
    • Shows full-screen eject modal when funds run out
+   • Visual billing pill overlay is removed to avoid redundancy
    ═══════════════════════════════════════════════════════════ */
 
 interface BillingOverlayProps {
@@ -22,8 +19,6 @@ interface BillingOverlayProps {
     accentHsl?: string;
     /** Called when fan is auto-ejected for insufficient funds */
     onAutoEject?: () => void;
-    /** Per-minute rate label to display (defaults to auto-detected) */
-    rateLabel?: string;
     /** Back route when ejected */
     exitRoute?: string;
 }
@@ -32,13 +27,11 @@ export default function BillingOverlay({
     sessionId,
     accentHsl = "280, 80%, 60%",
     onAutoEject,
-    rateLabel,
     exitRoute = "/home",
 }: BillingOverlayProps) {
     const router = useRouter();
     const billing = useSessionBilling(sessionId);
     const hasStartedRef = useRef(false);
-    const [dismissed, setDismissed] = useState(false);
     const [showEjectModal, setShowEjectModal] = useState(false);
     const [ejectCountdown, setEjectCountdown] = useState(15);
 
@@ -50,6 +43,7 @@ export default function BillingOverlay({
 
         return () => {
             billing.stopBilling();
+            hasStartedRef.current = false;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionId]);
@@ -58,7 +52,6 @@ export default function BillingOverlay({
     useEffect(() => {
         if (billing.autoEjected && !showEjectModal) {
             setShowEjectModal(true);
-            setDismissed(false);
         }
     }, [billing.autoEjected, showEjectModal]);
 
@@ -83,22 +76,9 @@ export default function BillingOverlay({
     if (!sessionId || !billing.isActive && !billing.autoEjected) return null;
 
     const accent = `hsl(${accentHsl})`;
-    const accentBg = `hsla(${accentHsl}, 0.15)`;
-    const accentBorder = `hsla(${accentHsl}, 0.3)`;
 
-    // Compute remaining estimate
+    // Compute current rate for summary displays
     const currentRate = billing.rate ?? 0;
-    const estimatedRemaining = (billing.lastBalance !== null && currentRate > 0)
-        ? Math.floor(billing.lastBalance / currentRate)
-        : null;
-    const lowBalance = estimatedRemaining !== null && estimatedRemaining <= 2;
-
-    // Auto-detect rate label
-    const displayRate = rateLabel || (currentRate > 0 ? `${cs()}${currentRate}/min` : null);
-
-    // Real-time countdown
-    const secs = billing.secondsUntilNextCharge;
-    const countdownLabel = secs <= 0 ? "charging..." : `${secs}s`;
 
     // ── Auto-Eject Modal ──
     if (showEjectModal) {
@@ -236,163 +216,6 @@ export default function BillingOverlay({
     }
 
     // ── Compact Billing Pill ──
-    if (dismissed) return null;
-
-    return (
-        <div
-            className="billing-overlay-pill"
-            style={{
-                position: "fixed",
-                bottom: "20px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                zIndex: 9990,
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "8px 16px",
-                borderRadius: "9999px",
-                background: lowBalance
-                    ? "hsla(0, 60%, 15%, 0.9)"
-                    : "hsla(270, 40%, 12%, 0.9)",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-                border: lowBalance
-                    ? "1px solid hsla(0, 70%, 50%, 0.4)"
-                    : `1px solid ${accentBorder}`,
-                boxShadow: lowBalance
-                    ? "0 4px 20px hsla(0, 70%, 50%, 0.25)"
-                    : `0 4px 20px hsla(${accentHsl}, 0.2)`,
-                fontFamily: "'Inter', 'Montserrat', sans-serif",
-                animation: "billingPillSlideUp 0.4s ease-out",
-            }}
-        >
-            <style>{`
-                @keyframes billingPillSlideUp {
-                    from { opacity: 0; transform: translate(-50%, 20px); }
-                    to { opacity: 1; transform: translate(-50%, 0); }
-                }
-                @keyframes billingPulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.6; }
-                }
-                @keyframes billingCountdownShrink {
-                    from { width: 100%; }
-                    to { width: 0%; }
-                }
-                @media (max-width: 1023px) {
-                    .billing-overlay-pill {
-                        bottom: 76px !important;
-                    }
-                }
-            `}</style>
-
-            {/* Timer icon + minutes */}
-            <div style={{
-                display: "flex", alignItems: "center", gap: "5px",
-                color: lowBalance ? "hsl(0, 80%, 65%)" : accent,
-            }}>
-                <Clock style={{
-                    width: "14px", height: "14px",
-                    animation: lowBalance ? "billingPulse 1s ease-in-out infinite" : "none",
-                }} />
-                <span style={{ fontSize: "12px", fontWeight: 700 }}>
-                    {billing.minutesBilled} min
-                </span>
-            </div>
-
-            {/* Divider */}
-            <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-
-            {/* Amount spent */}
-            <div style={{
-                display: "flex", alignItems: "center", gap: "4px",
-                color: "hsl(42, 90%, 55%)",
-            }}>
-                <Wallet style={{ width: "13px", height: "13px" }} />
-                <span style={{ fontSize: "12px", fontWeight: 700 }}>
-                    {cs()}{billing.totalBilled}
-                </span>
-            </div>
-
-            {/* Rate display */}
-            {displayRate && (
-                <>
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-                    <span style={{ fontSize: "10px", color: accent, fontWeight: 600 }}>
-                        {displayRate}
-                    </span>
-                </>
-            )}
-
-            {/* Real-time countdown to next charge */}
-            {currentRate > 0 && (
-                <>
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-                    <div style={{
-                        display: "flex", alignItems: "center", gap: "3px",
-                        color: secs <= 10 ? "hsl(30, 100%, 65%)" : "rgba(255,255,255,0.45)",
-                        animation: secs <= 10 ? "billingPulse 0.8s ease-in-out infinite" : "none",
-                    }}>
-                        <Timer style={{ width: "11px", height: "11px" }} />
-                        <span style={{
-                            fontSize: "10px", fontWeight: 700,
-                            minWidth: "52px",
-                        }}>
-                            next: {countdownLabel}
-                        </span>
-                    </div>
-                </>
-            )}
-
-            {/* Estimated remaining */}
-            {estimatedRemaining !== null && (
-                <>
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-                    <div style={{
-                        display: "flex", alignItems: "center", gap: "3px",
-                        animation: lowBalance ? "billingPulse 1.5s ease-in-out infinite" : "none",
-                    }}>
-                        <span style={{
-                            fontSize: "10px", fontWeight: 700,
-                            color: lowBalance ? "hsl(45, 100%, 55%)" : "rgba(255,255,255,0.5)",
-                        }}>
-                            ~{estimatedRemaining} left
-                        </span>
-                    </div>
-                </>
-            )}
-
-            {/* Low balance warning */}
-            {lowBalance && (
-                <>
-                    <div style={{ width: "1px", height: "16px", background: "rgba(255,255,255,0.15)" }} />
-                    <div style={{
-                        display: "flex", alignItems: "center", gap: "4px",
-                        animation: "billingPulse 1.5s ease-in-out infinite",
-                    }}>
-                        <AlertTriangle style={{ width: "12px", height: "12px", color: "hsl(0, 80%, 65%)" }} />
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "hsl(0, 80%, 65%)" }}>
-                            LOW
-                        </span>
-                    </div>
-                </>
-            )}
-
-            {/* Close button */}
-            <button
-                onClick={() => setDismissed(true)}
-                style={{
-                    width: "18px", height: "18px", borderRadius: "50%",
-                    background: "rgba(255,255,255,0.08)",
-                    border: "none", cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "rgba(255,255,255,0.4)",
-                    padding: 0, marginLeft: "4px",
-                }}
-            >
-                <X style={{ width: "10px", height: "10px" }} />
-            </button>
-        </div>
-    );
+    // Visual pill overlay is removed to avoid redundancy with the header billing widget and prevent UI clutter.
+    return null;
 }
