@@ -9,14 +9,18 @@ export default function BrandLogo({ className, showBadge = true }: { className?:
 
     const logoSrc = theme?.logoUrl || "/logo.png";
     const logoHeight = theme?.logoSize ? theme.logoSize * 2 : 72; // Force 200% size
+    const logoHeightMobile = 70;
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>
             <img
                 src={logoSrc}
                 alt={theme?.siteName || "PlayGroundX"}
-                className="w-auto object-contain flex-shrink-0 h-8 md:h-[var(--logo-height)]"
-                style={{ "--logo-height": `${logoHeight}px` } as React.CSSProperties}
+                className="w-auto object-contain flex-shrink-0 h-[var(--logo-height-mobile)] md:h-[var(--logo-height)]"
+                style={{ 
+                    "--logo-height-mobile": `${logoHeightMobile}px`,
+                    "--logo-height": `${logoHeight}px` 
+                } as React.CSSProperties}
             />
         </div>
     );
