@@ -302,8 +302,8 @@ export default function RoomSessionsBrowse({
                                             src={roomIcon} 
                                             alt={roomLabel}
                                             style={{ 
-                                                width: "32px", 
-                                                height: "32px", 
+                                                width: roomType === "flash-drop" ? "64px" : "32px", 
+                                                height: roomType === "flash-drop" ? "64px" : "32px", 
                                                 objectFit: "contain",
                                                 filter: `drop-shadow(0 0 5px ${accentLight})`
                                             }} 
@@ -408,14 +408,14 @@ export default function RoomSessionsBrowse({
                     </div>
                 ) : filteredSessions.length === 0 ? (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 20px", gap: "20px" }}>
-                        <div style={{ position: "relative", width: 100, height: 100, borderRadius: "32px", background: accentBg, border: `1px solid ${accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ position: "relative", width: roomType === "flash-drop" ? 200 : 100, height: roomType === "flash-drop" ? 200 : 100, borderRadius: "32px", background: accentBg, border: `1px solid ${accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {roomIcon ? (
                                 <img
                                     src={roomIcon}
                                     alt={roomLabel}
                                     style={{
-                                        width: "64px",
-                                        height: "64px",
+                                        width: roomType === "flash-drop" ? "128px" : "64px",
+                                        height: roomType === "flash-drop" ? "128px" : "64px",
                                         objectFit: "contain",
                                         filter: `drop-shadow(0 0 10px ${accentLight})`
                                     }}

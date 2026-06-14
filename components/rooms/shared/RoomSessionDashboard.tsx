@@ -301,7 +301,7 @@ export default function RoomSessionDashboard({
                                         <img 
                                             src={roomIcon} 
                                             alt={roomLabel}
-                                            className="w-8 h-8 sm:w-10 sm:h-10 object-contain shrink-0" 
+                                            className={roomType === "flash-drop" ? "w-16 h-16 sm:w-20 sm:h-20 object-contain shrink-0" : "w-8 h-8 sm:w-10 sm:h-10 object-contain shrink-0"} 
                                         />
                                     ) : (
                                         <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
