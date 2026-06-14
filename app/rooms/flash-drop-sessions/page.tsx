@@ -6,6 +6,7 @@ export default function FlashDropSessionsPage() {
         <RoomSessionsBrowse
             roomType="flash-drop"
             roomEmoji="⚡"
+            roomIcon="/rooms/icons/flash-drops.png"
             roomLabel="Flash Drops"
             fanPageRoute="/rooms/flash-drop"
             accentHsl="330, 100%, 55%"

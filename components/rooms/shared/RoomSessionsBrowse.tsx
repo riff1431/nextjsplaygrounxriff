@@ -51,6 +51,7 @@ interface RoomSessionsBrowseProps {
     backgroundOverlay?: string;    // overlay tint, e.g. "rgba(0,0,0,0.55)"
     className?: string;
     logoNode?: React.ReactNode;
+    roomIcon?: string;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -80,6 +81,7 @@ export default function RoomSessionsBrowse({
     backgroundOverlay,
     className,
     logoNode,
+    roomIcon,
 }: RoomSessionsBrowseProps) {
     const router = useRouter();
     const supabase = createClient();
@@ -295,9 +297,22 @@ export default function RoomSessionsBrowse({
                         ) : (
                             <div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <span style={{ fontSize: "26px", filter: `drop-shadow(0 0 5px ${accentLight})` }}>
-                                        {roomEmoji}
-                                    </span>
+                                    {roomIcon ? (
+                                        <img 
+                                            src={roomIcon} 
+                                            alt={roomLabel}
+                                            style={{ 
+                                                width: "32px", 
+                                                height: "32px", 
+                                                objectFit: "contain",
+                                                filter: `drop-shadow(0 0 5px ${accentLight})`
+                                            }} 
+                                        />
+                                    ) : (
+                                        <span style={{ fontSize: "26px", filter: `drop-shadow(0 0 5px ${accentLight})` }}>
+                                            {roomEmoji}
+                                        </span>
+                                    )}
                                     <h1
                                         style={{
                                             fontSize: "clamp(18px, 3vw, 24px)", fontWeight: 800,
@@ -394,7 +409,20 @@ export default function RoomSessionsBrowse({
                 ) : filteredSessions.length === 0 ? (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "100px 20px", gap: "20px" }}>
                         <div style={{ position: "relative", width: 100, height: 100, borderRadius: "32px", background: accentBg, border: `1px solid ${accentBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ fontSize: "48px", filter: `drop-shadow(0 0 10px ${accentLight})` }}>{roomEmoji}</span>
+                            {roomIcon ? (
+                                <img
+                                    src={roomIcon}
+                                    alt={roomLabel}
+                                    style={{
+                                        width: "64px",
+                                        height: "64px",
+                                        objectFit: "contain",
+                                        filter: `drop-shadow(0 0 10px ${accentLight})`
+                                    }}
+                                />
+                            ) : (
+                                <span style={{ fontSize: "48px", filter: `drop-shadow(0 0 10px ${accentLight})` }}>{roomEmoji}</span>
+                            )}
                         </div>
                         <div style={{ textAlign: "center" }}>
                             <h2 style={{ fontSize: "22px", fontWeight: 800, color: "#fff", margin: "0 0 8px" }}>

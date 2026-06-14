@@ -46,6 +46,7 @@ interface RoomSessionDashboardProps {
     onSessionStarted?: (session: RoomSession) => void;
     className?: string;
     logoNode?: React.ReactNode;
+    roomIcon?: string;
 }
 
 /* ─────────── Helpers ─────────── */
@@ -91,6 +92,7 @@ export default function RoomSessionDashboard({
     onSessionStarted,
     className,
     logoNode,
+    roomIcon,
 }: RoomSessionDashboardProps) {
     const router = useRouter();
     const supabase = createClient();
@@ -295,7 +297,15 @@ export default function RoomSessionDashboard({
                                         textShadow: `0 0 20px hsla(${accentHsl}, 0.4)`,
                                     }}
                                 >
-                                    <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
+                                    {roomIcon ? (
+                                        <img 
+                                            src={roomIcon} 
+                                            alt={roomLabel}
+                                            className="w-8 h-8 sm:w-10 sm:h-10 object-contain shrink-0" 
+                                        />
+                                    ) : (
+                                        <span className="text-2xl sm:text-3xl shrink-0">{roomEmoji}</span>
+                                    )}
                                     <span className="truncate">{roomLabel}</span>
                                 </h1>
                                 <p

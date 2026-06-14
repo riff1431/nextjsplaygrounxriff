@@ -404,6 +404,7 @@ const FlashdropCreatorRoom = () => {
             <RoomSessionDashboard
                 roomType="flash-drop"
                 roomEmoji="⚡"
+                roomIcon="/rooms/icons/flash-drops.png"
                 roomLabel="Flash Drops"
                 creatorPageRoute="/rooms/flash-drop-creator"
                 accentHsl="170, 80%, 50%"
