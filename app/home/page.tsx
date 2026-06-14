@@ -2157,9 +2157,14 @@ export default function Home() {
                             };
 
                             const getCustomIcon = (c: typeof CATS[number]) => {
-                                const size90Keys = ["drops", "conf", "xchat", "truth", "suga4u", "casino"];
-                                const is90 = size90Keys.includes(c.key);
-                                const sizeClass = is90 ? "w-[110px] h-[110px]" : "w-[80px] h-[80px]";
+                                const size110Keys = ["drops", "conf", "xchat", "truth", "suga4u", "casino"];
+                                const is110 = size110Keys.includes(c.key);
+                                const is78 = c.key === "bar";
+                                const sizeClass = is110 
+                                    ? "w-[110px] h-[110px]" 
+                                    : is78 
+                                        ? "w-[78px] h-[78px]" 
+                                        : "w-[80px] h-[80px]";
 
                                 if (typeof c.icon === 'string') {
                                     return (
