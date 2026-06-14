@@ -6,6 +6,7 @@ export default function XChatSessionsPage() {
         <RoomSessionsBrowse
             roomType="x-chat"
             roomEmoji="💬"
+            roomIcon="/rooms/icons/x-chat.png"
             roomLabel="X Chat"
             fanPageRoute="/rooms/x-chat"
             accentHsl="45, 90%, 55%"

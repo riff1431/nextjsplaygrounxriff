@@ -226,6 +226,7 @@ const XChatCreatorPage = () => {
                 <RoomSessionDashboard
                     roomType="x-chat"
                     roomEmoji="💬"
+                    roomIcon="/rooms/icons/x-chat.png"
                     roomLabel="X Chat"
                     creatorPageRoute="/rooms/x-chat-creator"
                     accentHsl="45, 90%, 55%"
