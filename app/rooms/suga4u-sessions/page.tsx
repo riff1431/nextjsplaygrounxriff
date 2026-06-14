@@ -7,6 +7,7 @@ export default function Suga4USessionsPage() {
         <RoomSessionsBrowse
             roomType="suga-4-u"
             roomEmoji="🍬"
+            roomIcon="/rooms/icons/suga4u.png"
             roomLabel="Suga 4 U"
             fanPageRoute="/rooms/suga4u"
             accentHsl="340, 75%, 55%"

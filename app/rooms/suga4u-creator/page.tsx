@@ -210,6 +210,7 @@ const Suga4UCreatorPage = () => {
             <RoomSessionDashboard
                 roomType="suga-4-u"
                 roomEmoji="🍬"
+                roomIcon="/rooms/icons/suga4u.png"
                 roomLabel="Suga 4 U"
                 creatorPageRoute="/rooms/suga4u-creator"
                 accentHsl="340, 75%, 55%"
