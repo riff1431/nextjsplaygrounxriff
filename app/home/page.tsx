@@ -2161,7 +2161,7 @@ export default function Home() {
                                 const is110 = size110Keys.includes(c.key);
                                 const is78 = c.key === "bar";
                                 const sizeClass = is110 
-                                    ? "w-[110px] h-[110px] max-h-[92px]" 
+                                    ? "w-[110px] h-[110px] max-h-[86px]" 
                                     : is78 
                                         ? "w-[78px] h-[78px]" 
                                         : "w-[80px] h-[80px]";
@@ -2187,7 +2187,7 @@ export default function Home() {
                                     key={`mobile-room-${cat.key}`}
                                     onClick={() => router.push(cat.route)}
                                     className={cx(
-                                        "h-[132px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
+                                        "h-[126px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
                                         tColorMap.border,
                                         tColorMap.glow
                                     )}
