@@ -302,8 +302,8 @@ export default function RoomSessionsBrowse({
                                             src={roomIcon} 
                                             alt={roomLabel}
                                             style={{ 
-                                                width: roomType === "flash-drop" ? "64px" : "32px", 
-                                                height: roomType === "flash-drop" ? "64px" : "32px", 
+                                                width: roomType === "flash-drop" ? "70px" : "32px", 
+                                                height: roomType === "flash-drop" ? "70px" : "32px", 
                                                 objectFit: "contain",
                                                 filter: `drop-shadow(0 0 5px ${accentLight})`
                                             }} 
