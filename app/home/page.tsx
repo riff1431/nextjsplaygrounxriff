@@ -2162,13 +2162,13 @@ export default function Home() {
                                         <img 
                                             src={c.icon} 
                                             alt="" 
-                                            className="w-10 h-10 object-contain shrink-0" 
+                                            className="w-[60px] h-[60px] object-contain shrink-0" 
                                             style={tColorMap.iconStyle} 
                                         />
                                     );
                                 }
                                 if (c.key === "alllive") {
-                                    return <Radio className={`w-10 h-10 ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
+                                    return <Radio className={`w-[60px] h-[60px] ${tColorMap.text}`} strokeWidth={1.8} style={tColorMap.iconStyle} />;
                                 }
                                 return c.icon;
                             };
