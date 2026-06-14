@@ -2159,7 +2159,7 @@ export default function Home() {
                             const getCustomIcon = (c: typeof CATS[number]) => {
                                 const size90Keys = ["drops", "conf", "xchat", "truth", "suga4u", "casino"];
                                 const is90 = size90Keys.includes(c.key);
-                                const sizeClass = is90 ? "w-[102px] h-[102px]" : "w-[80px] h-[80px]";
+                                const sizeClass = is90 ? "w-[107px] h-[107px]" : "w-[80px] h-[80px]";
 
                                 if (typeof c.icon === 'string') {
                                     return (
@@ -2182,7 +2182,7 @@ export default function Home() {
                                     key={`mobile-room-${cat.key}`}
                                     onClick={() => router.push(cat.route)}
                                     className={cx(
-                                        "min-h-[136px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
+                                        "min-h-[142px] rounded-2xl border flex flex-col items-center justify-center gap-1.5 p-2 active:scale-95 group transition-all duration-300",
                                         tColorMap.border,
                                         tColorMap.glow
                                     )}
